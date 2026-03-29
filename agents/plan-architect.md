@@ -37,6 +37,17 @@ Lista todos los Criterios de Aceptación. Son tu contrato: el Plan debe cubrir c
 **2. Identifica entidades de domain**
 Para cada concepto funcional mencionado en el Spec (usuario, oferta de trabajo, servicio, turno, ausencia...) → un Model en domain. Los nombres deben ser funcionales, no técnicos.
 
+**2.5. Verifica Shared Models (solo si el prompt incluye esa sección)**
+Si el prompt contiene una sección "Shared models del proyecto":
+- Los modelos listados en esa tabla **no se redefinen** en este Plan
+- Si esta feature es la **owner** del modelo → defínelo completamente en el Domain Layer con todos sus campos
+- Si esta feature **referencia** el modelo (no es owner) → en la tabla de Modelos escribe:
+  ```
+  | NombreModelo | — | Definido en: <feature-owner>_plan.md | CA-XXX |
+  ```
+  No repitas los campos, no copies la definición. Solo declara la referencia.
+- Nunca crear un modelo con el mismo nombre que uno en la tabla de shared models aunque parezca "ligeramente distinto"
+
 **3. Mapea UseCases**
 Para cada acción principal del usuario que tenga un CA dedicado → un UseCase.
 Regla: si dos CAs pertenecen al mismo flujo y comparten trigger → pueden ser el mismo UseCase. Si son flujos distintos → UseCases distintos.

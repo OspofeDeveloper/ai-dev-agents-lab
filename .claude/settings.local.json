@@ -51,7 +51,8 @@
       "Bash(cp /Users/oscar/.claude/skills/spec-expert/references/error_patterns.md \"/Users/oscar/Documents/AI_labs/Oscar Github/skills/spec-expert/references/error_patterns.md\")",
       "Bash(cp /Users/oscar/.claude/skills/prepare-spec/SKILL.md \"/Users/oscar/Documents/AI_labs/Oscar Github/skills/prepare-spec/SKILL.md\")",
       "Bash(chmod +x \"/Users/oscar/Documents/AI_labs/Oscar Github/install.sh\")",
-      "Bash(bash \"/Users/oscar/Documents/AI_labs/Oscar Github/install.sh\")"
+      "Bash(bash \"/Users/oscar/Documents/AI_labs/Oscar Github/install.sh\")",
+      "Bash(ls:*)"
     ]
   }
 }

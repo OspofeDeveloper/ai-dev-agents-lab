@@ -42,12 +42,19 @@ Ejemplo:
 
 Lee el `_spec.md` en su totalidad.
 
+Busca si existe un `_features.md` en el proyecto. Para encontrarlo:
+- Si el spec está en `features/<nombre>/`, busca `../../*_features.md` (dos niveles arriba)
+- Si el spec está en el directorio raíz, busca `*_features.md` en ese mismo directorio
+
+Si existe el `_features.md`, léelo completo. Lo usarás en el paso siguiente.
+
 ---
 
 ## Paso 4: Delegar al agente plan-architect
 
-Invoca el agente `plan-architect` pasándole como prompt:
+Construye el prompt para el agente:
 
+**Si NO existe `_features.md`** (proyecto sin descomposición multi-feature):
 ```
 Path del spec: <path_completo>
 Contenido del Spec:
@@ -55,6 +62,25 @@ Contenido del Spec:
 <contenido_completo_del_spec>
 ---
 ```
+
+**Si SÍ existe `_features.md`** (proyecto multi-feature):
+```
+Path del spec: <path_completo>
+Contenido del Spec:
+---
+<contenido_completo_del_spec>
+---
+
+Shared models del proyecto (NO redefinir — solo referenciar):
+---
+<sección "Tabla de shared models" del _features.md>
+---
+INSTRUCCIÓN: Si algún modelo de la tabla anterior aparece en el Spec de esta feature,
+NO lo redefinas en el Plan. Declara que lo usa esta feature y apunta a su feature owner.
+Si esta feature ES la owner del modelo, defínelo completamente en el Domain Layer.
+```
+
+Invoca el agente `plan-architect` con el prompt construido.
 
 Espera a que el agente complete su ejecución y recibe su output.
 
