@@ -1,7 +1,7 @@
 ---
 name: prepare-spec
-description: Orquestador SDD para transformar documentos de requisitos en Specs válidos. Tres modos — 'analyze' genera un informe de gaps y preguntas para el cliente; 'finalize' genera el .spec final tras la validación humana; 'validate' audita un _spec.md existente sin generar archivos. Activa en frases como "prepara el spec de", "analiza este documento para el spec", "convierte este .md en spec", "¿qué le falta a este doc para ser spec?", "genera el spec final", "transforma este documento en spec", "valida el spec", "comprueba si el spec sigue siendo válido".
-argument-hint: "analyze <archivo.md> | finalize <archivo.md> | validate <archivo_spec.md>"
+description: Orquestador SDD para transformar documentos de requisitos en Specs válidos. Cuatro modos — 'analyze' genera un informe de gaps y preguntas para el cliente; 'finalize' genera el .spec monolítico final tras la validación humana; 'validate' audita un _spec.md existente sin generar archivos; 'fast-track' genera directamente el spec de una sola capability sin pasar por el monolito. Activa en frases como "prepara el spec de", "analiza este documento para el spec", "convierte este .md en spec", "¿qué le falta a este doc para ser spec?", "genera el spec final", "transforma este documento en spec", "valida el spec", "comprueba si el spec sigue siendo válido", "genera el spec directo de esta feature", "fast-track del spec".
+argument-hint: "analyze <archivo.md> | finalize <archivo.md> | validate <archivo_spec.md> | fast-track <archivo.md> --capability <nombre-kebab>"
 effort: high
 allowed-tools: [Read, Write, Agent]
 disable-model-invocation: true
@@ -16,16 +16,18 @@ Tu rol es de **orquestador puro**: parseas argumentos, verificas archivos, deleg
 ## Paso 1: Parsear argumentos
 
 Extrae de `$ARGUMENTS`:
-- **Modo**: la primera palabra (`analyze` o `finalize`)
-- **Path del archivo**: el resto del argumento
+- **Modo**: la primera palabra (`analyze`, `finalize`, `validate` o `fast-track`)
+- **Path del archivo**: el argumento después del modo
+- **En modo `fast-track`**: extrae también `--capability <nombre>` del argumento. Si falta, informa: "Uso: `/prepare-spec fast-track <archivo.md> --capability <nombre-kebab-case>`"
 
 Si no hay argumento o el modo no es válido, informa al usuario:
-> "Uso: `/prepare-spec analyze <archivo.md>` | `/prepare-spec finalize <archivo.md>` | `/prepare-spec validate <archivo_spec.md>`"
+> "Uso: `/prepare-spec analyze <archivo.md>` | `/prepare-spec finalize <archivo.md>` | `/prepare-spec validate <archivo_spec.md>` | `/prepare-spec fast-track <archivo.md> --capability <nombre>`"
 
 Ejemplos:
 - `analyze docs/login.md` → modo=analyze, archivo=docs/login.md
 - `finalize src/specs/notificaciones.md` → modo=finalize, archivo=src/specs/notificaciones.md
 - `validate src/specs/notificaciones_spec.md` → modo=validate, archivo=src/specs/notificaciones_spec.md
+- `fast-track docs/push-notifications.md --capability push-notifications` → modo=fast-track, archivo=docs/push-notifications.md, capability=push-notifications
 
 ---
 
@@ -42,6 +44,8 @@ En modo `finalize`, verifica también que existe `<nombre_base>_analysis.md` en 
 
 En modo `validate`, verifica que el archivo termina en `_spec.md`. Si no → informa: "El modo validate espera un spec generado (`_spec.md`). Para analizar un PRD usa `/prepare-spec analyze`."
 
+En modo `fast-track`, solo verifica que el archivo de entrada existe. No requiere `_analysis.md` previo.
+
 ---
 
 ## Paso 3: Leer el contenido
@@ -50,7 +54,9 @@ Lee el archivo principal en su totalidad.
 
 En modo `finalize`, lee también el `_analysis.md` completo.
 
-En modo `finalize`, comprueba si hay items con `_(pendiente)_` sin respuesta. Si los hay, lista cuáles y detén: "Completa las respuestas pendientes en `_analysis.md` antes de continuar."
+En modo `finalize`, comprueba la severidad de los items pendientes:
+- Si hay items `[CRÍTICO]_(pendiente)_` sin respuesta → lista cuáles y detén: "Hay gaps **críticos** sin responder en `_analysis.md`. Son obligatorios para continuar."
+- Si solo hay items `[INFORMATIVO]_(pendiente)_` → informa al usuario que se aplicarán las asunciones por defecto y **permite continuar** (el agente aplicará las asunciones en el spec generado).
 
 En modo `validate`, lee el `_spec.md` en su totalidad.
 
@@ -94,6 +100,17 @@ Contenido del spec:
 ---
 ```
 
+**Para modo `fast-track`:**
+```
+Modo: fast-track
+Capability: <nombre-kebab-case>
+Path del archivo: <path_completo>
+Contenido del documento:
+---
+<contenido_completo_del_archivo>
+---
+```
+
 Espera a que el agente complete su ejecución y recibe su output estructurado.
 
 ---
@@ -104,8 +121,9 @@ Determina el path de salida:
 - Modo `analyze`: mismo directorio + nombre base + `_analysis.md` (ej: `docs/login.md` → `docs/login_analysis.md`)
 - Modo `finalize`: mismo directorio + nombre base + `_spec.md` (ej: `docs/login.md` → `docs/login_spec.md`)
 - Modo `validate`: **no escribir ningún archivo** — imprimir directamente el informe del agente al usuario.
+- Modo `fast-track`: `features/<capability>/<capability>_spec.md` relativo al directorio del archivo de entrada. Crea el directorio si no existe. (ej: `docs/push.md` con `--capability push-notifications` → `docs/features/push-notifications/push-notifications_spec.md`)
 
-Para `analyze` y `finalize`, escribe el output del agente en el archivo correspondiente.
+Para `analyze`, `finalize` y `fast-track`, escribe el output del agente en el archivo correspondiente.
 
 ---
 
@@ -125,3 +143,9 @@ Para `analyze` y `finalize`, escribe el output del agente en el archivo correspo
 **Tras validate:**
 - Imprime el informe directamente (no genera ningún archivo)
 - Si el resultado es REQUIERE_REVISIÓN: indica los problemas encontrados y sugiere corregirlos manualmente antes de pasar a la fase siguiente
+
+**Tras fast-track:**
+- Path del spec generado
+- Si hay items `[CRÍTICO]` pendientes en el spec: listarlos y advertir que bloquean `/prepare-plan`
+- Si se aplicaron asunciones: mencionar cuántas y dónde están documentadas en el spec
+- Siguiente paso: "Revisa el spec generado. Si está listo, continúa con `/prepare-plan generate <path>_spec.md`"

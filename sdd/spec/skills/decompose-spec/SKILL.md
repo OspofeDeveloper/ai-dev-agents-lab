@@ -79,14 +79,46 @@ Para cada feature en el output del agente:
 1. Determina el directorio: `<mismo_directorio_del_spec>/features/<nombre-feature>/`
 2. Crea el directorio si no existe
 3. Escribe el spec en `<nombre-feature>_spec.md`
+4. Escribe el `README.md` de la feature en el mismo directorio
 
 Ejemplo para un spec en `docs/proyecto_spec.md`:
 ```
 docs/proyecto_features.md
 docs/features/authentication/authentication_spec.md
+docs/features/authentication/README.md
 docs/features/services/services_spec.md
+docs/features/services/README.md
 docs/features/time-tracking/time-tracking_spec.md
+docs/features/time-tracking/README.md
 ```
+
+---
+
+## Paso 5.5: Verificación automática de conflictos (no bloqueante)
+
+Si se generaron **2 o más features**, invoca el agente `sdd-analyst` en modo `conflict` pasándole el contenido de todos los specs de feature generados:
+
+```
+Modo: conflict
+Features a comparar: <N> specs
+
+Contenido de [feature-1] ([path]):
+---
+<contenido>
+---
+
+Contenido de [feature-2] ([path]):
+---
+<contenido>
+---
+
+[... repetir por cada feature ...]
+```
+
+- Si el agente detecta conflictos → escribe el informe en `<directorio_base>_conflict_report.md` e incluye un aviso en el Paso 6.
+- Si no detecta conflictos → solo menciona brevemente en el Paso 6 que no se detectaron conflictos.
+
+Este paso es **informativo y no bloquea** el flujo. El usuario decide si resolver los conflictos antes de continuar con `/prepare-plan`.
 
 ---
 
@@ -96,6 +128,9 @@ docs/features/time-tracking/time-tracking_spec.md
 - Lista de features identificadas con sus rutas
 - Tabla de shared models detectados
 - Advertencia si hay features con pocos CAs (< 3) para que el usuario valide la partición
+- Resultado de la verificación de conflictos (Paso 5.5):
+  - Sin conflictos: "✓ Sin conflictos detectados entre los specs generados."
+  - Con conflictos: "⚠ Se detectaron conflictos. Revisa `<path>_conflict_report.md` antes de continuar con `/prepare-plan` en las features afectadas."
 - Siguiente paso:
   > "Revisa `<path>_features.md` y ajusta el scope si es necesario. Luego, por cada feature ejecuta:"
   > ```

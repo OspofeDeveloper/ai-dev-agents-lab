@@ -76,7 +76,12 @@ Un **shared model** es un modelo de domain que aparece como entidad relevante en
 
 Cada shared model tiene exactamente **una feature owner**: la feature que lo **crea o define** funcionalmente. No la que más lo usa.
 
-Criterio de desempate: la feature owner es la que tiene CAs que describen la **creación o gestión** de esa entidad (no solo su consulta).
+**Criterios de desempate (aplicar en orden hasta resolver la ambigüedad):**
+
+1. **Creación explícita**: la feature con CAs que describen la *creación* de la entidad (WHEN: el usuario crea / registra / da de alta)
+2. **Gestión completa**: si ninguna "crea", la feature con CAs que describen operaciones CRUD completas sobre la entidad (no solo lectura)
+3. **Mayor cobertura**: si empatan en gestión, la feature con más CAs que referencian directamente la entidad
+4. **Proximidad semántica**: si aún empatan, la feature cuyo nombre es más semánticamente cercano al modelo (ej: el modelo `Appointment` pertenece a la feature `appointment-management`, no a `user-profile`)
 
 Ejemplos:
 - `User` → owner: feature de autenticación (crea y gestiona la sesión)

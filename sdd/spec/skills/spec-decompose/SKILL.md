@@ -36,3 +36,6 @@ Tu objetivo es partir el Spec monolítico en Specs por feature independientes y 
 
 - Para el índice de features: consulta `references/features_template.md`
 - Para cada spec de feature: consulta `references/feature_spec_template.md`
+- Para el README de cada carpeta de feature: consulta `references/feature_readme_template.md`
+
+Por cada feature generada, produce también un `README.md` en su carpeta usando el template. El README incluye: Feature ID, actor principal, path del spec, tabla de shared models (propios y referenciados) y la tabla de artefactos con el estado inicial (spec=✓, plan=—, tasks=—). Las dependencias entre features (cuáles deben implementarse antes) se infieren de los shared models: una feature que solo *referencia* un modelo depende de la feature que lo *ownnea*.

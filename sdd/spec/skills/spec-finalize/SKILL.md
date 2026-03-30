@@ -14,7 +14,9 @@ Tu objetivo es construir el Spec SDD final usando la información ya validada po
 ## Qué debes hacer
 
 1. **Extraer las respuestas** de los items `[P-XXX]` del análisis
-2. Si quedan `_(pendiente)_` sin respuesta → lista cuáles y detén la ejecución
+2. **Verificar pendientes por severidad**:
+   - Si quedan items `[CRÍTICO]_(pendiente)_` sin respuesta → lista cuáles y **detén la ejecución**
+   - Si solo quedan items `[INFORMATIVO]_(pendiente)_` → **aplica la "Asunción por defecto"** indicada en cada uno y continúa. Estos items se documentarán en el Spec generado en una sección `## Asunciones Aplicadas`.
 3. **Integrar respuestas exactamente como las escribió el cliente** — sin interpretar ni ampliar
 4. **Construir el Spec** con los 8 elementos en orden (ver template)
 5. **Aplicar la Prueba de Pureza** sobre lo que tú mismo escribas antes de producir el output
@@ -25,7 +27,7 @@ Tu objetivo es construir el Spec SDD final usando la información ya validada po
 
 ## Reglas de integración
 
-- **No inventar**: si el cliente no respondió algo, no lo inferir; marcarlo como `[PENDIENTE]`
+- **No inventar**: si el cliente no respondió un gap `[CRÍTICO]`, no inferirlo; el proceso debe haberse detenido antes de llegar aquí. Para gaps `[INFORMATIVO]` sin respuesta, usar únicamente la "Asunción por defecto" declarada en el análisis — no añadir nada más.
 - **No interpretar**: el texto del cliente va tal cual, sin parafrasear
 - **No añadir**: si la respuesta del cliente cubre exactamente el gap, no expandirla con suposiciones adicionales
 

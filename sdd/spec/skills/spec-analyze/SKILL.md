@@ -44,6 +44,15 @@ Si encuentras información funcional ausente o ambigua (no técnica), formúlala
 - Sin opciones inventadas (el cliente decide)
 - Etiquetado secuencialmente desde `[P-001]`
 
+### Clasificación de severidad (obligatoria)
+
+Clasifica cada gap como `[CRÍTICO]` o `[INFORMATIVO]`:
+
+- **`[CRÍTICO]`**: bloquea la generación del spec. Aplica cuando el gap impide definir un CA verificable, el actor principal no está definido, un journey no tiene estado de éxito, o una regla de negocio tiene interpretaciones funcionales incompatibles entre sí.
+- **`[INFORMATIVO]`**: mejora la calidad pero puede avanzarse con una asunción explícita. Aplica para edge cases asumibles, prioridad relativa entre features, comportamiento en condiciones poco probables, o preferencias de UX menores. **Siempre incluye una "Asunción por defecto"** con lo que se aplicará si el cliente no responde.
+
+El campo `[CRÍTICO]` o `[INFORMATIVO]` va junto al identificador del gap: `[P-001][CRÍTICO]` o `[P-002][INFORMATIVO]`.
+
 ---
 
 ## Formato de output

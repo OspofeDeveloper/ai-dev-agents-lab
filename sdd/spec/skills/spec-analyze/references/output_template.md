@@ -61,20 +61,30 @@
 > Estos puntos **no fueron inferidos por el sistema**. Son ambigüedades o información ausente
 > que debe ser definida por el cliente antes de generar el `.spec` final.
 > **Instrucción**: escribe la respuesta del cliente en el campo "Respuesta" de cada punto.
+>
+> - `[CRÍTICO]`: **debe responderse** antes de ejecutar `finalize`.
+> - `[INFORMATIVO]`: si no se responde, se aplicará la "Asunción por defecto" indicada.
 
-### [P-001] [Título del gap — describe qué falta]
+### [P-001][CRÍTICO] [Título del gap — describe qué falta]
 - **Contexto**: [cita del documento o descripción de dónde aparece la ambigüedad]
 - **Problema**: [por qué esto es un gap funcional que bloquea el spec]
 - **Pregunta para el cliente**: [pregunta concreta y específica, sin opciones inventadas]
 - **Respuesta**: _(pendiente)_
+
+### [P-002][INFORMATIVO] [Título del gap — describe qué falta]
+- **Contexto**: [cita del documento o descripción de dónde aparece la ambigüedad]
+- **Pregunta para el cliente**: [pregunta concreta y específica, sin opciones inventadas]
+- **Respuesta**: _(pendiente)_
+- **Asunción por defecto**: [lo que se aplicará si el cliente no responde antes de ejecutar finalize]
 
 ---
 
 ## Próximos pasos
 
 1. Revisar las contaminaciones de la sección "Pureza" y confirmar las reescrituras sugeridas
-2. Responder **todas** las preguntas marcadas como _(pendiente)_ en la sección anterior
-3. Una vez completadas todas las respuestas, ejecutar:
+2. Responder los puntos `[CRÍTICO]` marcados como _(pendiente)_ — son obligatorios para continuar
+3. Responder los puntos `[INFORMATIVO]` si tienes la información — si no, se aplicará la asunción por defecto
+4. Una vez completados los `[CRÍTICO]`, ejecutar:
    ```
    /prepare-spec finalize [path/al/archivo.md]
    ```
