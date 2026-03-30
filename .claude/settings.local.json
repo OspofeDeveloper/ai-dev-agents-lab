@@ -61,7 +61,8 @@
       "Bash(mv /Users/oscar/Documents/GitHub/ai-dev-agents-lab/install.sh /Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/install-sdd.sh)",
       "Bash(mv /Users/oscar/Documents/GitHub/ai-dev-agents-lab/CLAUDE.md /Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/CLAUDE.md)",
       "Bash(mv /Users/oscar/Documents/GitHub/ai-dev-agents-lab/README.md /Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/README.md)",
-      "Bash(mv /Users/oscar/Documents/GitHub/ai-dev-agents-lab/prd-hogar-sad.md /Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/prd-hogar-sad.md)"
+      "Bash(mv /Users/oscar/Documents/GitHub/ai-dev-agents-lab/prd-hogar-sad.md /Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/prd-hogar-sad.md)",
+      "Bash(bash install.sh)"
     ]
   }
 }
