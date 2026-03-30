@@ -59,7 +59,15 @@ Define formalmente todos los roles involucrados antes de describir cualquier flu
 | Cuidador | Profesional que realiza la prestación | Registrar jornada, reportar incidencias |
 | Coordinador | Gestor de agenda | Asignar servicios, revisar disponibilidad |
 
-### 1. Recorridos de Usuario (User Journeys)
+### 1. Historias de Usuario (who / what / why)
+
+```
+Como [tipo de usuario]
+quiero [acción/objetivo]
+para que [beneficio/valor]
+```
+
+### 2. Recorridos de Usuario (User Journeys)
 Describe paso a paso cómo el usuario interactúa con la funcionalidad y qué problema resuelve.
 
 **Bien:**
@@ -71,13 +79,13 @@ Describe paso a paso cómo el usuario interactúa con la funcionalidad y qué pr
 **Mal (demasiado vago):**
 > Los usuarios pueden añadir recetas.
 
-### 2. Resultados y Éxito
+### 3. Resultados y Éxito
 Definición clara de qué significa que la funcionalidad se completó correctamente y cuáles son los resultados esperados.
 
 **Bien:**
 > Tras guardar, la receta aparece al inicio de la lista con nombre, miniatura y tiempo de preparación visibles.
 
-### 3. Instrucciones Inambiguas
+### 4. Instrucciones Inambiguas
 El Spec debe ser tan detallado que un agente de IA o un desarrollador no tenga que adivinar nada funcional. Cada punto de decisión debe estar resuelto.
 
 **Prueba de ambigüedad:** ¿Podrían dos personas leer esto e implementarlo de forma diferente? Si la respuesta es sí, necesita más detalle.
@@ -98,7 +106,7 @@ Si la navegación requiere que el sistema identifique a qué ítem llegar, espec
 **Bien (funcional, sin tecnicismos):**
 > La notificación incluye la identidad del remitente y el contexto de la conversación, de modo que la app pueda abrir directamente esa conversación sin pasos intermedios.
 
-### 4. Criterios de Aceptación (CA) en GIVEN/WHEN/THEN
+### 5. Criterios de Aceptación (CA) en GIVEN/WHEN/THEN
 Cada CA debe ser objetivamente verificable y referenciar su Historia de Usuario padre:
 
 ```
@@ -118,7 +126,7 @@ THEN aparece un diálogo de confirmación "¿Eliminar?" con opciones "Cancelar" 
 
 La referencia `← HU-XXX` permite auditar cobertura: cada HU debe tener al menos un CA, y cada CA debe estar justificado por una HU. CAs sin HU padre son síntoma de requisitos ocultos o scope creep.
 
-### 5. Checklists de Validación
+### 6. Checklists de Validación
 Lista de control para asegurar que todo está cubierto antes de pasar al Plan:
 
 - [ ] Todos los roles/actores identificados
@@ -130,14 +138,6 @@ Lista de control para asegurar que todo está cubierto antes de pasar al Plan:
 - [ ] Cada CA referencia su HU padre
 - [ ] Cada CA es testable de forma independiente
 - [ ] Cada destino de navegación está enumerado con sus variantes
-
-### 6. Historias de Usuario (who / what / why)
-
-```
-Como [tipo de usuario]
-quiero [acción/objetivo]
-para que [beneficio/valor]
-```
 
 ### 7. Fuera de Alcance
 Declara explícitamente qué NO está incluido en este spec. Sin esta sección, el implementador asume que todo lo no descrito está en scope o lo inventa.
@@ -165,7 +165,7 @@ Consulta `references/prohibited_items.md` para la tabla completa de elementos pr
 Cuando el usuario pida revisar un Spec existente, aplica esta revisión estructurada:
 
 ### Paso 1: Check de Completitud
-Verifica que están presentes los 6 elementos obligatorios.
+Verifica que están presentes los 8 elementos obligatorios.
 
 ### Paso 2: Check de Pureza
 Consulta `references/error_patterns.md` para recorrer los patrones de contaminación más frecuentes antes de dar tu veredicto. Busca frases que mencionen tecnología, arquitectura, código o plataformas específicas.

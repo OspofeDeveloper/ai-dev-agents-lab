@@ -1,6 +1,6 @@
 ---
 name: decompose-spec
-description: Orquestador SDD para partir un Spec monolítico limpio en Specs por feature. Úsalo cuando tengas un _spec.md validado (sin pendientes, con los 6 elementos SDD) y quieras obtener un spec independiente por cada feature del proyecto. Genera un _features.md con el índice de features y shared models, y una carpeta features/<nombre>/<nombre>_spec.md por cada feature. Activa en frases como "parte el spec en features", "descompón el spec por features", "separa el spec en specs individuales", "crea un spec por feature", "divide el spec monolítico". No activa para analizar o generar specs (usa prepare-spec) ni para planificar (usa prepare-plan).
+description: Orquestador SDD para partir un Spec monolítico limpio en Specs por feature. Úsalo cuando tengas un _spec.md validado (sin pendientes, con los 8 elementos SDD) y quieras obtener un spec independiente por cada feature del proyecto. Genera un _features.md con el índice de features y shared models, y una carpeta features/<nombre>/<nombre>_spec.md por cada feature. Activa en frases como "parte el spec en features", "descompón el spec por features", "separa el spec en specs individuales", "crea un spec por feature", "divide el spec monolítico". No activa para analizar o generar specs (usa prepare-spec) ni para planificar (usa prepare-plan).
 argument-hint: "<archivo_spec.md>"
 effort: high
 allowed-tools: [Read, Write, Bash, Agent]
@@ -61,6 +61,27 @@ Espera a que el agente complete su ejecución y recibe su output.
 El agente devolverá:
 - El contenido de `_features.md` (índice de features + tabla de shared models)
 - El contenido de cada `features/<nombre>/<nombre>_spec.md`
+
+---
+
+## Paso 4.5: Ownership checkpoint (bloqueo si hay ambigüedad)
+
+Antes de escribir ningún artefacto, revisa el `_features.md` recibido del agente:
+
+1. Busca en la tabla de Shared Models cualquier modelo que tenga:
+   - Owner marcado como "AMBIGUO", "?" o vacío
+   - Múltiples candidatos listados sin desempate explícito
+
+2. **Si hay modelos sin owner definitivo:**
+   - Presenta la tabla al usuario con los modelos ambiguos:
+     ```
+     | Modelo | Candidatos | Criterio aplicable (decompose-expert) |
+     ```
+   - Para cada modelo, aplica el criterio de desempate del decompose-expert y explica al usuario cuál candidato sale ganador y por qué
+   - **Espera respuesta del usuario** confirmando o corrigiendo el owner propuesto
+   - Actualiza el contenido del `_features.md` con el owner definitivo antes de continuar
+
+3. **Si todos los modelos tienen owner claro** → continúa directamente al Paso 5.
 
 ---
 

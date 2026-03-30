@@ -37,6 +37,7 @@ Cuando el usuario haga una petición SDD:
 Requisitos/PRD
     ↓ [sdd-analyst — fase Spec]
 _analysis.md → [usuario responde gaps] → _spec.md
+    ↓ [edición manual opcional → sdd-analyst validate]
     ↓ [sdd-analyst — descomposición]
 _features.md + features/<nombre>/<nombre>_spec.md
     ↓ [plan-architect — fase Plan]
@@ -45,6 +46,12 @@ features/<nombre>/<nombre>_plan.md
 features/<nombre>/<nombre>_tasks.md
 ```
 
+## Principio de precondiciones
+
+Las skills de orquestación (prepare-spec, prepare-plan, prepare-tasks, decompose-spec) tienen sus propias validaciones de precondición. **No las bypasses.** Si una skill reporta que el artefacto previo tiene pendientes o errores, comunica el bloqueo al usuario y espera a que los resuelva antes de reintentar la delegación.
+
 ## Principio de autonomía del subagente
 
-El subagente está "supercargado" con un catálogo de skills curadas (workflows, knowledge bases). Al recibir tu prompt, él analiza la misión y decide qué herramientas encadenar para cumplirla. Tu trabajo es darle una misión clara y completa — el cómo es responsabilidad suya.
+El subagente dispone de un catálogo de skills curadas (workflows, knowledge bases). Al recibir tu prompt con el modo explícito, sigue el workflow correspondiente y consulta los knowledge bases que ese workflow indica. Tu trabajo es darle una misión clara con el modo correcto y el contexto necesario — la ejecución es responsabilidad suya.
+
+**Nota sobre los orquestadores L1**: las skills de orquestación (prepare-spec, decompose-spec, prepare-delta, etc.) también pasan el modo explícito al subagente — esto es intencional y correcto. "No prescribir skills" aplica a este nivel: tú no dices "usa el skill spec-analyze", dices "modo: analyze" y el subagente elige el workflow interno. Los orquestadores L1 siguen el mismo principio.

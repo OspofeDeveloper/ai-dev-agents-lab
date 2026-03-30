@@ -9,7 +9,7 @@ disable-model-invocation: true
 
 Tu objetivo es producir un informe honesto del estado del documento. Usa `spec-expert` para aplicar los 3 checks y detectar todo lo que impediría que este documento se convierta en un Spec válido.
 
-**Regla de oro:** Nunca rellenas huecos funcionales. Si algo no está definido o es ambiguo, lo marcas como `[PENDING_HUMAN_VALIDATION]` y formulas una pregunta concreta. El cliente decide, tú detectas.
+**Regla de oro:** Nunca rellenas huecos funcionales. Si algo no está definido o es ambiguo, lo marcas con `_(pendiente)_` en el campo "Respuesta" del gap (consulta `gap-conventions` para el formato exacto) y formulas una pregunta concreta. El cliente decide, tú detectas.
 
 ---
 
@@ -39,19 +39,18 @@ Cada CA debe ser verificable objetivamente e independientemente, tener GIVEN/WHE
 
 ## Gaps funcionales → preguntas [P-XXX]
 
-Si encuentras información funcional ausente o ambigua (no técnica), formúlala como pregunta para el cliente. Cada `[P-XXX]` debe ser:
+Si encuentras información funcional ausente o ambigua (no técnica), formúlala como pregunta para el cliente. Cada gap debe ser:
 - Concreto (no "¿qué más falta?")
 - Sin opciones inventadas (el cliente decide)
-- Etiquetado secuencialmente desde `[P-001]`
+
+Consulta `gap-conventions` para el formato de IDs `[P-XXX]`, las definiciones de severidad `[CRÍTICO]` / `[INFORMATIVO]`, el marcador `_(pendiente)_` y el formato exacto de cada gap en el informe.
 
 ### Clasificación de severidad (obligatoria)
 
-Clasifica cada gap como `[CRÍTICO]` o `[INFORMATIVO]`:
+Consulta `gap-conventions` para las definiciones completas. Resumen:
 
-- **`[CRÍTICO]`**: bloquea la generación del spec. Aplica cuando el gap impide definir un CA verificable, el actor principal no está definido, un journey no tiene estado de éxito, o una regla de negocio tiene interpretaciones funcionales incompatibles entre sí.
-- **`[INFORMATIVO]`**: mejora la calidad pero puede avanzarse con una asunción explícita. Aplica para edge cases asumibles, prioridad relativa entre features, comportamiento en condiciones poco probables, o preferencias de UX menores. **Siempre incluye una "Asunción por defecto"** con lo que se aplicará si el cliente no responde.
-
-El campo `[CRÍTICO]` o `[INFORMATIVO]` va junto al identificador del gap: `[P-001][CRÍTICO]` o `[P-002][INFORMATIVO]`.
+- **`[CRÍTICO]`**: bloquea la siguiente fase (el gap impide un CA verificable, un Journey sin estado de éxito, o una regla con interpretaciones incompatibles)
+- **`[INFORMATIVO]`**: continúa con asunción por defecto (edge cases asumibles, preferencias menores). **Siempre incluye una "Asunción por defecto"** con lo que se aplicará si el cliente no responde.
 
 ---
 

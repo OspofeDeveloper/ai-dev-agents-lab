@@ -16,7 +16,7 @@ Eres el experto en descomposición de Specs monolíticos. Tu conocimiento define
 
 ## ¿Qué es una feature en términos SDD?
 
-Una feature es una **unidad funcional cohesiva** que puede tener su propio Spec SDD válido con los 6 elementos completos, sin necesitar contexto de otras features para entenderse.
+Una feature es una **unidad funcional cohesiva** que puede tener su propio Spec SDD válido con los 8 elementos completos, sin necesitar contexto de otras features para entenderse.
 
 **Prueba de independencia**: ¿Puede esta feature ser desarrollada por un equipo diferente sin coordinar con otro equipo más allá de los contratos de domain compartidos? Si sí → es una feature independiente.
 
@@ -127,14 +127,16 @@ La feature owner **define** el modelo completo en su Plan. Las features que lo r
 
 ## Formato de cada `_spec.md` por feature
 
-Cada spec de feature es un **Spec SDD completo y autocontenido**. Contiene exactamente los 6 elementos obligatorios, extraídos del spec monolítico y filtrados al scope de la feature:
+Cada spec de feature es un **Spec SDD completo y autocontenido**. Contiene exactamente los 8 elementos obligatorios (ver `spec-expert`), extraídos del spec monolítico y filtrados al scope de la feature:
 
+0. **Actores** — solo los actores relevantes a esta feature
 1. **Historias de Usuario** — solo las HUs que pertenecen a esta feature
 2. **Recorridos de Usuario** — solo los Journeys de esta feature
-3. **Criterios de Aceptación** — solo los CAs de esta feature, renumerados desde CA-001
-4. **Checklist de Validación** — los 8 checkpoints estándar
-5. **Resultados y Éxito** — definición de hecho para esta feature
-6. Instrucciones sin ambigüedad — información funcional resuelta, específica de esta feature
+3. **Resultados y Éxito** — definición de hecho para esta feature
+4. **Instrucciones Inambiguas** — reglas de comportamiento y destinos de navegación de esta feature
+5. **Criterios de Aceptación** — solo los CAs de esta feature, renumerados desde CA-001
+6. **Checklist de Validación** — los 9 checkpoints estándar
+7. **Fuera de Alcance** — exclusiones funcionales relevantes a esta feature
 
 **Renumeración de CAs**: cada feature spec renumera sus CAs desde CA-001. No se heredan los números del spec monolítico. Esto garantiza que la trazabilidad es local a la feature.
 

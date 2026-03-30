@@ -44,9 +44,7 @@ Consulta `spec-expert` para verificar que cada cambio propuesto está libre de c
 
 **4. Detectar gaps funcionales en los nuevos requisitos**
 
-Aplica la misma lógica que el modo ANALYZE estándar pero sobre los nuevos requisitos en el contexto del spec existente. Genera gaps `[D-XXX]` (prefijo D = Delta, para distinguir de los `[P-XXX]` del spec original):
-- `[D-001][CRÍTICO]`: impide definir un CA verificable para el cambio propuesto
-- `[D-002][INFORMATIVO]`: edge case asumible, con Asunción por defecto
+Aplica la misma lógica que el modo ANALYZE estándar pero sobre los nuevos requisitos en el contexto del spec existente. Consulta `gap-conventions` para el formato de IDs `[D-XXX]` (prefijo D = Delta), las definiciones de severidad y el marcador `_(pendiente)_`.
 
 **5. Producir el output**
 

@@ -104,6 +104,17 @@ Escribe el output del agente en el archivo correspondiente.
 
 ---
 
+## Paso 5.5: Verificación de conflictos tras apply (no bloqueante)
+
+Solo en modo `apply`. Busca si existe un `_features.md` en el proyecto (igual que hace `prepare-plan`: dos niveles arriba si el spec está en `features/<nombre>/`, o en el mismo directorio):
+
+- **Si existe `_features.md`**: lee todos los specs `*_spec.md` de las features declaradas. Invoca el agente `sdd-analyst` en modo `conflict` pasándole el spec recién actualizado + todos los otros specs de features. Si detecta conflictos → escribe el informe en `<nombre>_conflict_report.md` en el mismo directorio que el spec actualizado. Si no detecta conflictos → solo mencionarlo brevemente en el Paso 6.
+- **Si no existe `_features.md`**: omitir este paso.
+
+Este paso es **informativo y no bloquea** el flujo.
+
+---
+
 ## Paso 6: Informar al usuario
 
 **Tras analyze:**
@@ -116,4 +127,7 @@ Escribe el output del agente en el archivo correspondiente.
 - Path del spec actualizado
 - Nueva versión del spec (ej: v1.0 → v1.1)
 - Resumen de cambios integrados: HUs y CAs añadidos/modificados/eliminados
+- Resultado de la verificación de conflictos (Paso 5.5):
+  - Sin conflictos o sin `_features.md`: omitir o indicar brevemente
+  - Con conflictos: "⚠ Se detectaron conflictos. Revisa `<path>_conflict_report.md` antes de continuar con `/prepare-plan`."
 - Siguiente paso: "Puedes validar la integridad del spec actualizado con `/prepare-spec validate <path>_spec.md`"

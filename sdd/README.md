@@ -34,13 +34,15 @@ Transforma un documento de requisitos informal en un Spec funcional puro: sin te
 > - **SÍ** → es un detalle técnico → pertenece al Plan
 > - **NO** → es funcional → puede estar en el Spec
 
-Un Spec válido contiene exactamente 6 elementos obligatorios:
-1. Recorridos de Usuario (User Journeys)
-2. Resultados y Éxito
-3. Instrucciones Inambiguas
-4. Criterios de Aceptación (GIVEN/WHEN/THEN)
-5. Checklists de Validación
-6. Historias de Usuario
+Un Spec válido contiene exactamente 8 elementos obligatorios:
+0. Actores
+1. Historias de Usuario
+2. Recorridos de Usuario (User Journeys)
+3. Resultados y Éxito
+4. Instrucciones Inambiguas
+5. Criterios de Aceptación (GIVEN/WHEN/THEN)
+6. Checklist de Validación
+7. Fuera de Alcance
 
 El resultado es un **spec monolítico limpio** (`_spec.md`) que cubre todo el proyecto.
 

@@ -14,14 +14,11 @@ Tu objetivo es construir el Spec SDD final usando la información ya validada po
 ## Qué debes hacer
 
 1. **Extraer las respuestas** de los items `[P-XXX]` del análisis
-2. **Verificar pendientes por severidad**:
-   - Si quedan items `[CRÍTICO]_(pendiente)_` sin respuesta → lista cuáles y **detén la ejecución**
-   - Si solo quedan items `[INFORMATIVO]_(pendiente)_` → **aplica la "Asunción por defecto"** indicada en cada uno y continúa. Estos items se documentarán en el Spec generado en una sección `## Asunciones Aplicadas`.
-3. **Integrar respuestas exactamente como las escribió el cliente** — sin interpretar ni ampliar
-4. **Construir el Spec** con los 8 elementos en orden (ver template)
-5. **Aplicar la Prueba de Pureza** sobre lo que tú mismo escribas antes de producir el output
-6. **Asignar cada CA a su HU padre**: cada CA debe incluir `← HU-XXX` referenciando la historia que cubre
-7. **Auto-marcar el Checklist**: marca `[x]` los items que puedes verificar directamente del spec que generaste; deja `[ ]` solo los que requieren validación humana posterior
+2. **Integrar respuestas exactamente como las escribió el cliente** — sin interpretar ni ampliar
+3. **Construir el Spec** con los 8 elementos en orden (ver template)
+4. **Aplicar la Prueba de Pureza** sobre lo que tú mismo escribas antes de producir el output
+5. **Asignar cada CA a su HU padre**: cada CA debe incluir `← HU-XXX` referenciando la historia que cubre
+6. **Auto-marcar el Checklist**: marca `[x]` los items que puedes verificar directamente del spec que generaste; deja `[ ]` solo los que requieren validación humana posterior
 
 ---
 

@@ -31,9 +31,12 @@ Ejemplo:
 
 1. Verifica que el archivo existe.
 2. Lee el archivo completo.
-3. Comprueba que no contiene items `_(pendiente)_` sin responder. Si los hay → lista cuáles y detén:
-   > "El Spec tiene X items pendientes. Completa el análisis antes de generar el Plan."
-4. Verifica que el archivo parece un Spec validado (contiene "Criterios de Aceptación" o "Historias de Usuario"). Si parece un PRD sin procesar → informa:
+3. Comprueba si contiene items pendientes:
+   - Si hay `[CRÍTICO]_(pendiente)_` → lista cuáles y **detén la ejecución**:
+     > "❌ El Spec tiene X items [CRÍTICO] sin resolver. Responde los gaps críticos antes de generar el Plan."
+   - Si hay `[INFORMATIVO]_(pendiente)_` pero no `[CRÍTICO]` → advierte pero **continúa**:
+     > "⚠ El Spec tiene X items [INFORMATIVO] sin responder. Se usarán los valores por defecto. Puedes responderlos después si quieres más precisión."
+4. Verifica que el archivo parece un Spec validado (contiene "Criterios de Aceptación" e "Historias de Usuario"). Si parece un PRD sin procesar → informa:
    > "Este archivo no parece un Spec procesado. Primero ejecuta `/prepare-spec analyze <archivo.md>`"
 
 ---
@@ -47,6 +50,9 @@ Busca si existe un `_features.md` en el proyecto. Para encontrarlo:
 - Si el spec está en el directorio raíz, busca `*_features.md` en ese mismo directorio
 
 Si existe el `_features.md`, léelo completo. Lo usarás en el paso siguiente.
+
+Si el spec está dentro de `features/<nombre>/` pero **no se encuentra `_features.md`**, advierte al usuario:
+> "⚠ No se encontró `_features.md`. Si este proyecto tiene múltiples features que comparten modelos de dominio, los shared models no se considerarán en el Plan y podrían redefinirse en cada feature. Para gestionar shared models correctamente, genera primero un spec monolítico y usa `/decompose-spec`. Continuando sin shared models."
 
 ---
 

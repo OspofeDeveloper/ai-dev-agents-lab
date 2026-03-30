@@ -41,14 +41,14 @@ Aplica los 3 checks del modo ANALYZE pero enfocados en la capability indicada:
 
 ### 3. Gap handling inline
 
-No genera un `_analysis.md` separado. Los gaps se gestionan directamente:
+No genera un `_analysis.md` separado. Consulta `gap-conventions` para el formato de IDs `[P-XXX]`, severidades y marcador `_(pendiente)_`. Los gaps se gestionan directamente en el spec:
 
-- **`[CRÍTICO]`**: incluir en una sección `## Items Pendientes` al final del spec generado (ver formato abajo). La presencia de items `[CRÍTICO]` en el spec **bloquea** la ejecución de `/prepare-plan` — el agente de planificación debe verificar que no existen antes de proceder.
-- **`[INFORMATIVO]`**: aplicar la asunción razonable más conservadora (la que minimiza las asunciones funcionales) y documentar en una sección `## Asunciones Aplicadas` al final del spec.
+- **`[CRÍTICO]`**: incluir en una sección `## Items Pendientes` al final del spec generado (ver formato abajo). La presencia de items `[CRÍTICO]` en el spec **bloquea** la ejecución de `/prepare-plan`.
+- **`[INFORMATIVO]`**: aplicar la asunción más conservadora y documentar en `## Asunciones Aplicadas` al final del spec.
 
 ### 4. Generar el Spec de feature
 
-Produce un `_spec.md` completo con los 8 elementos SDD siguiendo la estructura de `spec-decompose/references/feature_spec_template.md`.
+Produce un `_spec.md` completo con los 8 elementos SDD siguiendo la estructura de `references/feature_spec_template.md`.
 
 **Header específico del fast-track:**
 ```markdown
@@ -68,7 +68,7 @@ Produce un `_spec.md` completo con los 8 elementos SDD siguiendo la estructura d
 
 ### [P-001][CRÍTICO] [Título del gap]
 - **Pregunta**: [pregunta concreta]
-- **Respuesta**: _(pendiente)_
+- **Respuesta**: [CRÍTICO]_(pendiente)_
 ```
 
 **Si hay asunciones aplicadas**, añadir:
@@ -81,3 +81,30 @@ Produce un `_spec.md` completo con los 8 elementos SDD siguiendo la estructura d
 ### 5. Validar el spec generado
 
 Antes de devolver el output, aplica la Prueba de Pureza al spec completo. Consulta `spec-expert`. Si hay contaminación técnica introducida durante la generación, corrígela antes de devolver el output.
+
+### 6. Generar artefactos de índice
+
+**README de la feature**: Genera el contenido completo de `features/<capability>/README.md` siguiendo `references/feature_readme_template.md`. Usa los datos del spec recién generado:
+- Feature ID: F-001 si `_features.md` no existe, o el siguiente ID disponible si existe
+- Actor principal: extraído del spec
+- Spec monolítico origen: `N/A (fast-track directo)`
+- Artefactos: Spec ✓, Plan —, Tasks —
+
+**Índice de features (`_features.md`)**: Busca si existe algún `*_features.md` en el directorio padre de la carpeta `features/` (es decir, en el mismo directorio que el archivo de input):
+- **Si existe**: léelo y añade la nueva feature como entrada `F-00X` (con el siguiente ID disponible). Actualiza la tabla de shared models si la feature declara alguno.
+- **Si no existe**: genera un `_features.md` nuevo usando el formato de `decompose-expert`, con esta feature como primera entrada `F-001`, sin spec monolítico origen y sin tabla de shared models si no hay ninguno.
+
+Devuelve en tu output, además del spec, los siguientes bloques claramente delimitados:
+```
+--- README ---
+<contenido completo del README.md>
+--- /README ---
+
+--- FEATURES_INDEX ---
+<contenido completo del _features.md actualizado o nuevo>
+--- /FEATURES_INDEX ---
+
+--- FEATURES_INDEX_PATH ---
+<path absoluto donde debe escribirse el _features.md>
+--- /FEATURES_INDEX_PATH ---
+```
