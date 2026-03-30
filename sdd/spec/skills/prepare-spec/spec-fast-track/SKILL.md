@@ -35,7 +35,7 @@ Aplica los 3 checks del modo ANALYZE pero enfocados en la capability indicada:
 
 **Check 1 — Completitud**: verifica los 8 elementos. Identifica cuáles están presentes, cuáles son derivables con asunciones razonables y cuáles requieren respuesta del cliente.
 
-**Check 2 — Pureza**: consulta `spec-expert/references/prohibited_items.md`. Propón reescrituras funcionales para cualquier contaminación técnica encontrada.
+**Check 2 — Pureza**: consulta `prohibited_items.md` del skill `spec-expert`. Propón reescrituras funcionales para cualquier contaminación técnica encontrada.
 
 **Check 3 — Testabilidad**: verifica que los CAs son verificables con GIVEN/WHEN/THEN completo.
 

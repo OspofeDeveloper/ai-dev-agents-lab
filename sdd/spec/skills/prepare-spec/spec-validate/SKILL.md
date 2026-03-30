@@ -18,7 +18,7 @@ Tu objetivo es auditar un `_spec.md` ya generado para detectar regresiones de pu
 Aplica los 3 checks definidos en `spec-expert`:
 
 - **Check 1 — Completitud**: los 8 elementos SDD están presentes (consulta `spec-expert` para sus definiciones)
-- **Check 2 — Pureza**: consulta `spec-expert/references/prohibited_items.md` y `error_patterns.md`; cita cualquier frase que viole la Prueba de Pureza
+- **Check 2 — Pureza**: consulta `prohibited_items.md` y `error_patterns.md` del skill `spec-expert`; cita cualquier frase que viole la Prueba de Pureza
 - **Check 3 — Testabilidad**: cada CA tiene GIVEN/WHEN/THEN completo, es verificable objetivamente, y referencia su HU padre (`← HU-XXX`)
 
 ---

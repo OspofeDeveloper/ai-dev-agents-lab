@@ -27,7 +27,7 @@ Verifica la presencia de los 8 elementos obligatorios (consulta `spec-expert` pa
 - Fuera de Alcance
 
 ### Check 2 — Pureza
-Consulta `spec-expert/references/prohibited_items.md` y `spec-expert/references/error_patterns.md` antes de emitir tu veredicto. Para cada frase problemática:
+Consulta `prohibited_items.md` y `error_patterns.md` del skill `spec-expert` antes de emitir tu veredicto. Para cada frase problemática:
 - Cita el fragmento exacto
 - Explica por qué es técnico
 - Propón la reescritura funcional

@@ -251,39 +251,54 @@ sdd/spec/
 ├── agents/
 │   └── sdd-analyst.md                        ← L2 worker (router por modo)
 └── skills/
-    ├── prepare-spec/SKILL.md                 ← L1: /prepare-spec
-    ├── decompose-spec/SKILL.md               ← L1: /decompose-spec
-    ├── prepare-delta/SKILL.md                ← L1: /prepare-delta
-    ├── check-conflicts/SKILL.md              ← L1: /check-conflicts
-    ├── spec-expert/                          ← L3 knowledge
-    │   ├── SKILL.md
-    │   └── references/
-    │       ├── prohibited_items.md
-    │       └── error_patterns.md
-    ├── decompose-expert/SKILL.md             ← L3 knowledge
-    ├── conflict-expert/SKILL.md              ← L3 knowledge
-    ├── spec-analyze/                         ← L3 workflow
-    │   ├── SKILL.md
-    │   └── references/output_template.md
-    ├── spec-finalize/                        ← L3 workflow
-    │   ├── SKILL.md
-    │   └── references/output_template.md
-    ├── spec-validate/                        ← L3 workflow (solo lectura, no produce archivos)
-    │   ├── SKILL.md
-    │   └── references/output_template.md
-    ├── spec-decompose/                       ← L3 workflow
-    │   ├── SKILL.md
-    │   └── references/
-    │       ├── features_template.md
-    │       ├── feature_spec_template.md
-    │       └── feature_readme_template.md
-    ├── spec-delta/                           ← L3 workflow
-    │   ├── SKILL.md
-    │   └── references/delta_analysis_template.md
-    ├── spec-fast-track/SKILL.md              ← L3 workflow
-    └── spec-conflict/                        ← L3 workflow
-        ├── SKILL.md
-        └── references/conflict_report_template.md
+    ├── core/                                 ← L3 knowledge (compartidos entre workflows)
+    │   ├── README.md
+    │   ├── spec-expert/                      ← 8 elementos SDD, Prueba de Pureza, Testabilidad
+    │   │   ├── SKILL.md
+    │   │   └── references/
+    │   │       ├── prohibited_items.md
+    │   │       └── error_patterns.md
+    │   ├── gap-conventions/SKILL.md          ← SSoT de IDs, severidades y marcador pendiente
+    │   ├── decompose-expert/SKILL.md         ← reglas de partición y shared models
+    │   └── conflict-expert/SKILL.md          ← 5 reglas de detección de conflictos
+    ├── prepare-spec/                         ← UC: crear/validar specs
+    │   ├── SKILL.md                          ← L1: /prepare-spec (orquestador)
+    │   ├── README.md
+    │   ├── spec-analyze/                     ← L3 workflow: modo analyze
+    │   │   ├── SKILL.md
+    │   │   └── references/output_template.md
+    │   ├── spec-finalize/                    ← L3 workflow: modo finalize
+    │   │   ├── SKILL.md
+    │   │   └── references/output_template.md
+    │   ├── spec-validate/                    ← L3 workflow: modo validate (no produce archivos)
+    │   │   ├── SKILL.md
+    │   │   └── references/output_template.md
+    │   └── spec-fast-track/                  ← L3 workflow: modo fast-track
+    │       ├── SKILL.md
+    │       └── references/
+    │           ├── feature_spec_template.md
+    │           └── feature_readme_template.md
+    ├── decompose-spec/                       ← UC: descomponer spec en features
+    │   ├── SKILL.md                          ← L1: /decompose-spec (orquestador)
+    │   ├── README.md
+    │   └── spec-decompose/                   ← L3 workflow: modo decompose
+    │       ├── SKILL.md
+    │       └── references/
+    │           ├── features_template.md
+    │           ├── feature_spec_template.md
+    │           └── feature_readme_template.md
+    ├── prepare-delta/                        ← UC: evolución incremental
+    │   ├── SKILL.md                          ← L1: /prepare-delta (orquestador)
+    │   ├── README.md
+    │   └── spec-delta/                       ← L3 workflow: modo delta
+    │       ├── SKILL.md
+    │       └── references/delta_analysis_template.md
+    └── check-conflicts/                      ← UC: detectar conflictos entre features
+        ├── SKILL.md                          ← L1: /check-conflicts (orquestador)
+        ├── README.md
+        └── spec-conflict/                    ← L3 workflow: modo conflict
+            ├── SKILL.md
+            └── references/conflict_report_template.md
 ```
 
 ---
@@ -292,9 +307,9 @@ sdd/spec/
 
 Para añadir un nuevo modo al pipeline:
 
-1. **Crea el workflow L3** en `skills/spec-<nombre>/SKILL.md` con `disable-model-invocation: true`. Aquí van las instrucciones paso a paso de qué debe hacer el agente.
-2. **Crea el knowledge base L3** (si el modo necesita reglas propias) en `skills/<nombre>-expert/SKILL.md` con `context: fork`.
+1. **Crea el workflow L3** en `skills/<orquestador>/spec-<nombre>/SKILL.md` con `disable-model-invocation: true`. Aquí van las instrucciones paso a paso de qué debe hacer el agente.
+2. **Crea el knowledge base L3** (si el modo necesita reglas propias que sean transversales a varios workflows) en `skills/core/<nombre>-expert/SKILL.md` con `context: fork`.
 3. **Registra el nuevo skill en `sdd-analyst.md`**: añádelo al frontmatter `skills: [...]` y a la tabla de routing.
-4. **Crea el orquestador L1** si el usuario necesita invocarlo directamente: `skills/<nombre>/SKILL.md` con `disable-model-invocation: true` y `allowed-tools: [Read, Write, Agent]`. Si el modo es una extensión natural de un orquestador existente (como `fast-track` en `prepare-spec`), modifica ese orquestador en lugar de crear uno nuevo.
+4. **Crea el orquestador L1** si el usuario necesita invocarlo directamente: `skills/<nombre>/SKILL.md` con `disable-model-invocation: true` y `allowed-tools: [Read, Write, Agent]`. Si el modo es una extensión natural de un orquestador existente (como `fast-track` en `prepare-spec`), modifica ese orquestador en lugar de crear uno nuevo. Añade también un `README.md` en la carpeta del orquestador.
 
 **Regla de diseño**: los orquestadores (L1) nunca razonan. Los workflows (L3) nunca escriben archivos. Solo el agente worker (L2) hace ambas cosas — y solo lo hace a través de los workflows que tiene disponibles.
