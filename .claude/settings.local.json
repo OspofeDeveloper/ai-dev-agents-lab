@@ -56,7 +56,8 @@
       "Bash(find /Users/oscar/Documents/GitHub/ai-dev-agents-lab -name *.json -o -name .claude* -type f)",
       "Bash(find /Users/oscar/Documents/GitHub/ai-dev-agents-lab -not -path *.git* -not -path *DS_Store -type d)",
       "Bash(cp:*)",
-      "Bash(bash install.sh 2>&1)"
+      "Bash(bash install.sh 2>&1)",
+      "Bash(find /Users/oscar/Documents/GitHub/ai-dev-agents-lab -not -path *.git* -not -name .DS_Store -type d -o -type f)"
     ]
   }
 }
