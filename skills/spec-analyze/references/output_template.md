@@ -1,6 +1,6 @@
 # Análisis SDD: [Nombre del documento]
 
-> **Generado por**: prepare-spec
+> **Generado por**: sdd-analyst (modo analyze)
 > **Fecha**: [YYYY-MM-DD]
 > **Archivo origen**: [path/al/archivo.md]
 
@@ -14,14 +14,16 @@
 
 ---
 
-## Completitud: X/6 elementos presentes
+## Completitud: X/8 elementos presentes
 
+- [ ] **Actores** — [presente / parcial: falta X / ausente]
+- [ ] **Historias de Usuario (Como/quiero/para que)** — [presente / parcial: falta X / ausente]
 - [ ] **Recorridos de Usuario** — [presente / parcial: falta X / ausente]
 - [ ] **Resultados y Éxito** — [presente / parcial: falta X / ausente]
 - [ ] **Instrucciones Inambiguas** — [presente / parcial: falta X / ausente]
 - [ ] **Criterios de Aceptación (GIVEN/WHEN/THEN)** — [presente / parcial: falta X / ausente]
 - [ ] **Checklist de Validación** — [presente / parcial: falta X / ausente]
-- [ ] **Historias de Usuario (Como/quiero/para que)** — [presente / parcial: falta X / ausente]
+- [ ] **Fuera de Alcance** — [presente / ausente]
 
 ---
 
@@ -29,8 +31,6 @@
 
 <!-- Si APROBADO: "No se encontraron elementos técnicos en el documento." -->
 <!-- Si CONTAMINADO: listar cada instancia encontrada -->
-
-### Contaminaciones encontradas
 
 #### [C-001] [Título breve de la contaminación]
 - **Cita**: > "[fragmento exacto del documento]"
@@ -44,11 +44,9 @@
 <!-- Si APROBADO: "Todos los CAs encontrados son verificables de forma objetiva e independiente." -->
 <!-- Si REQUIERE_MEJORA: listar CAs problemáticos -->
 
-### CAs que necesitan revisión
-
 #### [CA-001] [Título del CA problemático]
 - **CA actual**: [descripción o cita]
-- **Problema**: [vago / no verificable / dependiente de otro CA / sin GIVEN o sin THEN]
+- **Problema**: [vago / no verificable / dependiente de otro CA / sin GIVEN o sin THEN / sin referencia a HU padre]
 - **Sugerencia de reformulación**:
   ```
   GIVEN [precondición clara]

@@ -99,7 +99,7 @@ docs/features/time-tracking/time-tracking_spec.md
 - Siguiente paso:
   > "Revisa `<path>_features.md` y ajusta el scope si es necesario. Luego, por cada feature ejecuta:"
   > ```
-  > /prepare-plan generate features/<nombre>/<nombre>_spec.md
-  > /prepare-tasks generate features/<nombre>/<nombre>_plan.md
+  > /prepare-plan features/<nombre>/<nombre>_spec.md
+  > /prepare-tasks features/<nombre>/<nombre>_plan.md
   > ```
   > "Empieza por las features owner de shared models (marcadas en la tabla)."

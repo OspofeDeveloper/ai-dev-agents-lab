@@ -50,6 +50,15 @@ Cada capa tiene su lugar. Contaminar una con detalles de otra rompe el flujo.
 
 ## Lo que un Spec DEBE tener (obligatorio)
 
+### 0. Actores
+Define formalmente todos los roles involucrados antes de describir cualquier flujo. Sin un glosario de actores, los Journeys y CAs resultan ambiguos cuando hay múltiples roles con capacidades distintas.
+
+**Formato:**
+| Actor | Descripción | Capacidades en este spec |
+|-------|-------------|--------------------------|
+| Cuidador | Profesional que realiza la prestación | Registrar jornada, reportar incidencias |
+| Coordinador | Gestor de agenda | Asignar servicios, revisar disponibilidad |
+
 ### 1. Recorridos de Usuario (User Journeys)
 Describe paso a paso cómo el usuario interactúa con la funcionalidad y qué problema resuelve.
 
@@ -90,9 +99,10 @@ Si la navegación requiere que el sistema identifique a qué ítem llegar, espec
 > La notificación incluye la identidad del remitente y el contexto de la conversación, de modo que la app pueda abrir directamente esa conversación sin pasos intermedios.
 
 ### 4. Criterios de Aceptación (CA) en GIVEN/WHEN/THEN
-Cada CA debe ser objetivamente verificable:
+Cada CA debe ser objetivamente verificable y referenciar su Historia de Usuario padre:
 
 ```
+### CA-001: [título] ← HU-001
 GIVEN [precondición]
 WHEN [acción del usuario]
 THEN [resultado esperado]
@@ -100,10 +110,13 @@ THEN [resultado esperado]
 
 **Ejemplo:**
 ```
+### CA-003: Confirmación antes de eliminar ← HU-002
 GIVEN el usuario tiene al menos una receta guardada
 WHEN el usuario desliza a la izquierda sobre una tarjeta de receta
 THEN aparece un diálogo de confirmación "¿Eliminar?" con opciones "Cancelar" y "Confirmar"
 ```
+
+La referencia `← HU-XXX` permite auditar cobertura: cada HU debe tener al menos un CA, y cada CA debe estar justificado por una HU. CAs sin HU padre son síntoma de requisitos ocultos o scope creep.
 
 ### 5. Checklists de Validación
 Lista de control para asegurar que todo está cubierto antes de pasar al Plan:
@@ -114,6 +127,7 @@ Lista de control para asegurar que todo está cubierto antes de pasar al Plan:
 - [ ] Casos límite y edge cases documentados
 - [ ] Estados de error y fallo definidos
 - [ ] Todas las ambigüedades resueltas
+- [ ] Cada CA referencia su HU padre
 - [ ] Cada CA es testable de forma independiente
 - [ ] Cada destino de navegación está enumerado con sus variantes
 
@@ -124,6 +138,17 @@ Como [tipo de usuario]
 quiero [acción/objetivo]
 para que [beneficio/valor]
 ```
+
+### 7. Fuera de Alcance
+Declara explícitamente qué NO está incluido en este spec. Sin esta sección, el implementador asume que todo lo no descrito está en scope o lo inventa.
+
+**Bien:**
+> - Gestión de usuarios y roles: fuera de este spec, asumimos que el sistema de autenticación ya existe.
+> - Notificaciones push: tratadas en el spec de Notificaciones, no aquí.
+
+**Si no hay exclusiones definidas**, escribe: "No se han definido exclusiones explícitas en esta versión del spec."
+
+**Importante**: las exclusiones deben ser funcionales, no técnicas. "No usaremos PostgreSQL" es una exclusión técnica (va al Plan). "La gestión de contraseñas no es parte de este feature" es una exclusión funcional válida.
 
 ---
 
@@ -153,17 +178,22 @@ Cada CA en GIVEN/WHEN/THEN debe poder verificarse de forma objetiva e independie
 ```
 ## Revisión del Spec
 
-### Completitud: X/6 elementos presentes
+### Completitud: X/8 elementos presentes
+- [x] Actores
+- [x] Historias de Usuario (Como/quiero/para que)
 - [x] Recorridos de Usuario
-- [x] Resultados de Éxito
-- [ ] Instrucciones Inambiguas — FALTA: [qué está poco claro]
-- [x] Criterios de Aceptación (GIVEN/WHEN/THEN)
+- [x] Resultados y Éxito
+- [ ] Instrucciones Inambiguas — FALTA: [qué está poco claro o sin tabla de navegación]
+- [x] Criterios de Aceptación (GIVEN/WHEN/THEN con referencia HU padre)
 - [ ] Checklist de Validación — FALTA
-- [x] Historias de Usuario (quien/qué/por qué)
+- [ ] Fuera de Alcance — FALTA
 
 ### Pureza: APROBADO / CONTAMINADO
 Contaminación encontrada:
 - "[cita textual]" → Pertenece al Plan (razón: es un detalle técnico de X)
+
+### Testabilidad: APROBADO / REQUIERE_MEJORA
+- CA-00X: [problema] → Reformulación sugerida: GIVEN / WHEN / THEN
 
 ### Problemas a resolver antes del Plan:
 1. ...
@@ -178,13 +208,15 @@ Contaminación encontrada:
 
 Cuando el usuario quiera crear un Spec desde una idea, PRD informal o brief:
 
-1. **Identifica los actores** — ¿Quiénes son todos los usuarios/roles involucrados?
-2. **Mapea los journeys** — Para cada actor, ¿cuáles son los flujos principales?
-3. **Define el éxito** — Para cada journey, ¿cómo se ve "terminado"?
-4. **Escribe las historias** — Como [quien], quiero [qué], para que [por qué]
-5. **Añade Criterios de Aceptación** — GIVEN/WHEN/THEN para cada historia
-6. **Cubre los edge cases** — ¿Qué pasa cuando algo falla o el usuario hace algo inesperado?
-7. **Aplica el checklist de validación** — ¿Pasa completitud y pureza?
+1. **Define los actores** — ¿Quiénes son todos los usuarios/roles involucrados? ¿Qué puede hacer cada uno?
+2. **Escribe las historias** — Como [quien], quiero [qué], para que [por qué]
+3. **Mapea los journeys** — Para cada actor, ¿cuáles son los flujos principales paso a paso?
+4. **Define el éxito** — Para cada journey, ¿cómo se ve "terminado" desde la perspectiva del usuario?
+5. **Escribe las instrucciones inambiguas** — Reglas de comportamiento + tabla de destinos de navegación
+6. **Añade Criterios de Aceptación** — GIVEN/WHEN/THEN para cada historia; referencia la HU padre en cada CA
+7. **Cubre los edge cases** — ¿Qué pasa cuando algo falla o el usuario hace algo inesperado?
+8. **Declara el Fuera de Alcance** — ¿Qué funcionalidades relacionadas quedan explícitamente excluidas?
+9. **Aplica el checklist de validación** — ¿Pasa completitud y pureza?
 
 ---
 

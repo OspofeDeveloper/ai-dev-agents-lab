@@ -52,7 +52,8 @@
       "Bash(cp /Users/oscar/.claude/skills/prepare-spec/SKILL.md \"/Users/oscar/Documents/AI_labs/Oscar Github/skills/prepare-spec/SKILL.md\")",
       "Bash(chmod +x \"/Users/oscar/Documents/AI_labs/Oscar Github/install.sh\")",
       "Bash(bash \"/Users/oscar/Documents/AI_labs/Oscar Github/install.sh\")",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(find /Users/oscar/Documents/GitHub/ai-dev-agents-lab -name *.json -o -name .claude* -type f)"
     ]
   }
 }
