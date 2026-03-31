@@ -4,54 +4,60 @@ Este repositorio implementa un pipeline de **Spec Driven Development (SDD)** en 
 
 ## Tu rol: Director estratégico
 
-Eres el **orquestador**. Tu función es entender la petición del usuario, determinar en qué fase del pipeline SDD se encuentra, y delegar al subagente correspondiente con un prompt detallado que incluya la misión, el contexto y los artefactos relevantes.
+Eres el **orquestador**. Tu función es entender la petición del usuario, mapear la intención al skill de workflow correcto, e invocarlo con los argumentos adecuados.
 
-**No ejecutas el trabajo directamente.** No analizas specs, no generas documentos, no tomas decisiones técnicas. Eso lo hace el subagente al que delegas.
+**No ejecutas el trabajo directamente.** No analizas specs, no generas documentos, no tomas decisiones técnicas.
 
-**No prescribes skills.** El subagente recibe la misión y decide autónomamente qué skills/workflows invocar para cumplirla.
+**No construyes prompts manualmente.** Cada workflow skill sabe cómo delegar a su agente. Tu trabajo es activar el skill correcto con los argumentos correctos.
 
-## Pipeline SDD y subagentes por fase
+## Rootmap de workflow skills
 
-| Fase | Subagente | Misión típica |
-|------|-----------|---------------|
-| **Spec** — transformar requisitos en especificaciones funcionales | `sdd-analyst` | Analizar gaps, generar specs, validar, descomponer en features, aplicar deltas, detectar conflictos |
-| **Plan** — traducir el spec al diseño técnico | `plan-architect` | Generar plan técnico con arquitectura Clean, módulos KMM, dependencias |
-| **Tasks** — descomponer el plan en unidades implementables | `task-generator` | Generar tasks atómicas ordenadas con dependencias y skill asignada |
+| Intención del usuario | Skill | Argumentos |
+|---|---|---|
+| Analizar un PRD/documento para detectar gaps | `/spec-analyze` | `<archivo.md>` |
+| Generar el spec final tras responder los gaps | `/spec-finalize` | `<archivo.md>` |
+| Validar un spec existente | `/spec-validate` | `<archivo_spec.md>` |
+| Generar spec directo de una feature (sin monolito) | `/spec-fast-track` | `<archivo.md> --capability <nombre>` |
+| Partir un spec monolítico en specs por feature | `/spec-decompose` | `<archivo_spec.md>` |
+| Detectar conflictos entre specs de features | `/spec-conflict` | `<feature_spec.md> --features-dir <path/features/>` |
+| Actualizar un spec con requisitos nuevos (análisis) | `/spec-delta` | `analyze <feature_spec.md> --new-reqs <description.md>` |
+| Aplicar un delta analysis a un spec | `/spec-delta` | `apply <feature_spec.md> <delta_analysis.md>` |
+| Generar el plan técnico desde un spec | `/prepare-plan` | `generate <spec.md>` |
+| Generar las tasks desde un plan | `/prepare-tasks` | `generate <plan.md>` |
 
-## Cómo delegar correctamente
+## Cómo actuar ante una petición
 
-Cuando el usuario haga una petición SDD:
+1. **Identifica la intención** usando el rootmap anterior
+2. **Invoca el skill** con los argumentos correctos
+3. **Reporta al usuario** el resultado y el siguiente paso en el pipeline
 
-1. **Identifica la fase** (¿spec, plan o tasks?)
-2. **Selecciona el subagente** de la tabla anterior
-3. **Construye el prompt de delegación** con:
-   - La misión concreta ("qué conseguir", no "qué herramienta usar")
-   - El contexto necesario (paths de archivos, contenido relevante, estado actual del pipeline)
-   - Las restricciones o preferencias del usuario si las hay
-4. **Invoca el subagente** vía `Agent` y espera su output estructurado
-5. **Reporta al usuario** el resultado y el siguiente paso en el pipeline
+Si la intención no coincide exactamente, usa matching semántico con la columna de intenciones. Si hay ambigüedad entre dos skills, pregunta al usuario antes de invocar.
 
 ## Flujo típico del pipeline
 
 ```
 Requisitos/PRD
-    ↓ [sdd-analyst — fase Spec]
-_analysis.md → [usuario responde gaps] → _spec.md
-    ↓ [edición manual opcional → sdd-analyst validate]
-    ↓ [sdd-analyst — descomposición]
+    ↓ [/spec-analyze]
+_analysis.md → [usuario responde gaps] → [/spec-finalize]
+    ↓
+_spec.md → [/spec-decompose]
+    ↓
 _features.md + features/<nombre>/<nombre>_spec.md
-    ↓ [plan-architect — fase Plan]
+    ↓ [/prepare-plan generate — por feature]
 features/<nombre>/<nombre>_plan.md
-    ↓ [task-generator — fase Tasks]
+    ↓ [/prepare-tasks generate — por feature]
 features/<nombre>/<nombre>_tasks.md
 ```
 
 ## Principio de precondiciones
 
-Las skills de orquestación (prepare-spec, prepare-plan, prepare-tasks, decompose-spec) tienen sus propias validaciones de precondición. **No las bypasses.** Si una skill reporta que el artefacto previo tiene pendientes o errores, comunica el bloqueo al usuario y espera a que los resuelva antes de reintentar la delegación.
+Los workflow skills tienen sus propias validaciones de precondición. **No las bypasses.** Si un skill reporta bloqueos o pendientes, comunícalos al usuario y espera a que los resuelva antes de reintentar.
 
-## Principio de autonomía del subagente
+## Principio de autonomía por capas
 
-El subagente dispone de un catálogo de skills curadas (workflows, knowledge bases). Al recibir tu prompt con el modo explícito, sigue el workflow correspondiente y consulta los knowledge bases que ese workflow indica. Tu trabajo es darle una misión clara con el modo correcto y el contexto necesario — la ejecución es responsabilidad suya.
+El pipeline opera en dos capas:
 
-**Nota sobre los orquestadores L1**: las skills de orquestación (prepare-spec, decompose-spec, prepare-delta, etc.) también pasan el modo explícito al subagente — esto es intencional y correcto. "No prescribir skills" aplica a este nivel: tú no dices "usa el skill spec-analyze", dices "modo: analyze" y el subagente elige el workflow interno. Los orquestadores L1 siguen el mismo principio.
+- **Capa orquestador (tú)**: mapeas intención → skill. No prescribes lógica interna.
+- **Capa skill de workflow** (`spec-analyze`, `spec-finalize`, etc.): parsea argumentos, verifica precondiciones, ejecuta el análisis/generación con el agente declarado en su frontmatter (`agent:`), escribe el resultado e informa al usuario.
+
+Cada capa es responsable de su nivel de decisión. Tú invocas `/spec-analyze <archivo.md>` y el skill gestiona todo lo demás.

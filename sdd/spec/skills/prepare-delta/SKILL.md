@@ -5,6 +5,8 @@ argument-hint: "analyze <feature_spec.md> --new-reqs <description.md> | apply <f
 effort: high
 allowed-tools: [Read, Write, Agent]
 disable-model-invocation: true
+context: fork
+agent: sdd-analyst
 ---
 
 # prepare-delta — Orquestador del Flujo Delta SDD

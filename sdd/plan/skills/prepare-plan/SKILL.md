@@ -5,6 +5,8 @@ argument-hint: "generate <spec.md>"
 effort: high
 allowed-tools: [Read, Write, Agent]
 disable-model-invocation: true
+context: fork
+agent: plan-architect
 ---
 
 # prepare-plan — Orquestador del Flujo SDD (Etapa 2)

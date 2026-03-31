@@ -5,6 +5,8 @@ argument-hint: "<archivo_spec.md>"
 effort: high
 allowed-tools: [Read, Write, Bash, Agent]
 disable-model-invocation: true
+context: fork
+agent: sdd-analyst
 ---
 
 # decompose-spec — Orquestador de Partición SDD

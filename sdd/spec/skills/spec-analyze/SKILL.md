@@ -1,8 +1,11 @@
 ---
 name: spec-analyze
-description: Workflow interno para el modo ANALYZE del agente sdd-analyst. Define cómo auditar un documento de requisitos y producir un informe de gaps. Cargado como contexto por sdd-analyst — no invocar directamente.
-allowed-tools: [Read]
-disable-model-invocation: true
+description: Analiza un documento de requisitos y produce un informe de gaps (completitud, pureza y testabilidad). Genera un `_analysis.md` con preguntas para el cliente. Activa en frases como "analiza este documento para el spec", "¿qué le falta a este doc para ser spec?", "genera el análisis de gaps", "prepara el análisis del spec", "analiza este PRD".
+argument-hint: "<archivo.md>"
+effort: high
+allowed-tools: [Read, Write, Bash]
+context: fork
+agent: sdd-analyst
 ---
 
 # Workflow: ANALYZE
@@ -13,7 +16,34 @@ Tu objetivo es producir un informe honesto del estado del documento. Usa `spec-e
 
 ---
 
-## Qué debes identificar
+## Paso 1: Parsear argumentos
+
+Extrae de `$ARGUMENTS` el path del archivo a analizar.
+
+Si no hay argumento, informa al usuario:
+> "Uso: `/spec-analyze <archivo.md>`"
+> "Ejemplo: `/spec-analyze docs/requisitos.md`"
+
+---
+
+## Paso 2: Verificar el archivo
+
+Verifica que el archivo existe:
+```
+!test -f "<path>" && echo "EXISTE" || echo "NO_EXISTE"
+```
+
+Si no existe → informa al usuario con la ruta exacta y detén.
+
+---
+
+## Paso 3: Leer el contenido
+
+Lee el archivo en su totalidad.
+
+---
+
+## Paso 4: Identificar gaps y problemas
 
 ### Check 1 — Completitud
 Verifica la presencia de los 8 elementos obligatorios (consulta `spec-expert` para su definición):
@@ -37,7 +67,7 @@ Cada CA debe ser verificable objetivamente e independientemente, tener GIVEN/WHE
 
 ---
 
-## Gaps funcionales → preguntas [P-XXX]
+## Paso 5: Formular gaps funcionales → preguntas [P-XXX]
 
 Si encuentras información funcional ausente o ambigua (no técnica), formúlala como pregunta para el cliente. Cada gap debe ser:
 - Concreto (no "¿qué más falta?")
@@ -54,6 +84,24 @@ Consulta `gap-conventions` para las definiciones completas. Resumen:
 
 ---
 
-## Formato de output
+## Paso 6: Formato del informe
 
 Consulta `references/output_template.md` para la estructura exacta del informe.
+
+---
+
+## Paso 7: Escribir el resultado
+
+Determina el path de salida: mismo directorio que el archivo de entrada + nombre base + `_analysis.md`.
+- Ejemplo: `docs/requisitos.md` → `docs/requisitos_analysis.md`
+
+Escribe el informe generado en ese path.
+
+---
+
+## Paso 8: Informar al usuario
+
+Tras escribir el archivo, informa:
+- Path del archivo generado
+- Resumen: cuántos elementos de completitud faltan, cuántas contaminaciones detectadas, cuántos `[P-XXX]` pendientes (desglosados: CRÍTICOS e INFORMATIVOS)
+- Siguiente paso: "Edita `<path>_analysis.md`, responde las preguntas marcadas como _(pendiente)_ y luego ejecuta `/spec-finalize <archivo.md>`"

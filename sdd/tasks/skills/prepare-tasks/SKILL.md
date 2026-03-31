@@ -5,6 +5,8 @@ argument-hint: "generate <plan.md>"
 effort: high
 allowed-tools: [Read, Write, Agent]
 disable-model-invocation: true
+context: fork
+agent: task-generator
 ---
 
 # prepare-tasks — Orquestador del Flujo SDD (Etapa 3)

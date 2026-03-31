@@ -5,6 +5,8 @@ argument-hint: "<feature_spec.md> --features-dir <path/features/>"
 effort: high
 allowed-tools: [Read, Write, Bash, Agent]
 disable-model-invocation: true
+context: fork
+agent: sdd-analyst
 ---
 
 # check-conflicts — Orquestador de Detección de Conflictos SDD

@@ -5,6 +5,8 @@ argument-hint: "analyze <archivo.md> | finalize <archivo.md> | validate <archivo
 effort: high
 allowed-tools: [Read, Write, Bash, Agent]
 disable-model-invocation: true
+context: fork
+agent: sdd-analyst
 ---
 
 # prepare-spec — Orquestador del Flujo SDD
@@ -65,56 +67,16 @@ En modo `validate`, lee el `_spec.md` en su totalidad.
 
 ---
 
-## Paso 4: Delegar al agente sdd-analyst
+## Paso 4: Ejecutar el workflow correspondiente
 
-Invoca el agente `sdd-analyst` pasándole como prompt el siguiente bloque (con los valores reales sustituidos):
+Con el contenido ya leído, ejecuta el workflow para el modo indicado:
 
-**Para modo `analyze`:**
-```
-Modo: analyze
-Path del archivo: <path_completo>
-Contenido del documento:
----
-<contenido_completo_del_archivo>
----
-```
+- **`analyze`** → ejecuta el workflow `spec-analyze` usando el contenido del documento
+- **`finalize`** → ejecuta el workflow `spec-finalize` usando el contenido del documento original y del análisis
+- **`validate`** → ejecuta el workflow `spec-validate` usando el contenido del spec
+- **`fast-track`** → ejecuta el workflow `spec-fast-track` usando el contenido del documento y el nombre de capability
 
-**Para modo `finalize`:**
-```
-Modo: finalize
-Path del archivo original: <path_completo>
-Contenido del documento original:
----
-<contenido_del_archivo_original>
----
-Contenido del análisis completado:
----
-<contenido_completo_del_analysis.md>
----
-```
-
-**Para modo `validate`:**
-```
-Modo: validate
-Path del archivo: <path_completo>
-Contenido del spec:
----
-<contenido_completo_del_spec>
----
-```
-
-**Para modo `fast-track`:**
-```
-Modo: fast-track
-Capability: <nombre-kebab-case>
-Path del archivo: <path_completo>
-Contenido del documento:
----
-<contenido_completo_del_archivo>
----
-```
-
-Espera a que el agente complete su ejecución y recibe su output estructurado.
+El output estructurado resultante es el que utilizarás en el Paso 5.
 
 ---
 

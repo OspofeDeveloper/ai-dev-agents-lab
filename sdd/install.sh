@@ -1,12 +1,12 @@
 #!/bin/bash
-# install.sh — Distribuye templates y despliega el ecosistema SDD a ~/.claude
+# install.sh — Distribuye templates y despliega el ecosistema SDD al .claude del proyecto
 # Ejecutar desde el directorio sdd/: bash install.sh
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SHARED_DIR="$SCRIPT_DIR/spec/shared/templates"
-CLAUDE_DIR="$HOME/.claude"
+CLAUDE_DIR="$(pwd)/.claude"
 
 # ── 1. Distribuir templates compartidos a las skills que los necesitan ─────
 
@@ -26,10 +26,10 @@ copy_template() {
   echo "  ✓ ${dst#"$SCRIPT_DIR/"}"
 }
 
-copy_template "feature_spec_template.md"   "$SCRIPT_DIR/spec/skills/decompose-spec/spec-decompose/references"
-copy_template "feature_readme_template.md" "$SCRIPT_DIR/spec/skills/decompose-spec/spec-decompose/references"
-copy_template "feature_spec_template.md"   "$SCRIPT_DIR/spec/skills/prepare-spec/spec-fast-track/references"
-copy_template "feature_readme_template.md" "$SCRIPT_DIR/spec/skills/prepare-spec/spec-fast-track/references"
+copy_template "feature_spec_template.md"   "$SCRIPT_DIR/spec/skills/spec-decompose/references"
+copy_template "feature_readme_template.md" "$SCRIPT_DIR/spec/skills/spec-decompose/references"
+copy_template "feature_spec_template.md"   "$SCRIPT_DIR/spec/skills/spec-fast-track/references"
+copy_template "feature_readme_template.md" "$SCRIPT_DIR/spec/skills/spec-fast-track/references"
 
 # ── 2. Instalar agentes ────────────────────────────────────────────────────
 
@@ -46,8 +46,6 @@ install_agent() {
 }
 
 install_agent "$SCRIPT_DIR/spec/agents/sdd-analyst.md"
-install_agent "$SCRIPT_DIR/plan/agents/plan-architect.md"
-install_agent "$SCRIPT_DIR/tasks/agents/task-generator.md"
 
 # ── 3. Instalar skills ─────────────────────────────────────────────────────
 
@@ -60,29 +58,20 @@ install_skill() {
   local name
   name=$(basename "$src_dir")
   rm -rf "$CLAUDE_DIR/skills/$name"
-  cp -r "$src_dir" "$CLAUDE_DIR/skills/$name"
+  mkdir -p "$CLAUDE_DIR/skills/$name"
+  find "$src_dir" -not -name "README.md" -not -type d | while read -r file; do
+    rel="${file#"$src_dir/"}"
+    dest="$CLAUDE_DIR/skills/$name/$rel"
+    mkdir -p "$(dirname "$dest")"
+    cp "$file" "$dest"
+  done
   echo "  ✓ skills/$name/"
 }
 
-# Core knowledge — se aplana desde spec/skills/core/ (cada subdirectorio es un skill independiente)
-install_skill "$SCRIPT_DIR/spec/skills/core/spec-expert"
-install_skill "$SCRIPT_DIR/spec/skills/core/gap-conventions"
-install_skill "$SCRIPT_DIR/spec/skills/core/decompose-expert"
-install_skill "$SCRIPT_DIR/spec/skills/core/conflict-expert"
-
-# Orquestadores spec
-install_skill "$SCRIPT_DIR/spec/skills/prepare-spec"
-install_skill "$SCRIPT_DIR/spec/skills/decompose-spec"
-install_skill "$SCRIPT_DIR/spec/skills/prepare-delta"
-install_skill "$SCRIPT_DIR/spec/skills/check-conflicts"
-
-# Plan
-install_skill "$SCRIPT_DIR/plan/skills/plan-expert"
-install_skill "$SCRIPT_DIR/plan/skills/prepare-plan"
-
-# Tasks
-install_skill "$SCRIPT_DIR/tasks/skills/tasks-expert"
-install_skill "$SCRIPT_DIR/tasks/skills/prepare-tasks"
+# Instalar todos los skills de spec (estructura plana)
+for skill_dir in "$SCRIPT_DIR/spec/skills"/*/; do
+  install_skill "$skill_dir"
+done
 
 echo ""
 echo "Done. Reinicia Claude Code para activar los agentes y skills."
