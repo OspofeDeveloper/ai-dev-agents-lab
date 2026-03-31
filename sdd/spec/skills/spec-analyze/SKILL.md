@@ -86,7 +86,7 @@ Consulta `gap-conventions` para las definiciones completas. Resumen:
 
 ## Paso 6: Formato del informe
 
-Consulta `references/output_template.md` para la estructura exacta del informe.
+Consulta [output_template.md](output_template.md) para la estructura exacta del informe.
 
 ---
 

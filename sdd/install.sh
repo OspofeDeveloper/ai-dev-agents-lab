@@ -73,5 +73,19 @@ for skill_dir in "$SCRIPT_DIR/spec/skills"/*/; do
   install_skill "$skill_dir"
 done
 
+# ── 4. Instalar CLAUDE.md ─────────────────────────────────────────────────
+
+echo ""
+echo "Instalando CLAUDE.md..."
+cp "$SCRIPT_DIR/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
+echo "  ✓ CLAUDE.md"
+
+# ── 5. Instalar settings.json ──────────────────────────────────────────────
+
+echo ""
+echo "Instalando settings.json..."
+cp "$SCRIPT_DIR/settings.json" "$CLAUDE_DIR/settings.json"
+echo "  ✓ settings.json"
+
 echo ""
 echo "Done. Reinicia Claude Code para activar los agentes y skills."
