@@ -1,6 +1,6 @@
 # Spec: [Nombre de la Feature]
 > Versión: 1.0 | Fecha: [YYYY-MM-DD]
-> Spec monolítico origen: [path/_spec.md]
+> PRD origen: [path/prd.md]
 > Feature ID: F-00X
 
 ---
@@ -8,19 +8,19 @@
 ## Actores
 | Actor | Descripción | Capacidades en esta feature |
 |-------|-------------|----------------------------|
-| [nombre] | [quién es — copia literal del spec monolítico] | [qué puede hacer en esta feature] |
+| [nombre] | [quién es — copia literal del documento origen] | [qué puede hacer en esta feature] |
 
 ---
 
 ## Historias de Usuario
-<!-- Solo las HUs que pertenecen al scope de esta feature — copia literal del spec monolítico -->
+<!-- Solo las HUs que pertenecen al scope de esta feature — copia literal del documento origen -->
 ### HU-001: [título]
 Como [usuario] / quiero [acción] / para que [valor]
 
 ---
 
 ## Recorridos de Usuario
-<!-- Solo los Journeys de esta feature — copia literal del spec monolítico -->
+<!-- Solo los Journeys de esta feature — copia literal del documento origen -->
 ### Journey 1: [nombre]
 Actor: [quién] | Objetivo: [qué quiere]
 1. [paso]
@@ -32,13 +32,13 @@ Flujos alternativos: Si [condición] → [resultado]
 ---
 
 ## Resultados y Éxito
-[Definición de "hecho" para esta feature — filtrada del spec monolítico]
+[Definición de "hecho" para esta feature — filtrada del documento origen]
 
 ---
 
 ## Instrucciones Inambiguas
 ### Reglas de comportamiento
-[Reglas del spec monolítico filtradas al scope de esta feature]
+[Reglas del documento origen filtradas al scope de esta feature]
 
 ### Destinos de navegación
 | Desde | Acción / Condición | Destino |
@@ -50,7 +50,7 @@ Flujos alternativos: Si [condición] → [resultado]
 ---
 
 ## Criterios de Aceptación
-<!-- Renumerados desde CA-001 — copia literal del spec monolítico, solo filtrados -->
+<!-- Renumerados desde CA-001 — copia literal del documento origen, solo filtrados -->
 ### CA-001: [título] ← HU-001
 GIVEN [precondición]
 WHEN [acción del usuario]
@@ -72,4 +72,4 @@ THEN [resultado observable]
 ---
 
 ## Fuera de Alcance
-[Exclusiones relevantes a esta feature extraídas del spec monolítico, o "No se han definido exclusiones explícitas para esta feature."]
+[Exclusiones relevantes a esta feature extraídas del documento origen, o "No se han definido exclusiones explícitas para esta feature."]

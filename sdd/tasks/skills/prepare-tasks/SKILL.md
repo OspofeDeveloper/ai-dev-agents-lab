@@ -1,6 +1,6 @@
 ---
 name: prepare-tasks
-description: Orquestador SDD para transformar Planes técnicos KMM en Tasks de implementación. Úsalo cuando tengas un _plan.md validado y quieras generar el listado de tasks para ejecutar con las skills KMM. Activa en frases como "genera las tasks del plan", "trocéa el plan en tasks", "crea el listado de implementación", "prepara las tasks para", "¿qué tasks tengo que hacer?". No activa para generar Specs (usa prepare-spec) ni para generar Planes (usa prepare-plan).
+description: Orquestador SDD para transformar Planes técnicos KMM en Tasks de implementación. Úsalo cuando tengas un _plan.md validado y quieras generar el listado de tasks para ejecutar con las skills KMM. Activa en frases como "genera las tasks del plan", "trocéa el plan en tasks", "crea el listado de implementación", "prepara las tasks para", "¿qué tasks tengo que hacer?". No activa para generar Specs (usa wf-spec-map) ni para generar Planes (usa prepare-plan).
 argument-hint: "generate <plan.md>"
 effort: high
 allowed-tools: [Read, Write, Agent]

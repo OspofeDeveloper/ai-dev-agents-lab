@@ -1,6 +1,6 @@
 ---
 name: tasks-expert
-description: Experto en crear Tasks implementables KMM desde Planes técnicos SDD. Qué debe y qué NO debe contener una Task. Úsalo cuando quieras entender cómo trocear un Plan en tasks, cuánto debe durar una task, en qué orden van, o cuál es la skill KMM a usar para cada tipo de componente. Activa en frases como "¿cómo hago las tasks del plan?", "trocéa este plan en tasks", "¿en qué orden implemento las capas?", "¿qué skill uso para X?", "crea las tasks de implementación". No activa para validar Specs (spec-expert) ni para crear Planes (plan-expert).
+description: Experto en crear Tasks implementables KMM desde Planes técnicos SDD. Qué debe y qué NO debe contener una Task. Úsalo cuando quieras entender cómo trocear un Plan en tasks, cuánto debe durar una task, en qué orden van, o cuál es la skill KMM a usar para cada tipo de componente. Activa en frases como "¿cómo hago las tasks del plan?", "trocéa este plan en tasks", "¿en qué orden implemento las capas?", "¿qué skill uso para X?", "crea las tasks de implementación". No activa para validar Specs (kb-spec-expert) ni para crear Planes (plan-expert).
 argument-hint: "[archivo_plan.md | duda_sobre_tasks]"
 effort: high
 allowed-tools: [Read]

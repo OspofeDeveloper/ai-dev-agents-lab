@@ -9,27 +9,35 @@ Repositorio de skills, agentes y conocimiento para automatizar el flujo **Spec-D
 Un ecosistema de agentes Claude Code que cubre el pipeline completo desde un PRD informal hasta tareas de implementación accionables por feature, organizadas por capa KMM y listas para ser ejecutadas con skills especializadas.
 
 ```
-PRD / Notas       Spec limpio       Specs por        Plan técnico      Tasks
-informales  ──►   monolítico  ──►   feature    ──►   por feature ──►  por feature
-                  (_spec.md)       (features/         (_plan.md)       (_tasks.md)
-                                    <x>_spec.md)
-                                                                            │
-                                                                   /kmm-domain
-                                                                   /kmm-data
-                                                                   /kmm-presentation
-                                                                   /kmm-tests
-                                                                   ...
+PRD / Notas       Mapa funcional    Análisis de       Specs por        Plan técnico      Tasks
+informales  ──►   del proyecto ──►  gaps por    ──►   feature    ──►   por feature ──►  por feature
+                  (_project_map.md) feature           (features/         (_plan.md)       (_tasks.md)
+                                    (_analysis.md)     <x>_spec.md)
+                                                                                              │
+                                                                                     /kmm-domain
+                                                                                     /kmm-data
+                                                                                     /kmm-presentation
+                                                                                     /kmm-tests
+                                                                                     ...
 ```
 
 ---
 
 ## El pipeline SDD en cuatro etapas
 
-### Etapa 1 — Specify
+### Etapa 1 — Specify (map-flow)
 
-Transforma un documento de requisitos informal en un Spec funcional puro: sin tecnología, sin implementación, solo "qué" y "por qué".
+Transforma un documento de requisitos informal en specs funcionales puros por feature: sin tecnología, sin implementación, solo "qué" y "por qué".
 
-**Prueba de Pureza:**
+El flujo tiene tres pasos con dos checkpoints humanos:
+
+1. `/wf-spec-map` genera un mapa funcional del proyecto desde el PRD
+2. **[HUMANO]** valida el mapa: scope, features, shared models
+3. `/wf-spec-map-analyze` analiza cada feature del mapa y produce un análisis de gaps
+4. **[HUMANO]** responde los gaps de cada feature
+5. `/wf-spec-map-generate` genera un spec completo por feature
+
+**Prueba de Pureza del Spec:**
 > "¿Cambiaría esta frase si pasáramos de KMM a web, o de Kotlin a Python?"
 > - **SÍ** → es un detalle técnico → pertenece al Plan
 > - **NO** → es funcional → puede estar en el Spec
@@ -44,19 +52,7 @@ Un Spec válido contiene exactamente 8 elementos obligatorios:
 6. Checklist de Validación
 7. Fuera de Alcance
 
-El resultado es un **spec monolítico limpio** (`_spec.md`) que cubre todo el proyecto.
-
-### Etapa 2 — Decompose
-
-Parte el spec monolítico limpio en **un spec por feature**. Cada feature es una unidad funcional cohesiva con Journeys, CAs e Historias de Usuario propias.
-
-Esta etapa también identifica los **shared models**: modelos de domain que son usados por más de una feature. Cada shared model tiene una feature *owner* que lo define; las demás features solo lo referencian.
-
-El resultado es:
-- `_features.md` — índice de features con scope, shared models y rutas
-- `features/<nombre>/<nombre>_spec.md` — un Spec SDD completo y autocontenido por feature
-
-### Etapa 3 — Plan
+### Etapa 2 — Plan
 
 Transforma cada spec de feature en un plan técnico KMM. Aquí entra la tecnología: stack, módulos, capas, contratos de API, decisiones de expect/actual.
 
@@ -72,7 +68,7 @@ Un Plan **no debe tener**: código implementado, requisitos funcionales del usua
 
 Los shared models declarados en `_features.md` no se redefinen: la feature owner los define completos; el resto los referencia.
 
-### Etapa 4 — Tasks
+### Etapa 3 — Tasks
 
 Transforma el Plan de cada feature en tareas independientes y accionables, ordenadas por dependencias, cada una asignada a una skill KMM. Una task = un chunk implementable, una capa, un componente.
 
@@ -89,7 +85,7 @@ Ejemplo de task:
 
 ---
 
-## Arquitectura del ecosistema: 4 etapas × 3 capas
+## Arquitectura del ecosistema: 3 etapas × 3 capas
 
 Cada etapa sigue el mismo patrón arquitectónico de 3 capas:
 
@@ -97,22 +93,19 @@ Cada etapa sigue el mismo patrón arquitectónico de 3 capas:
               LAYER 3              LAYER 2              LAYER 1
            (Conocimiento)       (Agente Worker)      (Orquestador)
 
-ETAPA 1    spec-expert   ──►    sdd-analyst   ──◄──  prepare-spec
-SPECIFY    Reglas SDD            Analiza/             /prepare-spec
-                                 Finaliza Specs        analyze|finalize
+ETAPA 1    kb-spec-expert   ──►    sdd-analyst   ──◄──  wf-spec-map
+SPECIFY    kb-gap-conventions      Genera mapa,         wf-spec-map-analyze
+           kb-decompose-expert     analiza gaps,        wf-spec-map-generate
+           kb-conflict-expert      genera specs          /wf-spec-validate
+                                                         /wf-spec-conflict
 
-ETAPA 2    decompose-    ──►    sdd-analyst   ──◄──  decompose-spec
-DECOMPOSE  expert               Parte Spec en        /decompose-spec
-           Reglas de            features +            <spec.md>
-           partición            shared models
-
-ETAPA 3    plan-expert   ──►    plan-architect ──◄── prepare-plan
+ETAPA 2    plan-expert   ──►    plan-architect ──◄── prepare-plan
 PLAN       Reglas Plan           Spec → Plan          /prepare-plan
-           + KMM arch            técnico               <spec.md>
+           + KMM arch            técnico               generate <spec.md>
 
-ETAPA 4    tasks-expert  ──►    task-generator ──◄── prepare-tasks
+ETAPA 3    tasks-expert  ──►    task-generator ──◄── prepare-tasks
 TASKS      Reglas Tasks          Plan → Tasks         /prepare-tasks
-           + sizing KMM          ordenados             <plan.md>
+           + sizing KMM          ordenados             generate <plan.md>
 ```
 
 **Capa 1 — Skill Orquestador**: punto de entrada para el usuario. Parsea argumentos, verifica archivos, delega al agente. No tiene `context: fork` — corre en el contexto principal para poder invocar agentes.
@@ -121,7 +114,7 @@ TASKS      Reglas Tasks          Plan → Tasks         /prepare-tasks
 
 **Capa 3 — Skill de Referencia**: solo conocimiento y reglas. No realiza acciones, define estándares. Se inyecta en el agente para que cada decisión esté basada en criterios explícitos.
 
-> **Nota**: `sdd-analyst` es el worker compartido de las etapas 1 y 2. Opera en tres modos distintos (`analyze`, `finalize`, `decompose`) según lo que le pase el orquestador.
+> **Nota**: `sdd-analyst` es el worker compartido de la etapa Specify. Opera en distintos modos (`map`, `analyze`, `generate`, `validate`, `conflict`) según lo que le pase el orquestador.
 
 ---
 
@@ -130,43 +123,54 @@ TASKS      Reglas Tasks          Plan → Tasks         /prepare-tasks
 ```
 ~/.claude/
 ├── agents/
-│   ├── sdd-analyst.md          ✅ Worker: Specify + Decompose
+│   ├── sdd-analyst.md          ✅ Worker: Specify (map, analyze, generate, validate, conflict)
 │   ├── plan-architect.md       ✅ Worker: Plan (model: opus)
 │   └── task-generator.md       ✅ Worker: Tasks
 │
 └── skills/
-    ├── spec-expert/             ✅ Layer 3: Spec rules
+    ├── kb-spec-expert/             ✅ Layer 3: Spec rules
     │   ├── SKILL.md
     │   └── references/
     │       ├── prohibited_items.md
     │       └── error_patterns.md
     │
-    ├── decompose-expert/        ✅ Layer 3: Feature partition rules
+    ├── kb-gap-conventions/         ✅ Layer 3: Gap analysis conventions
     │   └── SKILL.md
     │
-    ├── plan-expert/             ✅ Layer 3: Plan rules
+    ├── kb-decompose-expert/        ✅ Layer 3: Feature partition rules
+    │   └── SKILL.md
+    │
+    ├── kb-conflict-expert/         ✅ Layer 3: Conflict detection rules
+    │   └── SKILL.md
+    │
+    ├── wf-spec-map/                ✅ Layer 1: Map orchestrator
+    │   └── SKILL.md
+    │
+    ├── wf-spec-map-analyze/        ✅ Layer 1: Gap analysis orchestrator
+    │   └── SKILL.md
+    │
+    ├── wf-spec-map-generate/       ✅ Layer 1: Spec generation orchestrator
+    │   └── SKILL.md
+    │
+    ├── wf-spec-validate/           ✅ Layer 1: Spec validation orchestrator
+    │   └── SKILL.md
+    │
+    ├── wf-spec-conflict/           ✅ Layer 1: Conflict detection orchestrator
+    │   └── SKILL.md
+    │
+    ├── plan-expert/                ✅ Layer 3: Plan rules
     │   ├── SKILL.md
     │   └── references/
     │       ├── kmm_architecture.md
-    │       ├── plan_structure.md
-    │       └── plan_patterns.md
+    │       └── plan_structure.md
     │
-    ├── tasks-expert/            ✅ Layer 3: Tasks rules
-    │   ├── SKILL.md
-    │   └── references/
-    │       ├── task_sizing.md
-    │       └── kmm_task_templates.md
-    │
-    ├── prepare-spec/            ✅ Layer 1: Specify orchestrator
+    ├── prepare-plan/               ✅ Layer 1: Plan orchestrator
     │   └── SKILL.md
     │
-    ├── decompose-spec/          ✅ Layer 1: Decompose orchestrator
+    ├── tasks-expert/               ✅ Layer 3: Tasks rules
     │   └── SKILL.md
     │
-    ├── prepare-plan/            ✅ Layer 1: Plan orchestrator
-    │   └── SKILL.md
-    │
-    └── prepare-tasks/           ✅ Layer 1: Tasks orchestrator
+    └── prepare-tasks/              ✅ Layer 1: Tasks orchestrator
         └── SKILL.md
 ```
 
@@ -176,17 +180,18 @@ TASKS      Reglas Tasks          Plan → Tasks         /prepare-tasks
 
 ```
 project-root/
-├── prd.md                           # PRD original (no se modifica)
-├── prd_analysis.md                  # /prepare-spec analyze
-├── prd_spec.md                      # /prepare-spec finalize — spec monolítico limpio
-├── prd_features.md                  # /decompose-spec — índice de features y shared models
+├── prd.md                              # PRD original (no se modifica)
+├── prd_project_map.md                  # /wf-spec-map — mapa funcional del proyecto
+├── prd_features.md                     # /wf-spec-map-generate — índice de features y shared models
 │
 └── features/
     ├── authentication/
-    │   ├── authentication_spec.md   # /decompose-spec
-    │   ├── authentication_plan.md   # /prepare-plan
-    │   └── authentication_tasks.md  # /prepare-tasks
+    │   ├── _analysis.md                # /wf-spec-map-analyze — gaps de la feature
+    │   ├── authentication_spec.md      # /wf-spec-map-generate
+    │   ├── authentication_plan.md      # /prepare-plan
+    │   └── authentication_tasks.md     # /prepare-tasks
     ├── services/
+    │   ├── _analysis.md
     │   ├── services_spec.md
     │   ├── services_plan.md
     │   └── services_tasks.md
@@ -198,26 +203,24 @@ project-root/
 ## Workflow completo
 
 ```bash
-# ── Etapa 1: Specify ──────────────────────────────────────────────────────────
-/prepare-spec analyze prd.md
-# → prd_analysis.md (gaps, contaminaciones técnicas, preguntas para el cliente)
+# ── Etapa 1: Specify (map-flow) ───────────────────────────────────────────────
 
-# [HUMANO] Editar prd_analysis.md: responder cada item _(pendiente)_
+/wf-spec-map prd.md
+# → prd_project_map.md (mapa funcional: features, scope, shared models)
 
-/prepare-spec finalize prd.md
-# → prd_spec.md (spec monolítico limpio, listo para partir)
+# [HUMANO] Revisar prd_project_map.md: validar features, ajustar scope si es necesario
 
+/wf-spec-map-analyze prd_project_map.md
+# → features/<nombre>/_analysis.md (gaps, preguntas, ambigüedades por feature)
 
-# ── Etapa 2: Decompose ────────────────────────────────────────────────────────
-/decompose-spec prd_spec.md
+# [HUMANO] Editar cada _analysis.md: responder los gaps de cada feature
+
+/wf-spec-map-generate prd_project_map.md
 # → prd_features.md (índice de features + tabla de shared models)
-# → features/<nombre>/<nombre>_spec.md (un spec por feature)
-
-# [HUMANO] Revisar prd_features.md: ajustar scope de features si es necesario
-#          Confirmar qué feature es owner de cada shared model
+# → features/<nombre>/<nombre>_spec.md (un spec SDD completo por feature)
 
 
-# ── Etapas 3 y 4: Por cada feature ───────────────────────────────────────────
+# ── Etapas 2 y 3: Por cada feature ───────────────────────────────────────────
 # Empezar por las features owner de shared models
 
 /prepare-plan generate features/authentication/authentication_spec.md
@@ -230,6 +233,14 @@ project-root/
 /prepare-plan generate features/services/services_spec.md
 /prepare-tasks generate features/services/services_plan.md
 # ...
+
+
+# ── Validación y conflictos (opcional, en cualquier momento) ──────────────────
+/wf-spec-validate features/authentication/authentication_spec.md
+# → auditoría del spec: elementos faltantes, contaminación técnica
+
+/wf-spec-conflict features/authentication/authentication_spec.md --features-dir features/
+# → detección de conflictos entre specs de features
 
 
 # ── Implementación con KMM skills ─────────────────────────────────────────────
@@ -248,16 +259,17 @@ project-root/
 Los shared models evitan que el mismo concepto (ej. `User`) sea definido de forma distinta en cada feature.
 
 **Cómo funcionan:**
-1. `/decompose-spec` detecta qué modelos aparecen en más de una feature y los lista en `_features.md` con su feature owner
-2. `/prepare-plan` lee la tabla de shared models e inyecta la información al `plan-architect`
-3. El `plan-architect` define el modelo completo solo en el Plan de la feature owner; en los demás planes solo lo referencia
+1. `/wf-spec-map` detecta qué modelos aparecen en más de una feature y los incluye en el mapa con su feature owner
+2. `/wf-spec-map-generate` genera `prd_features.md` con la tabla de shared models y produce specs que solo referencian los modelos de otras features sin redefinirlos
+3. `/prepare-plan` lee la tabla de shared models e inyecta la información al `plan-architect`
+4. El `plan-architect` define el modelo completo solo en el Plan de la feature owner; en los demás planes solo lo referencia
 
 **Ejemplo en `prd_features.md`:**
 ```markdown
 ## Tabla de shared models
 
-| Modelo | Feature Owner       | Features que lo referencian      |
-|--------|---------------------|----------------------------------|
+| Modelo | Feature Owner         | Features que lo referencian      |
+|--------|-----------------------|----------------------------------|
 | User   | F-001: authentication | services, time-tracking, profile |
 | Zone   | F-005: availability   | services                         |
 ```
@@ -274,16 +286,17 @@ El ecosistema SDD alimenta directamente las skills KMM de implementación:
 SDD ECOSYSTEM                              KMM ECOSYSTEM
 ─────────────                              ─────────────
 
-/prepare-spec  →  prd_spec.md
-/decompose-spec → features/<x>_spec.md
-/prepare-plan  →  features/<x>_plan.md
-/prepare-tasks →  features/<x>_tasks.md ──► /kmm-scaffold
-                                             /kmm-domain
-                                             /kmm-data
-                                             /kmm-presentation
-                                             /kmm-expect-actual
-                                             /kmm-tests
-                                             /kmm-audit
+/wf-spec-map         →  prd_project_map.md
+/wf-spec-map-analyze →  features/<x>/_analysis.md
+/wf-spec-map-generate → features/<x>/<x>_spec.md
+/prepare-plan        →  features/<x>/<x>_plan.md
+/prepare-tasks       →  features/<x>/<x>_tasks.md ──► /kmm-scaffold
+                                                       /kmm-domain
+                                                       /kmm-data
+                                                       /kmm-presentation
+                                                       /kmm-expect-actual
+                                                       /kmm-tests
+                                                       /kmm-audit
 ```
 
 El `task-generator` conoce los nombres de las skills KMM y asigna cada task a la skill correcta. Después de `/prepare-tasks`, el trabajo es ejecutar tasks en orden.
@@ -292,7 +305,7 @@ El `task-generator` conoce los nombres de las skills KMM y asigna cada task a la
 
 ## Propiedades de escalabilidad
 
-**Evolución independiente**: cada knowledge base (Capa 3) evoluciona sola. Actualizar `kmm_architecture.md` en `plan-expert` no afecta a `spec-expert`, `decompose-expert` ni `tasks-expert`.
+**Evolución independiente**: cada knowledge base (Capa 3) evoluciona sola. Actualizar `kmm_architecture.md` en `plan-expert` no afecta a `kb-spec-expert`, `kb-decompose-expert` ni `tasks-expert`.
 
 **Modelo por complejidad**:
 - `plan-architect` → `claude-opus-4-6` (decisiones arquitectónicas complejas)
@@ -302,11 +315,11 @@ El `task-generator` conoce los nombres de las skills KMM y asigna cada task a la
 **Memoria acumulativa**: cada agente worker tiene `memory: project`. Con el tiempo, el `plan-architect` recuerda decisiones de features anteriores y mantiene consistencia arquitectónica entre ellas.
 
 **Checkpoints humanos**: el pipeline nunca es fully-automatic. El humano valida artefactos estructurados en tres puntos clave:
-1. Tras `analyze` → responder preguntas abiertas
-2. Tras `decompose-spec` → validar partición y ownership de shared models
-3. Tras cada `prepare-plan` → revisar arquitectura antes de generar tasks
+1. Tras `/wf-spec-map` → validar mapa funcional y scope de features
+2. Tras `/wf-spec-map-analyze` → responder gaps de cada feature
+3. Tras cada `/prepare-plan` → revisar arquitectura antes de generar tasks
 
-**Trazabilidad completa**: cada task apunta a un CA del spec de feature. Cada CA del spec de feature es rastreable al spec monolítico origen.
+**Trazabilidad completa**: cada task apunta a un CA del spec de feature. Cada CA del spec de feature es rastreable al análisis de gaps y al mapa funcional origen.
 
 ---
 
@@ -337,11 +350,16 @@ git pull && ./install.sh
 
 | Componente | Tipo | Etapa | Estado |
 |---|---|---|---|
-| `spec-expert` | Skill Layer 3 | Specify | ✅ Implementado |
-| `sdd-analyst` | Agente Layer 2 | Specify + Decompose | ✅ Implementado |
-| `prepare-spec` | Skill Layer 1 | Specify | ✅ Implementado |
-| `decompose-expert` | Skill Layer 3 | Decompose | ✅ Implementado |
-| `decompose-spec` | Skill Layer 1 | Decompose | ✅ Implementado |
+| `kb-spec-expert` | Skill Layer 3 | Specify | ✅ Implementado |
+| `kb-gap-conventions` | Skill Layer 3 | Specify | ✅ Implementado |
+| `kb-decompose-expert` | Skill Layer 3 | Specify | ✅ Implementado |
+| `kb-conflict-expert` | Skill Layer 3 | Specify | ✅ Implementado |
+| `sdd-analyst` | Agente Layer 2 | Specify | ✅ Implementado |
+| `wf-spec-map` | Skill Layer 1 | Specify | ✅ Implementado |
+| `wf-spec-map-analyze` | Skill Layer 1 | Specify | ✅ Implementado |
+| `wf-spec-map-generate` | Skill Layer 1 | Specify | ✅ Implementado |
+| `wf-spec-validate` | Skill Layer 1 | Specify | ✅ Implementado |
+| `wf-spec-conflict` | Skill Layer 1 | Specify | ✅ Implementado |
 | `plan-expert` | Skill Layer 3 | Plan | ✅ Implementado |
 | `plan-architect` | Agente Layer 2 | Plan | ✅ Implementado |
 | `prepare-plan` | Skill Layer 1 | Plan | ✅ Implementado |

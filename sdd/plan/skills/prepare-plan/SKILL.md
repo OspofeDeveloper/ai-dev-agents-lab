@@ -1,6 +1,6 @@
 ---
 name: prepare-plan
-description: Orquestador SDD para transformar Specs validados en Planes técnicos KMM. Úsalo cuando tengas un _spec.md sin items pendientes y quieras generar el plan técnico de implementación. Activa en frases como "genera el plan desde el spec", "crea el plan técnico", "transforma el spec en plan", "planifica la implementación de", "prepara el plan para". No activa para analizar o generar Specs (usa prepare-spec) ni para crear Tasks (usa prepare-tasks).
+description: Orquestador SDD para transformar Specs validados en Planes técnicos KMM. Úsalo cuando tengas un _spec.md sin items pendientes y quieras generar el plan técnico de implementación. Activa en frases como "genera el plan desde el spec", "crea el plan técnico", "transforma el spec en plan", "planifica la implementación de", "prepara el plan para". No activa para analizar o generar Specs (usa wf-spec-map) ni para crear Tasks (usa prepare-tasks).
 argument-hint: "generate <spec.md>"
 effort: high
 allowed-tools: [Read, Write, Agent]
@@ -39,7 +39,7 @@ Ejemplo:
    - Si hay `[INFORMATIVO]_(pendiente)_` pero no `[CRÍTICO]` → advierte pero **continúa**:
      > "⚠ El Spec tiene X items [INFORMATIVO] sin responder. Se usarán los valores por defecto. Puedes responderlos después si quieres más precisión."
 4. Verifica que el archivo parece un Spec validado (contiene "Criterios de Aceptación" e "Historias de Usuario"). Si parece un PRD sin procesar → informa:
-   > "Este archivo no parece un Spec procesado. Primero ejecuta `/prepare-spec analyze <archivo.md>`"
+   > "Este archivo no parece un Spec procesado. Primero genera el spec con `/wf-spec-map <prd.md>`"
 
 ---
 
@@ -54,7 +54,7 @@ Busca si existe un `_features.md` en el proyecto. Para encontrarlo:
 Si existe el `_features.md`, léelo completo. Lo usarás en el paso siguiente.
 
 Si el spec está dentro de `features/<nombre>/` pero **no se encuentra `_features.md`**, advierte al usuario:
-> "⚠ No se encontró `_features.md`. Si este proyecto tiene múltiples features que comparten modelos de dominio, los shared models no se considerarán en el Plan y podrían redefinirse en cada feature. Para gestionar shared models correctamente, genera primero un spec monolítico y usa `/decompose-spec`. Continuando sin shared models."
+> "⚠ No se encontró `_features.md`. Si este proyecto tiene múltiples features que comparten modelos de dominio, los shared models no se considerarán en el Plan y podrían redefinirse en cada feature. Los shared models se gestionan automáticamente si usaste `/wf-spec-map-generate`. Continuando sin shared models."
 
 ---
 

@@ -1,6 +1,6 @@
 ---
 name: plan-expert
-description: Experto en Planes técnicos KMM con Clean Architecture. Qué debe y qué NO debe contener un Plan SDD. Úsalo cuando el usuario quiera crear, revisar o validar un Plan técnico que implementa un Spec. Activa en frases como "genera el plan técnico", "¿qué lleva el plan?", "revisa mi plan", "¿cómo estructuro el plan para KMM?", "transforma el spec en plan", "¿qué módulos necesito?", "¿qué va en domain/data/presentation?". No activa para validar Specs (usa spec-expert) ni para crear Tasks (usa tasks-expert).
+description: Experto en Planes técnicos KMM con Clean Architecture. Qué debe y qué NO debe contener un Plan SDD. Úsalo cuando el usuario quiera crear, revisar o validar un Plan técnico que implementa un Spec. Activa en frases como "genera el plan técnico", "¿qué lleva el plan?", "revisa mi plan", "¿cómo estructuro el plan para KMM?", "transforma el spec en plan", "¿qué módulos necesito?", "¿qué va en domain/data/presentation?". No activa para validar Specs (usa kb-spec-expert) ni para crear Tasks (usa tasks-expert).
 argument-hint: "[archivo_plan.md | spec_a_convertir.md]"
 effort: high
 allowed-tools: [Read]

@@ -26,10 +26,9 @@ copy_template() {
   echo "  ✓ ${dst#"$SCRIPT_DIR/"}"
 }
 
-copy_template "feature_spec_template.md"   "$SCRIPT_DIR/spec/skills/spec-decompose/references"
-copy_template "feature_readme_template.md" "$SCRIPT_DIR/spec/skills/spec-decompose/references"
-copy_template "feature_spec_template.md"   "$SCRIPT_DIR/spec/skills/spec-fast-track/references"
-copy_template "feature_readme_template.md" "$SCRIPT_DIR/spec/skills/spec-fast-track/references"
+copy_template "project_map_template.md"      "$SCRIPT_DIR/spec/skills/wf-spec-map/references"
+copy_template "feature_analysis_template.md" "$SCRIPT_DIR/spec/skills/wf-spec-map-analyze/references"
+copy_template "feature_readme_template.md"   "$SCRIPT_DIR/spec/skills/wf-spec-map-generate/references"
 
 # ── 2. Instalar agentes ────────────────────────────────────────────────────
 
