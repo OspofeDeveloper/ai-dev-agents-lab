@@ -1,4 +1,4 @@
-# Test 04 — `prepare-spec fast-track`
+# Test 04 — `wf-spec-fast-track`
 
 **Propósito del workflow:** Generar directamente el spec de una feature concreta sin necesidad de spec monolítico previo. Atajo para features pequeñas o aisladas donde no hay un PRD completo del que partir.
 
@@ -7,17 +7,17 @@
 ## Prompt de activación
 
 ```
-/prepare-spec fast-track sdd/prd-hogar-sad.md --capability notificaciones-push
+/wf-spec-fast-track sdd/prd-hogar-sad.md --capability notificaciones-push
 ```
 
 Variante con descripción libre en vez de nombre de capability:
 ```
-/prepare-spec fast-track sdd/prd-hogar-sad.md --capability "gestión de cuidadores"
+/wf-spec-fast-track sdd/prd-hogar-sad.md --capability "gestión de cuidadores"
 ```
 
 O si el documento es específico de esa feature:
 ```
-/prepare-spec fast-track sdd/requisitos-notificaciones.md
+/wf-spec-fast-track sdd/requisitos-notificaciones.md
 ```
 
 ---
@@ -25,8 +25,8 @@ O si el documento es específico de esa feature:
 ## Flujo esperado paso a paso
 
 ### Paso 1 — El orquestador L1 parsea el comando
-**Actor:** skill `prepare-spec` (L1)
-**Acción:** Lee `fast-track`, el path del documento y (si existe) el flag `--capability`.
+**Actor:** skill `wf-spec-fast-track` (L1)
+**Acción:** Lee el path del documento y (si existe) el flag `--capability`.
 **Verifica precondiciones:**
 - El archivo existe
 - Si `--capability` está presente, lo extrae como scope de la feature
@@ -37,7 +37,7 @@ O si el documento es específico de esa feature:
 ---
 
 ### Paso 2 — El orquestador lanza el subagente `sdd-analyst`
-**Actor:** skill `prepare-spec` (L1)
+**Actor:** skill `wf-spec-fast-track` (L1)
 **Acción:** Invoca `Agent(subagent_type="sdd-analyst")` con:
 ```
 modo: fast-track
@@ -50,17 +50,17 @@ capability: "notificaciones-push"  (si se especificó)
 ### Paso 3 — El subagente `sdd-analyst` enruta al workflow correcto
 **Actor:** agente `sdd-analyst` (L2)
 **Carga como contexto:**
-- Knowledge `spec-expert` — reglas de los 8 elementos SDD
-- Knowledge `decompose-expert` — para generar spec autocontenido de feature (sin spec monolítico padre)
-- Knowledge `gap-conventions` — para marcar gaps si los hay
-- Workflow `spec-fast-track` — instrucciones para este modo
+- Knowledge `kb-spec-expert` — reglas de los 8 elementos SDD
+- Knowledge `kb-decompose-expert` — para generar spec autocontenido de feature (sin spec monolítico padre)
+- Knowledge `kb-gap-conventions` — para marcar gaps si los hay
+- Workflow `wf-spec-fast-track` — instrucciones para este modo
 
 **Diferencia clave vs finalize:** Aquí se genera un spec de feature (autocontenido), no un spec monolítico.
 
 ---
 
-### Paso 4 — El subagente ejecuta el workflow `spec-fast-track`
-**Actor:** agente `sdd-analyst` (L2), guiado por `spec-fast-track` (L3)
+### Paso 4 — El subagente ejecuta el workflow `wf-spec-fast-track`
+**Actor:** agente `sdd-analyst` (L2), guiado por `wf-spec-fast-track` (L3)
 **Acciones en orden:**
 1. Delimita el scope de la feature (usa `--capability` o infiere del documento)
 2. Genera el spec de la feature con los 8 elementos SDD, aplicando la Prueba de Pureza
@@ -93,7 +93,7 @@ capability: "notificaciones-push"  (si se especificó)
 | Archivos generados | `features/<nombre>/<nombre>_spec.md` y `features/<nombre>/README.md` |
 | Artefacto | Spec de feature autocontenido con los 8 elementos SDD |
 | Bloqueo | Si hay gaps CRÍTICO en el documento fuente |
-| Siguiente paso | `/prepare-plan features/<nombre>/<nombre>_spec.md` directamente |
+| Siguiente paso | `/wf-prepare-plan features/<nombre>/<nombre>_spec.md` directamente |
 
 ---
 

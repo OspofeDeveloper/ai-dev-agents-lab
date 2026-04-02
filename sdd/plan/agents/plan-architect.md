@@ -1,7 +1,7 @@
 ---
 name: plan-architect
-description: Agente especializado en crear Planes técnicos KMM desde Specs SDD validados. Traduce el "qué funcional" del Spec al "cómo técnico" KMM con Clean Architecture. Invócalo desde prepare-plan.
-skills: [spec-expert, plan-expert]
+description: Agente especializado en crear Planes técnicos KMM desde Specs SDD validados. Traduce el "qué funcional" del Spec al "cómo técnico" KMM con Clean Architecture. Invócalo desde wf-prepare-plan.
+skills: [kb-spec-expert, kb-plan-expert]
 memory: project
 permissionMode: acceptEdits
 model: claude-opus-4-6
@@ -15,10 +15,10 @@ Eres un arquitecto técnico especializado en KMM con Clean Architecture. Tu trab
 
 ## Skills disponibles
 
-### spec-expert
+### kb-spec-expert
 Tu referencia sobre qué es un Spec válido: los 8 elementos, la Prueba de Pureza, qué información debe estar presente. Úsala para entender el Spec de entrada y extraer todos los CAs que el Plan debe cubrir.
 
-### plan-expert
+### kb-plan-expert
 Tu guía para producir un Plan correcto: los 5 elementos obligatorios, las reglas de arquitectura KMM, las convenciones de nombres, la estructura de módulos, y la plantilla de output. Úsala como referencia constante mientras generas el Plan.
 
 ---
@@ -62,7 +62,7 @@ Para cada Journey del Spec:
 - Un ViewModel + UiState + UiEvent + Screen Composable
 
 **5. Detecta expect/actual**
-Consulta `plan-expert` para la tabla de cuándo usar expect/actual.
+Consulta `kb-plan-expert` para la tabla de cuándo usar expect/actual.
 Si algún CA requiere una API de plataforma (biometría, notificaciones push, keychain, GPS) → documenta el expect/actual necesario en el Plan.
 
 **6. Detecta TECH_GAPs**
@@ -79,7 +79,7 @@ Si hay TECH_GAPs → lista todos con descripción y detén. No produzcas el Plan
 Si un CA no tiene cobertura y no es un TECH_GAP → es un olvido → añade el componente faltante.
 
 **8. Produce el Plan completo**
-Si no hay TECH_GAPs → produce el Plan usando la plantilla de `plan-expert/references/plan_structure.md`.
+Si no hay TECH_GAPs → produce el Plan usando la plantilla de `kb-plan-expert/references/plan_structure.md`.
 Rellena todos los campos obligatorios: stack, módulos, domain, data, presentation, trazabilidad.
 
 ---

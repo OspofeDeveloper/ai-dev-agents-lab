@@ -11,15 +11,15 @@ Este directorio contiene todos los agentes y skills que transforman un documento
 Tienes un PRD o documento de requisitos y quieres convertirlo en Specs SDD.
 
 ```
-/prepare-spec analyze prd.md
+/wf-spec-analyze prd.md
   → genera prd_analysis.md con gaps [CRÍTICO] e [INFORMATIVO]
 
 [edita prd_analysis.md, responde los gaps [CRÍTICO]]
 
-/prepare-spec finalize prd.md
+/wf-spec-finalize prd.md
   → genera prd_spec.md (spec monolítico con 8 elementos SDD)
 
-/decompose-spec prd_spec.md
+/wf-spec-decompose prd_spec.md
   → genera prd_features.md (índice de features)
   → genera features/<nombre>/<nombre>_spec.md por cada feature
   → genera features/<nombre>/README.md por cada feature
@@ -35,7 +35,7 @@ Tienes un PRD o documento de requisitos y quieres convertirlo en Specs SDD.
 Quieres documentar solo una capacidad concreta sin pasar por el spec monolítico. Útil para añadir features a proyectos maduros o arrancar documentando una sola área.
 
 ```
-/prepare-spec fast-track notifications.md --capability push-notifications
+/wf-spec-fast-track notifications.md --capability push-notifications
   → genera features/push-notifications/push-notifications_spec.md directamente
 ```
 
@@ -48,12 +48,12 @@ Quieres documentar solo una capacidad concreta sin pasar por el spec monolítico
 El software ya existe, hay un `_spec.md` en producción y quieres añadir o modificar una funcionalidad sin regenerar todo.
 
 ```
-/prepare-delta analyze features/auth/auth_spec.md --new-reqs new_auth_requirements.md
+/wf-spec-delta analyze features/auth/auth_spec.md --new-reqs new_auth_requirements.md
   → genera features/auth/auth_delta_analysis.md con HUs/CAs añadidos, modificados, eliminados
 
 [revisa el delta, responde gaps [CRÍTICO]]
 
-/prepare-delta apply features/auth/auth_spec.md features/auth/auth_delta_analysis.md
+/wf-spec-delta apply features/auth/auth_spec.md features/auth/auth_delta_analysis.md
   → actualiza auth_spec.md (versión 1.0 → 1.1) con sección Changelog
 ```
 
@@ -66,11 +66,11 @@ El software ya existe, hay un `_spec.md` en producción y quieres añadir o modi
 Editas manualmente un `_spec.md` y quieres verificar que no introdujiste contaminación técnica ni rompiste la estructura SDD.
 
 ```
-/prepare-spec validate features/auth/auth_spec.md
+/wf-spec-validate features/auth/auth_spec.md
   → imprime informe APROBADO / REQUIERE_REVISIÓN (no genera archivo)
 ```
 
-**Cuándo usarlo**: después de cualquier edición manual a un spec. También útil como gate antes de ejecutar `/prepare-plan`.
+**Cuándo usarlo**: después de cualquier edición manual a un spec. También útil como gate antes de ejecutar `/wf-prepare-plan`.
 
 ---
 
@@ -79,11 +79,11 @@ Editas manualmente un `_spec.md` y quieres verificar que no introdujiste contami
 Quieres verificar que los specs de las diferentes features del proyecto son coherentes entre sí: sin HUs duplicadas, CAs contradictorios ni scope overlap.
 
 ```
-/check-conflicts features/auth/auth_spec.md --features-dir features/
+/wf-spec-conflict features/auth/auth_spec.md --features-dir features/
   → genera features/auth/auth_conflict_report.md si hay conflictos
 ```
 
-**Cuándo usarlo**: después de modificar un spec existente o añadir una nueva feature con fast-track o delta, para verificar que el cambio no choca con el resto del sistema. También se ejecuta automáticamente al final de `/decompose-spec` (modo no bloqueante).
+**Cuándo usarlo**: después de modificar un spec existente o añadir una nueva feature con fast-track o delta, para verificar que el cambio no choca con el resto del sistema. También se ejecuta automáticamente al final de `/wf-spec-decompose` (modo no bloqueante).
 
 ---
 
@@ -92,9 +92,9 @@ Quieres verificar que los specs de las diferentes features del proyecto son cohe
 Preguntas conceptuales o revisión de un spec a mano, sin pasar por el flujo orquestado.
 
 ```
-/spec-expert features/auth/auth_spec.md
-/spec-expert ¿qué lleva un spec?
-/spec-expert ¿esto es un spec o un plan?
+/kb-spec-expert features/auth/auth_spec.md
+/kb-spec-expert ¿qué lleva un spec?
+/kb-spec-expert ¿esto es un spec o un plan?
 ```
 
 **Cuándo usarlo**: para aprender, revisar o depurar specs directamente en conversación, sin invocar el pipeline completo.
@@ -107,12 +107,13 @@ Todos los componentes de este directorio siguen el mismo patrón arquitectónico
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  CAPA 1 — Orquestadores (skills invocables por el usuario)  │
-│  prepare-spec  │  decompose-spec  │  prepare-delta  │  check-conflicts │
+│  CAPA 1 — Workflows (wf-) invocables por el usuario         │
+│  wf-spec-analyze │ wf-spec-finalize │ wf-spec-validate     │
+│  wf-spec-fast-track │ wf-spec-decompose │ wf-spec-conflict │
+│  wf-spec-delta                                              │
 │                                                             │
-│  Rol: parsear args → verificar archivos → delegar → escribir│
-│  No razonan. No analizan. Solo coordinan.                   │
-│  disable-model-invocation: true                             │
+│  Rol: parsear args → verificar archivos → ejecutar workflow │
+│  → delegar al agente → escribir resultado                   │
 └────────────────────────────┬────────────────────────────────┘
                              │ invoca Agent()
                              ▼
@@ -128,83 +129,73 @@ Todos los componentes de este directorio siguen el mismo patrón arquitectónico
                              │ carga como contexto
                              ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  CAPA 3 — Knowledge Bases y Workflows (solo contexto)       │
+│  CAPA 3 — Knowledge Bases (kb-) — solo contexto             │
 │                                                             │
-│  Knowledge:   spec-expert  │  decompose-expert  │  conflict-expert │
-│  Workflows:   spec-analyze │  spec-finalize  │  spec-validate      │
-│               spec-decompose │  spec-delta  │  spec-fast-track     │
-│               spec-conflict                                 │
+│  kb-spec-expert │ kb-decompose-expert │ kb-conflict-expert  │
+│  kb-gap-conventions                                         │
 │                                                             │
-│  Rol: reglas, templates, instrucciones de ejecución         │
+│  Rol: reglas, templates, criterios de validación            │
 │  No se invocan directamente. Solo se cargan como contexto.  │
-│  disable-model-invocation: true  │  context: fork (knowledge)│
+│  disable-model-invocation: true  │  context: fork           │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ### Por qué esta separación
 
-**Capa 1 (Orquestadores)** corren en el contexto principal de la conversación porque necesitan invocar `Agent()`. Al usar `disable-model-invocation: true`, no consumen tokens en razonamiento — son código procedural expresado en lenguaje natural. Si falla la verificación de un archivo, el error llega al usuario sin coste.
+**Capa 1 (Workflows `wf-`)** son los puntos de entrada del usuario. Cada workflow contiene las instrucciones paso a paso de ejecución, parsea argumentos, verifica precondiciones, delega al agente `sdd-analyst` y escribe el resultado.
 
 **Capa 2 (sdd-analyst)** es el único componente que razona. Al ser un subagente, su contexto está aislado del contexto principal — consume tokens solo cuando es necesario y no contamina la conversación con el usuario con el detalle técnico del análisis. Tiene `memory: project` para que sus decisiones sean coherentes a lo largo de múltiples ejecuciones en el mismo proyecto.
 
-**Capa 3 (Knowledge + Workflows)** son archivos de texto puro que se inyectan en el contexto del agente. Al declararlos en el frontmatter `skills: [...]` del agente, Claude Code los carga automáticamente cuando invoca el agente. Los knowledge bases tienen `context: fork` para que no interfieran con el contexto principal.
+**Capa 3 (Knowledge `kb-`)** son archivos de texto puro que se inyectan en el contexto del agente. Al declararlos en el frontmatter `skills: [...]` del agente, Claude Code los carga automáticamente cuando invoca el agente. Tienen `context: fork` para que no interfieran con el contexto principal.
 
 ---
 
 ## Mapa completo de componentes
 
-### Skills invocables (Capa 1)
+### Skills workflow (Capa 1) — invocables por el usuario
 
-| Skill | Comando | Modos | Produce |
-|-------|---------|-------|---------|
-| `prepare-spec` | `/prepare-spec` | `analyze`, `finalize`, `validate`, `fast-track` | `_analysis.md`, `_spec.md`, informe inline, `features/<x>/<x>_spec.md` |
-| `decompose-spec` | `/decompose-spec` | — | `_features.md`, `features/<x>/<x>_spec.md`, `features/<x>/README.md` |
-| `prepare-delta` | `/prepare-delta` | `analyze`, `apply` | `_delta_analysis.md`, spec actualizado con versión incrementada |
-| `check-conflicts` | `/check-conflicts` | — | `_conflict_report.md` |
+| Skill | Comando | Produce |
+|-------|---------|---------|
+| `wf-spec-analyze` | `/wf-spec-analyze` | `_analysis.md` |
+| `wf-spec-finalize` | `/wf-spec-finalize` | `_spec.md` |
+| `wf-spec-validate` | `/wf-spec-validate` | Informe inline (sin archivo) |
+| `wf-spec-fast-track` | `/wf-spec-fast-track` | `features/<x>/<x>_spec.md` directamente |
+| `wf-spec-decompose` | `/wf-spec-decompose` | `_features.md`, `features/<x>/<x>_spec.md`, `features/<x>/README.md` |
+| `wf-spec-conflict` | `/wf-spec-conflict` | `_conflict_report.md` |
+| `wf-spec-delta` | `/wf-spec-delta` | `_delta_analysis.md` (analyze) o spec actualizado (apply) |
 
 ### Agente worker (Capa 2)
 
 | Agente | Modos soportados | Invocado desde |
 |--------|-----------------|----------------|
-| `sdd-analyst` | `analyze`, `finalize`, `validate`, `decompose`, `delta`, `fast-track`, `conflict` | `prepare-spec`, `decompose-spec`, `prepare-delta`, `check-conflicts` |
+| `sdd-analyst` | `analyze`, `finalize`, `validate`, `decompose`, `delta`, `fast-track`, `conflict` | Todos los `wf-spec-*` |
 
 ### Knowledge bases (Capa 3)
 
 | Skill | Tipo | Usado en modos |
 |-------|------|----------------|
-| `spec-expert` | Conocimiento SDD (8 elementos, Prueba de Pureza, Testabilidad) | Todos |
-| `decompose-expert` | Partición de features, shared models, ownership | `decompose`, `fast-track` |
-| `conflict-expert` | 5 reglas de detección de conflictos entre specs | `conflict` |
-
-### Workflows (Capa 3)
-
-| Skill | Tipo | Modo que implementa |
-|-------|------|---------------------|
-| `spec-analyze` | Workflow | `analyze` |
-| `spec-finalize` | Workflow | `finalize` |
-| `spec-validate` | Workflow | `validate` |
-| `spec-decompose` | Workflow | `decompose` |
-| `spec-delta` | Workflow | `delta` (submodos: `analyze`, `apply`) |
-| `spec-fast-track` | Workflow | `fast-track` |
-| `spec-conflict` | Workflow | `conflict` |
+| `kb-spec-expert` | Conocimiento SDD (8 elementos, Prueba de Pureza, Testabilidad) | Todos |
+| `kb-decompose-expert` | Partición de features, shared models, ownership | `decompose`, `fast-track` |
+| `kb-conflict-expert` | 5 reglas de detección de conflictos entre specs | `conflict` |
+| `kb-gap-conventions` | SSoT de convenciones de gaps | Todos los modos que generen o verifiquen gaps |
 
 ---
 
 ## Routing interno del agente sdd-analyst
 
-Cuando un orquestador invoca `sdd-analyst`, le pasa un prompt estructurado con `Modo: <modo>` como primera línea. El agente lee el modo y carga el workflow y los knowledge bases correspondientes:
+Cuando un workflow invoca `sdd-analyst`, le pasa un prompt estructurado con `Modo: <modo>` como primera línea. El agente lee el modo y usa los knowledge bases correspondientes:
 
 ```
-Modo: analyze    → spec-analyze    + spec-expert
-Modo: finalize   → spec-finalize   + spec-expert
-Modo: validate   → spec-validate   + spec-expert
-Modo: decompose  → spec-decompose  + spec-expert + decompose-expert
-Modo: delta      → spec-delta      + spec-expert
-Modo: fast-track → spec-fast-track + spec-expert + decompose-expert
-Modo: conflict   → spec-conflict   + spec-expert + conflict-expert
+Modo: analyze    → kb-spec-expert + kb-gap-conventions
+Modo: finalize   → kb-spec-expert + kb-gap-conventions
+Modo: validate   → kb-spec-expert
+Modo: decompose  → kb-spec-expert + kb-decompose-expert
+Modo: delta      → kb-spec-expert + kb-gap-conventions
+Modo: fast-track → kb-spec-expert + kb-decompose-expert + kb-gap-conventions
+Modo: conflict   → kb-spec-expert + kb-conflict-expert
 ```
 
-Los workflows contienen las instrucciones paso a paso de qué hacer. Los knowledge bases son las reglas que el agente consulta durante la ejecución del workflow (la Prueba de Pureza, los criterios de feature válida, las reglas de detección de conflictos).
+Los knowledge bases son las reglas que el agente consulta durante la ejecución (la Prueba de Pureza, los criterios de feature válida, las reglas de detección de conflictos).
 
 ---
 
@@ -213,18 +204,18 @@ Los workflows contienen las instrucciones paso a paso de qué hacer. Los knowled
 ```
 proyecto/
 ├── prd.md                                    ← Input — no se modifica
-├── prd_analysis.md                           ← /prepare-spec analyze
-├── prd_spec.md                               ← /prepare-spec finalize
-├── prd_features.md                           ← /decompose-spec
-├── _conflict_report.md                       ← /decompose-spec (automático) o /check-conflicts
+├── prd_analysis.md                           ← /wf-spec-analyze
+├── prd_spec.md                               ← /wf-spec-finalize
+├── prd_features.md                           ← /wf-spec-decompose
+├── _conflict_report.md                       ← /wf-spec-decompose (automático) o /wf-spec-conflict
 └── features/
     └── <nombre-feature>/
-        ├── README.md                         ← /decompose-spec o /prepare-spec fast-track
-        ├── <nombre>_spec.md                  ← /decompose-spec o /prepare-spec fast-track
-        ├── <nombre>_delta_analysis.md        ← /prepare-delta analyze
-        ├── <nombre>_conflict_report.md       ← /check-conflicts
-        ├── <nombre>_plan.md                  ← /prepare-plan (etapa siguiente)
-        └── <nombre>_tasks.md                 ← /prepare-tasks (etapa siguiente)
+        ├── README.md                         ← /wf-spec-decompose o /wf-spec-fast-track
+        ├── <nombre>_spec.md                  ← /wf-spec-decompose o /wf-spec-fast-track
+        ├── <nombre>_delta_analysis.md        ← /wf-spec-delta analyze
+        ├── <nombre>_conflict_report.md       ← /wf-spec-conflict
+        ├── <nombre>_plan.md                  ← /wf-prepare-plan (etapa siguiente)
+        └── <nombre>_tasks.md                 ← /wf-prepare-tasks (etapa siguiente)
 ```
 
 ---
@@ -250,55 +241,48 @@ sdd/spec/
 ├── README.md                                  ← este archivo
 ├── agents/
 │   └── sdd-analyst.md                        ← L2 worker (router por modo)
+├── shared/
+│   └── templates/                            ← Source of truth para templates compartidos
+│       ├── feature_spec_template.md
+│       └── feature_readme_template.md
 └── skills/
-    ├── core/                                 ← L3 knowledge (compartidos entre workflows)
-    │   ├── README.md
-    │   ├── spec-expert/                      ← 8 elementos SDD, Prueba de Pureza, Testabilidad
-    │   │   ├── SKILL.md
-    │   │   └── references/
-    │   │       ├── prohibited_items.md
-    │   │       └── error_patterns.md
-    │   ├── gap-conventions/SKILL.md          ← SSoT de IDs, severidades y marcador pendiente
-    │   ├── decompose-expert/SKILL.md         ← reglas de partición y shared models
-    │   └── conflict-expert/SKILL.md          ← 5 reglas de detección de conflictos
-    ├── prepare-spec/                         ← UC: crear/validar specs
-    │   ├── SKILL.md                          ← L1: /prepare-spec (orquestador)
-    │   ├── README.md
-    │   ├── spec-analyze/                     ← L3 workflow: modo analyze
-    │   │   ├── SKILL.md
-    │   │   └── references/output_template.md
-    │   ├── spec-finalize/                    ← L3 workflow: modo finalize
-    │   │   ├── SKILL.md
-    │   │   └── references/output_template.md
-    │   ├── spec-validate/                    ← L3 workflow: modo validate (no produce archivos)
-    │   │   ├── SKILL.md
-    │   │   └── references/output_template.md
-    │   └── spec-fast-track/                  ← L3 workflow: modo fast-track
-    │       ├── SKILL.md
-    │       └── references/
-    │           ├── feature_spec_template.md
-    │           └── feature_readme_template.md
-    ├── decompose-spec/                       ← UC: descomponer spec en features
-    │   ├── SKILL.md                          ← L1: /decompose-spec (orquestador)
-    │   ├── README.md
-    │   └── spec-decompose/                   ← L3 workflow: modo decompose
-    │       ├── SKILL.md
-    │       └── references/
-    │           ├── features_template.md
-    │           ├── feature_spec_template.md
-    │           └── feature_readme_template.md
-    ├── prepare-delta/                        ← UC: evolución incremental
-    │   ├── SKILL.md                          ← L1: /prepare-delta (orquestador)
-    │   ├── README.md
-    │   └── spec-delta/                       ← L3 workflow: modo delta
-    │       ├── SKILL.md
-    │       └── references/delta_analysis_template.md
-    └── check-conflicts/                      ← UC: detectar conflictos entre features
-        ├── SKILL.md                          ← L1: /check-conflicts (orquestador)
-        ├── README.md
-        └── spec-conflict/                    ← L3 workflow: modo conflict
-            ├── SKILL.md
-            └── references/conflict_report_template.md
+    ├── kb-spec-expert/                       ← Knowledge: 8 elementos SDD, Pureza, Testabilidad
+    │   ├── SKILL.md
+    │   └── references/
+    │       ├── prohibited_items.md
+    │       └── error_patterns.md
+    ├── kb-decompose-expert/                  ← Knowledge: reglas de partición y shared models
+    │   └── SKILL.md
+    ├── kb-conflict-expert/                   ← Knowledge: 5 reglas de detección de conflictos
+    │   └── SKILL.md
+    ├── kb-gap-conventions/                   ← Knowledge: SSoT de IDs, severidades y pendientes
+    │   └── SKILL.md
+    ├── wf-spec-analyze/                      ← Workflow: PRD → _analysis.md
+    │   ├── SKILL.md
+    │   └── output_template.md
+    ├── wf-spec-finalize/                     ← Workflow: PRD + analysis → _spec.md
+    │   ├── SKILL.md
+    │   └── references/output_template.md
+    ├── wf-spec-validate/                     ← Workflow: _spec.md → informe inline
+    │   ├── SKILL.md
+    │   └── references/output_template.md
+    ├── wf-spec-fast-track/                   ← Workflow: PRD → feature spec directo
+    │   ├── SKILL.md
+    │   └── references/
+    │       ├── feature_spec_template.md
+    │       └── feature_readme_template.md
+    ├── wf-spec-decompose/                    ← Workflow: _spec.md → features/*/_spec.md
+    │   ├── SKILL.md
+    │   └── references/
+    │       ├── features_template.md
+    │       ├── feature_spec_template.md
+    │       └── feature_readme_template.md
+    ├── wf-spec-conflict/                     ← Workflow: detectar conflictos entre specs
+    │   ├── SKILL.md
+    │   └── references/conflict_report_template.md
+    └── wf-spec-delta/                        ← Workflow: evolución incremental de spec
+        ├── SKILL.md
+        └── references/delta_analysis_template.md
 ```
 
 ---
@@ -307,9 +291,9 @@ sdd/spec/
 
 Para añadir un nuevo modo al pipeline:
 
-1. **Crea el workflow L3** en `skills/<orquestador>/spec-<nombre>/SKILL.md` con `disable-model-invocation: true`. Aquí van las instrucciones paso a paso de qué debe hacer el agente.
-2. **Crea el knowledge base L3** (si el modo necesita reglas propias que sean transversales a varios workflows) en `skills/core/<nombre>-expert/SKILL.md` con `context: fork`.
-3. **Registra el nuevo skill en `sdd-analyst.md`**: añádelo al frontmatter `skills: [...]` y a la tabla de routing.
-4. **Crea el orquestador L1** si el usuario necesita invocarlo directamente: `skills/<nombre>/SKILL.md` con `disable-model-invocation: true` y `allowed-tools: [Read, Write, Agent]`. Si el modo es una extensión natural de un orquestador existente (como `fast-track` en `prepare-spec`), modifica ese orquestador en lugar de crear uno nuevo. Añade también un `README.md` en la carpeta del orquestador.
+1. **Crea el workflow** en `skills/wf-spec-<nombre>/SKILL.md` con `agent: sdd-analyst`. Aquí van las instrucciones paso a paso de qué debe hacer el agente.
+2. **Crea el knowledge base** (si el modo necesita reglas propias transversales a varios workflows) en `skills/kb-<nombre>-expert/SKILL.md` con `context: fork` y `disable-model-invocation: true`.
+3. **Registra el nuevo knowledge en `sdd-analyst.md`**: añádelo al frontmatter `skills: [...]` y a la tabla de routing.
+4. **Registra en CLAUDE.md**: añade la entrada en el rootmap de workflow skills.
 
-**Regla de diseño**: los orquestadores (L1) nunca razonan. Los workflows (L3) nunca escriben archivos. Solo el agente worker (L2) hace ambas cosas — y solo lo hace a través de los workflows que tiene disponibles.
+**Regla de diseño**: los workflows (`wf-`) son el punto de entrada del usuario y contienen las instrucciones de ejecución. Los knowledge (`kb-`) nunca se invocan directamente — solo se cargan como contexto del agente. Solo el agente worker (L2) razona y genera contenido.

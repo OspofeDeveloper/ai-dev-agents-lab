@@ -1,4 +1,4 @@
-# Test 01 — `prepare-spec analyze`
+# Test 01 — `wf-spec-analyze`
 
 **Propósito del workflow:** Analizar un documento de requisitos (PRD), detectar gaps de información y elementos de contaminación técnica, y producir un informe estructurado. Es el punto de entrada obligatorio antes de generar cualquier spec.
 
@@ -7,12 +7,12 @@
 ## Prompt de activación
 
 ```
-/prepare-spec analyze sdd/prd-hogar-sad.md
+/wf-spec-analyze sdd/prd-hogar-sad.md
 ```
 
 Variante con ruta relativa al proyecto:
 ```
-/prepare-spec analyze prd-hogar-sad.md
+/wf-spec-analyze prd-hogar-sad.md
 ```
 
 ---
@@ -20,11 +20,10 @@ Variante con ruta relativa al proyecto:
 ## Flujo esperado paso a paso
 
 ### Paso 1 — El orquestador L1 parsea el comando
-**Actor:** skill `prepare-spec` (L1)
-**Acción:** Lee el argumento `analyze` y el path del documento.
+**Actor:** skill `wf-spec-analyze` (L1)
+**Acción:** Lee el path del documento.
 **Verifica precondiciones:**
 - El archivo `prd-hogar-sad.md` existe
-- El modo `analyze` es reconocido
 **NO hace:** análisis, razonamiento ni escritura de contenido
 
 **Señal de correcto:** El agente confirma que va a lanzar un subagente sin hacer análisis él mismo.
@@ -32,7 +31,7 @@ Variante con ruta relativa al proyecto:
 ---
 
 ### Paso 2 — El orquestador lanza el subagente `sdd-analyst`
-**Actor:** skill `prepare-spec` (L1)
+**Actor:** skill `wf-spec-analyze` (L1)
 **Acción:** Invoca `Agent(subagent_type="sdd-analyst")` con el siguiente payload:
 ```
 modo: analyze
@@ -49,9 +48,9 @@ documento: <contenido de prd-hogar-sad.md>
 ### Paso 3 — El subagente `sdd-analyst` enruta al workflow correcto
 **Actor:** agente `sdd-analyst` (L2)
 **Acción:** Lee el `modo: analyze` y carga como contexto:
-- Knowledge `spec-expert` — reglas de los 8 elementos SDD
-- Knowledge `gap-conventions` — formatos de IDs, severidades, marcadores
-- Workflow `spec-analyze` — instrucciones paso a paso para este modo
+- Knowledge `kb-spec-expert` — reglas de los 8 elementos SDD
+- Knowledge `kb-gap-conventions` — formatos de IDs, severidades, marcadores
+- Workflow `wf-spec-analyze` — instrucciones paso a paso para este modo
 
 **NO hace:** decide por sí mismo qué analizar — sigue el workflow
 
@@ -59,8 +58,8 @@ documento: <contenido de prd-hogar-sad.md>
 
 ---
 
-### Paso 4 — El subagente ejecuta el workflow `spec-analyze`
-**Actor:** agente `sdd-analyst` (L2), guiado por el workflow `spec-analyze` (L3)
+### Paso 4 — El subagente ejecuta el workflow `wf-spec-analyze`
+**Actor:** agente `sdd-analyst` (L2), guiado por el workflow `wf-spec-analyze` (L3)
 **Acciones en orden:**
 1. Lee el documento PRD completo
 2. Para cada uno de los 8 elementos SDD, evalúa si está presente o ausente
@@ -85,7 +84,7 @@ documento: <contenido de prd-hogar-sad.md>
 - Preguntas al usuario para gaps CRÍTICO
 - Asunciones propuestas para gaps INFORMATIVO
 
-**Señal de correcto:** El archivo existe, los gaps CRÍTICO tienen `_(pendiente)_`, la estructura sigue el template de `spec-analyze/references/output_template.md`.
+**Señal de correcto:** El archivo existe, los gaps CRÍTICO tienen `_(pendiente)_`, la estructura sigue el template de `wf-spec-analyze/references/output_template.md`.
 
 ---
 

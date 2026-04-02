@@ -1,4 +1,4 @@
-# Test 05 — `decompose-spec`
+# Test 05 — `wf-spec-decompose`
 
 **Propósito del workflow:** Partir un spec monolítico (`prd_spec.md`) en specs por feature, identificar shared models y sus owners, y detectar conflictos entre features. Es el segundo paso tras `finalize`.
 
@@ -7,7 +7,7 @@
 ## Prompt de activación
 
 ```
-/decompose-spec sdd/prd_spec.md
+/wf-spec-decompose sdd/prd_spec.md
 ```
 
 ---
@@ -15,7 +15,7 @@
 ## Flujo esperado paso a paso
 
 ### Paso 1 — El orquestador L1 parsea el comando
-**Actor:** skill `decompose-spec` (L1)
+**Actor:** skill `wf-spec-decompose` (L1)
 **Acción:** Lee el path del spec monolítico.
 **Verifica precondiciones:**
 - El archivo existe
@@ -27,7 +27,7 @@
 ---
 
 ### Paso 2 — El orquestador lanza el subagente `sdd-analyst`
-**Actor:** skill `decompose-spec` (L1)
+**Actor:** skill `wf-spec-decompose` (L1)
 **Acción:** Invoca `Agent(subagent_type="sdd-analyst")` con:
 ```
 modo: decompose
@@ -40,20 +40,20 @@ output_dir: <directorio donde está el spec>
 ### Paso 3 — El subagente `sdd-analyst` enruta al workflow correcto
 **Actor:** agente `sdd-analyst` (L2)
 **Carga como contexto:**
-- Knowledge `spec-expert` — para validar que cada spec de feature sigue los 8 elementos
-- Knowledge `decompose-expert` — criterios de feature válida, reglas de shared models, ownership
-- Knowledge `conflict-expert` — para detectar conflictos durante la partición
-- Workflow `spec-decompose` — instrucciones paso a paso
+- Knowledge `kb-spec-expert` — para validar que cada spec de feature sigue los 8 elementos
+- Knowledge `kb-decompose-expert` — criterios de feature válida, reglas de shared models, ownership
+- Knowledge `kb-conflict-expert` — para detectar conflictos durante la partición
+- Workflow `wf-spec-decompose` — instrucciones paso a paso
 
 ---
 
-### Paso 4 — El subagente ejecuta el workflow `spec-decompose`
-**Actor:** agente `sdd-analyst` (L2), guiado por `spec-decompose` (L3)
+### Paso 4 — El subagente ejecuta el workflow `wf-spec-decompose`
+**Actor:** agente `sdd-analyst` (L2), guiado por `wf-spec-decompose` (L3)
 **Acciones en orden:**
 
 **4a. Identificar features:**
 - Agrupa HUs, Journeys y CAs por cohesión funcional (no por estructura técnica)
-- Verifica que cada feature candidata cumple los 3 criterios del decompose-expert:
+- Verifica que cada feature candidata cumple los 3 criterios del kb-decompose-expert:
   1. Tiene al menos 1 Journey propio que no depende de otra feature
   2. Tiene mínimo 3 CAs propios
   3. Tiene actor claro
@@ -82,7 +82,7 @@ output_dir: <directorio donde está el spec>
 - `features/<nombre>/README.md` con visión general de la feature
 
 **4f. Ejecutar check de conflictos automático:**
-- Detecta conflictos entre features según las 5 reglas del conflict-expert
+- Detecta conflictos entre features según las 5 reglas del kb-conflict-expert
 - Si hay conflictos: genera `_conflict_report.md` en el directorio raíz
 - Si no hay conflictos: lo indica en la respuesta inline (no genera el archivo)
 
@@ -115,7 +115,7 @@ _conflict_report.md   (solo si hay conflictos)
 | Archivos generados | `prd_features.md` + `features/X/X_spec.md` + `features/X/README.md` × N |
 | Conflictos | `_conflict_report.md` si los hay |
 | Bloqueo | No bloquea — el conflict report es informativo |
-| Siguiente paso | `/prepare-plan features/X/X_spec.md` para cada feature |
+| Siguiente paso | `/wf-prepare-plan features/X/X_spec.md` para cada feature |
 
 ---
 

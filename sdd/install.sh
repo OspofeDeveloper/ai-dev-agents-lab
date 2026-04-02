@@ -26,10 +26,10 @@ copy_template() {
   echo "  ✓ ${dst#"$SCRIPT_DIR/"}"
 }
 
-copy_template "feature_spec_template.md"   "$SCRIPT_DIR/spec/skills/spec-decompose/references"
-copy_template "feature_readme_template.md" "$SCRIPT_DIR/spec/skills/spec-decompose/references"
-copy_template "feature_spec_template.md"   "$SCRIPT_DIR/spec/skills/spec-fast-track/references"
-copy_template "feature_readme_template.md" "$SCRIPT_DIR/spec/skills/spec-fast-track/references"
+copy_template "feature_spec_template.md"   "$SCRIPT_DIR/spec/skills/wf-spec-decompose/references"
+copy_template "feature_readme_template.md" "$SCRIPT_DIR/spec/skills/wf-spec-decompose/references"
+copy_template "feature_spec_template.md"   "$SCRIPT_DIR/spec/skills/wf-spec-fast-track/references"
+copy_template "feature_readme_template.md" "$SCRIPT_DIR/spec/skills/wf-spec-fast-track/references"
 
 # ── 2. Instalar agentes ────────────────────────────────────────────────────
 
@@ -46,6 +46,8 @@ install_agent() {
 }
 
 install_agent "$SCRIPT_DIR/spec/agents/sdd-analyst.md"
+install_agent "$SCRIPT_DIR/plan/agents/plan-architect.md"
+install_agent "$SCRIPT_DIR/tasks/agents/task-generator.md"
 
 # ── 3. Instalar skills ─────────────────────────────────────────────────────
 
@@ -68,8 +70,18 @@ install_skill() {
   echo "  ✓ skills/$name/"
 }
 
-# Instalar todos los skills de spec (estructura plana)
+# Instalar todos los skills de spec
 for skill_dir in "$SCRIPT_DIR/spec/skills"/*/; do
+  install_skill "$skill_dir"
+done
+
+# Instalar todos los skills de plan
+for skill_dir in "$SCRIPT_DIR/plan/skills"/*/; do
+  install_skill "$skill_dir"
+done
+
+# Instalar todos los skills de tasks
+for skill_dir in "$SCRIPT_DIR/tasks/skills"/*/; do
   install_skill "$skill_dir"
 done
 

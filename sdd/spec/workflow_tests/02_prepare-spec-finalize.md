@@ -1,4 +1,4 @@
-# Test 02 — `prepare-spec finalize`
+# Test 02 — `wf-spec-finalize`
 
 **Propósito del workflow:** Generar el spec monolítico limpio con los 8 elementos SDD a partir del PRD original (y opcionalmente del `prd_analysis.md` previo con gaps ya respondidos). Es el segundo paso obligatorio tras `analyze`.
 
@@ -7,7 +7,7 @@
 ## Prompt de activación
 
 ```
-/prepare-spec finalize sdd/prd-hogar-sad.md
+/wf-spec-finalize sdd/prd-hogar-sad.md
 ```
 
 Si existe un `prd_analysis.md` en el mismo directorio, el agente debe detectarlo y usarlo automáticamente.
@@ -17,8 +17,8 @@ Si existe un `prd_analysis.md` en el mismo directorio, el agente debe detectarlo
 ## Flujo esperado paso a paso
 
 ### Paso 1 — El orquestador L1 parsea el comando
-**Actor:** skill `prepare-spec` (L1)
-**Acción:** Lee `finalize` y el path del PRD.
+**Actor:** skill `wf-spec-finalize` (L1)
+**Acción:** Lee el path del PRD.
 **Verifica precondiciones:**
 - El archivo PRD existe
 - Busca si existe `prd_analysis.md` en el mismo directorio
@@ -30,7 +30,7 @@ Si existe un `prd_analysis.md` en el mismo directorio, el agente debe detectarlo
 ---
 
 ### Paso 2 — El orquestador lanza el subagente `sdd-analyst`
-**Actor:** skill `prepare-spec` (L1)
+**Actor:** skill `wf-spec-finalize` (L1)
 **Acción:** Invoca `Agent(subagent_type="sdd-analyst")` con:
 ```
 modo: finalize
@@ -45,14 +45,14 @@ analysis: <contenido de prd_analysis.md, si existe>
 ### Paso 3 — El subagente `sdd-analyst` enruta al workflow correcto
 **Actor:** agente `sdd-analyst` (L2)
 **Carga como contexto:**
-- Knowledge `spec-expert` — definición y reglas de los 8 elementos SDD
-- Knowledge `gap-conventions` — cómo manejar gaps INFORMATIVO que aún están sin responder
-- Workflow `spec-finalize` — instrucciones paso a paso
+- Knowledge `kb-spec-expert` — definición y reglas de los 8 elementos SDD
+- Knowledge `kb-gap-conventions` — cómo manejar gaps INFORMATIVO que aún están sin responder
+- Workflow `wf-spec-finalize` — instrucciones paso a paso
 
 ---
 
-### Paso 4 — El subagente ejecuta el workflow `spec-finalize`
-**Actor:** agente `sdd-analyst` (L2), guiado por `spec-finalize` (L3)
+### Paso 4 — El subagente ejecuta el workflow `wf-spec-finalize`
+**Actor:** agente `sdd-analyst` (L2), guiado por `wf-spec-finalize` (L3)
 **Acciones en orden:**
 1. Lee el PRD y el analysis (si existe)
 2. Para cada uno de los 8 elementos, genera el contenido a partir del PRD:
@@ -93,7 +93,7 @@ analysis: <contenido de prd_analysis.md, si existe>
 | Archivo generado | `prd_spec.md` |
 | Artefacto | Spec monolítico válido con 8 elementos SDD |
 | Bloqueo | Si hay gaps CRÍTICO sin resolver en el analysis |
-| Siguiente paso | `/decompose-spec` o `/prepare-spec validate` |
+| Siguiente paso | `/wf-spec-decompose` o `/wf-spec-validate` |
 
 ---
 

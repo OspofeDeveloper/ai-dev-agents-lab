@@ -1,6 +1,6 @@
-# Test 06 — `check-conflicts`
+# Test 06 — `wf-spec-conflict`
 
-**Propósito del workflow:** Detectar conflictos entre specs de features ya existentes (HUs duplicadas, CAs contradictorios, scope overlap, shared models inconsistentes, fuera de alcance contradictorio). Puede ejecutarse tras `decompose-spec` o de forma independiente.
+**Propósito del workflow:** Detectar conflictos entre specs de features ya existentes (HUs duplicadas, CAs contradictorios, scope overlap, shared models inconsistentes, fuera de alcance contradictorio). Puede ejecutarse tras `wf-spec-decompose` o de forma independiente.
 
 ---
 
@@ -8,12 +8,12 @@
 
 Revisar conflictos de una feature concreta contra el resto:
 ```
-/check-conflicts sdd/features/hogar_spec.md --features-dir sdd/features/
+/wf-spec-conflict sdd/features/hogar_spec.md --features-dir sdd/features/
 ```
 
 Revisar todas las features entre sí:
 ```
-/check-conflicts --features-dir sdd/features/
+/wf-spec-conflict --features-dir sdd/features/
 ```
 
 ---
@@ -21,7 +21,7 @@ Revisar todas las features entre sí:
 ## Flujo esperado paso a paso
 
 ### Paso 1 — El orquestador L1 parsea el comando
-**Actor:** skill `check-conflicts` (L1)
+**Actor:** skill `wf-spec-conflict` (L1)
 **Acción:** Determina el scope del análisis:
 - Si se pasa un spec concreto: ese spec vs todos los demás en `--features-dir`
 - Si solo se pasa `--features-dir`: todas las features entre sí (N×N comparaciones)
@@ -34,7 +34,7 @@ Revisar todas las features entre sí:
 ---
 
 ### Paso 2 — El orquestador lanza el subagente `sdd-analyst`
-**Actor:** skill `check-conflicts` (L1)
+**Actor:** skill `wf-spec-conflict` (L1)
 **Acción:** Invoca `Agent(subagent_type="sdd-analyst")` con:
 ```
 modo: conflict
@@ -46,14 +46,14 @@ specs: [<contenido spec A>, <contenido spec B>, ...]
 ### Paso 3 — El subagente `sdd-analyst` enruta al workflow correcto
 **Actor:** agente `sdd-analyst` (L2)
 **Carga como contexto:**
-- Knowledge `spec-expert` — para entender la estructura de los specs
-- Knowledge `conflict-expert` — las 5 reglas de detección + severidades
-- Workflow `spec-conflict` — instrucciones paso a paso
+- Knowledge `kb-spec-expert` — para entender la estructura de los specs
+- Knowledge `kb-conflict-expert` — las 5 reglas de detección + severidades
+- Workflow `wf-spec-conflict` — instrucciones paso a paso
 
 ---
 
-### Paso 4 — El subagente ejecuta el workflow `spec-conflict`
-**Actor:** agente `sdd-analyst` (L2), guiado por `spec-conflict` (L3)
+### Paso 4 — El subagente ejecuta el workflow `wf-spec-conflict`
+**Actor:** agente `sdd-analyst` (L2), guiado por `wf-spec-conflict` (L3)
 **Acciones en orden:**
 
 Para cada par de features (A, B):

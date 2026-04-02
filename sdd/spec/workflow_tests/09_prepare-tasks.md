@@ -1,4 +1,4 @@
-# Test 09 — `prepare-tasks`
+# Test 09 — `wf-prepare-tasks`
 
 **Propósito del workflow:** Descomponer un plan técnico KMM (`*_plan.md`) en tasks atómicas, ordenadas, con dependencias explícitas y asignadas a skills de implementación. Es el último paso antes de la implementación.
 
@@ -7,7 +7,7 @@
 ## Prompt de activación
 
 ```
-/prepare-tasks generate sdd/features/hogar/hogar_plan.md
+/wf-prepare-tasks generate sdd/features/hogar/hogar_plan.md
 ```
 
 ---
@@ -15,7 +15,7 @@
 ## Flujo esperado paso a paso
 
 ### Paso 1 — El orquestador L1 parsea el comando
-**Actor:** skill `prepare-tasks` (L1)
+**Actor:** skill `wf-prepare-tasks` (L1)
 **Acción:** Lee `generate` y el path del plan.
 **Verifica precondiciones:**
 - El archivo existe y es un `*_plan.md`
@@ -26,7 +26,7 @@
 ---
 
 ### Paso 2 — El orquestador lanza el subagente `task-generator`
-**Actor:** skill `prepare-tasks` (L1)
+**Actor:** skill `wf-prepare-tasks` (L1)
 **Acción:** Invoca `Agent(subagent_type="task-generator")` con:
 ```
 plan: <contenido del plan>
@@ -40,14 +40,14 @@ feature_name: hogar
 ### Paso 3 — El subagente `task-generator` carga su contexto
 **Actor:** agente `task-generator` (L2)
 **Carga como contexto:**
-- Knowledge `plan-expert` — para entender la estructura del plan que va a descomponer
-- Knowledge `tasks-expert` — formato obligatorio de task, orden canónico, Prueba de Independencia
-- Referencias de `tasks-expert`: `task_sizing.md` y `kmm_task_templates.md`
+- Knowledge `kb-plan-expert` — para entender la estructura del plan que va a descomponer
+- Knowledge `kb-tasks-expert` — formato obligatorio de task, orden canónico, Prueba de Independencia
+- Referencias de `kb-tasks-expert`: `task_sizing.md` y `kmm_task_templates.md`
 
 ---
 
 ### Paso 4 — El subagente ejecuta la generación de tasks
-**Actor:** agente `task-generator` (L2), guiado por `tasks-expert` (L3)
+**Actor:** agente `task-generator` (L2), guiado por `kb-tasks-expert` (L3)
 **Acciones en orden:**
 
 **4a. Respetar el orden canónico KMM:**

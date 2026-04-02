@@ -1,4 +1,4 @@
-# Test 08 — `prepare-plan`
+# Test 08 — `wf-prepare-plan`
 
 **Propósito del workflow:** Traducir un spec de feature (autocontenido, con los 8 elementos SDD) a un plan técnico KMM con Clean Architecture. Es el primer paso que introduce decisiones técnicas en el pipeline.
 
@@ -7,7 +7,7 @@
 ## Prompt de activación
 
 ```
-/prepare-plan generate sdd/features/hogar/hogar_spec.md
+/wf-prepare-plan generate sdd/features/hogar/hogar_spec.md
 ```
 
 ---
@@ -15,7 +15,7 @@
 ## Flujo esperado paso a paso
 
 ### Paso 1 — El orquestador L1 parsea el comando
-**Actor:** skill `prepare-plan` (L1)
+**Actor:** skill `wf-prepare-plan` (L1)
 **Acción:** Lee `generate` y el path del spec de feature.
 **Verifica precondiciones:**
 - El archivo existe y es un `*_spec.md`
@@ -27,7 +27,7 @@
 ---
 
 ### Paso 2 — El orquestador lanza el subagente `plan-architect`
-**Actor:** skill `prepare-plan` (L1)
+**Actor:** skill `wf-prepare-plan` (L1)
 **Acción:** Invoca `Agent(subagent_type="plan-architect")` con:
 ```
 spec: <contenido del spec de feature>
@@ -46,14 +46,14 @@ feature_name: hogar
 ### Paso 3 — El subagente `plan-architect` carga su contexto
 **Actor:** agente `plan-architect` (L2)
 **Carga como contexto:**
-- Knowledge `spec-expert` — para hacer la Prueba de Trazabilidad (cada componente debe tener un CA que lo justifique)
-- Knowledge `plan-expert` — los 5 elementos obligatorios del Plan + reglas KMM
-- Referencias de `plan-expert`: `kmm_architecture.md` y `plan_structure.md`
+- Knowledge `kb-spec-expert` — para hacer la Prueba de Trazabilidad (cada componente debe tener un CA que lo justifique)
+- Knowledge `kb-plan-expert` — los 5 elementos obligatorios del Plan + reglas KMM
+- Referencias de `kb-plan-expert`: `kmm_architecture.md` y `plan_structure.md`
 
 ---
 
 ### Paso 4 — El subagente genera el plan
-**Actor:** agente `plan-architect` (L2), guiado por `plan-expert` (L3)
+**Actor:** agente `plan-architect` (L2), guiado por `kb-plan-expert` (L3)
 **Acciones en orden:**
 
 **4a. Declarar Stack Técnico:**
@@ -144,7 +144,7 @@ feature_name: hogar
 | Archivo generado | `features/hogar/hogar_plan.md` |
 | Bloqueo | Si hay TECH_GAPs: lista los gaps y no produce el plan |
 | Modelo usado | `claude-opus-4-6` (verificar en logs si es posible) |
-| Siguiente paso | `/prepare-tasks generate features/hogar/hogar_plan.md` |
+| Siguiente paso | `/wf-prepare-tasks generate features/hogar/hogar_plan.md` |
 
 ---
 

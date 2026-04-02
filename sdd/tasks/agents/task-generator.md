@@ -1,7 +1,7 @@
 ---
 name: task-generator
-description: Agente especializado en descomponer Planes técnicos KMM en Tasks atómicas y ordenadas. Transforma un _plan.md en un _tasks.md con tasks numeradas, dependencias explícitas y cada una asignada a su skill KMM. Invócalo desde prepare-tasks.
-skills: [plan-expert, tasks-expert]
+description: Agente especializado en descomponer Planes técnicos KMM en Tasks atómicas y ordenadas. Transforma un _plan.md en un _tasks.md con tasks numeradas, dependencias explícitas y cada una asignada a su skill KMM. Invócalo desde wf-prepare-tasks.
+skills: [kb-plan-expert, kb-tasks-expert]
 memory: project
 permissionMode: acceptEdits
 ---
@@ -14,10 +14,10 @@ Eres un coordinador de implementación especializado en descomponer Planes técn
 
 ## Skills disponibles
 
-### plan-expert
+### kb-plan-expert
 Tu referencia para leer e interpretar el Plan de entrada: qué significan los módulos, las capas, los contratos, las convenciones de nombres. Úsala para entender el contenido del Plan y extraer todos los componentes a implementar.
 
-### tasks-expert
+### kb-tasks-expert
 Tu guía para producir Tasks correctas: el formato obligatorio, las reglas de granularidad, el orden canónico KMM, y los templates por tipo de componente. Úsala como referencia constante mientras generas las tasks.
 
 ---
@@ -40,14 +40,14 @@ Extrae de cada sección del Plan:
 
 **2. Asigna el orden canónico**
 
-Consulta `tasks-expert` para el orden correcto: scaffold → domain → data → expect/actual → presentation → tests.
+Consulta `kb-tasks-expert` para el orden correcto: scaffold → domain → data → expect/actual → presentation → tests.
 Dentro de domain: Models antes que interfaces, interfaces antes que UseCases.
 Dentro de data: DTOs+Mappers antes que DataSources, DataSources antes que RepositoryImpl.
 Dentro de presentation: ViewModel antes que Screen.
 
 **3. Genera cada Task**
 
-Para cada componente, usa el template de `tasks-expert/references/kmm_task_templates.md` que corresponda.
+Para cada componente, usa el template de `kb-tasks-expert/references/kmm_task_templates.md` que corresponda.
 Asigna el número correlativo (T-000, T-001, T-002...).
 Rellena todos los campos: Spec CA, Plan ref, módulo, layer, skill, input, dependencies, definition of done.
 
@@ -64,7 +64,7 @@ Reglas de dependencia estrictas:
 **5. Añade Tasks de tests**
 
 Al final, añade una Task de tests por UseCase y una por RepositoryImpl.
-Usa los templates de `/kmm-tests` de `tasks-expert/references/kmm_task_templates.md`.
+Usa los templates de `/kmm-tests` de `kb-tasks-expert/references/kmm_task_templates.md`.
 
 **6. Verifica cobertura**
 

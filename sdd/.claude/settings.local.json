@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -v \"^/$\")",
+      "Bash(xargs -I {} basename {})",
+      "Bash(grep ^name::*)",
+      "Bash(sed -i '' 's/name: conflict-expert/name: kb-conflict-expert/' spec/skills/kb-conflict-expert/SKILL.md)",
+      "Bash(sed -i '' 's/name: decompose-expert/name: kb-decompose-expert/' spec/skills/kb-decompose-expert/SKILL.md)",
+      "Bash(sed -i '' 's/name: gap-conventions/name: kb-gap-conventions/' spec/skills/kb-gap-conventions/SKILL.md)",
+      "Bash(sed -i '' 's/name: plan-expert/name: kb-plan-expert/' plan/skills/kb-plan-expert/SKILL.md)",
+      "Bash(sed -i '' 's/name: tasks-expert/name: kb-tasks-expert/' tasks/skills/kb-tasks-expert/SKILL.md)",
+      "Bash(grep:*)",
+      "Bash(sed -i '' 's|`/spec-analyze|`/wf-spec-analyze|g' spec/skills/wf-spec-analyze/SKILL.md)",
+      "Bash(sed -i '' 's|`/spec-finalize|`/wf-spec-finalize|g' spec/skills/wf-spec-finalize/SKILL.md)",
+      "Bash(sed -i '' 's|`/spec-validate|`/wf-spec-validate|g' spec/skills/wf-spec-validate/SKILL.md)",
+      "Bash(sed -i '' 's|`/spec-fast-track|`/wf-spec-fast-track|g' spec/skills/wf-spec-fast-track/SKILL.md)",
+      "Bash(sed -i '' 's|`/spec-decompose|`/wf-spec-decompose|g' spec/skills/wf-spec-decompose/SKILL.md)"
+    ]
+  }
+}

@@ -1,4 +1,4 @@
-# Test 07 — `prepare-delta`
+# Test 07 — `wf-spec-delta`
 
 **Propósito del workflow:** Evolucionar un spec existente de forma incremental cuando llegan nuevos requisitos. Analiza qué cambia (HUs/CAs añadidos, modificados o eliminados), detecta gaps de la nueva info, y actualiza el spec sin destruir el trabajo previo. Tiene dos sub-modos: `analyze` y `apply`.
 
@@ -8,12 +8,12 @@
 
 **Sub-modo 1: Analizar qué cambia**
 ```
-/prepare-delta analyze sdd/features/hogar/hogar_spec.md --new-reqs sdd/nuevos-requisitos.md
+/wf-spec-delta analyze sdd/features/hogar/hogar_spec.md --new-reqs sdd/nuevos-requisitos.md
 ```
 
 **Sub-modo 2: Aplicar el delta al spec (tras responder gaps)**
 ```
-/prepare-delta apply sdd/features/hogar/hogar_spec.md sdd/features/hogar/hogar_delta_analysis.md
+/wf-spec-delta apply sdd/features/hogar/hogar_spec.md sdd/features/hogar/hogar_delta_analysis.md
 ```
 
 ---
@@ -21,7 +21,7 @@
 ## Flujo esperado — Sub-modo `analyze`
 
 ### Paso 1 — El orquestador L1 parsea el comando
-**Actor:** skill `prepare-delta` (L1)
+**Actor:** skill `wf-spec-delta` (L1)
 **Acción:** Lee `analyze`, el spec existente y el documento de nuevos requisitos.
 **Verifica precondiciones:**
 - El spec existe
@@ -31,7 +31,7 @@
 ---
 
 ### Paso 2 — El orquestador lanza el subagente `sdd-analyst`
-**Actor:** skill `prepare-delta` (L1)
+**Actor:** skill `wf-spec-delta` (L1)
 **Acción:** Invoca `Agent(subagent_type="sdd-analyst")` con:
 ```
 modo: delta
@@ -45,15 +45,15 @@ nuevos_requisitos: <contenido del documento de nuevos requisitos>
 ### Paso 3 — El subagente enruta y carga contexto
 **Actor:** agente `sdd-analyst` (L2)
 **Carga como contexto:**
-- Knowledge `spec-expert` — para entender los 8 elementos y la Prueba de Pureza
-- Knowledge `gap-conventions` — para usar IDs `[D-XXX]` (delta) en vez de `[P-XXX]`
-- Knowledge `conflict-expert` — para detectar si el delta introduce contradicciones con el spec actual
-- Workflow `spec-delta` — instrucciones paso a paso
+- Knowledge `kb-spec-expert` — para entender los 8 elementos y la Prueba de Pureza
+- Knowledge `kb-gap-conventions` — para usar IDs `[D-XXX]` (delta) en vez de `[P-XXX]`
+- Knowledge `kb-conflict-expert` — para detectar si el delta introduce contradicciones con el spec actual
+- Workflow `wf-spec-delta` — instrucciones paso a paso
 
 ---
 
-### Paso 4 — El subagente ejecuta el workflow `spec-delta` (analyze)
-**Actor:** agente `sdd-analyst` (L2), guiado por `spec-delta` (L3)
+### Paso 4 — El subagente ejecuta el workflow `wf-spec-delta` (analyze)
+**Actor:** agente `sdd-analyst` (L2), guiado por `wf-spec-delta` (L3)
 **Acciones en orden:**
 1. Lee el spec actual y los nuevos requisitos en paralelo
 2. Clasifica cada elemento nuevo:
@@ -62,7 +62,7 @@ nuevos_requisitos: <contenido del documento de nuevos requisitos>
    - **ELIMINAR:** HU/CA que los nuevos requisitos eliminan explícitamente
 3. Aplica Prueba de Pureza a los nuevos requisitos (elimina contaminación técnica)
 4. Detecta gaps en los nuevos requisitos (usa IDs `[D-XXX]`, no `[P-XXX]`)
-5. Detecta si el delta introduce contradicciones con el spec actual (conflict-expert)
+5. Detecta si el delta introduce contradicciones con el spec actual (kb-conflict-expert)
 6. Si hay gaps `[CRÍTICO]`: los lista y bloquea el `apply`
 
 **Señal de correcto:** Los IDs del delta usan prefijo `[D-XXX]` diferenciado de los IDs del spec original `[P-XXX]`.
@@ -101,7 +101,7 @@ Versión actual spec: 1.0
 ## Flujo esperado — Sub-modo `apply`
 
 ### Paso 1 — El orquestador verifica precondiciones del apply
-**Actor:** skill `prepare-delta` (L1)
+**Actor:** skill `wf-spec-delta` (L1)
 **Verifica:**
 - El spec existe
 - El delta_analysis existe
@@ -112,7 +112,7 @@ Versión actual spec: 1.0
 ---
 
 ### Paso 2 — El orquestador lanza el subagente
-**Actor:** skill `prepare-delta` (L1)
+**Actor:** skill `wf-spec-delta` (L1)
 **Acción:** Invoca `Agent(subagent_type="sdd-analyst")` con:
 ```
 modo: delta
