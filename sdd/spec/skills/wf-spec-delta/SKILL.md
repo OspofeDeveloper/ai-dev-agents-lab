@@ -146,6 +146,30 @@ Si se aplicaron asunciones de gaps `[INFORMATIVO]`, añadir antes del Changelog:
 - **[D-XXX]**: [descripción de la asunción aplicada por defecto]
 ```
 
+### Paso 6B.5: Actualizar `_traceability.md` (si existe)
+
+Busca `_traceability.md` en el directorio base del proyecto:
+- Si el spec está en `features/<nombre>/`: busca dos niveles arriba (ej: `features/auth/auth_spec.md` → busca en el directorio que contiene la carpeta `features/`)
+- Si el spec es monolítico: busca en el mismo directorio
+
+**Si existe el archivo:**
+
+Para cada tipo de cambio aplicado en este delta:
+
+- **HUs AÑADIDAS**: añade una fila nueva por cada HU con:
+  - RF inferido del delta analysis (busca el RF de origen mencionado en el delta o en el documento de nuevos requisitos)
+  - HU con su nuevo ID y título
+  - Feature: nombre del feature spec actual
+  - Estado: `activo`
+- **HUs MODIFICADAS**: actualiza el Título HU en la fila correspondiente; el ID y el RF no cambian
+- **HUs ELIMINADAS**: cambia el Estado de la fila a `eliminado vX.Y` (usando la nueva versión del spec); **NO eliminar la fila** — se conserva para auditoría
+
+Añade una fila al Historial de cambios con la nueva versión del spec, la fecha de hoy, tipo "delta apply" y una descripción breve del conjunto de cambios.
+
+**Si no existe el archivo:** omite este paso silenciosamente — no bloquea ni avisa.
+
+---
+
 ### Paso 7B: Aplicar la Prueba de Pureza al spec resultante
 
 Consulta `kb-spec-expert` y verifica que el spec final no tiene contaminación técnica. Si la hay, señálala en el output.
@@ -187,6 +211,7 @@ Este paso es **informativo y no bloquea** el flujo.
 - Path del spec actualizado
 - Nueva versión del spec (ej: v1.0 → v1.1)
 - Resumen de cambios integrados: HUs y CAs añadidos/modificados/eliminados
+- Estado de la trazabilidad: si se actualizó el `_traceability.md`, indicar: "✓ Trazabilidad actualizada."
 - Resultado de la verificación de conflictos:
   - Sin conflictos o sin `_features.md`: omitir o indicar brevemente
   - Con conflictos: "⚠ Se detectaron conflictos. Revisa `<path>_conflict_report.md` antes de continuar con `/wf-prepare-plan`."

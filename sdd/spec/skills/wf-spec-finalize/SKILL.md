@@ -84,11 +84,61 @@ Escribe el Spec generado en ese path.
 
 ---
 
+## Paso 7.5: Generar el documento de trazabilidad
+
+Genera el archivo `_traceability.md` que mapea cada RF del documento original a las HUs que lo implementan.
+
+**Por qué ahora:** En este momento tienes en contexto tanto el documento de origen (con sus RFs o secciones funcionales) como el spec recién generado (con sus HUs). Es el único punto del pipeline donde se puede establecer la procedencia RF→HU antes de que las HUs se distribuyan en features tras el decompose.
+
+### Extraer las HUs del spec generado
+
+Lee el spec que acabas de escribir y lista todas las HUs con su ID y título.
+
+### Mapear cada HU a su RF de origen
+
+Usando el documento de requisitos original (ya leído en el Paso 3), identifica qué RF o sección funcional motivó cada HU:
+
+- **Si el PRD tiene RFs numerados** (ej: "RF-4 Control Horario"): asigna directamente el ID del RF.
+- **Si el PRD tiene secciones funcionales sin numeración** (ej: "## Control Horario"): crea IDs RF-001, RF-002… basándose en los títulos de sección y añade al final del documento la nota: `> Los IDs de RF son inferidos de las secciones funcionales del PRD — el documento original no los numera explícitamente.`
+- **Si el PRD no tiene estructura clara**: agrupa las HUs por tema funcional, crea IDs RF sintéticos y añade la misma nota.
+
+### Construir el documento de trazabilidad
+
+Consulta `references/traceability_template.md` para la estructura exacta.
+
+- Columna Feature = `—` para todas las HUs (se completará en `wf-spec-decompose`)
+- Estado = `pendiente-decompose` para todas las HUs
+- Genera también la tabla de Cobertura por RF (agrupando HUs por RF)
+- Historial: una fila inicial con tipo "inicial" y fecha de hoy
+
+**Path de salida:** mismo directorio que el spec + nombre base + `_traceability.md`
+- Ejemplo: `docs/prd.md` → `docs/prd_traceability.md`
+
+Escribe el archivo.
+
+---
+
 ## Paso 8: Informar al usuario
 
-Tras escribir el archivo, informa:
+Tras escribir los archivos, informa:
 - Path del spec generado
 - Estado de los 8 elementos SDD (cuáles están completos)
 - Si se aplicaron asunciones por defecto: cuántas y en qué secciones
 - Si hay items `[PENDIENTE]` restantes: cuántos y cuáles
+- Path del `_traceability.md` generado y número de HUs trazadas
+- Nota: "La columna Feature quedará vacía hasta que ejecutes `/wf-spec-decompose`"
 - Siguiente paso: "Si editas el spec manualmente, puedes re-validarlo con `/wf-spec-validate <path>_spec.md`"
+
+Añade **siempre** al final del output el siguiente bloque:
+
+---
+**PRD CONGELADO**
+
+El documento `[path_del_prd_original]` queda congelado a partir de este momento.
+No lo modifiques directamente. Para cambios futuros sobre el spec:
+
+  `/wf-spec-delta analyze <path>_spec.md --new-reqs <descripcion_del_cambio.md>`
+
+Los cambios quedarán registrados en el Changelog del spec y en `_traceability.md`.
+
+---

@@ -110,6 +110,22 @@ docs/features/services/services_spec.md
 docs/features/services/README.md
 ```
 
+**Artefacto 3 — Actualizar `_traceability.md`**
+
+Busca `_traceability.md` en el mismo directorio que el spec monolítico
+(ej: `docs/proyecto_spec.md` → busca `docs/proyecto_traceability.md`).
+
+**Si existe:**
+- Para cada HU asignada a una feature:
+  - Actualiza la columna Feature con el nombre de la feature (ej: `authentication`)
+  - Cambia el Estado de `pendiente-decompose` a `activo`
+- Actualiza la tabla de Cobertura por RF completando la columna "Features involucradas" con todos los nombres de feature que contienen HUs de ese RF
+- Añade una fila al Historial de cambios: fecha de hoy, tipo "decompose", descripción "Features asignadas desde wf-spec-decompose"
+- Sobreescribe el archivo con los cambios
+
+**Si no existe:**
+- Emite un aviso no bloqueante al usuario (se incluirá en el Paso 8) y continúa con el resto del decompose
+
 ---
 
 ## Paso 7: Verificación automática de conflictos (no bloqueante)
@@ -128,6 +144,9 @@ Este paso es **informativo y no bloquea** el flujo.
 - Path del `_features.md` generado
 - Lista de features identificadas con sus rutas
 - Tabla de shared models detectados
+- Estado de la trazabilidad:
+  - Si se actualizó el `_traceability.md`: "✓ Trazabilidad actualizada — columna Feature completada para todas las HUs."
+  - Si no existía el `_traceability.md`: "⚠ No se encontró `_traceability.md`. Si quieres trazabilidad RF→HU→Feature, ejecuta `/wf-spec-finalize` con la versión actualizada del skill antes de volver a descomponer."
 - Resultado de la verificación de conflictos:
   - Sin conflictos: "✓ Sin conflictos detectados entre los specs generados."
   - Con conflictos: "⚠ Se detectaron conflictos. Revisa `<path>_conflict_report.md` antes de continuar con `/wf-prepare-plan` en las features afectadas."

@@ -40,14 +40,19 @@ Requisitos/PRD
     ↓ [/wf-spec-analyze]
 _analysis.md → [usuario responde gaps] → [/wf-spec-finalize]
     ↓
-_spec.md → [/wf-spec-decompose]
+_spec.md + _traceability.md (RF→HU generado, Feature pendiente)
+    ↓ ⚠ PRD CONGELADO — cambios futuros via /wf-spec-delta
+[/wf-spec-decompose]
     ↓
 _features.md + features/<nombre>/<nombre>_spec.md
+_traceability.md (RF→HU→Feature completo)
     ↓ [/wf-prepare-plan generate — por feature]
 features/<nombre>/<nombre>_plan.md
     ↓ [/wf-prepare-tasks generate — por feature]
 features/<nombre>/<nombre>_tasks.md
 ```
+
+> Para cambios post-spec: `/wf-spec-delta analyze <spec.md> --new-reqs <cambios.md>`
 
 ## Principio de precondiciones
 

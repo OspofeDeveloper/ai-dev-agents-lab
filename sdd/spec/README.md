@@ -203,9 +203,10 @@ Los knowledge bases son las reglas que el agente consulta durante la ejecución 
 
 ```
 proyecto/
-├── prd.md                                    ← Input — no se modifica
+├── prd.md                                    ← Input — congelado tras /wf-spec-finalize
 ├── prd_analysis.md                           ← /wf-spec-analyze
 ├── prd_spec.md                               ← /wf-spec-finalize
+├── prd_traceability.md                       ← /wf-spec-finalize (actualizado por decompose y delta)
 ├── prd_features.md                           ← /wf-spec-decompose
 ├── _conflict_report.md                       ← /wf-spec-decompose (automático) o /wf-spec-conflict
 └── features/
@@ -228,6 +229,7 @@ El pipeline nunca es completamente automático. Estos son los momentos donde el 
 |---------|-----------|-----------------------|
 | Tras `analyze` | Responder gaps `[CRÍTICO]_(pendiente)_` en `_analysis.md` | Sí — `finalize` no avanza |
 | Tras `analyze` | Responder gaps `[INFORMATIVO]_(pendiente)_` (opcional) | No — se aplican asunciones por defecto |
+| Tras `finalize` | PRD queda congelado — cambios futuros vía `wf-spec-delta` | No — pero editar el PRD genera inconsistencias con el Spec |
 | Tras `delta analyze` | Responder gaps `[CRÍTICO]_(pendiente)_` en `_delta_analysis.md` | Sí — `delta apply` no avanza |
 | Tras `decompose` | Revisar `_features.md` y validar la partición de features | No — pero afecta la calidad del plan |
 | Tras `decompose` | Revisar `_conflict_report.md` si hay conflictos `ALTA` | No — pero pueden propagarse problemas al plan |
