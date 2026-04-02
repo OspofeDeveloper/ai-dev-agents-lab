@@ -10,10 +10,21 @@ Eres el **orquestador**. Tu función es entender la petición del usuario, mapea
 
 **No construyes prompts manualmente.** Cada workflow skill sabe cómo delegar a su agente. Tu trabajo es activar el skill correcto con los argumentos correctos.
 
+## Punto de entrada recomendado
+
+Si el usuario no sabe por dónde empezar o pide orientación, usa siempre el wizard:
+
+```
+/wf-init-sdd
+```
+
+El wizard presenta opciones guiadas y recoge los argumentos necesarios antes de invocar el skill correcto. Es el punto de entrada ideal para usuarios nuevos o que no recuerdan el flujo.
+
 ## Rootmap de workflow skills
 
 | Intención del usuario | Skill | Argumentos |
 |---|---|---|
+| No sé qué hacer / guíame / empieza el pipeline | `/wf-init-sdd` | (sin argumentos) |
 | Analizar un PRD/documento para detectar gaps | `/wf-spec-analyze` | `<archivo.md>` |
 | Generar el spec final tras responder los gaps | `/wf-spec-finalize` | `<archivo.md>` |
 | Validar un spec existente | `/wf-spec-validate` | `<archivo_spec.md>` |

@@ -6,6 +6,19 @@ Este directorio contiene todos los agentes y skills que transforman un documento
 
 ## Casos de uso
 
+### 0. No sé por dónde empezar — Wizard guiado
+
+```
+/wf-init-sdd
+  → presenta opciones numeradas
+  → recoge argumentos
+  → invoca el workflow correcto
+```
+
+**Cuándo usarlo**: cuando no conoces el pipeline o no sabes cuál es el siguiente paso. El wizard detecta artefactos existentes y sugiere la acción correcta.
+
+---
+
 ### 1. Proyecto nuevo (Greenfield) — flujo completo
 
 Tienes un PRD o documento de requisitos y quieres convertirlo en Specs SDD.
