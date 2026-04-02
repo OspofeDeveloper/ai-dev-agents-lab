@@ -75,9 +75,9 @@ Aplica los 3 checks del modo ANALYZE pero enfocados en la capability indicada:
 
 ## Paso 6: Gap handling inline
 
-No genera un `_analysis.md` separado. Consulta `kb-gap-conventions` para el formato de IDs `[P-XXX]`, severidades y marcador `_(pendiente)_`. Los gaps se gestionan directamente en el spec:
+No genera un `_analysis.md` separado. Consulta `kb-gap-conventions` para el formato de IDs `[P-XXX]`, severidades, marcador `_(pendiente)_` y campo `Afecta`. Los gaps se gestionan directamente en el spec:
 
-- **`[CRÍTICO]`**: incluir en una sección `## Items Pendientes` al final del spec generado (ver formato abajo). La presencia de items `[CRÍTICO]` en el spec **bloquea** la ejecución de `/wf-prepare-plan`.
+- **`[CRÍTICO]`**: determina qué HUs afecta (campo `Afecta`). Las HUs afectadas se marcan `[INCOMPLETO]` en el spec (se generan con la información disponible). La presencia de HUs `[INCOMPLETO]` en el spec **bloquea** la ejecución de `/wf-prepare-plan`. Los gaps se documentan en una sección `## Items Pendientes` al final del spec (ver formato abajo).
 - **`[INFORMATIVO]`**: aplicar la asunción más conservadora y documentar en `## Asunciones Aplicadas` al final del spec.
 
 ---
@@ -99,10 +99,11 @@ Produce un `_spec.md` completo con los 8 elementos SDD siguiendo la estructura d
 ```markdown
 ## Items Pendientes
 
-> ⚠️ Este spec tiene gaps **críticos** sin resolver. `/wf-prepare-plan` quedará bloqueado hasta que se resuelvan.
+> ⚠️ Este spec tiene gaps **críticos** sin resolver. Las HUs afectadas están marcadas `[INCOMPLETO]` y `/wf-prepare-plan` quedará bloqueado hasta que se resuelvan.
 > Para resolverlos: edita este spec respondiendo los gaps, luego ejecuta `/wf-spec-validate <path>_spec.md`.
 
 ### [P-001][CRÍTICO] [Título del gap]
+- **Afecta**: [HU-001, HU-003]
 - **Pregunta**: [pregunta concreta]
 - **Respuesta**: [CRÍTICO]_(pendiente)_
 ```

@@ -27,7 +27,7 @@ Este skill es el **Single Source of Truth** para todas las convenciones de gaps 
 
 ### `[CRÍTICO]`
 
-Bloquea la generación del artefacto de la siguiente fase. Aplica cuando el gap impide:
+Marca las HUs afectadas como `[INCOMPLETO]` en el spec si no se responde. El spec se genera igualmente, pero las HUs incompletas no pueden avanzar a plan/tasks. Aplica cuando el gap impide:
 - Definir un CA verificable (GIVEN/WHEN/THEN completo e inequívoco)
 - Identificar el actor principal de un Journey
 - Determinar el estado de éxito de un Journey
@@ -58,6 +58,7 @@ El marcador `_(pendiente)_` se inserta en el campo **"Respuesta"** de cada gap h
 ```markdown
 ### [P-001][CRÍTICO] Título descriptivo del gap
 - **Contexto**: [dónde se detectó el gap en el documento]
+- **Afecta**: [HU-001, HU-003 — lista de HUs que no pueden completarse sin esta respuesta]
 - **Pregunta para el cliente**: [pregunta concreta y específica — sin inventar opciones]
 - **Respuesta**: _(pendiente)_
 
@@ -68,19 +69,40 @@ El marcador `_(pendiente)_` se inserta en el campo **"Respuesta"** de cada gap h
 - **Asunción por defecto**: [qué se aplicará si el cliente no responde]
 ```
 
+> **Nota sobre `Afecta`**: El campo `Afecta` es obligatorio en gaps `[CRÍTICO]` y permite trazar qué HUs quedarán marcadas como `[INCOMPLETO]` si el gap no se responde. No aplica a gaps `[INFORMATIVO]` (estos siempre tienen asunción por defecto).
+
 ---
 
 ## Reglas de bloqueo para orquestadores
 
 Los orquestadores verifican la presencia de marcadores pendientes antes de avanzar al siguiente paso del pipeline:
 
-| Condición en el artefacto | Acción del orquestador |
-|---------------------------|------------------------|
-| Hay `[CRÍTICO]_(pendiente)_` | **Bloquear**: listar los gaps sin respuesta y detener la ejecución |
-| Solo hay `[INFORMATIVO]_(pendiente)_` | **Continuar**: informar al usuario que se aplicarán las asunciones por defecto |
+### En `wf-spec-finalize` (generar spec desde analysis)
+
+| Condición en el `_analysis.md` | Acción del orquestador |
+|--------------------------------|------------------------|
+| Hay `[CRÍTICO]_(pendiente)_` | **Continuar**: informar al usuario qué HUs se marcarán `[INCOMPLETO]` en el spec generado |
+| Solo hay `[INFORMATIVO]_(pendiente)_` | **Continuar**: informar que se aplicarán las asunciones por defecto |
 | No hay `_(pendiente)_` | **Continuar** normalmente |
 
-**Patrón de verificación**: buscar la cadena literal `_(pendiente)_` en el archivo. Es un bloqueo si aparece en la misma sección que un `[CRÍTICO]`.
+CRÍTICO nunca bloquea la generación del spec. Las HUs afectadas por gaps CRÍTICO sin respuesta se incluyen en el spec con toda la información disponible, marcadas con `[INCOMPLETO]`.
+
+### En `wf-prepare-plan` (generar plan desde spec)
+
+| Condición en el `_spec.md` | Acción del orquestador |
+|-----------------------------|------------------------|
+| Hay HUs marcadas `[INCOMPLETO]` | **Bloquear**: listar las HUs incompletas y los gaps que las bloquean |
+| Hay `[INFORMATIVO]_(pendiente)_` pero no `[INCOMPLETO]` | **Continuar** con advertencia |
+| Sin marcadores pendientes | **Continuar** normalmente |
+
+### En `wf-spec-decompose` (partir spec en features)
+
+| Condición en el `_spec.md` | Acción del orquestador |
+|-----------------------------|------------------------|
+| Hay HUs marcadas `[INCOMPLETO]` | **Continuar**: propagar la marca `[INCOMPLETO]` a los feature specs correspondientes |
+| Sin marcadores pendientes | **Continuar** normalmente |
+
+**Patrón de verificación**: buscar la cadena literal `[INCOMPLETO]` para HUs incompletas, y `_(pendiente)_` para gaps sin responder.
 
 ---
 
@@ -90,3 +112,24 @@ Los orquestadores verifican la presencia de marcadores pendientes antes de avanz
 - Debe ser **específica**: no "se comportará de forma estándar" sino "se mostrará un mensaje de error genérico y el usuario permanecerá en la pantalla actual"
 - Se documenta en el spec generado en la sección `## Asunciones Aplicadas`
 - En modo `delta`, se documenta en la sección `## Asunciones Aplicadas (vX.Y)` del spec actualizado
+
+---
+
+## Marcador de HU incompleta: `[INCOMPLETO]`
+
+El marcador `[INCOMPLETO]` se aplica a nivel de HU en el spec generado cuando un gap `[CRÍTICO]` que la afecta (campo `Afecta`) quedó sin respuesta.
+
+### Formato en el spec generado
+
+Al final de cada HU afectada:
+```markdown
+> ⚠ [INCOMPLETO] — Pendiente de gap(s): [P-001], [P-003]. Responde en el `_analysis.md` y ejecuta `/wf-spec-delta` para completar.
+```
+
+### Efecto en el pipeline
+
+- Una HU marcada `[INCOMPLETO]` **se incluye** en el spec con toda la información disponible
+- Los CAs asociados se generan parcialmente si es posible (con el GIVEN/WHEN disponible) o se omiten con referencia al gap
+- `wf-spec-decompose` **propaga** la marca a los feature specs correspondientes
+- `wf-prepare-plan` **bloquea** si el feature spec contiene HUs `[INCOMPLETO]`
+- Para completar: responder el gap en el `_analysis.md`, luego ejecutar `/wf-spec-delta` para integrar la respuesta y eliminar la marca

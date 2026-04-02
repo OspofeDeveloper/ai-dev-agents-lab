@@ -47,7 +47,7 @@ Ejemplos:
 **Modo `apply`:**
 1. Verifica que el spec existe y termina en `_spec.md`.
 2. Verifica que el delta analysis existe y termina en `_delta_analysis.md`. Si no → informa: "El segundo argumento debe ser un delta analysis generado por `/wf-spec-delta analyze`."
-3. Lee el delta analysis y comprueba si hay items `[CRÍTICO]_(pendiente)_` sin respuesta. Si los hay → lista cuáles y detén: "Hay gaps **críticos** sin responder en el delta analysis. Son obligatorios antes de aplicar los cambios."
+3. Lee el delta analysis y comprueba si hay items `[CRÍTICO]_(pendiente)_` sin respuesta. Si los hay → informa al usuario: "Hay X gaps **críticos** sin responder. Las HUs afectadas se marcarán como `[INCOMPLETO]`." **Continúa.**
 
 ---
 
@@ -98,7 +98,7 @@ Usa `references/delta_analysis_template.md` para estructurar el informe.
 
 ### Paso 4B: Segunda verificación de gaps críticos
 
-Si hay `[CRÍTICO]_(pendiente)_` en el delta analysis → lista cuáles y detén. (El Paso 2 ya lo comprueba — esta es una segunda línea de defensa.)
+Si hay `[CRÍTICO]_(pendiente)_` en el delta analysis → informa al usuario qué HUs se marcarán `[INCOMPLETO]` y **continúa**. (Coherente con el Paso 2.)
 
 ### Paso 5B: Integrar los cambios
 
@@ -118,6 +118,20 @@ Para cada tipo de cambio:
 - **Journeys**: actualizar añadiendo/modificando/eliminando pasos según los cambios de HUs
 - **Instrucciones Inambiguas**: añadir/modificar/eliminar reglas según el delta
 - **Fuera de Alcance**: actualizar si el delta lo especifica
+
+### Paso 5B.5: Resolver marcadores `[INCOMPLETO]`
+
+Si el delta analysis resuelve gaps que originaron marcadores `[INCOMPLETO]` en el spec:
+
+1. Integrar la respuesta del gap en la HU afectada (completar la información que faltaba)
+2. Generar/completar los CAs que no pudieron generarse previamente por falta de información
+3. Eliminar el marcador `> ⚠ [INCOMPLETO] — ...` de la HU
+4. Eliminar el gap correspondiente de la sección `## Items Pendientes` del spec (si existe)
+5. Registrar en el Changelog: "Completada HU-XXX (gap [P-XXX] resuelto)"
+
+Si tras la integración ya no quedan HUs `[INCOMPLETO]` en el spec, el feature está listo para `/wf-prepare-plan`.
+
+---
 
 ### Paso 6B: Actualizar versionado y Changelog
 

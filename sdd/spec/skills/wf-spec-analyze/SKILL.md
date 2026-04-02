@@ -75,11 +75,15 @@ Si encuentras información funcional ausente o ambigua (no técnica), formúlala
 
 Consulta `kb-gap-conventions` para el formato de IDs `[P-XXX]`, las definiciones de severidad `[CRÍTICO]` / `[INFORMATIVO]`, el marcador `_(pendiente)_` y el formato exacto de cada gap en el informe.
 
+### Campo "Afecta" (obligatorio en CRÍTICO)
+
+Para cada gap `[CRÍTICO]`, determina qué HUs del documento no pueden completarse sin la respuesta a este gap. Lista sus IDs en el campo `- **Afecta**: [HU-001, HU-003]`. Si las HUs aún no tienen IDs asignados (porque el documento es un PRD sin HUs formales), describe las funcionalidades afectadas en texto libre (ej: `- **Afecta**: funcionalidad de login, recuperación de contraseña`).
+
 ### Clasificación de severidad (obligatoria)
 
 Consulta `kb-gap-conventions` para las definiciones completas. Resumen:
 
-- **`[CRÍTICO]`**: bloquea la siguiente fase (el gap impide un CA verificable, un Journey sin estado de éxito, o una regla con interpretaciones incompatibles)
+- **`[CRÍTICO]`**: las HUs indicadas en "Afecta" quedarán marcadas `[INCOMPLETO]` en el spec si no se responde. Se generarán con la información disponible pero no podrán avanzar a plan/tasks.
 - **`[INFORMATIVO]`**: continúa con asunción por defecto (edge cases asumibles, preferencias menores). **Siempre incluye una "Asunción por defecto"** con lo que se aplicará si el cliente no responde.
 
 ---

@@ -33,10 +33,12 @@ Ejemplo:
 
 1. Verifica que el archivo existe.
 2. Lee el archivo completo.
-3. Comprueba si contiene items pendientes:
-   - Si hay `[CRÍTICO]_(pendiente)_` → lista cuáles y **detén la ejecución**:
+3. Comprueba si contiene HUs incompletas o items pendientes:
+   - Si hay HUs marcadas `[INCOMPLETO]` → lista cuáles, los gaps que las bloquean, y **detén la ejecución**:
+     > "❌ El Spec tiene X HUs marcadas `[INCOMPLETO]`. No se puede generar el Plan hasta completarlas. Responde los gaps pendientes en el `_analysis.md` y ejecuta `/wf-spec-delta` para integrar las respuestas."
+   - Si hay `[CRÍTICO]_(pendiente)_` (en sección Items Pendientes del spec) → lista cuáles y **detén la ejecución**:
      > "❌ El Spec tiene X items [CRÍTICO] sin resolver. Responde los gaps críticos antes de generar el Plan."
-   - Si hay `[INFORMATIVO]_(pendiente)_` pero no `[CRÍTICO]` → advierte pero **continúa**:
+   - Si hay `[INFORMATIVO]_(pendiente)_` pero no `[INCOMPLETO]` ni `[CRÍTICO]` → advierte pero **continúa**:
      > "⚠ El Spec tiene X items [INFORMATIVO] sin responder. Se usarán los valores por defecto. Puedes responderlos después si quieres más precisión."
 4. Verifica que el archivo parece un Spec validado (contiene "Criterios de Aceptación" e "Historias de Usuario"). Si parece un PRD sin procesar → informa:
    > "Este archivo no parece un Spec procesado. Primero ejecuta `/wf-spec-analyze <archivo.md>`"

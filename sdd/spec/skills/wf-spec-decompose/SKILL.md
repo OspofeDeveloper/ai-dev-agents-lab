@@ -32,8 +32,9 @@ Si no hay argumento, informa al usuario:
 2. Verifica que el nombre termina en `_spec.md`. Si no → informa:
    > "Este archivo no parece un Spec procesado. Primero genera el spec con `/wf-spec-finalize <archivo.md>`"
 3. Lee el archivo completo.
-4. Comprueba que no contiene `_(pendiente)_` sin responder. Si los hay → lista cuáles y detén:
-   > "El Spec tiene items pendientes. Completa el análisis antes de descomponer."
+4. Comprueba si contiene `_(pendiente)_` sin responder (excluyendo HUs marcadas `[INCOMPLETO]`). Si hay `_(pendiente)_` fuera de contexto `[INCOMPLETO]` → lista cuáles y detén:
+   > "El Spec tiene items pendientes sin procesar. Ejecuta `/wf-spec-finalize` primero."
+5. Si hay HUs marcadas `[INCOMPLETO]` → informa al usuario: "El Spec tiene X HUs marcadas `[INCOMPLETO]`. Se propagarán a los feature specs correspondientes." **Continúa.**
 5. Verifica que contiene evidencia de Spec SDD válido (presencia de "Criterios de Aceptación" e "Historias de Usuario"). Si no → informa:
    > "Este archivo no parece un Spec SDD procesado. Primero ejecuta `/wf-spec-finalize <archivo.md>`"
 
@@ -75,6 +76,7 @@ Antes de generar los artefactos, verifica los shared models:
 - Los CAs de cada feature se renumeran desde CA-001 (la numeración es local a la feature)
 - Si hay duda sobre si un elemento pertenece a una feature → incluirlo (no omitir)
 - Los actores de cada feature spec son un subconjunto filtrado de los actores del spec monolítico
+- Las HUs marcadas `[INCOMPLETO]` se copian con su marca intacta al feature spec correspondiente
 
 ### Formatos
 

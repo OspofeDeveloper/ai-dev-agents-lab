@@ -45,7 +45,7 @@ Busca el archivo de análisis en este orden:
 Lee el archivo principal y el `_analysis.md` en su totalidad.
 
 Comprueba la severidad de los items pendientes en el `_analysis.md`:
-- Si hay items `[CRÍTICO]_(pendiente)_` sin respuesta → lista cuáles y detén: "Hay gaps **críticos** sin responder en `_analysis.md`. Son obligatorios para continuar."
+- Si hay items `[CRÍTICO]_(pendiente)_` sin respuesta → informa al usuario: "Hay X gaps **críticos** sin responder. Las HUs afectadas se marcarán como `[INCOMPLETO]` en el spec." Lista las HUs afectadas (campo `Afecta` de cada gap). **Continúa.**
 - Si solo hay items `[INFORMATIVO]_(pendiente)_` → informa al usuario que se aplicarán las asunciones por defecto y **continúa**.
 
 ---
@@ -54,16 +54,21 @@ Comprueba la severidad de los items pendientes en el `_analysis.md`:
 
 1. **Extraer las respuestas** de los items `[P-XXX]` del análisis
 2. **Integrar respuestas exactamente como las escribió el cliente** — sin interpretar ni ampliar
-3. **Construir el Spec** con los 8 elementos en orden (ver template)
-4. **Aplicar la Prueba de Pureza** sobre lo que tú mismo escribas antes de producir el output
-5. **Asignar cada CA a su HU padre**: cada CA debe incluir `← HU-XXX` referenciando la historia que cubre
-6. **Auto-marcar el Checklist**: marca `[x]` los items que puedes verificar directamente del spec que generaste; deja `[ ]` solo los que requieren validación humana posterior
+3. **Procesar contaminaciones de Pureza**: para cada contaminación `[C-XXX]` del análisis, lee el campo `Acción`:
+   - `ACEPTAR` o `EDITAR`: usar la reescritura (modificada o no) en lugar del texto original
+   - `RECHAZAR`: conservar el texto original del documento y documentar la excepción en una sección `## Excepciones de Pureza` del spec con la justificación del cliente
+   - Si no hay campo `Acción` marcado: aplicar la reescritura sugerida por defecto (compatibilidad con análisis anteriores)
+4. **Construir el Spec** con los 8 elementos en orden (ver template)
+5. **Aplicar la Prueba de Pureza** sobre lo que tú mismo escribas antes de producir el output
+6. **Asignar cada CA a su HU padre**: cada CA debe incluir `← HU-XXX` referenciando la historia que cubre
+7. **Marcar HUs incompletas**: para cada gap `[CRÍTICO]_(pendiente)_`, localiza las HUs indicadas en su campo `Afecta` y añade al final de cada una: `> ⚠ [INCOMPLETO] — Pendiente de gap(s): [P-XXX]. Responde en el _analysis.md y ejecuta /wf-spec-delta para completar.` Genera la HU con la información disponible. Los CAs asociados se generan parcialmente si es posible o se omiten con referencia al gap.
+8. **Auto-marcar el Checklist**: marca `[x]` los items que puedes verificar directamente del spec que generaste; deja `[ ]` solo los que requieren validación humana posterior
 
 ---
 
 ## Paso 5: Reglas de integración
 
-- **No inventar**: si el cliente no respondió un gap `[CRÍTICO]`, no inferirlo; el proceso debe haberse detenido antes de llegar aquí. Para gaps `[INFORMATIVO]` sin respuesta, usar únicamente la "Asunción por defecto" declarada en el análisis — no añadir nada más.
+- **No inventar**: si el cliente no respondió un gap `[CRÍTICO]`, no inferir la respuesta — generar la HU con la información disponible y marcarla `[INCOMPLETO]`. Para gaps `[INFORMATIVO]` sin respuesta, usar únicamente la "Asunción por defecto" declarada en el análisis — no añadir nada más.
 - **No interpretar**: el texto del cliente va tal cual, sin parafrasear
 - **No añadir**: si la respuesta del cliente cubre exactamente el gap, no expandirla con suposiciones adicionales
 
