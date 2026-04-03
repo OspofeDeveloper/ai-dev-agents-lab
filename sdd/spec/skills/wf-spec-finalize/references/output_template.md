@@ -3,6 +3,40 @@
 
 ---
 
+## Resumen de generación
+
+### Estado de los 8 elementos SDD
+| Elemento | Estado |
+|----------|--------|
+| Actores | [COMPLETO / INCOMPLETO — detalle] |
+| Historias de Usuario | [COMPLETO / INCOMPLETO — detalle] |
+| Recorridos de Usuario | [COMPLETO / INCOMPLETO — detalle] |
+| Resultados y Éxito | [COMPLETO / INCOMPLETO — detalle] |
+| Instrucciones Inambiguas | [COMPLETO / INCOMPLETO — detalle] |
+| Criterios de Aceptación | [COMPLETO / INCOMPLETO — detalle] |
+| Checklist de Validación | [COMPLETO / INCOMPLETO — detalle] |
+| Fuera de Alcance | [COMPLETO / INCOMPLETO — detalle] |
+
+### HUs incompletas
+<!-- Si no hay HUs incompletas, escribir "Ninguna." -->
+| HU | Título | Gaps pendientes |
+|----|--------|-----------------|
+| [HU-XXX] | [título] | [P-XXX, P-YYY] |
+
+### Asunciones por defecto aplicadas
+<!-- Si no se aplicaron asunciones, escribir "Ninguna." -->
+| Sección | Asunción aplicada | Origen (gap) |
+|---------|-------------------|--------------|
+| [sección] | [texto de la asunción] | [P-XXX] |
+
+### Contaminaciones de Pureza procesadas
+<!-- Si no hubo contaminaciones, escribir "Ninguna." -->
+| ID | Acción | Detalle |
+|----|--------|---------|
+| [C-XXX] | [ACEPTAR / EDITAR / RECHAZAR / defecto] | [breve descripción] |
+
+---
+
 ## Actores
 | Actor | Descripción | Capacidades en este spec |
 |-------|-------------|--------------------------|

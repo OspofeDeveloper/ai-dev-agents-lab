@@ -63,6 +63,7 @@ Comprueba la severidad de los items pendientes en el `_analysis.md`:
 6. **Asignar cada CA a su HU padre**: cada CA debe incluir `← HU-XXX` referenciando la historia que cubre
 7. **Marcar HUs incompletas**: para cada gap `[CRÍTICO]_(pendiente)_`, localiza las HUs indicadas en su campo `Afecta` y añade al final de cada una: `> ⚠ [INCOMPLETO] — Pendiente de gap(s): [P-XXX]. Responde en el _analysis.md y ejecuta /wf-spec-delta para completar.` Genera la HU con la información disponible. Los CAs asociados se generan parcialmente si es posible o se omiten con referencia al gap.
 8. **Auto-marcar el Checklist**: marca `[x]` los items que puedes verificar directamente del spec que generaste; deja `[ ]` solo los que requieren validación humana posterior
+9. **Rellenar la sección "Resumen de generación"** del template: completa las tablas de estado de los 8 elementos, HUs incompletas, asunciones por defecto aplicadas y contaminaciones de Pureza procesadas. Si una tabla no aplica, escribe "Ninguna." debajo del encabezado correspondiente
 
 ---
 
@@ -125,16 +126,14 @@ Escribe el archivo.
 
 ## Paso 8: Informar al usuario
 
-Tras escribir los archivos, informa:
-- Path del spec generado
-- Estado de los 8 elementos SDD (cuáles están completos)
-- Si se aplicaron asunciones por defecto: cuántas y en qué secciones
-- Si hay items `[PENDIENTE]` restantes: cuántos y cuáles
-- Path del `_traceability.md` generado y número de HUs trazadas
-- Nota: "La columna Feature quedará vacía hasta que ejecutes `/wf-spec-decompose`"
-- Siguiente paso: "Si editas el spec manualmente, puedes re-validarlo con `/wf-spec-validate <path>_spec.md`"
+Tras escribir los archivos, informa **solo** lo siguiente en terminal:
 
-Añade **siempre** al final del output el siguiente bloque:
+- Spec generado: `<path>_spec.md`
+- Trazabilidad: `<path>_traceability.md`
+
+> El detalle completo (estado de los 8 elementos, HUs incompletas, asunciones y contaminaciones) está dentro de la sección "Resumen de generación" del propio spec.
+
+Añade **siempre** al final del output los siguientes bloques:
 
 ---
 **PRD CONGELADO**
@@ -145,5 +144,12 @@ No lo modifiques directamente. Para cambios futuros sobre el spec:
   `/wf-spec-delta analyze <path>_spec.md --new-reqs <descripcion_del_cambio.md>`
 
 Los cambios quedarán registrados en el Changelog del spec y en `_traceability.md`.
+
+---
+**Siguiente paso** — descomponer el spec monolítico en features:
+
+  `/wf-spec-decompose <path>_spec.md`
+
+Si editas el spec manualmente antes de descomponer, puedes re-validarlo con `/wf-spec-validate <path>_spec.md`.
 
 ---
