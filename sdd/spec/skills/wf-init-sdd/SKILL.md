@@ -25,10 +25,13 @@ Muestra al usuario las opciones disponibles con este formato exacto:
 
 1. **Generar specs a partir de un PRD** — Tengo un documento de requisitos y quiero convertirlo en Specs SDD
 2. **Documentar una feature concreta** — Quiero generar el spec de una sola funcionalidad sin pasar por el spec monolítico
-3. **Modificar una funcionalidad existente** — Tengo un spec y quiero añadir, cambiar o eliminar requisitos
-4. **Validar un spec** — Quiero verificar que un spec cumple los estándares SDD
-5. **Detectar conflictos entre features** — Quiero verificar que los specs de diferentes features son coherentes entre sí
-6. **Continuar donde lo dejé** — Ya tengo artefactos generados y no sé cuál es el siguiente paso
+3. **Descomponer spec en features** — Tengo un spec monolítico y quiero partirlo en specs independientes por feature
+4. **Modificar una funcionalidad existente** — Tengo un spec y quiero añadir, cambiar o eliminar requisitos
+5. **Resolver gaps pendientes en una feature** — Tengo HUs marcadas como `[INCOMPLETO]` y ya he respondido los gaps
+6. **Validar un spec** — Quiero verificar que un spec cumple los estándares SDD
+7. **Detectar conflictos entre features** — Quiero verificar que los specs de diferentes features son coherentes entre sí
+8. **Ver qué features están listas** — Quiero saber el estado de mis features y el orden recomendado de implementación
+9. **Continuar donde lo dejé** — Ya tengo artefactos generados y no sé cuál es el siguiente paso
 
 Escribe el número de la opción que quieras.
 
@@ -73,7 +76,21 @@ Invoca: `/wf-spec-fast-track <ruta> --capability <nombre>`
 
 ---
 
-### Opción 3 — Modificar funcionalidad existente (Delta)
+### Opción 3 — Descomponer spec en features
+
+Pregunta al usuario:
+> "¿Cuál es la ruta del spec monolítico? (el archivo `_spec.md`)"
+
+Espera su respuesta. Verifica que el archivo existe y que termina en `_spec.md`.
+
+Invoca: `/wf-spec-decompose <ruta>`
+
+Tras la ejecución, informa:
+> "Se han generado los specs por feature en el directorio `features/`. El siguiente paso recomendado es `/wf-spec-readiness features/` para ver cuáles están listas para planificar."
+
+---
+
+### Opción 4 — Modificar funcionalidad existente (Delta)
 
 Pregunta al usuario:
 > "¿Cuál es la ruta del spec de feature a modificar? (el archivo `_spec.md`)"
@@ -92,7 +109,25 @@ Tras la ejecución, informa:
 
 ---
 
-### Opción 4 — Validar un spec
+### Opción 5 — Resolver gaps pendientes en una feature
+
+Pregunta al usuario:
+> "¿Cuál es la ruta del spec de feature con HUs incompletas? (el archivo `_spec.md`)"
+
+Espera su respuesta. Verifica que el archivo existe y que termina en `_spec.md`.
+
+Luego pregunta:
+> "¿Has respondido los gaps en el archivo `_analysis.md` correspondiente? (sí/no)"
+
+- Si responde **no**: "Primero edita el `_analysis.md`, responde los gaps marcados como _(pendiente)_ y vuelve a ejecutar esta opción."
+- Si responde **sí**: Invoca `/wf-spec-delta resolve <spec>`
+
+Tras la ejecución, informa:
+> "Las HUs completadas ya no están marcadas como `[INCOMPLETO]`. Ejecuta `/wf-spec-readiness features/` para verificar el estado actualizado."
+
+---
+
+### Opción 6 — Validar un spec
 
 Pregunta al usuario:
 > "¿Cuál es la ruta del spec a validar? (el archivo `_spec.md`)"
@@ -103,7 +138,7 @@ Invoca: `/wf-spec-validate <ruta>`
 
 ---
 
-### Opción 5 — Detectar conflictos entre features
+### Opción 7 — Detectar conflictos entre features
 
 Pregunta al usuario:
 > "¿Cuál es la ruta del spec de feature que quieres verificar?"
@@ -122,7 +157,26 @@ Invoca: `/wf-spec-conflict <spec> --features-dir <directorio>`
 
 ---
 
-### Opción 6 — Continuar donde lo dejé
+### Opción 8 — Ver qué features están listas
+
+Pregunta al usuario:
+> "¿Cuál es la ruta del directorio de features? (ej: `docs/features/`)"
+
+Espera su respuesta. Verifica que el directorio existe:
+```
+!test -d "<ruta>" && echo "EXISTE" || echo "NO_EXISTE"
+```
+
+Invoca: `/wf-spec-readiness <ruta>`
+
+Tras la ejecución, informa según el resultado:
+- Si hay features **BLOQUEADA_POR_GAPS**: "Hay features con HUs incompletas. Usa la opción 5 (resolver gaps) para desbloquearlas."
+- Si hay features **BLOQUEADA_POR_CONFLICTOS**: "Hay conflictos de severidad ALTA. Usa la opción 7 (detectar conflictos) para revisarlos y resolverlos manualmente."
+- Si hay features **LISTA**: "Las features marcadas como LISTA pueden avanzar a planificación con `/wf-prepare-plan generate <feature>_spec.md`."
+
+---
+
+### Opción 9 — Continuar donde lo dejé
 
 Pregunta al usuario:
 > "¿Cuál es la ruta del directorio de tu proyecto? (donde están o estarán los artefactos SDD)"
@@ -131,19 +185,35 @@ Espera su respuesta. Verifica que el directorio existe.
 
 **Busca artefactos en ese directorio** ejecutando:
 ```
-!ls "<ruta>"/*_features.md "<ruta>"/features/*/README.md "<ruta>"/*_spec.md "<ruta>"/*_analysis.md "<ruta>"/*_conflict_report.md 2>/dev/null || echo "SIN_ARTEFACTOS"
+!ls "<ruta>"/*_features.md "<ruta>"/features/*/README.md "<ruta>"/*_spec.md "<ruta>"/*_analysis.md "<ruta>"/*_delta_analysis.md "<ruta>"/*_conflict_report.md "<ruta>"/*_readiness_report.md 2>/dev/null || echo "SIN_ARTEFACTOS"
 ```
 
-**Aplica esta lógica de detección:**
+**Aplica esta lógica de detección (evalúa en orden de prioridad, de más avanzado a menos avanzado):**
 
 **Si existe `_features.md` y `features/*/_spec.md`:**
 - "Tu proyecto ya tiene specs por feature."
-- Verifica si existe `_conflict_report.md`. Si tiene conflictos `ALTA`: "Revisa los conflictos antes de continuar."
-- "Siguiente paso: `/wf-prepare-plan features/<nombre>/<nombre>_spec.md` por cada feature."
+- Busca `[INCOMPLETO]` en los feature specs:
+  ```
+  !grep -rl "INCOMPLETO" "<ruta>"/features/*/*_spec.md 2>/dev/null
+  ```
+  - Si hay features con `[INCOMPLETO]`: "Las siguientes features tienen HUs incompletas: `<lista>`. Responde los gaps en el `_analysis.md` correspondiente y ejecuta `/wf-spec-delta resolve <feature>_spec.md` por cada una."
+- Busca `_delta_analysis.md` sin aplicar:
+  ```
+  !ls "<ruta>"/features/*/*_delta_analysis.md 2>/dev/null
+  ```
+  - Si existen: "Hay delta analysis pendientes de aplicar: `<lista>`. Revisa los gaps y ejecuta `/wf-spec-delta apply <spec> <delta_analysis>` por cada uno."
+- Verifica si existe `_conflict_report.md`. Si tiene conflictos `ALTA`: "Hay conflictos de severidad ALTA sin resolver. Revísalos antes de continuar."
+- Si no hay bloqueos: "Siguiente paso recomendado: `/wf-spec-readiness <ruta>/features/` para ver el estado y orden de implementación de las features."
+- Si ya existe `_readiness_report.md` y no hay bloqueos: "Ya tienes un readiness report. Las features marcadas como LISTA pueden avanzar a planificación con `/wf-prepare-plan generate <feature>_spec.md`."
 
 **Si existe `_spec.md` pero NO `_features.md`:**
 - "Tienes el spec monolítico listo."
-- "Siguiente paso: `/wf-spec-decompose <ruta>_spec.md`"
+- Busca `[INCOMPLETO]` en el spec:
+  ```
+  !grep -c "INCOMPLETO" "<ruta>"/*_spec.md 2>/dev/null
+  ```
+  - Si hay `[INCOMPLETO]`: "El spec tiene HUs incompletas. Responde los gaps en el `_analysis.md` y ejecuta `/wf-spec-delta resolve <spec>` antes de descomponer."
+  - Si no hay `[INCOMPLETO]`: "Siguiente paso: `/wf-spec-decompose <ruta>_spec.md`"
 
 **Si existe `_analysis.md` pero NO `_spec.md`:**
 - Lee el `_analysis.md` y busca si contiene `_(pendiente)_` en gaps `[CRÍTICO]`:
@@ -161,4 +231,4 @@ Espera su respuesta. Verifica que el directorio existe.
 - **Nunca invoques un workflow sin tener todos los argumentos** que necesita. Si el usuario no proporciona una ruta, pregúntala.
 - **Verifica siempre que los archivos existen** antes de invocar un workflow. Si no existen, informa con la ruta exacta y vuelve a preguntar.
 - **No interpretes** la intención del usuario más allá de la opción numérica que eligió. Si no está claro, pide aclaración.
-- **Si el usuario responde algo que no es un número del 1 al 6**, intenta interpretar su intención semánticamente y mapearla a una de las 6 opciones. Si no puedes, vuelve a presentar el menú.
+- **Si el usuario responde algo que no es un número del 1 al 9**, intenta interpretar su intención semánticamente y mapearla a una de las 9 opciones. Si no puedes, vuelve a presentar el menú.

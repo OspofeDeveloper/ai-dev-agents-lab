@@ -123,7 +123,7 @@ El marcador `[INCOMPLETO]` se aplica a nivel de HU en el spec generado cuando un
 
 Al final de cada HU afectada:
 ```markdown
-> ⚠ [INCOMPLETO] — Pendiente de gap(s): [P-001], [P-003]. Responde en el `_analysis.md` y ejecuta `/wf-spec-delta` para completar.
+> ⚠ [INCOMPLETO] — Pendiente de gap(s): [P-001], [P-003]. Responde en el `_analysis.md` y ejecuta `/wf-spec-delta resolve` para completar.
 ```
 
 ### Efecto en el pipeline
@@ -132,4 +132,4 @@ Al final de cada HU afectada:
 - Los CAs asociados se generan parcialmente si es posible (con el GIVEN/WHEN disponible) o se omiten con referencia al gap
 - `wf-spec-decompose` **propaga** la marca a los feature specs correspondientes
 - `wf-prepare-plan` **bloquea** si el feature spec contiene HUs `[INCOMPLETO]`
-- Para completar: responder el gap en el `_analysis.md`, luego ejecutar `/wf-spec-delta` para integrar la respuesta y eliminar la marca
+- Para completar: responder el gap en el `_analysis.md`, luego ejecutar `/wf-spec-delta resolve <feature_spec.md>` para integrar la respuesta y eliminar la marca

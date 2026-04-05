@@ -138,6 +138,43 @@ Escribe el informe en el archivo correspondiente.
 
 ---
 
+## Paso 8.5: Actualizar estado en `_features.md`
+
+Tras escribir el readiness report, actualiza el `_features.md` encontrado en el Paso 2:
+
+### 8.5a — Estado por feature
+
+Para cada bloque de feature en la sección `## Features identificadas`, actualiza (o añade si no existe) la línea:
+```
+- **Estado**: [LISTA | LISTA_PARA_PLAN | BLOQUEADA_POR_GAPS | BLOQUEADA_POR_CONFLICTOS | ESPERANDO_DEPENDENCIAS]
+```
+
+Usa el estado determinado en el Paso 6. Si una feature tiene múltiples bloqueos, usa el de mayor prioridad (GAPS > CONFLICTOS > DEPENDENCIAS).
+
+### 8.5b — Resumen de estado
+
+Añade o actualiza la sección `## Resumen de estado` (justo después de `## Features identificadas`, antes de `## Tabla de shared models`):
+
+```markdown
+## Resumen de estado
+
+> Última actualización: [YYYY-MM-DD] | Fuente: `<path>_readiness_report.md`
+
+| Feature | Estado | Bloqueantes |
+|---------|--------|-------------|
+| F-001: [nombre] | LISTA | — |
+| F-002: [nombre] | BLOQUEADA_POR_GAPS | P-001, P-002 |
+```
+
+### 8.5c — Historial de cambios
+
+Si existe la sección `## Historial de cambios` en `_features.md`, añade una fila:
+```
+| [versión+1] | [YYYY-MM-DD] | readiness | Estado actualizado desde wf-spec-readiness |
+```
+
+---
+
 ## Paso 9: Informar al usuario
 
 - Path del informe generado

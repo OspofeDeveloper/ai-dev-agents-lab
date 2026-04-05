@@ -62,8 +62,8 @@
 
 | Gap | Severidad | HUs afectadas | Features afectadas | Accion |
 |-----|-----------|---------------|-------------------|--------|
-| [P-001] | CRITICO | HU-003 | F-001 | Responder y ejecutar `/wf-spec-delta` sobre el spec afectado |
-| [P-003] | CRITICO | HU-010 | F-003 | Responder y ejecutar `/wf-spec-delta` sobre el spec afectado |
+| [P-001] | CRITICO | HU-003 | F-001 | Responder y ejecutar `/wf-spec-delta resolve` sobre el spec afectado |
+| [P-003] | CRITICO | HU-010 | F-003 | Responder y ejecutar `/wf-spec-delta resolve` sobre el spec afectado |
 
 <!-- Agrupar por gap ID. Un mismo gap puede afectar a multiples HUs y features. -->
 
@@ -104,7 +104,7 @@
 
 <!-- PARCIALMENTE_LISTAS -->
 1. **Features listas**: ejecuta `/wf-prepare-plan generate <feature_spec.md>` para las features LISTA y LISTA_PARA_PLAN de las primeras fases
-2. **Features con gaps**: responde los gaps pendientes y ejecuta `/wf-spec-delta` para cada feature afectada
+2. **Features con gaps**: responde los gaps pendientes y ejecuta `/wf-spec-delta resolve` para cada feature afectada
 3. **Features con conflictos**: edita los specs para resolver los conflictos ALTA y re-ejecuta `/wf-spec-conflict`
 4. **Re-evaluar**: despues de resolver bloqueos, ejecuta `/wf-spec-readiness` de nuevo para verificar el progreso
 

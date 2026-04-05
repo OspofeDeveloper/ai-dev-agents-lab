@@ -112,21 +112,34 @@ docs/features/services/services_spec.md
 docs/features/services/README.md
 ```
 
-**Artefacto 3 — Actualizar `_traceability.md`**
+**Artefacto 3 — Trazabilidad RF → HU → Feature en `_features.md`**
 
-Busca `_traceability.md` en el mismo directorio que el spec monolítico
-(ej: `docs/proyecto_spec.md` → busca `docs/proyecto_traceability.md`).
+Lee la sección `## Anexo: Trazabilidad RF → HU` del spec monolítico. Esta sección contiene la tabla de mapeo RF→HU generada por `wf-spec-finalize`.
 
-**Si existe:**
-- Para cada HU asignada a una feature:
-  - Actualiza la columna Feature con el nombre de la feature (ej: `authentication`)
-  - Cambia el Estado de `pendiente-decompose` a `activo`
-- Actualiza la tabla de Cobertura por RF completando la columna "Features involucradas" con todos los nombres de feature que contienen HUs de ese RF
-- Añade una fila al Historial de cambios: fecha de hoy, tipo "decompose", descripción "Features asignadas desde wf-spec-decompose"
-- Sobreescribe el archivo con los cambios
+**Si el spec contiene el anexo:**
+- Enriquece cada fila añadiendo dos columnas: Feature (nombre de la feature asignada) y Estado (`activo`)
+- Genera la tabla completa `## Trazabilidad RF → HU → Feature` en `_features.md` (ver template)
+- Genera la tabla `## Cobertura por RF` completando la columna "Features involucradas"
+- Genera la sección `## Historial de cambios` con una fila: fecha de hoy, tipo "decompose", descripción "Features asignadas desde wf-spec-decompose"
 
-**Si no existe:**
-- Emite un aviso no bloqueante al usuario (se incluirá en el Paso 8) y continúa con el resto del decompose
+**Si el spec NO contiene el anexo** (generado por una versión anterior de finalize):
+- Emite un aviso no bloqueante al usuario (se incluirá en el Paso 8): "El spec no contiene el anexo de trazabilidad RF→HU. La sección de trazabilidad de `_features.md` quedará vacía. Puedes regenerar el spec con `/wf-spec-finalize` para obtener la trazabilidad."
+- Genera `_features.md` sin las secciones de trazabilidad
+
+---
+
+**Artefacto 4 — Archivar el spec monolítico**
+
+Añade al inicio del spec monolítico (antes del encabezado `# Spec:`) el siguiente banner:
+
+```
+> ⚠️ **ARCHIVO** — Este spec monolítico ha sido descompuesto en features independientes.
+> Consulta `<basename>_features.md` como hub del proyecto y `features/` para los specs individuales.
+> Fecha de archivo: [YYYY-MM-DD]
+
+```
+
+No modifiques ningún otro contenido del spec.
 
 ---
 
@@ -143,19 +156,23 @@ Este paso es **informativo y no bloquea** el flujo.
 
 ## Paso 8: Informar al usuario
 
-- Path del `_features.md` generado
+- Path del `_features.md` generado (Project Hub)
 - Lista de features identificadas con sus rutas
 - Tabla de shared models detectados
 - Estado de la trazabilidad:
-  - Si se actualizó el `_traceability.md`: "✓ Trazabilidad actualizada — columna Feature completada para todas las HUs."
-  - Si no existía el `_traceability.md`: "⚠ No se encontró `_traceability.md`. Si quieres trazabilidad RF→HU→Feature, ejecuta `/wf-spec-finalize` con la versión actualizada del skill antes de volver a descomponer."
+  - Si se incluyó trazabilidad en `_features.md`: "✓ Trazabilidad RF→HU→Feature integrada en `_features.md`."
+  - Si el spec no tenía anexo de trazabilidad: "⚠ `_features.md` generado sin trazabilidad. Regenera el spec con `/wf-spec-finalize` para obtener la trazabilidad."
+- Estado del archivo del spec monolítico: "✓ Spec monolítico archivado con banner de aviso."
 - Resultado de la verificación de conflictos:
   - Sin conflictos: "✓ Sin conflictos detectados entre los specs generados."
   - Con conflictos: "⚠ Se detectaron conflictos. Revisa `<path>_conflict_report.md` antes de continuar con `/wf-prepare-plan` en las features afectadas."
 - Siguiente paso:
-  > "Revisa `<path>_features.md` y ajusta el scope si es necesario. Luego, por cada feature ejecuta:"
+  > "`<path>_features.md` es tu hub del proyecto. Revísalo y ajusta el scope si es necesario."
+  > "Para ver qué features están listas y el orden recomendado:"
   > ```
-  > /wf-prepare-plan features/<nombre>/<nombre>_spec.md
-  > /wf-prepare-tasks features/<nombre>/<nombre>_plan.md
+  > /wf-spec-readiness <path>/features/
   > ```
-  > "Empieza por las features owner de shared models (marcadas en la tabla)."
+  > "Para planificar una feature lista:"
+  > ```
+  > /wf-prepare-plan generate features/<nombre>/<nombre>_spec.md
+  > ```

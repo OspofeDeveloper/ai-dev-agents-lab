@@ -252,7 +252,7 @@ Ningún CA en el documento usa el formato GIVEN/WHEN/THEN. Se señalan los casos
 - **Problema**: El documento no define qué ve el usuario durante el bloqueo ni cómo puede desbloquearse. No está claro si la app simplemente muestra un mensaje con el tiempo de espera, si envía un email de desbloqueo, o si el desbloqueo es solo temporal (esperar X minutos). Sin esto, el CA de bloqueo no puede escribirse.
 - **Afecta**: funcionalidad de inicio de sesión (RF-1.3)
 - **Pregunta para el cliente**: Cuando una trabajadora queda bloqueada temporalmente por intentos fallidos, ¿qué experimenta exactamente? ¿Solo se muestra un mensaje con el tiempo restante y el campo queda deshabilitado ese tiempo? ¿Puede desbloquear su cuenta por algún mecanismo (email, soporte)? ¿El bloqueo es por dispositivo o por cuenta?
-- **Respuesta**: _(pendiente)_
+- **Respuesta**: Si hay un bloqueo temporal, se muestra un mensaje genérico de "Ha habido un error en el inicio de sesión", al igual que si falla el usuario o contraseña, o si hay algun otro error. Por temas de seguridad, el error de login debe ser siempre genérico. _(resuelto — aplicado en authentication_spec v1.1)_
 
 ---
 
@@ -312,7 +312,7 @@ Ningún CA en el documento usa el formato GIVEN/WHEN/THEN. Se señalan los casos
 - **Problema**: El flujo que sigue la trabajadora SAD al activar su cuenta por primera vez desde el enlace de email no está descrito paso a paso. ¿Qué pantalla abre el enlace en la app (o en web)? ¿Qué campos introduce? ¿Qué ocurre al finalizar la activación (entra directamente a la app, vuelve al login)?
 - **Afecta**: funcionalidad de activación de cuenta (RF-1.2) del perfil SAD
 - **Pregunta para el cliente**: Cuando una trabajadora SAD recibe el email de activación y pulsa el enlace, ¿qué flujo sigue exactamente? ¿El enlace abre la app (si está instalada) o una web? ¿Qué introduce la trabajadora (solo contraseña, o también confirmar email)? ¿Al completar la activación entra directamente al onboarding/home o vuelve a la pantalla de login?
-- **Respuesta**: _(pendiente)_
+- **Respuesta**: En el caso de las cuentas SAD, la app no dará opción al registro de cuentas, por eso no se describe en los specs. La idea es que cuando entren en la app, la cuenta se habrá creado de forma externa, por lo que lo único que pueden hacer es iniciar sesión. _(resuelto — aplicado en authentication_spec v1.1)_
 
 ---
 

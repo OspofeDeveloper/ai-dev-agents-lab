@@ -108,6 +108,25 @@ THEN [resultado observable]
 
 ---
 
+## Anexo: Trazabilidad RF → HU
+
+| RF | Título RF | HU | Título HU |
+|----|-----------|-----|-----------|
+| RF-001 | [título] | HU-001 | [título] |
+| RF-001 | [título] | HU-002 | [título] |
+| RF-002 | [título] | HU-003 | [título] |
+
+<!-- Una fila por cada HU generada, agrupadas por RF de origen -->
+
+### Cobertura por RF
+
+| RF | Título RF | HUs asignadas |
+|----|-----------|---------------|
+| RF-001 | [título] | HU-001, HU-002 |
+| RF-002 | [título] | HU-003 |
+
+---
+
 <!-- Si quedan gaps sin resolver tras la integración: -->
 ## Items pendientes
 - [PENDIENTE] [P-XXX]: [descripción del gap no resuelto]

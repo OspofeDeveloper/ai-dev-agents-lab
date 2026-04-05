@@ -35,7 +35,7 @@ Ejemplo:
 2. Lee el archivo completo.
 3. Comprueba si contiene HUs incompletas o items pendientes:
    - Si hay HUs marcadas `[INCOMPLETO]` → lista cuáles, los gaps que las bloquean, y **detén la ejecución**:
-     > "❌ El Spec tiene X HUs marcadas `[INCOMPLETO]`. No se puede generar el Plan hasta completarlas. Responde los gaps pendientes en el `_analysis.md` y ejecuta `/wf-spec-delta` para integrar las respuestas."
+     > "❌ El Spec tiene X HUs marcadas `[INCOMPLETO]`. No se puede generar el Plan hasta completarlas. Responde los gaps pendientes en el `_analysis.md` y ejecuta `/wf-spec-delta resolve` para integrar las respuestas."
    - Si hay `[CRÍTICO]_(pendiente)_` (en sección Items Pendientes del spec) → lista cuáles y **detén la ejecución**:
      > "❌ El Spec tiene X items [CRÍTICO] sin resolver. Responde los gaps críticos antes de generar el Plan."
    - Si hay `[INFORMATIVO]_(pendiente)_` pero no `[INCOMPLETO]` ni `[CRÍTICO]` → advierte pero **continúa**:

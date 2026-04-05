@@ -34,6 +34,7 @@ El wizard presenta opciones guiadas y recoge los argumentos necesarios antes de 
 | Qué features están listas / orden de implementación | `/wf-spec-readiness` | `<path/features/>` |
 | Actualizar un spec con requisitos nuevos (análisis) | `/wf-spec-delta` | `analyze <feature_spec.md> --new-reqs <description.md>` |
 | Aplicar un delta analysis a un spec | `/wf-spec-delta` | `apply <feature_spec.md> <delta_analysis.md>` |
+| Completar HUs incompletas (gaps respondidos en analysis) | `/wf-spec-delta` | `resolve <feature_spec.md> [--analysis <path_analysis.md>]` |
 | Generar el plan técnico desde un spec | `/wf-prepare-plan` | `generate <spec.md>` |
 | Generar las tasks desde un plan | `/wf-prepare-tasks` | `generate <plan.md>` |
 
@@ -52,14 +53,18 @@ Requisitos/PRD
     ↓ [/wf-spec-analyze]
 _analysis.md → [usuario responde gaps] → [/wf-spec-finalize]
     ↓
-_spec.md + _traceability.md (RF→HU generado, Feature pendiente)
+_spec.md (con anexo trazabilidad RF→HU)
     ↓ ⚠ PRD CONGELADO — cambios futuros via /wf-spec-delta
 [/wf-spec-decompose]
     ↓
-_features.md + features/<nombre>/<nombre>_spec.md
-_traceability.md (RF→HU→Feature completo)
+_features.md (PROJECT HUB: index + trazabilidad RF→HU→Feature + estado)
+features/<nombre>/<nombre>_spec.md
+_spec.md archivado con banner
+    ↓ Si hay HUs [INCOMPLETO]: responder gaps en _analysis.md
+    ↓ [/wf-spec-delta resolve — por feature con gaps pendientes]
     ↓ [/wf-spec-readiness]
 _readiness_report.md (estado + orden de implementación)
+_features.md actualizado con estado por feature
     ↓ [/wf-prepare-plan generate — por feature]
 features/<nombre>/<nombre>_plan.md
     ↓ [/wf-prepare-tasks generate — por feature]

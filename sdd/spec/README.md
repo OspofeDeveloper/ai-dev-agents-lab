@@ -72,6 +72,19 @@ El software ya existe, hay un `_spec.md` en producción y quieres añadir o modi
 
 **Cuándo usarlo**: cuando el spec ya existe y el cambio es incremental (nueva HU, modificación de un comportamiento, eliminación de una funcionalidad deprecada). El delta es quirúrgico: no toca lo que no cambia.
 
+#### Completar HUs incompletas (resolver gaps pendientes)
+
+Si el spec tiene HUs marcadas `[INCOMPLETO]` por gaps `[CRÍTICO]` sin responder:
+
+```
+[responde los gaps [P-XXX] en el _analysis.md]
+
+/wf-spec-delta resolve features/auth/auth_spec.md
+  → auto-descubre el _analysis.md, integra respuestas, completa HUs y CAs, versión 1.0 → 1.1
+```
+
+**Cuándo usarlo**: después de `finalize` + `decompose`, cuando hay HUs que quedaron incompletas por gaps sin responder. El usuario responde los gaps en el `_analysis.md` y `resolve` integra las respuestas en el feature spec.
+
 ---
 
 ### 4. Validar un spec tras edición manual
@@ -170,18 +183,20 @@ Todos los componentes de este directorio siguen el mismo patrón arquitectónico
 | Skill | Comando | Produce |
 |-------|---------|---------|
 | `wf-spec-analyze` | `/wf-spec-analyze` | `_analysis.md` |
-| `wf-spec-finalize` | `/wf-spec-finalize` | `_spec.md` |
+| `wf-spec-finalize` | `/wf-spec-finalize` | `_spec.md` (con anexo trazabilidad RF→HU) |
 | `wf-spec-validate` | `/wf-spec-validate` | Informe inline (sin archivo) |
 | `wf-spec-fast-track` | `/wf-spec-fast-track` | `features/<x>/<x>_spec.md` directamente |
-| `wf-spec-decompose` | `/wf-spec-decompose` | `_features.md`, `features/<x>/<x>_spec.md`, `features/<x>/README.md` |
+| `wf-spec-decompose` | `/wf-spec-decompose` | `_features.md` (Project Hub: index + trazabilidad + estado), `features/<x>/<x>_spec.md`, `features/<x>/README.md`; archiva `_spec.md` |
 | `wf-spec-conflict` | `/wf-spec-conflict` | `_conflict_report.md` |
-| `wf-spec-delta` | `/wf-spec-delta` | `_delta_analysis.md` (analyze) o spec actualizado (apply) |
+| `wf-spec-delta` | `/wf-spec-delta` | `_delta_analysis.md` (analyze), spec actualizado (apply/resolve) |
+| `wf-spec-readiness` | `/wf-spec-readiness` | `_readiness_report.md`, actualiza estado en `_features.md` |
+| `wf-init-sdd` | `/wf-init-sdd` | Wizard interactivo — guía al workflow correcto |
 
 ### Agente worker (Capa 2)
 
 | Agente | Modos soportados | Invocado desde |
 |--------|-----------------|----------------|
-| `sdd-analyst` | `analyze`, `finalize`, `validate`, `decompose`, `delta`, `fast-track`, `conflict` | Todos los `wf-spec-*` |
+| `sdd-analyst` | `analyze`, `finalize`, `validate`, `decompose`, `delta`, `fast-track`, `conflict`, `readiness` | Todos los `wf-spec-*` |
 
 ### Knowledge bases (Capa 3)
 
@@ -206,6 +221,7 @@ Modo: decompose  → kb-spec-expert + kb-decompose-expert
 Modo: delta      → kb-spec-expert + kb-gap-conventions
 Modo: fast-track → kb-spec-expert + kb-decompose-expert + kb-gap-conventions
 Modo: conflict   → kb-spec-expert + kb-conflict-expert
+Modo: readiness  → kb-gap-conventions + kb-conflict-expert
 ```
 
 Los knowledge bases son las reglas que el agente consulta durante la ejecución (la Prueba de Pureza, los criterios de feature válida, las reglas de detección de conflictos).
@@ -218,10 +234,10 @@ Los knowledge bases son las reglas que el agente consulta durante la ejecución 
 proyecto/
 ├── prd.md                                    ← Input — congelado tras /wf-spec-finalize
 ├── prd_analysis.md                           ← /wf-spec-analyze
-├── prd_spec.md                               ← /wf-spec-finalize
-├── prd_traceability.md                       ← /wf-spec-finalize (actualizado por decompose y delta)
-├── prd_features.md                           ← /wf-spec-decompose
-├── _conflict_report.md                       ← /wf-spec-decompose (automático) o /wf-spec-conflict
+├── prd_spec.md                               ← /wf-spec-finalize (ARCHIVADO tras decompose, con anexo RF→HU)
+├── prd_features.md                           ← /wf-spec-decompose — PROJECT HUB (index + trazabilidad + estado)
+├── prd_conflict_report.md                    ← /wf-spec-decompose (automático) o /wf-spec-conflict
+├── prd_readiness_report.md                   ← /wf-spec-readiness
 └── features/
     └── <nombre-feature>/
         ├── README.md                         ← /wf-spec-decompose o /wf-spec-fast-track

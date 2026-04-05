@@ -1,3 +1,7 @@
+> ⚠️ **ARCHIVO** — Este spec monolítico ha sido descompuesto en features independientes.
+> Consulta `prd-hogar-sad_features.md` como hub del proyecto y `features/` para los specs individuales.
+> Fecha de archivo: 2026-04-02
+
 # Spec: Aplicaciones Móviles CUIDEO - Hogar & SAD
 > Versión: 1.0 | Fecha: 2026-04-02 | Generado desde: prd-hogar-sad.md
 
@@ -1209,6 +1213,66 @@ THEN se envía una notificación separada por cada servicio programado para el d
 - Funciones sociales (perfiles públicos, valoraciones entre trabajadoras)
 - Configuración de preferencias de notificaciones por tipo (previsto para una fase futura)
 - Pantalla de historial de servicios completados (RF-3.5 del PRD): el historial completo de llamamientos con su resultado está incluido en el alcance; el historial de servicios completados con filtro por fechas y detalle de horas trabajadas no está incluido en este spec.
+
+---
+
+## Anexo: Trazabilidad RF → HU
+
+| RF | Título RF | HU | Título HU |
+|----|-----------|-----|-----------|
+| RF-001 | Autenticación y Onboarding | HU-001 | Ver la pantalla de splash al abrir la app |
+| RF-001 | Autenticación y Onboarding | HU-002 | Completar el onboarding inicial |
+| RF-001 | Autenticación y Onboarding | HU-003 | Iniciar sesión en la app |
+| RF-001 | Autenticación y Onboarding | HU-004 | Activar mi cuenta (SAD) |
+| RF-001 | Autenticación y Onboarding | HU-005 | Registrarme en la app (Hogar) |
+| RF-001 | Autenticación y Onboarding | HU-029 | Cerrar sesión |
+| RF-001 | Autenticación y Onboarding | HU-032 | Ver pantalla de acceso revocado (SAD) |
+| RF-001 | Autenticación y Onboarding | HU-035 | Recuperar el acceso a mi cuenta |
+| RF-002 | Panel Principal | HU-006 | Navegar por el panel principal (perfil SAD) |
+| RF-002 | Panel Principal | HU-007 | Navegar por el panel principal (perfil Hogar) |
+| RF-002 | Panel Principal | HU-008 | Leer comunicados del tablón de anuncios |
+| RF-002 | Panel Principal | HU-009 | Ver mensajes del sistema |
+| RF-003 | Mis Servicios (Gestión de Servicios) | HU-010 | Ver el detalle de un servicio (SAD) |
+| RF-003 | Mis Servicios (Gestión de Servicios) | HU-011 | Consultar mis servicios asignados (SAD) |
+| RF-003 | Mis Servicios (Gestión de Servicios) | HU-012 | Responder a un llamamiento (SAD) |
+| RF-003 | Mis Servicios (Gestión de Servicios) | HU-013 | Gestionar notas de un servicio (SAD) |
+| RF-003 | Mis Servicios (Gestión de Servicios) | HU-014 | Recibir y confirmar un nuevo servicio asignado (SAD — contrato indefinido) |
+| RF-004 | Control Horario (Seguimiento de Tiempo) | HU-018 | Fichar entrada y salida en un servicio (SAD) |
+| RF-004 | Control Horario (Seguimiento de Tiempo) | HU-033 | Consultar historial de fichajes (SAD) |
+| RF-005 | Incidencias | HU-021 | Reportar una incidencia (SAD) |
+| RF-005 | Incidencias | HU-034 | Consultar historial de incidencias (SAD) |
+| RF-006 | Ofertas (Ofertas de Trabajo) | HU-015 | Navegar y filtrar ofertas de trabajo (Hogar) |
+| RF-006 | Ofertas (Ofertas de Trabajo) | HU-016 | Solicitar una oferta de trabajo (Hogar) |
+| RF-006 | Ofertas (Ofertas de Trabajo) | HU-017 | Consultar mis solicitudes de oferta (Hogar) |
+| RF-007 | Mi Disponibilidad (Gestión de Disponibilidad) | HU-026 | Gestionar mi disponibilidad semanal |
+| RF-008 | Mis Ausencias (Gestión de Ausencias) | HU-019 | Consultar historial de ausencias y saldo de vacaciones (SAD) |
+| RF-008 | Mis Ausencias (Gestión de Ausencias) | HU-020 | Solicitar una ausencia (SAD) |
+| RF-009 | Perfil (Gestión de Perfil) | HU-022 | Ver y editar mi perfil |
+| RF-009 | Perfil (Gestión de Perfil) | HU-023 | Gestionar mi foto de perfil |
+| RF-009 | Perfil (Gestión de Perfil) | HU-024 | Gestionar mis documentos (subir y firmar) |
+| RF-009 | Perfil (Gestión de Perfil) | HU-025 | Ver el estado de mi contrato (SAD) |
+| RF-010 | Comunicación | HU-027 | Comunicarme con coordinación mediante chat |
+| RF-010 | Comunicación | HU-028 | Ver mi historial de conversaciones |
+| RF-011 | Notificaciones (Notificaciones Push) | HU-030 | Recibir notificaciones push |
+| RF-011 | Notificaciones (Notificaciones Push) | HU-031 | Consultar el historial de notificaciones |
+
+> Los IDs de RF son inferidos de las secciones funcionales del PRD — el documento original los numera como RF-1 a RF-12 pero el RF-12 (Publicación de la Aplicación) es de alcance técnico/operativo y no genera HUs funcionales en el Spec.
+
+### Cobertura por RF
+
+| RF | Título RF | HUs asignadas |
+|----|-----------|---------------|
+| RF-001 | Autenticación y Onboarding | HU-001, HU-002, HU-003, HU-004, HU-005, HU-029, HU-032, HU-035 |
+| RF-002 | Panel Principal | HU-006, HU-007, HU-008, HU-009 |
+| RF-003 | Mis Servicios (Gestión de Servicios) | HU-010, HU-011, HU-012, HU-013, HU-014 |
+| RF-004 | Control Horario (Seguimiento de Tiempo) | HU-018, HU-033 |
+| RF-005 | Incidencias | HU-021, HU-034 |
+| RF-006 | Ofertas (Ofertas de Trabajo) | HU-015, HU-016, HU-017 |
+| RF-007 | Mi Disponibilidad (Gestión de Disponibilidad) | HU-026 |
+| RF-008 | Mis Ausencias (Gestión de Ausencias) | HU-019, HU-020 |
+| RF-009 | Perfil (Gestión de Perfil) | HU-022, HU-023, HU-024, HU-025 |
+| RF-010 | Comunicación | HU-027, HU-028 |
+| RF-011 | Notificaciones (Notificaciones Push) | HU-030, HU-031 |
 
 ---
 

@@ -112,4 +112,4 @@
    ```
    /wf-spec-finalize [path/al/archivo.md]
    ```
-5. Para completar HUs marcadas `[INCOMPLETO]` después: responde los gaps pendientes en este archivo y ejecuta `/wf-spec-delta`
+5. Para completar HUs marcadas `[INCOMPLETO]` después: responde los gaps pendientes en este archivo y ejecuta `/wf-spec-delta resolve <feature_spec.md>`

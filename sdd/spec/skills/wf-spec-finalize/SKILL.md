@@ -61,7 +61,7 @@ Comprueba la severidad de los items pendientes en el `_analysis.md`:
 4. **Construir el Spec** con los 8 elementos en orden (ver template)
 5. **Aplicar la Prueba de Pureza** sobre lo que tú mismo escribas antes de producir el output
 6. **Asignar cada CA a su HU padre**: cada CA debe incluir `← HU-XXX` referenciando la historia que cubre
-7. **Marcar HUs incompletas**: para cada gap `[CRÍTICO]_(pendiente)_`, localiza las HUs indicadas en su campo `Afecta` y añade al final de cada una: `> ⚠ [INCOMPLETO] — Pendiente de gap(s): [P-XXX]. Responde en el _analysis.md y ejecuta /wf-spec-delta para completar.` Genera la HU con la información disponible. Los CAs asociados se generan parcialmente si es posible o se omiten con referencia al gap.
+7. **Marcar HUs incompletas**: para cada gap `[CRÍTICO]_(pendiente)_`, localiza las HUs indicadas en su campo `Afecta` y añade al final de cada una: `> ⚠ [INCOMPLETO] — Pendiente de gap(s): [P-XXX]. Responde en el _analysis.md y ejecuta /wf-spec-delta resolve para completar.` Genera la HU con la información disponible. Los CAs asociados se generan parcialmente si es posible o se omiten con referencia al gap.
 8. **Auto-marcar el Checklist**: marca `[x]` los items que puedes verificar directamente del spec que generaste; deja `[ ]` solo los que requieren validación humana posterior
 9. **Rellenar la sección "Resumen de generación"** del template: completa las tablas de estado de los 8 elementos, HUs incompletas, asunciones por defecto aplicadas y contaminaciones de Pureza procesadas. Si una tabla no aplica, escribe "Ninguna." debajo del encabezado correspondiente
 
@@ -90,46 +90,41 @@ Escribe el Spec generado en ese path.
 
 ---
 
-## Paso 7.5: Generar el documento de trazabilidad
+## Paso 7.5: Generar el anexo de trazabilidad RF → HU en el spec
 
-Genera el archivo `_traceability.md` que mapea cada RF del documento original a las HUs que lo implementan.
+Añade al final del spec (antes de `## Items pendientes` si existe) una sección `## Anexo: Trazabilidad RF → HU` que mapea cada RF del documento original a las HUs que lo implementan.
 
 **Por qué ahora:** En este momento tienes en contexto tanto el documento de origen (con sus RFs o secciones funcionales) como el spec recién generado (con sus HUs). Es el único punto del pipeline donde se puede establecer la procedencia RF→HU antes de que las HUs se distribuyan en features tras el decompose.
 
 ### Extraer las HUs del spec generado
 
-Lee el spec que acabas de escribir y lista todas las HUs con su ID y título.
+Lista todas las HUs del spec con su ID y título.
 
 ### Mapear cada HU a su RF de origen
 
 Usando el documento de requisitos original (ya leído en el Paso 3), identifica qué RF o sección funcional motivó cada HU:
 
 - **Si el PRD tiene RFs numerados** (ej: "RF-4 Control Horario"): asigna directamente el ID del RF.
-- **Si el PRD tiene secciones funcionales sin numeración** (ej: "## Control Horario"): crea IDs RF-001, RF-002… basándose en los títulos de sección y añade al final del documento la nota: `> Los IDs de RF son inferidos de las secciones funcionales del PRD — el documento original no los numera explícitamente.`
+- **Si el PRD tiene secciones funcionales sin numeración** (ej: "## Control Horario"): crea IDs RF-001, RF-002… basándose en los títulos de sección y añade una nota: `> Los IDs de RF son inferidos de las secciones funcionales del PRD — el documento original no los numera explícitamente.`
 - **Si el PRD no tiene estructura clara**: agrupa las HUs por tema funcional, crea IDs RF sintéticos y añade la misma nota.
 
-### Construir el documento de trazabilidad
+### Construir el anexo
 
-Consulta `references/traceability_template.md` para la estructura exacta.
+Consulta la sección `## Anexo: Trazabilidad RF → HU` de `references/output_template.md` para la estructura exacta.
 
-- Columna Feature = `—` para todas las HUs (se completará en `wf-spec-decompose`)
-- Estado = `pendiente-decompose` para todas las HUs
-- Genera también la tabla de Cobertura por RF (agrupando HUs por RF)
-- Historial: una fila inicial con tipo "inicial" y fecha de hoy
+La tabla tiene 4 columnas: RF, Título RF, HU, Título HU. Una fila por cada HU, agrupadas por RF de origen.
 
-**Path de salida:** mismo directorio que el spec + nombre base + `_traceability.md`
-- Ejemplo: `docs/prd.md` → `docs/prd_traceability.md`
+Genera también la tabla de Cobertura por RF (agrupando HUs por RF, sin columna Feature).
 
-Escribe el archivo.
+**No se genera un archivo `_traceability.md` separado.** La trazabilidad completa RF→HU→Feature se construirá en `_features.md` cuando se ejecute `/wf-spec-decompose`.
 
 ---
 
 ## Paso 8: Informar al usuario
 
-Tras escribir los archivos, informa **solo** lo siguiente en terminal:
+Tras escribir el spec, informa **solo** lo siguiente en terminal:
 
-- Spec generado: `<path>_spec.md`
-- Trazabilidad: `<path>_traceability.md`
+- Spec generado: `<path>_spec.md` (incluye anexo de trazabilidad RF → HU)
 
 > El detalle completo (estado de los 8 elementos, HUs incompletas, asunciones y contaminaciones) está dentro de la sección "Resumen de generación" del propio spec.
 
@@ -143,7 +138,7 @@ No lo modifiques directamente. Para cambios futuros sobre el spec:
 
   `/wf-spec-delta analyze <path>_spec.md --new-reqs <descripcion_del_cambio.md>`
 
-Los cambios quedarán registrados en el Changelog del spec y en `_traceability.md`.
+Los cambios quedarán registrados en el Changelog del spec.
 
 ---
 **Siguiente paso** — descomponer el spec monolítico en features:

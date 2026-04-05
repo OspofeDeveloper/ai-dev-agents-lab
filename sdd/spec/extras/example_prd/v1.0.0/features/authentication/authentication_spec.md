@@ -1,5 +1,5 @@
 # Spec: Authentication
-> Versión: 1.0 | Fecha: 2026-04-02
+> Versión: 1.1 | Fecha: 2026-04-05
 > Spec monolítico origen: prd-hogar-sad_spec.md
 > Feature ID: F-001
 
@@ -9,7 +9,7 @@
 | Actor | Descripción | Capacidades en esta feature |
 |-------|-------------|----------------------------|
 | Trabajadora Hogar | Trabajadora de cuidado a domicilio con contrato fijo discontinuo que busca oportunidades. Usa la app CUIDEO (identidad visual azul). | Registro, login, onboarding, recuperar contraseña, cerrar sesión. |
-| Trabajadora SAD | Trabajadora contratada del Servicio de Asistencia Social que gestiona servicios asignados. Usa la app Felizvita (identidad visual verde). | Activar cuenta, login, onboarding, cerrar sesión, ver pantalla de acceso revocado. |
+| Trabajadora SAD | Trabajadora contratada del Servicio de Asistencia Social que gestiona servicios asignados. Usa la app Felizvita (identidad visual verde). | Login, onboarding, cerrar sesión, ver pantalla de acceso revocado. |
 | Sistema / Backoffice | Equipo de coordinación y administración que gestiona el backend y los datos. | Crear cuentas SAD, revocar acceso a trabajadoras. No es un actor de la app móvil pero sus acciones generan estados visibles para las trabajadoras. |
 
 ---
@@ -25,23 +25,16 @@ Como trabajadora (Hogar o SAD) / quiero ver un onboarding con las funcionalidade
 ### HU-003: Iniciar sesión en la app
 Como trabajadora (Hogar o SAD) / quiero iniciar sesión con mi email y contraseña / para que pueda acceder a la app de forma segura y mantener mi sesión activa sin necesidad de volver a hacer login en cada acceso.
 
-> ⚠ [INCOMPLETO] — Pendiente de gap(s): [P-001]. Responde en el _analysis.md y ejecuta /wf-spec-delta para completar.
-
-### HU-004: Activar mi cuenta (SAD)
-Como trabajadora SAD / quiero activar mi cuenta desde el enlace que recibo por email / para que pueda establecer mis credenciales y acceder a la app por primera vez.
-
-> ⚠ [INCOMPLETO] — Pendiente de gap(s): [P-007]. Responde en el _analysis.md y ejecuta /wf-spec-delta para completar.
-
-### HU-005: Registrarme en la app (Hogar)
+### HU-004: Registrarme en la app (Hogar)
 Como trabajadora Hogar / quiero registrarme en la app introduciendo mi email y contraseña / para que pueda crear mi cuenta y empezar a usar la app.
 
-### HU-029: Cerrar sesión
+### HU-005: Cerrar sesión
 Como trabajadora (Hogar o SAD) / quiero cerrar sesión de forma explícita / para que mis datos queden protegidos si comparto o pierdo el dispositivo.
 
-### HU-032: Ver pantalla de acceso revocado (SAD)
+### HU-006: Ver pantalla de acceso revocado (SAD)
 Como trabajadora SAD cuya cuenta ha sido suspendida o dada de baja / quiero ver una pantalla informativa en lugar de acceder a la app / para que entienda que ya no tengo acceso y sepa a dónde dirigirme.
 
-### HU-035: Recuperar el acceso a mi cuenta
+### HU-007: Recuperar el acceso a mi cuenta
 Como trabajadora (Hogar o SAD) / quiero recuperar el acceso a mi cuenta si olvido mi contraseña / para que pueda volver a usar la app sin necesidad de contactar con soporte.
 
 ---
@@ -54,7 +47,7 @@ Actor: Trabajadora Hogar o SAD | Objetivo: Llegar a la pantalla principal tras i
 1. La trabajadora abre la app por primera vez.
 2. La app muestra la pantalla de splash con el logo de la marca durante 2-3 segundos.
 3. No hay sesión activa; la app redirige al login.
-4. La trabajadora inicia sesión (Hogar: con email y contraseña; SAD: con email y contraseña).
+4. La trabajadora inicia sesión con email y contraseña (Hogar: credenciales creadas en el registro; SAD: credenciales creadas externamente por el backoffice).
 5. Tras el login exitoso, la app solicita permiso de notificaciones push.
 6. La app muestra las pantallas de onboarding (3-5 pantallas con los highlights principales).
 7. La app solicita permiso de ubicación con explicación del uso para fichaje.
@@ -84,14 +77,20 @@ Flujos alternativos:
 
 ---
 
-### Journey 3: Activación de cuenta por primera vez (SAD)
-Actor: Trabajadora SAD | Objetivo: Establecer credenciales y acceder a la app
+### Journey 3: Primer acceso de trabajadora SAD
+Actor: Trabajadora SAD | Objetivo: Acceder a la app por primera vez con las credenciales creadas por el backoffice
 
-> ⚠ [INCOMPLETO] — Pendiente de gap(s): [P-007]. El flujo exacto (qué pantalla abre el enlace, qué introduce la trabajadora, destino tras completar) no está definido. Responde en el _analysis.md y ejecuta /wf-spec-delta para completar.
+1. El backoffice crea la cuenta de la trabajadora SAD de forma externa y le comunica las credenciales.
+2. La trabajadora abre la app e introduce su email y contraseña en la pantalla de login.
+3. Tras el login exitoso, la app solicita permiso de notificaciones push.
+4. La app muestra las pantallas de onboarding (primera vez).
+5. La app solicita permiso de ubicación con explicación del uso para fichaje.
+6. El onboarding finaliza y la trabajadora llega a la home del perfil SAD.
 
-1. La trabajadora recibe un email de activación enviado desde el backoffice.
-2. La trabajadora pulsa el enlace del email.
-3. [PENDIENTE P-007: flujo de activación — pantalla, campos y destino no definidos]
+Estado de éxito: La trabajadora SAD accede a su home personalizada tras iniciar sesión con las credenciales creadas externamente.
+
+Flujos alternativos:
+- Si la trabajadora introduce credenciales incorrectas → se muestra un mensaje de error genérico.
 
 ---
 
@@ -110,6 +109,10 @@ Actor: Trabajadora SAD | Objetivo: Establecer credenciales y acceder a la app
 - Las credenciales de sesión se almacenan en el área de seguridad del dispositivo, protegidas contra acceso no autorizado por otras aplicaciones.
 - Toda la comunicación de la app con el servidor está cifrada y protegida contra interceptación.
 - Al detectar sesión inválida durante múltiples operaciones simultáneas: mostrar el login una única vez, cancelar las operaciones pendientes, no mostrar múltiples diálogos de error.
+- Cualquier error en el inicio de sesión (credenciales incorrectas, cuenta bloqueada temporalmente por intentos fallidos, u otro error) muestra siempre un mensaje genérico de error ("Ha habido un error en el inicio de sesión"). Por motivos de seguridad, el mensaje de error de login no debe revelar la causa específica del fallo.
+
+**Cuentas SAD:**
+- Las cuentas de las trabajadoras SAD se crean de forma externa desde el backoffice. La app no ofrece registro de cuentas para el perfil SAD. Las trabajadoras SAD acceden a la app únicamente mediante login con las credenciales creadas externamente.
 
 **Perfiles diferenciados:**
 - El producto se presenta como dos aplicaciones de marca diferenciada (CUIDEO para perfil Hogar con identidad visual azul, Felizvita para perfil SAD con identidad visual verde) que comparten las mismas funcionalidades de base y adaptan su contenido al tipo de contrato de la trabajadora.
@@ -127,6 +130,7 @@ Actor: Trabajadora SAD | Objetivo: Establecer credenciales y acceder a la app
 | Login | Login exitoso | Solicitud permiso notificaciones push → Onboarding (solo primera vez) → Home |
 | Login | Login exitoso (no primera vez) | Home (según perfil) |
 | Login | Cuenta suspendida / revocada (SAD) | Pantalla de acceso revocado |
+| Login | Error de inicio de sesión (cualquier causa) | Permanece en Login con mensaje genérico de error |
 
 ---
 
@@ -181,10 +185,10 @@ THEN la app verifica las credenciales, almacena la sesión de forma segura en el
 
 ---
 
-### CA-008: Login con credenciales incorrectas ← HU-003
-GIVEN la trabajadora introduce email o contraseña incorrectos
+### CA-008: Login con error — mensaje genérico ← HU-003
+GIVEN la trabajadora introduce email o contraseña incorrectos, o su cuenta está bloqueada temporalmente por intentos fallidos, o se produce cualquier otro error en el inicio de sesión
 WHEN pulsa "Iniciar sesión"
-THEN la app muestra un mensaje de error claro indicando que las credenciales son incorrectas; no redirige a la home.
+THEN la app muestra un mensaje genérico de error ("Ha habido un error en el inicio de sesión") sin revelar la causa específica del fallo; no redirige a la home.
 
 ---
 
@@ -195,9 +199,10 @@ THEN la app muestra un error de validación en el campo email antes de enviar la
 
 ---
 
-### CA-010: Bloqueo temporal por intentos fallidos ← HU-003
-
-> [INCOMPLETO] — Pendiente de gap [P-001]: el comportamiento observable del bloqueo (mensaje, duración, mecanismo de desbloqueo) y si es por dispositivo o por cuenta no están definidos. CA no puede completarse hasta resolver el gap.
+### CA-010: Bloqueo temporal por intentos fallidos — mensaje genérico ← HU-003
+GIVEN la trabajadora ha fallado múltiples intentos de login consecutivos y el sistema aplica un bloqueo temporal
+WHEN intenta iniciar sesión una vez más
+THEN la app muestra el mismo mensaje genérico de error ("Ha habido un error en el inicio de sesión") sin indicar que la cuenta está bloqueada, sin revelar la duración del bloqueo ni ofrecer mecanismos de desbloqueo diferenciados; el comportamiento es indistinguible del error por credenciales incorrectas.
 
 ---
 
@@ -222,48 +227,42 @@ THEN se muestra la pantalla de login una única vez, se cancelan las operaciones
 
 ---
 
-### CA-014: Activación de cuenta SAD — flujo pendiente ← HU-004
-
-> [INCOMPLETO] — Pendiente de gap [P-007]: el flujo de activación (qué pantalla abre el enlace, qué introduce la trabajadora, destino tras completar) no está definido. CA no puede completarse hasta resolver el gap.
-
----
-
-### CA-015: Registro Hogar — campos y validaciones ← HU-005
+### CA-014: Registro Hogar — campos y validaciones ← HU-004
 GIVEN la trabajadora Hogar está en la pantalla de registro
 WHEN introduce su email y contraseña
 THEN la app valida el formato del email y que la contraseña cumple los requisitos (mínimo 8 caracteres, al menos una mayúscula y un número) antes de enviar el formulario.
 
 ---
 
-### CA-016: Registro Hogar — alta completada ← HU-005
+### CA-015: Registro Hogar — alta completada ← HU-004
 GIVEN la trabajadora Hogar ha introducido datos válidos en el formulario de registro
 WHEN pulsa "Registrarse"
 THEN el alta se completa y la trabajadora inicia sesión directamente, llegando a su home.
 
 ---
 
-### CA-017: Registro Hogar — errores de validación ← HU-005
+### CA-016: Registro Hogar — errores de validación ← HU-004
 GIVEN la trabajadora Hogar introduce datos con formato inválido en el registro
 WHEN pulsa "Registrarse"
 THEN la app muestra mensajes de error claros en los campos con problemas, sin enviar el formulario.
 
 ---
 
-### CA-018: Cerrar sesión — confirmación y limpieza ← HU-029
+### CA-017: Cerrar sesión — confirmación y limpieza ← HU-005
 GIVEN la trabajadora accede a la opción de cerrar sesión
 WHEN pulsa "Cerrar sesión"
 THEN se muestra un diálogo de confirmación; al confirmar, se borran todos los tokens y datos de sesión almacenados en el dispositivo, se invalida el token en el backend y se redirige a la pantalla de login.
 
 ---
 
-### CA-019: Acceso revocado — pantalla informativa (SAD) ← HU-032
+### CA-018: Acceso revocado — pantalla informativa (SAD) ← HU-006
 GIVEN una trabajadora SAD intenta acceder con credenciales válidas pero su cuenta ha sido suspendida, dada de baja o desactivada
 WHEN el backend devuelve el estado de cuenta revocada durante la autenticación
 THEN se muestra la pantalla de acceso revocado con el mensaje "Ya no tienes permisos para acceder a esta aplicación", información de contacto o soporte, y sin posibilidad de navegar a ninguna sección de la app; no se almacenan tokens en este estado.
 
 ---
 
-### CA-020: Recuperar contraseña — flujo completo ← HU-035
+### CA-019: Recuperar contraseña — flujo completo ← HU-007
 GIVEN la trabajadora pulsa "¿Olvidaste tu contraseña?" en el login
 WHEN introduce su email en la pantalla de recuperación
 THEN la app muestra confirmación del envío del email sin revelar si el email existe en el sistema; el enlace recibido permite establecer una nueva contraseña que cumple los mismos requisitos que el registro (mínimo 8 caracteres, al menos una mayúscula y un número); si la cuenta está dada de baja, el enlace muestra la pantalla de acceso revocado.
@@ -276,15 +275,31 @@ THEN la app muestra confirmación del envío del email sin revelar si el email e
 - [x] Estados de éxito definidos
 - [x] Edge cases documentados
 - [x] Estados de error definidos
-- [x] Ambigüedades resueltas (las resolubles; las pendientes marcadas como [INCOMPLETO])
+- [x] Ambigüedades resueltas
 - [x] Cada CA referencia su HU padre
 - [x] Cada CA es testable de forma independiente
 - [x] Destinos de navegación enumerados con sus variantes
-- [ ] Flujo de activación SAD revisado con cliente ([P-007])
-- [ ] Comportamiento bloqueo de login revisado con cliente ([P-001])
 
 ---
 
 ## Fuera de Alcance
 - Autenticación biométrica (Face ID, huella digital)
 - Autenticación de dos factores (2FA)
+- Registro de cuentas SAD dentro de la app (las cuentas SAD se crean exclusivamente desde el backoffice)
+
+---
+
+## Changelog
+
+### v1.1 — 2026-04-05
+- **Completadas**: HU-003 "Iniciar sesión en la app" (gap [P-001] resuelto)
+- **Eliminadas**: HU-004 "Activar mi cuenta (SAD)" (gap [P-007] resuelto — el cliente confirma que no existe flujo de activación en la app; las cuentas SAD se crean externamente y la trabajadora accede mediante login)
+- **Eliminadas**: CA-014 "Activación de cuenta SAD — flujo pendiente" (asociado a HU-004 eliminada)
+- **Modificadas**: CA-008 "Login con credenciales incorrectas" → ahora "Login con error — mensaje genérico" — unificado con comportamiento de bloqueo: siempre mensaje genérico por seguridad
+- **Completadas**: CA-010 "Bloqueo temporal por intentos fallidos" (gap [P-001] resuelto — mensaje genérico indistinguible de otros errores de login)
+- **CAs nuevos**: ninguno
+- **Modificadas**: Journey 3 "Activación de cuenta por primera vez (SAD)" → ahora "Primer acceso de trabajadora SAD" — refleja que la cuenta ya existe y la trabajadora simplemente inicia sesión
+- **Reglas**: nueva "Cuentas SAD" — las cuentas se crean externamente, no hay registro SAD en la app
+- **Reglas**: nueva regla de mensaje genérico de error en login por seguridad
+- **Renumeración**: HUs renumeradas (antigua HU-005→HU-004, HU-029→HU-005, HU-032→HU-006, HU-035→HU-007); CAs renumerados (CA-015→CA-014 a CA-020→CA-019)
+- **Fuera de Alcance**: añadido "Registro de cuentas SAD dentro de la app"
