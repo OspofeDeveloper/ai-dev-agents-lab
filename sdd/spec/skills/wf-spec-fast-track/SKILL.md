@@ -1,32 +1,38 @@
 ---
 name: wf-spec-fast-track
-description: Genera el Spec de una feature directamente desde un documento de requisitos acotado a una sola capacidad, sin pasar por el flujo analyze/finalize/decompose. Activa en frases como "genera el spec directo de esta feature", "fast-track del spec", "crea el spec de esta capability directamente", "genera spec sin análisis previo".
-argument-hint: "<archivo.md> --capability <nombre-kebab>"
+description: Genera el Spec de una feature directamente desde un documento de requisitos acotado a una sola capacidad, sin pasar por el flujo analyze/finalize/decompose. Soporta modo scoped con --scope-from para filtrar un PRD completo a una feature del discovery. Activa en frases como "genera el spec directo de esta feature", "fast-track del spec", "crea el spec de esta capability directamente", "genera spec sin análisis previo".
+argument-hint: "<archivo.md> --capability <nombre-kebab> | <prd.md> --scope-from <discovery.md> --feature <F-00X>"
 effort: high
 allowed-tools: [Read, Write, Bash]
-context: fork
-agent: sdd-analyst
 ---
 
 # Workflow: FAST-TRACK
 
 Tu objetivo es generar un Spec de feature SDD completo y válido directamente desde un documento de requisitos enfocado en una sola capacidad. Usa `kb-spec-expert` para garantizar pureza y los 8 elementos, y `kb-decompose-expert` para verificar que el scope es el de una sola feature válida.
 
+**Dos modos de operación:**
+- **Modo directo** (`--capability`): el documento de entrada está acotado a una sola capacidad. Es el modo original.
+- **Modo scoped** (`--scope-from` + `--feature`): el documento de entrada es un PRD completo, pero se filtra a una sola feature usando el scope definido en un `_discovery.md` previo generado por `/wf-spec-discover`.
+
 **Cuándo usar fast-track vs. flujo estándar:**
 - Fast-track es para documentar **una sola capacidad** en un proyecto donde el resto ya está documentado (o no se quiere documentar todavía).
-- Si el documento describe múltiples capacidades independientes → informar que debe usar el flujo estándar (`/wf-spec-analyze` → `/wf-spec-finalize` → `/wf-spec-decompose`).
+- En modo scoped, fast-track opera sobre un PRD completo pero restringido al scope de una feature del discovery.
+- Si el documento describe múltiples capacidades independientes y no hay `--scope-from` → informar que debe usar el flujo estándar o `/wf-spec-discover` primero.
 
 ---
 
 ## Paso 1: Parsear argumentos
 
 Extrae de `$ARGUMENTS`:
-- **Path del archivo**: el primer argumento (antes de `--capability`)
-- **Capability**: el argumento después de `--capability`
+- **Path del archivo**: el primer argumento
+- **Modo directo**: si hay `--capability` → extraer el nombre de la capability
+- **Modo scoped**: si hay `--scope-from` y `--feature` → extraer el path del `_discovery.md` y el Feature ID (ej: `F-001`)
 
-Si falta `--capability`, informa:
-> "Uso: `/wf-spec-fast-track <archivo.md> --capability <nombre-kebab-case>`"
-> "Ejemplo: `/wf-spec-fast-track docs/push.md --capability push-notifications`"
+**Validación de argumentos:**
+- Si hay `--scope-from` sin `--feature` (o viceversa) → informa: "Los flags `--scope-from` y `--feature` deben usarse juntos."
+- Si no hay ni `--capability` ni `--scope-from` → informa:
+> "Uso modo directo: `/wf-spec-fast-track <archivo.md> --capability <nombre-kebab-case>`"
+> "Uso modo scoped: `/wf-spec-fast-track <prd.md> --scope-from <discovery.md> --feature <F-00X>`"
 
 ---
 
@@ -43,11 +49,23 @@ Si no existe → informa al usuario con la ruta exacta y detén.
 
 ## Paso 3: Leer el contenido
 
-Lee el archivo en su totalidad.
+Lee el archivo de entrada en su totalidad.
+
+**Si modo scoped:** lee también el `_discovery.md` indicado en `--scope-from`. Extrae del discovery:
+- El bloque de la feature indicada por `--feature` (ej: `F-001`)
+- El **nombre kebab-case** de la feature → se usa como `capability` para el resto del flujo
+- La lista de **Scope (RFs)** → los IDs de RF que pertenecen a esta feature
+- La lista de **Scope (secciones PRD)** → las secciones del PRD relevantes
+- Los **shared models** declarados para esta feature (owner y ref)
+
+Si el Feature ID no existe en el discovery → informa:
+> "El feature `<F-00X>` no existe en `<discovery.md>`. Features disponibles: [lista]."
 
 ---
 
 ## Paso 4: Scope Check
+
+### Modo directo (--capability)
 
 Verifica que el documento describe una única capability SDD válida. Consulta `kb-decompose-expert` para los criterios:
 - Actor principal identificable
@@ -55,9 +73,18 @@ Verifica que el documento describe una única capability SDD válida. Consulta `
 - Al menos 3 CAs verificables asumibles (incluso si el documento no los tiene todos explícitos, deben ser derivables con asunciones razonables)
 
 Si el documento claramente describe **múltiples features independientes** → devuelve:
-> "Este documento describe [N] capacidades distintas: [lista]. Para documentar todas, usa `/wf-spec-analyze <archivo.md>` seguido de `/wf-spec-decompose`. Para una sola, extrae solo esa capacidad en un documento separado y vuelve a ejecutar fast-track."
+> "Este documento describe [N] capacidades distintas: [lista]. Para documentar todas, usa `/wf-spec-discover <archivo.md>` para identificar features y luego `/wf-spec-features-first <archivo.md>` para generar los specs. Para una sola, extrae solo esa capacidad en un documento separado y vuelve a ejecutar fast-track."
 
 Si el scope es ambiguo pero asumible → aplícalo con una asunción [INFORMATIVO] documentada.
+
+### Modo scoped (--scope-from + --feature)
+
+**No aplica el check de multi-feature.** El scope ya fue definido por `/wf-spec-discover` y validado por el usuario. En su lugar:
+
+1. Filtra mentalmente el PRD a solo los RFs y secciones listados en el scope de la feature
+2. Lee el PRD completo para entender el contexto general, pero **solo genera HUs/CAs para los RFs del scope de esta feature**
+3. Verifica que el scope filtrado contiene suficiente información para generar un spec válido (actor identificable, journeys derivables, mínimo 3 CAs)
+4. Si la información es insuficiente → informa: "El scope del feature `<F-00X>` en el PRD no contiene suficiente información funcional para generar un spec válido. Revisa el `_discovery.md` y ajusta el scope."
 
 ---
 
@@ -86,13 +113,22 @@ No genera un `_analysis.md` separado. Consulta `kb-gap-conventions` para el form
 
 Produce un `_spec.md` completo con los 8 elementos SDD siguiendo la estructura de `references/feature_spec_template.md`.
 
-**Header específico del fast-track:**
+**Header específico del fast-track (modo directo):**
 ```markdown
 # Spec: [Nombre de la Capability]
 > Versión: 1.0 | Fecha: [YYYY-MM-DD]
 > Generado via: fast-track desde [path/del/documento.md]
 > Feature ID: F-001
 > Spec monolítico origen: N/A (fast-track directo)
+```
+
+**Header específico del fast-track (modo scoped):**
+```markdown
+# Spec: [Nombre de la Capability]
+> Versión: 1.0 | Fecha: [YYYY-MM-DD]
+> Generado via: fast-track desde [path/del/prd.md] (scope: F-00X via [discovery.md])
+> Feature ID: F-00X
+> Spec monolítico origen: N/A (features-first via discover)
 ```
 
 **Si hay items `[CRÍTICO]` pendientes**, añadir al final del spec (antes del Changelog si existiera):
@@ -134,6 +170,8 @@ Antes de escribir el output, aplica la Prueba de Pureza al spec completo. Consul
 **Índice de features (`_features.md`)**: Busca si existe algún `*_features.md` en el directorio del archivo de input:
 - **Si existe**: léelo y añade la nueva feature como entrada `F-00X` (con el siguiente ID disponible). Actualiza la tabla de shared models si la feature declara alguno.
 - **Si no existe**: genera un `_features.md` nuevo con esta feature como primera entrada `F-001`, sin spec monolítico origen y sin tabla de shared models si no hay ninguno.
+
+**Trazabilidad RF→HU (solo modo scoped):** Si se usó `--scope-from`, el discovery contiene el mapping RF→Feature. Al actualizar `_features.md`, añade o actualiza la sección `## Trazabilidad RF → HU → Feature` con las filas correspondientes a esta feature: para cada RF del scope, mapea las HUs generadas en este spec. Si la sección ya existía (de una ejecución previa de fast-track para otra feature), añade las filas nuevas sin eliminar las existentes.
 
 ---
 

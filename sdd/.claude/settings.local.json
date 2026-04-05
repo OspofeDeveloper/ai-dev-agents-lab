@@ -20,7 +20,8 @@
       "Bash(find /Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/spec/skills/kb-* -type f -name \"*.md\")",
       "Bash(find:*)",
       "Bash(wc -l /Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/spec/extras/example_prd/v1.0.0/prd-hogar-sad*.md /Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/spec/extras/example_prd/v1.0.0/features/*/README.md /Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/spec/extras/example_prd/v1.0.0/features/*/*_spec.md)",
-      "Bash(wc -l /Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/spec/extras/example_prd/v1.0.0/prd-hogar-sad*.md)"
+      "Bash(wc -l /Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/spec/extras/example_prd/v1.0.0/prd-hogar-sad*.md)",
+      "Bash(wc:*)"
     ]
   }
 }

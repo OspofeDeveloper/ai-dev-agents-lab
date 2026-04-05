@@ -28,7 +28,10 @@ El wizard presenta opciones guiadas y recoge los argumentos necesarios antes de 
 | Analizar un PRD/documento para detectar gaps | `/wf-spec-analyze` | `<archivo.md>` |
 | Generar el spec final tras responder los gaps | `/wf-spec-finalize` | `<archivo.md>` |
 | Validar un spec existente | `/wf-spec-validate` | `<archivo_spec.md>` |
+| Identificar features de un PRD (features-first) | `/wf-spec-discover` | `<archivo_prd.md>` |
+| Generar todos los specs por feature (flujo completo features-first) | `/wf-spec-features-first` | `<archivo_prd.md>` |
 | Generar spec directo de una feature (sin monolito) | `/wf-spec-fast-track` | `<archivo.md> --capability <nombre>` |
+| Generar spec de una feature desde un discovery | `/wf-spec-fast-track` | `<prd.md> --scope-from <discovery.md> --feature <F-00X>` |
 | Partir un spec monolítico en specs por feature | `/wf-spec-decompose` | `<archivo_spec.md>` |
 | Detectar conflictos entre specs de features | `/wf-spec-conflict` | `<feature_spec.md> --features-dir <path/features/>` |
 | Qué features están listas / orden de implementación | `/wf-spec-readiness` | `<path/features/>` |
@@ -46,7 +49,9 @@ El wizard presenta opciones guiadas y recoge los argumentos necesarios antes de 
 
 Si la intención no coincide exactamente, usa matching semántico con la columna de intenciones. Si hay ambigüedad entre dos skills, pregunta al usuario antes de invocar.
 
-## Flujo típico del pipeline
+## Flujos del pipeline
+
+### Flujo A: Spec-First (monolítico → decompose)
 
 ```
 Requisitos/PRD
@@ -69,6 +74,25 @@ _features.md actualizado con estado por feature
 features/<nombre>/<nombre>_plan.md
     ↓ [/wf-prepare-tasks generate — por feature]
 features/<nombre>/<nombre>_tasks.md
+```
+
+### Flujo B: Features-First (discover → fast-track paralelo)
+
+```
+Requisitos/PRD
+    ↓ [/wf-spec-discover]
+_discovery.md (mapa de features + scope RF→Feature + shared models)
+    ↓ [/wf-spec-features-first] (orquestador automático)
+    ↓ — o manualmente por feature:
+    ↓ [/wf-spec-fast-track <prd.md> --scope-from <discovery.md> --feature F-00X]
+        ↓
+    features/<nombre>/<nombre>_spec.md (en paralelo por feature)
+    _features.md actualizado incrementalmente
+    ↓ [/wf-spec-conflict]
+    ↓ [/wf-spec-readiness]
+_readiness_report.md
+    ↓ [/wf-prepare-plan generate — por feature]
+    ↓ [/wf-prepare-tasks generate — por feature]
 ```
 
 > Para cambios post-spec: `/wf-spec-delta analyze <spec.md> --new-reqs <cambios.md>`
