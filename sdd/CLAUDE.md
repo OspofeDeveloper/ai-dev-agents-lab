@@ -31,6 +31,7 @@ El wizard presenta opciones guiadas y recoge los argumentos necesarios antes de 
 | Generar spec directo de una feature (sin monolito) | `/wf-spec-fast-track` | `<archivo.md> --capability <nombre>` |
 | Partir un spec monolítico en specs por feature | `/wf-spec-decompose` | `<archivo_spec.md>` |
 | Detectar conflictos entre specs de features | `/wf-spec-conflict` | `<feature_spec.md> --features-dir <path/features/>` |
+| Qué features están listas / orden de implementación | `/wf-spec-readiness` | `<path/features/>` |
 | Actualizar un spec con requisitos nuevos (análisis) | `/wf-spec-delta` | `analyze <feature_spec.md> --new-reqs <description.md>` |
 | Aplicar un delta analysis a un spec | `/wf-spec-delta` | `apply <feature_spec.md> <delta_analysis.md>` |
 | Generar el plan técnico desde un spec | `/wf-prepare-plan` | `generate <spec.md>` |
@@ -57,6 +58,8 @@ _spec.md + _traceability.md (RF→HU generado, Feature pendiente)
     ↓
 _features.md + features/<nombre>/<nombre>_spec.md
 _traceability.md (RF→HU→Feature completo)
+    ↓ [/wf-spec-readiness]
+_readiness_report.md (estado + orden de implementación)
     ↓ [/wf-prepare-plan generate — por feature]
 features/<nombre>/<nombre>_plan.md
     ↓ [/wf-prepare-tasks generate — por feature]

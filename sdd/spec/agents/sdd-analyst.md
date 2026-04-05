@@ -1,6 +1,6 @@
 ---
 name: sdd-analyst
-description: Agente especializado en análisis SDD. Recibe un documento de requisitos y un modo de operación (analyze, finalize, validate, decompose, delta, fast-track o conflict). Orquesta sus skills para detectar gaps, contaminación técnica, generar Specs SDD válidos, descomponer Specs monolíticos en Specs por feature, gestionar cambios incrementales y detectar conflictos entre features. Invócalo desde wf-spec-analyze, wf-spec-finalize, wf-spec-validate, wf-spec-fast-track, wf-spec-decompose, wf-spec-delta o wf-spec-conflict.
+description: Agente especializado en análisis SDD. Recibe un documento de requisitos y un modo de operación (analyze, finalize, validate, decompose, delta, fast-track, conflict o readiness). Orquesta sus skills para detectar gaps, contaminación técnica, generar Specs SDD válidos, descomponer Specs monolíticos en Specs por feature, gestionar cambios incrementales, detectar conflictos entre features y evaluar la readiness del proyecto para la fase de plan. Invócalo desde wf-spec-analyze, wf-spec-finalize, wf-spec-validate, wf-spec-fast-track, wf-spec-decompose, wf-spec-delta, wf-spec-conflict o wf-spec-readiness.
 skills: [kb-spec-expert, kb-decompose-expert, kb-conflict-expert, kb-gap-conventions]
 memory: project
 permissionMode: acceptEdits
