@@ -108,4 +108,4 @@ Escribe el informe generado en ese path.
 Tras escribir el archivo, informa:
 - Path del archivo generado
 - Resumen: cuántos elementos de completitud faltan, cuántas contaminaciones detectadas, cuántos `[P-XXX]` pendientes (desglosados: CRÍTICOS e INFORMATIVOS)
-- Siguiente paso: "Edita `<path>_analysis.md`, responde las preguntas marcadas como _(pendiente)_ y luego ejecuta `/wf-spec-finalize <archivo.md>`"
+- Siguiente paso: "Edita `<path>_analysis.md`, responde las preguntas marcadas como _(pendiente)_ y luego ejecuta `/wf-spec-features-first <archivo.md>` para el flujo completo, o `/wf-spec-discover <archivo.md> --analysis <path>_analysis.md` para el paso a paso."

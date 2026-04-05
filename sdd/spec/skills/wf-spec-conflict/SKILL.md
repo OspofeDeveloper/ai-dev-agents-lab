@@ -34,7 +34,7 @@ Si no hay argumento, informa al usuario:
 
 1. Verifica que el spec objetivo existe.
 2. Busca todos los archivos `*_spec.md` dentro del directorio `--features-dir` (un nivel de profundidad: `features/*/<nombre>_spec.md`).
-3. Si no hay specs en el directorio → informa: "No se encontraron specs en `<features-dir>`. Asegúrate de haber ejecutado `/wf-spec-decompose` o de que la ruta es correcta."
+3. Si no hay specs en el directorio → informa: "No se encontraron specs en `<features-dir>`. Asegúrate de haber ejecutado `/wf-spec-features-first` o `/wf-spec-fast-track` o de que la ruta es correcta."
 4. Si solo hay 1 spec en total (contando el objetivo) → informa: "Solo hay 1 spec. Se necesitan al menos 2 specs para verificar conflictos."
 
 ---

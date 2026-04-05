@@ -26,13 +26,11 @@ El wizard presenta opciones guiadas y recoge los argumentos necesarios antes de 
 |---|---|---|
 | No sé qué hacer / guíame / empieza el pipeline | `/wf-init-sdd` | (sin argumentos) |
 | Analizar un PRD/documento para detectar gaps | `/wf-spec-analyze` | `<archivo.md>` |
-| Generar el spec final tras responder los gaps | `/wf-spec-finalize` | `<archivo.md>` |
 | Validar un spec existente | `/wf-spec-validate` | `<archivo_spec.md>` |
-| Identificar features de un PRD (features-first) | `/wf-spec-discover` | `<archivo_prd.md>` |
-| Generar todos los specs por feature (flujo completo features-first) | `/wf-spec-features-first` | `<archivo_prd.md>` |
-| Generar spec directo de una feature (sin monolito) | `/wf-spec-fast-track` | `<archivo.md> --capability <nombre>` |
-| Generar spec de una feature desde un discovery | `/wf-spec-fast-track` | `<prd.md> --scope-from <discovery.md> --feature <F-00X>` |
-| Partir un spec monolítico en specs por feature | `/wf-spec-decompose` | `<archivo_spec.md>` |
+| Identificar features de un PRD | `/wf-spec-discover` | `<archivo_prd.md> [--analysis <analysis.md>]` |
+| Generar todos los specs por feature (flujo completo) | `/wf-spec-features-first` | `<archivo_prd.md>` |
+| Generar spec directo de una feature | `/wf-spec-fast-track` | `<archivo.md> --capability <nombre> [--analysis <analysis.md>]` |
+| Generar spec de una feature desde un discovery | `/wf-spec-fast-track` | `<prd.md> --scope-from <discovery.md> --feature <F-00X> [--analysis <analysis.md>]` |
 | Detectar conflictos entre specs de features | `/wf-spec-conflict` | `<feature_spec.md> --features-dir <path/features/>` |
 | Qué features están listas / orden de implementación | `/wf-spec-readiness` | `<path/features/>` |
 | Actualizar un spec con requisitos nuevos (análisis) | `/wf-spec-delta` | `analyze <feature_spec.md> --new-reqs <description.md>` |
@@ -49,52 +47,30 @@ El wizard presenta opciones guiadas y recoge los argumentos necesarios antes de 
 
 Si la intención no coincide exactamente, usa matching semántico con la columna de intenciones. Si hay ambigüedad entre dos skills, pregunta al usuario antes de invocar.
 
-## Flujos del pipeline
-
-### Flujo A: Spec-First (monolítico → decompose)
+## Flujo del pipeline
 
 ```
 Requisitos/PRD
-    ↓ [/wf-spec-analyze]
-_analysis.md → [usuario responde gaps] → [/wf-spec-finalize]
+    ↓ [/wf-spec-analyze] (obligatorio)
+_analysis.md → [usuario responde gaps]
+    ↓ [/wf-spec-features-first] (orquestador automático)
+    ↓ — internamente ejecuta:
+    ↓   [/wf-spec-discover --analysis _analysis.md]
+    ↓   _discovery.md (mapa de features + scope RF→Feature + shared models)
+    ↓   [/wf-spec-fast-track --analysis _analysis.md] (en paralelo por feature)
     ↓
-_spec.md (con anexo trazabilidad RF→HU)
-    ↓ ⚠ PRD CONGELADO — cambios futuros via /wf-spec-delta
-[/wf-spec-decompose]
-    ↓
-_features.md (PROJECT HUB: index + trazabilidad RF→HU→Feature + estado)
 features/<nombre>/<nombre>_spec.md
-_spec.md archivado con banner
-    ↓ Si hay HUs [INCOMPLETO]: responder gaps en _analysis.md
-    ↓ [/wf-spec-delta resolve — por feature con gaps pendientes]
+_features.md (PROJECT HUB: index + trazabilidad RF→HU→Feature + estado)
+    ↓ [/wf-spec-conflict]
     ↓ [/wf-spec-readiness]
 _readiness_report.md (estado + orden de implementación)
-_features.md actualizado con estado por feature
     ↓ [/wf-prepare-plan generate — por feature]
 features/<nombre>/<nombre>_plan.md
     ↓ [/wf-prepare-tasks generate — por feature]
 features/<nombre>/<nombre>_tasks.md
 ```
 
-### Flujo B: Features-First (discover → fast-track paralelo)
-
-```
-Requisitos/PRD
-    ↓ [/wf-spec-discover]
-_discovery.md (mapa de features + scope RF→Feature + shared models)
-    ↓ [/wf-spec-features-first] (orquestador automático)
-    ↓ — o manualmente por feature:
-    ↓ [/wf-spec-fast-track <prd.md> --scope-from <discovery.md> --feature F-00X]
-        ↓
-    features/<nombre>/<nombre>_spec.md (en paralelo por feature)
-    _features.md actualizado incrementalmente
-    ↓ [/wf-spec-conflict]
-    ↓ [/wf-spec-readiness]
-_readiness_report.md
-    ↓ [/wf-prepare-plan generate — por feature]
-    ↓ [/wf-prepare-tasks generate — por feature]
-```
-
+> El analyze es obligatorio. `/wf-spec-features-first` lo ejecuta automáticamente si no existe `_analysis.md`.
 > Para cambios post-spec: `/wf-spec-delta analyze <spec.md> --new-reqs <cambios.md>`
 
 ## Principio de precondiciones
@@ -106,6 +82,6 @@ Los workflow skills tienen sus propias validaciones de precondición. **No las b
 El pipeline opera en dos capas:
 
 - **Capa orquestador (tú)**: mapeas intención → skill. No prescribes lógica interna.
-- **Capa skill de workflow** (`wf-spec-analyze`, `wf-spec-finalize`, etc.): parsea argumentos, verifica precondiciones, ejecuta el análisis/generación con el agente declarado en su frontmatter (`agent:`), escribe el resultado e informa al usuario.
+- **Capa skill de workflow** (`wf-spec-analyze`, `wf-spec-discover`, etc.): parsea argumentos, verifica precondiciones, ejecuta el análisis/generación con el agente declarado en su frontmatter (`agent:`), escribe el resultado e informa al usuario.
 
 Cada capa es responsable de su nivel de decisión. Tú invocas `/wf-spec-analyze <archivo.md>` y el skill gestiona todo lo demás.

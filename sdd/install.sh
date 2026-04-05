@@ -26,8 +26,6 @@ copy_template() {
   echo "  ✓ ${dst#"$SCRIPT_DIR/"}"
 }
 
-copy_template "feature_spec_template.md"   "$SCRIPT_DIR/spec/skills/wf-spec-decompose/references"
-copy_template "feature_readme_template.md" "$SCRIPT_DIR/spec/skills/wf-spec-decompose/references"
 copy_template "feature_spec_template.md"   "$SCRIPT_DIR/spec/skills/wf-spec-fast-track/references"
 copy_template "feature_readme_template.md" "$SCRIPT_DIR/spec/skills/wf-spec-fast-track/references"
 

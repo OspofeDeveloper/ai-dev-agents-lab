@@ -56,7 +56,7 @@ Busca si existe un `_features.md` en el proyecto. Para encontrarlo:
 Si existe el `_features.md`, léelo completo. Lo usarás en el paso siguiente.
 
 Si el spec está dentro de `features/<nombre>/` pero **no se encuentra `_features.md`**, advierte al usuario:
-> "⚠ No se encontró `_features.md`. Si este proyecto tiene múltiples features que comparten modelos de dominio, los shared models no se considerarán en el Plan y podrían redefinirse en cada feature. Para gestionar shared models correctamente, genera primero un spec monolítico y usa `/wf-spec-decompose`. Continuando sin shared models."
+> "⚠ No se encontró `_features.md`. Si este proyecto tiene múltiples features que comparten modelos de dominio, los shared models no se considerarán en el Plan y podrían redefinirse en cada feature. Para gestionar shared models correctamente, usa `/wf-spec-features-first` o `/wf-spec-discover` para identificar features y shared models. Continuando sin shared models."
 
 ---
 

@@ -41,9 +41,24 @@ Si no existe → informa al usuario con la ruta exacta y detén.
 
 ---
 
+## Paso 2.5: Análisis de gaps (obligatorio)
+
+1. Busca si existe un `*_analysis.md` para este PRD en el mismo directorio (convención: `<basename>_analysis.md`)
+2. **Si existe** → usarlo como contexto. Continuar al Paso 3 pasando el path del analysis.
+3. **Si NO existe** → invocar `/wf-spec-analyze <prd.md>`. Tras la ejecución, **DETENERSE** e informar al usuario:
+   > "Se ha generado el análisis de gaps en `<path>_analysis.md`. Edita el archivo, responde las preguntas marcadas como _(pendiente)_ (las `[CRÍTICO]` son obligatorias para specs completos) y vuelve a ejecutar `/wf-spec-features-first <prd.md>`."
+
+**Importante:** Este paso **nunca bloquea por gaps sin responder**. Si el analysis existe pero tiene gaps `[CRÍTICO]` con `_(pendiente)_`, se pasa igualmente a discover y fast-track. Los fast-track generarán las HUs afectadas como `[INCOMPLETO]`, que es lo que bloquea `/wf-prepare-plan` (no la generación de specs).
+
+---
+
 ## Paso 3: Ejecutar discover
 
-Invoca `/wf-spec-discover <prd.md>`.
+Si hay `_analysis.md` disponible (del Paso 2.5):
+- Invoca `/wf-spec-discover <prd.md> --analysis <analysis.md>`
+
+Si no hay analysis:
+- Invoca `/wf-spec-discover <prd.md>`
 
 Espera a que termine. Lee el resultado para obtener:
 - Path del `_discovery.md` generado
@@ -72,7 +87,7 @@ Para cada feature F-00X del discovery, lanza un subagente con el `Agent` tool us
 ```
 Agent(
   subagent_type: "sdd-analyst",
-  prompt: "Ejecuta el skill /wf-spec-fast-track con los siguientes argumentos: <prd.md> --scope-from <discovery.md> --feature F-00X"
+  prompt: "Ejecuta el skill /wf-spec-fast-track con los siguientes argumentos: <prd.md> --scope-from <discovery.md> --feature F-00X [--analysis <analysis.md> si disponible]"
 )
 ```
 
@@ -145,6 +160,9 @@ Presenta un resumen completo del flujo:
 
 Si hay features con gaps `[CRÍTICO]`:
 > "Las siguientes features tienen gaps críticos sin resolver: [lista]. Edita los specs afectados, responde los gaps marcados como _(pendiente)_ y ejecuta `/wf-spec-delta resolve <feature_spec.md>` por cada una."
+
+Si se usó `_analysis.md` con gaps `[CRÍTICO]` sin responder:
+> "Hay [N] gaps críticos del análisis previo que no fueron respondidos. Los specs afectados tienen HUs marcadas `[INCOMPLETO]` que bloquean `/wf-prepare-plan`. Responde los gaps en `<path>_analysis.md` y re-ejecuta."
 
 Si hay conflictos de severidad ALTA:
 > "Se detectaron conflictos entre features. Revisa `<path>_conflict_report.md` y resuelve antes de planificar."

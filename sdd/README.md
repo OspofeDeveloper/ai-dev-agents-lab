@@ -98,13 +98,12 @@ Cada etapa sigue el mismo patrón arquitectónico de 3 capas:
            (Conocimiento)       (Agente Worker)      (Workflow)
 
 ETAPA 1    kb-spec-expert ──►   sdd-analyst   ──◄──  wf-spec-analyze
-SPECIFY    Reglas SDD            Analiza/             wf-spec-finalize
-                                 Finaliza Specs       wf-spec-validate
-
-ETAPA 2    kb-decompose-  ──►   sdd-analyst   ──◄──  wf-spec-decompose
-DECOMPOSE  expert               Parte Spec en        wf-spec-fast-track
-           Reglas de            features +            wf-spec-conflict
-           partición            shared models         wf-spec-delta
+SPECIFY    Reglas SDD            Analiza/             wf-spec-discover
+           kb-decompose-        Genera Specs          wf-spec-features-first
+           expert               por feature           wf-spec-fast-track
+           Reglas de                                  wf-spec-validate
+           partición                                  wf-spec-conflict
+                                                      wf-spec-delta
 
 ETAPA 3    kb-plan-expert ──►   plan-architect ──◄── wf-prepare-plan
 PLAN       Reglas Plan           Spec → Plan          /wf-prepare-plan
@@ -166,10 +165,6 @@ TASKS      Reglas Tasks          Plan → Tasks         /wf-prepare-tasks
     │   ├── SKILL.md
     │   └── output_template.md
     │
-    ├── wf-spec-finalize/        ✅ Workflow: Generate final spec
-    │   ├── SKILL.md
-    │   └── references/output_template.md
-    │
     ├── wf-spec-validate/        ✅ Workflow: Audit existing spec
     │   ├── SKILL.md
     │   └── references/output_template.md
@@ -179,13 +174,6 @@ TASKS      Reglas Tasks          Plan → Tasks         /wf-prepare-tasks
     │   └── references/
     │       ├── feature_spec_template.md
     │       └── feature_readme_template.md
-    │
-    ├── wf-spec-decompose/       ✅ Workflow: Split monolith into features
-    │   ├── SKILL.md
-    │   └── references/
-    │       ├── feature_spec_template.md
-    │       ├── feature_readme_template.md
-    │       └── features_template.md
     │
     ├── wf-spec-conflict/        ✅ Workflow: Detect conflicts between specs
     │   ├── SKILL.md
@@ -208,14 +196,14 @@ TASKS      Reglas Tasks          Plan → Tasks         /wf-prepare-tasks
 
 ```
 project-root/
-├── prd.md                           # PRD original (no se modifica)
-├── prd_analysis.md                  # /wf-spec-analyze
-├── prd_spec.md                      # /wf-spec-finalize — spec monolítico limpio
-├── prd_features.md                  # /wf-spec-decompose — índice de features y shared models
+├── prd.md                           # PRD original
+├── prd_analysis.md                  # /wf-spec-analyze (recomendado)
+├── prd_discovery.md                 # /wf-spec-discover — mapa de features
+├── prd_features.md                  # /wf-spec-features-first — índice de features y shared models
 │
 └── features/
     ├── authentication/
-    │   ├── authentication_spec.md   # /wf-spec-decompose
+    │   ├── authentication_spec.md   # /wf-spec-fast-track
     │   ├── authentication_plan.md   # /wf-prepare-plan
     │   └── authentication_tasks.md  # /wf-prepare-tasks
     ├── services/
@@ -236,14 +224,10 @@ project-root/
 
 # [HUMANO] Editar prd_analysis.md: responder cada item _(pendiente)_
 
-/wf-spec-finalize prd.md
-# → prd_spec.md (spec monolítico limpio, listo para partir)
-
-
-# ── Etapa 2: Decompose ────────────────────────────────────────────────────────
-/wf-spec-decompose prd_spec.md
+/wf-spec-features-first prd.md
+# → prd_discovery.md (mapa de features + scope RF→Feature)
 # → prd_features.md (índice de features + tabla de shared models)
-# → features/<nombre>/<nombre>_spec.md (un spec por feature)
+# → features/<nombre>/<nombre>_spec.md (un spec por feature, en paralelo)
 
 # [HUMANO] Revisar prd_features.md: ajustar scope de features si es necesario
 #          Confirmar qué feature es owner de cada shared model
@@ -280,7 +264,7 @@ project-root/
 Los shared models evitan que el mismo concepto (ej. `User`) sea definido de forma distinta en cada feature.
 
 **Cómo funcionan:**
-1. `/wf-spec-decompose` detecta qué modelos aparecen en más de una feature y los lista en `_features.md` con su feature owner
+1. `/wf-spec-discover` detecta qué modelos aparecen en más de una feature y los lista en `_features.md` con su feature owner
 2. `/wf-prepare-plan` lee la tabla de shared models e inyecta la información al `plan-architect`
 3. El `plan-architect` define el modelo completo solo en el Plan de la feature owner; en los demás planes solo lo referencia
 
@@ -306,8 +290,7 @@ El ecosistema SDD alimenta directamente las skills KMM de implementación:
 SDD ECOSYSTEM                              KMM ECOSYSTEM
 ─────────────                              ─────────────
 
-/wf-spec-analyze + /wf-spec-finalize → prd_spec.md
-/wf-spec-decompose → features/<x>_spec.md
+/wf-spec-analyze + /wf-spec-features-first → features/<x>_spec.md
 /wf-prepare-plan   → features/<x>_plan.md
 /wf-prepare-tasks  → features/<x>_tasks.md ──► /kmm-scaffold
                                              /kmm-domain
@@ -335,7 +318,7 @@ El `task-generator` conoce los nombres de las skills KMM y asigna cada task a la
 
 **Checkpoints humanos**: el pipeline nunca es fully-automatic. El humano valida artefactos estructurados en tres puntos clave:
 1. Tras `wf-spec-analyze` → responder preguntas abiertas
-2. Tras `wf-spec-decompose` → validar partición y ownership de shared models
+2. Tras `wf-spec-features-first` → validar partición y ownership de shared models
 3. Tras cada `wf-prepare-plan` → revisar arquitectura antes de generar tasks
 
 **Trazabilidad completa**: cada task apunta a un CA del spec de feature. Cada CA del spec de feature es rastreable al spec monolítico origen.
@@ -375,14 +358,14 @@ git pull && ./install.sh
 | `kb-gap-conventions` | Knowledge (kb) | Transversal | ✅ Implementado |
 | `kb-plan-expert` | Knowledge (kb) | Plan | ✅ Implementado |
 | `kb-tasks-expert` | Knowledge (kb) | Tasks | ✅ Implementado |
-| `sdd-analyst` | Agente Worker | Specify + Decompose | ✅ Implementado |
+| `sdd-analyst` | Agente Worker | Specify | ✅ Implementado |
 | `plan-architect` | Agente Worker | Plan | ✅ Implementado |
 | `task-generator` | Agente Worker | Tasks | ✅ Implementado |
 | `wf-spec-analyze` | Workflow (wf) | Specify | ✅ Implementado |
-| `wf-spec-finalize` | Workflow (wf) | Specify | ✅ Implementado |
 | `wf-spec-validate` | Workflow (wf) | Specify | ✅ Implementado |
+| `wf-spec-discover` | Workflow (wf) | Specify | ✅ Implementado |
+| `wf-spec-features-first` | Workflow (wf) | Specify | ✅ Implementado |
 | `wf-spec-fast-track` | Workflow (wf) | Specify | ✅ Implementado |
-| `wf-spec-decompose` | Workflow (wf) | Decompose | ✅ Implementado |
 | `wf-spec-conflict` | Workflow (wf) | Conflict | ✅ Implementado |
 | `wf-spec-delta` | Workflow (wf) | Delta | ✅ Implementado |
 | `wf-prepare-plan` | Workflow (wf) | Plan | ✅ Implementado |

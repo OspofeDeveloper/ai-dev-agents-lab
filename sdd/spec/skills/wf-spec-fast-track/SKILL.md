@@ -1,7 +1,7 @@
 ---
 name: wf-spec-fast-track
-description: Genera el Spec de una feature directamente desde un documento de requisitos acotado a una sola capacidad, sin pasar por el flujo analyze/finalize/decompose. Soporta modo scoped con --scope-from para filtrar un PRD completo a una feature del discovery. Activa en frases como "genera el spec directo de esta feature", "fast-track del spec", "crea el spec de esta capability directamente", "genera spec sin análisis previo".
-argument-hint: "<archivo.md> --capability <nombre-kebab> | <prd.md> --scope-from <discovery.md> --feature <F-00X>"
+description: Genera el Spec de una feature directamente desde un documento de requisitos acotado a una sola capacidad. Soporta modo scoped con --scope-from para filtrar un PRD completo a una feature del discovery. Acepta --analysis para usar gaps pre-resueltos de un analisis previo. Activa en frases como "genera el spec directo de esta feature", "fast-track del spec", "crea el spec de esta capability directamente", "genera spec sin análisis previo".
+argument-hint: "<archivo.md> --capability <nombre-kebab> [--analysis <analysis.md>] | <prd.md> --scope-from <discovery.md> --feature <F-00X> [--analysis <analysis.md>]"
 effort: high
 allowed-tools: [Read, Write, Bash]
 ---
@@ -27,6 +27,7 @@ Extrae de `$ARGUMENTS`:
 - **Path del archivo**: el primer argumento
 - **Modo directo**: si hay `--capability` → extraer el nombre de la capability
 - **Modo scoped**: si hay `--scope-from` y `--feature` → extraer el path del `_discovery.md` y el Feature ID (ej: `F-001`)
+- **Flag opcional**: `--analysis <path>` → path a un `_analysis.md` con gaps pre-resueltos
 
 **Validación de argumentos:**
 - Si hay `--scope-from` sin `--feature` (o viceversa) → informa: "Los flags `--scope-from` y `--feature` deben usarse juntos."
@@ -89,6 +90,12 @@ Si el scope es ambiguo pero asumible → aplícalo con una asunción [INFORMATIV
 ---
 
 ## Paso 5: Análisis compacto (inline)
+
+**Si se proporcionó `--analysis`**: lee el `_analysis.md` primero. Extrae todos los gaps respondidos (donde "Respuesta" no es `_(pendiente)_`). Durante los checks siguientes, antes de crear un gap nuevo:
+1. Busca en el analysis si la misma pregunta o contexto ya fue respondido
+2. Si fue respondido → usa la respuesta del cliente directamente, no crees gap ni marques `[INCOMPLETO]`
+3. Si no fue respondido (sigue como `_(pendiente)_`) → procede como si no hubiera analysis (crea gap `[CRÍTICO]` y marca HU como `[INCOMPLETO]`)
+4. Si el inline analysis detecta un gap que no existe en el analysis previo → créalo normalmente
 
 Aplica los 3 checks del modo ANALYZE pero enfocados en la capability indicada:
 

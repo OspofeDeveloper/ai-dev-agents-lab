@@ -1,7 +1,7 @@
 ---
 name: wf-spec-discover
 description: Analiza un PRD e identifica features candidatas por cohesión funcional. Genera un _discovery.md con el mapa de features, scope por feature y shared models. No genera specs — solo el roadmap para ejecutar wf-spec-fast-track por feature. Activa en frases como "identifica features del PRD", "descubre las features", "qué features tiene este PRD", "mapa de features", "features-first", "qué features hay en este documento".
-argument-hint: "<prd_archivo.md>"
+argument-hint: "<prd_archivo.md> [--analysis <analysis.md>]"
 effort: high
 allowed-tools: [Read, Write, Bash]
 context: fork
@@ -18,11 +18,13 @@ Tu objetivo es leer un PRD y producir un mapa de features candidatas con su scop
 
 ## Paso 1: Parsear argumentos
 
-Extrae de `$ARGUMENTS` el path del archivo PRD a analizar.
+Extrae de `$ARGUMENTS`:
+- **Path del PRD**: el primer argumento
+- **Flag opcional**: `--analysis <path>` — path a un `_analysis.md` generado previamente por `/wf-spec-analyze`
 
 Si no hay argumento, informa al usuario:
-> "Uso: `/wf-spec-discover <prd_archivo.md>`"
-> "Ejemplo: `/wf-spec-discover docs/requisitos.md`"
+> "Uso: `/wf-spec-discover <prd_archivo.md> [--analysis <analysis.md>]`"
+> "Ejemplo: `/wf-spec-discover docs/requisitos.md --analysis docs/requisitos_analysis.md`"
 
 ---
 
@@ -36,13 +38,19 @@ Verifica que el archivo existe:
 Si no existe → informa al usuario con la ruta exacta y detén.
 
 Si el nombre termina en `_spec.md` → informa:
-> "Este archivo parece un Spec ya procesado. `/wf-spec-discover` opera sobre PRDs o documentos de requisitos, no sobre specs. Si quieres partir un spec monolítico en features, usa `/wf-spec-decompose <archivo_spec.md>`."
+> "Este archivo parece un Spec ya procesado. `/wf-spec-discover` opera sobre PRDs o documentos de requisitos, no sobre specs."
 
 ---
 
 ## Paso 3: Leer el contenido
 
 Lee el archivo PRD en su totalidad.
+
+**Si se proporcionó `--analysis`**: lee también el `_analysis.md`. Extrae los gaps respondidos (donde el campo "Respuesta" no es `_(pendiente)_`). Las respuestas del cliente se usan como contexto adicional para:
+- **Paso 5**: identificar features con mayor precisión (las respuestas pueden clarificar scopes ambiguos)
+- **Paso 7**: asignar shared models (las respuestas pueden aclarar ownership)
+
+Los gaps sin responder (`_(pendiente)_`) se ignoran en discover — no bloquean la identificación de features.
 
 ---
 
@@ -67,7 +75,7 @@ Consulta `kb-decompose-expert` y aplica el algoritmo de identificación por cohe
 3. **Agrupa por objetivo**: un objetivo principal = una feature candidata
 4. **Nombra cada candidata** en kebab-case descriptivo (ej: `appointment-management`, `time-tracking`)
 
-**Diferencia clave con decompose:** Aquí trabajas con un PRD crudo, no con un spec validado. No existen HUs ni CAs formales aún. Debes razonar sobre:
+**Nota:** Aquí trabajas con un PRD crudo, no con un spec validado. No existen HUs ni CAs formales aún. Debes razonar sobre:
 - **Journeys anticipados**: qué recorridos de usuario se pueden prever a partir del PRD
 - **CAs derivables**: qué criterios de aceptación verificables se podrían generar razonablemente
 
@@ -144,6 +152,7 @@ Tras escribir el archivo, informa:
 
 - Si hubo merges: lista de candidatas fusionadas y razón
 - Si hay shared models con ownership ambiguo pendiente de confirmación: listarlos
+- Si se usó `--analysis`: "Se utilizó el análisis previo (`<path>`) como contexto adicional para la identificación de features."
 
 **Siguiente paso** (mostrar siempre):
 
@@ -155,9 +164,4 @@ Tras escribir el archivo, informa:
 > Para generar el spec de una feature individual:
 > ```
 > /wf-spec-fast-track <prd.md> --scope-from <path>_discovery.md --feature F-001
-> ```
->
-> Si prefieres el flujo completo (spec monolítico → decompose):
-> ```
-> /wf-spec-analyze <prd.md>
 > ```

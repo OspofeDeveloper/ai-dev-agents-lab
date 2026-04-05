@@ -1,6 +1,6 @@
 ---
 name: wf-spec-readiness
-description: Analiza los artefactos post-decompose (specs de feature, READMEs, _features.md, _conflict_report.md opcional) y genera un informe de readiness que indica qué features están listas para plan, cuáles están bloqueadas y por qué, y el orden de implementación recomendado. Activa en frases como "qué features están listas", "readiness de las features", "cuáles puedo planificar", "orden de implementación", "verifica readiness", "qué falta para planificar".
+description: Analiza los artefactos post-spec-generation (specs de feature, READMEs, _features.md, _conflict_report.md opcional) y genera un informe de readiness que indica qué features están listas para plan, cuáles están bloqueadas y por qué, y el orden de implementación recomendado. Activa en frases como "qué features están listas", "readiness de las features", "cuáles puedo planificar", "orden de implementación", "verifica readiness", "qué falta para planificar".
 argument-hint: "<path/features/>"
 effort: medium
 allowed-tools: [Read, Write, Bash]
@@ -10,7 +10,7 @@ agent: sdd-analyst
 
 # Workflow: READINESS
 
-Tu objetivo es sintetizar el estado de los artefactos post-decompose en un informe accionable que le diga al usuario exactamente qué features puede pasar a `/wf-prepare-plan` y en qué orden. No generas ni modificas ningún artefacto existente — solo lees y sintetizas. Usa `kb-gap-conventions` para interpretar marcadores `[INCOMPLETO]` y severidades, y `kb-conflict-expert` para interpretar severidades de conflictos.
+Tu objetivo es sintetizar el estado de los artefactos post-spec-generation en un informe accionable que le diga al usuario exactamente qué features puede pasar a `/wf-prepare-plan` y en qué orden. No generas ni modificas ningún artefacto existente — solo lees y sintetizas. Usa `kb-gap-conventions` para interpretar marcadores `[INCOMPLETO]` y severidades, y `kb-conflict-expert` para interpretar severidades de conflictos.
 
 **Regla de oro:** Este informe es una fotografía del estado actual. No propone resoluciones — indica qué falta y dónde encontrarlo.
 
@@ -37,8 +37,8 @@ Si no hay argumento y no se puede inferir, informa al usuario:
 4. Busca `*_conflict_report.md` en el directorio padre del directorio de features (opcional — puede no existir).
 
 Valida:
-- Si no hay `_features.md` → detén: "No se encontró `_features.md` en `<directorio_padre>`. Ejecuta `/wf-spec-decompose` primero."
-- Si no hay specs → detén: "No se encontraron specs de feature en `<features-dir>`. Ejecuta `/wf-spec-decompose` primero."
+- Si no hay `_features.md` → detén: "No se encontró `_features.md` en `<directorio_padre>`. Ejecuta `/wf-spec-features-first` o `/wf-spec-fast-track` primero."
+- Si no hay specs → detén: "No se encontraron specs de feature en `<features-dir>`. Ejecuta `/wf-spec-features-first` o `/wf-spec-fast-track` primero."
 - Si falta algún README → advertencia no bloqueante: "Falta README.md en `<feature>/`. Las dependencias de esta feature se inferirán solo del `_features.md`."
 - Si no hay `_conflict_report.md` → advertencia no bloqueante: "No se encontró `_conflict_report.md`. Ejecuta `/wf-spec-conflict` para un análisis de conflictos completo. Continuando sin análisis de conflictos."
 

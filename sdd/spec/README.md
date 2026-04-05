@@ -29,14 +29,11 @@ Tienes un PRD o documento de requisitos y quieres convertirlo en Specs SDD.
 
 [edita prd_analysis.md, responde los gaps [CRÍTICO]]
 
-/wf-spec-finalize prd.md
-  → genera prd_spec.md (spec monolítico con 8 elementos SDD)
-
-/wf-spec-decompose prd_spec.md
-  → genera prd_features.md (índice de features)
+/wf-spec-features-first prd.md
+  → ejecuta discover + fast-track por feature en paralelo
+  → genera prd_discovery.md, prd_features.md
   → genera features/<nombre>/<nombre>_spec.md por cada feature
-  → genera features/<nombre>/README.md por cada feature
-  → ejecuta verificación de conflictos automáticamente
+  → ejecuta verificación de conflictos y readiness automáticamente
 ```
 
 **Cuándo usarlo**: cuando tienes un PRD que cubre todo el sistema o un conjunto amplio de funcionalidades.
@@ -109,7 +106,7 @@ Quieres verificar que los specs de las diferentes features del proyecto son cohe
   → genera features/auth/auth_conflict_report.md si hay conflictos
 ```
 
-**Cuándo usarlo**: después de modificar un spec existente o añadir una nueva feature con fast-track o delta, para verificar que el cambio no choca con el resto del sistema. También se ejecuta automáticamente al final de `/wf-spec-decompose` (modo no bloqueante).
+**Cuándo usarlo**: después de modificar un spec existente o añadir una nueva feature con fast-track o delta, para verificar que el cambio no choca con el resto del sistema. También se ejecuta automáticamente al final de `/wf-spec-features-first` (modo no bloqueante).
 
 ---
 
@@ -134,8 +131,8 @@ Todos los componentes de este directorio siguen el mismo patrón arquitectónico
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  CAPA 1 — Workflows (wf-) invocables por el usuario         │
-│  wf-spec-analyze │ wf-spec-finalize │ wf-spec-validate     │
-│  wf-spec-fast-track │ wf-spec-decompose │ wf-spec-conflict │
+│  wf-spec-analyze │ wf-spec-validate │ wf-spec-discover     │
+│  wf-spec-fast-track │ wf-spec-features-first │ wf-spec-conflict │
 │  wf-spec-delta                                              │
 │                                                             │
 │  Rol: parsear args → verificar archivos → ejecutar workflow │
@@ -183,10 +180,10 @@ Todos los componentes de este directorio siguen el mismo patrón arquitectónico
 | Skill | Comando | Produce |
 |-------|---------|---------|
 | `wf-spec-analyze` | `/wf-spec-analyze` | `_analysis.md` |
-| `wf-spec-finalize` | `/wf-spec-finalize` | `_spec.md` (con anexo trazabilidad RF→HU) |
 | `wf-spec-validate` | `/wf-spec-validate` | Informe inline (sin archivo) |
+| `wf-spec-discover` | `/wf-spec-discover` | `_discovery.md` (mapa de features + scope RF→Feature) |
+| `wf-spec-features-first` | `/wf-spec-features-first` | `_discovery.md`, `_features.md` (Project Hub), `features/<x>/<x>_spec.md` |
 | `wf-spec-fast-track` | `/wf-spec-fast-track` | `features/<x>/<x>_spec.md` directamente |
-| `wf-spec-decompose` | `/wf-spec-decompose` | `_features.md` (Project Hub: index + trazabilidad + estado), `features/<x>/<x>_spec.md`, `features/<x>/README.md`; archiva `_spec.md` |
 | `wf-spec-conflict` | `/wf-spec-conflict` | `_conflict_report.md` |
 | `wf-spec-delta` | `/wf-spec-delta` | `_delta_analysis.md` (analyze), spec actualizado (apply/resolve) |
 | `wf-spec-readiness` | `/wf-spec-readiness` | `_readiness_report.md`, actualiza estado en `_features.md` |
@@ -232,16 +229,16 @@ Los knowledge bases son las reglas que el agente consulta durante la ejecución 
 
 ```
 proyecto/
-├── prd.md                                    ← Input — congelado tras /wf-spec-finalize
-├── prd_analysis.md                           ← /wf-spec-analyze
-├── prd_spec.md                               ← /wf-spec-finalize (ARCHIVADO tras decompose, con anexo RF→HU)
-├── prd_features.md                           ← /wf-spec-decompose — PROJECT HUB (index + trazabilidad + estado)
-├── prd_conflict_report.md                    ← /wf-spec-decompose (automático) o /wf-spec-conflict
+├── prd.md                                    ← Input
+├── prd_analysis.md                           ← /wf-spec-analyze (recomendado)
+├── prd_discovery.md                          ← /wf-spec-discover
+├── prd_features.md                           ← /wf-spec-features-first — PROJECT HUB (index + trazabilidad + estado)
+├── prd_conflict_report.md                    ← /wf-spec-features-first (automático) o /wf-spec-conflict
 ├── prd_readiness_report.md                   ← /wf-spec-readiness
 └── features/
     └── <nombre-feature>/
-        ├── README.md                         ← /wf-spec-decompose o /wf-spec-fast-track
-        ├── <nombre>_spec.md                  ← /wf-spec-decompose o /wf-spec-fast-track
+        ├── README.md                         ← /wf-spec-fast-track
+        ├── <nombre>_spec.md                  ← /wf-spec-fast-track
         ├── <nombre>_delta_analysis.md        ← /wf-spec-delta analyze
         ├── <nombre>_conflict_report.md       ← /wf-spec-conflict
         ├── <nombre>_plan.md                  ← /wf-prepare-plan (etapa siguiente)
@@ -256,12 +253,11 @@ El pipeline nunca es completamente automático. Estos son los momentos donde el 
 
 | Momento | Qué hacer | Bloquea si no se hace |
 |---------|-----------|-----------------------|
-| Tras `analyze` | Responder gaps `[CRÍTICO]_(pendiente)_` en `_analysis.md` | Sí — `finalize` no avanza |
+| Tras `analyze` | Responder gaps `[CRÍTICO]_(pendiente)_` en `_analysis.md` | No bloquea generación de specs, pero las HUs afectadas quedan `[INCOMPLETO]` y bloquean `prepare-plan` |
 | Tras `analyze` | Responder gaps `[INFORMATIVO]_(pendiente)_` (opcional) | No — se aplican asunciones por defecto |
-| Tras `finalize` | PRD queda congelado — cambios futuros vía `wf-spec-delta` | No — pero editar el PRD genera inconsistencias con el Spec |
+| Tras `features-first` | Revisar `_features.md` y validar la partición de features | No — pero afecta la calidad del plan |
+| Tras `features-first` | Revisar `_conflict_report.md` si hay conflictos `ALTA` | No — pero pueden propagarse problemas al plan |
 | Tras `delta analyze` | Responder gaps `[CRÍTICO]_(pendiente)_` en `_delta_analysis.md` | Sí — `delta apply` no avanza |
-| Tras `decompose` | Revisar `_features.md` y validar la partición de features | No — pero afecta la calidad del plan |
-| Tras `decompose` | Revisar `_conflict_report.md` si hay conflictos `ALTA` | No — pero pueden propagarse problemas al plan |
 
 ---
 
@@ -291,21 +287,12 @@ sdd/spec/
     ├── wf-spec-analyze/                      ← Workflow: PRD → _analysis.md
     │   ├── SKILL.md
     │   └── output_template.md
-    ├── wf-spec-finalize/                     ← Workflow: PRD + analysis → _spec.md
-    │   ├── SKILL.md
-    │   └── references/output_template.md
     ├── wf-spec-validate/                     ← Workflow: _spec.md → informe inline
     │   ├── SKILL.md
     │   └── references/output_template.md
     ├── wf-spec-fast-track/                   ← Workflow: PRD → feature spec directo
     │   ├── SKILL.md
     │   └── references/
-    │       ├── feature_spec_template.md
-    │       └── feature_readme_template.md
-    ├── wf-spec-decompose/                    ← Workflow: _spec.md → features/*/_spec.md
-    │   ├── SKILL.md
-    │   └── references/
-    │       ├── features_template.md
     │       ├── feature_spec_template.md
     │       └── feature_readme_template.md
     ├── wf-spec-conflict/                     ← Workflow: detectar conflictos entre specs

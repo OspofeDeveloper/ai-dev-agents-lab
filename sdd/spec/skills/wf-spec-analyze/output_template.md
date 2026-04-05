@@ -96,7 +96,7 @@
 - **Contexto**: [cita del documento o descripción de dónde aparece la ambigüedad]
 - **Pregunta para el cliente**: [pregunta concreta y específica, sin opciones inventadas]
 - **Respuesta**: _(pendiente)_
-- **Asunción por defecto**: [lo que se aplicará si el cliente no responde antes de ejecutar finalize]
+- **Asunción por defecto**: [lo que se aplicará si el cliente no responde antes de ejecutar discover/fast-track]
 
 ---
 
@@ -108,8 +108,12 @@
    - `[x] RECHAZAR (justificar)` — añade tu justificación; el texto original se conservará como excepción documentada
 2. Responder los puntos `[CRÍTICO]` que puedas — los que queden sin respuesta marcarán sus HUs como `[INCOMPLETO]` en el spec (se generarán pero no podrán avanzar a plan/tasks)
 3. Responder los puntos `[INFORMATIVO]` si tienes la información — si no, se aplicará la asunción por defecto
-4. Una vez revisado, ejecutar:
+4. Una vez revisado, ejecutar el flujo completo automático:
    ```
-   /wf-spec-finalize [path/al/archivo.md]
+   /wf-spec-features-first [path/al/archivo.md]
+   ```
+   O para el paso a paso (solo discovery):
+   ```
+   /wf-spec-discover [path/al/archivo.md] --analysis [path/al/archivo_analysis.md]
    ```
 5. Para completar HUs marcadas `[INCOMPLETO]` después: responde los gaps pendientes en este archivo y ejecuta `/wf-spec-delta resolve <feature_spec.md>`
