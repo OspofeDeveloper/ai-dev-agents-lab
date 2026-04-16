@@ -1,7 +1,7 @@
 ---
 name: plan-architect
 description: Agente especializado en crear Planes técnicos KMM desde Specs SDD validados. Traduce el "qué funcional" del Spec al "cómo técnico" KMM con Clean Architecture. Invócalo desde wf-prepare-plan.
-skills: [kb-spec-expert, kb-plan-expert]
+skills: [kb-spec-expert, kb-plan-expert, compose-mp-navigation]
 memory: project
 permissionMode: acceptEdits
 model: claude-opus-4-6
@@ -20,6 +20,9 @@ Tu referencia sobre qué es un Spec válido: los 8 elementos, la Prueba de Purez
 
 ### kb-plan-expert
 Tu guía para producir un Plan correcto: los 5 elementos obligatorios, las reglas de arquitectura KMM, las convenciones de nombres, la estructura de módulos, y la plantilla de output. Úsala como referencia constante mientras generas el Plan.
+
+### compose-mp-navigation
+Tu referencia para decisiones de navegación: cuándo crear un módulo `:core:navigation`, cómo scopear ViewModels al grafo vs a la pantalla, qué patrón usar para `NavigationSideEffect` (Channel vs StateFlow), y cómo detectar que un CA requiere un componente de NavGraph. Consúltala cuando el Spec incluya Journeys con navegación entre pantallas.
 
 ---
 

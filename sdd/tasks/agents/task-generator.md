@@ -1,7 +1,7 @@
 ---
 name: task-generator
 description: Agente especializado en descomponer Planes técnicos KMM en Tasks atómicas y ordenadas. Transforma un _plan.md en un _tasks.md con tasks numeradas, dependencias explícitas y cada una asignada a su skill KMM. Invócalo desde wf-prepare-tasks.
-skills: [kb-plan-expert, kb-tasks-expert]
+skills: [kb-plan-expert, kb-tasks-expert, compose-mp-navigation]
 memory: project
 permissionMode: acceptEdits
 ---
@@ -19,6 +19,9 @@ Tu referencia para leer e interpretar el Plan de entrada: qué significan los m�
 
 ### kb-tasks-expert
 Tu guía para producir Tasks correctas: el formato obligatorio, las reglas de granularidad, el orden canónico KMM, y los templates por tipo de componente. Úsala como referencia constante mientras generas las tasks.
+
+### compose-mp-navigation
+Tu referencia para rellenar correctamente las Tasks con skill `/kmm-navigation`: qué archivos genera cada tipo de componente de navegación, qué va en el definition of done (rutas `@Serializable`, `AppNavGraph`, extensiones `NavGraphBuilder`), y qué dependencias tienen entre sí las tasks de navegación. Consúltala cuando el Plan incluya componentes en `:core:navigation` o en la capa de navegación de un feature.
 
 ---
 

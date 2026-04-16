@@ -222,3 +222,20 @@ Usa estos templates para formatear cada Task en el `_tasks.md`. Sustituye los va
 - **Dependencies:** [T-00X (NombreRepositoryImpl)]
 - **Definition of done:** `NombreRepositoryImplTest.kt` en `src/commonTest/` con DataSources fake (no mocks de Ktor). Verifica estrategia de caché si aplica.
 ```
+
+---
+
+## Template: /kmm-navigation
+
+```markdown
+## T-00X: Navigation — [AppNavGraph / FeatureNavGraph]
+
+- **Spec CA:** [CA-XXX]
+- **Plan ref:** §Navegación
+- **Módulo:** [:app o :feature:nombre]
+- **Layer:** presentation
+- **Skill:** /kmm-navigation
+- **Input:** Rutas: [ListaDeRutas]. StartDestination: [Route]. ¿Nested en?: [:app NavHost | standalone]
+- **Dependencies:** [T-00X (Screen Composables)]
+- **Definition of done:** NavGraph definido en commonMain con todas las rutas type-safe. NavHost wired en el entry point de la plataforma. Rutas extraídas con toRoute() en cada destination.
+```

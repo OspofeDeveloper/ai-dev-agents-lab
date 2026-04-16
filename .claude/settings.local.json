@@ -64,7 +64,11 @@
       "Bash(mv /Users/oscar/Documents/GitHub/ai-dev-agents-lab/prd-hogar-sad.md /Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/prd-hogar-sad.md)",
       "Bash(bash install.sh)",
       "Bash(find /Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/spec -not -path */.*)",
-      "Bash(find /Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/spec /Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd /Users/oscar/Documents/GitHub/ai-dev-agents-lab -maxdepth 1 -name install.sh -o -maxdepth 1 -name *.sh)"
+      "Bash(find /Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/spec /Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd /Users/oscar/Documents/GitHub/ai-dev-agents-lab -maxdepth 1 -name install.sh -o -maxdepth 1 -name *.sh)",
+      "Bash(mv /Users/oscar/Documents/GitHub/ai-dev-agents-lab/kmm/skills/kmm-resources/resources /Users/oscar/Documents/GitHub/ai-dev-agents-lab/kmm/skills/kmm-resources/references)",
+      "Bash(mkdir -p /Users/oscar/Documents/GitHub/ai-dev-agents-lab/kmm/skills/kmm-ui-text/references)",
+      "Bash(mv /Users/oscar/Documents/GitHub/ai-dev-agents-lab/kmm/skills/kmm-resources/references/ui-text-pattern.md /Users/oscar/Documents/GitHub/ai-dev-agents-lab/kmm/skills/kmm-ui-text/references/ui-text-pattern.md)",
+      "Bash(chmod +x:*)"
     ]
   }
 }

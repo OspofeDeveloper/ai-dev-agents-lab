@@ -31,7 +31,7 @@ Una Task es la **unidad mínima de implementación**: un componente, en una capa
 - **Plan ref:** [§sección del Plan]
 - **Módulo:** [:feature:nombre o :core:nombre]
 - **Layer:** domain | data | presentation | expect-actual | test
-- **Skill:** /kmm-scaffold | /kmm-domain | /kmm-data | /kmm-presentation | /kmm-expect-actual | /kmm-tests
+- **Skill:** /kmm-scaffold | /kmm-domain | /kmm-data | /kmm-presentation | /kmm-expect-actual | /kmm-tests | /kmm-navigation
 - **Input:** [qué tipo/modelo/interfaz recibe o crea]
 - **Dependencies:** [T-XXX, T-YYY | ninguna]
 - **Definition of done:** [qué archivos deben existir al finalizar]
@@ -67,6 +67,7 @@ T-007  /kmm-data            → RepositoryImpl (una Task por repositorio)
 T-008  /kmm-expect-actual   → APIs platform-specific (si aplica)
 T-009  /kmm-presentation    → ViewModel + UiState + UiEvent
 T-010  /kmm-presentation    → Screen Composable
+T-010b /kmm-navigation      → NavGraph + rutas type-safe (después de todos los Screens)
 T-011  /kmm-tests           → Tests de domain (UseCases)
 T-012  /kmm-tests           → Tests de data (RepositoryImpl)
 ```
