@@ -22,6 +22,8 @@ Invariantes de arquitectura para el manejo de textos en KMM:
 - **`asString()` solo en la capa UI**: la resolución del texto ocurre en el Composable, no en el ViewModel ni en el dominio.
 - **Tests sin `@Composable`**: en tests se compara directamente el valor `UiText` (tipo + referencia a recurso) sin renderizar UI.
 
+Este patrón se apoya en `kb-kmm-resources` para los recursos compartidos y la localización. `UiText` no sustituye a `compose.resources`; define cómo exponer esos recursos desde ViewModel hacia la UI.
+
 ---
 
 ## 1. Definición del sealed interface
@@ -108,6 +110,7 @@ fun onLoginFailed_stateHasResourceError() {
 - `UiText` en `commonMain`, sin dependencias de plataforma
 - `asString()` solo invocado desde Composables
 - `ResourceString` para strings traducibles; `DynamicString` para strings externos
+- `kb-kmm-resources` como sistema base de recursos compartidos
 
 ### Prohibido
 

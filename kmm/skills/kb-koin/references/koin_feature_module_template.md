@@ -1,33 +1,31 @@
 # Templates — Módulos de feature
 
+Estos ejemplos muestran patrones de registro en Koin. La ubicación arquitectónica de cada pieza se decide con las skills de capa; aquí solo se ilustra cómo cablearlas.
+
+Cuando una dependencia necesita distinguir varias instancias del mismo tipo, usar qualifiers agrupados por dominio de resolución, no necesariamente por tecnología.
+
+```kotlin
+enum class FeatureQualifiers {
+    RemoteClient,
+}
+```
+
 ## Módulo de feature estándar (forma completa)
 
 ```kotlin
-// features/auth/di/authModule.kt
-val authModule = module {
+// features/profile/di/profileModule.kt
+val profileModule = module {
 
     // --- Capa de datos ---
-    single { AuthService(get(named(CoreQualifiers.AppKtorClient))) }
-    single<AuthRepository> { AuthRepositoryImpl(get(), get()) }
+    single { ProfileRemoteDataSource(get(named(FeatureQualifiers.RemoteClient))) }
+    single<ProfileRepository> { ProfileRepositoryImpl(get(), get()) }
 
     // --- Use Cases ---
-    factoryOf(::LoginUseCase)
-    factoryOf(::ForgotPasswordUseCase)
-    factoryOf(::RegistrationUseCase)
-    factoryOf(::DeleteAccountUseCase)
-    factoryOf(::LogoutUseCase)
-    factoryOf(::GetProfileUseCase)
-    factoryOf(::SaveEditProfileUseCase)
-    factoryOf(::SaveChangePasswordUseCase)
-    factoryOf(::SetPushTokenUseCase)
+    factoryOf(::LoadProfileUseCase)
+    factoryOf(::SaveProfileUseCase)
 
     // --- ViewModels ---
-    viewModelOf(::LoginViewModel)
-    viewModelOf(::ForgotPasswordViewModel)
-    viewModelOf(::RegistrationViewModel)
     viewModelOf(::ProfileViewModel)
-    viewModelOf(::EditProfileViewModel)
-    viewModelOf(::ChangePasswordViewModel)
 }
 ```
 
@@ -36,12 +34,11 @@ val authModule = module {
 ## Módulo de feature mínimo (forma corta)
 
 ```kotlin
-val resetsModule = module {
-    single { ResetApi(get(named(CoreQualifiers.AppKtorClient))) }
-    single<ResetsRepository> { ResetsRepositoryImpl(get()) }
-    factoryOf(::DoResetUseCase)
-    factoryOf(::LoadResetsUseCase)
-    viewModelOf(::ResetViewModel)
+val catalogModule = module {
+    single { CatalogRemoteDataSource(get(named(FeatureQualifiers.RemoteClient))) }
+    single<CatalogRepository> { CatalogRepositoryImpl(get()) }
+    factoryOf(::LoadCatalogUseCase)
+    viewModelOf(::CatalogViewModel)
 }
 ```
 
@@ -49,22 +46,18 @@ val resetsModule = module {
 
 ## Módulo con ViewModel como single (caso excepcional)
 
-Usar `singleOf` en lugar de `viewModelOf` solo cuando el ViewModel necesita sobrevivir a la navegación entre screens o ser compartido. Ejemplo del proyecto:
+Usar `singleOf` en lugar de `viewModelOf` solo cuando el ViewModel necesita sobrevivir a la navegación entre screens o ser compartido.
 
 ```kotlin
-val locationModule = module {
-    single { LocationsService(get(named(CoreQualifiers.AppKtorClient))) }
-    single<LocationsRepository> { LocationsRepositoryImpl(get()) }
+val editorModule = module {
+    single { EditorRemoteDataSource(get(named(FeatureQualifiers.RemoteClient))) }
+    single<EditorRepository> { EditorRepositoryImpl(get()) }
 
-    // Single porque se comparte entre dos screens de edición
-    singleOf(::EditLocationViewModel)
+    singleOf(::SharedEditorViewModel)
+    viewModelOf(::EditorDetailsViewModel)
 
-    // ViewModel normal para el resto
-    viewModelOf(::ChangeLocationNameViewModel)
-
-    factoryOf(::DeleteLocationUseCase)
-    factoryOf(::SaveChangeLocationNameUseCase)
-    factoryOf(::GetUserLocationsUseCase)
+    factoryOf(::LoadEditorContentUseCase)
+    factoryOf(::SaveEditorContentUseCase)
 }
 ```
 
@@ -75,30 +68,11 @@ val locationModule = module {
 ```kotlin
 // app/di/appModule.kt
 val appModule = module {
-
-    // ViewModels de pantallas principales
     viewModelOf(::AppViewModel)
-    viewModelOf(::HomeViewModel)
-    viewModelOf(::AddPumpViewModel)
-    viewModelOf(::PumpDetailViewModel)
-    viewModelOf(::PumpAdvancedParametersViewModel)
-    viewModelOf(::PumpBasicConfigViewModel)
-    viewModelOf(::PumpFineAdjustmentsViewModel)
-    viewModelOf(::PumpSettingsViewModel)
-    viewModelOf(::PumpWifiConnectionViewModel)
-    viewModelOf(::PumpResetViewModel)
+    viewModelOf(::HomeScreenViewModel)
 
-    // Use Cases que orquestan múltiples features
-    factoryOf(::GetAdvancedParametersUseCase)
-    factoryOf(::GetFineAdjustmentsUseCase)
-    factoryOf(::GetPumpDetailUseCase)
-    factoryOf(::GetRealTimeTelemetryUseCase)
-    factoryOf(::SetUpdateAvailableUseCase)
-    factoryOf(::DeletePumpUseCase)
-    factoryOf(::ResetPumpControllersUseCase)
-    factoryOf(::ResetPumpAlarmsUseCase)
-    factoryOf(::ResetPumpFactoryModeUseCase)
-    factoryOf(::InitHomeDataUseCase)
+    factoryOf(::BootstrapAppUseCase)
+    factoryOf(::SyncSessionStateUseCase)
 }
 ```
 
@@ -107,13 +81,11 @@ val appModule = module {
 ## Módulos con expect/actual factory function
 
 ```kotlin
-// commonMain — BLEModule.kt
-val BLEModule = module {
-    single<BLERepository> { createBLERepositoryImpl() }
+val platformStorageModule = module {
+    single<PlatformStorage> { createPlatformStorage() }
 }
 
-// commonMain — firebaseModule.kt
-val firebaseModule = module {
-    single<FirebaseRepository> { createFirebaseRepositoryImpl() }
+val platformNotifierModule = module {
+    single<PlatformNotifier> { createPlatformNotifier() }
 }
 ```

@@ -1,0 +1,126 @@
+---
+name: kb-kmm-network-contracts
+description: "Base de conocimiento de contratos de networking en proyectos KMM: errores de red, resultados tipados, límites entre servicios remotos y repositorios, y reglas estables independientes de la librería HTTP."
+argument-hint: ""
+effort: low
+allowed-tools: [Read]
+context: fork
+disable-model-invocation: true
+---
+
+# Network Contracts KMM — Base de Conocimiento
+
+## Regla 1: Separar contrato de red e implementación HTTP
+
+La política de networking debe sobrevivir a un cambio de librería HTTP. Por eso, esta skill define conceptos estables y no detalles de Ktor, Retrofit u otra implementación.
+
+La ubicación concreta de estos contratos se decide con las skills de capa:
+
+- `kb-kmm-core-layer` si el contrato es transversal a varias features
+- `kb-kmm-feature-clean-architecture` si el contrato pertenece a una única feature
+
+---
+
+## Regla 2: Esta skill define límites de integración, no arquitectura general de capas
+
+Esta skill regula únicamente el borde entre:
+
+- cliente HTTP o data source remoto
+- contrato técnico de error y resultado
+- repositorio que adapta la respuesta remota al dominio
+
+No define:
+
+- cómo se organiza internamente una feature
+- dónde vive físicamente cada pieza
+- cómo se implementa el cliente HTTP
+- cómo se registran dependencias
+- cómo funciona la autenticación
+
+Si una regla aplica a cualquier integración remota aunque cambie la librería HTTP, pertenece aquí. Si habla de carpetas, DI, Ktor o auth concreta, pertenece a otra skill.
+
+---
+
+## Regla 3: Resultado tipado para operaciones remotas
+
+Las operaciones remotas no exponen excepciones crudas a las capas superiores. Deben devolver un resultado tipado (`NetworkResult`, `AppResult`, `Either` o equivalente) con éxito o error controlado.
+
+El tipo concreto puede variar por proyecto, pero la regla estable es esta: la capa superior no interpreta excepciones de transporte sin normalizar.
+
+→ Templates: `references/network_contracts_templates.md`
+
+---
+
+## Regla 4: Error de red normalizado
+
+Los errores de transporte y protocolo se mapean a un contrato técnico estable, por ejemplo:
+
+- sin conexión
+- error de serialización
+- no autorizado
+- timeout
+- conflicto
+- error servidor
+- error desconocido
+
+La taxonomía exacta puede variar, pero debe ser única y compartida.
+
+→ Templates: `references/network_contracts_templates.md`
+
+---
+
+## Regla 5: El data source remoto expone modelos técnicos
+
+El límite remoto habla en términos de transporte o integración:
+
+- DTOs
+- payloads HTTP
+- errores de red normalizados
+- resultados tipados remotos
+
+No expone directamente modelos de dominio ni detalles crudos del cliente HTTP hacia arriba.
+
+---
+
+## Regla 6: El repositorio adapta de contrato remoto a dominio
+
+El repositorio consume el contrato remoto y lo adapta a las necesidades del dominio:
+
+- transforma DTOs a modelos de dominio
+- convierte errores remotos al contrato superior que corresponda
+- oculta detalles del cliente HTTP a casos de uso y UI
+
+Esta regla no decide si el repositorio vive en `core` o dentro de una feature. Esa decisión pertenece a las skills de capa.
+
+---
+
+## Regla 7: La URL base, headers globales y auth no forman parte del contrato remoto estable
+
+La URL base, los headers globales, la auth automática y otras decisiones de cliente pertenecen a infraestructura.
+
+Esta skill solo fija que esas decisiones no deben contaminar el contrato remoto estable.
+
+---
+
+## Regla 8: Logging y observabilidad van detrás de abstracciones
+
+Si el proyecto registra tráfico de red, debe hacerlo a través de una abstracción reutilizable (`AppLogger` u otra), no acoplando cada servicio a una librería concreta de logging.
+
+---
+
+## Regla 9: Polimorfismo JSON y convenciones del backend son contratos de integración
+
+Si el backend usa discriminadores como `"$type"`, códigos de error propios o convenciones de payload, esas reglas pertenecen al contrato de integración de red, no a la arquitectura ni a la DI.
+
+---
+
+## Regla 10: Esta skill define contratos remotos; otras skills deciden ubicación e implementación
+
+Esta skill se combina con:
+
+- `kb-kmm-core-layer` para decidir si el contrato es transversal
+- `kb-kmm-feature-clean-architecture` para decidir cómo se integra dentro de una feature
+- `kb-kmm-http-ktor` para implementarlo con Ktor, si aplica
+- skills de auth para cualquier política o mecanismo de autenticación
+
+No duplicar aquí reglas que ya pertenezcan a esas dimensiones.

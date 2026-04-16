@@ -1,6 +1,6 @@
 ---
 name: kb-kmm-environments
-description: "Base de conocimiento del sistema multi-brand/multi-environment en KMM: arquitectura, plugin BuildConfig (gmazzo), prioridad de resolución brand/env, flujo XCConfig → Gradle en iOS, estructura de ficheros, jerarquía XCConfig, target vs scheme en Xcode, valores sensibles y troubleshooting."
+description: "Base de conocimiento de entornos y variantes en proyectos KMM: semántica estable de env, composición de la matriz brand×env, valores derivados vs declarativos, fuentes de verdad por plataforma y criterios para configuración sensible."
 argument-hint: ""
 effort: low
 allowed-tools: [Read]
@@ -10,170 +10,126 @@ disable-model-invocation: true
 
 # KMM Environments — Base de Conocimiento
 
-## Regla 1: Arquitectura del sistema
+## Regla 1: `env` es una dimensión distinta de `brand`
 
-El sistema tiene dos ejes de configuración independientes:
+El sistema de variantes combina dos ejes conceptualmente separados:
 
 | Dimensión | Controla |
 |-----------|----------|
-| **brand** | App ID, nombre de la app, assets, lógica de negocio específica de marca |
-| **env** | URL de API, sufijo del App ID (ej. `.pre`), flags de entorno |
+| `env` | destino de integración, URLs, sufijos de build, flags de entorno y cualquier configuración dependiente del entorno |
 
-Cada combinación brand×env produce una **variante**. Con 2 brands y 2 entornos hay 4 variantes; con N brands y M entornos hay N×M variantes.
+La semántica de `brand` vive en `kb-kmm-brands`.
 
-El sistema genera un único objeto `BuildConfig` compartido en `commonMain` que es accesible desde todo el código Kotlin (Android e iOS). El valor de `BuildConfig` depende de qué variante se está compilando.
-
----
-
-## Regla 2: Plugin BuildConfig (gmazzo)
-
-Plugin: `com.github.gmazzo.buildconfig`, versión por defecto `6.0.9`.
-
-Genera un objeto Kotlin en tiempo de compilación accesible desde `commonMain` con los campos declarados en el bloque `buildConfig { }` del módulo. Se registra como plugin en `gradle/libs.versions.toml` y se aplica en `composeApp/build.gradle.kts`.
-
-Si el proyecto ya tiene el plugin con otra versión, usar la versión existente.
-
-→ Templates: `references/android_buildconfig_templates.md`
+Esta skill se centra en `env` y en cómo `env` se combina con el catálogo de brands para formar variantes.
 
 ---
 
-## Regla 3: Prioridad de resolución brand/env en Android
+## Regla 2: La matriz de variantes compone brands y entornos
 
-```
-Prioridad 1: Propiedad Gradle explícita   -Papp.brand=brand1   -Papp.env=env1
-                 ↓ (si ausente)
-Prioridad 2: Inspección del nombre de tarea   "assembleBrand1Env2Debug" → brand=brand1, env=env2
-                 ↓ (si no hay coincidencia)
-Prioridad 3: Valores por defecto   brand=brand1, env=env1 (el primer valor de cada dimensión)
-```
+Antes de hablar de Gradle, XCConfig o cualquier tooling, el proyecto debe poder expresar con claridad:
 
-iOS **siempre** usa la Prioridad 1 porque el Script Build Phase pasa explícitamente `-Papp.brand` y `-Papp.env`.
+- qué entornos existen
+- qué combinación genera cada variante
+- qué valores son propios de una variante concreta
 
-Android en CI/CD puede usar la Prioridad 1 también: `./gradlew assembleBrand1Env2Release -Papp.brand=brand1 -Papp.env=env2`.
+La matriz `brand × env` se construye combinando:
 
-Para proyectos con 3+ entornos, la lógica de Prioridad 2 usa un bloque `when` encadenado en lugar de un `if/else` simple.
+- el catálogo de brands definido en `kb-kmm-brands`
+- el catálogo de entornos definido por esta skill
 
-→ Implementación: `references/android_buildconfig_templates.md`
+Android e iOS solo materializan esa matriz con mecanismos distintos.
 
 ---
 
-## Regla 4: Flujo XCConfig → Gradle en iOS
+## Regla 3: Los valores de entorno son los que cambian por destino operativo
 
-1. El desarrollador selecciona un **Scheme** en Xcode (ej. `Brand1-Env1`)
-2. El Scheme apunta a una **Build Configuration** (ej. `Debug-Env1`) que incluye el XCConfig de marca (ej. `Brand1/Brand1-Env1.xcconfig`)
-3. El XCConfig define `APP_ENV = env1`
-4. Cuando Xcode ejecuta el **Script Build Phase**, todos los valores del XCConfig activo están disponibles como variables de entorno de shell
-5. El script lee `${APP_ENV}` y lo pasa a Gradle: `-Papp.env=${APP_ENV}`
-6. Gradle recibe la propiedad explícita y usa la Prioridad 1
+`env` agrupa diferencias como:
 
-La selección del scheme en Xcode es la única fuente de verdad para los builds iOS. No hay ambigüedad posible.
+- URL base o destino de integración
+- sufijos de build
+- flags de entorno
+- configuración externa que cambia entre pre, pro, staging, qa o equivalentes
 
-→ Script: `references/ios_script_build_phase_template.md`
+Si un valor permanece estable al cambiar solo el entorno, no pertenece a `env`.
 
 ---
 
-## Regla 5: Estructura de ficheros
+## Regla 4: Distinguir valores declarativos de valores derivados
 
-| Fichero | Propósito |
-|---------|-----------|
-| `gradle/libs.versions.toml` | Declaración de versión y alias del plugin |
-| `composeApp/build.gradle.kts` | Flavors Android + bloque `buildConfig` |
-| `{brand}-{env}.properties` (raíz del proyecto) | Valores por variante que Gradle no puede derivar (URLs, keys) |
-| `iosApp/Configuration/Shared.xcconfig` | Team ID, versión de marketing — compartido por todos los targets |
-| `iosApp/Configuration/Debug.xcconfig` | `KOTLIN_FRAMEWORK_BUILD_TYPE = debug` |
-| `iosApp/Configuration/Release.xcconfig` | `KOTLIN_FRAMEWORK_BUILD_TYPE = release` |
-| `iosApp/Configuration/{Brand}/{Brand}-{Env}.xcconfig` | Configuración específica de marca×entorno para iOS |
+No toda variable de configuración debe declararse explícitamente por variante.
 
-Los ficheros `.properties` van en la **raíz del proyecto**, no dentro de ningún módulo.
+- **Declarativos**: valores que no se pueden derivar con seguridad de `brand` y `env` como URLs, keys, identificadores externos o flags arbitrarios
+- **Derivados**: valores que el sistema puede calcular de forma determinista a partir de `brand` y `env`
+
+El sistema de tooling no debe obligar a persistir manualmente valores derivados si ya puede calcularlos de forma estable.
 
 ---
 
-## Regla 6: Jerarquía XCConfig
+## Regla 5: El código compartido consume un único contrato de configuración
 
-```
-Debug.xcconfig
-└── #include "Shared.xcconfig"
+El proyecto expone un único objeto o contrato de configuración accesible desde `commonMain`.
 
-Release.xcconfig
-└── #include "Shared.xcconfig"
+Ese contrato debe reflejar la variante activa en tiempo de compilación o resolución, independientemente de si la plataforma materializa esa variante con:
 
-{Brand}/{Brand}-{Env}.xcconfig
-└── #include "../Shared.xcconfig"
-    (NO incluye Debug.xcconfig ni Release.xcconfig)
-```
+- Gradle properties
+- product flavors
+- BuildConfig
+- XCConfig
+- scripts de build
 
-En la pestaña Info del proyecto Xcode, cada fila de Build Configuration apunta a un XCConfig específico. Xcode aplica internamente las capas debug/release y la capa brand×env como configuraciones separadas asignadas a la misma build configuration row.
-
-El XCConfig de brand×env **no incluye** el de debug/release; ambos se asignan en paralelo desde los settings del proyecto Xcode.
-
-→ Templates: `references/ios_xcconfig_templates.md`
+La semántica compartida es estable aunque cambie el mecanismo concreto.
 
 ---
 
-## Regla 7: Target vs Build Configuration vs Scheme en Xcode
+## Regla 6: Cada plataforma tiene su propia fuente de verdad operativa
 
-El modelo de Xcode tiene tres capas que hay que crear en orden:
+La semántica de variante es única, pero cada plataforma puede tener una fuente operativa distinta:
 
-```
-Target ──── Build Configuration ──── XCConfig
-              │
-  Scheme ─────┘  (scheme = target + build configuration por acción)
-```
+- Android puede resolver la variante desde propiedades explícitas, tareas o flavors
+- iOS puede resolverla desde target, build configuration, scheme y/o XCConfig
 
-- **Target** = una unidad de compilación por **brand** (bundle ID base, firma, Info.plist, Build Phases). Con 1 brand se usa el target por defecto; con 2+ brands se duplica el target por cada brand adicional.
-- **Build Configuration** = una por combinación **debug/release × env**. Siempre hay que crearlas, independientemente del número de brands. Con 2 envs: `Debug-{Env1}`, `Debug-{Env2}`, `Release-{Env1}`, `Release-{Env2}`. Se crean duplicando las configuraciones Debug/Release existentes del proyecto.
-- **Scheme** = uno por **brand × env** (controla qué target + qué Build Configuration está activa al correr/archivar). Acción Run → `Debug-{Env}`; acción Archive → `Release-{Env}`.
-
-### Árbol de decisión (a partir de la matriz brand×env del Paso 1)
-
-```
-brands.size - 1  →  targets adicionales a crear (0 si hay 1 brand)
-envs.size × 2    →  Build Configurations a crear (Debug-{Env} + Release-{Env} por env)
-brands × envs    →  schemes a crear
-```
-
-Con 1 brand, 2 envs: 0 targets nuevos, 4 Build Configurations, 2 schemes.  
-Con 2 brands, 2 envs: 1 target nuevo, 4 Build Configurations, 4 schemes.
-
-### Asignación XCConfig a Build Configurations (dos niveles)
-
-Xcode permite asignar XCConfig a **nivel proyecto** y a **nivel target** sobre la misma Build Configuration. Ambos aplican en paralelo (no se excluyen):
-
-| Build Configuration | XCConfig nivel proyecto | XCConfig nivel target |
-|---------------------|-------------------------|-----------------------|
-| Debug-{Env1}        | `Debug.xcconfig`        | `{Brand}/{Brand}-{Env1}.xcconfig` |
-| Debug-{Env2}        | `Debug.xcconfig`        | `{Brand}/{Brand}-{Env2}.xcconfig` |
-| Release-{Env1}      | `Release.xcconfig`      | `{Brand}/{Brand}-{Env1}.xcconfig` |
-| Release-{Env2}      | `Release.xcconfig`      | `{Brand}/{Brand}-{Env2}.xcconfig` |
-
-Así `KOTLIN_FRAMEWORK_BUILD_TYPE` viene del XCConfig de proyecto y `APP_ENV`/`APP_BRAND` vienen del XCConfig de target, sin colisión.
+La regla importante no es que ambas plataformas funcionen igual, sino que ambas resuelvan la misma matriz conceptual de variantes.
 
 ---
 
-## Regla 8: Valores sensibles
+## Regla 7: La configuración sensible sigue una política distinta a la configuración pública
 
-**Pueden commitearse:**
-- `APP_BASE_URL` (URLs de API no son secretas normalmente)
-- Cualquier valor que no sea una credencial o clave privada
+No todos los valores de variante tienen el mismo tratamiento:
 
-**NO deben commitearse (añadir a `.gitignore`):**
-- API keys, tokens de analytics, secrets
-- Cualquier valor que dé acceso a sistemas externos
+- valores públicos o no sensibles pueden vivir versionados
+- secretos o credenciales no deben commitearse
+- el sistema debe permitir que CI o el entorno de build inyecten esos valores sin romper la matriz de variantes
 
-**Patrón para CI:**
-1. Añadir `.properties` a `.gitignore` para desarrollo local
-2. En CI, generar los ficheros `.properties` en tiempo de build desde variables de entorno o un secrets manager
-3. Para XCConfig, usar Xcode user-defined build settings o inyección desde CI
+La política de sensibilidad forma parte del diseño del sistema, no del tooling concreto.
 
 ---
 
-## Regla 9: Troubleshooting
+## Regla 8: La implementación Android y la implementación iOS viven en skills separadas
 
-| Síntoma | Causa | Solución |
-|---------|-------|----------|
-| `FileNotFoundException: brand1-env1.properties` | Fichero `.properties` no existe | Crear el fichero en la raíz del proyecto |
-| `BuildConfig` no encontrado en el IDE | No se ha compilado todavía | Ejecutar cualquier tarea `assemble` una vez |
-| iOS build usa la URL incorrecta | XCConfig no enlazado a la build configuration | Enlazar el XCConfig en la pestaña Info del proyecto Xcode |
-| `APP_ENV` vacío en el script | XCConfig no aplicado | Verificar que el scheme usa la build configuration correcta |
-| Brand incorrecto en iOS build | Script Build Phase tiene `-Papp.brand=` hardcodeado con valor erróneo | Revisar el valor en el script del target correspondiente |
-| Variante errónea en Android IDE | Prioridad 2: el nombre de la tarea de sync contiene el nombre de un entorno | Usar Prioridad 1 en CI o cambiar el Variant selector en el IDE |
+Esta skill solo define la semántica estable del sistema multi-brand/multi-environment.
+
+Las decisiones concretas de implementación viven en:
+
+- `kb-kmm-android-environments`
+- `kb-kmm-ios-environments`
+
+No duplicar aquí reglas propias de:
+
+- plugins Gradle concretos
+- `BuildConfig`
+- `XCConfig`
+- scripts de Xcode
+- target/build configuration/scheme
+
+---
+
+## Regla 9: Los workflows componen brands, entornos y tooling
+
+Las workflows pueden usar esta skill para:
+
+- consumir el catálogo de brands definido en `kb-kmm-brands`
+- construir la matriz de variantes
+- decidir qué es derivado y qué es declarativo
+- validar qué valores son sensibles
+
+Pero la implementación operativa se delega a las skills de Android e iOS, no se redefine aquí.

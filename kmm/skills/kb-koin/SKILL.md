@@ -1,6 +1,6 @@
 ---
 name: kb-koin
-description: "Base de conocimiento de Koin DI en proyectos KMM: organización de módulos por feature, tipos de registro (single/factory/viewModelOf/singleOf), patrón qualifier con enums, nativeModule expect/actual para código de plataforma, initKoin en Android e iOS, y orden de módulos."
+description: "Base de conocimiento de Koin DI en proyectos KMM: organización de módulos por feature, tipos de registro, patrón qualifier con enums, nativeModule expect/actual, initKoin y orden de módulos."
 argument-hint: ""
 effort: low
 allowed-tools: [Read]
@@ -10,24 +10,31 @@ disable-model-invocation: true
 
 # Koin DI KMM — Base de Conocimiento
 
-## Regla 1: Organización de módulos
+## Regla 1: Koin define wiring, no ownership arquitectónico
 
-Cada feature tiene su propio módulo Koin en `<feature>/di/<feature>Module.kt`. Los módulos de infraestructura viven en `core/`. El módulo de app (`appModule`) agrupa ViewModels y Use Cases que pertenecen a múltiples features o a la navegación principal.
+Koin solo resuelve y cablea dependencias. No decide por sí sola qué pieza pertenece a `core`, a una feature o a `app`.
 
-```
+La ubicación y ownership de cada pieza se decide con:
+
+- `kb-kmm-core-layer`
+- `kb-kmm-feature-clean-architecture`
+- `kb-kmm-app-layer`
+- `kb-kmm-clean-architecture`
+
+Una vez decidida esa ubicación, Koin registra las piezas en módulos coherentes con esa estructura.
+
+---
+
+## Regla 2: Organización de módulos alineada con la arquitectura
+
+```text
 app/di/
   initKoin.kt       ← punto de entrada, registra todos los módulos
   appModule.kt      ← ViewModels y UseCases de nivel app
 
 core/di/
-  coreModule.kt     ← HttpClients, CoreRepository, configuración BuildConfig
-  nativeModule.kt   ← expect val nativeModule (DataStore, BLE, Firebase por plataforma)
-
-core/ble/di/
-  BLEModule.kt      ← BLERepository via expect/actual factory function
-
-core/firebase/di/
-  firebaseModule.kt ← FirebaseRepository via expect/actual factory function
+  coreModule.kt     ← infraestructura transversal y configuración BuildConfig
+  nativeModule.kt   ← expect val nativeModule para código específico de plataforma
 
 features/<feature>/di/
   <feature>Module.kt
@@ -39,186 +46,139 @@ Todos los módulos se registran en `initKoin`. No hay módulos dinámicos ni car
 
 ---
 
-## Regla 2: initKoin — inicialización
+## Regla 3: initKoin — inicialización
 
 Existe una única función `initKoin(config: KoinAppDeclaration? = null)` en `commonMain`. Cada plataforma la llama de forma distinta:
 
 - **Android**: en `Application.onCreate()`, pasando `androidLogger` y `androidContext`
 - **iOS**: en `ComposeUIViewController(configure = { initKoin() })`
 
-El parámetro `config` permite que cada plataforma inyecte configuración específica (contexto Android, logger) sin que `initKoin` necesite saber nada de plataforma.
+El parámetro `config` permite que cada plataforma inyecte configuración específica sin que `initKoin` necesite conocer detalles de plataforma.
 
 → Templates: `references/koin_init_templates.md`
 
 ---
 
-## Regla 3: Tipos de registro
+## Regla 4: Tipos de registro
 
 | Tipo | DSL | Ciclo de vida | Cuándo usarlo |
 |------|-----|---------------|---------------|
-| `single` | `single { }` / `singleOf(::Class)` | Una instancia para toda la app | Repositorios, APIs/Services, HttpClients, configuración BuildConfig |
+| `single` | `single { }` / `singleOf(::Class)` | Una instancia para toda la app | Repositorios, servicios, APIs, clientes de infraestructura, configuración |
 | `factory` | `factory { }` / `factoryOf(::Class)` | Nueva instancia en cada inyección | Use Cases |
 | `viewModel` | `viewModelOf(::Class)` | Gestionado por el ciclo de vida de Compose/Voyager | ViewModels de screens |
-| `single` (ViewModel) | `singleOf(::Class)` | Una instancia compartida entre screens | ViewModels que deben sobrevivir a la navegación — uso excepcional |
+| `single` (ViewModel) | `singleOf(::Class)` | Una instancia compartida entre screens | ViewModels compartidos, uso excepcional |
 
-**Regla de oro**: si tienes dudas entre `single` y `factory` para un Use Case, usa `factory`. Los Use Cases son operaciones, no servicios.
+**Regla de oro**: si tienes dudas entre `single` y `factory` para un Use Case, usa `factory`.
 
 ---
 
-## Regla 4: Patrón qualifier
+## Regla 5: Los qualifiers distinguen instancias, no definen arquitectura
 
-Cuando hay múltiples instancias del mismo tipo en el grafo de Koin, se usan **enums como qualifiers** para distinguirlas. Esto evita colisiones de tipos y hace el código legible.
+Cuando hay múltiples instancias del mismo tipo en el grafo de Koin, se usan **enums como qualifiers** para distinguirlas.
 
 ```kotlin
-// Declaración del qualifier (un enum por dominio)
-enum class CoreQualifiers { AppKtorClient, AppBaseUrl, FirebaseRegionUrl }
+enum class NetworkQualifiers { ApiHttpClient, ApiBaseUrl }
 
-// Registro con qualifier
-single(named(CoreQualifiers.AppKtorClient)) { HttpClient { ... } }
+single(named(NetworkQualifiers.ApiHttpClient)) { HttpClient { ... } }
 
-// Consumo con qualifier
-single { AuthService(get(named(CoreQualifiers.AppKtorClient))) }
+single { AuthService(get(named(NetworkQualifiers.ApiHttpClient))) }
 ```
 
-Los qualifiers del proyecto se agrupan por dominio:
+Los qualifiers se agrupan por dominio, no por librería. Ejemplos habituales:
 
 | Enum | Fichero | Qué distingue |
 |------|---------|---------------|
-| `CoreQualifiers` | `core/di/CoreQualifiers.kt` | HttpClient de app, URLs de app |
-| `IdentityQualifiers` | `core/identity/data/IdentityQualifiers.kt` | HttpClient de Identity, URLs y credenciales OAuth |
-| `AndroidQualifiers` | `androidMain/.../AndroidQualifiers.kt` | Implementaciones Android de BLE y Firebase |
-| `iOSQualifier` | `iosMain/.../iOSQualifier.kt` | Implementaciones iOS de BLE y Firebase |
+| `NetworkQualifiers` | `core/di/NetworkQualifiers.kt` | clientes HTTP, URLs base, configuración de red |
+| `AuthQualifiers` | `core/auth/data/AuthQualifiers.kt` | cliente de Identity, client_id, grant types |
+| `AndroidQualifiers` | `androidMain/.../AndroidQualifiers.kt` | implementaciones Android |
+| `iOSQualifier` | `iosMain/.../iOSQualifier.kt` | implementaciones iOS |
 
-Los qualifiers de plataforma (`AndroidQualifiers`, `iOSQualifier`) se usan solo en `nativeModule` y no se consumen desde `commonMain`.
+Los qualifiers de plataforma se usan solo en `nativeModule` y no se consumen desde `commonMain`.
 
 ---
 
-## Regla 5: Estructura estándar de módulo de feature
+## Regla 6: Los módulos registran la estructura ya decidida por las skills de capa
 
-Todo módulo de feature sigue esta estructura de registro, de más compartido a más volátil:
+En una feature típica, el módulo suele registrar dependencias en un orden parecido a este:
 
+```text
+single     -> Api / Service
+single     -> Repository
+factory    -> Use Cases
+viewModelOf -> ViewModels
 ```
-single  → Api / Service      (inyecta HttpClient con qualifier)
-single  → Repository         (inyecta Api/Service)
-factory → Use Cases          (inyectan Repository)
-viewModelOf → ViewModels     (inyectan Use Cases)
-```
+
+Ese orden es un patrón de wiring habitual, no una regla arquitectónica independiente de las skills de capa.
 
 Short form con `singleOf` y `factoryOf`:
 
 ```kotlin
 val authModule = module {
-    singleOf(::AuthService)          // si no necesita qualifier
+    singleOf(::RemoteAuthService)
     singleOf(::AuthRepositoryImpl) bind AuthRepository::class
     factoryOf(::LoginUseCase)
     viewModelOf(::LoginViewModel)
 }
 ```
 
-Cuando el constructor necesita un qualifier (caso habitual para el HttpClient), se usa la forma larga:
+Cuando el constructor necesita un qualifier, se usa la forma larga:
 
 ```kotlin
-single { AuthService(get(named(CoreQualifiers.AppKtorClient))) }
+single { RemoteAuthService(get(named(NetworkQualifiers.ApiHttpClient))) }
 ```
 
 → Templates: `references/koin_feature_module_template.md`
 
 ---
 
-## Regla 6: nativeModule — código específico de plataforma
+## Regla 7: nativeModule — código específico de plataforma
 
-`nativeModule` es un `expect val` en `commonMain` con implementaciones `actual` en `androidMain` e `iosMain`. Se usa para registrar dependencias cuya implementación varía por plataforma: DataStore, BLE y Firebase.
+`nativeModule` es un `expect val` en `commonMain` con implementaciones `actual` en `androidMain` e `iosMain`. Se usa para registrar dependencias cuya implementación varía por plataforma: DataStore, BLE, Firebase o equivalentes.
 
-Cada plataforma usa sus propios qualifiers (`AndroidQualifiers` / `iOSQualifier`) para registrar las implementaciones específicas:
-
-```kotlin
-// androidMain
-actual val nativeModule = module {
-    single<BLERepository>(named(AndroidQualifiers.AndroidBleRepository)) {
-        AndroidBLERepositoryImpl(get())
-    }
-    single { dataStore(get()) }   // DataStore con contexto Android
-}
-
-// iosMain
-actual val nativeModule = module {
-    single<BLERepository>(named(iOSQualifier.iOSBleRepository)) {
-        IOSBLERepositoryImpl(get())
-    }
-    single { getDataStore() }     // DataStore en iOS no necesita contexto
-}
-```
-
-`nativeModule` siempre se registra **primero** en `initKoin` porque `coreModule` depende de DataStore.
+`nativeModule` siempre se registra **primero** en `initKoin` cuando otros módulos dependen de infraestructura de plataforma.
 
 → Templates: `references/koin_init_templates.md`
 
 ---
 
-## Regla 7: Módulos con factory function expect/actual
+## Regla 8: Módulos con factory function expect/actual
 
-`BLEModule` y `firebaseModule` usan una factory function `expect`/`actual` para crear la implementación de plataforma sin usar qualifiers de plataforma en commonMain:
-
-```kotlin
-// commonMain — BLEModule.kt
-val BLEModule = module {
-    single<BLERepository> { createBLERepositoryImpl() }
-}
-
-// expect en commonMain
-expect fun createBLERepositoryImpl(): BLERepository
-
-// actual en androidMain
-actual fun createBLERepositoryImpl(): BLERepository = AndroidBLERepositoryImpl(...)
-
-// actual en iosMain
-actual fun createBLERepositoryImpl(): BLERepository = IOSBLERepositoryImpl(...)
-```
-
-Este patrón es más limpio que el qualifier de plataforma cuando la implementación es única por plataforma y no hay necesidad de distinguir entre varias. Se usa cuando `commonMain` solo necesita **una** instancia del tipo.
+Cuando `commonMain` necesita una única implementación por plataforma y no hace falta distinguir varias instancias, puede usarse una factory function `expect`/`actual` en lugar de qualifiers de plataforma.
 
 ---
 
-## Regla 8: Orden en initKoin y resolución lazy
+## Regla 9: Orden en initKoin y resolución lazy
 
-Koin resuelve dependencias de forma **lazy**: una instancia se crea la primera vez que se solicita, no cuando se registra el módulo. Por eso el orden de los módulos en `initKoin` no determina el orden de instanciación.
+Koin resuelve dependencias de forma **lazy**: una instancia se crea la primera vez que se solicita, no cuando se registra el módulo.
 
-El único orden que importa es:
+El orden recomendado es:
 
+```text
+nativeModule
+coreModule
+[features]
+appModule
 ```
-nativeModule    ← primero: aporta DataStore, que coreModule necesita
-coreModule      ← segundo: aporta HttpClients y CoreRepository, que las features necesitan
-[features]      ← cualquier orden entre ellas
-appModule       ← último o junto a features: depende de que las features estén registradas
-```
 
-En Android, el bloque `config?.invoke(this)` (que añade `androidContext`) se ejecuta antes de `modules(...)`, por lo que el contexto está siempre disponible independientemente del orden de módulos.
+El orden expresa dependencias estructurales, no inicialización inmediata.
 
 ---
 
-## Regla 9: Dependencias de build
+## Regla 10: Koin no define arquitectura ni stack técnico
 
-```toml
-# gradle/libs.versions.toml
-[libraries]
-koin-core              = { module = "io.insert-koin:koin-core" }
-koin-android           = { module = "io.insert-koin:koin-android" }
-koin-compose           = { module = "io.insert-koin:koin-compose" }
-koin-compose-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel" }
-koin-test              = { module = "io.insert-koin:koin-test" }
-voyager-koin           = { module = "cafe.adriel.voyager:voyager-koin" }
-```
+Koin solo cablea dependencias. Las reglas de arquitectura viven en la skill correspondiente. Las reglas de networking, auth o persistencia viven en sus propias skills.
 
-En `composeApp/build.gradle.kts`:
+Si una regla sigue siendo cierta aunque cambie Koin, no pertenece aquí.
 
-```kotlin
-commonMain.dependencies {
-    implementation(libs.koin.core)
-    implementation(libs.koin.compose)
-    implementation(libs.koin.compose.viewmodel)
-    implementation(libs.voyager.koin)
-}
-androidMain.dependencies {
-    implementation(libs.koin.android)
-}
-```
+---
+
+## Regla 11: Esta skill se combina con las skills de capa y de infraestructura
+
+Esta skill se usa junto con:
+
+- `kb-kmm-core-layer`
+- `kb-kmm-feature-clean-architecture`
+- `kb-kmm-app-layer`
+- skills de networking, auth o storage cuando la dependencia registrada pertenezca a esas dimensiones
+
+Koin registra y resuelve dependencias; no redefine las reglas conceptuales de esas piezas.

@@ -1,6 +1,6 @@
 ---
-name: kb-kmm-navigation
-description: Base de conocimiento sobre navegación type-safe en Compose Multiplatform: rutas @Serializable, NavHost, nested graphs, deep links, shell adaptativo, back stack, scoping de ViewModels y NavigationSideEffect.
+name: kb-kmm-navigation-compose
+description: Base de conocimiento de implementación de navegación con Compose Navigation + Kotlin Serialization en KMM: rutas @Serializable, NavHost, nested graphs, back stack, deep links de grafo, shell adaptativo y constraints de commonMain.
 argument-hint: "topic de navegación a consultar (opcional)"
 effort: low
 allowed-tools: [Read]
@@ -8,22 +8,32 @@ context: fork
 disable-model-invocation: true
 ---
 
-# Compose Multiplatform — Navegación
+# Compose Multiplatform — Navigation Compose
 
 ---
 
-## Contrato de Navegación
+## Alcance
 
-Estas reglas son invariantes de arquitectura, independientes de la librería de navegación que se use:
+Esta skill implementa navegación con:
 
-- **Rutas como tipos en `commonMain`**: cada destino es un tipo (objeto o clase), no un string. Se ubican en el paquete de navegación de `:app` accesible por todas las features sin que ellas dependan entre sí.
-- **NavHost y todo el grafo en `commonMain`**: el `NavHost` y las extensiones `NavGraphBuilder` viven en `commonMain`.
-- **Features exponen, no navegan**: cada feature expone una función de registro de su grafo que acepta lambdas para las acciones de salida. Nunca recibe el `NavController` — solo emite callbacks que `:app` resuelve.
-- **NavController encapsulado**: el `NavController` vive en el composable shell de nivel superior. No se expone a features ni se almacena en un `CompositionLocal` global.
-- **Lógica de navegación en ViewModel**: cuando la navegación depende de lógica de negocio, el ViewModel emite un `NavigationSideEffect` via `Channel` o `StateFlow`. Elegir uno y aplicarlo consistentemente en todo el proyecto. Nunca mezclar navegación con `UiEvent` — riesgo de navegaciones duplicadas en recompose.
-- **Separación entre features**: `:feature:A` no depende de `:feature:B` para navegar. Solo dependen del contrato central de rutas.
+- Compose Navigation
+- Kotlin Serialization
+- Compose Multiplatform
 
-Todo lo que sigue es la implementación de este contrato con Compose Navigation + Kotlin Serialization.
+No define por sí sola:
+
+- ownership arquitectónico de la navegación
+- contrato entre `app` y features
+- patrón de efectos de navegación desde ViewModel
+- integración de plataforma con el host
+- DI concreta
+
+Esas reglas viven en:
+
+- `kb-kmm-navigation-contracts`
+- `kb-kmm-navigation-viewmodel-events`
+- `kb-kmm-navigation-platform-behaviors`
+- `kb-koin` si aplica
 
 ---
 
@@ -137,13 +147,13 @@ Usar `calculateWindowSizeClass()` de `androidx.compose.material3.windowsizeclass
 
 ---
 
-## 7. Deep Links
+## 7. Deep Links de grafo
+
+Esta skill cubre solo la resolución del deep link una vez el host entrega el evento al runtime de navegación. La configuración de plataforma que conecta URLs, intents, universal links o bridges nativos debe delegarse a `kb-kmm-navigation-platform-behaviors`.
 
 Los argumentos del URI se mapean automáticamente a los campos de la ruta `@Serializable` cuando se usa `navDeepLink<T>(basePath = ...)`. Para URIs custom, los placeholders `{campo}` deben coincidir con los nombres de los parámetros de la data class.
 
-Requiere configuración en `AndroidManifest.xml` (Android) y en `Info.plist` / `Entitlements` (iOS Universal Links).
-
-- Para todos los patrones de deep link y configuración por plataforma, ver [deeplinks.md](resources/deeplinks.md)
+- Para los patrones de deep link dentro del grafo, ver [deeplinks.md](resources/deeplinks.md)
 
 ---
 
@@ -153,43 +163,27 @@ Requiere configuración en `AndroidManifest.xml` (Android) y en `Info.plist` / `
 
 | Scope | API | Duración |
 |---|---|---|
-| Pantalla (default) | `koinNavViewModel()` | Vive mientras la entrada existe en el back stack |
-| Nested graph | `koinViewModel(viewModelStoreOwner = graphEntry)` | Sobrevive a navegación entre rutas del mismo grafo |
+| Pantalla (default) | helper de DI del proyecto | Vive mientras la entrada existe en el back stack |
+| Nested graph | helper de DI del proyecto con `graphEntry` | Sobrevive a navegación entre rutas del mismo grafo |
+
+Si el proyecto usa Koin, consultar `kb-koin` y los ejemplos en `resources/viewmodel-and-navigation-events.md`.
 
 ### Restricción: no usar `SavedStateHandle` en commonMain
 
-`SavedStateHandle` es una API de AndroidX Lifecycle. En commonMain, pasar los argumentos al ViewModel via constructor desde el Composable usando `parametersOf(route.userId)`.
+`SavedStateHandle` es una API de AndroidX Lifecycle. En commonMain, pasar los argumentos al ViewModel via constructor desde el Composable usando el mecanismo de parámetros de la DI activa.
 
 - Para ejemplos completos de scoping y paso de parámetros, ver [viewmodel-and-navigation-events.md](resources/viewmodel-and-navigation-events.md)
 
 ---
 
-## 9. NavigationSideEffect desde ViewModel
+## 9. ViewModel events y side effects
 
-### Opciones
+El patrón de efectos de navegación desde ViewModel no se define en esta skill.
 
-**`Channel<NavigationEvent>` (BUFFERED)** — garantiza entrega única; el canal se cancela con el scope del `LaunchedEffect`.
+Esta skill solo consume ese patrón cuando necesita integrarse con el grafo Compose.
 
-**`StateFlow` con reset** — modelo UDF puro; requiere llamar a `onEffectHandled()` tras consumir el evento.
-
-### Regla del `LaunchedEffect`
-
-La key depende del patrón:
-- **Channel:** usar `LaunchedEffect(viewModel)` — colecta el Flow una sola vez mientras el ViewModel vive; se reinicia si el Composable re-entra con un ViewModel distinto
-- **StateFlow:** usar `LaunchedEffect(uiState.effect)` — el bloque se re-ejecuta cuando el valor del efecto cambia; `LaunchedEffect(viewModel)` no sirve aquí porque StateFlow emite un snapshot, no un stream continuo
-
-Nunca usar `LaunchedEffect(Unit)` — no detecta cambios de ViewModel en re-entradas a la composición.
-
-**Tradeoffs:**
-
-| | `Channel` (BUFFERED) | `StateFlow` con reset |
-|---|---|---|
-| Entrega única | Garantizada por el Channel | Manual (`onEffectHandled`) |
-| Testabilidad | Requiere `runTest` + `launch` | Snapshot directo del estado |
-| Consistencia UDF | Rompe el modelo estado puro | 100% UDF |
-| Pérdida de eventos | Imposible (buffered) | Posible si se resetea antes de colectar |
-
-- Para ambos patrones completos (ViewModel + Composable), ver [viewmodel-and-navigation-events.md](resources/viewmodel-and-navigation-events.md)
+- Para el patrón completo de efectos y `LaunchedEffect`, ver [viewmodel-and-navigation-events.md](resources/viewmodel-and-navigation-events.md)
+- La fuente normativa de ese patrón es `kb-kmm-navigation-viewmodel-events`
 
 ---
 
@@ -208,39 +202,15 @@ Las transiciones globales se definen en el `NavHost`. Las transiciones por ruta 
 
 ---
 
-## 11. BackHandler y Predictive Back
-
-`BackHandler` en commonMain viene de `androidx.compose.ui.platform` (CMP 1.6+). **No usar** `androidx.activity.compose.BackHandler` — es Android-only y rompe la compilación en iOS/Desktop.
-
-Para predictive back en Android 13+, declarar `android:enableOnBackInvokedCallback="true"` en `AndroidManifest.xml`. En iOS, el gesto de swipe-back es manejado automáticamente por UIKit.
-
-- Para el ejemplo de `BackHandler` con formularios, ver [backhandler.md](resources/backhandler.md)
-
----
-
-## 12. Testing de navegación
-
-`TestNavHostController` requiere `android.content.Context` — los tests de integración del grafo son **instrumentados (Android)** y van en `androidTest/`, no en `commonTest`.
-
-Los únicos tests que van en `commonTest` son los del ViewModel (usando fake del canal de navegación).
-
-- Para los tres patrones de test (integración de grafo, verificación de ruta, fake para ViewModel), ver [testing.md](resources/testing.md)
-
----
-
 ## Requisitos NO Negociables
 
 _Específicos de Compose Navigation + Kotlin Serialization. Si cambia la librería, revisitar._
 
 - Rutas type-safe con `@Serializable` — sin strings hardcodeados
-- `AppNavGraph` recibe el `navController` como parámetro requerido; el owner es siempre el shell o el test
-- `LaunchedEffect(viewModel)` como key en el patrón Channel; `LaunchedEffect(uiState.effect)` en el patrón StateFlow; nunca `LaunchedEffect(Unit)`
-- Scoping de ViewModel con `koinNavViewModel()` o equivalente (Hilt: `hiltViewModel()`), nunca instanciación directa
+- `AppNavGraph` recibe el `navController` como parámetro requerido
 - `SavedStateHandle.toRoute()` prohibido en `commonMain` (API de AndroidX Lifecycle, solo Android)
-- `androidx.activity.compose.BackHandler` prohibido en `commonMain` — usar `androidx.compose.ui.platform.BackHandler`
 - Ignorar el `Boolean` de retorno de `popBackStack()` está prohibido en destinos que pueden ser entry points de deep link
 - Navegación adaptativa: `NavigationBar` en Compact, `NavigationRail` en Medium, `NavigationDrawer` en Expanded
-- Tests de integración del grafo en `androidTest` (instrumentados), no en `commonTest`
 
 ---
 

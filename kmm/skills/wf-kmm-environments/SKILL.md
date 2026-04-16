@@ -3,7 +3,7 @@ name: wf-kmm-environments
 description: "Configura un sistema multi-brand/multi-environment en un proyecto KMM: Android (Gradle product flavors + BuildConfig) e iOS (XCConfig + Script Build Phase). Usar cuando el usuario quiera configurar entornos, flavors, variantes de build o multi-brand en un proyecto KMM. Activar con frases como 'configurar entornos', 'añadir pre/pro', 'configurar flavors', 'configurar variantes de build', 'añadir staging/production', 'setup environments', 'multi-brand KMM'."
 argument-hint: "[brands y entornos, ej: 'pre pro' o 'cuideo felizvita con pre y pro']"
 effort: high
-allowed-tools: [Read, Write, Edit, Bash]
+allowed-tools: [Read, Write, Bash]
 context: fork
 agent: kmm-implementer
 ---
@@ -46,21 +46,31 @@ Leer estos ficheros para entender qué hay y qué falta:
 
 ---
 
-## Paso 3 — Consultar kb-kmm-environments
+## Paso 3 — Consultar la semántica estable de variantes
 
-Consultar las reglas del skill `kb-kmm-environments` para obtener los criterios técnicos canónicos que guían los pasos 4–8. En particular las reglas sobre el plugin BuildConfig, prioridad de resolución brand/env, estructura de ficheros, jerarquía XCConfig y valores sensibles.
+Consultar `kb-kmm-brands` y `kb-kmm-environments` para fijar:
 
----
-
-## Paso 4 — Registrar el plugin BuildConfig
-
-En `gradle/libs.versions.toml`, añadir el plugin gmazzo si no está presente siguiendo la **Regla 2** del kb-. Si ya existe el plugin con otra versión, usar la versión existente.
-
-Consultar `kb-kmm-environments/references/android_buildconfig_templates.md § libs.versions.toml` para el snippet exacto.
+- catálogo de brands
+- matriz `brand × env`
+- valores declarativos vs derivados
+- sensibilidad de variables
+- contrato compartido que consumirá `commonMain`
 
 ---
 
-## Paso 4b — Sincronizar Gradle
+## Paso 4 — Aplicar implementación Android
+
+Consultar `kb-kmm-android-environments` para:
+
+- registrar el plugin BuildConfig
+- configurar flavor dimensions y productFlavors
+- implementar resolución `brand/env`
+- declarar los `buildConfigField` del contrato compartido
+- crear `.properties` solo para valores declarativos
+
+---
+
+## Paso 5 — Sincronizar Gradle
 
 Ejecutar un sync de Gradle para que el IDE resuelva el plugin recién declarado y sus dependencias estén disponibles antes de editar `build.gradle.kts`:
 
@@ -72,46 +82,27 @@ Esperar a que termine sin errores antes de continuar. Si el sync falla, revisar 
 
 ---
 
-## Paso 5 — Configurar Android
+## Paso 6 — Aplicar implementación iOS
 
-En `composeApp/build.gradle.kts`, realizar tres acciones siguiendo las **Reglas 2, 3 y 5** del kb-:
+Consultar `kb-kmm-ios-environments` para:
 
-1. Aplicar el plugin al bloque `plugins { }`.
-2. Declarar `flavorDimensions` y `productFlavors` dentro de `android { }` con los datos de Paso 1.
-3. Añadir el bloque `buildConfig { }` después de `android { }`. El bloque siempre incluye el scaffold de resolución brand/env y la carga de properties. Los `buildConfigField` se añaden **únicamente** para las variables que el usuario especificó en el Paso 1 — ni más ni menos. No añadir `BRAND`, `IS_PRE` ni ningún otro campo por iniciativa propia.
-
-Consultar `kb-kmm-environments/references/android_buildconfig_templates.md` para los templates de cada sección. Para 3+ entornos, usar la variante `§ Lógica de resolución para 3+ entornos`.
-
----
-
-## Paso 6 — Crear ficheros .properties
-
-Crear un fichero `.properties` por variante brand×env en la **raíz del proyecto** siguiendo la **Regla 5** del kb-. Solo incluir valores que Gradle no puede derivar (URLs, API keys). No incluir `BRAND` ni `IS_PRE`.
-
-Consultar la **Regla 8** del kb- para decidir qué valores son seguros de commitear. Consultar `kb-kmm-environments/references/android_properties_templates.md` para la estructura de cada fichero.
-
----
-
-## Paso 7 — Configurar iOS
-
-### 7a. Crear la jerarquía XCConfig
-
-Crear en `iosApp/Configuration/` los ficheros XCConfig siguiendo la **Regla 6** del kb- para la jerarquía de includes. Consultar `kb-kmm-environments/references/ios_xcconfig_templates.md` para los templates completos de cada fichero.
-
-### 7b. Targets, Build Configurations y Schemes en Xcode
+- crear jerarquía XCConfig
+- preparar targets, build configurations y schemes
+- añadir el script build phase
+- pasar a Gradle solo las propiedades mínimas de variante
 
 > **Instrucciones manuales para el usuario** — estos pasos los ejecuta el usuario en Xcode, no el agente.
 
-Ver **Regla 7** del kb- para la relación target/build configuration/scheme y el árbol de decisión. Los sub-pasos deben ejecutarse en orden.
+Los sub-pasos manuales de Xcode deben ejecutarse en orden.
 
-**7b-1. Añadir Build Configurations (siempre, para todo proyecto con N envs)**
+**6a. Añadir Build Configurations**
 
 En la pestaña **Info** del proyecto Xcode, sección Configurations:
 1. Duplicar `Debug` una vez por cada env → renombrar a `Debug-{Env1}`, `Debug-{Env2}`, …
 2. Duplicar `Release` una vez por cada env → renombrar a `Release-{Env1}`, `Release-{Env2}`, …
 3. Eliminar las filas `Debug` y `Release` originales si ya no se usarán (opcional, pero evita confusión).
 
-**7b-2. Añadir targets adicionales (solo si brands.size > 1)**
+**6b. Añadir targets adicionales si hay más de una brand**
 
 Por cada brand adicional (brand2, brand3, …):
 1. File → Duplicate Target → seleccionar el target `iosApp`
@@ -120,15 +111,13 @@ Por cada brand adicional (brand2, brand3, …):
 
 Si solo hay 1 brand, omitir este sub-paso.
 
-**7b-3. Enlazar XCConfig a cada Build Configuration (dos niveles)**
+**6c. Enlazar XCConfig a cada Build Configuration**
 
-Para cada fila de Build Configuration creada en 7b-1, en la pestaña Info → Configurations:
+Para cada fila de Build Configuration creada en 6a, en la pestaña Info → Configurations:
 - Columna del **proyecto**: asignar `Debug.xcconfig` a las filas `Debug-{Env}` y `Release.xcconfig` a las filas `Release-{Env}`
 - Columna de cada **target**: asignar el `{Brand}/{Brand}-{Env}.xcconfig` correspondiente
 
-Consultar la tabla de asignación de la **Regla 7** del kb- para el mapeo exacto.
-
-**7b-4. Crear Schemes (uno por brand×env)**
+**6d. Crear Schemes**
 
 Product → Scheme → New Scheme → seleccionar el target del brand correspondiente:
 1. Nombrar el scheme `{Brand}-{Env}` (ej. `Brand1-Pre`, `Cuideo-Pro`)
@@ -137,17 +126,17 @@ Product → Scheme → New Scheme → seleccionar el target del brand correspond
    - Acción **Archive** → Build Configuration: `Release-{Env}`
    - Resto de acciones (Test, Profile, Analyze): `Debug-{Env}`
 
-### 7c. Script Build Phase
+**6e. Script Build Phase**
 
-Cada target necesita un **Run Script Build Phase**. Seguir la **Regla 4** del kb- para entender el flujo `${APP_ENV}` → Gradle. Consultar `kb-kmm-environments/references/ios_script_build_phase_template.md` para el script de cada target.
+Cada target necesita un **Run Script Build Phase**.
 
 ---
 
-## Paso 8 — Informar al usuario
+## Paso 7 — Informar al usuario
 
 Tras aplicar todos los cambios, reportar:
 
 - Lista de ficheros creados o modificados
-- Si hubo pasos manuales de Xcode pendientes (7b): recordárselos explícitamente
-- Referencia de uso post-configuración: leer `kb-kmm-environments/references/usage_reference.md` y mostrar su contenido al usuario
+- Si hubo pasos manuales de Xcode pendientes (Paso 6): recordárselos explícitamente
+- Referencia de uso post-configuración: leer `references/usage_reference.md` del skill `kb-kmm-environments` y mostrar su contenido al usuario
 - Siguiente paso sugerido: verificar el build ejecutando la variante por defecto en Android y seleccionando un scheme en Xcode

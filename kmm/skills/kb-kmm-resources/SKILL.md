@@ -18,7 +18,7 @@ Invariantes de arquitectura para recursos en KMM:
 
 - **Todos los recursos compartidos en `commonMain/composeResources/`**: strings, drawables, fonts y raw files. Nunca en `androidMain` ni `iosMain` si son compartidos.
 - **Acceso siempre vía `Res`**: usar las funciones de `org.jetbrains.compose.resources` (`stringResource`, `painterResource`, `Font`, `Res.readBytes`). Nunca hardcodear strings ni rutas.
-- **`stringResource()` en Composables, `getString()` fuera**: `getString()` es suspend y se usa en ViewModels o UseCases. `stringResource()` es `@Composable` y solo se usa en la capa de UI.
+- **`stringResource()` en Composables, `getString()` fuera solo cuando procede**: `getString()` es suspend y solo debe usarse fuera de Composables cuando el caso realmente necesita un `String` resuelto en ese punto. Si el proyecto usa `UiText`, ViewModels no resuelven strings; exponen referencias y la UI las resuelve.
 - **Localización con carpetas `values-{locale}/`**: el archivo `strings.xml` por defecto va en `values/`; las traducciones en `values-es/`, `values-fr/`, etc.
 - **`@StringRes` prohibido en `commonMain`**: es una API Android-only. Usar `StringResource` de `compose.resources`.
 - **Recursos platform-specific fuera de `commonMain`**: launch icons, splash screens y assets nativos van en `androidApp/` o `iosApp/`, no en `commonMain`.
@@ -64,9 +64,17 @@ Text(text = stringResource(Res.string.profile_greeting, userName))
 Text(text = pluralStringResource(Res.plurals.items_count, count, count))
 ```
 
-### 2.3 Uso fuera de Composables (ViewModel / UseCase)
+### 2.3 Uso fuera de Composables
 
-`getString()` es suspend y requiere un coroutine scope. No puede usarse en inicialización síncrona. Para el patrón completo de cómo el ViewModel expone textos a la UI, ver el skill `kb-kmm-ui-text`.
+`getString()` es suspend y requiere un coroutine scope. No puede usarse en inicialización síncrona.
+
+Si el proyecto usa `kb-kmm-ui-text`, el ViewModel no debe resolver strings; debe exponer `UiText` y delegar la resolución a la UI.
+
+`getString()` queda reservado para casos donde realmente se necesita el string materializado fuera de un Composable, por ejemplo:
+
+- texto que se envía a una API o share sheet
+- adapters o bridges que no operan con `UiText`
+- utilidades de infraestructura o composición externa a la UI
 
 ```kotlin
 suspend fun buildShareText(): String = getString(Res.string.share_message)
@@ -99,7 +107,8 @@ Se leen con `Res.readBytes("files/nombre.ext")`, que es `suspend` y devuelve `By
 ### Obligatorio
 
 - Strings y drawables compartidos en `commonMain/composeResources/`
-- `stringResource()` para textos en Composables; `getString()` (suspend) fuera de Composables
+- `stringResource()` para textos en Composables
+- `getString()` solo cuando realmente se necesita el `String` resuelto fuera de UI
 - `painterResource()` para imágenes compartidas
 - Soporte de localización con carpetas `values-{locale}/`
 
@@ -108,6 +117,7 @@ Se leen con `Res.readBytes("files/nombre.ext")`, que es `suspend` y devuelve `By
 - Hardcodear strings en Composables
 - `@StringRes` en `commonMain` — API de Android, no disponible en iOS
 - Recursos platform-specific (launch icons, splash screens) en `commonMain`
+- Resolver strings en ViewModels si el proyecto adopta el patrón `UiText`
 
 ---
 

@@ -1,0 +1,116 @@
+---
+name: wf-kmm-auth-setup-keycloak
+description: "Configura autenticación OAuth con Keycloak en un proyecto KMM separando contratos de sesión, proveedor OAuth y mecanismo técnico de integración con el cliente HTTP."
+argument-hint: "[IDS_BASE_URL, realm, client_id, grant types, estrategia de refresh y mecanismo HTTP]"
+effort: high
+allowed-tools: [Read, Write, Bash]
+context: fork
+agent: kmm-implementer
+---
+
+# wf-kmm-auth-setup-keycloak
+
+## Paso 1: Tratar esta workflow como composición, no como fuente normativa
+
+Esta skill configura auth con Keycloak componiendo varias skills especializadas.
+
+No define reglas nuevas de arquitectura, sesión, proveedor ni mecanismo HTTP.
+
+---
+
+## Paso 2: Confirmar primero arquitectura y ubicación de piezas
+
+Aplicar:
+
+- `kb-kmm-clean-architecture`
+- `kb-kmm-core-layer`
+- `kb-kmm-feature-clean-architecture`
+- `kb-kmm-app-layer`
+
+Con esto se decide:
+
+- dónde vive el contrato de sesión
+- qué piezas son transversales y van a `core`
+- qué implementaciones pertenecen a una feature concreta
+- qué wiring final o composición pertenece a `app`
+
+---
+
+## Paso 3: Confirmar la política de auth
+
+Aplicar `kb-kmm-auth-contracts` para confirmar:
+
+- si hay access token y refresh token
+- cómo se detecta la sesión expirada
+- qué endpoints son públicos
+- dónde vive el contrato de sesión o store de tokens
+
+---
+
+## Paso 4: Confirmar detalles específicos de Keycloak
+
+Aplicar `kb-kmm-auth-oauth-keycloak` y recopilar:
+
+- `IDS_BASE_URL`
+- `realm`
+- `client_id`
+- grant type de login
+- grant type de refresh
+- entornos y variaciones de configuración
+
+---
+
+## Paso 5: Leer el mecanismo HTTP activo
+
+Detectar si el proyecto usa Ktor u otra librería HTTP. No asumir que Keycloak implica Ktor.
+
+---
+
+## Paso 6: Crear contratos antes que implementaciones
+
+Crear o verificar:
+
+- store o repositorio de sesión
+- eventos de sesión
+- API de identidad
+- modelos internos de token
+
+La ubicación de estas piezas debe respetar las skills de capa. No asumir que todo contrato de auth vive automáticamente en `core` sin comprobar si es realmente transversal.
+
+---
+
+## Paso 7: Implementar el proveedor Keycloak
+
+Crear la implementación de `IdentityApi` con formulario y ruta del token endpoint siguiendo `kb-kmm-auth-oauth-keycloak`.
+
+---
+
+## Paso 8: Implementar el mecanismo técnico de refresh solo después
+
+Separar explícitamente estas dimensiones:
+
+- política de sesión -> `kb-kmm-auth-contracts`
+- proveedor OAuth -> `kb-kmm-auth-oauth-keycloak`
+- mecanismo técnico -> skill HTTP o plugin correspondiente
+
+No mezclar decisiones de proveedor con decisiones de mecanismo.
+
+---
+
+## Paso 9: Implementar el mecanismo técnico de refresh
+
+Solo si el proyecto usa Ktor y la estrategia acordada es auth automática en el cliente, aplicar `kb-kmm-auth-ktor-plugin`.
+
+Si el proyecto usa otro mecanismo, implementar la variante correspondiente sin introducir reglas de Ktor en esta workflow.
+
+---
+
+## Paso 10: Registrar e informar
+
+Registrar las piezas en DI respetando la separación entre contratos, proveedor e implementaciones técnicas.
+
+Reportar por separado:
+
+- contratos de auth creados
+- integración Keycloak creada
+- mecanismo técnico elegido para aplicar auth en requests

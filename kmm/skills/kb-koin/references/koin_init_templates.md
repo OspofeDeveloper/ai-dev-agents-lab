@@ -1,5 +1,7 @@
 # Templates — initKoin y nativeModule
 
+Estos ejemplos muestran patrones de inicialización y registro en Koin. No fijan dominios concretos del proyecto ni una infraestructura específica más allá del wiring de plataforma.
+
 ## initKoin — commonMain
 
 ```kotlin
@@ -8,20 +10,11 @@ fun initKoin(config: KoinAppDeclaration? = null): KoinApplication {
     return startKoin {
         config?.invoke(this)
         modules(
-            nativeModule,       // primero: DataStore, BLE, Firebase de plataforma
-            coreModule,         // segundo: HttpClients, CoreRepository, IdentityApi
-            authModule,
-            pumpsModule,
-            locationModule,
-            alarmModule,
-            BLEModule,
-            firebaseModule,
-            appModule,
-            parametersModule,
-            resetsModule,
-            cyclesModule,
-            lightsModule,
-            deviceModule
+            nativeModule,
+            coreModule,
+            featureAModule,
+            featureBModule,
+            appModule
         )
     }
 }
@@ -32,13 +25,12 @@ fun initKoin(config: KoinAppDeclaration? = null): KoinApplication {
 ## Inicialización Android — Application
 
 ```kotlin
-// androidMain/.../SaciPumpsApp.kt
-class SaciPumpsApp : Application() {
+class SampleApp : Application() {
     override fun onCreate() {
         super.onCreate()
         initKoin {
             androidLogger(Level.DEBUG)
-            androidContext(this@SaciPumpsApp)
+            androidContext(this@SampleApp)
         }
     }
 }
@@ -49,11 +41,7 @@ class SaciPumpsApp : Application() {
 ## Inicialización iOS — MainViewController
 
 ```kotlin
-// iosMain/.../MainViewController.kt
-fun MainViewController(
-    nativeFactory: NativeFactory
-) = ComposeUIViewController(configure = { initKoin() }) {
-    NativeFactoryProvider.factory = nativeFactory
+fun MainViewController() = ComposeUIViewController(configure = { initKoin() }) {
     AppEntryPoint()
 }
 ```
@@ -63,21 +51,9 @@ fun MainViewController(
 ## nativeModule — Android
 
 ```kotlin
-// androidMain/.../nativeModule.android.kt
 actual val nativeModule = module {
-    factoryOf(::AndroidBLEProvisioningService)
-
-    single<BLERepository>(named(AndroidQualifiers.AndroidBleRepository)) {
-        AndroidBLERepositoryImpl(get())
-    }
-
-    single { FirebaseApi() }
-
-    single<FirebaseRepository>(named(AndroidQualifiers.AndroidFirebaseRepository)) {
-        AndroidFirebaseRepositoryImpl(get())
-    }
-
-    single { dataStore(get()) }  // get() resuelve el contexto Android
+    single<PlatformStorage> { AndroidPlatformStorage(get()) }
+    single<PlatformNotifier> { AndroidPlatformNotifier(get()) }
 }
 ```
 
@@ -86,21 +62,9 @@ actual val nativeModule = module {
 ## nativeModule — iOS
 
 ```kotlin
-// iosMain/.../nativeModule.ios.kt
 actual val nativeModule = module {
-    factoryOf(::IOSBLEProvisioningService)
-
-    single<BLERepository>(named(iOSQualifier.iOSBleRepository)) {
-        IOSBLERepositoryImpl(get())
-    }
-
-    single<FirebaseRepository>(named(iOSQualifier.iOSFirebaseRepository)) {
-        IOSFirebaseRepositoryImpl(get())
-    }
-
-    single { IOSFirebaseService() }
-
-    single { getDataStore() }  // sin contexto en iOS
+    single<PlatformStorage> { IOSPlatformStorage() }
+    single<PlatformNotifier> { IOSPlatformNotifier() }
 }
 ```
 
@@ -109,6 +73,5 @@ actual val nativeModule = module {
 ## expect/actual nativeModule — commonMain
 
 ```kotlin
-// commonMain/.../nativeModule.kt
 expect val nativeModule: Module
 ```
