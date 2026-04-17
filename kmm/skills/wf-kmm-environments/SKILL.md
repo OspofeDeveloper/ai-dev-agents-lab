@@ -5,7 +5,7 @@ argument-hint: "[brands y entornos, ej: 'pre pro' o 'cuideo felizvita con pre y 
 effort: high
 allowed-tools: [Read, Write, Bash]
 context: fork
-agent: kmm-implementer
+agent: kmm-platform-integrator
 ---
 
 # wf-kmm-environments

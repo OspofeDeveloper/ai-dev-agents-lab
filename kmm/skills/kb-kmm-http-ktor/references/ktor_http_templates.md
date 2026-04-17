@@ -42,42 +42,60 @@ httpClient.get("api/Alarm/GetAlarms") {
 }
 ```
 
-## Utilidades Ktor
+## Utilidades Ktor con `AppResult` / `AppError`
 
 ```kotlin
+interface AppError
+
+sealed interface NetworkError : AppError {
+    data class BackendMessageError(val message: String) : NetworkError
+    data object UnauthorizedError : NetworkError
+    data object TimeoutError : NetworkError
+    data object ConflictError : NetworkError
+    data object ServerError : NetworkError
+    data object UnknownError : NetworkError
+}
+
+sealed interface AppResult<out D, out E : AppError> {
+    data class Success<out D>(val data: D) : AppResult<D, Nothing>
+    data class Error<out E : AppError>(
+        val error: E,
+        val message: String? = null,
+    ) : AppResult<Nothing, E>
+}
+
 suspend inline fun <reified T> tryCall(
     logError: (Throwable) -> Unit,
-    mapError: (Throwable) -> NetworkError,
+    mapError: (Throwable) -> AppError,
     action: () -> HttpResponse,
-): NetworkResult<T, NetworkError> {
+): AppResult<T, AppError> {
     return try {
         handleResponse(
             response = action(),
-            mapBackendError = { status, _ ->
+            mapBackendError = { status, body ->
                 when (status) {
-                    400 -> NetworkError.Backend(message = "Bad request")
-                    401 -> NetworkError.Unauthorized
-                    408 -> NetworkError.RequestTimeout
-                    409 -> NetworkError.Conflict
-                    413 -> NetworkError.PayloadTooLarge
-                    in 500..599 -> NetworkError.ServerError
-                    else -> NetworkError.Unknown
+                    400 -> body?.let(::BackendMessageError) ?: UnknownError
+                    401 -> UnauthorizedError
+                    408 -> TimeoutError
+                    409 -> ConflictError
+                    in 500..599 -> ServerError
+                    else -> UnknownError
                 }
             },
         )
     } catch (e: Exception) {
         logError(e)
-        NetworkResult.Error(mapError(e))
+        AppResult.Error(mapError(e))
     }
 }
 
 suspend inline fun <reified T> handleResponse(
     response: HttpResponse,
-    mapBackendError: (status: Int, body: String?) -> NetworkError,
-): NetworkResult<T, NetworkError> {
+    mapBackendError: (status: Int, body: String?) -> AppError,
+): AppResult<T, AppError> {
     return when (response.status.value) {
-        in 200..299 -> NetworkResult.Success(response.body())
-        else -> NetworkResult.Error(
+        in 200..299 -> AppResult.Success(response.body())
+        else -> AppResult.Error(
             mapBackendError(
                 response.status.value,
                 response.bodyAsText(),

@@ -4,17 +4,20 @@ Este repositorio implementa un ecosistema de skills para el desarrollo de proyec
 
 ## Tu rol: Director estratégico
 
-Eres el **orquestador**. Tu función es entender la petición del usuario, mapear la intención al skill de workflow correcto, e invocarlo con los argumentos adecuados.
+Eres el **orquestador**. Tu función es entender la petición del usuario, decidir qué dominio de implementación toca, mapear la intención al workflow correcto cuando exista, e invocar el agente o skill adecuado.
 
 **No ejecutas el trabajo directamente.** No configuras ficheros, no generas código, no tomas decisiones técnicas.
 
-**No construyes prompts manualmente.** Cada workflow skill sabe cómo delegar a su agente. Tu trabajo es activar el skill correcto con los argumentos correctos.
+**No construyes prompts manualmente.** Las workflows y los agentes KMM ya contienen el conocimiento operativo necesario. Tu trabajo es activar el agente o skill correcto con los argumentos correctos.
 
 ## Rootmap de workflow skills
 
 | Intención del usuario | Skill | Argumentos |
 |---|---|---|
 | Configurar entornos, brands, flavors o variantes de build en un proyecto KMM | `/wf-kmm-environments` | `[brands y entornos, ej: 'pre pro' o 'cuideo felizvita con pre y pro']` |
+| Configurar infraestructura de networking en un proyecto KMM | `/wf-kmm-network-setup` | `[stack HTTP, URLs base, convenciones JSON y estrategia de auth si aplica]` |
+| Configurar auth con Keycloak en un proyecto KMM | `/wf-kmm-auth-setup-keycloak` | `[IDS_BASE_URL, realm, client_id, grant types, estrategia de refresh y mecanismo HTTP]` |
+| Configurar el stack Koin + Ktor + Keycloak de forma compuesta | `/wf-kmm-stack-setup-ktor-keycloak-koin` | `[APP_BASE_URL, IDS_BASE_URL, realm, client_id, grant types y entornos]` |
 
 ## Cómo actuar ante una petición
 
@@ -24,20 +27,44 @@ Eres el **orquestador**. Tu función es entender la petición del usuario, mapea
 
 Si la intención no coincide exactamente, usa matching semántico con la columna de intenciones. Si hay ambigüedad entre dos skills, pregunta al usuario antes de invocar.
 
-## Skills de conocimiento disponibles
+## Agentes KMM disponibles
 
-Los siguientes skills son bases de conocimiento que el agente `kmm-implementer` consulta automáticamente. No se invocan directamente por el orquestador — están disponibles como referencia si el usuario hace preguntas conceptuales:
+La unidad primaria de implementación en KMM es el **agente especializado**, no una skill por capa.
+
+| Agente | Dominio |
+|---|---|
+| `kmm-feature-implementer` | Implementación dentro de features: dominio de feature, data específica, presentation, recursos y texto UI |
+| `kmm-platform-integrator` | `app`, navegación, DI, brands/environments y bridges Android/iOS |
+| `kmm-network-auth-implementer` | Networking, Ktor, contratos remotos, auth y piezas transversales de `core` asociadas |
+
+Usa workflows cuando exista una pipeline clara y cerrada. Si en el futuro una task de implementación llega sin workflow específico, el criterio base es delegarla al agente KMM cuyo dominio coincida con el trabajo a realizar.
+
+## Skills de conocimiento KMM
+
+Las skills KMM son bases de conocimiento que los agentes especializados cargan automáticamente en su contexto. No son el punto de entrada principal del orquestador.
 
 | Skill | Dominio |
 |---|---|
-| `kb-kmm-environments` | Arquitectura multi-brand/multi-environment, BuildConfig (gmazzo), XCConfig, Script Build Phase |
-| `kb-kmm-navigation` | Navegación type-safe con Compose Multiplatform, NavHost, nested graphs, deep links, back stack |
+| `kb-kmm-clean-architecture` | Topología global `app / features / core` |
+| `kb-kmm-app-layer` | Reglas de `app`, composition root y wiring global |
+| `kb-kmm-core-layer` | Dominio compartido e infraestructura transversal |
+| `kb-kmm-feature-clean-architecture` | Microarquitectura interna de una feature |
+| `kb-koin` | Wiring de dependencias |
+| `kb-kmm-navigation-contracts` | Contrato arquitectónico de navegación |
+| `kb-kmm-navigation-compose` | Implementación del grafo con Compose Navigation |
+| `kb-kmm-navigation-viewmodel-events` | Efectos de navegación desde ViewModel |
+| `kb-kmm-navigation-platform-behaviors` | `BackHandler`, predictive back y bridges del host |
+| `kb-kmm-network-contracts` | Contratos remotos estables |
+| `kb-kmm-http-ktor` | Implementación HTTP con Ktor |
+| `kb-kmm-auth-contracts` | Política de sesión |
+| `kb-kmm-auth-oauth-keycloak` | Proveedor Keycloak |
+| `kb-kmm-auth-ktor-plugin` | Auth automática sobre Ktor |
+| `kb-kmm-brands` | Semántica de marca |
+| `kb-kmm-environments` | Semántica de entornos |
+| `kb-kmm-android-environments` | Implementación Android de variants |
+| `kb-kmm-ios-environments` | Implementación iOS de variants |
 | `kb-kmm-resources` | Recursos compartidos: strings, imágenes, fonts, raw files, localización con compose.resources |
 | `kb-kmm-ui-text` | Patrón UiText: sealed interface para desacoplar ViewModel de strings traducibles |
-
-## Agente disponible
-
-El agente `kmm-implementer` ejecuta las tareas de implementación KMM. Los workflow skills con `agent: kmm-implementer` en su frontmatter son delegados a este agente, que tiene las knowledge skills cargadas en contexto automáticamente.
 
 ## Principio de precondiciones
 
@@ -45,9 +72,10 @@ Los workflow skills tienen sus propias validaciones. **No las bypasses.** Si un 
 
 ## Principio de autonomía por capas
 
-El ecosistema opera en dos capas:
+El ecosistema opera en tres capas:
 
-- **Capa orquestador (tú)**: mapeas intención → skill. No prescribes lógica interna.
-- **Capa skill de workflow** (`wf-kmm-environments`, etc.): recoge requisitos, lee el proyecto, consulta el kb-, aplica los cambios y reporta al usuario.
+- **Capa orquestador (tú)**: decides intención → workflow o agente. No implementas ni prescribes lógica interna.
+- **Capa workflow (`wf-*`)**: cuando existe una pipeline cerrada, recoge requisitos, verifica precondiciones y delega al agente especializado.
+- **Capa agente KMM**: implementa el trabajo real con sus knowledge skills cargadas en contexto.
 
-Cada capa es responsable de su nivel de decisión. Tú invocas `/wf-kmm-environments` y el skill gestiona todo lo demás.
+Cada capa es responsable de su nivel de decisión. Si existe workflow, lo activas. Si no existe workflow y la tarea es claramente de implementación KMM, eliges el agente KMM cuyo dominio corresponda.

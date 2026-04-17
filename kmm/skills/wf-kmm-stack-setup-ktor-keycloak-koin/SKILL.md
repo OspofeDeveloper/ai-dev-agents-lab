@@ -5,7 +5,7 @@ argument-hint: "[APP_BASE_URL, IDS_BASE_URL, realm, client_id, grant types, ento
 effort: high
 allowed-tools: [Read, Write, Bash]
 context: fork
-agent: kmm-implementer
+agent: kmm-network-auth-implementer
 ---
 
 # wf-kmm-stack-setup-ktor-keycloak-koin

@@ -1,6 +1,6 @@
 # Test 09 — `wf-prepare-tasks`
 
-**Propósito del workflow:** Descomponer un plan técnico KMM (`*_plan.md`) en tasks atómicas, ordenadas, con dependencias explícitas y asignadas a skills de implementación. Es el último paso antes de la implementación.
+**Propósito del workflow:** Descomponer un plan técnico KMM (`*_plan.md`) en tasks atómicas, ordenadas, con dependencias explícitas y asignadas a agentes KMM owner. Es el último paso antes de la implementación.
 
 ---
 
@@ -52,19 +52,20 @@ feature_name: hogar
 
 **4a. Respetar el orden canónico KMM:**
 ```
-T-000  /kmm-scaffold      → estructura de módulos
-T-001  /kmm-domain        → Models
-T-002  /kmm-domain        → Repository interfaces
-T-003  /kmm-domain        → UseCases
-T-004  /kmm-data          → DTOs + Mappers
-T-005  /kmm-data          → DataSource remote
-T-006  /kmm-data          → DataSource local
-T-007  /kmm-data          → RepositoryImpl
-T-008  /kmm-expect-actual → APIs platform-specific
-T-009  /kmm-presentation  → ViewModel + UiState + UiEvent
-T-010  /kmm-presentation  → Screen Composable
-T-011  /kmm-tests         → Tests domain
-T-012  /kmm-tests         → Tests data
+T-000  platform      → estructura de módulos / wiring base
+T-001  feature       → Models
+T-002  feature       → Repository interfaces
+T-003  feature       → UseCases
+T-004  feature       → DTOs + Mappers
+T-005  feature       → DataSource remote/local de feature
+T-006  network-auth  → infraestructura transversal remota/auth (si aplica)
+T-007  feature       → RepositoryImpl
+T-008  platform      → APIs platform-specific / expect-actual
+T-009  feature       → ViewModel + UiState + UiEvent
+T-010  feature       → Screen Composable
+T-011  platform      → navegación / wiring en app
+T-012  feature       → Tests domain
+T-013  feature       → Tests data
 ```
 
 **4b. Para cada task, generar el formato completo:**
@@ -75,7 +76,9 @@ T-012  /kmm-tests         → Tests data
 - **Plan ref:** §Domain Layer / Models
 - **Módulo:** :feature:hogar
 - **Layer:** domain
-- **Skill:** /kmm-domain
+- **Execution domain:** feature
+- **Owner agent:** kmm-feature-implementer
+- **Suggested workflow:** —
 - **Input:** ninguna
 - **Dependencies:** T-000
 - **Definition of done:**
@@ -114,8 +117,10 @@ Features: hogar
 - **Spec CA:** (ninguna, es infraestructura)
 - **Plan ref:** §Módulos Gradle
 - **Módulo:** :feature:hogar
-- **Layer:** scaffold
-- **Skill:** /kmm-scaffold
+- **Layer:** platform
+- **Execution domain:** platform
+- **Owner agent:** kmm-platform-integrator
+- **Suggested workflow:** —
 - **Input:** hogar_plan.md §Módulos Gradle
 - **Dependencies:** ninguna
 - **Definition of done:**
@@ -139,7 +144,7 @@ Features: hogar
 |----------|-------|
 | Archivo generado | `features/hogar/hogar_tasks.md` |
 | Bloqueo | No bloquea — si el plan tiene TECH_GAPs, los hereda pero genera lo que puede |
-| Siguiente paso | Ejecutar tasks en orden con `/kmm-scaffold`, `/kmm-domain`, etc. |
+| Siguiente paso | Delegar tasks en orden al `Owner agent` indicado en cada una |
 
 ---
 

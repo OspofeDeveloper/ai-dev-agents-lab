@@ -24,6 +24,8 @@ Invariantes de arquitectura para el manejo de textos en KMM:
 
 Este patrón se apoya en `kb-kmm-resources` para los recursos compartidos y la localización. `UiText` no sustituye a `compose.resources`; define cómo exponer esos recursos desde ViewModel hacia la UI.
 
+Cuando el proyecto usa un error transversal como `AppError`, la conversión desde ese error a `UiText` también pertenece a presentation/UI. El ViewModel puede recibir `AppError` desde casos de uso o repositorios y convertirlo a `UiText` mediante un mapper específico de presentation.
+
 ---
 
 ## 1. Definición del sealed interface
@@ -69,6 +71,16 @@ val error = UiText.DynamicString("Server error: 500")                           
 val greeting = UiText.ResourceString(Res.string.profile_greeting, listOf(userName)) // con argumento
 ```
 
+Si el proyecto usa un contrato transversal de error:
+
+```kotlin
+fun AppError.toUiText(): UiText = when (this) {
+    is NetworkError.NoInternet -> UiText.ResourceString(Res.string.error_no_internet)
+    is NetworkError.CustomError -> UiText.DynamicString(message)
+    else -> UiText.ResourceString(Res.string.error_unknown)
+}
+```
+
 ---
 
 ## 3. Resolución en Composables
@@ -111,6 +123,7 @@ fun onLoginFailed_stateHasResourceError() {
 - `asString()` solo invocado desde Composables
 - `ResourceString` para strings traducibles; `DynamicString` para strings externos
 - `kb-kmm-resources` como sistema base de recursos compartidos
+- si el proyecto usa `AppError`, su mapping a `UiText` vive en presentation/UI, no en networking
 
 ### Prohibido
 

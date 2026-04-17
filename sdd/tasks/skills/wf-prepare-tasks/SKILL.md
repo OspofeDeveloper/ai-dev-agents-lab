@@ -1,6 +1,6 @@
 ---
 name: wf-prepare-tasks
-description: Orquestador SDD para transformar Planes técnicos KMM en Tasks de implementación. Úsalo cuando tengas un _plan.md validado y quieras generar el listado de tasks para ejecutar con las skills KMM. Activa en frases como "genera las tasks del plan", "trocéa el plan en tasks", "crea el listado de implementación", "prepara las tasks para", "¿qué tasks tengo que hacer?". No activa para generar Specs (usa wf-spec-analyze) ni para generar Planes (usa wf-prepare-plan).
+description: Orquestador SDD para transformar Planes técnicos KMM en Tasks de implementación. Úsalo cuando tengas un _plan.md validado y quieras generar el listado de tasks para delegar a agentes KMM especializados. Activa en frases como "genera las tasks del plan", "trocéa el plan en tasks", "crea el listado de implementación", "prepara las tasks para", "¿qué tasks tengo que hacer?". No activa para generar Specs (usa wf-spec-analyze) ni para generar Planes (usa wf-prepare-plan).
 argument-hint: "generate <plan.md>"
 effort: high
 allowed-tools: [Read, Write, Agent]
@@ -75,6 +75,6 @@ Escribe el output del agente en ese archivo.
 ## Paso 6: Informar al usuario
 
 - Path del archivo de tasks generado
-- Resumen: total de tasks, desglose por fase (scaffold/domain/data/presentation/tests)
+- Resumen: total de tasks y desglose por owner agent o dominio de ejecución
 - Orden recomendado de ejecución
-- Siguiente paso: "Ejecuta las tasks en orden empezando por T-000 con `/kmm-scaffold`"
+- Siguiente paso: "Delega las tasks en orden empezando por T-000 al owner agent indicado"

@@ -67,6 +67,8 @@ Esas utilidades implementan el contrato remoto estable del proyecto; no deben in
 
 → Templates: `references/ktor_http_templates.md`
 
+`tryCall` y `handleResponse` deben devolver `AppResult<T, AppError>`. `NetworkError` es una implementación concreta de `AppError`, no el contrato principal que se propaga por la app.
+
 ---
 
 ## Regla 6: Logging de Ktor detrás del logger transversal
@@ -105,3 +107,18 @@ La transformación desde ese contrato remoto a dominio pertenece al repositorio 
 - `kb-kmm-network-contracts`
 - `kb-kmm-feature-clean-architecture`
 - `kb-kmm-core-layer` si la pieza es transversal
+
+---
+
+## Regla 10: El parsing de error backend y el mapeo de status viven en helpers Ktor compartidos
+
+Cuando una API devuelve varios formatos de body de error, esa lógica se concentra en helpers compartidos del cliente Ktor.
+
+Patrón recomendado:
+
+- `tryCall` captura excepciones del cliente y las mapea a `AppError`
+- `handleResponse` transforma status HTTP y bodies de error a `AppError`
+- cuando el error es de red, la implementación concreta suele ser `NetworkError : AppError`
+- las APIs concretas solo describen request y response body
+
+Las clases API no deberían repetir parsing de `400`, `401`, `409` o variantes del backend endpoint por endpoint.

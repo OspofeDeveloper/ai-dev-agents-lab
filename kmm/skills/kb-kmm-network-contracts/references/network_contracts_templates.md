@@ -2,19 +2,31 @@
 
 Estos ejemplos son ilustrativos. No imponen nombres concretos de tipos, paquetes o utilidades del proyecto.
 
-## Resultado remoto tipado
+## Contrato transversal de app
 
 ```kotlin
-sealed interface NetworkResult<out T, out E> {
-    data class Success<T>(val value: T) : NetworkResult<T, Nothing>
-    data class Error<E>(val error: E) : NetworkResult<Nothing, E>
+interface AppError
+
+sealed interface AppResult<out D, out E : AppError> {
+    data class Success<out D>(val data: D) : AppResult<D, Nothing>
+    data class Error<out E : AppError>(
+        val error: E,
+        val message: String? = null,
+    ) : AppResult<Nothing, E>
+}
+
+inline fun <T, E : AppError, R> AppResult<T, E>.map(
+    transform: (T) -> R,
+): AppResult<R, E> = when (this) {
+    is AppResult.Success -> AppResult.Success(transform(data))
+    is AppResult.Error -> AppResult.Error(error, message)
 }
 ```
 
-## Error de red compartido
+## Error de red como implementación concreta
 
 ```kotlin
-sealed interface NetworkError {
+sealed interface NetworkError : AppError {
     data object NoInternet : NetworkError
     data object Serialization : NetworkError
     data object Unauthorized : NetworkError
@@ -31,7 +43,7 @@ sealed interface NetworkError {
 
 ```kotlin
 interface AuthRemoteDataSource {
-    suspend fun login(dto: LoginDto): NetworkResult<TokenDto, NetworkError>
+    suspend fun login(dto: LoginDto): AppResult<TokenDto, AppError>
 }
 ```
 
@@ -39,7 +51,23 @@ interface AuthRemoteDataSource {
 
 ```kotlin
 interface AuthRepository {
-    suspend fun login(username: String, password: String): Result<TokenInfo>
+    suspend fun login(username: String, password: String): AppResult<TokenInfo, AppError>
+}
+```
+
+## Adaptación en repositorio preservando errores
+
+```kotlin
+class AuthRepositoryImpl(
+    private val remote: AuthRemoteDataSource,
+) : AuthRepository {
+    override suspend fun login(
+        username: String,
+        password: String,
+    ): AppResult<TokenInfo, AppError> {
+        return remote.login(LoginDto(username, password))
+            .map { dto -> dto.toDomain() }
+    }
 }
 ```
 

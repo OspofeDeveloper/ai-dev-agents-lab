@@ -20,7 +20,9 @@ install_agent() {
   echo "  ✓ agents/$name"
 }
 
-install_agent "$SCRIPT_DIR/agents/kmm-implementer.md"
+install_agent "$SCRIPT_DIR/agents/kmm-feature-implementer.md"
+install_agent "$SCRIPT_DIR/agents/kmm-platform-integrator.md"
+install_agent "$SCRIPT_DIR/agents/kmm-network-auth-implementer.md"
 
 # ── 2. Instalar skills ─────────────────────────────────────────────────────
 

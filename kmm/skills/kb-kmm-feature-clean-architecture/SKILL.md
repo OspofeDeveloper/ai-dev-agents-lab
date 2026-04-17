@@ -147,6 +147,8 @@ Los límites internos de una feature deben preservar esta separación:
 
 Si un DTO llega al `ViewModel` o a la `Screen`, la frontera entre `data` y `domain` está rota.
 
+Si el proyecto usa un contrato transversal de resultado y error (`AppResult<T, AppError>` o equivalente), esa abstracción puede atravesar el repositorio y llegar a use cases y ViewModel. Lo que no debe cruzar la frontera son DTOs, `HttpResponse`, status codes o excepciones del cliente HTTP.
+
 ---
 
 ## Regla 10: Los mappers viven junto al cambio de representación
@@ -155,6 +157,7 @@ Cada mapper debe vivir donde se transforma una representación en otra:
 
 - DTO -> dominio en `data`
 - dominio -> UI model en `presentation`, solo si ese modelo de UI realmente existe
+- `AppError` -> `UiText` en `presentation`, cuando la UI necesite representarlo
 
 No mezclar en un mismo mapper transformaciones de infraestructura y de UI. Cada capa convierte hacia la representación que necesita.
 
@@ -171,6 +174,8 @@ La regla práctica es:
 - acceso y orquestación de fuentes -> repositorio
 - regla o acción de negocio -> use case
 - coordinación de estado de pantalla -> `ViewModel`
+
+Si una operación solo necesita propagar `AppResult` desde repositorio a `ViewModel`, el use case puede ser un simple pass-through. Si necesita combinar varios `AppResult`, aplicar reglas de negocio o priorizar errores, esa lógica pertenece al use case.
 
 ---
 

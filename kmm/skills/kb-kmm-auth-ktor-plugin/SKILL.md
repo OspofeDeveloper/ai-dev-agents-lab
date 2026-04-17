@@ -70,6 +70,8 @@ La convención concreta puede variar. En una implementación típica se usa un h
 
 La API de plugins de Ktor puede obligar a usar `runBlocking` para leer flows o ejecutar refresh dentro de hooks como `onRequest`. Ese detalle pertenece solo a esta implementación.
 
+Si la operación de refresh devuelve resultado, la convención preferida es `AppResult<TokenInfo, AppError>` o equivalente. El plugin reacciona a `onSuccess` / `onError`; no necesita un contrato especial distinto del resto del proyecto.
+
 ---
 
 ## Regla 6: Los servicios de feature consumen solo el cliente autenticado

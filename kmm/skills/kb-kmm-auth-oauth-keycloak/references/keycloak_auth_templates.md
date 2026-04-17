@@ -6,8 +6,8 @@ Estos ejemplos muestran el contrato e implementación específica de Keycloak. L
 
 ```kotlin
 interface IdentityApi {
-    suspend fun login(loginDto: LoginDto): NetworkResult<TokenInfoDto, NetworkError>
-    suspend fun refreshToken(refreshToken: String): NetworkResult<TokenInfoDto, NetworkError>
+    suspend fun login(loginDto: LoginDto): AppResult<TokenInfoDto, AppError>
+    suspend fun refreshToken(refreshToken: String): AppResult<TokenInfoDto, AppError>
 }
 ```
 
@@ -22,7 +22,7 @@ class IdentityApiImpl(
     private val refreshTokenGrantType: String
 ) : IdentityApi {
 
-    override suspend fun login(loginDto: LoginDto): NetworkResult<TokenInfoDto, NetworkError> {
+    override suspend fun login(loginDto: LoginDto): AppResult<TokenInfoDto, AppError> {
         return tryCall {
             httpClient.submitForm(
                 url = "/realms/$realm/protocol/openid-connect/token",
@@ -36,7 +36,7 @@ class IdentityApiImpl(
         }
     }
 
-    override suspend fun refreshToken(refreshToken: String): NetworkResult<TokenInfoDto, NetworkError> {
+    override suspend fun refreshToken(refreshToken: String): AppResult<TokenInfoDto, AppError> {
         return tryCall {
             httpClient.submitForm(
                 url = "/realms/$realm/protocol/openid-connect/token",

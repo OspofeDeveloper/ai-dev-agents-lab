@@ -33,6 +33,8 @@ Si el proyecto usa access token y refresh token, debe existir un contrato claro 
 - limpiar sesión
 - emitir eventos de sesión expirada cuando aplique
 
+Si las operaciones de login, refresh o lectura técnica de sesión devuelven resultado, la convención preferida es `AppResult<T, AppError>`.
+
 → Templates: `references/auth_contracts_templates.md`
 
 ---
@@ -42,6 +44,8 @@ Si el proyecto usa access token y refresh token, debe existir un contrato claro 
 La regla estable es: si el access token expira y todavía existe refresh token válido, el sistema intenta renovarlo antes de dar la sesión por perdida.
 
 Cómo se implementa ese refresh depende de la tecnología concreta y debe vivir en una skill de implementación.
+
+El refresh no debe inventar un contrato de error distinto al resto del proyecto. Si falla, devuelve `AppError` y deja que el mecanismo técnico o la capa superior reaccionen en consecuencia.
 
 ---
 

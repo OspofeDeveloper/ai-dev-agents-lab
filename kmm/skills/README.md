@@ -87,7 +87,7 @@ Cada skill debe poseer solo **una dimensión de verdad**:
 ### Networking
 
 - `kb-kmm-network-contracts`
-  Define el contrato remoto estable: `NetworkResult`, `NetworkError`, límite remoto y adaptación a dominio.
+  Define el contrato remoto estable: `AppResult`, `AppError`, `NetworkError` como variante concreta, límite remoto y adaptación a dominio.
 
 - `kb-kmm-http-ktor`
   Define la implementación HTTP concreta con Ktor: `HttpClient`, plugins, logging, timeouts, JSON y helpers Ktor.

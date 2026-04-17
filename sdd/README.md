@@ -6,7 +6,7 @@ Repositorio de skills, agentes y conocimiento para automatizar el flujo **Spec-D
 
 ## Qué es esto
 
-Un ecosistema de agentes Claude Code que cubre el pipeline completo desde un PRD informal hasta tareas de implementación accionables por feature, organizadas por capa KMM y listas para ser ejecutadas con skills especializadas.
+Un ecosistema de agentes Claude Code que cubre el pipeline completo desde un PRD informal hasta tareas de implementación accionables por feature, listas para ser delegadas a agentes KMM especializados.
 
 ```
 PRD / Notas       Spec limpio       Specs por        Plan técnico      Tasks
@@ -14,11 +14,9 @@ informales  ──►   monolítico  ──►   feature    ──►   por feat
                   (_spec.md)       (features/         (_plan.md)       (_tasks.md)
                                     <x>_spec.md)
                                                                             │
-                                                                   /kmm-domain
-                                                                   /kmm-data
-                                                                   /kmm-presentation
-                                                                   /kmm-tests
-                                                                   ...
+                                                           kmm-feature-implementer
+                                                           kmm-platform-integrator
+                                                           kmm-network-auth-implementer
 ```
 
 ---
@@ -74,7 +72,7 @@ Los shared models declarados en `_features.md` no se redefinen: la feature owner
 
 ### Etapa 4 — Tasks
 
-Transforma el Plan de cada feature en tareas independientes y accionables, ordenadas por dependencias, cada una asignada a una skill KMM. Una task = un chunk implementable, una capa, un componente.
+Transforma el Plan de cada feature en tareas independientes y accionables, ordenadas por dependencias, cada una asignada a un **owner agent KMM**. Una task = un chunk implementable, con un dominio de ejecución y un responsable claro.
 
 Ejemplo de task:
 ```
@@ -82,7 +80,8 @@ Ejemplo de task:
 - Spec CA: CA-003
 - Plan ref: §3.2 Domain Module
 - Layer: domain | Module: :feature:auth
-- Skill: /kmm-domain
+- Execution domain: feature
+- Owner agent: kmm-feature-implementer
 - Dependencies: ninguna
 - Definition of done: UseCase + Repository interface + Model creados
 ```
@@ -248,13 +247,11 @@ project-root/
 # ...
 
 
-# ── Implementación con KMM skills ─────────────────────────────────────────────
-# Por cada feature, ejecutar las tasks en orden:
-/kmm-scaffold  (T-000)
-/kmm-domain    (T-001, T-002, ...)
-/kmm-data      (T-003, T-004, ...)
-/kmm-presentation (T-005, ...)
-/kmm-tests     (T-006, ...)
+# ── Implementación con agentes KMM ───────────────────────────────────────────
+# Por cada feature, delegar las tasks en orden al owner agent indicado:
+# T-000  -> kmm-platform-integrator
+# T-001… -> kmm-feature-implementer
+# T-00X  -> kmm-network-auth-implementer (si hay infraestructura transversal)
 ```
 
 ---
@@ -284,7 +281,7 @@ Los shared models evitan que el mismo concepto (ej. `User`) sea definido de form
 
 ## Puente SDD → KMM
 
-El ecosistema SDD alimenta directamente las skills KMM de implementación:
+El ecosistema SDD alimenta directamente a los agentes KMM de implementación:
 
 ```
 SDD ECOSYSTEM                              KMM ECOSYSTEM
@@ -292,16 +289,12 @@ SDD ECOSYSTEM                              KMM ECOSYSTEM
 
 /wf-spec-analyze + /wf-spec-features-first → features/<x>_spec.md
 /wf-prepare-plan   → features/<x>_plan.md
-/wf-prepare-tasks  → features/<x>_tasks.md ──► /kmm-scaffold
-                                             /kmm-domain
-                                             /kmm-data
-                                             /kmm-presentation
-                                             /kmm-expect-actual
-                                             /kmm-tests
-                                             /kmm-audit
+/wf-prepare-tasks  → features/<x>_tasks.md ──► kmm-feature-implementer
+                                             kmm-platform-integrator
+                                             kmm-network-auth-implementer
 ```
 
-El `task-generator` conoce los nombres de las skills KMM y asigna cada task a la skill correcta. Después de `/wf-prepare-tasks`, el trabajo es ejecutar tasks en orden.
+El `task-generator` conoce los dominios de implementación KMM y asigna cada task a un `owner agent`. Después de `/wf-prepare-tasks`, el trabajo del orquestador es delegar las tasks en orden al agente correcto, no ejecutar una skill por capa.
 
 ---
 

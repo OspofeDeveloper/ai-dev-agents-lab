@@ -1,241 +1,250 @@
-# Templates de Task por Skill KMM
+# Templates de Task por Dominio de Ejecución KMM
 
 Usa estos templates para formatear cada Task en el `_tasks.md`. Sustituye los valores `[EN CORCHETES]`.
 
 ---
 
-## Template: /kmm-scaffold
+## Template: Scaffold / wiring base
 
 ```markdown
-## T-000: Scaffold — [Nombre del módulo]
+## T-000: Platform — [Nombre del módulo o bloque]
 
 - **Spec CA:** —
 - **Plan ref:** §Módulos Gradle
-- **Módulo:** [:feature:nombre]
-- **Layer:** scaffold
-- **Skill:** /kmm-scaffold
-- **Input:** Feature: [nombre], módulos: [:feature:nombre], capas: domain/data/presentation
+- **Módulo:** [:feature:nombre | :app | :core:nombre]
+- **Layer:** platform
+- **Execution domain:** platform
+- **Owner agent:** kmm-platform-integrator
+- **Suggested workflow:** —
+- **Input:** Feature: [nombre], módulos: [lista], wiring base requerido: [síntesis]
 - **Dependencies:** ninguna
-- **Definition of done:** Directorios `domain/model/`, `domain/repository/`, `domain/usecase/`, `data/remote/dto/`, `data/mapper/`, `data/repository/`, `presentation/` creados. `build.gradle.kts` configurado con dependencias base (Koin, Coroutines).
+- **Definition of done:** Estructura base creada o actualizada, módulos conectados y wiring mínimo preparado para las Tasks posteriores.
 ```
 
 ---
 
-## Template: /kmm-domain (Model)
+## Template: Feature Domain Model
 
 ```markdown
-## T-00X: Domain — [NombreModel]
+## T-00X: Feature Domain — [NombreModel]
 
 - **Spec CA:** [CA-XXX]
 - **Plan ref:** §Domain Layer > Modelos
 - **Módulo:** [:feature:nombre]
 - **Layer:** domain
-- **Skill:** /kmm-domain
+- **Execution domain:** feature
+- **Owner agent:** kmm-feature-implementer
+- **Suggested workflow:** —
 - **Input:** Data class con campos: `campo1: Tipo, campo2: Tipo?`
 - **Dependencies:** [T-000]
-- **Definition of done:** `NombreModel.kt` en `domain/model/` — data class pura sin anotaciones de framework.
+- **Definition of done:** `NombreModel.kt` en `domain/model/` — modelo puro sin dependencias de framework.
 ```
 
 ---
 
-## Template: /kmm-domain (Repository Interface)
+## Template: Feature Repository Interface
 
 ```markdown
-## T-00X: Domain — [NombreRepository] interface
+## T-00X: Feature Domain — [NombreRepository] interface
 
 - **Spec CA:** [CA-XXX]
 - **Plan ref:** §Domain Layer > Repository Interfaces
 - **Módulo:** [:feature:nombre]
 - **Layer:** domain
-- **Skill:** /kmm-domain
-- **Input:** Interfaz con métodos: `fun getSomething(param: Type): Flow<Result<NombreModel>>`
-- **Dependencies:** [T-00X (NombreModel)]
-- **Definition of done:** `NombreRepository.kt` en `domain/repository/` — interface con contratos en términos de domain models, sin DTOs.
+- **Execution domain:** feature
+- **Owner agent:** kmm-feature-implementer
+- **Suggested workflow:** —
+- **Input:** Interfaz con métodos: `[firma(s) en términos de domain]`
+- **Dependencies:** [T-00X (Model)]
+- **Definition of done:** `NombreRepository.kt` en `domain/repository/` — contratos expresados en modelos de domain.
 ```
 
 ---
 
-## Template: /kmm-domain (UseCase)
+## Template: Feature UseCase
 
 ```markdown
-## T-00X: Domain — [NombreUseCase]
+## T-00X: Feature Domain — [NombreUseCase]
 
 - **Spec CA:** [CA-XXX]
 - **Plan ref:** §Domain Layer > Use Cases
 - **Módulo:** [:feature:nombre]
 - **Layer:** domain
-- **Skill:** /kmm-domain
-- **Input:** Parámetros: `[param: Tipo]`. Retorno: `Flow<Result<NombreModel>>` / `suspend: Result<T>`
-- **Dependencies:** [T-00X (NombreRepository interface)]
-- **Definition of done:** `NombreUseCase.kt` en `domain/usecase/` con `operator fun invoke()`. Inyecta el Repository por constructor.
+- **Execution domain:** feature
+- **Owner agent:** kmm-feature-implementer
+- **Suggested workflow:** —
+- **Input:** Parámetros: `[param: Tipo]`. Retorno: `[tipo funcional]`
+- **Dependencies:** [T-00X (Repository interface)]
+- **Definition of done:** `NombreUseCase.kt` en `domain/usecase/` con dependencias inyectadas por constructor.
 ```
 
 ---
 
-## Template: /kmm-data (DTO + Mapper)
+## Template: Feature DTO + Mapper
 
 ```markdown
-## T-00X: Data — [NombreDto] + Mapper
+## T-00X: Feature Data — [NombreDto] + Mapper
 
 - **Spec CA:** [CA-XXX]
 - **Plan ref:** §Data Layer > DTOs
 - **Módulo:** [:feature:nombre]
 - **Layer:** data
-- **Skill:** /kmm-data
-- **Input:** DTO con campos JSON: `campo: String, campo2: Int`. Mapea hacia: `NombreModel`
-- **Dependencies:** [T-00X (NombreModel en domain)]
-- **Definition of done:** `NombreDto.kt` en `data/remote/dto/` (con `@Serializable`) + `NombreMapper.kt` en `data/mapper/` con función `fun NombreDto.toModel(): NombreModel`.
+- **Execution domain:** feature
+- **Owner agent:** kmm-feature-implementer
+- **Suggested workflow:** —
+- **Input:** DTO con campos remotos: `[campos]`. Mapea hacia: `[NombreModel]`
+- **Dependencies:** [T-00X (Model)]
+- **Definition of done:** DTO remoto y mapper hacia dominio definidos en la estructura de data de la feature.
 ```
 
 ---
 
-## Template: /kmm-data (DataSource Remote)
+## Template: Feature Remote DataSource
 
 ```markdown
-## T-00X: Data — [NombreRemoteDataSource]
+## T-00X: Feature Data — [NombreRemoteDataSource]
 
 - **Spec CA:** [CA-XXX]
 - **Plan ref:** §Data Layer > DataSources
 - **Módulo:** [:feature:nombre]
 - **Layer:** data
-- **Skill:** /kmm-data
-- **Input:** Endpoint: `GET /api/nombre`. Retorna: `NombreDto`
-- **Dependencies:** [T-00X (NombreDto)]
-- **Definition of done:** `NombreRemoteDataSource.kt` (interfaz) + `NombreRemoteDataSourceImpl.kt` (implementación Ktor) en `data/remote/datasource/`.
+- **Execution domain:** feature
+- **Owner agent:** kmm-feature-implementer
+- **Suggested workflow:** —
+- **Input:** Endpoint o contrato remoto: `[método/endpoint]`. Retorna: `[DTO/resultado]`
+- **Dependencies:** [T-00X (DTO + Mapper)]
+- **Definition of done:** borde remoto de la feature definido de forma coherente con los contratos de red existentes.
 ```
 
 ---
 
-## Template: /kmm-data (DataSource Local)
+## Template: Shared Remote/Auth Infrastructure
 
 ```markdown
-## T-00X: Data — [NombreLocalDataSource]
+## T-00X: Network/Auth — [Nombre del componente]
 
-- **Spec CA:** [CA-XXX]
-- **Plan ref:** §Data Layer > DataSources
-- **Módulo:** [:feature:nombre]
-- **Layer:** data
-- **Skill:** /kmm-data
-- **Input:** Operaciones: `save(entity: NombreEntity)`, `getAll(): List<NombreEntity>`
-- **Dependencies:** [T-000]
-- **Definition of done:** `NombreLocalDataSource.kt` (interfaz) + `NombreLocalDataSourceImpl.kt` (SQLDelight) en `data/local/datasource/`.
+- **Spec CA:** [CA-XXX | —]
+- **Plan ref:** [§Remote integration | §Auth | §Core]
+- **Módulo:** [:core:nombre | :feature:nombre]
+- **Layer:** core
+- **Execution domain:** network-auth
+- **Owner agent:** kmm-network-auth-implementer
+- **Suggested workflow:** [wf-kmm-network-setup | wf-kmm-auth-setup-keycloak | wf-kmm-stack-setup-ktor-keycloak-koin | —]
+- **Input:** Contrato o mecanismo: `[cliente HTTP | plugin auth | session contract | datasource compartido]`
+- **Dependencies:** [T-XXX | ninguna]
+- **Definition of done:** componente remoto o de auth implementado respetando contratos estables y ubicación correcta en `core` o módulo correspondiente.
 ```
 
 ---
 
-## Template: /kmm-data (RepositoryImpl)
+## Template: Feature RepositoryImpl
 
 ```markdown
-## T-00X: Data — [NombreRepositoryImpl]
+## T-00X: Feature Data — [NombreRepositoryImpl]
 
 - **Spec CA:** [CA-XXX, CA-YYY]
 - **Plan ref:** §Data Layer > Repository Implementations
 - **Módulo:** [:feature:nombre]
 - **Layer:** data
-- **Skill:** /kmm-data
-- **Input:** Implementa `NombreRepository`. DataSources: `NombreRemoteDataSource` [+ `NombreLocalDataSource`]. Estrategia: [Remote-first | Cache-first | Local-only]
-- **Dependencies:** [T-00X (NombreRepository interface), T-00X (DataSources)]
-- **Definition of done:** `NombreRepositoryImpl.kt` en `data/repository/` implementando la interfaz de domain. Usa los DataSources inyectados, nunca Ktor directamente.
+- **Execution domain:** feature
+- **Owner agent:** kmm-feature-implementer
+- **Suggested workflow:** —
+- **Input:** Implementa `[NombreRepository]`. Estrategia: `[Remote-first | Cache-first | Local-only]`
+- **Dependencies:** [T-00X (Repository interface), T-00X (DataSources)]
+- **Definition of done:** repository de feature implementado y adaptado al borde remoto/local sin romper contratos de domain.
 ```
 
 ---
 
-## Template: /kmm-expect-actual
+## Template: Platform Bridge / Expect-Actual
 
 ```markdown
-## T-00X: Expect/Actual — [NombrePlatformApi]
+## T-00X: Platform — [NombrePlatformApi]
 
 - **Spec CA:** [CA-XXX]
 - **Plan ref:** §Expect/Actual
-- **Módulo:** [:feature:nombre o :core:nombre]
-- **Layer:** expect-actual
-- **Skill:** /kmm-expect-actual
-- **Input:** `expect fun/class NombrePlatformApi` — propósito: [qué hace funcionalmente]. Plataformas: Android + iOS
+- **Módulo:** [:feature:nombre | :core:nombre | :app]
+- **Layer:** platform
+- **Execution domain:** platform
+- **Owner agent:** kmm-platform-integrator
+- **Suggested workflow:** —
+- **Input:** Integración requerida: `[expect/actual | host bridge | platform API]`
 - **Dependencies:** [T-00X]
-- **Definition of done:** `NombrePlatformApi.kt` en `commonMain/` (expect) + `NombrePlatformApi.android.kt` en `androidMain/` (actual) + `NombrePlatformApi.ios.kt` en `iosMain/` (actual).
+- **Definition of done:** integración de plataforma definida en `commonMain` y plataformas requeridas, o bridge del host cableado en el módulo correcto.
 ```
 
 ---
 
-## Template: /kmm-presentation (ViewModel + State + Events)
+## Template: Feature ViewModel + State + Events
 
 ```markdown
-## T-00X: Presentation — [NombreViewModel] + State + Events
+## T-00X: Feature Presentation — [NombreViewModel] + State + Events
 
 - **Spec CA:** [CA-XXX, CA-YYY]
 - **Plan ref:** §Presentation Layer > ViewModels
 - **Módulo:** [:feature:nombre]
 - **Layer:** presentation
-- **Skill:** /kmm-presentation
-- **Input:** UiState campos: `isLoading: Boolean, data: NombreModel?, error: String?`. UiEvent variantes: `OnButtonClicked, OnInputChanged(value: String), OnRetry`
-- **Dependencies:** [T-00X (NombreUseCase)]
-- **Definition of done:** `NombreViewModel.kt` (expone `StateFlow<NombreUiState>` y `onEvent(NombreUiEvent)`) + `NombreUiState.kt` + `NombreUiEvent.kt` (sealed class) en `presentation/`.
+- **Execution domain:** feature
+- **Owner agent:** kmm-feature-implementer
+- **Suggested workflow:** —
+- **Input:** UiState: `[campos]`. UiEvent: `[variantes]`
+- **Dependencies:** [T-00X (UseCase)]
+- **Definition of done:** ViewModel, UiState y UiEvent implementados siguiendo las reglas de la feature y de exposición de texto/UI.
 ```
 
 ---
 
-## Template: /kmm-presentation (Screen Composable)
+## Template: Feature Screen
 
 ```markdown
-## T-00X: Presentation — [NombreScreen] Composable
+## T-00X: Feature Presentation — [NombreScreen]
 
 - **Spec CA:** [CA-XXX]
-- **Plan ref:** §Presentation Layer > ViewModels
+- **Plan ref:** §Presentation Layer > Screens
 - **Módulo:** [:feature:nombre]
 - **Layer:** presentation
-- **Skill:** /kmm-presentation
-- **Input:** Recibe `NombreUiState`, emite `NombreUiEvent`. Journeys cubiertos: [Journey 1, Journey 2]
-- **Dependencies:** [T-00X (NombreViewModel + State + Events)]
-- **Definition of done:** `NombreScreen.kt` en `presentation/screen/` — Composable stateless que renderiza el UiState y delega toda lógica al ViewModel vía UiEvent.
+- **Execution domain:** feature
+- **Owner agent:** kmm-feature-implementer
+- **Suggested workflow:** —
+- **Input:** Renderiza `[UiState]`, emite `[UiEvent]`, journeys cubiertos: `[lista]`
+- **Dependencies:** [T-00X (ViewModel + State + Events)]
+- **Definition of done:** Screen composable implementada y conectada al contrato de presentation de la feature.
 ```
 
 ---
 
-## Template: /kmm-tests (UseCase)
+## Template: Navigation / App Wiring
 
 ```markdown
-## T-00X: Tests — [NombreUseCase]
-
-- **Spec CA:** [CA-XXX]
-- **Plan ref:** §Domain Layer > Use Cases
-- **Módulo:** [:feature:nombre]
-- **Layer:** test
-- **Skill:** /kmm-tests
-- **Input:** Componente: `NombreUseCase`. Casos a cubrir: happy path, error de repositorio, estado vacío
-- **Dependencies:** [T-00X (NombreUseCase)]
-- **Definition of done:** `NombreUseCaseTest.kt` en `src/commonTest/` usando JUnit5. Si devuelve Flow → usar Turbine. Repository mockeado con fake implementation.
-```
-
----
-
-## Template: /kmm-tests (RepositoryImpl)
-
-```markdown
-## T-00X: Tests — [NombreRepositoryImpl]
-
-- **Spec CA:** [CA-XXX]
-- **Plan ref:** §Data Layer > Repository Implementations
-- **Módulo:** [:feature:nombre]
-- **Layer:** test
-- **Skill:** /kmm-tests
-- **Input:** Componente: `NombreRepositoryImpl`. Casos: remote success, remote error, cache hit, cache miss
-- **Dependencies:** [T-00X (NombreRepositoryImpl)]
-- **Definition of done:** `NombreRepositoryImplTest.kt` en `src/commonTest/` con DataSources fake (no mocks de Ktor). Verifica estrategia de caché si aplica.
-```
-
----
-
-## Template: /kmm-navigation
-
-```markdown
-## T-00X: Navigation — [AppNavGraph / FeatureNavGraph]
+## T-00X: Platform Navigation — [AppNavGraph / FeatureGraph integration]
 
 - **Spec CA:** [CA-XXX]
 - **Plan ref:** §Navegación
-- **Módulo:** [:app o :feature:nombre]
-- **Layer:** presentation
-- **Skill:** /kmm-navigation
-- **Input:** Rutas: [ListaDeRutas]. StartDestination: [Route]. ¿Nested en?: [:app NavHost | standalone]
+- **Módulo:** [:app | :feature:nombre]
+- **Layer:** app
+- **Execution domain:** platform
+- **Owner agent:** kmm-platform-integrator
+- **Suggested workflow:** —
+- **Input:** Rutas: `[lista]`. StartDestination: `[Route]`. Tipo de integración: `[AppNavGraph | featureGraph | host deep link]`
 - **Dependencies:** [T-00X (Screen Composables)]
-- **Definition of done:** NavGraph definido en commonMain con todas las rutas type-safe. NavHost wired en el entry point de la plataforma. Rutas extraídas con toRoute() en cada destination.
+- **Definition of done:** navegación o wiring de app integrada respetando ownership, rutas type-safe y comportamiento del host.
+```
+
+---
+
+## Template: Feature Tests
+
+```markdown
+## T-00X: Feature Tests — [Nombre del componente]
+
+- **Spec CA:** [CA-XXX]
+- **Plan ref:** [§Domain Layer | §Data Layer | §Presentation Layer]
+- **Módulo:** [:feature:nombre]
+- **Layer:** test
+- **Execution domain:** feature
+- **Owner agent:** kmm-feature-implementer
+- **Suggested workflow:** —
+- **Input:** Componente a validar: `[UseCase | RepositoryImpl | ViewModel]`. Casos: `[lista]`
+- **Dependencies:** [T-00X (componente implementado)]
+- **Definition of done:** suite de tests o validación automatizada implementada con doubles apropiados y sin dependencias accidentales del runtime real.
 ```

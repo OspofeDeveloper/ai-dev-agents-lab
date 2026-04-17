@@ -18,7 +18,7 @@ interface SessionEvents {
 
 class AuthPluginConfig {
     lateinit var sessionReader: SessionReader
-    lateinit var refreshToken: suspend (String) -> NetworkResult<TokenPayload, NetworkError>
+    lateinit var refreshToken: suspend (String) -> AppResult<TokenPayload, AppError>
     var shouldBypassAuth: (HttpRequestBuilder) -> Boolean = { request ->
         request.headers["No-Auth"] == "true"
     }
@@ -28,6 +28,8 @@ class AuthPluginConfig {
     }
 }
 ```
+
+Donde `AppResult`, `AppError` y `NetworkError : AppError` siguen el contrato transversal del proyecto.
 
 ## Plugin de auth
 

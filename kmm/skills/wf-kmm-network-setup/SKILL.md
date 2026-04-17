@@ -5,7 +5,7 @@ argument-hint: "[stack HTTP, URLs base, entornos, convenciones JSON y estrategia
 effort: high
 allowed-tools: [Read, Write, Bash]
 context: fork
-agent: kmm-implementer
+agent: kmm-network-auth-implementer
 ---
 
 # wf-kmm-network-setup

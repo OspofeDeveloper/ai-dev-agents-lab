@@ -5,7 +5,7 @@ argument-hint: "[IDS_BASE_URL, realm, client_id, grant types, estrategia de refr
 effort: high
 allowed-tools: [Read, Write, Bash]
 context: fork
-agent: kmm-implementer
+agent: kmm-network-auth-implementer
 ---
 
 # wf-kmm-auth-setup-keycloak

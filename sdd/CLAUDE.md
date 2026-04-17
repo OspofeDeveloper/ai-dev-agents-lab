@@ -68,10 +68,12 @@ _readiness_report.md (estado + orden de implementación)
 features/<nombre>/<nombre>_plan.md
     ↓ [/wf-prepare-tasks generate — por feature]
 features/<nombre>/<nombre>_tasks.md
+    ↓ [delegación del orquestador a agentes KMM owner]
 ```
 
 > El analyze es obligatorio. `/wf-spec-features-first` lo ejecuta automáticamente si no existe `_analysis.md`.
 > Para cambios post-spec: `/wf-spec-delta analyze <spec.md> --new-reqs <cambios.md>`
+> Tras `/wf-prepare-tasks`, cada task debe delegarse al `Owner agent` indicado en el `_tasks.md`.
 
 ## Principio de precondiciones
 

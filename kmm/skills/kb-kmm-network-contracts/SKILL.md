@@ -41,17 +41,23 @@ Si una regla aplica a cualquier integración remota aunque cambie la librería H
 
 ---
 
-## Regla 3: Resultado tipado para operaciones remotas
+## Regla 3: El contrato preferido es `AppResult<T, AppError>`
 
-Las operaciones remotas no exponen excepciones crudas a las capas superiores. Deben devolver un resultado tipado (`NetworkResult`, `AppResult`, `Either` o equivalente) con éxito o error controlado.
+Las operaciones remotas no exponen excepciones crudas a las capas superiores. Deben devolver un resultado tipado con éxito o error controlado.
 
-El tipo concreto puede variar por proyecto, pero la regla estable es esta: la capa superior no interpreta excepciones de transporte sin normalizar.
+La convención preferida para estas skills es:
+
+- `AppResult<T, AppError>` como contrato transversal de resultado
+- `AppError` como contrato transversal de error
+- `NetworkError` como implementación concreta de `AppError` para el dominio de red
+
+El principio estable es este: la capa superior no interpreta excepciones de transporte sin normalizar y la red se integra en el mismo contrato de resultado/error que use el resto del proyecto.
 
 → Templates: `references/network_contracts_templates.md`
 
 ---
 
-## Regla 4: Error de red normalizado
+## Regla 4: `NetworkError` es una implementación concreta de `AppError`
 
 Los errores de transporte y protocolo se mapean a un contrato técnico estable, por ejemplo:
 
@@ -65,18 +71,26 @@ Los errores de transporte y protocolo se mapean a un contrato técnico estable, 
 
 La taxonomía exacta puede variar, pero debe ser única y compartida.
 
+En esta convención:
+
+- `AppError` es el contrato base
+- `NetworkError` implementa `AppError`
+- otros dominios pueden aportar otras implementaciones concretas (`BleError`, `CoreError`, etc.)
+
+La UI y el dominio superior trabajan con `AppError`; networking solo aporta una variante concreta dentro de ese contrato.
+
 → Templates: `references/network_contracts_templates.md`
 
 ---
 
-## Regla 5: El data source remoto expone modelos técnicos
+## Regla 5: El data source remoto expone modelos técnicos dentro de `AppResult`
 
 El límite remoto habla en términos de transporte o integración:
 
 - DTOs
 - payloads HTTP
 - errores de red normalizados
-- resultados tipados remotos
+- resultados tipados aplicados al contrato transversal del proyecto
 
 No expone directamente modelos de dominio ni detalles crudos del cliente HTTP hacia arriba.
 
@@ -87,10 +101,18 @@ No expone directamente modelos de dominio ni detalles crudos del cliente HTTP ha
 El repositorio consume el contrato remoto y lo adapta a las necesidades del dominio:
 
 - transforma DTOs a modelos de dominio
-- convierte errores remotos al contrato superior que corresponda
+- conserva o convierte errores remotos al contrato superior que corresponda
 - oculta detalles del cliente HTTP a casos de uso y UI
 
 Esta regla no decide si el repositorio vive en `core` o dentro de una feature. Esa decisión pertenece a las skills de capa.
+
+El patrón preferido es:
+
+- la API o remote source devuelve `AppResult<Dto, AppError>`
+- el repositorio transforma el `Success` con `map { dto -> domain }`
+- el error sube intacto salvo que exista una razón de negocio clara para adaptarlo
+
+Eso evita remapeos redundantes y mantiene una sola taxonomía de error en la app.
 
 ---
 
@@ -124,3 +146,29 @@ Esta skill se combina con:
 - skills de auth para cualquier política o mecanismo de autenticación
 
 No duplicar aquí reglas que ya pertenezcan a esas dimensiones.
+
+---
+
+## Regla 11: La normalización de errores HTTP produce `AppResult<T, AppError>`
+
+La lectura de códigos HTTP, parsing de body de error y mapeo de excepciones de cliente pertenecen al borde remoto, no al repositorio ni al ViewModel.
+
+El patrón estable es:
+
+- `tryCall` o helper equivalente ejecuta la llamada
+- `handleResponse` o helper equivalente transforma `HttpResponse` a `AppResult<T, AppError>`
+- el repositorio consume ese resultado ya normalizado
+
+El repositorio no debe reinterpretar status codes ni parsear bodies de error del backend.
+
+## Regla 12: La UI consume un error transversal, no un detalle HTTP
+
+Las capas de presentación no deberían conocer `HttpResponse`, códigos de estado ni excepciones del cliente.
+
+Lo correcto es:
+
+- ViewModel consume `AppResult<Domain, AppError>` o equivalente
+- presentation reacciona con `onSuccess` / `onError`
+- la conversión a `UiText` o representación visual ocurre en presentation/UI
+
+La red aporta una variante de error; la UI consume el contrato transversal del proyecto.
