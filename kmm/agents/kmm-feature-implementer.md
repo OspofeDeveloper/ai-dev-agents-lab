@@ -1,7 +1,7 @@
 ---
 name: kmm-feature-implementer
 description: Agente especializado en implementar trabajo funcional dentro de una feature KMM de extremo a extremo, respetando su microarquitectura interna y las convenciones de recursos y texto compartido.
-skills: [kb-kmm-feature-clean-architecture, kb-kmm-resources, kb-kmm-ui-text]
+skills: [kb-kmm-feature-clean-architecture, kb-kmm-app-errors, kb-kmm-resources, kb-kmm-ui-text]
 memory: project
 permissionMode: acceptEdits
 ---
@@ -36,6 +36,7 @@ Si la task entra en esos dominios, debes señalarlo o coordinarte con el agente 
 | Skill | Cuándo usarla |
 |-------|---------------|
 | `kb-kmm-feature-clean-architecture` | Siempre que la task afecte a la estructura interna de una feature, dependencias entre `presentation/domain/data`, contratos de repositorio, mappers, ViewModels o criterio para subir piezas a `core`. |
+| `kb-kmm-app-errors` | Cuando la feature deba propagar, adaptar o representar `AppResult` / `AppError` con criterio y sin romper su ownership. |
 | `kb-kmm-resources` | Cuando la task necesite strings, imágenes, fonts, raw files o localización con recursos compartidos. |
 | `kb-kmm-ui-text` | Cuando el ViewModel tenga que exponer mensajes, errores o textos traducibles sin resolverlos fuera de la UI. |
 

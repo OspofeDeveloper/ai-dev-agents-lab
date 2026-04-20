@@ -53,6 +53,8 @@ La convención preferida para estas skills es:
 
 El principio estable es este: la capa superior no interpreta excepciones de transporte sin normalizar y la red se integra en el mismo contrato de resultado/error que use el resto del proyecto.
 
+La definición del contrato transversal `AppResult` / `AppError` pertenece a `kb-kmm-app-errors`. Esta skill lo consume y lo especializa para el borde remoto.
+
 → Templates: `references/network_contracts_templates.md`
 
 ---
@@ -69,7 +71,7 @@ Los errores de transporte y protocolo se mapean a un contrato técnico estable, 
 - error servidor
 - error desconocido
 
-La taxonomía exacta puede variar, pero debe ser única y compartida.
+La taxonomía exacta puede variar, pero debe ser única y compartida dentro del dominio de red.
 
 En esta convención:
 
@@ -78,6 +80,8 @@ En esta convención:
 - otros dominios pueden aportar otras implementaciones concretas (`BleError`, `CoreError`, etc.)
 
 La UI y el dominio superior trabajan con `AppError`; networking solo aporta una variante concreta dentro de ese contrato.
+
+La política general de ownership, adaptación y propagación de `AppError` pertenece a `kb-kmm-app-errors`.
 
 → Templates: `references/network_contracts_templates.md`
 
@@ -140,6 +144,7 @@ Si el backend usa discriminadores como `"$type"`, códigos de error propios o co
 
 Esta skill se combina con:
 
+- `kb-kmm-app-errors` para el contrato transversal `AppResult` / `AppError`
 - `kb-kmm-core-layer` para decidir si el contrato es transversal
 - `kb-kmm-feature-clean-architecture` para decidir cómo se integra dentro de una feature
 - `kb-kmm-http-ktor` para implementarlo con Ktor, si aplica

@@ -19,9 +19,10 @@ Confirmar con el usuario o inferir del proyecto:
 3. reglas de microarquitectura de feature, siguiendo `kb-kmm-feature-clean-architecture`
 4. reglas de `app`, siguiendo `kb-kmm-app-layer`
 5. librería de DI activa, siguiendo la skill correspondiente (`kb-koin` si aplica)
-6. implementación HTTP elegida (`kb-kmm-http-ktor` si aplica)
-7. si existe auth y cuál es su estrategia (`kb-kmm-auth-contracts` + skill específica)
-8. convenciones del backend como discriminadores JSON, errores especiales o múltiples URLs base
+6. contrato transversal de resultado y error, siguiendo `kb-kmm-app-errors`
+7. implementación HTTP elegida (`kb-kmm-http-ktor` si aplica)
+8. si existe auth y cuál es su estrategia (`kb-kmm-auth-contracts` + skill específica)
+9. convenciones del backend como discriminadores JSON, errores especiales o múltiples URLs base
 
 No asumir una estrategia de auth concreta por el mero hecho de configurar networking.
 
@@ -41,6 +42,7 @@ Aplicar:
 - `kb-kmm-core-layer` para decidir qué contratos o infraestructura van a `core`
 - `kb-kmm-feature-clean-architecture` para decidir qué piezas viven dentro de una feature
 - `kb-kmm-app-layer` para reservar en `app` solo el wiring y la composición final
+- `kb-kmm-app-errors` para fijar el contrato transversal `AppResult` / `AppError`
 - `kb-kmm-network-contracts` para definir errores, resultados y límites entre servicios y repositorios
 - la skill de DI activa para definir el patrón de registro
 

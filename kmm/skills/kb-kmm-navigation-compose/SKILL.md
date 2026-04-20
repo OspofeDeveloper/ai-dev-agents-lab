@@ -41,7 +41,7 @@ Esas reglas viven en:
 
 Versión mínima: `org.jetbrains.androidx.navigation:navigation-compose:2.8+` (artifact CMP; soporta type-safe routes en `commonMain`). Requiere también `kotlin("plugin.serialization")` y `kotlinx.serialization.json` en `commonMain`.
 
-- Para las dependencias Gradle y el plugin de serialización, ver [setup-and-routes.md](resources/setup-and-routes.md)
+- Para las dependencias Gradle y el plugin de serialización, ver [setup-and-routes.md](references/setup-and-routes.md)
 
 ---
 
@@ -51,7 +51,7 @@ Versión mínima: `org.jetbrains.androidx.navigation:navigation-compose:2.8+` (a
 
 Todas las rutas van en `commonMain`. Cada ruta es un `object` (sin argumentos) o una `data class` (con argumentos). Los argumentos opcionales llevan valor por defecto. Las raíces de nested graphs también son `@Serializable object`.
 
-- Para ejemplos completos de definición de rutas, ver [setup-and-routes.md](resources/setup-and-routes.md)
+- Para ejemplos completos de definición de rutas, ver [setup-and-routes.md](references/setup-and-routes.md)
 
 ### 2.2 Restricciones en commonMain
 
@@ -66,7 +66,7 @@ Todas las rutas van en `commonMain`. Cada ruta es un `object` (sin argumentos) o
 
 El NavHost y todo el grafo de navegación viven en `commonMain`. `AppNavGraph` acepta el `navController` como parámetro requerido (sin default): el owner es siempre el `AppShell` en producción o el test que lo invoca. Esto garantiza que el mismo `navController` sea compartido por el NavHost y el componente de navegación del shell (bottom bar / rail / drawer).
 
-- Para el patrón completo de `AppNavGraph.kt` y extracción de argumentos, ver [navhost-and-backstack.md](resources/navhost-and-backstack.md)
+- Para el patrón completo de `AppNavGraph.kt` y extracción de argumentos, ver [navhost-and-backstack.md](references/navhost-and-backstack.md)
 
 ### 3.2 `rememberNavController()`
 
@@ -99,7 +99,7 @@ Usar `popBackStack()` para "Atrás" desde pantallas internas. Usar `navigateUp()
 
 **`popBackStack()` devuelve un `Boolean`** — `false` si el stack ya estaba vacío. En destinos que pueden recibirse vía deep link, manejar ese caso con un fallback a `HomeRoute`.
 
-- Para todos los ejemplos de back stack, ver [navhost-and-backstack.md](resources/navhost-and-backstack.md)
+- Para todos los ejemplos de back stack, ver [navhost-and-backstack.md](references/navhost-and-backstack.md)
 
 ---
 
@@ -109,7 +109,7 @@ Usar `popBackStack()` para "Atrás" desde pantallas internas. Usar `navigateUp()
 
 `navController.navigate(MainGraph)` aterriza en el `startDestination` del graph. `navController.navigate(ProfileRoute("123"))` va directo a la ruta, en cualquier graph.
 
-- Para ejemplos de nested graphs, ver [nested-graphs-and-multimodule.md](resources/nested-graphs-and-multimodule.md)
+- Para ejemplos de nested graphs, ver [nested-graphs-and-multimodule.md](references/nested-graphs-and-multimodule.md)
 
 ### 5.2 Feature modules con grafos independientes
 
@@ -117,7 +117,7 @@ Cada feature expone `fun NavGraphBuilder.featureGraph(...)` con lambdas para las
 
 Las rutas se centralizan en `:app/navigation/`. Features nunca dependen entre sí ni conocen rutas de otros features — solo dependen del contrato central. El `NavController` nunca sale de `:app`.
 
-- Para la estructura de módulos y el patrón de registro de grafos, ver [nested-graphs-and-multimodule.md](resources/nested-graphs-and-multimodule.md)
+- Para la estructura de módulos y el patrón de registro de grafos, ver [nested-graphs-and-multimodule.md](references/nested-graphs-and-multimodule.md)
 
 ---
 
@@ -143,7 +143,7 @@ En CMP con soporte para tablet y desktop, el shell se adapta al tamaño de venta
 
 Usar `calculateWindowSizeClass()` de `androidx.compose.material3.windowsizeclass` en commonMain.
 
-- Para los tres layouts completos (`AppShell`, `CompactLayout`, `MediumLayout`, `ExpandedLayout`), ver [bottom-nav-and-adaptive.md](resources/bottom-nav-and-adaptive.md)
+- Para los tres layouts completos (`AppShell`, `CompactLayout`, `MediumLayout`, `ExpandedLayout`), ver [bottom-nav-and-adaptive.md](references/bottom-nav-and-adaptive.md)
 
 ---
 
@@ -153,7 +153,7 @@ Esta skill cubre solo la resolución del deep link una vez el host entrega el ev
 
 Los argumentos del URI se mapean automáticamente a los campos de la ruta `@Serializable` cuando se usa `navDeepLink<T>(basePath = ...)`. Para URIs custom, los placeholders `{campo}` deben coincidir con los nombres de los parámetros de la data class.
 
-- Para los patrones de deep link dentro del grafo, ver [deeplinks.md](resources/deeplinks.md)
+- Para los patrones de deep link dentro del grafo, ver [deeplinks.md](references/deeplinks.md)
 
 ---
 
@@ -166,13 +166,13 @@ Los argumentos del URI se mapean automáticamente a los campos de la ruta `@Seri
 | Pantalla (default) | helper de DI del proyecto | Vive mientras la entrada existe en el back stack |
 | Nested graph | helper de DI del proyecto con `graphEntry` | Sobrevive a navegación entre rutas del mismo grafo |
 
-Si el proyecto usa Koin, consultar `kb-koin` y los ejemplos en `resources/viewmodel-and-navigation-events.md`.
+Si el proyecto usa Koin, consultar `kb-koin` y la `kb-kmm-navigation-viewmodel-events`, que contiene el patron autoritativo y sus referencias de implementacion.
 
 ### Restricción: no usar `SavedStateHandle` en commonMain
 
 `SavedStateHandle` es una API de AndroidX Lifecycle. En commonMain, pasar los argumentos al ViewModel via constructor desde el Composable usando el mecanismo de parámetros de la DI activa.
 
-- Para ejemplos completos de scoping y paso de parámetros, ver [viewmodel-and-navigation-events.md](resources/viewmodel-and-navigation-events.md)
+- Para ejemplos completos de scoping y paso de parametros, consultar `kb-kmm-navigation-viewmodel-events` -> `references/viewmodel-and-navigation-events.md`
 
 ---
 
@@ -182,7 +182,7 @@ El patrón de efectos de navegación desde ViewModel no se define en esta skill.
 
 Esta skill solo consume ese patrón cuando necesita integrarse con el grafo Compose.
 
-- Para el patrón completo de efectos y `LaunchedEffect`, ver [viewmodel-and-navigation-events.md](resources/viewmodel-and-navigation-events.md)
+- Para el patron completo de efectos y `LaunchedEffect`, consultar `kb-kmm-navigation-viewmodel-events` -> `references/viewmodel-and-navigation-events.md`
 - La fuente normativa de ese patrón es `kb-kmm-navigation-viewmodel-events`
 
 ---
@@ -198,7 +198,7 @@ Las transiciones globales se definen en el `NavHost`. Las transiciones por ruta 
 | Predictive back animation | Automático (Android 14+) | No aplica |
 | SharedElement transitions | Experimental (CMP 1.7) | Limitado |
 
-- Para los patrones de transición global y por ruta, ver [animations.md](resources/animations.md)
+- Para los patrones de transición global y por ruta, ver [animations.md](references/animations.md)
 
 ---
 

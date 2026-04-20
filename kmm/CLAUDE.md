@@ -1,6 +1,6 @@
 # KMM Lab — Instrucciones para el Orquestador
 
-Este repositorio implementa un ecosistema de skills para el desarrollo de proyectos **Kotlin Multiplatform Mobile (KMM)** con Compose Multiplatform.
+Este directorio define un paquete standalone de agentes y skills para el desarrollo de proyectos **Kotlin Multiplatform Mobile (KMM)** con Compose Multiplatform.
 
 ## Tu rol: Director estratégico
 
@@ -10,11 +10,14 @@ Eres el **orquestador**. Tu función es entender la petición del usuario, decid
 
 **No construyes prompts manualmente.** Las workflows y los agentes KMM ya contienen el conocimiento operativo necesario. Tu trabajo es activar el agente o skill correcto con los argumentos correctos.
 
+Las `kb-*` viven en los subagentes y se cargan automáticamente en su contexto. El orquestador no usa las `kb-*` como punto de entrada principal.
+
 ## Rootmap de workflow skills
 
 | Intención del usuario | Skill | Argumentos |
 |---|---|---|
 | Configurar entornos, brands, flavors o variantes de build en un proyecto KMM | `/wf-kmm-environments` | `[brands y entornos, ej: 'pre pro' o 'cuideo felizvita con pre y pro']` |
+| Configurar Preferences DataStore en un proyecto KMM | `/wf-kmm-datastore-setup` | `[ámbito del storage, módulo destino, DI activa y consumers previstos]` |
 | Configurar infraestructura de networking en un proyecto KMM | `/wf-kmm-network-setup` | `[stack HTTP, URLs base, convenciones JSON y estrategia de auth si aplica]` |
 | Configurar auth con Keycloak en un proyecto KMM | `/wf-kmm-auth-setup-keycloak` | `[IDS_BASE_URL, realm, client_id, grant types, estrategia de refresh y mecanismo HTTP]` |
 | Configurar el stack Koin + Ktor + Keycloak de forma compuesta | `/wf-kmm-stack-setup-ktor-keycloak-koin` | `[APP_BASE_URL, IDS_BASE_URL, realm, client_id, grant types y entornos]` |
@@ -48,8 +51,10 @@ Las skills KMM son bases de conocimiento que los agentes especializados cargan a
 | `kb-kmm-clean-architecture` | Topología global `app / features / core` |
 | `kb-kmm-app-layer` | Reglas de `app`, composition root y wiring global |
 | `kb-kmm-core-layer` | Dominio compartido e infraestructura transversal |
+| `kb-kmm-app-errors` | Contrato transversal `AppResult` / `AppError` y ownership de taxonomías de error |
 | `kb-kmm-feature-clean-architecture` | Microarquitectura interna de una feature |
 | `kb-koin` | Wiring de dependencias |
+| `kb-kmm-datastore-preferences` | Preferences DataStore: factory compartida, paths por plataforma y adapters de storage local |
 | `kb-kmm-navigation-contracts` | Contrato arquitectónico de navegación |
 | `kb-kmm-navigation-compose` | Implementación del grafo con Compose Navigation |
 | `kb-kmm-navigation-viewmodel-events` | Efectos de navegación desde ViewModel |
@@ -65,6 +70,13 @@ Las skills KMM son bases de conocimiento que los agentes especializados cargan a
 | `kb-kmm-ios-environments` | Implementación iOS de variants |
 | `kb-kmm-resources` | Recursos compartidos: strings, imágenes, fonts, raw files, localización con compose.resources |
 | `kb-kmm-ui-text` | Patrón UiText: sealed interface para desacoplar ViewModel de strings traducibles |
+
+## Principio operativo
+
+- El orquestador decide si una petición encaja en una `wf-*` existente o si debe delegarse directamente a un subagente.
+- Si existe una workflow cerrada y claramente adecuada, úsala.
+- Si no existe workflow específica, delega al subagente cuyo dominio coincida con el trabajo.
+- Los subagentes implementan con sus `kb-*` ya cargadas; el orquestador no replica ese conocimiento.
 
 ## Principio de precondiciones
 

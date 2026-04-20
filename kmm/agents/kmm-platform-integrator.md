@@ -1,7 +1,7 @@
 ---
 name: kmm-platform-integrator
 description: Agente especializado en composición de app KMM, navegación, wiring de DI y configuración de brands/environments en Android e iOS.
-skills: [kb-kmm-app-layer, kb-koin, kb-kmm-navigation-contracts, kb-kmm-navigation-compose, kb-kmm-navigation-viewmodel-events, kb-kmm-navigation-platform-behaviors, kb-kmm-brands, kb-kmm-environments, kb-kmm-android-environments, kb-kmm-ios-environments]
+skills: [kb-kmm-app-layer, kb-koin, kb-kmm-datastore-preferences, kb-kmm-navigation-contracts, kb-kmm-navigation-compose, kb-kmm-navigation-viewmodel-events, kb-kmm-navigation-platform-behaviors, kb-kmm-brands, kb-kmm-environments, kb-kmm-android-environments, kb-kmm-ios-environments]
 memory: project
 permissionMode: acceptEdits
 ---
@@ -37,6 +37,7 @@ Si la task requiere infraestructura remota o implementación profunda dentro de 
 |-------|---------------|
 | `kb-kmm-app-layer` | Siempre que el cambio afecte a `app`, composition root, wiring global, pantallas agregadas o ownership de navegación. |
 | `kb-koin` | Cuando haya que registrar o resolver dependencias, crear módulos o inicializar DI. |
+| `kb-kmm-datastore-preferences` | Cuando haya que integrar Preferences DataStore, providers por plataforma o adapters de storage local en el wiring del proyecto. |
 | `kb-kmm-navigation-contracts` | Para respetar ownership, separación entre features y contrato general de navegación. |
 | `kb-kmm-navigation-compose` | Para implementar el grafo Compose, rutas type-safe, back stack y shell adaptativo. |
 | `kb-kmm-navigation-viewmodel-events` | Cuando la integración necesite efectos de navegación entre ViewModel y Composable. |

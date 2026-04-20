@@ -35,6 +35,8 @@ Si el proyecto usa access token y refresh token, debe existir un contrato claro 
 
 Si las operaciones de login, refresh o lectura técnica de sesión devuelven resultado, la convención preferida es `AppResult<T, AppError>`.
 
+La definición transversal de `AppResult` y `AppError` pertenece a `kb-kmm-app-errors`. Esta skill solo fija cómo auth se integra en ese contrato.
+
 → Templates: `references/auth_contracts_templates.md`
 
 ---
@@ -71,6 +73,7 @@ Keycloak, Auth0 u otro proveedor no cambian la política general de sesión. Lo 
 
 Esta skill se combina con:
 
+- `kb-kmm-app-errors` para el contrato transversal de resultado y error
 - skills de proveedor OAuth, como `kb-kmm-auth-oauth-keycloak`
 - skills de mecanismo técnico, como `kb-kmm-auth-ktor-plugin`
 - skills de capa para decidir ubicación y ownership

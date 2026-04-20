@@ -40,11 +40,13 @@ Con esto se decide:
 Aplicar:
 
 - `kb-kmm-network-contracts`
+- `kb-kmm-app-errors`
 - `kb-kmm-auth-contracts`
 - `kb-kmm-auth-oauth-keycloak`
 
 Con esto se fijan:
 
+- contrato transversal de resultado y error
 - contrato remoto y taxonomía de errores
 - política de sesión y refresh
 - contrato específico con Keycloak

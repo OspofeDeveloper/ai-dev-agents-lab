@@ -124,6 +124,7 @@ fun onLoginFailed_stateHasResourceError() {
 - `ResourceString` para strings traducibles; `DynamicString` para strings externos
 - `kb-kmm-resources` como sistema base de recursos compartidos
 - si el proyecto usa `AppError`, su mapping a `UiText` vive en presentation/UI, no en networking
+- la política transversal de `AppError` se define en `kb-kmm-app-errors`; esta skill solo define su representación visual
 
 ### Prohibido
 

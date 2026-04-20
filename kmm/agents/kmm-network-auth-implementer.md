@@ -1,7 +1,7 @@
 ---
 name: kmm-network-auth-implementer
 description: Agente especializado en infraestructura remota KMM: contratos de red, cliente HTTP, autenticación y reglas transversales de core asociadas a networking/auth.
-skills: [kb-kmm-core-layer, kb-kmm-network-contracts, kb-kmm-http-ktor, kb-kmm-auth-contracts, kb-kmm-auth-oauth-keycloak, kb-kmm-auth-ktor-plugin]
+skills: [kb-kmm-core-layer, kb-kmm-app-errors, kb-kmm-network-contracts, kb-kmm-http-ktor, kb-kmm-auth-contracts, kb-kmm-auth-oauth-keycloak, kb-kmm-auth-ktor-plugin]
 memory: project
 permissionMode: acceptEdits
 ---
@@ -37,7 +37,8 @@ Si la task requiere wiring en `app` o implementación profunda de UI/feature, de
 | Skill | Cuándo usarla |
 |-------|---------------|
 | `kb-kmm-core-layer` | Para decidir si una pieza remota o de auth debe vivir en `core` y no en una feature. |
-| `kb-kmm-network-contracts` | Para respetar contratos remotos estables, `NetworkResult`, `NetworkError` y el borde RemoteDataSource/Repository. |
+| `kb-kmm-app-errors` | Para respetar el contrato transversal `AppResult` / `AppError` y decidir ownership o adaptación de taxonomías de error. |
+| `kb-kmm-network-contracts` | Para respetar contratos remotos estables, `NetworkError` como variante concreta de `AppError` y el borde RemoteDataSource/Repository. |
 | `kb-kmm-http-ktor` | Cuando el mecanismo HTTP concreto sea Ktor: `HttpClient`, plugins, timeouts, JSON o helpers de cliente. |
 | `kb-kmm-auth-contracts` | Para política de sesión, refresh, expiración y fronteras estables de auth. |
 | `kb-kmm-auth-oauth-keycloak` | Cuando el proveedor concreto sea Keycloak y haya que modelar endpoints, grants o payloads. |

@@ -68,6 +68,9 @@ Cada skill debe poseer solo **una dimensión de verdad**:
 - `kb-kmm-core-layer`
   Define qué pertenece a `core`: dominio compartido e infraestructura transversal.
 
+- `kb-kmm-app-errors`
+  Define el contrato transversal `AppResult` / `AppError`, ownership de taxonomías de error y reglas de adaptación entre capas.
+
 - `kb-kmm-feature-clean-architecture`
   Define la microarquitectura interna de una feature: `presentation / domain / data`.
 
@@ -75,6 +78,11 @@ Cada skill debe poseer solo **una dimensión de verdad**:
 
 - `kb-koin`
   Define el wiring con Koin: módulos, `initKoin`, qualifiers, `nativeModule`, tipos de registro y orden de módulos.
+
+### Storage local
+
+- `kb-kmm-datastore-preferences`
+  Define cómo introducir Preferences DataStore en KMM: factory común, path por plataforma, ownership de keys y adapters sobre storage local.
 
 ### Recursos y texto
 
@@ -87,7 +95,7 @@ Cada skill debe poseer solo **una dimensión de verdad**:
 ### Networking
 
 - `kb-kmm-network-contracts`
-  Define el contrato remoto estable: `AppResult`, `AppError`, `NetworkError` como variante concreta, límite remoto y adaptación a dominio.
+  Define el contrato remoto estable sobre el contrato transversal de app: borde remoto, variante `NetworkError`, límite remoto y adaptación a dominio.
 
 - `kb-kmm-http-ktor`
   Define la implementación HTTP concreta con Ktor: `HttpClient`, plugins, logging, timeouts, JSON y helpers Ktor.
@@ -133,6 +141,9 @@ Cada skill debe poseer solo **una dimensión de verdad**:
 
 ### Workflows
 
+- `wf-kmm-datastore-setup`
+  Orquesta la configuración de Preferences DataStore respetando capas, providers por plataforma y wiring de DI.
+
 - `wf-kmm-network-setup`
   Orquesta la configuración de networking sin asumir auth concreta.
 
@@ -154,6 +165,7 @@ Arquitectura global
 Arquitectura por capa
   kb-kmm-app-layer
   kb-kmm-core-layer
+  kb-kmm-app-errors
   kb-kmm-feature-clean-architecture
 
 Brands
@@ -161,6 +173,9 @@ Brands
 
 DI
   kb-koin
+
+Storage local
+  kb-kmm-datastore-preferences
 
 Recursos y texto
   kb-kmm-resources
@@ -187,6 +202,7 @@ Variantes y entornos
   kb-kmm-ios-environments
 
 Workflows
+  wf-kmm-datastore-setup
   wf-kmm-network-setup
   wf-kmm-auth-setup-keycloak
   wf-kmm-stack-setup-ktor-keycloak-koin

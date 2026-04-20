@@ -72,6 +72,8 @@ La API de plugins de Ktor puede obligar a usar `runBlocking` para leer flows o e
 
 Si la operación de refresh devuelve resultado, la convención preferida es `AppResult<TokenInfo, AppError>` o equivalente. El plugin reacciona a `onSuccess` / `onError`; no necesita un contrato especial distinto del resto del proyecto.
 
+La definición transversal de `AppResult` y `AppError` pertenece a `kb-kmm-app-errors`. Esta skill solo implementa cómo el plugin técnico se integra con ese contrato.
+
 ---
 
 ## Regla 6: Los servicios de feature consumen solo el cliente autenticado
@@ -91,6 +93,7 @@ El plugin de Ktor solo orquesta:
 
 La semántica de sesión, expiración y proveedor OAuth pertenece a:
 
+- `kb-kmm-app-errors`
 - `kb-kmm-auth-contracts`
 - la skill del proveedor concreta, como `kb-kmm-auth-oauth-keycloak`
 

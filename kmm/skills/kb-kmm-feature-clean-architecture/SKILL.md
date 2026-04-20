@@ -108,6 +108,8 @@ Puede contener:
 - implementaciones concretas de repositorio
 - modelos pensados solo para renderizar UI
 
+El criterio para decidir si un error propio de feature debe existir y cómo se relaciona con `AppError` pertenece a `kb-kmm-app-errors`.
+
 ---
 
 ## Regla 7: Los repositorios son contrato en `domain` e implementación en `data`
@@ -149,6 +151,8 @@ Si un DTO llega al `ViewModel` o a la `Screen`, la frontera entre `data` y `doma
 
 Si el proyecto usa un contrato transversal de resultado y error (`AppResult<T, AppError>` o equivalente), esa abstracción puede atravesar el repositorio y llegar a use cases y ViewModel. Lo que no debe cruzar la frontera son DTOs, `HttpResponse`, status codes o excepciones del cliente HTTP.
 
+La política de cuándo conservar un error y cuándo adaptarlo se delega a `kb-kmm-app-errors`.
+
 ---
 
 ## Regla 10: Los mappers viven junto al cambio de representación
@@ -176,6 +180,8 @@ La regla práctica es:
 - coordinación de estado de pantalla -> `ViewModel`
 
 Si una operación solo necesita propagar `AppResult` desde repositorio a `ViewModel`, el use case puede ser un simple pass-through. Si necesita combinar varios `AppResult`, aplicar reglas de negocio o priorizar errores, esa lógica pertenece al use case.
+
+La política transversal de `AppResult` / `AppError` pertenece a `kb-kmm-app-errors`.
 
 ---
 

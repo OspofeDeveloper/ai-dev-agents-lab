@@ -26,10 +26,12 @@ Aplicar:
 - `kb-kmm-core-layer`
 - `kb-kmm-feature-clean-architecture`
 - `kb-kmm-app-layer`
+- `kb-kmm-app-errors`
 
 Con esto se decide:
 
 - dónde vive el contrato de sesión
+- qué contrato transversal de resultado y error usa la app
 - qué piezas son transversales y van a `core`
 - qué implementaciones pertenecen a una feature concreta
 - qué wiring final o composición pertenece a `app`
@@ -44,6 +46,7 @@ Aplicar `kb-kmm-auth-contracts` para confirmar:
 - cómo se detecta la sesión expirada
 - qué endpoints son públicos
 - dónde vive el contrato de sesión o store de tokens
+- cómo auth se integra en `AppResult` / `AppError`
 
 ---
 

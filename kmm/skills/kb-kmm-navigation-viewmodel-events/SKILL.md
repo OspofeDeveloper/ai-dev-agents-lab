@@ -39,7 +39,7 @@ Las opciones habituales son:
 
 Elegir uno y aplicarlo de forma consistente. No mezclar patrones arbitrariamente entre pantallas equivalentes.
 
-→ Patterns: `resources/viewmodel-and-navigation-events.md`
+→ Patterns: `references/viewmodel-and-navigation-events.md`
 
 ---
 
@@ -52,7 +52,7 @@ La key correcta no es universal:
 
 `LaunchedEffect(Unit)` no es válido para este problema porque oculta cambios de owner o re-entradas relevantes.
 
-→ Patterns: `resources/viewmodel-and-navigation-events.md`
+→ Patterns: `references/viewmodel-and-navigation-events.md`
 
 ---
 
