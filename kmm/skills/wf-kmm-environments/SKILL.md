@@ -1,6 +1,6 @@
 ---
 name: wf-kmm-environments
-description: "Configura un sistema multi-brand/multi-environment en un proyecto KMM: Android (Gradle product flavors + BuildConfig) e iOS (XCConfig + Script Build Phase). Usar cuando el usuario quiera configurar entornos, flavors, variantes de build o multi-brand en un proyecto KMM. Activar con frases como 'configurar entornos', 'añadir pre/pro', 'configurar flavors', 'configurar variantes de build', 'añadir staging/production', 'setup environments', 'multi-brand KMM'."
+description: "Configura un sistema multi-brand/multi-environment en un proyecto KMM componiendo semántica estable de variantes y sus implementaciones Android e iOS."
 argument-hint: "[brands y entornos, ej: 'pre pro' o 'cuideo felizvita con pre y pro']"
 effort: high
 allowed-tools: [Read, Write, Bash]
@@ -10,11 +10,11 @@ agent: kmm-platform-integrator
 
 # wf-kmm-environments
 
-Configura un sistema multi-brand/multi-environment en un proyecto KMM. El resultado es un objeto `BuildConfig` compartido en `commonMain`, conectado con Android (Gradle product flavors) e iOS (XCConfig + Script Build Phase).
+Configura un sistema multi-brand/multi-environment en un proyecto KMM componiendo semántica estable y sus implementaciones por plataforma.
 
 ---
 
-## Paso 1 — Recopilar requisitos
+## Paso 1: Recopilar requisitos
 
 Si el usuario no ha especificado todos los parámetros, preguntar:
 
@@ -23,19 +23,11 @@ Si el usuario no ha especificado todos los parámetros, preguntar:
 3. **URLs de API** — Una URL base por combinación brand×env.
 4. **Variables adicionales** — API keys, feature flags, claves de analytics que varíen por variante.
 
-Cuando tengas los datos, calcular la **matriz de variantes** y confirmarla con el usuario antes de tocar ningún fichero:
-
-```
-Variantes a generar:
-  {brand1}-{env1}  →  {appId1}.{env1suffix}    URL: https://...
-  {brand1}-{env2}  →  {appId1}                 URL: https://...
-  {brand2}-{env1}  →  {appId2}.{env1suffix}    URL: https://...
-  {brand2}-{env2}  →  {appId2}                 URL: https://...
-```
+Cuando tengas los datos, calcular la matriz `brand × env` y confirmarla con el usuario antes de tocar ningún fichero, siguiendo la **Regla 2** de `kb-kmm-environments` y la **Regla 2** de `kb-kmm-brands`.
 
 ---
 
-## Paso 2 — Leer el estado actual del proyecto
+## Paso 2: Leer el estado actual del proyecto
 
 Leer estos ficheros para entender qué hay y qué falta:
 
@@ -46,7 +38,7 @@ Leer estos ficheros para entender qué hay y qué falta:
 
 ---
 
-## Paso 3 — Consultar la semántica estable de variantes
+## Paso 3: Consultar la semántica estable de variantes
 
 Consultar `kb-kmm-brands` y `kb-kmm-environments` para fijar:
 
@@ -56,9 +48,14 @@ Consultar `kb-kmm-brands` y `kb-kmm-environments` para fijar:
 - sensibilidad de variables
 - contrato compartido que consumirá `commonMain`
 
+Usar como ancla:
+
+- `kb-kmm-brands` -> **Regla 1**, **Regla 2** y **Regla 4**
+- `kb-kmm-environments` -> **Regla 1**, **Regla 2**, **Regla 4**, **Regla 5** y **Regla 7**
+
 ---
 
-## Paso 4 — Aplicar implementación Android
+## Paso 4: Aplicar implementación Android
 
 Consultar `kb-kmm-android-environments` para:
 
@@ -68,21 +65,17 @@ Consultar `kb-kmm-android-environments` para:
 - declarar los `buildConfigField` del contrato compartido
 - crear `.properties` solo para valores declarativos
 
----
-
-## Paso 5 — Sincronizar Gradle
-
-Ejecutar un sync de Gradle para que el IDE resuelva el plugin recién declarado y sus dependencias estén disponibles antes de editar `build.gradle.kts`:
-
-```bash
-./gradlew --quiet help
-```
-
-Esperar a que termine sin errores antes de continuar. Si el sync falla, revisar que el plugin se añadió correctamente en `libs.versions.toml`.
+Usar como ancla la **Regla 2**, la **Regla 3**, la **Regla 4** y la **Regla 5** de `kb-kmm-android-environments`.
 
 ---
 
-## Paso 6 — Aplicar implementación iOS
+## Paso 5: Sincronizar Gradle
+
+Ejecutar un sync de Gradle para verificar que el plugin recién declarado y sus dependencias quedan resolubles antes de seguir. Si falla, revisar primero la declaración en `libs.versions.toml`.
+
+---
+
+## Paso 6: Aplicar implementación iOS
 
 Consultar `kb-kmm-ios-environments` para:
 
@@ -91,48 +84,13 @@ Consultar `kb-kmm-ios-environments` para:
 - añadir el script build phase
 - pasar a Gradle solo las propiedades mínimas de variante
 
-> **Instrucciones manuales para el usuario** — estos pasos los ejecuta el usuario en Xcode, no el agente.
+Usar como ancla la **Regla 2**, la **Regla 3**, la **Regla 4** y la **Regla 7** de `kb-kmm-ios-environments`.
 
-Los sub-pasos manuales de Xcode deben ejecutarse en orden.
-
-**6a. Añadir Build Configurations**
-
-En la pestaña **Info** del proyecto Xcode, sección Configurations:
-1. Duplicar `Debug` una vez por cada env → renombrar a `Debug-{Env1}`, `Debug-{Env2}`, …
-2. Duplicar `Release` una vez por cada env → renombrar a `Release-{Env1}`, `Release-{Env2}`, …
-3. Eliminar las filas `Debug` y `Release` originales si ya no se usarán (opcional, pero evita confusión).
-
-**6b. Añadir targets adicionales si hay más de una brand**
-
-Por cada brand adicional (brand2, brand3, …):
-1. File → Duplicate Target → seleccionar el target `iosApp`
-2. Renombrarlo a `{Brand}App`
-3. En Build Settings del nuevo target, revisar Bundle Identifier y Display Name
-
-Si solo hay 1 brand, omitir este sub-paso.
-
-**6c. Enlazar XCConfig a cada Build Configuration**
-
-Para cada fila de Build Configuration creada en 6a, en la pestaña Info → Configurations:
-- Columna del **proyecto**: asignar `Debug.xcconfig` a las filas `Debug-{Env}` y `Release.xcconfig` a las filas `Release-{Env}`
-- Columna de cada **target**: asignar el `{Brand}/{Brand}-{Env}.xcconfig` correspondiente
-
-**6d. Crear Schemes**
-
-Product → Scheme → New Scheme → seleccionar el target del brand correspondiente:
-1. Nombrar el scheme `{Brand}-{Env}` (ej. `Brand1-Pre`, `Cuideo-Pro`)
-2. Editar el scheme (Edit Scheme):
-   - Acción **Run** → Build Configuration: `Debug-{Env}`
-   - Acción **Archive** → Build Configuration: `Release-{Env}`
-   - Resto de acciones (Test, Profile, Analyze): `Debug-{Env}`
-
-**6e. Script Build Phase**
-
-Cada target necesita un **Run Script Build Phase**.
+Si el proyecto requiere pasos manuales en Xcode, derivarlos desde las references de `kb-kmm-ios-environments`; no convertir esta workflow en la fuente normativa de esos pasos.
 
 ---
 
-## Paso 7 — Informar al usuario
+## Paso 7: Informar al usuario
 
 Tras aplicar todos los cambios, reportar:
 

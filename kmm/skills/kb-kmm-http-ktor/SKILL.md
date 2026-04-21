@@ -61,13 +61,13 @@ Cuando un endpoint requiere `application/x-www-form-urlencoded`, la implementaci
 
 ## Regla 5: Las utilidades de Ktor viven fuera de las features
 
-Helpers como `tryCall`, `handleResponse`, mappers de excepción o loggers de Ktor viven en `core/network` o equivalente. No se duplican por feature.
+Helpers como `tryCall`, `responseHandler` por defecto, mappers de excepción o loggers de Ktor viven en `core/network` o equivalente. No se duplican por feature.
 
 Esas utilidades implementan el contrato remoto estable del proyecto; no deben inventar un contrato paralelo distinto del definido en `kb-kmm-network-contracts`.
 
 → Templates: `references/ktor_http_templates.md`
 
-`tryCall` y `handleResponse` deben devolver `AppResult<T, AppError>`. `NetworkError` es una implementación concreta de `AppError`, no el contrato principal que se propaga por la app.
+`tryCall` y su `responseHandler` por defecto deben devolver `AppResult<T, AppError>`. `NetworkError` es una implementación concreta de `AppError`, no el contrato principal que se propaga por la app.
 
 ---
 
@@ -108,17 +108,28 @@ La transformación desde ese contrato remoto a dominio pertenece al repositorio 
 - `kb-kmm-feature-clean-architecture`
 - `kb-kmm-core-layer` si la pieza es transversal
 
+Cuando una feature define una pieza HTTP propia, el naming preferido del proyecto para ese borde concreto es `<Feature>Api`.
+
 ---
 
-## Regla 10: El parsing de error backend y el mapeo de status viven en helpers Ktor compartidos
+## Regla 10: `tryCall` centraliza excepciones; `responseHandler` es inyectable para contratos HTTP especiales
 
-Cuando una API devuelve varios formatos de body de error, esa lógica se concentra en helpers compartidos del cliente Ktor.
+`tryCall` captura todas las excepciones del cliente Ktor y las normaliza a `AppError`. Es el único punto donde se tocan `ConnectTimeoutException`, `SocketTimeoutException`, `JsonConvertException` y similares.
 
-Patrón recomendado:
+La interpretación del `HttpResponse` no es fija: `tryCall` acepta un parámetro `responseHandler` que se puede sustituir cuando un endpoint necesita tratar éxitos no estándar (`202`, `204`, etc.), parsear bodies de error ricos o devolver una taxonomía distinta a `NetworkError`.
 
-- `tryCall` captura excepciones del cliente y las mapea a `AppError`
-- `handleResponse` transforma status HTTP y bodies de error a `AppError`
-- cuando el error es de red, la implementación concreta suele ser `NetworkError : AppError`
-- las APIs concretas solo describen request y response body
+- `defaultResponseHandler` es la implementación por defecto: resuelve el caso común (`2xx -> body<T>()`) y mapea errores HTTP a `NetworkError`
+- los handlers alternativos se usan desde la `Api` de la feature o desde `core/network/` y devuelven `AppResult<T, AppError>`
+- si el handler es trivial, puede quedarse privado en la `Api`; si tiene lógica propia o crece, la preferencia es extraerlo a `data/responseHandlers/`
+- las clases `Api` no repiten parsing de status código por código fuera de su `responseHandler` específico
 
-Las clases API no deberían repetir parsing de `400`, `401`, `409` o variantes del backend endpoint por endpoint.
+→ Templates: `references/ktor_http_templates.md`
+
+## Checklist antes de cerrar
+
+- ¿Cada llamada HTTP de la `Api` usa `tryCall` como wrapper común?
+- ¿Se evitó duplicar manualmente `try/catch` y parsing de status codes dentro de la `Api`?
+- ¿Los contratos HTTP especiales del endpoint se resolvieron con `responseHandler` en lugar de reimplementar el wrapper?
+- ¿La `Api` devuelve DTOs o modelos técnicos, y no modelos de dominio?
+- ¿Los `responseHandler` no triviales están separados del request-building cuando ya tienen entidad propia?
+- ¿La `Api` sigue siendo el único punto de `data` que toca el cliente HTTP?

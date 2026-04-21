@@ -40,6 +40,8 @@ features/<feature>/di/
   <feature>Module.kt
 ```
 
+Este árbol es un mapa conceptual de wiring alineado con la arquitectura. No obliga a una estructura física exacta si el proyecto mantiene la misma responsabilidad y claridad.
+
 Todos los módulos se registran en `initKoin`. No hay módulos dinámicos ni carga lazy de módulos.
 
 → Templates: `references/koin_init_templates.md`
@@ -70,19 +72,15 @@ El parámetro `config` permite que cada plataforma inyecte configuración espec�
 
 **Regla de oro**: si tienes dudas entre `single` y `factory` para un Use Case, usa `factory`.
 
+En `commonMain`, la forma preferida para registrar ViewModels es `viewModelOf(::Class)`.
+
+Evitar `viewModel { ... }` como DSL lambda en KMP `commonMain` salvo que el proyecto tenga explícitamente el artefacto/import correcto y una razón concreta para usarlo.
+
 ---
 
 ## Regla 5: Los qualifiers distinguen instancias, no definen arquitectura
 
 Cuando hay múltiples instancias del mismo tipo en el grafo de Koin, se usan **enums como qualifiers** para distinguirlas.
-
-```kotlin
-enum class NetworkQualifiers { ApiHttpClient, ApiBaseUrl }
-
-single(named(NetworkQualifiers.ApiHttpClient)) { HttpClient { ... } }
-
-single { AuthService(get(named(NetworkQualifiers.ApiHttpClient))) }
-```
 
 Los qualifiers se agrupan por dominio, no por librería. Ejemplos habituales:
 
@@ -94,6 +92,8 @@ Los qualifiers se agrupan por dominio, no por librería. Ejemplos habituales:
 | `iOSQualifier` | `iosMain/.../iOSQualifier.kt` | implementaciones iOS |
 
 Los qualifiers de plataforma se usan solo en `nativeModule` y no se consumen desde `commonMain`.
+
+→ Templates: `references/koin_feature_module_template.md`
 
 ---
 
@@ -109,23 +109,6 @@ viewModelOf -> ViewModels
 ```
 
 Ese orden es un patrón de wiring habitual, no una regla arquitectónica independiente de las skills de capa.
-
-Short form con `singleOf` y `factoryOf`:
-
-```kotlin
-val authModule = module {
-    singleOf(::RemoteAuthService)
-    singleOf(::AuthRepositoryImpl) bind AuthRepository::class
-    factoryOf(::LoginUseCase)
-    viewModelOf(::LoginViewModel)
-}
-```
-
-Cuando el constructor necesita un qualifier, se usa la forma larga:
-
-```kotlin
-single { RemoteAuthService(get(named(NetworkQualifiers.ApiHttpClient))) }
-```
 
 → Templates: `references/koin_feature_module_template.md`
 
@@ -182,3 +165,10 @@ Esta skill se usa junto con:
 - skills de networking, auth o storage cuando la dependencia registrada pertenezca a esas dimensiones
 
 Koin registra y resuelve dependencias; no redefine las reglas conceptuales de esas piezas.
+
+## Checklist antes de cerrar
+
+- ¿Cada ViewModel en `commonMain` se registra con `viewModelOf(::Class)` como opción preferida?
+- ¿Se evitó `viewModel { ... }` salvo necesidad explícita y correctamente soportada?
+- ¿El nuevo módulo quedó registrado antes de `appModule` en `initKoin`?
+- ¿El orden global respeta `nativeModule -> coreModule -> [features] -> appModule`?

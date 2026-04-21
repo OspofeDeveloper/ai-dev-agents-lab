@@ -22,11 +22,11 @@ No define reglas nuevas de arquitectura, sesión, proveedor ni mecanismo HTTP.
 
 Aplicar:
 
-- `kb-kmm-clean-architecture`
-- `kb-kmm-core-layer`
-- `kb-kmm-feature-clean-architecture`
-- `kb-kmm-app-layer`
-- `kb-kmm-app-errors`
+- `kb-kmm-clean-architecture` -> **Regla 2**
+- `kb-kmm-core-layer` -> **Regla 7** y **Regla 13**
+- `kb-kmm-feature-clean-architecture` -> **Regla 7** y **Regla 12**
+- `kb-kmm-app-layer` -> **Regla 8**
+- `kb-kmm-app-errors` -> **Regla 1**, **Regla 5** y **Regla 6**
 
 Con esto se decide:
 
@@ -48,6 +48,8 @@ Aplicar `kb-kmm-auth-contracts` para confirmar:
 - dónde vive el contrato de sesión o store de tokens
 - cómo auth se integra en `AppResult` / `AppError`
 
+Usar como ancla la **Regla 2**, la **Regla 3** y la **Regla 4** de `kb-kmm-auth-contracts`.
+
 ---
 
 ## Paso 4: Confirmar detalles específicos de Keycloak
@@ -60,6 +62,8 @@ Aplicar `kb-kmm-auth-oauth-keycloak` y recopilar:
 - grant type de login
 - grant type de refresh
 - entornos y variaciones de configuración
+
+Usar como ancla la **Regla 2**, la **Regla 3** y la **Regla 4** de `kb-kmm-auth-oauth-keycloak`.
 
 ---
 
@@ -80,11 +84,17 @@ Crear o verificar:
 
 La ubicación de estas piezas debe respetar las skills de capa. No asumir que todo contrato de auth vive automáticamente en `core` sin comprobar si es realmente transversal.
 
+La separación entre contrato, proveedor e implementación debe seguir la **Regla 7** de `kb-kmm-auth-contracts`.
+
 ---
 
 ## Paso 7: Implementar el proveedor Keycloak
 
 Crear la implementación de `IdentityApi` con formulario y ruta del token endpoint siguiendo `kb-kmm-auth-oauth-keycloak`.
+
+Aplicar específicamente la **Regla 2**, la **Regla 3** y la **Regla 5** de esa skill.
+
+Si la `Api` necesita parsear errores ricos del login o tratar respuestas de éxito especiales, hacerlo a través del `responseHandler` del wrapper remoto común descrito en `kb-kmm-http-ktor`, no duplicando `try/catch`.
 
 ---
 
@@ -103,6 +113,8 @@ No mezclar decisiones de proveedor con decisiones de mecanismo.
 ## Paso 9: Implementar el mecanismo técnico de refresh
 
 Solo si el proyecto usa Ktor y la estrategia acordada es auth automática en el cliente, aplicar `kb-kmm-auth-ktor-plugin`.
+
+Usar como ancla la **Regla 1**, la **Regla 2**, la **Regla 4** y la **Regla 7** de `kb-kmm-auth-ktor-plugin`.
 
 Si el proyecto usa otro mecanismo, implementar la variante correspondiente sin introducir reglas de Ktor en esta workflow.
 

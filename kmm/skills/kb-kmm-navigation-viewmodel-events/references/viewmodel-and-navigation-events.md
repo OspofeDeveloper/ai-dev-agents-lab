@@ -1,15 +1,47 @@
-# ViewModel Scoping y NavigationSideEffect — Ejemplos de Código
+# ViewModel Scoping y LoginEvents — Ejemplos de Código
 
 ## Efectos de navegación — definición compartida
 
 Los efectos nombran **hechos de dominio**, no destinos. Ambos patrones (Channel y StateFlow) usan el mismo sealed interface:
 
 ```kotlin
-sealed interface LoginEffect {
-    data object LoginSuccess : LoginEffect
-    data object RegistrationRequired : LoginEffect
+sealed interface LoginEvents {
+    data object LoginSuccess : LoginEvents
+    data object RegistrationRequired : LoginEvents
 }
 ```
+
+## Separación entre `State` y `Events`
+
+El patrón correcto no es "todo error a eventos" ni "todo outcome a state".
+
+Ejemplo de login:
+
+```kotlin
+data class LoginState(
+    val isLoading: Boolean = false,
+    val error: LoginUiError? = null,
+)
+
+sealed interface LoginUiError {
+    data class InvalidCredentials(val attemptsRemaining: Int?) : LoginUiError
+    data object AccountBlocked : LoginUiError
+    data object Generic : LoginUiError
+}
+
+sealed interface LoginEvents {
+    data object LoginSuccess : LoginEvents
+    data object FirstLoginRequired : LoginEvents
+    data object AccountInactive : LoginEvents
+}
+```
+
+Regla práctica del ejemplo:
+
+- `InvalidCredentials`, `AccountBlocked`, `Generic` viven en `State`
+- `LoginSuccess`, `FirstLoginRequired`, `AccountInactive` viven en `Events`
+
+`AccountInactive` va en `Events` aunque una app termine mostrándolo como error, porque esa traducción depende de composición externa y puede variar por brand.
 
 ## ViewModel scoped a pantalla (default)
 
@@ -49,7 +81,7 @@ composable<ProfileRoute> { backStackEntry ->
 
 ---
 
-## NavigationSideEffect — Patrón Channel (recomendado)
+## LoginEvents — Patrón Channel (recomendado)
 
 El NavHost decide adónde ir; la feature declara qué ocurrió.
 
@@ -59,12 +91,12 @@ El NavHost decide adónde ir; la feature declara qué ocurrió.
 // composeApp/src/commonMain/kotlin/com/example/app/screens/login/LoginViewModel.kt
 class LoginViewModel : ViewModel() {
 
-    private val _effect = Channel<LoginEffect>(Channel.BUFFERED)
-    val effect = _effect.receiveAsFlow()
+    private val _events = Channel<LoginEvents>(Channel.BUFFERED)
+    val events = _events.receiveAsFlow()
 
     fun onLoginSuccess() {
         viewModelScope.launch {
-            _effect.send(LoginEffect.LoginSuccess)
+            _events.send(LoginEvents.LoginSuccess)
         }
     }
 }
@@ -80,10 +112,10 @@ fun LoginScreen(
     onRegistrationRequired: () -> Unit
 ) {
     LaunchedEffect(viewModel) {  // key = viewModel, no Unit
-        viewModel.effect.collect { effect ->
-            when (effect) {
-                LoginEffect.LoginSuccess        -> onLoginSuccess()
-                LoginEffect.RegistrationRequired -> onRegistrationRequired()
+        viewModel.events.collect { event ->
+            when (event) {
+                LoginEvents.LoginSuccess        -> onLoginSuccess()
+                LoginEvents.RegistrationRequired -> onRegistrationRequired()
             }
         }
     }
@@ -102,28 +134,67 @@ composable<LoginRoute> {
 }
 ```
 
----
+## Mismo hecho, distinta traducción por app
 
-## NavigationSideEffect — Alternativa StateFlow con reset
+El ViewModel no decide si un mismo hecho navega o muestra error visual. Esa traducción pertenece a `app`.
 
 ### ViewModel
 
 ```kotlin
-data class LoginUiState(
+when (error) {
+    is AuthError.AccountInactive -> {
+        _events.send(LoginEvents.AccountInactive)
+    }
+    is AuthError.AccountBlocked -> {
+        _state.update { it.copy(error = LoginUiError.AccountBlocked) }
+    }
+}
+```
+
+### App FelizVita
+
+```kotlin
+LoginScreen(
+    onAccountInactive = {
+        navController.navigate(AccountInactiveRoute)
+    },
+)
+```
+
+### App Cuideo
+
+```kotlin
+LoginScreen(
+    onAccountInactive = {
+        showInactiveAccountError()
+    },
+)
+```
+
+Lo importante es que el hecho emitido por el ViewModel es el mismo. La diferencia de comportamiento no se modela dentro de la feature.
+
+---
+
+## LoginEvents — Alternativa StateFlow con reset
+
+### ViewModel
+
+```kotlin
+data class LoginState(
     val isLoading: Boolean = false,
-    val effect: LoginEffect? = null   // null = sin efecto pendiente
+    val event: LoginEvents? = null   // null = sin evento pendiente
 )
 
 class LoginViewModel : ViewModel() {
-    private val _uiState = MutableStateFlow(LoginUiState())
-    val uiState = _uiState.asStateFlow()
+    private val _state = MutableStateFlow(LoginState())
+    val state = _state.asStateFlow()
 
     fun onLoginSuccess() {
-        _uiState.update { it.copy(effect = LoginEffect.LoginSuccess) }
+        _state.update { it.copy(event = LoginEvents.LoginSuccess) }
     }
 
-    fun onEffectHandled() {
-        _uiState.update { it.copy(effect = null) }
+    fun onEventHandled() {
+        _state.update { it.copy(event = null) }
     }
 }
 ```
@@ -131,15 +202,15 @@ class LoginViewModel : ViewModel() {
 ### Composable — consumir y resetear
 
 ```kotlin
-val uiState by viewModel.uiState.collectAsState()
+val state by viewModel.state.collectAsState()
 
-LaunchedEffect(uiState.effect) {
-    uiState.effect?.let { effect ->
-        when (effect) {
-            LoginEffect.LoginSuccess        -> onLoginSuccess()
-            LoginEffect.RegistrationRequired -> onRegistrationRequired()
+LaunchedEffect(state.event) {
+    state.event?.let { event ->
+        when (event) {
+            LoginEvents.LoginSuccess        -> onLoginSuccess()
+            LoginEvents.RegistrationRequired -> onRegistrationRequired()
         }
-        viewModel.onEffectHandled()
+        viewModel.onEventHandled()
     }
 }
 ```

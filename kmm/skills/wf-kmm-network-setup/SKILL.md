@@ -14,14 +14,14 @@ agent: kmm-network-auth-implementer
 
 Confirmar con el usuario o inferir del proyecto:
 
-1. arquitectura base del proyecto y ubicación de capas, siguiendo `kb-kmm-clean-architecture`
-2. reglas de `core`, siguiendo `kb-kmm-core-layer`
-3. reglas de microarquitectura de feature, siguiendo `kb-kmm-feature-clean-architecture`
-4. reglas de `app`, siguiendo `kb-kmm-app-layer`
-5. librería de DI activa, siguiendo la skill correspondiente (`kb-koin` si aplica)
-6. contrato transversal de resultado y error, siguiendo `kb-kmm-app-errors`
-7. implementación HTTP elegida (`kb-kmm-http-ktor` si aplica)
-8. si existe auth y cuál es su estrategia (`kb-kmm-auth-contracts` + skill específica)
+1. arquitectura base del proyecto y ubicación de capas, siguiendo la **Regla 2** de `kb-kmm-clean-architecture`
+2. reglas de `core`, siguiendo la **Regla 3** y la **Regla 7** de `kb-kmm-core-layer`
+3. microarquitectura de feature, siguiendo la **Regla 2** y la **Regla 7** de `kb-kmm-feature-clean-architecture`
+4. reglas de `app`, siguiendo la **Regla 1** y la **Regla 8** de `kb-kmm-app-layer`
+5. librería de DI activa, siguiendo la **Regla 1** y la **Regla 2** de la skill correspondiente (`kb-koin` si aplica)
+6. contrato transversal de resultado y error, siguiendo la **Regla 1** y la **Regla 3** de `kb-kmm-app-errors`
+7. implementación HTTP elegida, siguiendo la **Regla 1** y la **Regla 2** de la skill concreta (`kb-kmm-http-ktor` si aplica)
+8. si existe auth y cuál es su estrategia, siguiendo `kb-kmm-auth-contracts` y la skill específica aplicable
 9. convenciones del backend como discriminadores JSON, errores especiales o múltiples URLs base
 
 No asumir una estrategia de auth concreta por el mero hecho de configurar networking.
@@ -38,13 +38,13 @@ Leer dependencias, módulos DI, configuración por entorno, estructura de `core/
 
 Aplicar:
 
-- `kb-kmm-clean-architecture` para respetar la topología global
-- `kb-kmm-core-layer` para decidir qué contratos o infraestructura van a `core`
-- `kb-kmm-feature-clean-architecture` para decidir qué piezas viven dentro de una feature
-- `kb-kmm-app-layer` para reservar en `app` solo el wiring y la composición final
-- `kb-kmm-app-errors` para fijar el contrato transversal `AppResult` / `AppError`
-- `kb-kmm-network-contracts` para definir errores, resultados y límites entre servicios y repositorios
-- la skill de DI activa para definir el patrón de registro
+- `kb-kmm-clean-architecture` -> **Regla 2**
+- `kb-kmm-core-layer` -> **Regla 7** y **Regla 13**
+- `kb-kmm-feature-clean-architecture` -> **Regla 7** y **Regla 12**
+- `kb-kmm-app-layer` -> **Regla 8**
+- `kb-kmm-app-errors` -> **Regla 1**, **Regla 5** y **Regla 6**
+- `kb-kmm-network-contracts` -> **Regla 3**, **Regla 5**, **Regla 6** y **Regla 11**
+- la skill de DI activa -> reglas de wiring, nunca ownership
 
 No crear todavía mecanismos acoplados a auth si no están confirmados.
 
@@ -62,6 +62,12 @@ Si el stack es Ktor, aplicar `kb-kmm-http-ktor` para:
 - utilidades específicas de Ktor
 - sin introducir decisiones de DI o auth que pertenezcan a otras skills
 
+Tomar como base la **Regla 2**, la **Regla 5** y la **Regla 10** de `kb-kmm-http-ktor`.
+
+Si el proyecto ya tiene un wrapper remoto común, reutilizarlo. No reimplementar `try/catch` ni parsing manual de status codes dentro de cada `Api`.
+
+**Antes de escribir la versión en `libs.versions.toml`**, leer el fichero y comprobar si ya existe una entrada `ktor`. Si existe, usar esa versión; no sobreescribir con una versión por defecto.
+
 Si el stack no es Ktor, usar la skill equivalente y no mezclar criterios de esta workflow con una librería distinta.
 
 ---
@@ -70,9 +76,11 @@ Si el stack no es Ktor, usar la skill equivalente y no mezclar criterios de esta
 
 Si el proyecto requiere autenticación:
 
-- aplicar `kb-kmm-auth-contracts`
+- aplicar `kb-kmm-auth-contracts`, especialmente su separación entre política y mecanismo
 - aplicar la skill del proveedor OAuth correspondiente si existe
 - aplicar la skill del mecanismo concreto de integración con el cliente HTTP solo si está confirmada
+
+Si un endpoint necesita errores ricos o contratos HTTP especiales, resolverlos mediante el `responseHandler` del wrapper común y no con lógica duplicada en el servicio.
 
 ---
 
@@ -85,6 +93,8 @@ La selección de ubicación antes del registro sigue estas reglas:
 - contratos o utilidades realmente transversales -> `core`
 - repositorios, data sources y servicios propios de una única feature -> dentro de la feature
 - composición global o wiring final -> `app`
+
+El registro en DI sigue la **Regla 1** y la **Regla 10** de la skill de DI activa.
 
 ---
 

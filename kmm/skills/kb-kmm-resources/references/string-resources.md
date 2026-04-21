@@ -45,7 +45,9 @@ fun ItemCounter(count: Int) {
 
 ## 3. Uso fuera de Composables (suspend)
 
-Para obtener un string en un ViewModel o UseCase sin contexto `@Composable`:
+Para obtener un string fuera de un Composable cuando realmente hace falta materializarlo en ese punto, por ejemplo en un bridge, share sheet o utilidad externa a la UI.
+
+Si el proyecto usa `kb-kmm-ui-text`, el ViewModel no debería resolver el string aquí.
 
 ```kotlin
 import myapp.shared.generated.resources.Res

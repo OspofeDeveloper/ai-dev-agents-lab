@@ -31,9 +31,19 @@ Cada feature puede organizarse internamente en tres subcapas conceptuales:
 
 - `presentation`: Screen, Section, ViewModel, state, events, effects y mappers de UI
 - `domain`: modelos de dominio propios de la feature, repositorios como contrato y use cases
-- `data`: implementaciones de repositorio, data sources, DTOs y mappers de infraestructura a dominio
+- `data`: implementaciones de repositorio, APIs remotas, DTOs, response handlers y mappers de infraestructura a dominio
 
 La estructura exacta de carpetas puede variar por proyecto, pero la separación de responsabilidades no.
+
+Cuando una pantalla usa ViewModel, la convención preferida del proyecto es separar esa pantalla en:
+
+- `presentation/<pantalla>/<Pantalla>Screen.kt`
+- `presentation/<pantalla>/viewmodel/<Pantalla>ViewModel.kt`
+- `presentation/<pantalla>/viewmodel/<Pantalla>State.kt`
+- `presentation/<pantalla>/viewmodel/<Pantalla>Intent.kt`
+- `presentation/<pantalla>/viewmodel/<Pantalla>Events.kt`
+
+→ Templates: `references/presentation_viewmodel_patterns.md`
 
 ---
 
@@ -61,10 +71,21 @@ La capa `presentation` contiene la representación de pantalla y su coordinació
 
 - `Screen` o `Section`
 - `ViewModel`
-- `UiState`
-- `UiEvent`
-- `UiEffect`
+- estado de pantalla
+- eventos de entrada UI -> ViewModel
+- efectos de salida ViewModel -> UI
 - transformaciones de dominio a modelo de presentación cuando sean necesarias para renderizar
+
+En este proyecto, cuando existe un ViewModel de pantalla, la convención preferida es:
+
+- `<Pantalla>State` como estado de pantalla
+- `<Pantalla>Intent` como eventos de entrada UI -> ViewModel
+- `<Pantalla>Events` como efectos de salida ViewModel -> UI
+- `fun onEvent(intent: <Pantalla>Intent)` como único punto de entrada del ViewModel
+
+Si el estado se mantiene directamente en el ViewModel, la forma preferida es `var state by mutableStateOf(...)` con `private set`.
+
+La separación exacta entre `State`, `Intent` y `Events`, incluyendo qué outcomes deben salir por efectos y qué decisiones tiene prohibidas el ViewModel, se delega a `kb-kmm-navigation-viewmodel-events`.
 
 `presentation` no debe contener:
 
@@ -130,12 +151,19 @@ La capa superior nunca depende de la implementación concreta.
 La subcapa `data` contiene todo detalle necesario para cumplir los contratos de `domain`:
 
 - repositorios concretos
-- remote data sources
+- APIs remotas
 - local data sources
 - DTOs, entities de persistencia o modelos de transporte
+- response handlers para contratos HTTP especiales, cuando hagan falta
 - mappers entre infraestructura y dominio
 
 `data` puede depender de `domain` y de infraestructura compartida. No debe filtrar sus tipos técnicos hacia `presentation` ni `domain`.
+
+Cuando existe acceso remoto HTTP, la `Api` es la única pieza de `data` que toca el cliente HTTP. El repositorio consume esa pieza y adapta el resultado a dominio.
+
+Si un `responseHandler` HTTP deja de ser trivial, puede extraerse a `data/responseHandlers/` para separar el request-building del parsing de contratos especiales.
+
+→ Templates: `references/feature_remote_data_patterns.md`
 
 ---
 
@@ -143,7 +171,7 @@ La subcapa `data` contiene todo detalle necesario para cumplir los contratos de 
 
 Los límites internos de una feature deben preservar esta separación:
 
-- APIs y data sources consumen y devuelven DTOs o modelos técnicos
+- APIs consumen y devuelven DTOs o modelos técnicos
 - repositorios convierten esos modelos a dominio
 - use cases y `ViewModel` trabajan con modelos de dominio
 
@@ -164,6 +192,12 @@ Cada mapper debe vivir donde se transforma una representación en otra:
 - `AppError` -> `UiText` en `presentation`, cuando la UI necesite representarlo
 
 No mezclar en un mismo mapper transformaciones de infraestructura y de UI. Cada capa convierte hacia la representación que necesita.
+
+Cuando un dato cruza fronteras entre capas y representa una unidad semántica clara, la preferencia del proyecto es encapsularlo en un modelo propio de esa capa en lugar de pasarlo como variables sueltas:
+
+- `UiModel` en `presentation`, cuando haga falta una representación de entrada o estado compuesta
+- `Model` en `domain`
+- `Dto` en `data`
 
 ---
 
@@ -252,3 +286,10 @@ Esta skill solo fija la microarquitectura interna de una feature.
 - Las skills de networking, auth o storage definen los contratos e implementaciones técnicas concretas
 
 Si una regla depende de Koin, Ktor, SQLDelight o cualquier otra librería, no pertenece aquí.
+
+## Checklist antes de cerrar
+
+- ¿La pantalla con ViewModel usa `presentation/<pantalla>/viewmodel/` como ubicación preferida?
+- ¿El ViewModel expone `onEvent(intent)` como único punto de entrada?
+- ¿El estado de pantalla usa `<Pantalla>State` y no un naming genérico inconsistente con la convención del proyecto?
+- ¿La capa `presentation` evita mezclar DTOs, data sources o detalles de infraestructura?

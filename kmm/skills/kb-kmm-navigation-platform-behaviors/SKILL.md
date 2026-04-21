@@ -32,6 +32,8 @@ El uso de `BackHandler` pertenece a la integración con el host y al ciclo de vi
 - La decisión de interceptar atrás vive en la UI o en un adaptador de plataforma, no en el ViewModel como llamada directa a navegación.
 - La acción resultante debe delegar a callbacks o efectos ya definidos por el contrato de navegación del proyecto.
 
+→ Templates: `references/backhandler.md`
+
 ## Regla 2: Predictive back se trata como capacidad específica de Android
 La integración con predictive back es un detalle del host Android y debe mantenerse separada del diseño general del grafo.
 

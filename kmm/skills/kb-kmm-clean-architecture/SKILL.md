@@ -26,6 +26,8 @@ La topología arquitectónica del proyecto es:
 app/ -> features/ -> core/
 ```
 
+Este diagrama expresa solo la dirección conceptual de dependencias. No es una plantilla física de carpetas ni una estructura obligatoria 1:1 del repositorio.
+
 La dirección de dependencias es siempre hacia dentro:
 
 - `app` puede depender de `features` y `core`

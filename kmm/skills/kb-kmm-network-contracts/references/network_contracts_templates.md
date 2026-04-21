@@ -42,8 +42,8 @@ sealed interface NetworkError : AppError {
 ## Límite remoto
 
 ```kotlin
-interface AuthRemoteDataSource {
-    suspend fun login(dto: LoginDto): AppResult<TokenDto, AppError>
+interface AuthApi {
+    suspend fun login(request: LoginRequestDto): AppResult<TokenDto, AppError>
 }
 ```
 
@@ -51,7 +51,7 @@ interface AuthRemoteDataSource {
 
 ```kotlin
 interface AuthRepository {
-    suspend fun login(username: String, password: String): AppResult<TokenInfo, AppError>
+    suspend fun login(model: LoginModel): AppResult<TokenInfo, AppError>
 }
 ```
 
@@ -59,13 +59,10 @@ interface AuthRepository {
 
 ```kotlin
 class AuthRepositoryImpl(
-    private val remote: AuthRemoteDataSource,
+    private val api: AuthApi,
 ) : AuthRepository {
-    override suspend fun login(
-        username: String,
-        password: String,
-    ): AppResult<TokenInfo, AppError> {
-        return remote.login(LoginDto(username, password))
+    override suspend fun login(model: LoginModel): AppResult<TokenInfo, AppError> {
+        return api.login(LoginRequestDto.from(model))
             .map { dto -> dto.toDomain() }
     }
 }

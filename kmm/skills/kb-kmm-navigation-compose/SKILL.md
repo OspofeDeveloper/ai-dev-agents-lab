@@ -1,6 +1,6 @@
 ---
 name: kb-kmm-navigation-compose
-description: Base de conocimiento de implementación de navegación con Compose Navigation + Kotlin Serialization en KMM: rutas @Serializable, NavHost, nested graphs, back stack, deep links de grafo, shell adaptativo y constraints de commonMain.
+description: "Base de conocimiento de implementación de navegación con Compose Navigation + Kotlin Serialization en KMM: rutas @Serializable, NavHost, nested graphs, back stack, deep links de grafo, shell adaptativo, testing del grafo y constraints de commonMain."
 argument-hint: "topic de navegación a consultar (opcional)"
 effort: low
 allowed-tools: [Read]
@@ -8,17 +8,11 @@ context: fork
 disable-model-invocation: true
 ---
 
-# Compose Multiplatform — Navigation Compose
+# Compose Multiplatform Navigation Compose — Base de Conocimiento
 
----
+## Regla 1: Esta skill implementa el grafo Compose; no define ownership ni contratos globales
 
-## Alcance
-
-Esta skill implementa navegación con:
-
-- Compose Navigation
-- Kotlin Serialization
-- Compose Multiplatform
+Esta skill define la implementación concreta del grafo con Compose Navigation y rutas type-safe.
 
 No define por sí sola:
 
@@ -35,185 +29,145 @@ Esas reglas viven en:
 - `kb-kmm-navigation-platform-behaviors`
 - `kb-koin` si aplica
 
----
+## Regla 2: Setup y dependencias mínimas se fijan por librería
 
-## 1. Setup y dependencias
+La implementación usa el artefacto Compose Multiplatform de Navigation Compose y Kotlin Serialization en `commonMain`.
 
-Versión mínima: `org.jetbrains.androidx.navigation:navigation-compose:2.8+` (artifact CMP; soporta type-safe routes en `commonMain`). Requiere también `kotlin("plugin.serialization")` y `kotlinx.serialization.json` en `commonMain`.
+Versión mínima de referencia: `org.jetbrains.androidx.navigation:navigation-compose:2.8+`.
 
-- Para las dependencias Gradle y el plugin de serialización, ver [setup-and-routes.md](references/setup-and-routes.md)
+La configuración exacta de dependencias y plugin pertenece a templates, no a esta regla conceptual.
 
----
+→ Templates: `references/setup-and-routes.md`
 
-## 2. Rutas type-safe
+## Regla 3: Las rutas son type-safe y viven en `commonMain`
 
-### 2.1 Definición con `@Serializable`
+Todas las rutas viven en `commonMain`.
 
-Todas las rutas van en `commonMain`. Cada ruta es un `object` (sin argumentos) o una `data class` (con argumentos). Los argumentos opcionales llevan valor por defecto. Las raíces de nested graphs también son `@Serializable object`.
+Cada ruta es:
 
-- Para ejemplos completos de definición de rutas, ver [setup-and-routes.md](references/setup-and-routes.md)
+- `object` si no lleva argumentos
+- `data class` si lleva argumentos
+- `@Serializable object` si representa la raíz de un nested graph
 
-### 2.2 Restricciones en commonMain
+Los argumentos opcionales llevan valor por defecto.
 
-- Usar `backStackEntry.toRoute<T>()` para extraer argumentos, **nunca** `SavedStateHandle.toRoute()` (API de AndroidX Lifecycle, no disponible en `commonMain`)
-- Pasar argumentos complejos como primitivos serializables, no como objetos Parcelable
+→ Templates: `references/setup-and-routes.md`
 
----
+## Regla 4: En `commonMain` se usan APIs multiplataforma de navegación
 
-## 3. NavHost y destinations
+Para extraer argumentos se usa `backStackEntry.toRoute<T>()`.
 
-### 3.1 NavHost en commonMain
+Está prohibido usar `SavedStateHandle.toRoute()` en `commonMain` porque depende de AndroidX Lifecycle.
 
-El NavHost y todo el grafo de navegación viven en `commonMain`. `AppNavGraph` acepta el `navController` como parámetro requerido (sin default): el owner es siempre el `AppShell` en producción o el test que lo invoca. Esto garantiza que el mismo `navController` sea compartido por el NavHost y el componente de navegación del shell (bottom bar / rail / drawer).
+Los argumentos complejos deben cruzar la ruta como primitivos serializables, no como objetos de plataforma.
 
-- Para el patrón completo de `AppNavGraph.kt` y extracción de argumentos, ver [navhost-and-backstack.md](references/navhost-and-backstack.md)
+→ Templates: `references/setup-and-routes.md`
 
-### 3.2 `rememberNavController()`
+## Regla 5: El `NavHost` vive en `commonMain` y comparte owner con el shell
 
-`rememberNavController()` ya está atado al `SavedStateRegistry` del host: sobrevive a cambios de configuración sin trabajo adicional. No usar `LocalNavController` CompositionLocal — hace el grafo difícil de testear.
+El `NavHost` y todo el grafo viven en `commonMain`.
 
----
+`AppNavGraph` recibe el `navController` como parámetro requerido, sin default. El owner es siempre el shell o el test que lo invoca.
 
-## 4. Back stack management
+Esto garantiza que el mismo `navController` se comparta entre el `NavHost` y el componente de navegación del shell.
 
-### 4.1 `popUpTo` + `inclusive`
+No usar `LocalNavController` como `CompositionLocal`, porque empeora testabilidad y oculta ownership.
 
-`inclusive = true` elimina también la ruta destino del `popUpTo`. Úsalo cuando la pantalla de origen no debe quedar en el stack (flujos de autenticación, onboarding).
+→ Templates: `references/navhost-and-backstack.md`
 
-### 4.2 `launchSingleTop`
+## Regla 6: El back stack se manipula con criterios explícitos de flujo
 
-Obligatorio en BottomNavigation. Evita duplicar el destino si ya está en el top del stack.
+La combinación `popUpTo`, `inclusive`, `launchSingleTop`, `saveState` y `restoreState` se usa según el tipo de flujo:
 
-### 4.3 `saveState` / `restoreState`
+- `inclusive = true` cuando el origen no debe quedar en stack
+- `launchSingleTop` en navegación por tabs
+- `saveState` y `restoreState` en shell por tabs para conservar estado
 
-Obligatorios en BottomNavigation para no perder el scroll position ni el estado del formulario al cambiar de tab.
+`popBackStack()` y `navigateUp()` no son intercambiables semánticamente. Si un destino puede recibirse vía deep link, ignorar el `Boolean` de `popBackStack()` está prohibido y debe existir fallback explícito.
 
-### 4.4 `popBackStack()` vs `navigateUp()`
+→ Templates: `references/navhost-and-backstack.md`
 
-| Función | Comportamiento |
-|---|---|
-| `popBackStack()` | Elimina la entrada actual del back stack. No hace nada si ya está en el root. |
-| `navigateUp()` | Igual que `popBackStack()`, pero si el stack está vacío, delega al sistema (equivale a pulsar el botón Up de Android). |
+## Regla 7: Los nested graphs preservan la frontera entre features y `app`
 
-Usar `popBackStack()` para "Atrás" desde pantallas internas. Usar `navigateUp()` en la action bar/toolbar.
+Navegar al graph aterriza en su `startDestination`; navegar a una ruta aterriza en ese destino concreto.
 
-**`popBackStack()` devuelve un `Boolean`** — `false` si el stack ya estaba vacío. En destinos que pueden recibirse vía deep link, manejar ese caso con un fallback a `HomeRoute`.
+Cada feature expone su registro de grafo con callbacks o lambdas de salida.
 
-- Para todos los ejemplos de back stack, ver [navhost-and-backstack.md](references/navhost-and-backstack.md)
+La feature:
 
----
+- no recibe el `NavController`
+- no conoce rutas de otras features
+- no decide composición global
 
-## 5. Nested NavGraphs
+Las rutas compartidas y el `NavController` permanecen centralizados en `app`.
 
-### 5.1 Navegar al graph vs a una ruta
+→ Templates: `references/nested-graphs-and-multimodule.md`
 
-`navController.navigate(MainGraph)` aterriza en el `startDestination` del graph. `navController.navigate(ProfileRoute("123"))` va directo a la ruta, en cualquier graph.
+## Regla 8: El shell adaptativo es responsabilidad del runtime Compose, no del contrato de navegación
 
-- Para ejemplos de nested graphs, ver [nested-graphs-and-multimodule.md](references/nested-graphs-and-multimodule.md)
+La navegación por tabs aplica siempre las opciones necesarias para evitar duplicados y conservar estado.
 
-### 5.2 Feature modules con grafos independientes
+La selección del item activo se sincroniza con la jerarquía actual del destino.
 
-Cada feature expone `fun NavGraphBuilder.featureGraph(...)` con lambdas para las acciones de salida. El feature **nunca** recibe el `NavController` — solo emite callbacks que `:app` resuelve.
+En entornos adaptativos:
 
-Las rutas se centralizan en `:app/navigation/`. Features nunca dependen entre sí ni conocen rutas de otros features — solo dependen del contrato central. El `NavController` nunca sale de `:app`.
+- `NavigationBar` en compact
+- `NavigationRail` en medium
+- `NavigationDrawer` en expanded
 
-- Para la estructura de módulos y el patrón de registro de grafos, ver [nested-graphs-and-multimodule.md](references/nested-graphs-and-multimodule.md)
+La implementación concreta del shell y sus layouts vive en templates.
 
----
+→ Templates: `references/bottom-nav-and-adaptive.md`
 
-## 6. Shell y navegación adaptativa
+## Regla 9: Esta skill resuelve deep links dentro del grafo, no la integración del host
 
-Las opciones de navegación por tabs se aplican **siempre** en el `onClick` de cada tab:
+La skill cubre la resolución de deep links una vez el host entrega el evento al runtime de navegación.
 
-```
-popUpTo<StartDestination> { saveState = true }   // StartDestination = startDestination del NavHost
-launchSingleTop = true
-restoreState = true
-```
+La configuración de plataforma que conecta URLs, intents, universal links o bridges nativos pertenece a `kb-kmm-navigation-platform-behaviors`.
 
-La sincronización del item seleccionado se hace con `currentDestination?.hierarchy?.any { it.hasRoute(item.route::class) }`.
+Los placeholders del URI deben coincidir con los nombres de los parámetros de la ruta `@Serializable`.
 
-En CMP con soporte para tablet y desktop, el shell se adapta al tamaño de ventana:
+→ Templates: `references/deeplinks.md`
 
-| Window size class | Ancho | Componente |
-|---|---|---|
-| Compact | < 600 dp | `NavigationBar` (bottom) |
-| Medium | 600–840 dp | `NavigationRail` (lateral izquierdo) |
-| Expanded | > 840 dp | `NavigationDrawer` permanente (lateral) |
+## Regla 10: El scoping de ViewModel y los side effects se consumen desde sus skills autoritativas
 
-Usar `calculateWindowSizeClass()` de `androidx.compose.material3.windowsizeclass` en commonMain.
+El grafo Compose puede necesitar scoping de ViewModel y consumo de side effects, pero no define su patrón normativo.
 
-- Para los tres layouts completos (`AppShell`, `CompactLayout`, `MediumLayout`, `ExpandedLayout`), ver [bottom-nav-and-adaptive.md](references/bottom-nav-and-adaptive.md)
+Para scoping y paso de parámetros, consultar la DI activa y el patrón autoritativo de navegación desde ViewModel.
 
----
+Para efectos de navegación y `LaunchedEffect`, la skill autoritativa es `kb-kmm-navigation-viewmodel-events`.
 
-## 7. Deep Links de grafo
+→ Templates: `references/viewmodel-scoping.md`
 
-Esta skill cubre solo la resolución del deep link una vez el host entrega el evento al runtime de navegación. La configuración de plataforma que conecta URLs, intents, universal links o bridges nativos debe delegarse a `kb-kmm-navigation-platform-behaviors`.
+## Regla 11: Testing del grafo pertenece a la implementación Compose
 
-Los argumentos del URI se mapean automáticamente a los campos de la ruta `@Serializable` cuando se usa `navDeepLink<T>(basePath = ...)`. Para URIs custom, los placeholders `{campo}` deben coincidir con los nombres de los parámetros de la data class.
+El testing del grafo y de la integración con `NavHost` pertenece a esta dimensión porque valida la implementación concreta de Compose Navigation.
 
-- Para los patrones de deep link dentro del grafo, ver [deeplinks.md](references/deeplinks.md)
+Los tests de ViewModel aislados siguen perteneciendo a `kb-kmm-navigation-viewmodel-events`, no a esta skill.
 
----
+→ Templates: `references/testing.md`
 
-## 8. ViewModel scoping
+## Regla 12: Las transiciones son un detalle de implementación del `NavHost`
 
-### Scoping disponible
+Las transiciones globales se definen en el `NavHost`; las transiciones por ruta sobreescriben las globales.
 
-| Scope | API | Duración |
-|---|---|---|
-| Pantalla (default) | helper de DI del proyecto | Vive mientras la entrada existe en el back stack |
-| Nested graph | helper de DI del proyecto con `graphEntry` | Sobrevive a navegación entre rutas del mismo grafo |
+En iOS deben preferirse transiciones compatibles con Compose Multiplatform. Predictive back animation no convierte Android en fuente de verdad del diseño del grafo.
 
-Si el proyecto usa Koin, consultar `kb-koin` y la `kb-kmm-navigation-viewmodel-events`, que contiene el patron autoritativo y sus referencias de implementacion.
+→ Templates: `references/animations.md`
 
-### Restricción: no usar `SavedStateHandle` en commonMain
+## Regla 13: Los comportamientos de plataforma no contaminan esta skill
 
-`SavedStateHandle` es una API de AndroidX Lifecycle. En commonMain, pasar los argumentos al ViewModel via constructor desde el Composable usando el mecanismo de parámetros de la DI activa.
+`BackHandler`, predictive back y bridges del host no viven aquí.
 
-- Para ejemplos completos de scoping y paso de parametros, consultar `kb-kmm-navigation-viewmodel-events` -> `references/viewmodel-and-navigation-events.md`
+Si una decisión depende de AndroidManifest, AppDelegate, SceneDelegate, universal links o APIs del host, delegar en `kb-kmm-navigation-platform-behaviors`.
 
----
+## Regla 14: Requisitos no negociables de esta implementación
 
-## 9. ViewModel events y side effects
+Mientras el proyecto use Compose Navigation + Kotlin Serialization:
 
-El patrón de efectos de navegación desde ViewModel no se define en esta skill.
-
-Esta skill solo consume ese patrón cuando necesita integrarse con el grafo Compose.
-
-- Para el patron completo de efectos y `LaunchedEffect`, consultar `kb-kmm-navigation-viewmodel-events` -> `references/viewmodel-and-navigation-events.md`
-- La fuente normativa de ese patrón es `kb-kmm-navigation-viewmodel-events`
-
----
-
-## 10. Animaciones de transición
-
-Las transiciones globales se definen en el `NavHost`. Las transiciones por ruta sobreescriben las globales. Para iOS, usar solo las basadas en `AnimatedContentTransitionScope` (multiplataforma).
-
-| Feature | Android | iOS |
-|---|---|---|
-| `slideIntoContainer` / `slideOutOfContainer` | Soportado | Soportado |
-| `fadeIn` / `fadeOut` | Soportado | Soportado |
-| Predictive back animation | Automático (Android 14+) | No aplica |
-| SharedElement transitions | Experimental (CMP 1.7) | Limitado |
-
-- Para los patrones de transición global y por ruta, ver [animations.md](references/animations.md)
-
----
-
-## Requisitos NO Negociables
-
-_Específicos de Compose Navigation + Kotlin Serialization. Si cambia la librería, revisitar._
-
-- Rutas type-safe con `@Serializable` — sin strings hardcodeados
+- rutas type-safe con `@Serializable`
 - `AppNavGraph` recibe el `navController` como parámetro requerido
-- `SavedStateHandle.toRoute()` prohibido en `commonMain` (API de AndroidX Lifecycle, solo Android)
-- Ignorar el `Boolean` de retorno de `popBackStack()` está prohibido en destinos que pueden ser entry points de deep link
-- Navegación adaptativa: `NavigationBar` en Compact, `NavigationRail` en Medium, `NavigationDrawer` en Expanded
+- `SavedStateHandle.toRoute()` está prohibido en `commonMain`
+- el retorno de `popBackStack()` no se ignora en entry points de deep link
+- el shell adaptativo respeta la semántica compact/medium/expanded
 
----
-
-**Version**: 3.0.0
-**Ultima actualizacion**: 2026-04-11
-**Compatibilidad**: Compose Multiplatform 1.7+, Kotlin 2.0+, Navigation Compose 2.8+

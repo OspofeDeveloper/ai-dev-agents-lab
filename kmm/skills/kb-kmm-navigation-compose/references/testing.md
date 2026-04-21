@@ -66,13 +66,13 @@ class LoginViewModelTest {
     fun onLoginSuccess_emitsLoginSuccess() = runTest {
         val viewModel = LoginViewModel(fakeAuthUseCase)
 
-        val effects = mutableListOf<LoginEffect>()
-        val job = launch { viewModel.effect.toList(effects) }
+        val events = mutableListOf<LoginEvents>()
+        val job = launch { viewModel.events.toList(events) }
 
         viewModel.onLoginSuccess()
         advanceUntilIdle()
 
-        assertEquals(listOf(LoginEffect.LoginSuccess), effects)
+        assertEquals(listOf(LoginEvents.LoginSuccess), events)
         job.cancel()
     }
 }

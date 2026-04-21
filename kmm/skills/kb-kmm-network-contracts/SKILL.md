@@ -25,7 +25,7 @@ La ubicación concreta de estos contratos se decide con las skills de capa:
 
 Esta skill regula únicamente el borde entre:
 
-- cliente HTTP o data source remoto
+- cliente HTTP o API remota
 - contrato técnico de error y resultado
 - repositorio que adapta la respuesta remota al dominio
 
@@ -87,7 +87,7 @@ La política general de ownership, adaptación y propagación de `AppError` pert
 
 ---
 
-## Regla 5: El data source remoto expone modelos técnicos dentro de `AppResult`
+## Regla 5: La API remota expone modelos técnicos dentro de `AppResult`
 
 El límite remoto habla en términos de transporte o integración:
 
@@ -112,7 +112,7 @@ Esta regla no decide si el repositorio vive en `core` o dentro de una feature. E
 
 El patrón preferido es:
 
-- la API o remote source devuelve `AppResult<Dto, AppError>`
+- la API devuelve `AppResult<Dto, AppError>`
 - el repositorio transforma el `Success` con `map { dto -> domain }`
 - el error sube intacto salvo que exista una razón de negocio clara para adaptarlo
 
@@ -161,8 +161,10 @@ La lectura de códigos HTTP, parsing de body de error y mapeo de excepciones de 
 El patrón estable es:
 
 - `tryCall` o helper equivalente ejecuta la llamada
-- `handleResponse` o helper equivalente transforma `HttpResponse` a `AppResult<T, AppError>`
+- `responseHandler` o helper equivalente transforma `HttpResponse` a `AppResult<T, AppError>`
 - el repositorio consume ese resultado ya normalizado
+
+Cuando un `responseHandler` deja de ser trivial o se vuelve específico de un contrato con suficiente entidad, puede extraerse a `data/responseHandlers/` en lugar de quedarse embebido en la `Api`.
 
 El repositorio no debe reinterpretar status codes ni parsear bodies de error del backend.
 

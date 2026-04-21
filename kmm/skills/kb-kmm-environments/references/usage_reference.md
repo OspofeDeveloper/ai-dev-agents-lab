@@ -42,9 +42,14 @@ when {
 
 ## § Añadir una variable nueva
 
-1. Añadirla a todos los ficheros `.properties` (ver `references/android_properties_templates.md`)
+1. Añadirla a todos los ficheros `.properties` de Android
 2. En `composeApp/build.gradle.kts`, añadir dentro del bloque `buildConfig { }`:
    ```kotlin
    buildConfigField("KEY", properties.getProperty("KEY").trim())
    ```
 3. Si el código Swift de iOS también la necesita: añadirla a cada XCConfig y referenciarla en `Info.plist` como `$(KEY)`
+
+Referencias de implementación:
+
+- Android: consultar `kb-kmm-android-environments` -> `references/android_properties_templates.md` y `references/android_buildconfig_templates.md`
+- iOS: consultar `kb-kmm-ios-environments` -> `references/ios_xcconfig_templates.md` y `references/ios_script_build_phase_template.md`

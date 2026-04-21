@@ -8,119 +8,81 @@ context: fork
 disable-model-invocation: true
 ---
 
-# Compose Multiplatform — Recursos Compartidos (compose.resources)
+# Compose Multiplatform Resources — Base de Conocimiento
 
----
+## Regla 1: Los recursos compartidos viven en `commonMain/composeResources`
 
-## Contrato de Recursos
+Todos los recursos compartidos viven en `commonMain/composeResources/`.
 
-Invariantes de arquitectura para recursos en KMM:
+Esto incluye:
 
-- **Todos los recursos compartidos en `commonMain/composeResources/`**: strings, drawables, fonts y raw files. Nunca en `androidMain` ni `iosMain` si son compartidos.
-- **Acceso siempre vía `Res`**: usar las funciones de `org.jetbrains.compose.resources` (`stringResource`, `painterResource`, `Font`, `Res.readBytes`). Nunca hardcodear strings ni rutas.
-- **`stringResource()` en Composables, `getString()` fuera solo cuando procede**: `getString()` es suspend y solo debe usarse fuera de Composables cuando el caso realmente necesita un `String` resuelto en ese punto. Si el proyecto usa `UiText`, ViewModels no resuelven strings; exponen referencias y la UI las resuelve.
-- **Localización con carpetas `values-{locale}/`**: el archivo `strings.xml` por defecto va en `values/`; las traducciones en `values-es/`, `values-fr/`, etc.
-- **`@StringRes` prohibido en `commonMain`**: es una API Android-only. Usar `StringResource` de `compose.resources`.
-- **Recursos platform-specific fuera de `commonMain`**: launch icons, splash screens y assets nativos van en `androidApp/` o `iosApp/`, no en `commonMain`.
+- strings
+- drawables
+- fonts
+- raw files
 
-Todo lo que sigue es la implementación de este contrato.
+Los recursos nativos de plataforma, como launch icons o splash screens, no viven aquí.
 
----
+## Regla 2: El acceso a recursos compartidos usa `Res` y APIs de `compose.resources`
 
-## 1. Setup y estructura de directorios
+El acceso compartido usa la clase `Res` y las funciones de `org.jetbrains.compose.resources`.
 
-El módulo compartido (`shared`) declara `compose.components.resources` en `commonMain.dependencies`. La configuración `compose.resources { ... }` en `build.gradle.kts` del módulo controla la visibilidad de la clase `Res`, el paquete generado y cuándo se genera la clase.
+Está prohibido hardcodear strings o rutas cuando el recurso pertenece al sistema compartido.
 
-Los recursos se organizan bajo `commonMain/composeResources/` en subcarpetas por tipo:
+## Regla 3: Los strings se resuelven en UI salvo necesidad explícita fuera de Composable
 
-| Carpeta | Contenido |
-|---|---|
-| `values/` | Strings XML y plurals |
-| `values-{locale}/` | Traducciones (mismo `strings.xml`) |
-| `drawable/` | PNG, JPEG, WebP, SVG/XML vector |
-| `font/` | TTF, OTF |
-| `files/` | Archivos raw (JSON, binarios, etc.) |
+En Composables se usa `stringResource()`.
 
-- Para la configuración Gradle completa y la estructura de directorios, ver [setup-and-structure.md](references/setup-and-structure.md)
+Fuera de Composables, `getString()` solo se usa cuando realmente se necesita el `String` materializado en ese punto.
 
----
+Si el proyecto usa `kb-kmm-ui-text`, el ViewModel no resuelve strings: expone referencias y la UI las materializa.
 
-## 2. String resources
+→ Templates: `references/string-resources.md`
 
-### 2.1 Definición
+## Regla 4: La localización se organiza por carpetas `values-{locale}`
 
-Los strings se declaran en `commonMain/composeResources/values/strings.xml`. Soportan argumentos posicionales (`%1$s`, `%1$d`) y plurals. Las traducciones van en carpetas `values-{locale}/` con el mismo nombre de archivo.
+El archivo base vive en `values/`.
 
-### 2.2 Uso en Composables
+Las traducciones viven en carpetas `values-{locale}/` con el mismo nombre de fichero.
 
-```kotlin
-// Simple
-Text(text = stringResource(Res.string.login_title))
+→ Templates: `references/string-resources.md`
 
-// Con argumento
-Text(text = stringResource(Res.string.profile_greeting, userName))
+## Regla 5: `@StringRes` no forma parte del contrato compartido
 
-// Plural
-Text(text = pluralStringResource(Res.plurals.items_count, count, count))
-```
+`@StringRes` pertenece a Android y está prohibido en `commonMain`.
 
-### 2.3 Uso fuera de Composables
+Para referencias a strings compartidos se usa `StringResource` de `compose.resources`.
 
-`getString()` es suspend y requiere un coroutine scope. No puede usarse en inicialización síncrona.
+## Regla 6: La estructura del sistema de recursos se configura en el módulo compartido
 
-Si el proyecto usa `kb-kmm-ui-text`, el ViewModel no debe resolver strings; debe exponer `UiText` y delegar la resolución a la UI.
+El módulo compartido declara `compose.components.resources` y configura la generación de `Res`.
 
-`getString()` queda reservado para casos donde realmente se necesita el string materializado fuera de un Composable, por ejemplo:
+La estructura exacta de carpetas y la configuración Gradle son detalles de implementación.
 
-- texto que se envía a una API o share sheet
-- adapters o bridges que no operan con `UiText`
-- utilidades de infraestructura o composición externa a la UI
+→ Templates: `references/setup-and-structure.md`
 
-```kotlin
-suspend fun buildShareText(): String = getString(Res.string.share_message)
-```
+## Regla 7: Imágenes, fonts y raw files usan el canal de acceso correspondiente
 
-- Para el XML completo de strings y ejemplos de localización, ver [string-resources.md](references/string-resources.md)
+Cada tipo de recurso usa su API específica:
 
----
+- imágenes con `painterResource`
+- fonts con `Font`
+- raw files con `Res.readBytes`
 
-## 3. Imágenes, fonts y raw files
+La elección del tipo de recurso pertenece a esta dimensión; su uso concreto pertenece a templates.
 
-### 3.1 Imágenes (`drawable/`)
+→ Templates: `references/image-font-raw.md`
 
-Soportan PNG, JPEG, BMP, WebP y SVG (como XML vector drawable). Se accede con `painterResource(Res.drawable.nombre)`.
+## Regla 8: Esta skill no sustituye al patrón de exposición textual
 
-### 3.2 Fonts (`font/`)
+Esta skill define el sistema base de recursos compartidos.
 
-Se carga con `Font(Res.font.nombre)` dentro de un `FontFamily`. El bloque es `@Composable`.
+No define cómo un ViewModel expone texto traducible a UI. Ese patrón vive en `kb-kmm-ui-text`.
 
-### 3.3 Raw files (`files/`)
+## Regla 9: Requisitos no negociables
 
-Se leen con `Res.readBytes("files/nombre.ext")`, que es `suspend` y devuelve `ByteArray`. Apto para JSON de configuración, archivos de datos, etc.
-
-- Para código completo de los tres tipos, ver [image-font-raw.md](references/image-font-raw.md)
-
----
-
-## Requisitos NO Negociables
-
-### Obligatorio
-
-- Strings y drawables compartidos en `commonMain/composeResources/`
+- strings y drawables compartidos en `commonMain/composeResources/`
 - `stringResource()` para textos en Composables
-- `getString()` solo cuando realmente se necesita el `String` resuelto fuera de UI
-- `painterResource()` para imágenes compartidas
-- Soporte de localización con carpetas `values-{locale}/`
-
-### Prohibido
-
-- Hardcodear strings en Composables
-- `@StringRes` en `commonMain` — API de Android, no disponible en iOS
-- Recursos platform-specific (launch icons, splash screens) en `commonMain`
-- Resolver strings en ViewModels si el proyecto adopta el patrón `UiText`
-
----
-
-**Version**: 2.0.0
-**Última actualización**: 2026-04-11
-**Compatibilidad**: Compose Multiplatform 1.6+, Kotlin 2.0+
+- `getString()` solo cuando se necesita el `String` fuera de UI
+- soporte de localización con carpetas `values-{locale}/`
+- recursos platform-specific fuera de `commonMain`

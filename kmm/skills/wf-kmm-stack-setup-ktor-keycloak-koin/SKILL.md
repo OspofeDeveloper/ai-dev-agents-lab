@@ -20,11 +20,11 @@ Esta skill existe como atajo para tu stack habitual. No define reglas nuevas: co
 
 Aplicar:
 
-- `kb-kmm-clean-architecture`
-- `kb-kmm-core-layer`
-- `kb-kmm-feature-clean-architecture`
-- `kb-kmm-app-layer`
-- `kb-koin`
+- `kb-kmm-clean-architecture` -> **Regla 2**
+- `kb-kmm-core-layer` -> **Regla 7** y **Regla 13**
+- `kb-kmm-feature-clean-architecture` -> **Regla 7** y **Regla 12**
+- `kb-kmm-app-layer` -> **Regla 8**
+- `kb-koin` -> **Regla 1**, **Regla 2** y **Regla 10**
 
 Con esto se decide:
 
@@ -39,10 +39,10 @@ Con esto se decide:
 
 Aplicar:
 
-- `kb-kmm-network-contracts`
-- `kb-kmm-app-errors`
-- `kb-kmm-auth-contracts`
-- `kb-kmm-auth-oauth-keycloak`
+- `kb-kmm-network-contracts` -> **Regla 3**, **Regla 5**, **Regla 6** y **Regla 11**
+- `kb-kmm-app-errors` -> **Regla 1**, **Regla 5** y **Regla 6**
+- `kb-kmm-auth-contracts` -> **Regla 2**, **Regla 3**, **Regla 4** y **Regla 7**
+- `kb-kmm-auth-oauth-keycloak` -> **Regla 2**, **Regla 3**, **Regla 4** y **Regla 5**
 
 Con esto se fijan:
 
@@ -59,8 +59,8 @@ No implementar todavía Ktor ni el plugin de auth antes de tener cerrados estos 
 
 Aplicar:
 
-- `kb-kmm-http-ktor`
-- `kb-kmm-auth-ktor-plugin`
+- `kb-kmm-http-ktor` -> **Regla 2**, **Regla 5** y **Regla 10**
+- `kb-kmm-auth-ktor-plugin` -> **Regla 1**, **Regla 2**, **Regla 4** y **Regla 7**
 
 Con esto se implementa:
 
@@ -81,6 +81,13 @@ No trasladar a estas skills decisiones de política de auth, proveedor OAuth o u
 5. instalar el plugin de auth en el cliente de app si aplica
 6. registrar dependencias en Koin sin mezclar contratos con implementaciones
 7. verificar que las features consumen solo el cliente autenticado y no coordinan refresh manualmente
+
+La ejecución debe respetar explícitamente:
+
+- `kb-kmm-network-contracts` -> **Regla 6**
+- `kb-kmm-auth-contracts` -> **Regla 7**
+- `kb-kmm-http-ktor` -> **Regla 8** y **Regla 9**
+- `kb-kmm-auth-ktor-plugin` -> **Regla 6** y **Regla 8**
 
 ---
 
