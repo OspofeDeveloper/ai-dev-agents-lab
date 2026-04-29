@@ -25,10 +25,14 @@ Las `kb-*` viven en los subagentes y se cargan automáticamente en su contexto. 
 ## Cómo actuar ante una petición
 
 1. **Identifica la intención** usando el rootmap anterior
-2. **Invoca el skill** con los argumentos correctos
-3. **Reporta al usuario** el resultado y el siguiente paso
+2. **Si encaja en una `wf-*` cerrada**, invoca esa workflow con los argumentos correctos
+3. **Si no encaja en una `wf-*` y la petición es de implementación**, explora primero el proyecto con `kmm-explorer`
+4. **Con la exploración hecha**, decide si:
+   - delegar directamente al agente implementador correcto;
+   - o pasar antes por `kmm-planner` si la tarea necesita descomposición real en fases o varios agentes
+5. **Reporta al usuario** el resultado y el siguiente paso
 
-Si la intención no coincide exactamente, usa matching semántico con la columna de intenciones. Si hay ambigüedad entre dos skills, pregunta al usuario antes de invocar.
+Si la intención no coincide exactamente, usa matching semántico con la columna de intenciones. Si hay ambigüedad entre dos skills o dos agentes, explora primero con `kmm-explorer` antes de decidir.
 
 ## Agentes KMM disponibles
 
@@ -36,11 +40,24 @@ La unidad primaria de implementación en KMM es el **agente especializado**, no 
 
 | Agente | Dominio |
 |---|---|
-| `kmm-feature-implementer` | Implementación dentro de features: dominio de feature, data específica, presentation, recursos y texto UI |
+| `kmm-feature-implementer` | Implementación dentro de features: dominio de feature, data específica, presentation, recursos, texto UI y borde remoto propio de feature cuando no es infraestructura transversal |
 | `kmm-platform-integrator` | `app`, navegación, DI, brands/environments y bridges Android/iOS |
 | `kmm-network-auth-implementer` | Networking, Ktor, contratos remotos, auth y piezas transversales de `core` asociadas |
+| `kmm-explorer` | Exploración, auditoría, diagnóstico y análisis previo a la implementación usando las `kb-*` para decidir ownership, detectar contradicciones y mapear el estado actual |
+| `kmm-planner` | Planificación de tareas KMM a partir de un contexto ya explorado, ordenando fases, agentes o workflows sin sustituir la exploración técnica |
 
 Usa workflows cuando exista una pipeline clara y cerrada. Si en el futuro una task de implementación llega sin workflow específico, el criterio base es delegarla al agente KMM cuyo dominio coincida con el trabajo a realizar.
+
+Usa `kmm-explorer` cuando la tarea sea principalmente de lectura, auditoría, diagnóstico, localización de ownership o análisis previo antes de implementar.
+
+Usa `kmm-planner` cuando la petición sea explícitamente de planificación o descomposición y el contexto técnico relevante ya esté claro o ya haya sido explorado.
+
+En una petición típica de implementación de feature, el flujo preferido es:
+
+1. `kmm-explorer`
+2. elección de `wf-*` o del agente implementador adecuado
+3. `kmm-planner` solo si hace falta descomponer la tarea antes de ejecutar
+4. implementación
 
 ## Skills de conocimiento KMM
 
@@ -75,6 +92,12 @@ Las skills KMM son bases de conocimiento que los agentes especializados cargan a
 
 - El orquestador decide si una petición encaja en una `wf-*` existente o si debe delegarse directamente a un subagente.
 - Si existe una workflow cerrada y claramente adecuada, úsala.
+- Si la petición es de exploración, auditoría o análisis previo antes de cambiar código, prioriza `kmm-explorer`.
+- Si la petición es de planificación o diseño del approach pero todavía falta contexto técnico del proyecto, prioriza `kmm-explorer` primero.
+- Si la petición es de planificación o descomposición y el contexto ya está claro, prioriza `kmm-planner`.
+- Si la petición es de implementación y no existe una `wf-*` cerrada, no saltes directamente a `kmm-planner`: explora primero con `kmm-explorer`.
+- `kmm-explorer` no produce planes detallados: explora y recomienda el siguiente paso.
+- `kmm-planner` no sustituye la exploración: planifica sobre contexto ya conocido o ya explorado.
 - Si no existe workflow específica, delega al subagente cuyo dominio coincida con el trabajo.
 - Los subagentes implementan con sus `kb-*` ya cargadas; el orquestador no replica ese conocimiento.
 
@@ -90,4 +113,4 @@ El ecosistema opera en tres capas:
 - **Capa workflow (`wf-*`)**: cuando existe una pipeline cerrada, recoge requisitos, verifica precondiciones y delega al agente especializado.
 - **Capa agente KMM**: implementa el trabajo real con sus knowledge skills cargadas en contexto.
 
-Cada capa es responsable de su nivel de decisión. Si existe workflow, lo activas. Si no existe workflow y la tarea es claramente de implementación KMM, eliges el agente KMM cuyo dominio corresponda.
+Cada capa es responsable de su nivel de decisión. Si existe workflow, lo activas. Si no existe workflow y la tarea es claramente de implementación KMM, primero exploras con `kmm-explorer` y después eliges el agente KMM cuyo dominio corresponda.

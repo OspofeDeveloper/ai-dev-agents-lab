@@ -6,6 +6,7 @@ set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_DIR="$(pwd)/.claude"
+shopt -s nullglob
 
 # ── 1. Instalar agentes ────────────────────────────────────────────────────
 
@@ -20,9 +21,9 @@ install_agent() {
   echo "  ✓ agents/$name"
 }
 
-install_agent "$SCRIPT_DIR/agents/kmm-feature-implementer.md"
-install_agent "$SCRIPT_DIR/agents/kmm-platform-integrator.md"
-install_agent "$SCRIPT_DIR/agents/kmm-network-auth-implementer.md"
+for agent_file in "$SCRIPT_DIR/agents"/*.md; do
+  install_agent "$agent_file"
+done
 
 # ── 2. Instalar skills ─────────────────────────────────────────────────────
 
@@ -36,7 +37,7 @@ install_skill() {
   name=$(basename "$src_dir")
   rm -rf "$CLAUDE_DIR/skills/$name"
   mkdir -p "$CLAUDE_DIR/skills/$name"
-  find "$src_dir" -not -name "README.md" -not -type d | while read -r file; do
+  find "$src_dir" -type f ! -name ".DS_Store" | while read -r file; do
     rel="${file#"$src_dir/"}"
     dest="$CLAUDE_DIR/skills/$name/$rel"
     mkdir -p "$(dirname "$dest")"
