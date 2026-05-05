@@ -1,41 +1,37 @@
-# Patrón UiText — Implementación Completa
+# Patrón UIText — Implementación Completa
 
-## 1. Sealed interface en commonMain
+## 1. Sealed class en commonMain
 
 ```kotlin
-// shared/src/commonMain/kotlin/com/example/core/ui/model/UiText.kt
-package com.example.core.ui.model
+// composeApp/src/commonMain/kotlin/com/example/cuideo/core/ui/UIText.kt
+package com.example.cuideo.core.ui
 
 import androidx.compose.runtime.Composable
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 
-sealed interface UiText {
+sealed class UIText {
 
-    data class DynamicString(val value: String) : UiText
+    data class Dynamic(val value: String) : UIText()
 
-    data class ResourceString(
+    data class Resource(
         val resource: StringResource,
         val args: List<Any> = emptyList()
-    ) : UiText
-}
+    ) : UIText()
 
-@Composable
-fun UiText.asString(): String {
-    return when (this) {
-        is UiText.DynamicString -> value
-        is UiText.ResourceString -> {
-            if (args.isEmpty()) {
-                stringResource(resource)
-            } else {
-                stringResource(resource, *args.toTypedArray())
-            }
+    @Composable
+    fun asString(): String = when (this) {
+        is Dynamic -> value
+        is Resource -> if (args.isEmpty()) {
+            stringResource(resource)
+        } else {
+            stringResource(resource, *args.toTypedArray())
         }
     }
 }
 ```
 
-## 2. Uso en State
+## 2. Uso en State (errores y mensajes)
 
 ```kotlin
 @Immutable
@@ -43,31 +39,84 @@ data class LoginState(
     val email: String = "",
     val password: String = "",
     val isLoading: Boolean = false,
-    val error: UiText? = null
+    val error: UIText? = null
 )
 ```
 
 ## 3. Creación desde ViewModel
 
 ```kotlin
-import myapp.shared.generated.resources.Res
-import myapp.shared.generated.resources.login_error
-import myapp.shared.generated.resources.profile_greeting
+import cuideo.composeapp.generated.resources.Res
+import cuideo.composeapp.generated.resources.login_error
+import cuideo.composeapp.generated.resources.profile_greeting
 
-// Error de recurso (traducible, recomendado)
-val error = UiText.ResourceString(Res.string.login_error)
+// Texto traducible (recomendado para errores y mensajes fijos)
+val error = UIText.Resource(Res.string.login_error)
 
-// Error dinámico (cuando el mensaje viene del servidor)
-val error = UiText.DynamicString("Server error: 500")
+// Texto dinámico (cuando el mensaje viene del servidor o de datos externos)
+val error = UIText.Dynamic("Server error: 500")
 
-// Con argumentos
-val greeting = UiText.ResourceString(
+// Con argumentos de formato
+val greeting = UIText.Resource(
     resource = Res.string.profile_greeting,
     args = listOf(userName)
 )
 ```
 
-## 4. Uso en Composables
+## 4. Uso en UiModels (campos de dato localizables)
+
+`UIText` también puede usarse en UiModels para campos cuya representación depende del locale o de lógica condicional que decide entre un string de recurso y un string dinámico.
+
+Caso típico: un campo de fecha que muestra "Hoy, 12/05/2025" cuando es la fecha actual, o "Lunes, 05/05/2025" cuando no lo es.
+
+```kotlin
+data class ServiceUiModel(
+    val id: String,
+    val startDate: UIText,   // puede ser Dynamic o Resource según la lógica del mapper
+    val patientName: String,
+    // ...
+)
+```
+
+El mapper de presentación construye el `UIText` apropiado:
+
+```kotlin
+private fun formatStartDate(isoDate: String): UIText {
+    // ... parsing de fecha ...
+    return if (isToday) {
+        UIText.Resource(Res.string.home_today_format, listOf(formatted))
+    } else {
+        UIText.Dynamic("$dayOfWeek, $formatted")
+    }
+}
+
+fun Service.toUiModel(): ServiceUiModel = ServiceUiModel(
+    startDate = formatStartDate(startDate),
+    // ...
+)
+```
+
+El Composable lo materializa sin lógica condicional:
+
+```kotlin
+@Composable
+fun ServiceItem(service: ServiceUiModel) {
+    Text(text = service.startDate.asString())
+}
+```
+
+**Cuándo usar `UIText` en un UiModel vs. `StringResource` directamente:**
+- Usa `UIText` cuando el campo puede ser dinámico (dato del servidor) O traducible según condición.
+- Usa `StringResource` directamente cuando el campo es siempre un recurso fijo (sin datos externos), como `contractType: StringResource`.
+
+**Qué no hacer:**
+- No expongas `startDateText: String` junto con `isToday: Boolean` para que la UI decida si usa `stringResource(...)`.
+- No expongas un `String` ya formateado más un flag para que el Composable reconstruya la frase final.
+- No repartas la decisión textual entre varios campos cuando un único `UIText` representa mejor la intención visual final.
+
+El mapper o ViewModel debe devolver el valor final como `UIText`. La UI solo lo materializa con `asString()`.
+
+## 5. Uso en Composables
 
 ```kotlin
 @Composable
@@ -81,13 +130,13 @@ fun LoginScreen(state: LoginState) {
 }
 ```
 
-## 5. Test sin @Composable
+## 6. Test sin @Composable
 
 ```kotlin
 @Test
 fun onLoginFailed_stateHasResourceError() {
     viewModel.onLoginFailed()
     val error = viewModel.state.value.error
-    assertEquals(UiText.ResourceString(Res.string.login_error), error)
+    assertEquals(UIText.Resource(Res.string.login_error), error)
 }
 ```

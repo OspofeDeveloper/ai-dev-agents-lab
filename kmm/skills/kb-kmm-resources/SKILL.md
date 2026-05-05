@@ -35,7 +35,7 @@ En Composables se usa `stringResource()`.
 
 Fuera de Composables, `getString()` solo se usa cuando realmente se necesita el `String` materializado en ese punto.
 
-Si el proyecto usa `kb-kmm-ui-text`, el ViewModel no resuelve strings: expone referencias y la UI las materializa.
+Si el proyecto usa `kb-kmm-ui-text`, el ViewModel no resuelve strings para estado/UI models: expone `UIText` o `StringResource` y la UI los materializa.
 
 → Templates: `references/string-resources.md`
 
@@ -73,13 +73,38 @@ La elección del tipo de recurso pertenece a esta dimensión; su uso concreto pe
 
 → Templates: `references/image-font-raw.md`
 
-## Regla 8: Esta skill no sustituye al patrón de exposición textual
+## Regla 8: `StringResource` puede usarse directamente en UiModels para campos siempre traducibles
+
+Cuando un campo de un UiModel es siempre un string de recurso (nunca un valor dinámico externo), puede tipificarse directamente como `StringResource` de `compose.resources`.
+
+El mapper de presentación asigna la clave correspondiente:
+
+```kotlin
+data class HomeWorkerUiModel(
+    val contractType: StringResource = Res.string.home_contract_type_none,
+    val state: StringResource = Res.string.home_worker_status_none
+)
+
+fun ContractType.toStringResource(): StringResource = when (this) {
+    ContractType.UNDEFINED -> Res.string.home_contract_type_undefined
+    ContractType.TEMPORARY -> Res.string.home_contract_type_temporary
+    // ...
+}
+```
+
+El Composable lo resuelve con `stringResource(field)`.
+
+Cuando el campo puede ser dinámico O traducible según condición, usar `UIText` en su lugar (`kb-kmm-ui-text`).
+
+No usar `StringResource` más primitivos auxiliares para que la UI reconstruya el texto final. Si existe una bifurcación entre texto dinámico y traducible, esa decisión ya debe venir cerrada desde presentation mediante `UIText`.
+
+## Regla 9: Esta skill no sustituye al patrón de exposición textual
 
 Esta skill define el sistema base de recursos compartidos.
 
 No define cómo un ViewModel expone texto traducible a UI. Ese patrón vive en `kb-kmm-ui-text`.
 
-## Regla 9: Requisitos no negociables
+## Regla 10: Requisitos no negociables
 
 - strings y drawables compartidos en `commonMain/composeResources/`
 - `stringResource()` para textos en Composables

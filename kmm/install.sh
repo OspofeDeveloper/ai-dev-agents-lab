@@ -1,16 +1,36 @@
 #!/bin/bash
 # install.sh — Despliega el ecosistema KMM al .claude del proyecto
-# Ejecutar desde el directorio del proyecto KMM destino: bash /path/to/kmm/install.sh
+# Ejecutar desde el directorio del proyecto KMM destino:
+#   bash /path/to/kmm/install.sh [normal|optimized]
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_DIR="$(pwd)/.claude"
+SKILL_VARIANT="${1:-normal}"
+AGENTS_SOURCE_DIR="$SCRIPT_DIR/agents"
+SKILLS_SOURCE_DIR="$SCRIPT_DIR/skills"
+CLAUDE_SOURCE_FILE="$SCRIPT_DIR/CLAUDE.md"
 shopt -s nullglob
+
+case "$SKILL_VARIANT" in
+  normal)
+    ;;
+  optimized)
+    AGENTS_SOURCE_DIR="$SCRIPT_DIR/agents_optimized"
+    SKILLS_SOURCE_DIR="$SCRIPT_DIR/skills_optimized"
+    CLAUDE_SOURCE_FILE="$SCRIPT_DIR/CLAUDE_optimized.md"
+    ;;
+  *)
+    echo "Uso: bash /path/to/kmm/install.sh [normal|optimized]"
+    exit 1
+    ;;
+esac
 
 # ── 1. Instalar agentes ────────────────────────────────────────────────────
 
 echo "Instalando agentes..."
+echo "Instalando agentes desde $(basename "$AGENTS_SOURCE_DIR")..."
 mkdir -p "$CLAUDE_DIR/agents"
 
 install_agent() {
@@ -21,14 +41,14 @@ install_agent() {
   echo "  ✓ agents/$name"
 }
 
-for agent_file in "$SCRIPT_DIR/agents"/*.md; do
+for agent_file in "$AGENTS_SOURCE_DIR"/*.md; do
   install_agent "$agent_file"
 done
 
 # ── 2. Instalar skills ─────────────────────────────────────────────────────
 
 echo ""
-echo "Instalando skills..."
+echo "Instalando skills desde $(basename "$SKILLS_SOURCE_DIR")..."
 mkdir -p "$CLAUDE_DIR/skills"
 
 install_skill() {
@@ -46,15 +66,15 @@ install_skill() {
   echo "  ✓ skills/$name/"
 }
 
-for skill_dir in "$SCRIPT_DIR/skills"/*/; do
+for skill_dir in "$SKILLS_SOURCE_DIR"/*/; do
   install_skill "$skill_dir"
 done
 
 # ── 3. Instalar CLAUDE.md ──────────────────────────────────────────────────
 
 echo ""
-echo "Instalando CLAUDE.md..."
-cp "$SCRIPT_DIR/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
+echo "Instalando CLAUDE.md desde $(basename "$CLAUDE_SOURCE_FILE")..."
+cp "$CLAUDE_SOURCE_FILE" "$CLAUDE_DIR/CLAUDE.md"
 echo "  ✓ CLAUDE.md"
 
 # ── 4. Instalar settings.json ──────────────────────────────────────────────
