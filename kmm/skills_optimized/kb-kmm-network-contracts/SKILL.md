@@ -97,6 +97,8 @@ The remote boundary speaks in transport/integration terms:
 
 It does not expose domain models or raw HTTP client details upward.
 
+DTO nullability and transport-tolerant modeling are delegated to `kb-kmm-model-boundaries`.
+
 ---
 
 ## Rule 6: The repository adapts the remote contract to domain
@@ -116,6 +118,8 @@ Preferred pattern:
 - the error passes upward unchanged unless there is a clear business reason to adapt it
 
 This avoids redundant remapping and preserves a single error taxonomy across the app.
+
+Null cleanup and default replacement during DTO -> domain mapping are delegated to `kb-kmm-model-boundaries`.
 
 ---
 
@@ -143,6 +147,7 @@ If the backend uses discriminators such as `"$type"`, custom error codes, or pay
 
 Combine with:
 
+- `kb-kmm-model-boundaries` for DTO nullability and DTO -> domain normalization policy
 - `kb-kmm-app-errors` for the cross-cutting `AppResult` / `AppError` contract
 - `kb-kmm-core-layer` to decide whether the contract is cross-cutting
 - `kb-kmm-feature-clean-architecture` to decide how it integrates inside a feature

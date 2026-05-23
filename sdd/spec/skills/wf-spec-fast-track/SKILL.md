@@ -4,6 +4,7 @@ description: Genera el Spec de una feature directamente desde un documento de re
 argument-hint: "<archivo.md> --capability <nombre-kebab> [--analysis <analysis.md>] | <prd.md> --scope-from <discovery.md> --feature <F-00X> [--analysis <analysis.md>]"
 effort: high
 allowed-tools: [Read, Write, Bash]
+agent: sdd-spec-writer
 ---
 
 # Workflow: FAST-TRACK

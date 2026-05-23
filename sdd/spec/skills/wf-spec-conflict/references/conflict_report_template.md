@@ -1,6 +1,6 @@
 # Conflict Report: [Nombre del proyecto]
 
-> **Generado por**: sdd-analyst (modo conflict)
+> **Generado por**: sdd-spec-auditor
 > **Fecha**: [YYYY-MM-DD]
 > **Specs analizados**: [N] features
 > **Features**: [lista de feature IDs y nombres]

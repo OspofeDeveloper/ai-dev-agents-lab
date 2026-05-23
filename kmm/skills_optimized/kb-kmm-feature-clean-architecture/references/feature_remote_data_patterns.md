@@ -21,6 +21,7 @@ data/
 - receives a request model or request DTO when the input has a clear semantic unit
 - executes the call wrapped in `tryCall` from `core/network`
 - returns `AppResult<Dto, AppError>`
+- keeps response DTOs nullable by default unless the app is the authoritative source of that value
 
 If a `responseHandler` is small, it may remain private inside the `Api`. If it grows or develops enough semantics of its own, the project preference is to move it to `data/responseHandlers/`.
 
@@ -32,4 +33,5 @@ Its responsibilities are:
 
 - invoke the `Api`
 - transform the result with `.map { it.toDomain() }`
+- clean transport nulls during that mapping before data enters `domain`
 - adapt the error to the domain error taxonomy only if the feature requires it

@@ -1,6 +1,6 @@
 # Delta Analysis: [Nombre del feature spec]
 
-> **Generado por**: sdd-analyst (modo delta/analyze)
+> **Generado por**: sdd-spec-writer
 > **Fecha**: [YYYY-MM-DD]
 > **Spec existente**: [path/feature_spec.md] (v[X.Y])
 > **Nuevos requisitos**: [path/description.md]

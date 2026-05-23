@@ -1,6 +1,6 @@
 # Readiness Report: [Nombre del proyecto]
 
-> **Generado por**: sdd-analyst (modo readiness)
+> **Generado por**: sdd-spec-auditor
 > **Fecha**: [YYYY-MM-DD]
 > **Features analizadas**: [N]
 > **Conflict report**: [Si — path | No encontrado]

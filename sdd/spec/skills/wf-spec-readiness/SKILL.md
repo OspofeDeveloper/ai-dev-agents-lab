@@ -5,7 +5,7 @@ argument-hint: "<path/features/>"
 effort: medium
 allowed-tools: [Read, Write, Bash]
 context: fork
-agent: sdd-analyst
+agent: sdd-spec-auditor
 ---
 
 # Workflow: READINESS
@@ -63,7 +63,9 @@ Para cada feature, extrae:
 Del `_features.md`, extrae para cada feature:
 - Feature ID (F-001, F-002, etc.)
 - Nombre de la feature
-- Ruta al spec
+- Ruta al spec (si existe)
+
+**Detección de features no generadas aún**: si una feature del `_features.md` no tiene archivo `*_spec.md` correspondiente en `<features-dir>/<nombre>/`, marca la feature como `PENDIENTE_GENERACIÓN` y omite los Pasos 4b–4d para ella (no hay spec que inspeccionar). Sus dependencias se infieren solo del `_features.md`.
 
 ### 4b — Gaps (marcadores [INCOMPLETO])
 
@@ -115,10 +117,13 @@ Para cada feature, asigna un estado:
 | `BLOQUEADA_POR_GAPS` | Tiene HUs `[INCOMPLETO]` |
 | `BLOQUEADA_POR_CONFLICTOS` | Involucrada en conflicto(s) ALTA no resueltos |
 | `ESPERANDO_DEPENDENCIAS` | Sin gaps ni conflictos propios, pero alguna dependencia tiene gaps o conflictos que impiden planificar |
+| `PENDIENTE_GENERACIÓN` | Identificada en el discovery pero aún no se ha generado spec (no se ha incluido en ninguna iteración de `wf-spec-features-first`). No es un bloqueo accionable — refleja que el humano aún no ha pedido procesarla. |
 
 Una feature puede tener múltiples bloqueos simultáneos. En ese caso, listar todos los motivos. La prioridad de display es: GAPS > CONFLICTOS > DEPENDENCIAS.
 
 **Nota importante sobre LISTA vs LISTA_PARA_PLAN**: Una feature `LISTA_PARA_PLAN` puede pasar a `/wf-prepare-plan` (no tiene bloqueos propios), pero su implementación posterior dependerá de que sus dependencias estén también planificadas e implementadas. Indica al usuario que puede planificar pero debe respetar el orden de fases para implementar.
+
+**Nota sobre `PENDIENTE_GENERACIÓN`**: estas features se incluyen en el `_features.md` y en el informe de readiness como visibilidad del backlog, pero no participan del topological sort ni del orden de implementación — no hay spec con dependencias declaradas hasta que se generen. Si otra feature ya generada declara una dependencia sobre una `PENDIENTE_GENERACIÓN`, esa dependencia se reporta como "dependencia hacia feature no generada todavía" (no bloquea readiness de la feature ya generada, pero sí señala al usuario qué generar a continuación).
 
 ---
 
@@ -146,7 +151,7 @@ Tras escribir el readiness report, actualiza el `_features.md` encontrado en el 
 
 Para cada bloque de feature en la sección `## Features identificadas`, actualiza (o añade si no existe) la línea:
 ```
-- **Estado**: [LISTA | LISTA_PARA_PLAN | BLOQUEADA_POR_GAPS | BLOQUEADA_POR_CONFLICTOS | ESPERANDO_DEPENDENCIAS]
+- **Estado**: [LISTA | LISTA_PARA_PLAN | BLOQUEADA_POR_GAPS | BLOQUEADA_POR_CONFLICTOS | ESPERANDO_DEPENDENCIAS | PENDIENTE_GENERACIÓN]
 ```
 
 Usa el estado determinado en el Paso 6. Si una feature tiene múltiples bloqueos, usa el de mayor prioridad (GAPS > CONFLICTOS > DEPENDENCIAS).
@@ -179,9 +184,11 @@ Si existe la sección `## Historial de cambios` en `_features.md`, añade una fi
 
 - Path del informe generado
 - Resumen rápido:
-  - N features listas de M totales
+  - N features listas de M totales con spec generado
   - N features bloqueadas (desglose por tipo de bloqueo)
+  - N features `PENDIENTE_GENERACIÓN` (aún no procesadas en ninguna iteración)
 - Siguiente paso según el estado:
-  - **Todas listas**: "Todas las features están listas. Ejecuta `/wf-prepare-plan generate <feature_spec.md>` siguiendo el orden de fases del informe."
+  - **Todas listas**: "Todas las features generadas están listas. Ejecuta `/wf-prepare-plan generate <feature_spec.md>` siguiendo el orden de fases del informe."
   - **Algunas listas**: "Puedes empezar con las features LISTA y LISTA_PARA_PLAN de las primeras fases. Las features bloqueadas requieren acción — consulta el informe para los detalles."
   - **Ninguna lista**: "Ninguna feature está lista para planificar. Revisa el informe para los bloqueos y resuélvelos antes de continuar."
+  - **Hay PENDIENTE_GENERACIÓN**: "Quedan [N] features identificadas en el discovery que aún no se han generado: [lista de IDs]. Cuando quieras incluirlas en una próxima iteración: `/wf-spec-features-first <prd.md> --features F-XXX,F-YYY,...`"

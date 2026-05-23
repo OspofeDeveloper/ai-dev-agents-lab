@@ -14,6 +14,8 @@ features/<feature>/presentation/<screen>/
 
 ## 2. Preferred naming
 
+Screen state and presentation-owned UI models should default every parameter to a render-safe value.
+
 - `<Screen>State` — mutable screen state
 - `<Screen>Intent` — UI → ViewModel input events
 - `<Screen>Events` — ViewModel → UI output effects

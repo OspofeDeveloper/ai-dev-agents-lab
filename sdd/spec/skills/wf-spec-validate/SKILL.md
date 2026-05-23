@@ -5,7 +5,7 @@ argument-hint: "<archivo_spec.md>"
 effort: high
 allowed-tools: [Read]
 context: fork
-agent: sdd-analyst
+agent: sdd-spec-auditor
 ---
 
 # Workflow: VALIDATE

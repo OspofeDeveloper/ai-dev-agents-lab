@@ -5,7 +5,7 @@ argument-hint: "<feature_spec.md> --features-dir <path/features/>"
 effort: high
 allowed-tools: [Read, Write, Bash]
 context: fork
-agent: sdd-analyst
+agent: sdd-spec-auditor
 ---
 
 # Workflow: CONFLICT

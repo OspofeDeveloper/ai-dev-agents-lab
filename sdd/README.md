@@ -21,7 +21,20 @@ informales  ──►   monolítico  ──►   feature    ──►   por feat
 
 ---
 
-## El pipeline SDD en cuatro etapas
+## El pipeline SDD en cinco etapas
+
+### Etapa 0 — PRD
+
+Revisa y limpia el documento de entrada antes de convertirlo en Spec. Aquí se valida que el PRD describe negocio, actores, alcance y exclusiones sin contaminarse con decisiones técnicas.
+
+Un PRD válido para este ecosistema:
+- describe un producto completo, no un fragmento arbitrario
+- explicita actores
+- declara alcance dentro y fuera
+- puede organizarse por actores, por RFs o por secciones funcionales
+- no mezcla implementación técnica
+
+`wf-prd-create` ayuda a redactar el documento inicial. El preflight recomendado es `wf-prd-review`. El paso obligatorio del pipeline sigue siendo `wf-spec-analyze`.
 
 ### Etapa 1 — Specify
 
@@ -88,7 +101,7 @@ Ejemplo de task:
 
 ---
 
-## Arquitectura del ecosistema: 4 etapas × 3 capas
+## Arquitectura del ecosistema: 5 etapas × 3 capas
 
 Cada etapa sigue el mismo patrón arquitectónico de 3 capas:
 
@@ -96,13 +109,25 @@ Cada etapa sigue el mismo patrón arquitectónico de 3 capas:
               LAYER 3              LAYER 2              LAYER 1
            (Conocimiento)       (Agente Worker)      (Workflow)
 
-ETAPA 1    kb-spec-expert ──►   sdd-analyst   ──◄──  wf-spec-analyze
-SPECIFY    Reglas SDD            Analiza/             wf-spec-discover
-           kb-decompose-        Genera Specs          wf-spec-features-first
-           expert               por feature           wf-spec-fast-track
-           Reglas de                                  wf-spec-validate
-           partición                                  wf-spec-conflict
-                                                      wf-spec-delta
+ETAPA 0    kb-prd-expert  ──►   prd-expert         ──◄──  wf-prd-create
+PRD        Reglas PRD            Redacta / revisa PRD      wf-prd-review
+
+ETAPA 1    kb-spec-expert ──►   sdd-spec-explorer  ──◄──  wf-spec-analyze
+SPECIFY    kb-decompose-         Diagnóstico               wf-spec-discover
+           expert
+
+           kb-spec-expert ──►   sdd-spec-writer    ──◄──  wf-spec-fast-track
+           kb-gap-              Escritura / delta         wf-spec-delta
+           conventions
+
+           kb-spec-expert ──►   sdd-spec-auditor   ──◄──  wf-spec-validate
+           kb-conflict-         Auditoría                 wf-spec-conflict
+           expert                                         wf-spec-readiness
+
+           sdd-spec-planner     Planifica approach
+
+           wf-spec-features-first
+           Orquesta discover + fast-track en paralelo
 
 ETAPA 3    kb-plan-expert ──►   plan-architect ──◄── wf-prepare-plan
 PLAN       Reglas Plan           Spec → Plan          /wf-prepare-plan
@@ -119,7 +144,7 @@ TASKS      Reglas Tasks          Plan → Tasks         /wf-prepare-tasks
 
 **Capa 3 — Skill de Knowledge (`kb-`)**: solo conocimiento y reglas. No realiza acciones, define estándares. Se inyecta en el agente para que cada decisión esté basada en criterios explícitos.
 
-> **Nota**: `sdd-analyst` es el worker compartido de las etapas 1 y 2. Opera en siete modos distintos (`analyze`, `finalize`, `validate`, `decompose`, `fast-track`, `delta`, `conflict`) según lo que le pase el workflow.
+> **Nota**: la arquitectura actual separa exploración, planificación, escritura y auditoría en agentes distintos. No existe ya un worker monolítico para Spec.
 
 ---
 
@@ -128,11 +153,22 @@ TASKS      Reglas Tasks          Plan → Tasks         /wf-prepare-tasks
 ```
 ~/.claude/
 ├── agents/
-│   ├── sdd-analyst.md          ✅ Worker: Specify + Decompose
+│   ├── prd-expert.md           ✅ Worker: PRD authoring + review
+│   ├── sdd-spec-explorer.md    ✅ Worker: diagnóstico Spec
+│   ├── sdd-spec-planner.md     ✅ Worker: planning Spec
+│   ├── sdd-spec-writer.md      ✅ Worker: escritura Spec
+│   ├── sdd-spec-auditor.md     ✅ Worker: auditoría Spec
 │   ├── plan-architect.md       ✅ Worker: Plan (model: opus)
 │   └── task-generator.md       ✅ Worker: Tasks
 │
 └── skills/
+    ├── kb-prd-expert/           ✅ Knowledge: PRD rules
+    │   ├── SKILL.md
+    │   └── references/
+    │       ├── prd_structure_guide.md
+    │       ├── prd_error_patterns.md
+    │       └── prd_prohibited_items.md
+    │
     ├── kb-spec-expert/          ✅ Knowledge: Spec rules
     │   ├── SKILL.md
     │   └── references/
@@ -163,6 +199,12 @@ TASKS      Reglas Tasks          Plan → Tasks         /wf-prepare-tasks
     ├── wf-spec-analyze/         ✅ Workflow: Analyze requirements
     │   ├── SKILL.md
     │   └── output_template.md
+    │
+    ├── wf-prd-create/           ✅ Workflow: Create PRD
+    │   └── SKILL.md
+    │
+    ├── wf-prd-review/           ✅ Workflow: PRD preflight
+    │   └── SKILL.md
     │
     ├── wf-spec-validate/        ✅ Workflow: Audit existing spec
     │   ├── SKILL.md
@@ -219,16 +261,32 @@ project-root/
 ```bash
 # ── Etapa 1: Specify ──────────────────────────────────────────────────────────
 /wf-spec-analyze prd.md
-# → prd_analysis.md (gaps, contaminaciones técnicas, preguntas para el cliente)
+# → prd_analysis.md con:
+#     · mapa de elementos del Spec a generar desde el PRD (informativo)
+#     · pureza del PRD (única condición que justifica modificarlo)
+#     · gaps [CRÍTICO] e [INFORMATIVO] de negocio
+# Veredicto: LISTO_PARA_SPECS | LISTO_PARA_SPECS_CON_PREGUNTAS | REQUIERE_LIMPIEZA_PRD
 
-# [HUMANO] Editar prd_analysis.md: responder cada item _(pendiente)_
+# [HUMANO] Responder cada gap _(pendiente)_ en prd_analysis.md (NO se modifica el PRD)
 
+# Opción A — Generar specs de TODO el PRD en una sola pasada:
 /wf-spec-features-first prd.md
 # → prd_discovery.md (mapa de features + scope RF→Feature)
 # → prd_features.md (índice de features + tabla de shared models)
 # → features/<nombre>/<nombre>_spec.md (un spec por feature, en paralelo)
 
-# [HUMANO] Revisar prd_features.md: ajustar scope de features si es necesario
+# Opción B — Iterativo por fases / subset (delivery por fases):
+/wf-spec-discover prd.md --analysis prd_analysis.md
+# → prd_discovery.md con el mapa F-001..F-N
+
+# [HUMANO] Elegir qué Feature IDs entran en la iteración actual
+
+/wf-spec-features-first prd.md --features F-001,F-002,F-003
+# → Genera specs solo para las features indicadas
+# → prd_features.md marca el resto como PENDIENTE_GENERACIÓN
+# Más tarde:  /wf-spec-features-first prd.md --features F-004,F-005
+
+# [HUMANO] Revisar prd_features.md: ajustar scope si es necesario
 #          Confirmar qué feature es owner de cada shared model
 
 
@@ -305,14 +363,15 @@ El `task-generator` conoce los dominios de implementación KMM y asigna cada tas
 **Modelo por complejidad**:
 - `plan-architect` → `claude-opus-4-6` (decisiones arquitectónicas complejas)
 - `task-generator` → `claude-sonnet-4-6` (formateo estructurado)
-- `sdd-analyst` → modelo por defecto (análisis funcional)
+- agentes Spec → modelo por defecto, con responsabilidad separada por tipo de trabajo
 
-**Memoria acumulativa**: cada agente worker tiene `memory: project`. Con el tiempo, el `plan-architect` recuerda decisiones de features anteriores y mantiene consistencia arquitectónica entre ellas.
+**Memoria acumulativa**: cada agente worker tiene `memory: project`. Con el tiempo, los agentes de Spec y el `plan-architect` recuerdan decisiones previas y mantienen consistencia entre artefactos.
 
-**Checkpoints humanos**: el pipeline nunca es fully-automatic. El humano valida artefactos estructurados en tres puntos clave:
-1. Tras `wf-spec-analyze` → responder preguntas abiertas
-2. Tras `wf-spec-features-first` → validar partición y ownership de shared models
-3. Tras cada `wf-prepare-plan` → revisar arquitectura antes de generar tasks
+**Checkpoints humanos**: el pipeline nunca es fully-automatic. El humano valida artefactos estructurados en cuatro puntos clave:
+1. Tras `wf-spec-analyze` → responder gaps de negocio _(pendiente)_ en el `_analysis.md` (el PRD no se modifica, salvo veredicto `REQUIERE_LIMPIEZA_PRD`)
+2. Tras `wf-spec-discover` (modo iterativo) → elegir qué Feature IDs entran en la próxima iteración
+3. Tras `wf-spec-features-first` → validar partición y ownership de shared models
+4. Tras cada `wf-prepare-plan` → revisar arquitectura antes de generar tasks
 
 **Trazabilidad completa**: cada task apunta a un CA del spec de feature. Cada CA del spec de feature es rastreable al spec monolítico origen.
 
@@ -329,7 +388,9 @@ cd ai-dev-agents-lab
 
 # Instalar en ~/.claude/
 chmod +x install.sh
-./install.sh
+./install.sh          # ecosistema completo
+./install.sh prd      # solo fase PRD
+./install.sh spec     # solo fase Spec
 
 # Reiniciar Claude Code para cargar los nuevos skills y agentes
 ```
@@ -339,21 +400,30 @@ Para actualizar tras un `git pull`:
 git pull && ./install.sh
 ```
 
+Si te importa el rendimiento del agente, instala solo la fase que necesites. Las fases están diseñadas para trabajar con precondiciones duras y no necesitan cargar el ecosistema completo a la vez.
+
 ---
 
 ## Estado de implementación
 
 | Componente | Tipo | Etapa | Estado |
 |---|---|---|---|
+| `kb-prd-expert` | Knowledge (kb) | PRD | ✅ Implementado |
 | `kb-spec-expert` | Knowledge (kb) | Specify | ✅ Implementado |
 | `kb-decompose-expert` | Knowledge (kb) | Decompose | ✅ Implementado |
 | `kb-conflict-expert` | Knowledge (kb) | Conflict | ✅ Implementado |
 | `kb-gap-conventions` | Knowledge (kb) | Transversal | ✅ Implementado |
 | `kb-plan-expert` | Knowledge (kb) | Plan | ✅ Implementado |
 | `kb-tasks-expert` | Knowledge (kb) | Tasks | ✅ Implementado |
-| `sdd-analyst` | Agente Worker | Specify | ✅ Implementado |
+| `prd-expert` | Agente Worker | PRD | ✅ Implementado |
+| `sdd-spec-explorer` | Agente Worker | Specify | ✅ Implementado |
+| `sdd-spec-planner` | Agente Worker | Specify | ✅ Implementado |
+| `sdd-spec-writer` | Agente Worker | Specify | ✅ Implementado |
+| `sdd-spec-auditor` | Agente Worker | Specify | ✅ Implementado |
 | `plan-architect` | Agente Worker | Plan | ✅ Implementado |
 | `task-generator` | Agente Worker | Tasks | ✅ Implementado |
+| `wf-prd-create` | Workflow (wf) | PRD | ✅ Implementado |
+| `wf-prd-review` | Workflow (wf) | PRD | ✅ Implementado |
 | `wf-spec-analyze` | Workflow (wf) | Specify | ✅ Implementado |
 | `wf-spec-validate` | Workflow (wf) | Specify | ✅ Implementado |
 | `wf-spec-discover` | Workflow (wf) | Specify | ✅ Implementado |

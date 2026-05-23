@@ -176,6 +176,8 @@ Internal feature boundaries must preserve this separation:
 
 If a DTO reaches the ViewModel or the Screen, the boundary between `data` and `domain` is broken.
 
+The nullability policy for DTOs and the cleanup required before entering `domain` are delegated to `kb-kmm-model-boundaries`.
+
 If the project uses a cross-cutting result/error contract (`AppResult<T, AppError>` or equivalent), that abstraction may cross the repository boundary and reach use cases and the ViewModel. What must not cross that boundary are DTOs, `HttpResponse`, status codes, or HTTP client exceptions.
 
 The policy for when to preserve an error and when to adapt it is delegated to `kb-kmm-app-errors`.
@@ -190,7 +192,9 @@ Each mapper must live where one representation is transformed into another:
 - domain → UI model in `presentation`, only if that UI model genuinely exists
 - `AppError` → `UiText` in `presentation`, when the UI needs to render it
 
-Do not mix infrastructure and UI transformations in the same mapper. Each layer converts toward the representation it needs.
+Do not mix infrastructure and UI transformations in the same mapper.
+
+The default-value policy for `domain` and `presentation` models is delegated to `kb-kmm-model-boundaries`. Each layer converts toward the representation it needs.
 
 When data crosses layer boundaries and represents a clear semantic unit, the project preference is to encapsulate it in a layer-specific model rather than passing it as loose variables:
 

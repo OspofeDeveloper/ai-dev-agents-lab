@@ -1,8 +1,10 @@
 # Análisis SDD: [Nombre del documento]
 
-> **Generado por**: sdd-analyst (modo analyze)
+> **Generado por**: sdd-spec-explorer
 > **Fecha**: [YYYY-MM-DD]
 > **Archivo origen**: [path/al/archivo.md]
+
+> **Nota**: este análisis prepara la información que los Specs van a necesitar. El PRD permanece congelado — las respuestas y decisiones se anotan **en este archivo**, no en el PRD.
 
 ---
 
@@ -19,31 +21,38 @@
 
 ---
 
-## Estado general
+## Estado de preparación para Specs
 
-> **[REQUIERE_TRABAJO | APROBADO_CON_OBSERVACIONES | APROBADO]**
+> **[LISTO_PARA_SPECS | LISTO_PARA_SPECS_CON_PREGUNTAS | REQUIERE_LIMPIEZA_PRD]**
 >
-> Resumen en 1-2 frases del estado del documento y los principales bloqueantes.
+> Resumen en 1-2 frases del estado del documento de cara a generar los Specs.
+
+**Significado de los veredictos:**
+- `LISTO_PARA_SPECS`: el PRD está limpio (sin contaminación técnica) y no hay gaps `[CRÍTICO]` pendientes. Se puede arrancar la generación de Specs directamente.
+- `LISTO_PARA_SPECS_CON_PREGUNTAS`: el PRD está limpio, pero hay gaps `[CRÍTICO]` por responder. Se puede generar Specs igualmente — las HUs afectadas saldrán marcadas `[INCOMPLETO]` y se podrán completar luego con `/wf-spec-delta resolve`.
+- `REQUIERE_LIMPIEZA_PRD`: se detectó contaminación técnica en el PRD (Check 2). **Única condición** que requiere modificar el PRD antes de continuar.
 
 ---
 
-## Completitud: X/8 elementos presentes
+## Elementos del Spec a generar desde este PRD
 
-- [ ] **Actores** — [presente / parcial: falta X / ausente]
-- [ ] **Historias de Usuario (Como/quiero/para que)** — [presente / parcial: falta X / ausente]
-- [ ] **Recorridos de Usuario** — [presente / parcial: falta X / ausente]
-- [ ] **Resultados y Éxito** — [presente / parcial: falta X / ausente]
-- [ ] **Instrucciones Inambiguas** — [presente / parcial: falta X / ausente]
-- [ ] **Criterios de Aceptación (GIVEN/WHEN/THEN)** — [presente / parcial: falta X / ausente]
-- [ ] **Checklist de Validación** — [presente / parcial: falta X / ausente]
-- [ ] **Fuera de Alcance** — [presente / ausente]
+> Esta sección es **informativa**, no diagnóstica. Mapea qué partes del Spec final ya están en el PRD y cuáles se generarán durante la fase Spec. Es normal y esperable que un PRD bien formado no contenga HUs formales, Journeys paso a paso, CAs en GIVEN/WHEN/THEN ni Checklist — esos elementos pertenecen al Spec (`kb-prd-expert` Regla 9), no al PRD.
+
+- **Actores** — [ya en PRD / a generar en Spec / parcial — se completará en Spec]
+- **Historias de Usuario (Como/quiero/para que)** — [ya en PRD / a generar en Spec / parcial — se completará en Spec]
+- **Recorridos de Usuario** — [ya en PRD / a generar en Spec / parcial — se completará en Spec]
+- **Resultados y Éxito** — [ya en PRD / a generar en Spec / parcial — se completará en Spec]
+- **Instrucciones Inambiguas** — [ya en PRD / a generar en Spec / parcial — se completará en Spec]
+- **Criterios de Aceptación (GIVEN/WHEN/THEN)** — [ya en PRD / a generar en Spec / parcial — se completará en Spec]
+- **Checklist de Validación** — [ya en PRD / a generar en Spec / parcial — se completará en Spec]
+- **Fuera de Alcance** — [ya en PRD / a generar en Spec / parcial — se completará en Spec]
 
 ---
 
 ## Pureza: [APROBADO | CONTAMINADO]
 
 <!-- Si APROBADO: "No se encontraron elementos técnicos en el documento." -->
-<!-- Si CONTAMINADO: listar cada instancia encontrada -->
+<!-- Si CONTAMINADO: listar cada instancia encontrada — éste es el único caso que requiere editar el PRD -->
 
 #### [C-001] [Título breve de la contaminación]
 - **Cita**: > "[fragmento exacto del documento]"
@@ -52,17 +61,18 @@
 - **Acción**: `[ ] ACEPTAR` · `[ ] EDITAR` · `[ ] RECHAZAR (justificar)`
 
 <!-- Instrucciones para el usuario:
-     - ACEPTAR: la reescritura se usará tal cual en el spec final
+     - ACEPTAR: la reescritura se aplicará al PRD tal cual y luego se usará en el spec final
      - EDITAR: modifica el texto de "Reescritura sugerida" arriba y marca esta opción
      - RECHAZAR: añade tu justificación tras "RECHAZAR"; el texto original se conservará como excepción consciente
      Solo marca UNA de las tres opciones por contaminación. -->
 
 ---
 
-## Testabilidad: [APROBADO | REQUIERE_MEJORA]
+## Testabilidad: [APROBADO | REQUIERE_MEJORA | NO_APLICA]
 
 <!-- Si APROBADO: "Todos los CAs encontrados son verificables de forma objetiva e independiente." -->
 <!-- Si REQUIERE_MEJORA: listar CAs problemáticos -->
+<!-- Si NO_APLICA: "El PRD no contiene CAs formales — esperado en un PRD. Los CAs se generarán en la fase Spec." -->
 
 #### [CA-001] [Título del CA problemático]
 - **CA actual**: [descripción o cita]
@@ -80,7 +90,9 @@
 
 > Estos puntos **no fueron inferidos por el sistema**. Son ambigüedades o información ausente
 > que debe ser definida por el cliente antes de generar el `.spec` final.
-> **Instrucción**: escribe la respuesta del cliente en el campo "Respuesta" de cada punto.
+>
+> **Las respuestas se escriben en este archivo, no en el PRD** — el PRD permanece congelado.
+> Escribe la respuesta de cada cliente en el campo "Respuesta" del gap correspondiente.
 >
 > - `[CRÍTICO]`: afecta directamente a las HUs indicadas en "Afecta". Si se deja sin responder, esas HUs se marcarán como `[INCOMPLETO]` en el spec — se generarán con la información disponible pero no podrán avanzar a plan/tasks hasta completarse.
 > - `[INFORMATIVO]`: si no se responde, se aplicará la "Asunción por defecto" indicada.
@@ -102,13 +114,12 @@
 
 ## Próximos pasos
 
-1. En la sección "Pureza", para cada contaminación marca **una** de las tres acciones:
-   - `[x] ACEPTAR` — se usará la reescritura tal cual en el spec
-   - `[x] EDITAR` — modifica el texto de "Reescritura sugerida" y marca esta opción
-   - `[x] RECHAZAR (justificar)` — añade tu justificación; el texto original se conservará como excepción documentada
-2. Responder los puntos `[CRÍTICO]` que puedas — los que queden sin respuesta marcarán sus HUs como `[INCOMPLETO]` en el spec (se generarán pero no podrán avanzar a plan/tasks)
-3. Responder los puntos `[INFORMATIVO]` si tienes la información — si no, se aplicará la asunción por defecto
-4. Una vez revisado, ejecutar el flujo completo automático:
+**Si el veredicto es `LISTO_PARA_SPECS` o `LISTO_PARA_SPECS_CON_PREGUNTAS`** (el PRD no se modifica):
+
+1. Anota la respuesta de cada `[P-XXX]` que puedas resolver **en este archivo**, en el campo `Respuesta` (sustituye `_(pendiente)_` por la respuesta real). No modifiques el PRD.
+2. Los `[CRÍTICO]` que queden sin respuesta marcarán sus HUs como `[INCOMPLETO]` en el spec (se generarán pero no podrán avanzar a plan/tasks hasta completarse).
+3. Los `[INFORMATIVO]` que queden sin respuesta aplicarán su asunción por defecto.
+4. Ejecuta el flujo completo automático:
    ```
    /wf-spec-features-first [path/al/archivo.md]
    ```
@@ -116,4 +127,12 @@
    ```
    /wf-spec-discover [path/al/archivo.md] --analysis [path/al/archivo_analysis.md]
    ```
-5. Para completar HUs marcadas `[INCOMPLETO]` después: responde los gaps pendientes en este archivo y ejecuta `/wf-spec-delta resolve <feature_spec.md>`
+5. Para completar HUs marcadas `[INCOMPLETO]` más tarde: responde los gaps pendientes en este archivo y ejecuta `/wf-spec-delta resolve <feature_spec.md>`.
+
+**Si el veredicto es `REQUIERE_LIMPIEZA_PRD`** (único caso que toca el PRD):
+
+1. En la sección "Pureza", para cada contaminación marca **una** de las tres acciones:
+   - `[x] ACEPTAR` — aplica la reescritura sugerida al PRD
+   - `[x] EDITAR` — modifica el texto de "Reescritura sugerida" y marca esta opción; luego aplica ese texto al PRD
+   - `[x] RECHAZAR (justificar)` — añade tu justificación; el texto original se conservará como excepción documentada
+2. Tras editar el PRD, vuelve a ejecutar `/wf-spec-analyze [path/al/archivo.md]` para confirmar que la limpieza es completa antes de avanzar.

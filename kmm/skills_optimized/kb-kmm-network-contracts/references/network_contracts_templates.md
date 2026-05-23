@@ -42,6 +42,14 @@ sealed interface NetworkError : AppError {
 ## Remote boundary
 
 ```kotlin
+data class TokenDto(
+    val accessToken: String? = null,
+    val refreshToken: String? = null,
+    val expiresIn: Long? = null,
+)
+```
+
+```kotlin
 interface AuthApi {
     suspend fun login(request: LoginRequestDto): AppResult<TokenDto, AppError>
 }
@@ -58,6 +66,18 @@ interface AuthRepository {
 ## Repository adaptation preserving errors
 
 ```kotlin
+data class TokenInfo(
+    val accessToken: String = "",
+    val refreshToken: String = "",
+    val expiresIn: Long = 0,
+)
+
+fun TokenDto.toDomain(): TokenInfo = TokenInfo(
+    accessToken = accessToken.orEmpty(),
+    refreshToken = refreshToken.orEmpty(),
+    expiresIn = expiresIn ?: 0,
+)
+
 class AuthRepositoryImpl(
     private val api: AuthApi,
 ) : AuthRepository {

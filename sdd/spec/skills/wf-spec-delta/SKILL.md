@@ -5,7 +5,7 @@ argument-hint: "analyze <spec.md> --new-reqs <desc.md> | apply <spec.md> <delta.
 effort: high
 allowed-tools: [Read, Write, Bash]
 context: fork
-agent: sdd-analyst
+agent: sdd-spec-writer
 ---
 
 # Workflow: DELTA

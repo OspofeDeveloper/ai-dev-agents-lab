@@ -5,10 +5,12 @@ argument-hint: "<prd_archivo.md> [--analysis <analysis.md>]"
 effort: high
 allowed-tools: [Read, Write, Bash]
 context: fork
-agent: sdd-analyst
+agent: sdd-spec-explorer
 ---
 
 # Workflow: DISCOVER
+
+Este workflow pertenece a la fase Spec y **requiere un PRD o documento de requisitos previo** como entrada. Si el usuario todavía no tiene ese artefacto, remítelo a la fase PRD antes de continuar.
 
 Tu objetivo es leer un PRD y producir un mapa de features candidatas con su scope, sin generar ningún spec. Usa `kb-decompose-expert` para las reglas de identificación de features y shared models.
 
@@ -37,8 +39,8 @@ Verifica que el archivo existe:
 
 Si no existe → informa al usuario con la ruta exacta y detén.
 
-Si el nombre termina en `_spec.md` → informa:
-> "Este archivo parece un Spec ya procesado. `/wf-spec-discover` opera sobre PRDs o documentos de requisitos, no sobre specs."
+Si el nombre termina en `_spec.md`, `_plan.md` o `_tasks.md` → informa:
+> "Este archivo parece un artefacto posterior del pipeline SDD. `/wf-spec-discover` opera sobre PRDs o documentos de requisitos previos a Spec."
 
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: kmm-feature-implementer
 description: Specialized agent for implementing end-to-end functional work inside a KMM feature while respecting its internal microarchitecture and shared resource and UI text conventions.
-skills: [kb-kmm-clean-architecture, kb-kmm-feature-clean-architecture, kb-koin, kb-kmm-navigation-viewmodel-events, kb-kmm-app-errors, kb-kmm-network-contracts, kb-kmm-http-ktor, kb-kmm-resources, kb-kmm-ui-text]
+skills: [kb-kmm-clean-architecture, kb-kmm-feature-clean-architecture, kb-kmm-model-boundaries, kb-koin, kb-kmm-navigation-viewmodel-events, kb-kmm-app-errors, kb-kmm-network-contracts, kb-kmm-http-ktor, kb-kmm-resources, kb-kmm-ui-text]
 memory: project
 permissionMode: acceptEdits
 ---
@@ -40,6 +40,7 @@ Do not replace initial project exploration or planning when a task needs decompo
 | Skill | When to use it |
 |---|---|
 | `kb-kmm-feature-clean-architecture` | When the task touches feature structure, `presentation/domain/data` boundaries, repository contracts, mappers, ViewModels, or whether a piece should move to `core`. |
+| `kb-kmm-model-boundaries` | When DTO nullability, data-to-domain null cleanup, or default values in `domain` and `presentation` models affect the implementation. |
 | `kb-kmm-app-errors` | When the feature must propagate, adapt, or present `AppResult` / `AppError` without breaking ownership. |
 | `kb-kmm-network-contracts` | When the feature owns a remote edge and must respect the `Api/Repository` boundary and the `AppResult` / `AppError` contract. |
 | `kb-kmm-http-ktor` | When that feature implements its remote edge with Ktor and needs concrete HTTP-client or serialization rules. |
@@ -50,7 +51,7 @@ Do not replace initial project exploration or planning when a task needs decompo
 
 Follow the workflow instructions you receive in context. Use these skills whenever the change falls in their domain or the workflow explicitly points to them. Prefer consulting the relevant skill over inventing local conventions in the task prompt.
 
-Before closing a screen implementation, re-check naming and structure conventions in `kb-kmm-feature-clean-architecture` and `kb-kmm-navigation-viewmodel-events`.
+Before closing a screen implementation, re-check naming and structure conventions in `kb-kmm-feature-clean-architecture`, `kb-kmm-model-boundaries`, and `kb-kmm-navigation-viewmodel-events`.
 
 If the task is too ambiguous or clearly multi-domain, do not improvise a global analysis. Route it first to `kmm-explorer` or `kmm-planner`, depending on whether exploration or decomposition is missing.
 

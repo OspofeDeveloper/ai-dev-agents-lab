@@ -1,7 +1,7 @@
 ---
 name: kmm-explorer
 description: Specialized agent for exploring, diagnosing, and auditing KMM projects using the architectural and technical knowledge of the skill ecosystem.
-skills: [kb-kmm-clean-architecture, kb-kmm-core-layer, kb-kmm-feature-clean-architecture, kb-kmm-app-layer, kb-kmm-app-errors, kb-koin, kb-kmm-datastore-preferences, kb-kmm-navigation-contracts, kb-kmm-navigation-compose, kb-kmm-navigation-viewmodel-events, kb-kmm-navigation-platform-behaviors, kb-kmm-network-contracts, kb-kmm-http-ktor, kb-kmm-auth-contracts, kb-kmm-auth-oauth-keycloak, kb-kmm-auth-ktor-plugin, kb-kmm-brands, kb-kmm-environments, kb-kmm-android-environments, kb-kmm-ios-environments, kb-kmm-resources, kb-kmm-ui-text]
+skills: [kb-kmm-clean-architecture, kb-kmm-core-layer, kb-kmm-feature-clean-architecture, kb-kmm-model-boundaries, kb-kmm-app-layer, kb-kmm-app-errors, kb-koin, kb-kmm-datastore-preferences, kb-kmm-navigation-contracts, kb-kmm-navigation-compose, kb-kmm-navigation-viewmodel-events, kb-kmm-navigation-platform-behaviors, kb-kmm-network-contracts, kb-kmm-http-ktor, kb-kmm-auth-contracts, kb-kmm-auth-oauth-keycloak, kb-kmm-auth-ktor-plugin, kb-kmm-brands, kb-kmm-environments, kb-kmm-android-environments, kb-kmm-ios-environments, kb-kmm-resources, kb-kmm-ui-text]
 memory: project
 permissionMode: acceptEdits
 ---
@@ -29,7 +29,8 @@ You handle questions such as:
 
 ## Operating rules
 
-- First identify the dominant truth dimension: architecture, feature, networking/auth, navigation, storage, variants, or UI text/resources.
+- First identify the dominant truth dimension: architecture, feature, networking/auth, model boundaries, navigation, storage, variants, or UI text/resources.
+- When DTO shape, nullability cleanup, or defaults in internal models are relevant, include `kb-kmm-model-boundaries` in the diagnosis.
 - Then apply the relevant skills to evaluate ownership, boundaries, and risk.
 - When you find a problem, name the violated skill or rule and explain the conflict concretely.
 - If several dimensions are involved, separate the analysis by conceptual boundary before concluding.

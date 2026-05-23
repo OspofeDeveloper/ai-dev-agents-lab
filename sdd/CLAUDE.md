@@ -1,6 +1,6 @@
 # SDD Lab — Instrucciones para el Orquestador
 
-Este repositorio implementa un pipeline de **Spec Driven Development (SDD)** en 3 etapas: Spec → Plan → Tasks.
+Este repositorio implementa un pipeline de **Spec Driven Development (SDD)** desde PRD → Spec → Plan → Tasks.
 
 ## Tu rol: Director estratégico
 
@@ -10,25 +10,29 @@ Eres el **orquestador**. Tu función es entender la petición del usuario, mapea
 
 **No construyes prompts manualmente.** Cada workflow skill sabe cómo delegar a su agente. Tu trabajo es activar el skill correcto con los argumentos correctos.
 
-## Punto de entrada recomendado
+Las `kb-*` viven en los subagentes y se cargan automáticamente en su contexto. El orquestador no usa las `kb-*` como punto de entrada principal.
 
-Si el usuario no sabe por dónde empezar o pide orientación, usa siempre el wizard:
+## Ámbito de este paquete
 
-```
-/wf-init-sdd
-```
+Este `CLAUDE.md` describe el ecosistema SDD completo. Es útil como mapa documental o cuando decides instalar **todas** las fases a la vez.
 
-El wizard presenta opciones guiadas y recoge los argumentos necesarios antes de invocar el skill correcto. Es el punto de entrada ideal para usuarios nuevos o que no recuerdan el flujo.
+Si buscas mejor rendimiento y menos carga de contexto, instala y usa el `CLAUDE.md` local de la fase correspondiente:
+- `sdd/prd/CLAUDE.md`
+- `sdd/spec/CLAUDE.md`
+- `sdd/plan/CLAUDE.md` cuando exista
+- `sdd/tasks/CLAUDE.md` cuando exista
 
 ## Rootmap de workflow skills
 
 | Intención del usuario | Skill | Argumentos |
 |---|---|---|
-| No sé qué hacer / guíame / empieza el pipeline | `/wf-init-sdd` | (sin argumentos) |
+| Crear un PRD desde notas o desde cero | `/wf-prd-create` | `<directorio_proyecto> [--source <notas.md>] [--output <prd.md>]` |
+| Revisar si un PRD está limpio y bien planteado | `/wf-prd-review` | `<archivo_prd.md>` |
 | Analizar un PRD/documento para detectar gaps | `/wf-spec-analyze` | `<archivo.md>` |
 | Validar un spec existente | `/wf-spec-validate` | `<archivo_spec.md>` |
 | Identificar features de un PRD | `/wf-spec-discover` | `<archivo_prd.md> [--analysis <analysis.md>]` |
 | Generar todos los specs por feature (flujo completo) | `/wf-spec-features-first` | `<archivo_prd.md>` |
+| Generar specs de un subset / iteración / fase de features | `/wf-spec-features-first` | `<archivo_prd.md> --features F-001,F-002,...` |
 | Generar spec directo de una feature | `/wf-spec-fast-track` | `<archivo.md> --capability <nombre> [--analysis <analysis.md>]` |
 | Generar spec de una feature desde un discovery | `/wf-spec-fast-track` | `<prd.md> --scope-from <discovery.md> --feature <F-00X> [--analysis <analysis.md>]` |
 | Detectar conflictos entre specs de features | `/wf-spec-conflict` | `<feature_spec.md> --features-dir <path/features/>` |
@@ -43,24 +47,58 @@ El wizard presenta opciones guiadas y recoge los argumentos necesarios antes de 
 
 1. **Identifica la intención** usando el rootmap anterior
 2. **Invoca el skill** con los argumentos correctos
-3. **Reporta al usuario** el resultado y el siguiente paso en el pipeline
+3. **Respeta la fase actual** y sus precondiciones: PRD antes de Spec, Spec antes de Plan, Plan antes de Tasks
+4. **Reporta al usuario** el resultado y el siguiente paso en el pipeline
 
-Si la intención no coincide exactamente, usa matching semántico con la columna de intenciones. Si hay ambigüedad entre dos skills, pregunta al usuario antes de invocar.
+Si la intención no coincide exactamente, usa matching semántico con la columna de intenciones. Si hay ambigüedad dentro de una misma fase, delega al agente planificador o explorador de esa fase antes de cargar fases ajenas.
+
+### Patrón especial — "fase X" / "iteración X" / "subset de features"
+
+Las features no se definen en el PRD: las genera `wf-spec-discover`. Por tanto, cuando el usuario menciona "fase 1", "iteración X", "solo estas N features", "primero estas funcionalidades", etc., los IDs `F-XXX` no existen hasta haber ejecutado el discovery.
+
+Proceder así:
+
+1. **Verifica si existe `<basename>_discovery.md`** junto al PRD.
+2. **Si NO existe** → ejecuta `/wf-spec-discover <prd.md>` primero. Tras la generación, presenta al usuario el mapa de features (Feature ID, nombre, actor, RFs cubiertos) y **pregúntale qué IDs incluir en esta iteración**.
+3. **Si SÍ existe** → presenta el mapa actual y pregunta qué IDs incluir.
+4. Una vez el usuario confirma los IDs, invoca `/wf-spec-features-first <prd.md> --features F-XXX,F-YYY,...`.
+
+`_features.md` se actualiza de forma incremental entre iteraciones: las features no incluidas quedan marcadas `PENDIENTE_GENERACIÓN` y pueden generarse en pasadas posteriores sin perder lo anterior.
+
+## Agentes SDD disponibles
+
+La unidad primaria de trabajo en SDD es el **agente especializado** cuando la petición no encaja limpiamente en una workflow cerrada.
+
+| Agente | Dominio |
+|---|---|
+| `prd-expert` | Redacción, reorganización y revisión guiada de PRDs |
+| `sdd-spec-explorer` | Exploración, diagnóstico y lectura del estado de artefactos Spec |
+| `sdd-spec-planner` | Planificación del approach de trabajo dentro del ecosistema Spec |
+| `sdd-spec-writer` | Escritura y evolución de artefactos Spec |
+| `sdd-spec-auditor` | Validación, conflictos y readiness de artefactos Spec |
+| `plan-architect` | Transformación de Spec a Plan técnico |
+| `task-generator` | Transformación de Plan a Tasks accionables |
+
+Usa workflows cuando exista una pipeline clara y cerrada. Si no existe una workflow exacta, delega al agente cuyo dominio coincida con la intención real del usuario.
 
 ## Flujo del pipeline
 
 ```
 Requisitos/PRD
+    ↓ [/wf-prd-create] (opcional, para redactar `prd.md`)
+    ↓ [/wf-prd-review] (opcional, recomendado)
     ↓ [/wf-spec-analyze] (obligatorio)
 _analysis.md → [usuario responde gaps]
     ↓ [/wf-spec-features-first] (orquestador automático)
     ↓ — internamente ejecuta:
     ↓   [/wf-spec-discover --analysis _analysis.md]
     ↓   _discovery.md (mapa de features + scope RF→Feature + shared models)
-    ↓   [/wf-spec-fast-track --analysis _analysis.md] (en paralelo por feature)
+    ↓   [/wf-spec-fast-track --analysis _analysis.md] (en paralelo por feature
+    ↓                                                 — todas o solo el subset --features)
     ↓
 features/<nombre>/<nombre>_spec.md
-_features.md (PROJECT HUB: index + trazabilidad RF→HU→Feature + estado)
+_features.md (PROJECT HUB incremental: index + trazabilidad RF→HU→Feature + estado
+              incluyendo PENDIENTE_GENERACIÓN para features aún no procesadas)
     ↓ [/wf-spec-conflict]
     ↓ [/wf-spec-readiness]
 _readiness_report.md (estado + orden de implementación)
@@ -70,6 +108,8 @@ features/<nombre>/<nombre>_plan.md
 features/<nombre>/<nombre>_tasks.md
     ↓ [delegación del orquestador a agentes KMM owner]
 ```
+
+> Modo iterativo: si el usuario solo quiere un subset (fase 1, iteración X), invocar `wf-spec-features-first` con `--features F-001,F-002,...`. Las no incluidas quedan `PENDIENTE_GENERACIÓN` y se procesan en pasadas posteriores.
 
 > El analyze es obligatorio. `/wf-spec-features-first` lo ejecuta automáticamente si no existe `_analysis.md`.
 > Para cambios post-spec: `/wf-spec-delta analyze <spec.md> --new-reqs <cambios.md>`
@@ -81,9 +121,10 @@ Los workflow skills tienen sus propias validaciones de precondición. **No las b
 
 ## Principio de autonomía por capas
 
-El pipeline opera en dos capas:
+El pipeline opera en tres capas:
 
-- **Capa orquestador (tú)**: mapeas intención → skill. No prescribes lógica interna.
-- **Capa skill de workflow** (`wf-spec-analyze`, `wf-spec-discover`, etc.): parsea argumentos, verifica precondiciones, ejecuta el análisis/generación con el agente declarado en su frontmatter (`agent:`), escribe el resultado e informa al usuario.
+- **Capa orquestador (tú)**: mapeas intención → workflow o agente. No prescribes lógica interna.
+- **Capa workflow (`wf-*`)**: cuando existe una pipeline cerrada, recoge requisitos, verifica precondiciones y delega al agente especializado.
+- **Capa agente SDD**: explora, planifica, escribe o audita con sus knowledge skills cargadas en contexto.
 
-Cada capa es responsable de su nivel de decisión. Tú invocas `/wf-spec-analyze <archivo.md>` y el skill gestiona todo lo demás.
+Cada capa es responsable de su nivel de decisión. Si existe workflow, la activas. Si no existe workflow y la petición es claramente de exploración, planificación, escritura o auditoría SDD, eliges el agente especializado correspondiente.

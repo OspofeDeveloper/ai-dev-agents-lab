@@ -1,18 +1,22 @@
 ---
 name: wf-spec-analyze
-description: Analiza un documento de requisitos y produce un informe de gaps (completitud, pureza y testabilidad). Genera un `_analysis.md` con preguntas para el cliente. Activa en frases como "analiza este documento para el spec", "¿qué le falta a este doc para ser spec?", "genera el análisis de gaps", "prepara el análisis del spec", "analiza este PRD".
+description: Recopila las decisiones de negocio que necesitarán los Specs a partir de un PRD ya congelado. Mapea qué elementos del Spec se generarán desde el PRD, detecta contaminación técnica y formula preguntas concretas para el cliente. Genera un `_analysis.md` cuyas respuestas alimentan los Specs (el PRD no se modifica). Activa en frases como "prepara los inputs para los specs", "qué decisiones de negocio faltan para los specs", "analiza este PRD para empezar los specs", "genera el análisis previo al spec".
 argument-hint: "<archivo.md>"
 effort: high
 allowed-tools: [Read, Write, Bash]
 context: fork
-agent: sdd-analyst
+agent: sdd-spec-explorer
 ---
 
 # Workflow: ANALYZE
 
-Tu objetivo es producir un informe honesto del estado del documento. Usa `kb-spec-expert` para aplicar los 3 checks y detectar todo lo que impediría que este documento se convierta en un Spec válido.
+Este workflow pertenece a la fase Spec y **requiere un PRD o documento de requisitos previo** como entrada. Si el usuario todavía no tiene ese artefacto, remítelo a la fase PRD antes de continuar.
 
-**Regla de oro:** Nunca rellenas huecos funcionales. Si algo no está definido o es ambiguo, lo marcas con `_(pendiente)_` en el campo "Respuesta" del gap (consulta `kb-gap-conventions` para el formato exacto) y formulas una pregunta concreta. El cliente decide, tú detectas.
+Tu objetivo es **recopilar las decisiones de negocio que los Specs necesitarán** a partir de un PRD que ya está congelado. No auditas el PRD ni le buscas defectos: el PRD ya hizo su trabajo en la fase anterior y, según `kb-prd-expert`, no tiene por qué contener HUs, Journeys, CAs ni Checklist — esos elementos pertenecen al Spec y se generarán después.
+
+Usa `kb-spec-expert` para aplicar los 3 checks. El Check 1 mapea qué elementos del Spec se generarán a partir del PRD; el Check 2 detecta contaminación técnica (única condición que sí justifica retocar el PRD); el Check 3 evalúa la testabilidad si el PRD ya tuviera CAs formales.
+
+**Regla de oro:** Nunca rellenas huecos funcionales. Si algo no está definido o es ambiguo, lo marcas con `_(pendiente)_` en el campo "Respuesta" del gap (consulta `kb-gap-conventions` para el formato exacto) y formulas una pregunta concreta. El cliente decide, tú detectas. **El PRD no se modifica**: las respuestas se anotan en el `_analysis.md` y alimentan los Specs.
 
 ---
 
@@ -35,6 +39,9 @@ Verifica que el archivo existe:
 
 Si no existe → informa al usuario con la ruta exacta y detén.
 
+Si el nombre termina en `_spec.md`, `_plan.md` o `_tasks.md` → informa:
+> "Este archivo parece un artefacto posterior del pipeline SDD. `/wf-spec-analyze` opera sobre PRDs o documentos de requisitos previos a Spec."
+
 ---
 
 ## Paso 3: Leer el contenido
@@ -43,10 +50,11 @@ Lee el archivo en su totalidad.
 
 ---
 
-## Paso 4: Identificar gaps y problemas
+## Paso 4: Mapear elementos del Spec y detectar problemas reales
 
-### Check 1 — Completitud
-Verifica la presencia de los 8 elementos obligatorios (consulta `kb-spec-expert` para su definición):
+### Check 1 — Mapeo de elementos del Spec a generar
+Para cada uno de los 8 elementos del Spec (consulta `kb-spec-expert` para su definición), determina su estado de partida en el PRD:
+
 - Actores
 - Historias de Usuario (Como/quiero/para que)
 - Recorridos de Usuario
@@ -56,14 +64,18 @@ Verifica la presencia de los 8 elementos obligatorios (consulta `kb-spec-expert`
 - Checklist de Validación
 - Fuera de Alcance
 
-### Check 2 — Pureza
+Para cada uno, indica si ya viene en el PRD, si se generará entero durante la fase Spec, o si está parcial y se completará en Spec. **Esto no es un score de defectos**: lo normal en un PRD es que HUs formales, Journeys paso a paso, CAs en GIVEN/WHEN/THEN y Checklist no estén — pertenecen al Spec, no al PRD (`kb-prd-expert` Regla 9). El propósito de este check es dar visibilidad de qué se va a generar después, no señalar carencias.
+
+### Check 2 — Pureza (única vía legítima para tocar el PRD)
 Consulta `prohibited_items.md` y `error_patterns.md` del skill `kb-spec-expert` antes de emitir tu veredicto. Para cada frase problemática:
 - Cita el fragmento exacto
 - Explica por qué es técnico
 - Propón la reescritura funcional
 
+**Importante**: ésta es la **única** condición que justifica devolver el documento a la fase PRD. Si el Check 2 está limpio, el PRD se considera correcto tal cual está y se procede con los Specs, incluso si los Checks 1 o 3 reportan elementos ausentes (es lo esperable).
+
 ### Check 3 — Testabilidad
-Cada CA debe ser verificable objetivamente e independientemente, tener GIVEN/WHEN/THEN completo, y referenciar su HU padre. Los que no cumplan estos criterios deben aparecer con su reformulación sugerida.
+Si el PRD ya incluye CAs formales (poco habitual en un PRD), cada uno debe ser verificable objetivamente e independientemente, tener GIVEN/WHEN/THEN completo, y referenciar su HU padre. Los que no cumplan estos criterios deben aparecer con su reformulación sugerida. Si no hay CAs en el PRD, indica `NO_APLICA` — los CAs se generarán en la fase Spec.
 
 ---
 
@@ -107,5 +119,8 @@ Escribe el informe generado en ese path.
 
 Tras escribir el archivo, informa:
 - Path del archivo generado
-- Resumen: cuántos elementos de completitud faltan, cuántas contaminaciones detectadas, cuántos `[P-XXX]` pendientes (desglosados: CRÍTICOS e INFORMATIVOS)
-- Siguiente paso: "Edita `<path>_analysis.md`, responde las preguntas marcadas como _(pendiente)_ y luego ejecuta `/wf-spec-features-first <archivo.md>` para el flujo completo, o `/wf-spec-discover <archivo.md> --analysis <path>_analysis.md` para el paso a paso."
+- Veredicto del Estado de preparación para Specs
+- Resumen: cuántos elementos del Spec se generarán desde cero vs. ya parciales en PRD, cuántas contaminaciones técnicas detectadas (si las hay), cuántos `[P-XXX]` pendientes (desglosados: CRÍTICOS e INFORMATIVOS)
+- Siguiente paso:
+  - Si veredicto = `LISTO_PARA_SPECS` o `LISTO_PARA_SPECS_CON_PREGUNTAS`: "Anota las respuestas a las preguntas marcadas como _(pendiente)_ en `<path>_analysis.md` (las respuestas se escriben en este archivo, no en el PRD) y ejecuta `/wf-spec-features-first <archivo.md>` para el flujo completo, o `/wf-spec-discover <archivo.md> --analysis <path>_analysis.md` para el paso a paso."
+  - Si veredicto = `REQUIERE_LIMPIEZA_PRD`: "Hay contaminación técnica en el PRD. Aplica las acciones marcadas en la sección Pureza del análisis y vuelve a ejecutar `/wf-spec-analyze <archivo.md>` antes de continuar."
