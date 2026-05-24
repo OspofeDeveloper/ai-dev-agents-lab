@@ -55,6 +55,8 @@ Si no existe → informa al usuario con la ruta exacta y detén.
 
 **Importante:** Este paso **nunca bloquea por gaps sin responder**. Si el analysis existe pero tiene gaps `[CRÍTICO]` con `_(pendiente)_`, se pasa igualmente a discover y fast-track. Los fast-track generarán las HUs afectadas como `[INCOMPLETO]`, que es lo que bloquea `/wf-prepare-plan` (no la generación de specs).
 
+Si el `_analysis.md` o el contexto del proyecto indican que el PRD ha cambiado después de generar specs previos, informa de que puede ser necesario ejecutar `wf-prd-sync-impact` o `wf-spec-sync-from-prd` antes de mezclar nuevas pasadas con artefactos desactualizados.
+
 ---
 
 ## Paso 3: Ejecutar discover (o reutilizarlo)
@@ -203,7 +205,7 @@ Indica el modo: "Iteración sobre subset `[F-001, F-002, ...]`" o "Generación c
 **Siguientes pasos** (según el estado):
 
 Si hay features con gaps `[CRÍTICO]`:
-> "Las siguientes features tienen gaps críticos sin resolver: [lista]. Edita los specs afectados, responde los gaps marcados como _(pendiente)_ y ejecuta `/wf-spec-delta resolve <feature_spec.md>` por cada una."
+> "Las siguientes features tienen gaps críticos sin resolver: [lista]. Edita los specs afectados, responde los gaps marcados como _(pendiente)_ y ejecuta `/wf-spec-gap-resolve <feature_spec.md>` por cada una."
 
 Si se usó `_analysis.md` con gaps `[CRÍTICO]` sin responder:
 > "Hay [N] gaps críticos del análisis previo que no fueron respondidos. Los specs afectados tienen HUs marcadas `[INCOMPLETO]` que bloquean `/wf-prepare-plan`. Responde los gaps en `<path>_analysis.md` y re-ejecuta."

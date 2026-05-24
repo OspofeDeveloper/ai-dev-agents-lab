@@ -85,6 +85,11 @@ Formatea el `_tasks.md` completo usando la estructura de output indicada más ab
 ```
 # Tasks: [Nombre de la Feature]
 > **Plan origen:** [path/_plan.md]
+> **Spec origen:** [path/_spec.md | unknown]
+> **PRD origen:** [path/al/PRD.md | unknown]
+> **PRD version:** [1.0 | unknown]
+> **Change ref:** [CR-XXX | N/A]
+> **Status sync:** [in_sync | needs_review | stale | unknown]
 > **Fecha:** [YYYY-MM-DD]
 > **Total tasks:** N
 
@@ -110,3 +115,5 @@ Formatea el `_tasks.md` completo usando la estructura de output indicada más ab
 ## Regla de oro
 
 > Cada Task debe ser ejecutable por un agente que solo haya leído el Plan y las Tasks anteriores como contexto, sin necesitar ninguna decisión adicional del desarrollador.
+
+Si el Plan de entrada declara metadata de trazabilidad, refléjala en el header del `_tasks.md`. Si no existe, usa `unknown` de forma explícita.

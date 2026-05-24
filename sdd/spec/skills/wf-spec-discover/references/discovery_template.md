@@ -1,5 +1,8 @@
 # Feature Discovery: [nombre del proyecto]
 > PRD origen: [path/prd.md] | Fecha: [YYYY-MM-DD]
+> PRD version: [1.0 | unknown]
+> Change ref: [CR-XXX | N/A]
+> Status sync: [in_sync | needs_review | stale | unknown]
 > Generado por: wf-spec-discover
 
 ---

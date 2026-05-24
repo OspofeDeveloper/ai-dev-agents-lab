@@ -23,7 +23,7 @@ Tienes un PRD o documento de requisitos y quieres convertirlo en Specs SDD para 
       · pureza del PRD (contaminación técnica si la hay)
       · gaps [CRÍTICO] e [INFORMATIVO] para responder
   → veredicto: LISTO_PARA_SPECS | LISTO_PARA_SPECS_CON_PREGUNTAS | REQUIERE_LIMPIEZA_PRD
-  El PRD no se modifica salvo en REQUIERE_LIMPIEZA_PRD: las respuestas se anotan en el _analysis.md.
+  Las respuestas a gaps se anotan en el `_analysis.md`. Si aparece un cambio real de producto, se formaliza con `wf-prd-change` antes de resincronizar derivados.
 
 [edita prd_analysis.md y responde los gaps [CRÍTICO]]
 
@@ -106,11 +106,31 @@ Si el spec tiene HUs marcadas `[INCOMPLETO]` por gaps `[CRÍTICO]` sin responder
 ```
 [responde los gaps [P-XXX] en el _analysis.md]
 
-/wf-spec-delta resolve features/auth/auth_spec.md
+/wf-spec-gap-resolve features/auth/auth_spec.md
   → auto-descubre el _analysis.md, integra respuestas, completa HUs y CAs, versión 1.0 → 1.1
 ```
 
-**Cuándo usarlo**: después de generar un feature spec que dejó HUs incompletas por gaps sin responder. El usuario responde los gaps en el `_analysis.md` y `resolve` integra las respuestas en el feature spec.
+**Cuándo usarlo**: después de generar un feature spec que dejó HUs incompletas por gaps sin responder. El usuario responde los gaps en el `_analysis.md` y `wf-spec-gap-resolve` integra las respuestas en el feature spec.
+
+#### Cambio de producto tras entrar en Spec
+
+Si la "respuesta" realmente cambia el alcance o el roadmap del producto:
+
+```
+/wf-prd-change prd.md --new-reqs cambio.md
+  → actualiza el PRD, registra el cambio y deja trazabilidad
+
+/wf-prd-sync-impact prd.md
+  → detecta qué discovery/specs/planes/tasks quedaron afectados
+
+/wf-spec-sync-from-prd analyze prd.md
+  → genera requisitos de sync por feature
+
+/wf-spec-sync-from-prd apply prd.md --features F-001,F-003
+  → resincroniza los specs afectados
+```
+
+**Cuándo usarlo**: cuando el producto vigente cambia de verdad, por ejemplo mover una capacidad de fase 2 a MVP.
 
 ---
 
@@ -189,9 +209,14 @@ Todos los componentes de este directorio siguen el mismo patrón arquitectónico
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  CAPA 1 — Workflows (wf-) invocables por el usuario         │
-│  wf-spec-analyze │ wf-spec-validate │ wf-spec-discover     │
-│  wf-spec-fast-track │ wf-spec-features-first │ wf-spec-conflict │
-│  wf-spec-delta │ wf-spec-readiness                           │
+│  Propios de Spec:                                            │
+│   wf-spec-analyze │ wf-spec-validate │ wf-spec-discover     │
+│   wf-spec-fast-track │ wf-spec-features-first               │
+│   wf-spec-conflict │ wf-spec-delta │ wf-spec-gap-resolve    │
+│   wf-spec-sync-from-prd │ wf-spec-readiness                  │
+│   wf-prd-sync-impact                                         │
+│  Remitidos a la fase PRD (no propios):                       │
+│   wf-prd-change                                              │
 │                                                             │
 │  Rol: parsear args → verificar archivos → ejecutar workflow │
 │  → delegar al agente → escribir resultado                   │
@@ -211,8 +236,11 @@ Todos los componentes de este directorio siguen el mismo patrón arquitectónico
 ┌─────────────────────────────────────────────────────────────┐
 │  CAPA 3 — Knowledge Bases (kb-) — solo contexto             │
 │                                                             │
-│  kb-spec-expert │ kb-decompose-expert │ kb-conflict-expert  │
-│  kb-gap-conventions                                         │
+│  Propias de Spec:                                            │
+│   kb-spec-expert │ kb-decompose-expert │ kb-conflict-expert │
+│   kb-gap-conventions │ kb-traceability-rules                │
+│  Cross-fase (viven en sdd/prd/, cargadas por agentes Spec): │
+│   kb-prd-expert │ kb-product-change-governance              │
 │                                                             │
 │  Rol: reglas, templates, criterios de validación            │
 │  Uso principal: contexto de agentes. Consulta directa solo  │
@@ -249,7 +277,11 @@ Al estar especializados, su contexto es más estrecho, el contrato de cada uno e
 | `wf-spec-features-first` | `/wf-spec-features-first [--features F-XXX,...]` | `_discovery.md`, `_features.md` (Project Hub incremental con `PENDIENTE_GENERACIÓN` para features aún no procesadas), `features/<x>/<x>_spec.md` |
 | `wf-spec-fast-track` | `/wf-spec-fast-track` | `features/<x>/<x>_spec.md` directamente |
 | `wf-spec-conflict` | `/wf-spec-conflict` | `_conflict_report.md` |
-| `wf-spec-delta` | `/wf-spec-delta` | `_delta_analysis.md` (analyze), spec actualizado (apply/resolve) |
+| `wf-spec-delta` | `/wf-spec-delta` | `_delta_analysis.md` (analyze), spec actualizado (apply) |
+| `wf-spec-gap-resolve` | `/wf-spec-gap-resolve` | spec actualizado desde `_analysis.md` |
+| `wf-prd-change` | `/wf-prd-change` | PRD actualizado, `product-changelog.md`, `decisions/CR-XXX.md`, `*_change_request.md` |
+| `wf-prd-sync-impact` | `/wf-prd-sync-impact` | `_sync_report.md` |
+| `wf-spec-sync-from-prd` | `/wf-spec-sync-from-prd` | `*_sync_requirements.md`, specs resincronizados |
 | `wf-spec-readiness` | `/wf-spec-readiness` | `_readiness_report.md`, actualiza estado en `_features.md` |
 
 ### Agentes worker (Capa 2)
@@ -258,8 +290,8 @@ Al estar especializados, su contexto es más estrecho, el contrato de cada uno e
 |--------|-----------------|----------------|
 | `sdd-spec-explorer` | diagnóstico de PRD/spec, análisis de gaps, discovery | `wf-spec-analyze`, `wf-spec-discover`, exploración directa |
 | `sdd-spec-planner` | planificación de approach | uso directo por el orquestador cuando la petición es ambigua |
-| `sdd-spec-writer` | fast-track, delta apply/resolve, escritura de artefactos | `wf-spec-fast-track`, `wf-spec-delta`, `wf-spec-features-first` |
-| `sdd-spec-auditor` | validate, conflict, readiness | `wf-spec-validate`, `wf-spec-conflict`, `wf-spec-readiness` |
+| `sdd-spec-writer` | fast-track, delta apply, sync desde PRD, escritura de artefactos | `wf-spec-fast-track`, `wf-spec-delta`, `wf-spec-gap-resolve`, `wf-spec-sync-from-prd`, `wf-spec-features-first` |
+| `sdd-spec-auditor` | validate, conflict, readiness, sync impact | `wf-spec-validate`, `wf-spec-conflict`, `wf-spec-readiness`, `wf-prd-sync-impact` |
 
 ### Knowledge bases (Capa 3)
 
@@ -269,6 +301,15 @@ Al estar especializados, su contexto es más estrecho, el contrato de cada uno e
 | `kb-decompose-expert` | Partición de features, shared models, ownership | `discover`, `fast-track` |
 | `kb-conflict-expert` | 5 reglas de detección de conflictos entre specs | `conflict` |
 | `kb-gap-conventions` | SSoT de convenciones de gaps | Todos los modos que generen o verifiquen gaps |
+| `kb-traceability-rules` | Trazabilidad entre PRD, specs, plan y tasks | `gap-resolve`, `sync-from-prd`, `readiness`, `sync-impact` |
+| `kb-prd-expert` ⚠ | Reglas del PRD (cargada por agentes Spec para leer el PRD de entrada) | `analyze`, `discover`, `fast-track`, exploración |
+| `kb-product-change-governance` ⚠ | Reglas para distinguir gap vs. change request y gestionar impacto de negocio | `analyze`, `gap-resolve`, `sync-from-prd`, `sync-impact`, planning |
+
+> ⚠ `kb-prd-expert` y `kb-product-change-governance` viven físicamente en `sdd/prd/skills/`. Son kb cross-fase. La carga concreta por agente:
+> - `kb-prd-expert`: `sdd-spec-explorer`, `sdd-spec-writer`, `sdd-spec-planner` (el auditor no la necesita porque audita specs ya escritos).
+> - `kb-product-change-governance`: los 4 agentes Spec.
+>
+> **Si instalas `sdd/spec/` por separado, debes instalar también estas dos kb** o los agentes Spec quedarán sin las reglas de lectura del PRD y de governance de cambios.
 
 ---
 
@@ -302,6 +343,7 @@ proyecto/
 ├── prd_analysis.md                           ← /wf-spec-analyze (recomendado)
 ├── prd_discovery.md                          ← /wf-spec-discover
 ├── prd_features.md                           ← /wf-spec-features-first — PROJECT HUB (index + trazabilidad + estado)
+├── prd_sync_report.md                        ← /wf-prd-sync-impact
 ├── prd_conflict_report.md                    ← /wf-spec-features-first (automático) o /wf-spec-conflict
 ├── prd_readiness_report.md                   ← /wf-spec-readiness
 └── features/
@@ -309,6 +351,7 @@ proyecto/
         ├── README.md                         ← /wf-spec-fast-track
         ├── <nombre>_spec.md                  ← /wf-spec-fast-track
         ├── <nombre>_delta_analysis.md        ← /wf-spec-delta analyze
+        ├── <nombre>_sync_requirements.md     ← /wf-spec-sync-from-prd analyze
         ├── <nombre>_conflict_report.md       ← /wf-spec-conflict
         ├── <nombre>_plan.md                  ← /wf-prepare-plan (etapa siguiente)
         └── <nombre>_tasks.md                 ← /wf-prepare-tasks (etapa siguiente)
@@ -322,13 +365,15 @@ El pipeline nunca es completamente automático. Estos son los momentos donde el 
 
 | Momento | Qué hacer | Bloquea si no se hace |
 |---------|-----------|-----------------------|
-| Tras `analyze` | Responder gaps `[CRÍTICO]_(pendiente)_` en `_analysis.md` (en el propio archivo, no en el PRD) | No bloquea generación de specs, pero las HUs afectadas quedan `[INCOMPLETO]` y bloquean `prepare-plan` |
-| Tras `analyze` | Responder gaps `[INFORMATIVO]_(pendiente)_` (opcional) | No — se aplican asunciones por defecto |
-| Tras `analyze` con veredicto `REQUIERE_LIMPIEZA_PRD` | Aplicar las reescrituras de la sección Pureza al PRD y volver a ejecutar `/wf-spec-analyze` | Sí — único caso en que se toca el PRD antes de continuar |
+| Tras `analyze` | Responder gaps `[CRÍTICO]` con `_(pendiente)_` en `_analysis.md` (en el propio archivo, no en el PRD) | No bloquea generación de specs, pero las HUs afectadas quedan `[INCOMPLETO]` y bloquean `prepare-plan` |
+| Tras `analyze` o validación con cliente | Si la respuesta cambia el alcance o el roadmap, ejecutar `wf-prd-change` antes de seguir | Sí — evita derivar specs desde una verdad de negocio obsoleta |
+| Tras `analyze` | Responder gaps `[INFORMATIVO]` con `_(pendiente)_` (opcional) | No — se aplican asunciones por defecto |
+| Tras `analyze` con veredicto `REQUIERE_LIMPIEZA_PRD` | Aplicar las reescrituras de la sección Pureza al PRD y volver a ejecutar `/wf-spec-analyze` | Sí — único caso en que se toca el PRD por contaminación técnica dentro del analyze |
 | Tras `discover` (modo iterativo) | Elegir los Feature IDs que entran en la próxima iteración | Sí — `wf-spec-features-first --features` los necesita |
 | Tras `features-first` | Revisar `_features.md` y validar la partición de features | No — pero afecta la calidad del plan |
 | Tras `features-first` | Revisar `_conflict_report.md` si hay conflictos `ALTA` | No — pero pueden propagarse problemas al plan |
-| Tras `delta analyze` | Responder gaps `[CRÍTICO]_(pendiente)_` en `_delta_analysis.md` | Sí — `delta apply` no avanza |
+| Tras `wf-prd-sync-impact` | Revisar artefactos `stale` o `needs_review` y decidir qué features resincronizar | Sí — bloquea avanzar con specs desalineados |
+| Tras `delta analyze` | Responder gaps `[CRÍTICO]` con `_(pendiente)_` en `_delta_analysis.md` | Sí — `delta apply` no avanza |
 
 ---
 
@@ -356,6 +401,10 @@ sdd/spec/
     │   └── SKILL.md
     ├── kb-spec-expert/
     │   └── SKILL.md
+    ├── kb-traceability-rules/
+    │   └── SKILL.md
+    ├── wf-prd-sync-impact/
+    │   └── SKILL.md
     ├── wf-spec-analyze/
     │   ├── SKILL.md
     │   └── output_template.md
@@ -369,7 +418,11 @@ sdd/spec/
     │   └── SKILL.md
     ├── wf-spec-features-first/
     │   └── SKILL.md
+    ├── wf-spec-gap-resolve/
+    │   └── SKILL.md
     ├── wf-spec-readiness/
+    │   └── SKILL.md
+    ├── wf-spec-sync-from-prd/
     │   └── SKILL.md
     └── wf-spec-validate/
         └── SKILL.md

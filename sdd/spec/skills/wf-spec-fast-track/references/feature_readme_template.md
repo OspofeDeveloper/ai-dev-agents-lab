@@ -4,6 +4,10 @@
 > **Spec**: [nombre]_spec.md
 > **Actor principal**: [quién usa esta feature]
 > **Spec monolítico origen**: [path/_spec.md]
+> **PRD origen**: [path/al/PRD.md | N/A]
+> **PRD version**: [1.0 | unknown | N/A]
+> **Change ref**: [CR-XXX | N/A]
+> **Status sync**: [in_sync | needs_review | stale | unknown]
 
 ## Descripción
 

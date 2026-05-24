@@ -2,6 +2,11 @@
 > Versión: 1.0 | Fecha: [YYYY-MM-DD]
 > Spec monolítico origen: [path/_spec.md]
 > Feature ID: F-00X
+> Source requirements: [path/al/documento_origen.md]
+> derived_from_prd: [path/al/PRD.md | N/A]
+> derived_from_prd_version: [1.0 | unknown | N/A]
+> derived_from_change: [CR-XXX | N/A]
+> status_sync: [in_sync | needs_review | stale | unknown]
 
 ---
 

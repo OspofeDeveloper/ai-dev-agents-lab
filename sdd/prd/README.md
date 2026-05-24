@@ -13,9 +13,11 @@ El objetivo de esta etapa no es generar Specs ni tomar decisiones técnicas. Su 
 | Skill | Tipo | Rol |
 |---|---|---|
 | `kb-prd-expert` | Knowledge base | Reglas de qué debe y qué no debe contener un PRD |
+| `kb-product-change-governance` | Knowledge base (cross-fase) | Reglas de gobernanza, clasificación y trazabilidad de cambios de producto. Vive aquí pero la cargan también los 4 agentes Spec. Instalar `sdd/spec/` sin esta kb deja a sus agentes sin reglas para distinguir gaps de change requests. Nota: `kb-prd-expert` también es cross-fase (la cargan `sdd-spec-explorer`, `sdd-spec-writer` y `sdd-spec-planner` para leer el PRD de entrada). |
 | `prd-expert` | Agente worker | Ayuda a redactar, reorganizar y revisar PRDs con guía |
 | `wf-prd-create` | Workflow | Genera un `prd.md` inicial a partir de notas o brief |
 | `wf-prd-review` | Workflow | Revisión rápida de limpieza y procesabilidad antes de entrar en `spec` |
+| `wf-prd-change` | Workflow | Formaliza un cambio de producto, actualiza PRD y deja trazabilidad |
 
 ## Relación con el resto del pipeline
 
@@ -31,4 +33,21 @@ PRD
 
 `wf-prd-create` sirve para redactar el documento inicial. `wf-prd-review` no sustituye a `wf-spec-analyze`: solo revisa si el PRD está bien planteado antes de entrar en la fase Spec.
 
-> Tras pasar a la fase Spec, **el PRD se congela**. Las decisiones de negocio que los Specs necesitan (gaps `[P-XXX]` detectados por `wf-spec-analyze`) se anotan en el `_analysis.md`, no en el PRD. La única condición que justifica volver a editar el PRD es contaminación técnica detectada (veredicto `REQUIERE_LIMPIEZA_PRD` del analyze).
+> Durante una ejecución concreta del pipeline, el PRD se trata como snapshot estable. Pero en producción el PRD sigue siendo la fuente de verdad de negocio. Si cambia el producto comprometido, usa `wf-prd-change`; si solo estás resolviendo una ambigüedad, usa `_analysis.md` y los workflows de spec correspondientes.
+
+## Cuándo usar `wf-prd-change`
+
+Usa `wf-prd-change` cuando la decisión ya no es una aclaración menor, sino un cambio real de producto. Ejemplos típicos:
+
+- una capacidad pasa de fase futura a MVP
+- una exclusión deja de ser válida
+- cambia una regla de negocio transversal
+- cambia qué actor puede ejecutar una capacidad
+
+En esos casos, el orden correcto es:
+
+```text
+1. Actualizar PRD con /wf-prd-change
+2. Medir impacto con /wf-prd-sync-impact
+3. Resincronizar specs afectados con /wf-spec-sync-from-prd
+```

@@ -26,6 +26,15 @@ No modeles la Task en torno a una CLI skill por capa. El punto de ejecución pri
 
 ## Lo que una Task DEBE tener (formato obligatorio)
 
+Además del bloque de Tasks individuales, el `_tasks.md` debe llevar un header de trazabilidad mínima con:
+
+- `Plan origen`
+- `Spec origen`
+- `PRD origen`
+- `PRD version`
+- `Change ref`
+- `Status sync`
+
 ```markdown
 ## T-[número]: [Área] — [Nombre del componente]
 

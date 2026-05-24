@@ -114,11 +114,17 @@ PRD        Reglas PRD            Redacta / revisa PRD      wf-prd-review
 
 ETAPA 1    kb-spec-expert ──►   sdd-spec-explorer  ──◄──  wf-spec-analyze
 SPECIFY    kb-decompose-         Diagnóstico               wf-spec-discover
-           expert
+           expert                                         wf-prd-sync-impact
+           kb-product-
+           change-governance
+           kb-traceability-
+           rules
 
            kb-spec-expert ──►   sdd-spec-writer    ──◄──  wf-spec-fast-track
            kb-gap-              Escritura / delta         wf-spec-delta
-           conventions
+           conventions          / sync                    wf-spec-gap-resolve
+           kb-traceability-                                wf-spec-sync-from-prd
+           rules
 
            kb-spec-expert ──►   sdd-spec-auditor   ──◄──  wf-spec-validate
            kb-conflict-         Auditoría                 wf-spec-conflict
@@ -169,6 +175,9 @@ TASKS      Reglas Tasks          Plan → Tasks         /wf-prepare-tasks
     │       ├── prd_error_patterns.md
     │       └── prd_prohibited_items.md
     │
+    ├── kb-product-change-governance/ ✅ Knowledge: product change governance
+    │   └── SKILL.md
+    │
     ├── kb-spec-expert/          ✅ Knowledge: Spec rules
     │   ├── SKILL.md
     │   └── references/
@@ -182,6 +191,9 @@ TASKS      Reglas Tasks          Plan → Tasks         /wf-prepare-tasks
     │   └── SKILL.md
     │
     ├── kb-gap-conventions/      ✅ Knowledge: Gap format conventions
+    │   └── SKILL.md
+    │
+    ├── kb-traceability-rules/   ✅ Knowledge: sync status and derivation rules
     │   └── SKILL.md
     │
     ├── kb-plan-expert/          ✅ Knowledge: Plan rules
@@ -206,6 +218,9 @@ TASKS      Reglas Tasks          Plan → Tasks         /wf-prepare-tasks
     ├── wf-prd-review/           ✅ Workflow: PRD preflight
     │   └── SKILL.md
     │
+    ├── wf-prd-change/           ✅ Workflow: Product change management on PRD
+    │   └── SKILL.md
+    │
     ├── wf-spec-validate/        ✅ Workflow: Audit existing spec
     │   ├── SKILL.md
     │   └── references/output_template.md
@@ -223,6 +238,15 @@ TASKS      Reglas Tasks          Plan → Tasks         /wf-prepare-tasks
     ├── wf-spec-delta/           ✅ Workflow: Evolve spec with new requirements
     │   ├── SKILL.md
     │   └── references/delta_analysis_template.md
+    │
+    ├── wf-spec-gap-resolve/     ✅ Workflow: Complete incomplete HUs from analysis
+    │   └── SKILL.md
+    │
+    ├── wf-prd-sync-impact/      ✅ Workflow: Analyze PRD change impact downstream
+    │   └── SKILL.md
+    │
+    ├── wf-spec-sync-from-prd/   ✅ Workflow: Resync feature specs after PRD changes
+    │   └── SKILL.md
     │
     ├── wf-prepare-plan/         ✅ Workflow: Spec → Plan
     │   └── SKILL.md
@@ -368,12 +392,12 @@ El `task-generator` conoce los dominios de implementación KMM y asigna cada tas
 **Memoria acumulativa**: cada agente worker tiene `memory: project`. Con el tiempo, los agentes de Spec y el `plan-architect` recuerdan decisiones previas y mantienen consistencia entre artefactos.
 
 **Checkpoints humanos**: el pipeline nunca es fully-automatic. El humano valida artefactos estructurados en cuatro puntos clave:
-1. Tras `wf-spec-analyze` → responder gaps de negocio _(pendiente)_ en el `_analysis.md` (el PRD no se modifica, salvo veredicto `REQUIERE_LIMPIEZA_PRD`)
+1. Tras `wf-spec-analyze` → responder gaps de negocio _(pendiente)_ en el `_analysis.md` o, si cambió el producto comprometido, abrir `wf-prd-change`
 2. Tras `wf-spec-discover` (modo iterativo) → elegir qué Feature IDs entran en la próxima iteración
 3. Tras `wf-spec-features-first` → validar partición y ownership de shared models
 4. Tras cada `wf-prepare-plan` → revisar arquitectura antes de generar tasks
 
-**Trazabilidad completa**: cada task apunta a un CA del spec de feature. Cada CA del spec de feature es rastreable al spec monolítico origen.
+**Trazabilidad completa**: cada task apunta a un CA del spec de feature. Cada CA del spec de feature es rastreable al spec monolítico origen. Los artefactos derivados deben poder declarar además contra qué versión del PRD fueron generados y si siguen `in_sync`.
 
 ---
 

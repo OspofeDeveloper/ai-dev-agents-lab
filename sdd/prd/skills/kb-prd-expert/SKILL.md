@@ -21,13 +21,15 @@ El PRD es el **documento de entrada** del pipeline. Su único trabajo es describ
 ```
 PRD (negocio)  →  Spec (funcional)  →  Plan (técnico)  →  Tasks
      ↓
- Se congela
- tras el Spec
+ Control de cambios
+ y resincronización
 ```
 
-Una vez que el Spec existe, **el PRD se congela**. Pasa a ser un artefacto histórico de referencia — ya no es la fuente de verdad. Los cambios posteriores se gestionan con `wf-spec-delta` sobre el Spec, nunca modificando el PRD.
+En una pasada concreta del pipeline, el PRD se trata como **snapshot estable**. Pero en el ciclo de vida del producto, el PRD sigue siendo la **fuente de verdad de negocio** y puede evolucionar mediante control de cambios. Los cambios posteriores no se resuelven editando specs a mano sin contexto: se formalizan en el PRD y luego se propagan a los artefactos derivados.
 
-**Implicación directa:** un PRD no necesita ser perfecto. El pipeline detecta sus gaps y hace preguntas. Lo que sí necesita es estar limpio: sin contaminación técnica y con scope explícito.
+**Implicación directa:** un PRD no necesita ser perfecto. El pipeline detecta sus gaps y hace preguntas. Lo que sí necesita es estar limpio: sin contaminación técnica, con scope explícito y con trazabilidad suficiente para que un cambio aprobado pueda resincronizar discovery, specs, planes y tasks.
+
+→ Gobernanza de cambios: `kb-product-change-governance`
 
 ---
 
@@ -208,3 +210,16 @@ PRD  →  Analyze  →  Discovery / Feature Specs  →  Plan  →  Tasks
 - **Tasks**: trocean la implementación.
 
 **Regla de frontera:** si una duda es "¿qué quiere exactamente el negocio?", aún pertenece a PRD/Spec. Si la duda es "¿cómo lo implementamos en KMM?", ya pertenece a Plan.
+
+## Regla 11: Gobernanza de cambios delegada
+
+Las reglas completas para distinguir:
+
+- resolución de gap
+- cambio de comportamiento
+- cambio de alcance
+- versionado y trazabilidad del PRD
+
+no viven aquí. Su SSoT es `kb-product-change-governance`.
+
+**Regla operativa mínima de este skill:** si cambia la respuesta a "qué producto estamos construyendo", no lo trates como una simple aclaración del `_analysis.md`; usa `wf-prd-change`.

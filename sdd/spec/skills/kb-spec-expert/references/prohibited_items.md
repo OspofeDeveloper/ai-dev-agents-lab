@@ -2,6 +2,8 @@
 
 Estos elementos contaminan el Spec y rompen el flujo SDD. Pertenecen exclusivamente al **Plan**:
 
+> **Relación con `kb-prd-expert/references/prd_prohibited_items.md`:** Este catálogo es **subset** del catálogo del PRD. El Spec admite cosas que el PRD prohíbe (pantallas, flujos de navegación con destinos específicos, etc.) porque el Spec ya describe comportamiento funcional concreto. Pero todo lo prohibido aquí también está prohibido en el PRD.
+
 | Elemento prohibido | Por qué está prohibido | Dónde pertenece |
 |---|---|---|
 | Lenguajes de programación (Python, Kotlin, Swift, JS) | Hace el Spec tecnología-dependiente | Plan |

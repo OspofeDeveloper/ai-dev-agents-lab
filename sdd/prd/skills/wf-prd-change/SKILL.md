@@ -1,0 +1,114 @@
+---
+name: wf-prd-change
+description: Gestiona cambios de producto sobre un PRD existente. Clasifica el cambio, decide si es una aclaración o un verdadero change request, actualiza el PRD cuando corresponde y deja trazabilidad en changelog y decision log junto con una matriz de impacto sobre analysis, discovery, specs, plan y tasks. Activa en frases como "cambia el alcance del PRD", "esto pasa de fase 2 a MVP", "actualiza el PRD con esta decisión", "gestiona este cambio de producto", "abre un change request sobre el PRD".
+argument-hint: "<prd.md> --new-reqs <cambio.md>"
+effort: high
+allowed-tools: [Read, Write, Bash]
+context: fork
+agent: prd-expert
+---
+
+# Workflow: PRD-CHANGE
+
+Tu objetivo es gestionar cambios de producto una vez que el PRD ya existe y el pipeline puede haber generado artefactos derivados.
+
+Usa `kb-prd-expert` para preservar pureza de negocio y `kb-product-change-governance` para decidir si el cambio requiere actualizar el PRD o basta con registrarlo como aclaración.
+
+**Regla de oro:** si el cambio altera el producto comprometido, el PRD se actualiza primero y la trazabilidad se registra antes de hablar de specs.
+
+## Paso 1: Parsear argumentos
+
+Extrae de `$ARGUMENTS`:
+
+- path del `PRD.md`
+- `--new-reqs <archivo.md>` obligatorio: documento con el cambio propuesto
+
+Si faltan argumentos:
+> "Uso: `/wf-prd-change <prd.md> --new-reqs <cambio.md>`"
+
+## Paso 2: Verificar archivos
+
+Comprueba que existen el PRD y el documento de cambio.
+
+Si no existe alguno, informa y detén.
+
+## Paso 3: Leer contexto
+
+Lee:
+
+- PRD completo
+- documento de cambio
+- `product-changelog.md` si existe en el mismo directorio
+- `*_analysis.md`, `*_discovery.md`, `*_features.md` si existen
+
+## Paso 4: Clasificar el cambio
+
+Siguiendo `kb-product-change-governance`, clasifica el cambio como:
+
+- `CLARIFICATION`
+- `BEHAVIOR_CHANGE`
+- `SCOPE_CHANGE`
+- `PRIORITY_CHANGE`
+- `DEPRECATION`
+
+Indica también:
+
+- severidad: `BAJA | MEDIA | ALTA`
+- si exige editar el PRD: `sí/no`
+- por qué
+
+Si es solo `CLARIFICATION` y no contradice el PRD:
+
+- no reescribas el PRD
+- genera igualmente el artefacto de cambio
+- recomienda `wf-spec-gap-resolve` o `wf-spec-delta` según corresponda
+
+## Paso 5: Proponer y aplicar el cambio en el PRD
+
+Si el cambio exige editar el PRD:
+
+1. actualiza versión y fecha del PRD
+2. reescribe únicamente las secciones afectadas
+3. conserva el resto intacto
+4. si una exclusión de fase futura pasa a MVP, elimina o corrige esa exclusión
+
+Nunca metas detalles técnicos.
+
+## Paso 6: Registrar trazabilidad
+
+Escribe o actualiza:
+
+- `product-changelog.md`
+- `decisions/CR-XXX.md`
+
+La entrada mínima debe incluir:
+
+- ID del cambio
+- fecha
+- tipo
+- resumen de la decisión
+- secciones del PRD tocadas
+- artefactos potencialmente afectados
+
+## Paso 7: Generar impacto inicial
+
+Genera un informe `<basename>_change_request.md` con:
+
+- clasificación del cambio
+- diff funcional resumido
+- impacto preliminar sobre:
+  - analysis
+  - discovery
+  - features index
+  - specs
+  - plan
+  - tasks
+- siguiente workflow recomendado
+
+## Paso 8: Informar siguiente paso
+
+- Si solo fue aclaración:
+  > "El cambio no altera el producto comprometido. No fue necesario reescribir el PRD. Continúa con `wf-spec-gap-resolve` o `wf-spec-delta` según el artefacto afectado."
+
+- Si hubo cambio de producto:
+  > "El PRD se actualizó y se registró el cambio. Ejecuta `wf-prd-sync-impact <prd.md>` para medir qué artefactos derivados han quedado desincronizados."

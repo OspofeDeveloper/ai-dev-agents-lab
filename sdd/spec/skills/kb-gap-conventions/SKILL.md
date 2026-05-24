@@ -82,7 +82,7 @@ Los orquestadores verifican la presencia de marcadores pendientes antes de avanz
 | Condición en el `_spec.md` | Acción del orquestador |
 |-----------------------------|------------------------|
 | Hay HUs marcadas `[INCOMPLETO]` | **Bloquear**: listar las HUs incompletas y los gaps que las bloquean |
-| Hay `[INFORMATIVO]_(pendiente)_` pero no `[INCOMPLETO]` | **Continuar** con advertencia |
+| Hay gaps `[INFORMATIVO]` con `_(pendiente)_` pero no `[INCOMPLETO]` | **Continuar** con advertencia |
 | Sin marcadores pendientes | **Continuar** normalmente |
 
 **Patrón de verificación**: buscar la cadena literal `[INCOMPLETO]` para HUs incompletas, y `_(pendiente)_` para gaps sin responder.
@@ -106,7 +106,7 @@ El marcador `[INCOMPLETO]` se aplica a nivel de HU en el spec generado cuando un
 
 Al final de cada HU afectada:
 ```markdown
-> ⚠ [INCOMPLETO] — Pendiente de gap(s): [P-001], [P-003]. Responde en el `_analysis.md` y ejecuta `/wf-spec-delta resolve` para completar.
+> ⚠ [INCOMPLETO] — Pendiente de gap(s): [P-001], [P-003]. Responde en el `_analysis.md` y ejecuta `/wf-spec-gap-resolve` para completar.
 ```
 
 ### Efecto en el pipeline
@@ -114,4 +114,4 @@ Al final de cada HU afectada:
 - Una HU marcada `[INCOMPLETO]` **se incluye** en el spec con toda la información disponible
 - Los CAs asociados se generan parcialmente si es posible (con el GIVEN/WHEN disponible) o se omiten con referencia al gap
 - `wf-prepare-plan` **bloquea** si el feature spec contiene HUs `[INCOMPLETO]`
-- Para completar: responder el gap en el `_analysis.md`, luego ejecutar `/wf-spec-delta resolve <feature_spec.md>` para integrar la respuesta y eliminar la marca
+- Para completar: responder el gap en el `_analysis.md`, luego ejecutar `/wf-spec-gap-resolve <feature_spec.md>` para integrar la respuesta y eliminar la marca

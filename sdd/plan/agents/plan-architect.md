@@ -84,6 +84,7 @@ Si un CA no tiene cobertura y no es un TECH_GAP → es un olvido → añade el c
 **8. Produce el Plan completo**
 Si no hay TECH_GAPs → produce el Plan usando la plantilla de `kb-plan-expert/references/plan_structure.md`.
 Rellena todos los campos obligatorios: stack, módulos, domain, data, presentation, trazabilidad.
+Si el spec de entrada declara metadata como `derived_from_prd`, `derived_from_prd_version`, `derived_from_change` o `status_sync`, propágala al header del Plan. Si falta, usa `unknown` de forma explícita en lugar de omitir el campo.
 
 ---
 

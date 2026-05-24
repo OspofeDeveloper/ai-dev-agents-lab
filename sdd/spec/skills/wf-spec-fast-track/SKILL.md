@@ -128,6 +128,11 @@ Produce un `_spec.md` completo con los 8 elementos SDD siguiendo la estructura d
 > Generado via: fast-track desde [path/del/documento.md]
 > Feature ID: F-001
 > Spec monolítico origen: N/A (fast-track directo)
+> Source requirements: [path/del/documento.md]
+> derived_from_prd: N/A
+> derived_from_prd_version: N/A
+> derived_from_change: N/A
+> status_sync: unknown
 ```
 
 **Header específico del fast-track (modo scoped):**
@@ -137,6 +142,11 @@ Produce un `_spec.md` completo con los 8 elementos SDD siguiendo la estructura d
 > Generado via: fast-track desde [path/del/prd.md] (scope: F-00X via [discovery.md])
 > Feature ID: F-00X
 > Spec monolítico origen: N/A (features-first via discover)
+> Source requirements: [path/del/prd.md]
+> derived_from_prd: [path/del/prd.md]
+> derived_from_prd_version: [versión del PRD o unknown]
+> derived_from_change: [CR-XXX | N/A]
+> status_sync: in_sync
 ```
 
 **Si hay items `[CRÍTICO]` pendientes**, añadir al final del spec (antes del Changelog si existiera):
@@ -144,12 +154,12 @@ Produce un `_spec.md` completo con los 8 elementos SDD siguiendo la estructura d
 ## Items Pendientes
 
 > ⚠️ Este spec tiene gaps **críticos** sin resolver. Las HUs afectadas están marcadas `[INCOMPLETO]` y `/wf-prepare-plan` quedará bloqueado hasta que se resuelvan.
-> Para resolverlos: edita este spec respondiendo los gaps, luego ejecuta `/wf-spec-validate <path>_spec.md`.
+> Para resolverlos: responde los gaps en el `_analysis.md` y ejecuta `/wf-spec-gap-resolve <path>_spec.md`.
 
 ### [P-001][CRÍTICO] [Título del gap]
 - **Afecta**: [HU-001, HU-003]
 - **Pregunta**: [pregunta concreta]
-- **Respuesta**: [CRÍTICO]_(pendiente)_
+- **Respuesta**: _(pendiente)_
 ```
 
 **Si hay asunciones aplicadas**, añadir:

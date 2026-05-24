@@ -2,6 +2,8 @@
 
 Estos elementos contaminan el PRD y rompen el flujo SDD. Cada uno pertenece a una capa posterior del pipeline.
 
+> **Relación con `kb-spec-expert/references/prohibited_items.md`:** Este catálogo es **estricto-superset** del catálogo del Spec. Todo lo prohibido en el Spec también lo está en el PRD, y además el PRD prohíbe elementos que el Spec sí admite (pantallas como unidades, flujos de navegación con nombres de pantallas, timelines, estructura de módulos, criterios técnicos de QA). Si una frase sería inválida en el Spec, automáticamente lo es en el PRD.
+
 ## Tabla de prohibidos
 
 | Elemento prohibido | Por qué está prohibido | Dónde pertenece |

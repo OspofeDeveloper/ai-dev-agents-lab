@@ -1,6 +1,6 @@
 ---
 name: wf-spec-analyze
-description: Recopila las decisiones de negocio que necesitarán los Specs a partir de un PRD ya congelado. Mapea qué elementos del Spec se generarán desde el PRD, detecta contaminación técnica y formula preguntas concretas para el cliente. Genera un `_analysis.md` cuyas respuestas alimentan los Specs (el PRD no se modifica). Activa en frases como "prepara los inputs para los specs", "qué decisiones de negocio faltan para los specs", "analiza este PRD para empezar los specs", "genera el análisis previo al spec".
+description: Recopila las decisiones de negocio que necesitarán los Specs a partir de un PRD vigente. Mapea qué elementos del Spec se generarán desde el PRD, detecta contaminación técnica y formula preguntas concretas para el cliente. Genera un `_analysis.md` cuyas respuestas alimentan los Specs. Si detectas que una respuesta pendiente implicaría un cambio real de producto, debes remitir a `wf-prd-change` en lugar de tratarlo como un simple gap. Activa en frases como "prepara los inputs para los specs", "qué decisiones de negocio faltan para los specs", "analiza este PRD para empezar los specs", "genera el análisis previo al spec".
 argument-hint: "<archivo.md>"
 effort: high
 allowed-tools: [Read, Write, Bash]
@@ -12,11 +12,11 @@ agent: sdd-spec-explorer
 
 Este workflow pertenece a la fase Spec y **requiere un PRD o documento de requisitos previo** como entrada. Si el usuario todavía no tiene ese artefacto, remítelo a la fase PRD antes de continuar.
 
-Tu objetivo es **recopilar las decisiones de negocio que los Specs necesitarán** a partir de un PRD que ya está congelado. No auditas el PRD ni le buscas defectos: el PRD ya hizo su trabajo en la fase anterior y, según `kb-prd-expert`, no tiene por qué contener HUs, Journeys, CAs ni Checklist — esos elementos pertenecen al Spec y se generarán después.
+Tu objetivo es **recopilar las decisiones de negocio que los Specs necesitarán** a partir de un PRD vigente. No auditas el PRD ni le buscas defectos funcionales por deporte: el PRD ya hizo su trabajo en la fase anterior y, según `kb-prd-expert`, no tiene por qué contener HUs, Journeys, CAs ni Checklist — esos elementos pertenecen al Spec y se generarán después.
 
-Usa `kb-spec-expert` para aplicar los 3 checks. El Check 1 mapea qué elementos del Spec se generarán a partir del PRD; el Check 2 detecta contaminación técnica (única condición que sí justifica retocar el PRD); el Check 3 evalúa la testabilidad si el PRD ya tuviera CAs formales.
+Usa `kb-spec-expert` para aplicar los 3 checks. El Check 1 mapea qué elementos del Spec se generarán a partir del PRD; el Check 2 detecta contaminación técnica (única condición que sí justifica retocar el PRD dentro del propio analyze); el Check 3 evalúa la testabilidad si el PRD ya tuviera CAs formales.
 
-**Regla de oro:** Nunca rellenas huecos funcionales. Si algo no está definido o es ambiguo, lo marcas con `_(pendiente)_` en el campo "Respuesta" del gap (consulta `kb-gap-conventions` para el formato exacto) y formulas una pregunta concreta. El cliente decide, tú detectas. **El PRD no se modifica**: las respuestas se anotan en el `_analysis.md` y alimentan los Specs.
+**Regla de oro:** Nunca rellenas huecos funcionales. Si algo no está definido o es ambiguo, lo marcas con `_(pendiente)_` en el campo "Respuesta" del gap (consulta `kb-gap-conventions` para el formato exacto) y formulas una pregunta concreta. El cliente decide, tú detectas. Si la respuesta pendiente realmente encubre un cambio de alcance, prioridad o reglas de negocio, debes remitir a `wf-prd-change`.
 
 ---
 
@@ -87,6 +87,8 @@ Si encuentras información funcional ausente o ambigua (no técnica), formúlala
 
 Consulta `kb-gap-conventions` para el formato de IDs `[P-XXX]`, las definiciones de severidad `[CRÍTICO]` / `[INFORMATIVO]`, el marcador `_(pendiente)_` y el formato exacto de cada gap en el informe.
 
+**Importante:** si el problema detectado no es una ambigüedad sino una contradicción entre el PRD vigente y una decisión nueva de negocio ("esto pasa de fase 2 a MVP", "se elimina esta exclusión", "ahora otro actor puede hacerlo"), no lo reduzcas a un gap normal. Márcalo explícitamente como **requiere change request** y remite a `wf-prd-change`.
+
 ### Campo "Afecta" (obligatorio en CRÍTICO)
 
 Para cada gap `[CRÍTICO]`, determina qué HUs del documento no pueden completarse sin la respuesta a este gap. Lista sus IDs en el campo `- **Afecta**: [HU-001, HU-003]`. Si las HUs aún no tienen IDs asignados (porque el documento es un PRD sin HUs formales), describe las funcionalidades afectadas en texto libre (ej: `- **Afecta**: funcionalidad de login, recuperación de contraseña`).
@@ -122,5 +124,6 @@ Tras escribir el archivo, informa:
 - Veredicto del Estado de preparación para Specs
 - Resumen: cuántos elementos del Spec se generarán desde cero vs. ya parciales en PRD, cuántas contaminaciones técnicas detectadas (si las hay), cuántos `[P-XXX]` pendientes (desglosados: CRÍTICOS e INFORMATIVOS)
 - Siguiente paso:
-  - Si veredicto = `LISTO_PARA_SPECS` o `LISTO_PARA_SPECS_CON_PREGUNTAS`: "Anota las respuestas a las preguntas marcadas como _(pendiente)_ en `<path>_analysis.md` (las respuestas se escriben en este archivo, no en el PRD) y ejecuta `/wf-spec-features-first <archivo.md>` para el flujo completo, o `/wf-spec-discover <archivo.md> --analysis <path>_analysis.md` para el paso a paso."
-  - Si veredicto = `REQUIERE_LIMPIEZA_PRD`: "Hay contaminación técnica en el PRD. Aplica las acciones marcadas en la sección Pureza del análisis y vuelve a ejecutar `/wf-spec-analyze <archivo.md>` antes de continuar."
+  - Si veredicto = `LISTO_PARA_SPECS` o `LISTO_PARA_SPECS_CON_PREGUNTAS`: "Anota las respuestas a las preguntas marcadas como _(pendiente)_ en `<path>_analysis.md` y ejecuta `/wf-spec-features-first <archivo.md>` para el flujo completo, o `/wf-spec-discover <archivo.md> --analysis <path>_analysis.md` para el paso a paso."
+  - Si veredicto = `REQUIERE_LIMPIEZA_PRD`: "Hay contaminación técnica en el PRD. Tienes dos vías para limpiarlo: (a) aplicar tú mismo las reescrituras de la sección Pureza del análisis; (b) delegar la limpieza al agente `prd-expert` o ejecutar `/wf-prd-review <archivo.md>` para un diagnóstico previo más estructurado antes de corregir. Tras la corrección, vuelve a ejecutar `/wf-spec-analyze <archivo.md>`."
+  - Si detectaste cambio de producto: "Antes de continuar con Specs, formaliza el cambio en el PRD con `/wf-prd-change <archivo.md> --new-reqs <cambio.md>` y luego evalúa impacto con `/wf-prd-sync-impact <archivo.md>`."

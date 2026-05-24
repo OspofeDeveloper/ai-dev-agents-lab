@@ -18,6 +18,7 @@ Las `kb-*` viven en los subagentes y se cargan automáticamente en su contexto. 
 |---|---|---|
 | Crear un PRD desde notas, brief o idea inicial | `/wf-prd-create` | `<directorio_proyecto> [--source <notas.md>] [--output <prd.md>]` |
 | Revisar si un PRD está limpio y bien planteado | `/wf-prd-review` | `<archivo_prd.md>` |
+| Gestionar un cambio de producto sobre un PRD ya existente | `/wf-prd-change` | `<archivo_prd.md> --new-reqs <cambio.md>` |
 
 ## Cómo actuar ante una petición
 
@@ -44,7 +45,8 @@ Las skills PRD son bases de conocimiento que los agentes especializados cargan a
 
 | Skill | Dominio |
 |---|---|
-| `kb-prd-expert` | Reglas del PRD: rol en SDD, estructura válida, alcance, actores, fuera de alcance y contaminación técnica |
+| `kb-prd-expert` | Reglas del PRD: rol en SDD, estructura válida, alcance, actores, fuera de alcance y contaminación técnica. **Cross-fase**: la cargan también los agentes Spec para leer el PRD de entrada. |
+| `kb-product-change-governance` | Clasificación de cambios, control de alcance y trazabilidad entre PRD y derivados. **Cross-fase**: la cargan también los agentes Spec para distinguir gaps de change requests. |
 
 ## Principio operativo
 

@@ -28,6 +28,9 @@ Si buscas mejor rendimiento y menos carga de contexto, instala y usa el `CLAUDE.
 |---|---|---|
 | Crear un PRD desde notas o desde cero | `/wf-prd-create` | `<directorio_proyecto> [--source <notas.md>] [--output <prd.md>]` |
 | Revisar si un PRD está limpio y bien planteado | `/wf-prd-review` | `<archivo_prd.md>` |
+| Formalizar un cambio de producto sobre un PRD existente | `/wf-prd-change` | `<archivo_prd.md> --new-reqs <cambio.md>` |
+| Medir impacto de un cambio de PRD sobre artefactos derivados | `/wf-prd-sync-impact` | `<archivo_prd.md>` |
+| Resincronizar specs tras un cambio de PRD | `/wf-spec-sync-from-prd` | `analyze <prd.md> \| apply <prd.md> --features F-001,F-002,...` |
 | Analizar un PRD/documento para detectar gaps | `/wf-spec-analyze` | `<archivo.md>` |
 | Validar un spec existente | `/wf-spec-validate` | `<archivo_spec.md>` |
 | Identificar features de un PRD | `/wf-spec-discover` | `<archivo_prd.md> [--analysis <analysis.md>]` |
@@ -39,7 +42,7 @@ Si buscas mejor rendimiento y menos carga de contexto, instala y usa el `CLAUDE.
 | Qué features están listas / orden de implementación | `/wf-spec-readiness` | `<path/features/>` |
 | Actualizar un spec con requisitos nuevos (análisis) | `/wf-spec-delta` | `analyze <feature_spec.md> --new-reqs <description.md>` |
 | Aplicar un delta analysis a un spec | `/wf-spec-delta` | `apply <feature_spec.md> <delta_analysis.md>` |
-| Completar HUs incompletas (gaps respondidos en analysis) | `/wf-spec-delta` | `resolve <feature_spec.md> [--analysis <path_analysis.md>]` |
+| Completar HUs incompletas (gaps respondidos en analysis) | `/wf-spec-gap-resolve` | `<feature_spec.md> [--analysis <path_analysis.md>]` |
 | Generar el plan técnico desde un spec | `/wf-prepare-plan` | `generate <spec.md>` |
 | Generar las tasks desde un plan | `/wf-prepare-tasks` | `generate <plan.md>` |
 
@@ -113,6 +116,8 @@ features/<nombre>/<nombre>_tasks.md
 
 > El analyze es obligatorio. `/wf-spec-features-first` lo ejecuta automáticamente si no existe `_analysis.md`.
 > Para cambios post-spec: `/wf-spec-delta analyze <spec.md> --new-reqs <cambios.md>`
+> Para completar HUs `[INCOMPLETO]` con respuestas ya escritas en `_analysis.md`: `/wf-spec-gap-resolve <spec.md>`
+> Para cambios de producto (scope, prioridad, exclusiones): primero `/wf-prd-change`, luego `/wf-prd-sync-impact` y `/wf-spec-sync-from-prd`.
 > Tras `/wf-prepare-tasks`, cada task debe delegarse al `Owner agent` indicado en el `_tasks.md`.
 
 ## Principio de precondiciones

@@ -35,7 +35,9 @@ Ejemplo:
 2. Lee el archivo completo.
 3. Comprueba que no contiene `[TECH_GAP]` sin resolver. Si los hay → lista cuáles y detén:
    > "El Plan tiene X TECH_GAPs sin resolver. Actualiza el Spec y regenera el Plan antes de crear Tasks."
-4. Verifica que el archivo parece un Plan técnico (contiene "Domain Layer" o "Checklist de Trazabilidad"). Si no → informa:
+4. Si el plan declara `status_sync: stale` o `status_sync: needs_review` → detén:
+   > "El Plan no está sincronizado con la versión vigente del PRD. Resincroniza primero el Spec/Plan antes de crear Tasks."
+5. Verifica que el archivo parece un Plan técnico (contiene "Domain Layer" o "Checklist de Trazabilidad"). Si no → informa:
    > "Este archivo no parece un Plan técnico. Primero ejecuta `/wf-prepare-plan generate <spec.md>`"
 
 ---
@@ -56,6 +58,7 @@ Contenido del Plan:
 ---
 <contenido_completo_del_plan>
 ---
+INSTRUCCIÓN: Si el Plan declara metadata de trazabilidad (`Spec origen`, `PRD origen`, `PRD version`, `Change ref`, `Status sync`), propágala al header del `_tasks.md`. Si falta, usa `unknown` o `N/A` de forma explícita.
 ```
 
 Espera a que el agente complete su ejecución y recibe su output.

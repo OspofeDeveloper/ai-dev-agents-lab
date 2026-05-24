@@ -8,6 +8,10 @@ Usa esta estructura para producir un Plan válido. Todos los campos marcados `[o
 # Plan: [Nombre de la Feature]
 > **Versión:** 1.0
 > **Spec origen:** [path/al/_spec.md]
+> **PRD origen:** [path/al/PRD.md | unknown]
+> **PRD version:** [1.0 | unknown]
+> **Change ref:** [CR-XXX | N/A]
+> **Status sync:** [in_sync | needs_review | stale | unknown]
 > **Fecha:** [YYYY-MM-DD]
 > **Estado:** BORRADOR
 

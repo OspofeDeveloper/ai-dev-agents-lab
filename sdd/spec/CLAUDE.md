@@ -26,14 +26,19 @@ Si el usuario todavía no tiene `prd.md` o el documento base no está listo, det
 | Identificar features de un PRD | `/wf-spec-discover` | `<archivo_prd.md> [--analysis <analysis.md>]` |
 | Generar todos los specs por feature desde un PRD | `/wf-spec-features-first` | `<archivo_prd.md> [--skip-conflict] [--skip-readiness]` |
 | Generar specs de un subset / iteración / fase de features | `/wf-spec-features-first` | `<archivo_prd.md> --features F-001,F-002,...` |
-| Generar spec directo de una feature | `/wf-spec-fast-track` | `<archivo_prd.md> --capability <nombre> [--analysis <analysis.md>]` |
-| Generar spec de una feature desde un discovery | `/wf-spec-fast-track` | `<archivo_prd.md> --scope-from <discovery.md> --feature <F-00X> [--analysis <analysis.md>]` |
+| Generar spec directo de una feature | `/wf-spec-fast-track` | `<archivo.md> --capability <nombre> [--analysis <analysis.md>]` (acepta cualquier doc acotado a una capacidad, no solo PRD) |
+| Generar spec de una feature desde un discovery | `/wf-spec-fast-track` | `<prd.md> --scope-from <discovery.md> --feature <F-00X> [--analysis <analysis.md>]` |
 | Validar un spec existente | `/wf-spec-validate` | `<archivo_spec.md>` |
 | Detectar conflictos entre specs de features | `/wf-spec-conflict` | `<feature_spec.md> --features-dir <path/features/>` |
 | Ver qué features están listas y el orden de implementación | `/wf-spec-readiness` | `<path/features/>` |
 | Analizar cambios sobre un spec existente | `/wf-spec-delta` | `analyze <feature_spec.md> --new-reqs <description.md>` |
 | Aplicar un delta analysis a un spec | `/wf-spec-delta` | `apply <feature_spec.md> <delta_analysis.md>` |
-| Completar HUs incompletas desde un analysis | `/wf-spec-delta` | `resolve <feature_spec.md> [--analysis <path_analysis.md>]` |
+| Completar HUs incompletas desde un analysis | `/wf-spec-gap-resolve` | `<feature_spec.md> [--analysis <path_analysis.md>]` |
+| Formalizar un cambio de producto antes de resincronizar specs ⚠ | `/wf-prd-change` | `<archivo_prd.md> --new-reqs <cambio.md>` |
+| Analizar impacto de un cambio de PRD sobre artefactos Spec | `/wf-prd-sync-impact` | `<archivo_prd.md>` |
+| Resincronizar specs tras un cambio de PRD | `/wf-spec-sync-from-prd` | `analyze <prd.md> \| apply <prd.md> --features F-001,F-002,...` |
+
+> ⚠ `/wf-prd-change` vive físicamente en la fase PRD (`sdd/prd/skills/`). El orquestador Spec lo lista porque es el handoff correcto cuando una respuesta a un gap se convierte en cambio de producto, pero la ejecución pertenece a la fase PRD.
 
 ## Cómo actuar ante una petición
 
@@ -79,6 +84,11 @@ Las skills Spec son bases de conocimiento que los agentes especializados cargan 
 | `kb-decompose-expert` | Reglas para identificar features, shared models y ownership |
 | `kb-conflict-expert` | Reglas de detección de conflictos entre specs |
 | `kb-gap-conventions` | Convenciones SSoT para gaps, severidades y pendientes |
+| `kb-traceability-rules` | Reglas de trazabilidad y estados de sincronización entre PRD y derivados |
+| `kb-prd-expert` ⚠ | Reglas del PRD — cargada por agentes Spec para leer el PRD de entrada (vive en `sdd/prd/`) |
+| `kb-product-change-governance` ⚠ | Reglas para distinguir gaps de cambios reales de producto (vive en `sdd/prd/`) |
+
+> ⚠ Las dos kb marcadas son cross-fase: viven en `sdd/prd/skills/` pero las cargan los agentes Spec. Si instalas solo `sdd/spec/`, debes copiar también esas dos kb o los agentes Spec quedarán sin sus reglas de lectura del PRD y de governance.
 
 ## Principio operativo
 

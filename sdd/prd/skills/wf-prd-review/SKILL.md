@@ -65,13 +65,16 @@ No penalices la estructura elegida si el documento sigue siendo claro y trazable
 
 ## Paso 5: Revisar contaminación técnica
 
-Detecta fragmentos que deberían salir del PRD por pertenecer a Plan o Tasks:
-- tecnologías
-- arquitectura
-- detalles de API o almacenamiento
-- instrucciones de implementación
+Aplica la **Prueba de Negocio** definida en `kb-prd-expert` Regla 6 a cada sección del PRD.
 
-Para cada caso, cita el fragmento y explica por qué está fuera de frontera.
+Consulta el catálogo completo de elementos prohibidos en `references/prd_prohibited_items.md` del skill `kb-prd-expert` (incluye stack tecnológico, frameworks, patrones de diseño, endpoints, esquemas de datos, timelines, criterios técnicos de QA, pantallas como unidades de feature, etc.).
+
+Para cada fragmento problemático:
+- Cita el fragmento exacto
+- Indica qué entrada del catálogo viola
+- Propón la reescritura funcional equivalente
+
+No inventes una frontera propia inline: la SSoT es `kb-prd-expert`.
 
 ---
 
@@ -96,7 +99,8 @@ LISTO / LISTO_CON_AJUSTES / NO_LISTO
 
 ### Siguiente paso
 - Si está listo: `/wf-spec-analyze <archivo_prd.md>`
-- Si no está listo: corregir el PRD y volver a ejecutar `/wf-prd-review <archivo_prd.md>`
+- Si no está listo por contaminación técnica o estructura: corregir el PRD (manualmente o delegando a `prd-expert`) y volver a ejecutar `/wf-prd-review <archivo_prd.md>`
+- Si la revisión revela que falta alcance comprometido, una capacidad necesita cambiar de fase, o una exclusión deja de ser válida: no se trata de un fix de redacción sino de un cambio de producto. Remite a `/wf-prd-change <archivo_prd.md> --new-reqs <cambio.md>` para formalizarlo con trazabilidad.
 ```
 
 No inventes requisitos faltantes. Si hay huecos, señálalos como problemas de entrada.

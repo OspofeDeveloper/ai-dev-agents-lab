@@ -4,7 +4,7 @@
 > **Fecha**: [YYYY-MM-DD]
 > **Archivo origen**: [path/al/archivo.md]
 
-> **Nota**: este análisis prepara la información que los Specs van a necesitar. El PRD permanece congelado — las respuestas y decisiones se anotan **en este archivo**, no en el PRD.
+> **Nota**: este análisis prepara la información que los Specs van a necesitar. Las respuestas a gaps se anotan **en este archivo**. Si durante la validación aparece un cambio real de producto, debe formalizarse en el PRD mediante `wf-prd-change` antes de seguir resincronizando derivados.
 
 ---
 
@@ -29,7 +29,7 @@
 
 **Significado de los veredictos:**
 - `LISTO_PARA_SPECS`: el PRD está limpio (sin contaminación técnica) y no hay gaps `[CRÍTICO]` pendientes. Se puede arrancar la generación de Specs directamente.
-- `LISTO_PARA_SPECS_CON_PREGUNTAS`: el PRD está limpio, pero hay gaps `[CRÍTICO]` por responder. Se puede generar Specs igualmente — las HUs afectadas saldrán marcadas `[INCOMPLETO]` y se podrán completar luego con `/wf-spec-delta resolve`.
+- `LISTO_PARA_SPECS_CON_PREGUNTAS`: el PRD está limpio, pero hay gaps `[CRÍTICO]` por responder. Se puede generar Specs igualmente — las HUs afectadas saldrán marcadas `[INCOMPLETO]` y se podrán completar luego con `/wf-spec-gap-resolve`.
 - `REQUIERE_LIMPIEZA_PRD`: se detectó contaminación técnica en el PRD (Check 2). **Única condición** que requiere modificar el PRD antes de continuar.
 
 ---
@@ -52,7 +52,7 @@
 ## Pureza: [APROBADO | CONTAMINADO]
 
 <!-- Si APROBADO: "No se encontraron elementos técnicos en el documento." -->
-<!-- Si CONTAMINADO: listar cada instancia encontrada — éste es el único caso que requiere editar el PRD -->
+<!-- Si CONTAMINADO: listar cada instancia encontrada — éste es el único caso que requiere editar el PRD por contaminación técnica detectada en analyze -->
 
 #### [C-001] [Título breve de la contaminación]
 - **Cita**: > "[fragmento exacto del documento]"
@@ -91,7 +91,7 @@
 > Estos puntos **no fueron inferidos por el sistema**. Son ambigüedades o información ausente
 > que debe ser definida por el cliente antes de generar el `.spec` final.
 >
-> **Las respuestas se escriben en este archivo, no en el PRD** — el PRD permanece congelado.
+> **Las respuestas se escriben en este archivo, no en el PRD**, salvo que la propia respuesta cambie el producto comprometido. En ese caso, usa `wf-prd-change`.
 > Escribe la respuesta de cada cliente en el campo "Respuesta" del gap correspondiente.
 >
 > - `[CRÍTICO]`: afecta directamente a las HUs indicadas en "Afecta". Si se deja sin responder, esas HUs se marcarán como `[INCOMPLETO]` en el spec — se generarán con la información disponible pero no podrán avanzar a plan/tasks hasta completarse.
@@ -114,9 +114,9 @@
 
 ## Próximos pasos
 
-**Si el veredicto es `LISTO_PARA_SPECS` o `LISTO_PARA_SPECS_CON_PREGUNTAS`** (el PRD no se modifica):
+**Si el veredicto es `LISTO_PARA_SPECS` o `LISTO_PARA_SPECS_CON_PREGUNTAS`**:
 
-1. Anota la respuesta de cada `[P-XXX]` que puedas resolver **en este archivo**, en el campo `Respuesta` (sustituye `_(pendiente)_` por la respuesta real). No modifiques el PRD.
+1. Anota la respuesta de cada `[P-XXX]` que puedas resolver **en este archivo**, en el campo `Respuesta` (sustituye `_(pendiente)_` por la respuesta real). Si al responder descubres que cambia el producto comprometido, usa `wf-prd-change` y no trates la decisión como un simple gap.
 2. Los `[CRÍTICO]` que queden sin respuesta marcarán sus HUs como `[INCOMPLETO]` en el spec (se generarán pero no podrán avanzar a plan/tasks hasta completarse).
 3. Los `[INFORMATIVO]` que queden sin respuesta aplicarán su asunción por defecto.
 4. Ejecuta el flujo completo automático:
@@ -127,9 +127,9 @@
    ```
    /wf-spec-discover [path/al/archivo.md] --analysis [path/al/archivo_analysis.md]
    ```
-5. Para completar HUs marcadas `[INCOMPLETO]` más tarde: responde los gaps pendientes en este archivo y ejecuta `/wf-spec-delta resolve <feature_spec.md>`.
+5. Para completar HUs marcadas `[INCOMPLETO]` más tarde: responde los gaps pendientes en este archivo y ejecuta `/wf-spec-gap-resolve <feature_spec.md>`.
 
-**Si el veredicto es `REQUIERE_LIMPIEZA_PRD`** (único caso que toca el PRD):
+**Si el veredicto es `REQUIERE_LIMPIEZA_PRD`** (único caso de edición del PRD por contaminación técnica detectada en analyze):
 
 1. En la sección "Pureza", para cada contaminación marca **una** de las tres acciones:
    - `[x] ACEPTAR` — aplica la reescritura sugerida al PRD

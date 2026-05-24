@@ -1,7 +1,7 @@
 ---
 name: wf-spec-delta
-description: Evoluciona un Spec de feature existente. Modo 'analyze' genera un informe delta con HUs y CAs añadidos, modificados y eliminados; modo 'apply' integra los cambios validados en el spec; modo 'resolve' completa HUs marcadas [INCOMPLETO] a partir de gaps respondidos en el analysis original. Activa en frases como "quiero añadir funcionalidad al spec", "actualiza el spec con estos requisitos nuevos", "evoluciona el spec con este cambio", "genera el delta del spec", "completar gaps", "resolver incompletos".
-argument-hint: "analyze <spec.md> --new-reqs <desc.md> | apply <spec.md> <delta.md> | resolve <spec.md> [--analysis <analysis.md>]"
+description: Evoluciona un Spec de feature existente. Modo 'analyze' genera un informe delta con HUs y CAs añadidos, modificados y eliminados; modo 'apply' integra los cambios validados en el spec. La resolución de HUs `[INCOMPLETO]` desde un `_analysis.md` pertenece a `wf-spec-gap-resolve`, no a este workflow. Activa en frases como "quiero añadir funcionalidad al spec", "actualiza el spec con estos requisitos nuevos", "evoluciona el spec con este cambio", "genera el delta del spec".
+argument-hint: "analyze <spec.md> --new-reqs <desc.md> | apply <spec.md> <delta.md>"
 effort: high
 allowed-tools: [Read, Write, Bash]
 context: fork
@@ -12,35 +12,31 @@ agent: sdd-spec-writer
 
 Tu objetivo es gestionar la evolución controlada de un Spec SDD existente. Usa `kb-spec-expert` para asegurarte de que los cambios propuestos y el spec resultante mantienen la pureza funcional y los 8 elementos SDD.
 
-**Regla de oro:** El delta nunca reescribe la historia del spec — solo la extiende. Los cambios deben ser mínimos y quirúrgicos. Si el documento de nuevos requisitos describe en realidad un cambio de scope masivo, indícalo explícitamente al finalizar y sugiere volver a partir de un PRD completo.
+**Regla de oro:** El delta nunca reescribe la historia del spec — solo la extiende. Los cambios deben ser mínimos y quirúrgicos. Si el documento de nuevos requisitos describe en realidad un cambio de scope, prioridad o exclusión del producto, indícalo explícitamente y remite a `wf-prd-change` antes de seguir.
 
 ---
 
 ## Paso 1: Parsear argumentos
 
 Extrae de `$ARGUMENTS`:
-- **Modo**: la primera palabra (`analyze`, `apply` o `resolve`)
+- **Modo**: la primera palabra (`analyze` o `apply`)
 - En modo `analyze`:
   - **Path del spec existente**: el argumento después del modo, hasta `--new-reqs`
   - **Path de nuevos requisitos**: el argumento después de `--new-reqs`
 - En modo `apply`:
   - **Path del spec existente**: el segundo argumento
   - **Path del delta analysis**: el tercer argumento
-- En modo `resolve`:
-  - **Path del spec existente**: el argumento después del modo
-  - **Path del analysis** (opcional): el argumento después de `--analysis`. Si se omite, se auto-descubre (ver Paso 2).
-
 Si no hay argumento o el modo no es válido, informa al usuario:
 > "Uso:"
 > - "`/wf-spec-delta analyze <feature_spec.md> --new-reqs <description.md>`"
 > - "`/wf-spec-delta apply <feature_spec.md> <feature_delta_analysis.md>`"
-> - "`/wf-spec-delta resolve <feature_spec.md> [--analysis <path_analysis.md>]`"
 
 Ejemplos:
 - `analyze features/auth/auth_spec.md --new-reqs new_requirements.md`
 - `apply features/auth/auth_spec.md features/auth/auth_delta_analysis.md`
-- `resolve features/auth/auth_spec.md`
-- `resolve features/auth/auth_spec.md --analysis ../../prd-app_analysis.md`
+
+Si el usuario intenta usar `resolve`, remítele a:
+> "`/wf-spec-gap-resolve <feature_spec.md> [--analysis <path_analysis.md>]`"
 
 ---
 
@@ -53,14 +49,7 @@ Ejemplos:
 **Modo `apply`:**
 1. Verifica que el spec existe y termina en `_spec.md`.
 2. Verifica que el delta analysis existe y termina en `_delta_analysis.md`. Si no → informa: "El segundo argumento debe ser un delta analysis generado por `/wf-spec-delta analyze`."
-3. Lee el delta analysis y comprueba si hay items `[CRÍTICO]_(pendiente)_` sin respuesta. Si los hay → informa al usuario: "Hay X gaps **críticos** sin responder. Las HUs afectadas se marcarán como `[INCOMPLETO]`." **Continúa.**
-
-**Modo `resolve`:**
-1. Verifica que el spec existe y termina en `_spec.md`. Si no → informa: "El primer argumento debe ser un spec SDD (`_spec.md`)."
-2. Si se proporcionó `--analysis`: verifica que el archivo existe y termina en `_analysis.md`.
-3. Si no se proporcionó `--analysis`: auto-descubrir buscando `*_analysis.md` en el directorio dos niveles arriba del spec (convención: si el spec está en `features/<nombre>/<nombre>_spec.md`, buscar en el directorio que contiene la carpeta `features/`). Si no se encuentra ningún `_analysis.md` → informa: "No se encontró un `_analysis.md` en el directorio del proyecto. Usa `--analysis <path>` para indicar la ruta." y detén.
-4. Lee el spec y extrae todos los marcadores `[INCOMPLETO]` con sus IDs de gap `[P-XXX]`.
-5. Si no hay marcadores `[INCOMPLETO]` → informa: "Este feature spec no tiene HUs incompletas. No hay gaps que resolver." y detén.
+3. Lee el delta analysis y comprueba si hay gaps `[CRÍTICO]` con `_(pendiente)_` sin respuesta. Si los hay → informa al usuario: "Hay X gaps **críticos** sin responder. Las HUs afectadas se marcarán como `[INCOMPLETO]`." **Continúa.**
 
 ---
 
@@ -101,6 +90,8 @@ Consulta `kb-spec-expert` para verificar que cada cambio propuesto está libre d
 
 Aplica la misma lógica que el modo ANALYZE estándar sobre los nuevos requisitos en el contexto del spec existente. Consulta `kb-gap-conventions` para el formato de IDs `[D-XXX]` (prefijo D = Delta), las definiciones de severidad y el marcador `_(pendiente)_`.
 
+Si el supuesto "nuevo requisito" en realidad redefine el alcance del MVP, una exclusión del PRD o una regla transversal del producto, detén el delta y remite a `wf-prd-change`.
+
 ### Paso 8A: Formato del informe delta
 
 Usa `references/delta_analysis_template.md` para estructurar el informe.
@@ -111,7 +102,7 @@ Usa `references/delta_analysis_template.md` para estructurar el informe.
 
 ### Paso 4B: Segunda verificación de gaps críticos
 
-Si hay `[CRÍTICO]_(pendiente)_` en el delta analysis → informa al usuario qué HUs se marcarán `[INCOMPLETO]` y **continúa**. (Coherente con el Paso 2.)
+Si hay gaps `[CRÍTICO]` con `_(pendiente)_` en el delta analysis → informa al usuario qué HUs se marcarán `[INCOMPLETO]` y **continúa**. (Coherente con el Paso 2.)
 
 ### Paso 5B: Integrar los cambios
 
@@ -132,83 +123,6 @@ Para cada tipo de cambio:
 - **Instrucciones Inambiguas**: añadir/modificar/eliminar reglas según el delta
 - **Fuera de Alcance**: actualizar si el delta lo especifica
 
-### Paso 5B.5: Resolver marcadores `[INCOMPLETO]`
-
-Si el delta analysis resuelve gaps que originaron marcadores `[INCOMPLETO]` en el spec:
-
-1. Integrar la respuesta del gap en la HU afectada (completar la información que faltaba)
-2. Generar/completar los CAs que no pudieron generarse previamente por falta de información
-3. Eliminar el marcador `> ⚠ [INCOMPLETO] — ...` de la HU
-4. Eliminar el gap correspondiente de la sección `## Items Pendientes` del spec (si existe)
-5. Registrar en el Changelog: "Completada HU-XXX (gap [P-XXX] resuelto)"
-
-Si tras la integración ya no quedan HUs `[INCOMPLETO]` en el spec, el feature está listo para `/wf-prepare-plan`.
-
----
-
-## Submodo RESOLVE
-
-### Paso 4R: Extraer gaps objetivo del spec
-
-Parsea el spec y extrae de cada marcador `[INCOMPLETO]` los IDs de gap referenciados (ej: `[P-001]`, `[P-007]`). Construye una lista de gaps objetivo: `{ gap_id, HUs_afectadas[] }`.
-
-### Paso 5R: Localizar respuestas en el analysis
-
-Lee el `_analysis.md` y para cada gap objetivo:
-1. Busca la sección del gap por su ID (ej: `### [P-001][CRÍTICO] ...`)
-2. Lee el campo `**Respuesta**`
-3. Clasifica:
-   - Si contiene `_(pendiente)_` → **sin resolver**
-   - Si contiene texto + `_(resuelto — aplicado en <nombre_spec> ...)_` donde `<nombre_spec>` coincide con el spec actual → **ya aplicado en este spec** (omitir, no re-aplicar)
-   - Si contiene texto + `_(resuelto — aplicado en ...)_` donde el spec actual NO aparece en la lista → **resuelto, pendiente de aplicar en este spec** (capturar solo el texto de la respuesta, sin el marcador de resolución)
-   - Si contiene cualquier otro texto (sin marcador de pendiente ni de resolución) → **resuelto** (capturar la respuesta íntegra)
-
-### Paso 5R.2: Verificar estado de resolución
-
-- Si **todos** los gaps objetivo están sin resolver → informa: "Ninguno de los gaps referenciados tiene respuesta en el analysis. Responde los gaps pendientes en `<path_analysis.md>` antes de ejecutar resolve." y **detén**.
-- Si **algunos** gaps están sin resolver → informa: "X de Y gaps tienen respuesta. Se integrarán los resueltos. Los gaps sin responder siguen siendo: [lista de IDs sin resolver]." **Continúa** con los resueltos.
-- Si **todos** están resueltos → **continúa**.
-
-### Paso 5R.3: Integrar respuestas
-
-Para cada gap resuelto, aplica la misma lógica que el Paso 5B.5:
-
-1. Integrar la respuesta del gap en la HU afectada (completar la información que faltaba)
-2. Generar/completar los CAs que no pudieron generarse previamente por falta de información
-3. Eliminar el marcador `> ⚠ [INCOMPLETO] — ...` de la HU
-4. Eliminar el gap correspondiente de la sección `## Items Pendientes` del spec (si existe)
-
-Reglas de integración (idénticas a Paso 5B):
-- **No interpretar**: la respuesta del cliente va tal cual
-- **No ampliar**: si la respuesta cubre el gap, no expandirla
-- **No inferir**: no añadir información que el cliente no proporcionó
-
-### Paso 5R.4: Marcar gaps como resueltos en el analysis
-
-Para cada gap integrado, actualizar el campo `**Respuesta**` en el `_analysis.md` añadiendo el marcador de resolución al final:
-
-```
-- **Respuesta**: [respuesta original del cliente] _(resuelto — aplicado en <nombre_spec> v<X.Y>)_
-```
-
-Ejemplo:
-```
-- **Respuesta**: El bloqueo muestra un mensaje con el tiempo restante y el campo queda deshabilitado. Es por cuenta, no por dispositivo. _(resuelto — aplicado en authentication_spec v1.1)_
-```
-
-Esto permite:
-- Saber que el gap ya fue procesado (evitar re-aplicar)
-- Trazar en qué spec y versión se integró
-- Conservar la respuesta original como registro de la decisión
-
-**Nota**: si el mismo `[P-XXX]` es referenciado por múltiples feature specs, cada resolve añade su propia marca. Ejemplo: `_(resuelto — aplicado en authentication_spec v1.1, home-dashboard_spec v1.1)_`.
-
-Al leer un gap en el Paso 5R, si el campo `**Respuesta**` contiene texto seguido de `_(resuelto — aplicado en ...)_`, el gap se considera **resuelto con respuesta disponible**. Extraer solo el texto de la respuesta (sin el marcador de resolución) para la integración.
-
-Tras la integración y marcado, fluir a los Pasos 6B, 6B.5, 7B, 8B, N-0.5 y N (compartidos con el submodo APPLY).
-
----
-
 ### Paso 6B: Actualizar versionado y Changelog
 
 Incrementar la versión en el header del spec (1.0 → 1.1, 1.2 → 1.3, 2.0 → 2.1).
@@ -226,14 +140,6 @@ Añadir o actualizar la sección Changelog al final del spec (orden cronológico
 - **CAs modificados**: CA-XXX "[título]"
 - **CAs eliminados**: CA-XXX "[título]"
 - **Reglas**: [nueva/modificada/eliminada] "[descripción breve]"
-```
-
-En modo `resolve`, el Changelog registra las HUs completadas:
-
-```markdown
-### v[X.Y] — [YYYY-MM-DD]
-- **Completadas**: HU-XXX "[título]" (gap [P-XXX] resuelto)
-- **CAs nuevos**: CA-XXX a CA-YYY (generados tras resolver gaps)
 ```
 
 Si se aplicaron asunciones de gaps `[INFORMATIVO]`, añadir antes del Changelog:
@@ -285,7 +191,6 @@ Revisa que el spec resultante sigue teniendo los 8 elementos SDD. Si alguno ha q
 - **Modo `analyze`**: mismo directorio que el spec + nombre base + `_delta_analysis.md`
   - Ejemplo: `features/auth/auth_spec.md` → `features/auth/auth_delta_analysis.md`
 - **Modo `apply`**: sobreescribe el spec existente con la versión actualizada
-- **Modo `resolve`**: sobreescribe el spec existente con la versión actualizada (igual que `apply`)
 
 ---
 
@@ -316,14 +221,4 @@ Este paso es **informativo y no bloquea** el flujo.
 - Resultado de la verificación de conflictos:
   - Sin conflictos o sin `_features.md`: omitir o indicar brevemente
   - Con conflictos: "⚠ Se detectaron conflictos. Revisa `<path>_conflict_report.md` antes de continuar con `/wf-prepare-plan`."
-- Siguiente paso: "Puedes validar la integridad del spec actualizado con `/wf-spec-validate <path>_spec.md`"
-
-**Tras resolve:**
-- Path del spec actualizado
-- Nueva versión del spec (ej: v1.0 → v1.1)
-- Lista de gaps resueltos y HUs completadas (ej: "Completada HU-003 (gap [P-001] resuelto)")
-- CAs generados/completados con los gaps resueltos
-- Si quedan HUs `[INCOMPLETO]` (por gaps que seguían sin respuesta): listarlas con sus gaps pendientes
-- Si no quedan `[INCOMPLETO]`: "✓ Feature listo para `/wf-prepare-plan`."
-- Estado de la trazabilidad: si se actualizó, indicar "✓ Trazabilidad actualizada."
 - Siguiente paso: "Puedes validar la integridad del spec actualizado con `/wf-spec-validate <path>_spec.md`"
