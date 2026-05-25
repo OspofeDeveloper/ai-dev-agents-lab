@@ -25,7 +25,20 @@ Tu referencia para estructurar la fase `design`: que debe contener `DESIGN.md`, 
 - path del spec
 - contenido completo del spec
 - modo solicitado (`design-system` o `feature-prototype`)
+- PRD del producto (si fue proporcionado por el usuario via `--prd` o respuesta interactiva)
+- research de apps de referencia (si fue obtenido por el workflow)
 - si existe, contenido actual de `DESIGN.md`
+
+### Como usar las entradas enriquecidas
+
+**PRD disponible:**
+Extrae de el: nombre del producto, vision, audiencia objetivo, diferenciadores y cualquier mencion de estilo visual o UX. Usa esa informacion para derivar los adjetivos de `## Visual Personality` con precision de marca, no de forma generica.
+
+**Research de apps disponible:**
+Usa los nombres y descripciones de apps encontradas para poblar `## Reference Apps`. Para cada app, especifica que aspecto concreto es relevante para este producto (no copies el nombre sin razonamiento).
+
+**Sin PRD ni research:**
+Deriva `## Visual Personality` desde el spec: el tipo de datos que maneja (numericos, narrativos, visuales), la frecuencia de uso (diaria rapida vs ocasional profunda) y el tipo de actor (usuario personal, profesional, empresa) permiten inferir adjetivos razonables. Marca `## Reference Apps` con `[DESIGN_GAP: investigar apps de referencia en la categoria <categoria>]`.
 
 ### Proceso
 

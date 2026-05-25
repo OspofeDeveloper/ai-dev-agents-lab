@@ -5,6 +5,13 @@
 version: alpha
 name: <Nombre del producto>
 description: <Resumen breve del tono visual y contexto del producto>
+visual_personality:
+  adjectives:
+    - <adjetivo_1>: <implicacion concreta en UI>
+    - <adjetivo_2>: <implicacion concreta en UI>
+  anti_adjectives:
+    - <evitar_1>
+    - <evitar_2>
 colors:
   primary: "#000000"
   secondary: "#666666"
@@ -45,23 +52,37 @@ spacing:
   md: 16px
   lg: 24px
   xl: 32px
+motion:
+  speed: fast | balanced | slow
+  easing: ease-out | ease-in-out | spring
+  style: functional | expressive | playful
 components:
   button-primary:
     backgroundColor: "{colors.primary}"
     textColor: "{colors.surface}"
-    borderRadius: "{rounded.md}"
+    rounded: "{rounded.md}"
   input-default:
     backgroundColor: "{colors.surface}"
     borderColor: "{colors.secondary}"
-    borderRadius: "{rounded.sm}"
+    rounded: "{rounded.sm}"
   card-default:
     backgroundColor: "{colors.surface}"
-    borderRadius: "{rounded.md}"
+    rounded: "{rounded.md}"
 ---
 
 ## Overview
 
-Describe el caracter general del producto, la sensacion que debe transmitir y 2-4 principios de marca integrados en prose o bullets cortos.
+Describe el caracter general del producto, la sensacion que debe transmitir y 2-4 principios de marca en prose o bullets cortos.
+
+## Visual Personality
+
+Define el caracter visual del producto con adjetivos concretos y sus implicaciones en decisiones de UI. Usa el listado del frontmatter como guia.
+
+- **<adjetivo>**: implicacion concreta — ej. "veloz → transiciones < 200ms, sin animaciones decorativas que retrasen feedback"
+- **<adjetivo>**: implicacion concreta
+
+Anti-adjetivos — lo que este sistema visual explicitamente NO es:
+- **<evitar>**: comportamiento concreto que hay que evitar y por que
 
 ## Colors
 
@@ -75,13 +96,39 @@ Explica jerarquia visual, contraste entre titulares y cuerpo, y tono editorial o
 
 Define densidad, espaciado, ritmos verticales y anchuras habituales.
 
+## Elevation & Depth
+
+Explica como la app transmite jerarquia y profundidad visual:
+
+- Si se usan sombras, definir niveles semanticos (ej: nivel 1 para cards, nivel 2 para dialogs, nivel 3 para sheets que cubren pantalla).
+- Si se usa elevation via color de superficie (fondos con distintos valores de gris), describirlo aqui.
+- Si el producto es flat-design, indicarlo explicitamente y definir como se separa contenido sin sombras.
+
 ## Shapes
 
-Explica el caracter de bordes, radios y geometria general si es relevante para la identidad.
+Explica el caracter de bordes, radios y geometria general de la identidad.
 
 ## Components
 
-Explica como deben sentirse formularios, listas, cards, tabs, dialogs y acciones destructivas. Incluye aqui el tratamiento comun de estados recurrentes si afecta a componentes.
+Explica como deben sentirse formularios, listas, cards, tabs, dialogs y acciones destructivas. Incluye el tratamiento comun de estados recurrentes (loading, empty, error, success) cuando afecta a componentes.
+
+## Motion & Micro-interactions
+
+Define el comportamiento animado del sistema visual:
+
+- **Velocidad base**: duracion tipica de transiciones (ej: 150ms feedback, 300ms navegacion entre pantallas).
+- **Easing**: curva de animacion y cuando aplicarla (ej: ease-out para entradas, ease-in para salidas).
+- **Elementos con feedback animado**: botones, inputs, listas, dialogs — que tipo de feedback recibe cada uno.
+- **Estilo general**: functional (animaciones utilitarias) | expressive (refuerzan personalidad de marca) | playful (gamifican la experiencia).
+- **Lo que NO se anima**: elementos que cambian sin transicion para no retrasar la percepcion de respuesta.
+
+## Reference Apps
+
+Apps reales del mercado que sirven de norte visual. Para cada referencia indicar el aspecto concreto a tomar, no solo el nombre.
+
+- **<App 1>**: <aspecto concreto — ej. "sistema de cards de saldo, tipografia numerica tabulada, densidad de informacion en lista de transacciones">
+- **<App 2>**: <aspecto concreto>
+- **<App 3>**: <aspecto concreto>
 
 ## Do's and Don'ts
 

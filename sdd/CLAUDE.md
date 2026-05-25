@@ -44,7 +44,7 @@ Si buscas mejor rendimiento y menos carga de contexto, instala y usa el `CLAUDE.
 | Actualizar un spec con requisitos nuevos (análisis) | `/wf-spec-delta` | `analyze <feature_spec.md> --new-reqs <description.md>` |
 | Aplicar un delta analysis a un spec | `/wf-spec-delta` | `apply <feature_spec.md> <delta_analysis.md>` |
 | Completar HUs incompletas (gaps respondidos en analysis) | `/wf-spec-gap-resolve` | `<feature_spec.md> [--analysis <path_analysis.md>]` |
-| Crear o actualizar el sistema visual del producto desde un feature spec | `/wf-design-system` | `generate <feature_spec.md> [--design-file DESIGN.md]` |
+| Crear o actualizar el sistema visual del producto desde un feature spec | `/wf-design-system` | `generate <feature_spec.md> [--prd <prd.md>] [--design-file DESIGN.md]` |
 | Generar flows, views y prompt de ensamblaje para Stitch desde un feature spec | `/wf-design-feature-prototype` | `generate <feature_spec.md> [--design-file DESIGN.md]` |
 | Generar el plan técnico desde un spec | `/wf-prepare-plan` | `generate <spec.md>` |
 | Generar las tasks desde un plan | `/wf-prepare-tasks` | `generate <plan.md>` |

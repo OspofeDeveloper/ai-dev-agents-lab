@@ -56,4 +56,4 @@ El orden correcto es:
 
 ## Nota sobre el formato de `DESIGN.md`
 
-`DESIGN.md` sigue el formato abierto de Google: front matter YAML para tokens normativos y markdown para rationale. Como comprobacion opcional, puede validarse con `npx @google/design.md lint DESIGN.md`.
+`DESIGN.md` sigue el formato abierto de Google: front matter YAML para tokens normativos y markdown para rationale. El linter `npx @google/design.md lint DESIGN.md` se ejecuta automaticamente al final de `wf-design-system`.

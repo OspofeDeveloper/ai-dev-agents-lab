@@ -22,7 +22,7 @@ Si hay tension entre fuentes:
 
 ## Contrato visual
 
-Usa estrictamente el `DESIGN.md` del producto como fuente de identidad visual. No redefinas tokens ni componentes base dentro de este prompt.
+Usa estrictamente el `DESIGN.md` del producto como fuente de identidad visual. No redefinas tokens, componentes base ni reglas de formato dentro de este prompt. Si necesitas hacer referencia a un componente o token especifico, citalos por nombre y remite a `DESIGN.md`; no copies sus valores aqui.
 
 ## Vistas requeridas
 

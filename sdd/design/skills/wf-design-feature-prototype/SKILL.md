@@ -76,13 +76,16 @@ INSTRUCCION: produce tres artefactos separados y completos:
 2. <feature>_views.md
 3. <feature>_ui_prompt.md
 
-Cada vista debe trazar a HUs, journeys y CAs del spec.
+Aplica las reglas de kb-design-expert que tienes en contexto:
+- Regla 4: cada vista debe trazar a HU/Journey/CA del spec — condiciones de UI no trazables son comportamiento inventado
+- Regla 7: flows capturan secuencia, precondiciones y transiciones — no estados visuales ni componentes
+- Regla 8: views son la SSoT de pantalla — solo decisiones, condiciones trazables al spec, dependencias cross-feature marcadas con [Dependencia: F-XXX]
+- Regla 9: ui_prompt ensambla sin redefinir — no copies tokens ni componentes de DESIGN.md
+
 No inventes funcionalidad fuera del spec.
-Responsabilidades:
-- <feature>_flows.md: secuencias, precondiciones y transiciones. No metas componentes ni estados visuales detallados.
-- <feature>_views.md: contrato canonico de pantallas, componentes, acciones, estados visuales y notas de layout.
-- <feature>_ui_prompt.md: prompt de ensamblaje para Stitch que referencia DESIGN.md, flows y views sin duplicar su contenido pantalla por pantalla.
 Si faltan datos criticos, devuelve DESIGN_GAPs y no produzcas artefactos parciales.
+
+Formato de output: usa el bundle definido en references/output_bundle_template.md de esta skill.
 ```
 
 ## Paso 6: Manejar DESIGN_GAPs
@@ -93,7 +96,7 @@ Si el agente devuelve `DESIGN_GAP` o `DESIGN_GAPs`:
 
 ## Paso 7: Escribir resultados
 
-Escribe cada artefacto en su archivo correspondiente.
+Parsea la respuesta del agente usando el formato de bundle de `references/output_bundle_template.md`: extrae cada bloque `===FILE: <nombre>===` como archivo separado y escribe cada uno en su path correspondiente.
 
 ## Paso 8: Informar al usuario
 

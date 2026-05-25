@@ -48,7 +48,8 @@ flowchart TB
         W2["wf-spec-discover"]
         W3["wf-spec-fast-track"]
         W4["wf-spec-features-first"]
-        W5["wf-spec-delta / gap-resolve / validate / conflict / readiness"]
+        W5["wf-spec-delta apply / gap-resolve / sync-from-prd"]
+        W6["wf-spec-validate / conflict / readiness / sync-impact"]
     end
 
     subgraph L2["Agentes worker"]
@@ -71,7 +72,8 @@ flowchart TB
     W2 --> A1
     W3 --> A3
     W4 --> A3
-    W5 --> A4
+    W5 --> A3
+    W6 --> A4
     L3 -.-> L2
 ```
 

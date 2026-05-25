@@ -22,7 +22,7 @@ Si el usuario todavia no tiene un spec por feature, o el spec tiene HUs `[INCOMP
 
 | Intencion del usuario | Skill | Argumentos |
 |---|---|---|
-| Crear o actualizar el sistema visual persistente del producto | `/wf-design-system` | `generate <feature_spec.md> [--design-file DESIGN.md]` |
+| Crear o actualizar el sistema visual persistente del producto | `/wf-design-system` | `generate <feature_spec.md> [--prd <prd.md>] [--design-file DESIGN.md]` |
 | Generar flows, views y prompt de ensamblaje para Stitch desde una feature | `/wf-design-feature-prototype` | `generate <feature_spec.md> [--design-file DESIGN.md]` |
 
 ## Como actuar ante una peticion
@@ -82,4 +82,4 @@ Cada capa es responsable de su nivel de decision. Si existe workflow, la activas
 
 ## Nota sobre `DESIGN.md`
 
-`DESIGN.md` debe mantenerse alineado con el formato abierto de Google: tokens normativos en YAML y rationale en markdown. Si el usuario pide revisar calidad o estructura del archivo, puedes recomendar validarlo con `npx @google/design.md lint DESIGN.md`.
+`DESIGN.md` debe mantenerse alineado con el formato abierto de Google: tokens normativos en YAML y rationale en markdown. El linter `npx @google/design.md lint DESIGN.md` se ejecuta automaticamente al final de `wf-design-system`; no es necesario invocarlo manualmente salvo que el usuario quiera validar un archivo editado a mano.

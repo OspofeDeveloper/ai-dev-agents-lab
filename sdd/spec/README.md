@@ -219,72 +219,17 @@ sdd-spec-explorer
 
 ---
 
-## Arquitectura de 3 capas
+## Mapa de componentes
 
-Todos los componentes de este directorio siguen el mismo patrón arquitectónico. Entender las 3 capas es clave para extender el sistema sin romper su coherencia.
+La fase `spec` se apoya en tres tipos de piezas:
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│  CAPA 1 — Workflows (wf-) invocables por el usuario         │
-│  Propios de Spec:                                            │
-│   wf-spec-analyze │ wf-spec-validate │ wf-spec-discover     │
-│   wf-spec-fast-track │ wf-spec-features-first               │
-│   wf-spec-conflict │ wf-spec-delta │ wf-spec-gap-resolve    │
-│   wf-spec-sync-from-prd │ wf-spec-readiness                  │
-│   wf-prd-sync-impact                                         │
-│  Remitidos a la fase PRD (no propios):                       │
-│   wf-prd-change                                              │
-│                                                             │
-│  Rol: parsear args → verificar archivos → ejecutar workflow │
-│  → delegar al agente → escribir resultado                   │
-└────────────────────────────┬────────────────────────────────┘
-                             │ invoca Agent()
-                             ▼
-┌─────────────────────────────────────────────────────────────┐
-│  CAPA 2 — Agentes Worker                                    │
-│  sdd-spec-explorer │ sdd-spec-planner │ sdd-spec-writer    │
-│  sdd-spec-auditor                                         │
-│                                                             │
-│  Rol: explorar │ planificar │ escribir/evolucionar │ auditar│
-│  memory: project  │  permissionMode: acceptEdits            │
-└────────────────────────────┬────────────────────────────────┘
-                             │ carga como contexto
-                             ▼
-┌─────────────────────────────────────────────────────────────┐
-│  CAPA 3 — Knowledge Bases (kb-) — solo contexto             │
-│                                                             │
-│  Propias de Spec:                                            │
-│   kb-spec-expert │ kb-decompose-expert │ kb-conflict-expert │
-│   kb-gap-conventions │ kb-traceability-rules                │
-│  Cross-fase (viven en sdd/prd/, cargadas por agentes Spec): │
-│   kb-prd-expert │ kb-product-change-governance              │
-│                                                             │
-│  Rol: reglas, templates, criterios de validación            │
-│  Uso principal: contexto de agentes. Consulta directa solo  │
-│  como apoyo conceptual, no como entrada operativa.          │
-│  disable-model-invocation: true  │  context: fork           │
-└─────────────────────────────────────────────────────────────┘
-```
+- `wf-*`: puntos de entrada operativos. Parsean argumentos, validan precondiciones y delegan el trabajo.
+- agentes: workers especializados por tipo de razonamiento (`explorer`, `planner`, `writer`, `auditor`).
+- `kb-*`: conocimiento de fondo cargado por los agentes como contexto reusable.
 
-### Por qué esta separación
+La lógica exacta de routing y la política de skills viven en [CLAUDE.md](/Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/spec/CLAUDE.md). Este README mantiene solo el mapa funcional de la fase.
 
-**Capa 1 (Workflows `wf-`)** son los puntos de entrada del usuario. Cada workflow contiene las instrucciones paso a paso de ejecución, parsea argumentos, verifica precondiciones, delega al agente especializado y escribe el resultado.
-
-**Capa 2 (agentes Spec)** separa responsabilidades:
-- `sdd-spec-explorer` diagnostica
-- `sdd-spec-planner` decide approach
-- `sdd-spec-writer` genera o evoluciona artefactos
-- `sdd-spec-auditor` valida coherencia y readiness
-
-Al estar especializados, su contexto es más estrecho, el contrato de cada uno es más claro y la arquitectura escala mejor.
-
-**Capa 3 (Knowledge `kb-`)** son archivos de texto puro que se inyectan en el contexto del agente. Al declararlos en el frontmatter `skills: [...]` del agente, Claude Code los carga automáticamente cuando invoca el agente. Tienen `context: fork` para que no interfieran con el contexto principal.
-
----
-
-## Mapa completo de componentes
-
-### Skills workflow (Capa 1) — invocables por el usuario
+### Workflows
 
 | Skill | Comando | Produce |
 |-------|---------|---------|
@@ -301,7 +246,7 @@ Al estar especializados, su contexto es más estrecho, el contrato de cada uno e
 | `wf-spec-sync-from-prd` | `/wf-spec-sync-from-prd` | `*_sync_requirements.md`, specs resincronizados |
 | `wf-spec-readiness` | `/wf-spec-readiness` | `_readiness_report.md`, actualiza estado en `_features.md` |
 
-### Agentes worker (Capa 2)
+### Agentes
 
 | Agente | Modos soportados | Invocado desde |
 |--------|-----------------|----------------|
@@ -310,7 +255,7 @@ Al estar especializados, su contexto es más estrecho, el contrato de cada uno e
 | `sdd-spec-writer` | fast-track, delta apply, sync desde PRD, escritura de artefactos | `wf-spec-fast-track`, `wf-spec-delta`, `wf-spec-gap-resolve`, `wf-spec-sync-from-prd`, `wf-spec-features-first` |
 | `sdd-spec-auditor` | validate, conflict, readiness, sync impact | `wf-spec-validate`, `wf-spec-conflict`, `wf-spec-readiness`, `wf-prd-sync-impact` |
 
-### Knowledge bases (Capa 3)
+### Knowledge bases
 
 | Skill | Tipo | Usado en modos |
 |-------|------|----------------|
@@ -327,28 +272,6 @@ Al estar especializados, su contexto es más estrecho, el contrato de cada uno e
 > - `kb-product-change-governance`: los 4 agentes Spec.
 >
 > **`install.sh spec` ya instala automáticamente estas dos kb cross-fase y también `wf-prd-change`, `wf-prd-review` + `prd-expert`,** porque el ecosistema Spec necesita ese handoff cuando una respuesta a un gap se convierte en cambio real de producto o cuando el analyze exige limpiar el PRD antes de continuar.
-
----
-
-## Routing recomendado del ecosistema Spec
-
-El reparto actual de responsabilidades es este:
-
-```text
-Diagnóstico inicial o lectura del estado
-  -> sdd-spec-explorer
-
-Planificación del approach
-  -> sdd-spec-planner
-
-Escritura o evolución de artefactos
-  -> sdd-spec-writer
-
-Validación, conflictos y readiness
-  -> sdd-spec-auditor
-```
-
-Los knowledge bases siguen siendo la SSoT conceptual. Lo que cambia es qué agente las consume en cada momento.
 
 ---
 
@@ -452,8 +375,8 @@ sdd/spec/
 Para añadir un nuevo modo al pipeline:
 
 1. **Crea el workflow** en `skills/wf-spec-<nombre>/SKILL.md` con el `agent:` especializado correcto (`sdd-spec-explorer`, `sdd-spec-writer` o `sdd-spec-auditor`). Aquí van las instrucciones paso a paso de qué debe hacer el agente.
-2. **Crea el knowledge base** (si el modo necesita reglas propias transversales a varios workflows) en `skills/kb-<nombre>-expert/SKILL.md` con `context: fork` y `disable-model-invocation: true`.
-3. **Registra el nuevo knowledge en el agente correcto**: añádelo al frontmatter `skills: [...]` y documenta su responsabilidad.
-4. **Registra en CLAUDE.md y README.md**: añade la entrada en el rootmap o en el mapa del ecosistema si aplica.
+2. **Crea o reutiliza una `kb-*`** solo si el modo necesita reglas transversales reutilizables por varios workflows o agentes.
+3. **Registra el knowledge en el agente correcto**: añádelo al frontmatter `skills: [...]` y documenta su responsabilidad.
+4. **Registra en `CLAUDE.md` y en este README** solo los entrypoints y handoffs que cambien el mapa funcional de la fase.
 
-**Regla de diseño**: los workflows (`wf-`) son el punto de entrada principal del usuario y contienen las instrucciones de ejecución. Los knowledge (`kb-`) viven como SSoT conceptual y se cargan como contexto del agente. La consulta directa de un `kb-*` puede servir como apoyo conceptual, pero no debe ser la forma principal de operar el pipeline.
+La política transversal para diseñar skills y agentes no vive ya en este README. Debe mantenerse como SSoT fuera de la fase, para evitar que `spec` replique reglas globales de frontmatter o arquitectura.

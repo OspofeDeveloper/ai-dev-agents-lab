@@ -69,6 +69,8 @@ Prueba de trazabilidad:
 - Si hay trazabilidad clara, la vista esta justificada.
 - Si no la hay, la vista es especulativa y no debe incluirse.
 
+Esto incluye **condiciones de visibilidad y comportamiento condicional de elementos UI**: si el spec no dice explicitamente que un elemento debe ocultarse o mostrarse bajo cierta condicion, no introduzcas esa condicion en `*_views.md`. Las condiciones de UI no trazables al spec son comportamiento inventado.
+
 ## Regla 5: Flujos primero, estilo despues
 
 El orden correcto es:
@@ -82,23 +84,35 @@ No empieces por colores, gradientes o componentes si aun no esta cerrada la estr
 
 ## Regla 6: DESIGN.md sigue el formato abierto de Google con orden estable
 
-`DESIGN.md` debe seguir el patron del formato abierto de Google:
-- front matter YAML con tokens
-- cuerpo markdown con rationale y guidance
+`DESIGN.md` sigue la especificacion oficial `@google/design.md`:
+- **Front matter YAML**: tokens con tipos estrictos
+- **Cuerpo markdown**: rationale y guidance en prose
 
-Los tokens son los valores normativos.
-El markdown explica intencion, tono y reglas de aplicacion.
+Los tokens son los valores normativos. El markdown explica intencion, tono y reglas de aplicacion.
 
-Siempre que sea razonable, respeta la estructura canonica:
+**Secciones canonicas** — deben aparecer en este orden exacto entre si:
 - `## Overview`
 - `## Colors`
 - `## Typography`
 - `## Layout`
-- `## Shapes` si aplica
+- `## Elevation & Depth`
+- `## Shapes`
 - `## Components`
 - `## Do's and Don'ts`
 
-Si necesitas guidance adicional sobre estados, voz o microcopy, incorporala dentro de estas secciones en lugar de crear una segunda estructura normativa paralela.
+**Secciones custom** — el linter las preserva sin error; incluirlas en estas posiciones recomendadas:
+- `## Visual Personality` → despues de `## Overview`, antes de `## Colors`
+- `## Motion & Micro-interactions` → despues de `## Components`, antes de `## Do's and Don'ts`
+- `## Reference Apps` → despues de `## Motion`, antes de `## Do's and Don'ts`
+
+**Token types validos:**
+- `colors`: hex `"#RRGGBB"` en sRGB
+- `typography`: objeto con `fontFamily`, `fontSize`, `fontWeight`, `lineHeight`, `letterSpacing`. Para cifras tabuladas usar `fontFeature: "tnum"` — **nunca `fontVariantNumeric`** (no es un campo valido del schema)
+- `spacing` / `rounded`: strings con unidad (`"8px"`, `"1rem"`, `"0.875rem"`)
+- `components`: propiedades estandar (`backgroundColor`, `textColor`, `rounded`, `padding`). Referencias con `{categoria.nombre}`
+- `visual_personality` / `motion`: objetos libres — el linter los preserva sin validarlos
+
+Validar el resultado con `npx @google/design.md lint DESIGN.md`: cubre orden de secciones canonicas, referencias rotas, presencia de al menos un color primario y contraste WCAG AA en pares de color.
 
 → Templates: `references/design_md_template.md`
 
@@ -119,6 +133,8 @@ No metas:
 
 Los estados visuales viven en `*_views.md`.
 
+Si el archivo incluye un mapa de navegacion consolidado al final, debe marcarse como derivado con la nota `> Derivado de las tablas de transiciones por flujo. La fuente normativa son dichas tablas.` Si hay conflicto entre el mapa y una tabla individual, manda la tabla del flujo individual.
+
 → Templates: `references/feature_flows_template.md`
 
 ## Regla 8: Las views son la SSoT de la pantalla
@@ -135,6 +151,10 @@ Los estados visuales viven en `*_views.md`.
 
 Es el documento que evita prompts ambiguos tipo "haz una pantalla bonita de cuentas".
 Si `flows` y `views` entran en conflicto sobre una pantalla concreta, manda `views` para todo lo relativo a composicion, estados y componentes.
+
+Reglas adicionales para mantener `*_views.md` limpio:
+- **Solo decisiones, no razonamientos**: cada campo normativo contiene la decision tomada. El razonamiento que llevo a elegir una variante de componente sobre otra no va inline; si es valioso preservarlo, usa un bloque `> Nota:` al final de la vista, separado de la definicion.
+- **Dependencias cross-feature**: si una vista incluye elementos que pertenecen a otra feature (entidades, campos o estructuras definidas en otro spec), marcalos con `[Dependencia: F-XXX]`. La vista describe que existe el elemento, no define su estructura interna.
 
 → Templates: `references/feature_views_template.md`
 
@@ -159,6 +179,7 @@ No debe:
 - volver a enumerar todos los componentes ya definidos en `*_views.md`
 - duplicar microcopy extensa de dialogs o formularios
 - convertirse en una segunda SSoT por pantalla
+- repetir valores de tokens, nombres de componentes ni reglas de formato ya definidas en `DESIGN.md`. Si quieres recordarle a Stitch el uso de un componente o token concreto, citalos por nombre y remite a `DESIGN.md` como fuente; no copies sus valores dentro del prompt.
 
 → Templates: `references/feature_ui_prompt_template.md`
 
@@ -175,3 +196,41 @@ Por eso `design` debe dejar explicitado:
 - decisiones visuales que impactan arquitectura UI
 
 Si un detalle visual afecta a navegacion, validacion o estructura de estado, debe quedar escrito en `*_views.md`, no solo en Stitch.
+
+## Regla 11: Visual Personality es obligatorio en todo DESIGN.md
+
+`DESIGN.md` debe incluir la seccion `## Visual Personality` y su bloque `visual_personality:` en el frontmatter YAML. Sin esta seccion, el agente y Stitch no tienen un norte de caracter visual y el output es generico.
+
+**En el frontmatter:**
+```yaml
+visual_personality:
+  adjectives:
+    - adjetivo_1: implicacion concreta en UI
+    - adjetivo_2: implicacion concreta en UI
+  anti_adjectives:
+    - evitar_1
+    - evitar_2
+```
+
+**En la seccion markdown:**
+- 5-7 adjetivos de marca con su implicacion concreta en decisiones de UI (no basta listar el adjetivo sin la implicacion)
+- 2-3 anti-adjetivos: lo que este sistema visual explicitamente NO es, con el comportamiento concreto a evitar
+
+**Como derivar los adjetivos:**
+- Del PRD: nombre del producto, vision, audiencia objetivo y diferenciadores
+- Del spec: contexto de uso (frecuencia, urgencia, tipo de datos), tipo de tarea del actor
+
+Si no hay PRD disponible, derivar desde el spec: un spec de finanzas personales con foco en velocidad operativa y legibilidad numerica conduce a adjetivos como "utilitario", "confiable", "veloz". Un spec de fitness con gamificacion conduce a "energetico", "motivador", "visual".
+
+## Regla 12: Reference Apps es obligatorio en todo DESIGN.md
+
+`DESIGN.md` debe incluir la seccion `## Reference Apps` con 3-5 apps reales del mercado en la misma categoria de producto.
+
+**Formato de cada referencia:**
+- Nombre de la app
+- Aspecto concreto a tomar (no solo el nombre): densidad, paleta, tipografia, componentes, micro-interacciones
+- Por que es relevante para este producto concreto
+
+Las referencias se obtienen via web research en el `wf-design-system` antes de delegar al agente. Si no hay research disponible, marcar la seccion con `[DESIGN_GAP: investigar apps de referencia en la categoria <nombre_categoria>]` en lugar de inventar referencias.
+
+Un DESIGN.md sin Reference Apps obliga a Stitch a generar el estilo sin norte → resultado amateur. Una referencia concreta ("tomar de Revolut la densidad de informacion en listas y la tipografia numerica prominente") guia al generador hacia decisiones profesionales.
