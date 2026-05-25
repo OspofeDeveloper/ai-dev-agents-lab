@@ -1,7 +1,7 @@
 ---
 name: wf-spec-features-first
-description: Orquestador completo del flujo features-first. Ejecuta discover para identificar features del PRD y luego lanza fast-track en paralelo para cada feature identificada (o solo para un subset si se pasa `--features`). Ejecuta conflict check y readiness al final. Activa en frases como "genera specs por feature del PRD", "flujo features-first completo", "specs en paralelo del PRD", "genera todas las features del PRD", "genera specs de la fase 1", "genera specs de estas features", "features-first completo".
-argument-hint: "<prd_archivo.md> [--features F-001,F-002,...] [--skip-conflict] [--skip-readiness]"
+description: Orquestador completo del flujo features-first. Ejecuta discover para identificar features del PRD y luego lanza fast-track en paralelo para cada feature identificada (o solo para un subset si se pasa `--features`). Introduce dos guardrails: no continúa automáticamente con gaps críticos abiertos salvo opt-in explícito, y en PRDs grandes exige confirmación para generar todas las features en una sola pasada. Ejecuta conflict check y readiness al final. Activa en frases como "genera specs por feature del PRD", "flujo features-first completo", "specs en paralelo del PRD", "genera todas las features del PRD", "genera specs de la fase 1", "genera specs de estas features", "features-first completo".
+argument-hint: "<prd_archivo.md> [--features F-001,F-002,...] [--allow-open-critical-gaps] [--all-features] [--skip-conflict] [--skip-readiness]"
 effort: high
 model: claude-opus-4-6
 allowed-tools: [Read, Write, Bash, Agent]
@@ -25,13 +25,16 @@ Extrae de `$ARGUMENTS`:
 - **Path del PRD**: el primer argumento
 - **Flags opcionales**:
   - `--features F-001,F-002,...`: lista separada por comas de Feature IDs a procesar en esta ejecución. Si se omite, se procesan **todas** las features del discovery. Si se incluye, requiere que el `_discovery.md` exista previamente (los IDs solo se conocen tras un discover).
+  - `--allow-open-critical-gaps`: confirma explícitamente que se quiere generar specs aunque el `_analysis.md` todavía tenga gaps `[CRÍTICO]` con `_(pendiente)_`. Sin este flag, el workflow se detiene para que el usuario decida.
+  - `--all-features`: confirma explícitamente que se quiere generar **todas** las features identificadas por el discovery en una sola pasada. Se usa como override cuando el workflow detecta que el PRD es lo bastante grande como para recomendar iteración por subset.
   - `--skip-conflict`: omitir detección de conflictos al final
   - `--skip-readiness`: omitir evaluación de readiness al final
 
 Si no hay argumento, informa al usuario:
-> "Uso: `/wf-spec-features-first <prd_archivo.md> [--features F-001,F-002,...] [--skip-conflict] [--skip-readiness]`"
+> "Uso: `/wf-spec-features-first <prd_archivo.md> [--features F-001,F-002,...] [--allow-open-critical-gaps] [--all-features] [--skip-conflict] [--skip-readiness]`"
 > "Ejemplo (todo el PRD): `/wf-spec-features-first docs/requisitos.md`"
 > "Ejemplo (iteración/fase): `/wf-spec-features-first docs/requisitos.md --features F-001,F-002,F-005`"
+> "Ejemplo (continuar con gaps críticos abiertos): `/wf-spec-features-first docs/requisitos.md --features F-001,F-002 --allow-open-critical-gaps`"
 
 ---
 
@@ -49,11 +52,31 @@ Si no existe → informa al usuario con la ruta exacta y detén.
 ## Paso 2.5: Análisis de gaps (obligatorio)
 
 1. Busca si existe un `*_analysis.md` para este PRD en el mismo directorio (convención: `<basename>_analysis.md`)
-2. **Si existe** → usarlo como contexto. Continuar al Paso 3 pasando el path del analysis.
-3. **Si NO existe** → invocar `/wf-spec-analyze <prd.md>`. Tras la ejecución, **DETENERSE** e informar al usuario:
+2. **Si NO existe** → invocar `/wf-spec-analyze <prd.md>`. Tras la ejecución, **DETENERSE** e informar al usuario:
    > "Se ha generado el análisis de gaps en `<path>_analysis.md`. Edita el archivo, responde las preguntas marcadas como _(pendiente)_ (las `[CRÍTICO]` son obligatorias para specs completos) y vuelve a ejecutar `/wf-spec-features-first <prd.md>`."
+3. **Si existe** → léelo y determina:
+   - veredicto (`LISTO_PARA_SPECS`, `LISTO_PARA_SPECS_CON_PREGUNTAS`, `REQUIERE_LIMPIEZA_PRD`)
+   - número de gaps `[CRÍTICO]` pendientes (`Respuesta: _(pendiente)_`)
+   - si hay gaps marcados `[PUEDE_REQUERIR_CR]`
+   - si alguna respuesta ya resuelta parece introducir expansión de capacidad no comprometida en el PRD
+4. Si el veredicto es `REQUIERE_LIMPIEZA_PRD` → **DETENERSE** e informar al usuario:
+   > "El análisis previo marca `REQUIERE_LIMPIEZA_PRD`. Corrige la contaminación técnica del PRD antes de continuar y vuelve a ejecutar el flujo."
+5. Si hay gaps `[CRÍTICO]` pendientes y **no** se ha pasado `--allow-open-critical-gaps` → **DETENERSE** e informar al usuario:
+   > "El análisis previo sigue teniendo [N] gap(s) `[CRÍTICO]` pendiente(s). Decide una de estas dos vías antes de generar specs: (a) responderlos en `<path>_analysis.md` y re-ejecutar; (b) re-ejecutar añadiendo `--allow-open-critical-gaps` para aceptar HUs `[INCOMPLETO]`."
+6. Si hay gaps `[CRÍTICO]` pendientes y **sí** se ha pasado `--allow-open-critical-gaps` → continuar al Paso 3 dejando constancia explícita de que las HUs afectadas podrán salir `[INCOMPLETO]`.
+7. Si no hay gaps `[CRÍTICO]` pendientes, inspecciona las respuestas ya resueltas. Si alguna introduce señales de cambio de producto según `kb-product-change-governance`, **DETENERSE** e informar al usuario:
+   > "Las respuestas del análisis parecen introducir cambio de producto (por ejemplo: nueva entidad persistente, catálogo reutilizable, nueva granularidad funcional o flujo adicional no comprometido en el PRD). Formaliza primero el cambio con `wf-prd-change <prd.md> --new-reqs <cambio.md>` antes de derivar discovery/specs."
+8. Si no hay gaps `[CRÍTICO]` pendientes y no se detectan señales de cambio → continuar al Paso 3 usando el `_analysis.md` como contexto.
 
-**Importante:** Este paso **nunca bloquea por gaps sin responder**. Si el analysis existe pero tiene gaps `[CRÍTICO]` con `_(pendiente)_`, se pasa igualmente a discover y fast-track. Los fast-track generarán las HUs afectadas como `[INCOMPLETO]`, que es lo que bloquea `/wf-prepare-plan` (no la generación de specs).
+**Importante:** los gaps `[INFORMATIVO]` nunca bloquean. Los gaps `[CRÍTICO]` abiertos tampoco bloquean por sí solos, pero ahora requieren una decisión explícita del usuario mediante `--allow-open-critical-gaps` para evitar generación implícita con HUs `[INCOMPLETO]`.
+
+**Heurística mínima para detectar expansión en respuestas resueltas:** si la respuesta añade o describe cualquiera de estos elementos sin que el PRD los comprometiera explícitamente, no continúes a discover/specs sin `wf-prd-change`:
+
+- entidad persistente nueva
+- catálogo reutilizable
+- CRUD o gestión explícita sobre algo antes implícito
+- nueva granularidad funcional
+- flujo adicional de usuario para coordinar varias entidades
 
 Si el `_analysis.md` o el contexto del proyecto indican que el PRD ha cambiado después de generar specs previos, informa de que puede ser necesario ejecutar `wf-prd-sync-impact` o `wf-spec-sync-from-prd` antes de mezclar nuevas pasadas con artefactos desactualizados.
 
@@ -96,6 +119,14 @@ Parsea la lista completa de features identificadas:
   2. Si alguno no existe → **detén** con mensaje claro: "Los siguientes IDs no aparecen en `<path>_discovery.md`: [lista]. IDs válidos: [lista del discovery]."
   3. El subset = solo las features cuyos IDs aparecen en `--features`.
 - **Features NO incluidas en el subset** (caso `--features`): se registrarán en `_features.md` con estado `PENDIENTE_GENERACIÓN` y no se les lanza fast-track en esta ejecución.
+
+### 4a.1 — Guardrail de coste para PRDs grandes
+
+Si **NO** se ha pasado `--features` y el discovery contiene **más de 5 features**:
+
+- **Si NO se ha pasado `--all-features`** → **DETENERSE** e informar al usuario:
+  > "El discovery ha identificado [N_total] features. Para evitar una ejecución costosa y poco controlable, el modo recomendado es iterar por subset. Revisa `<path>_discovery.md` y vuelve a ejecutar con `--features F-001,F-002,...`. Si aun así quieres generar todas en una sola pasada, re-ejecuta con `--all-features`."
+- **Si SÍ se ha pasado `--all-features`** → continuar procesando todas las features del discovery.
 
 ### 4b — Detectar specs preexistentes
 

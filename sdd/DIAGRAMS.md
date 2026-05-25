@@ -59,9 +59,20 @@ flowchart TD
     Notes -->|/wf-prd-create| PRD[(prd.md)]
     PRD -->|/wf-prd-review| PRD
     PRD -->|/wf-spec-analyze| Analysis[(_analysis.md)]
-    Analysis -.->|"humano responde<br/>gaps [CRÍTICO]"| Analysis
-    Analysis -->|/wf-spec-features-first| Discovery[(_discovery.md)]
-    Discovery --> Features[(features/&lt;x&gt;/&lt;x&gt;_spec.md)]
+    Analysis --> Decision{"¿Hay gaps [CRÍTICO]<br/>pendientes?"}
+    Decision -->|Sí| Resolve["Responder gaps en<br/>_analysis.md"]
+    Resolve --> Analysis
+    Decision -->|Seguir igualmente| OpenGaps["/wf-spec-features-first<br/>--allow-open-critical-gaps"]
+    Decision -->|No| FF["/wf-spec-features-first"]
+    FF --> Discovery[(_discovery.md)]
+    OpenGaps --> Discovery
+    Discovery --> Size{"¿Más de 5 features?"}
+    Size -->|Sí| Subset["Elegir subset<br/>--features F-001,F-002"]
+    Size -->|Override explícito| Full["/wf-spec-features-first<br/>--all-features"]
+    Size -->|No| Generate["Generación directa"]
+    Subset --> Features[(features/&lt;x&gt;/&lt;x&gt;_spec.md)]
+    Full --> Features
+    Generate --> Features
     Features --> Conflict[(_conflict_report.md)]
     Conflict --> Readiness[(_readiness_report.md)]
     Readiness -->|/wf-prepare-plan| PlanFile[(features/&lt;x&gt;/&lt;x&gt;_plan.md)]
@@ -75,6 +86,7 @@ flowchart TD
 
     PRD -.->|"cambio de scope,<br/>prioridad o exclusión"| Change[/"/wf-prd-change"/]
     Change --> PRD
+    Change --> ChangeFiles["prd/product-changelog.md<br/>+ prd/changes/CR-XXX/"]
     Change --> Impact[/"/wf-prd-sync-impact"/]
     Impact --> Sync[/"/wf-spec-sync-from-prd"/]
     Sync --> Features
@@ -86,7 +98,7 @@ flowchart TD
     style Tasks fill:#e0f2f1
 ```
 
-**Mensaje clave:** el flujo lineal feliz es PRD → analyze → features-first → plan → tasks. Los tres bucles laterales (gap-resolve, delta, change) cubren mantenimiento sin regenerar todo el pipeline.
+**Mensaje clave:** el flujo feliz ya no asume dos cosas implícitas: ni continuar con gaps críticos abiertos ni generar todo un PRD grande de una sola vez. El sistema fuerza esa decisión antes de gastar contexto y tokens.
 
 ---
 
@@ -150,6 +162,10 @@ flowchart TD
 ```
 
 **Mensaje clave:** este es el árbol de decisión más importante del día a día. Si te equivocas y tratas un change como gap, los specs derivan de una verdad de negocio obsoleta y se acumula deuda silenciosa. La SSoT formal de esta clasificación está en `sdd/prd/skills/kb-product-change-governance/SKILL.md`.
+
+**Artefactos esperados tras un change:** `prd/product-changelog.md` como índice global y `prd/changes/CR-XXX/` como carpeta del cambio con `change-request.md` y `decision.md`.
+
+**Señales de que una "respuesta a gap" ya es change:** introduce una entidad persistente nueva, un catálogo reutilizable, una nueva granularidad funcional o un flujo adicional no comprometido en el PRD. En esos casos no debe derivarse directamente a discovery/specs.
 
 ---
 

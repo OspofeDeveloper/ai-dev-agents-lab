@@ -34,8 +34,8 @@ Si buscas mejor rendimiento y menos carga de contexto, instala y usa el `CLAUDE.
 | Analizar un PRD/documento para detectar gaps | `/wf-spec-analyze` | `<archivo.md>` |
 | Validar un spec existente | `/wf-spec-validate` | `<archivo_spec.md>` |
 | Identificar features de un PRD | `/wf-spec-discover` | `<archivo_prd.md> [--analysis <analysis.md>]` |
-| Generar todos los specs por feature (flujo completo) | `/wf-spec-features-first` | `<archivo_prd.md>` |
-| Generar specs de un subset / iteración / fase de features | `/wf-spec-features-first` | `<archivo_prd.md> --features F-001,F-002,...` |
+| Generar todos los specs por feature (flujo completo) | `/wf-spec-features-first` | `<archivo_prd.md> [--all-features] [--allow-open-critical-gaps]` |
+| Generar specs de un subset / iteración / fase de features | `/wf-spec-features-first` | `<archivo_prd.md> --features F-001,F-002,... [--allow-open-critical-gaps]` |
 | Generar spec directo de una feature | `/wf-spec-fast-track` | `<archivo.md> --capability <nombre> [--analysis <analysis.md>]` |
 | Generar spec de una feature desde un discovery | `/wf-spec-fast-track` | `<prd.md> --scope-from <discovery.md> --feature <F-00X> [--analysis <analysis.md>]` |
 | Detectar conflictos entre specs de features | `/wf-spec-conflict` | `<feature_spec.md> --features-dir <path/features/>` |
@@ -56,6 +56,8 @@ Si buscas mejor rendimiento y menos carga de contexto, instala y usa el `CLAUDE.
 Si la intención no coincide exactamente, usa matching semántico con la columna de intenciones. Si hay ambigüedad dentro de una misma fase, delega al agente planificador o explorador de esa fase antes de cargar fases ajenas.
 
 ### Patrón especial — "fase X" / "iteración X" / "subset de features"
+
+Este patrón **solo aplica** cuando el usuario pide explícitamente trabajar por fases, por iteración o sobre un subconjunto de features. No aplica a peticiones generales como "crea las specs", "genera las specs del PRD" o "quiero crear las specs": en esos casos el entrypoint correcto es `/wf-spec-features-first <prd.md>`, no `/wf-spec-discover`.
 
 Las features no se definen en el PRD: las genera `wf-spec-discover`. Por tanto, cuando el usuario menciona "fase 1", "iteración X", "solo estas N features", "primero estas funcionalidades", etc., los IDs `F-XXX` no existen hasta haber ejecutado el discovery.
 
@@ -91,8 +93,8 @@ Requisitos/PRD
     ↓ [/wf-prd-create] (opcional, para redactar `prd.md`)
     ↓ [/wf-prd-review] (opcional, recomendado)
     ↓ [/wf-spec-analyze] (obligatorio)
-_analysis.md → [usuario responde gaps]
-    ↓ [/wf-spec-features-first] (orquestador automático)
+_analysis.md → [usuario responde gaps o acepta continuar con `--allow-open-critical-gaps`]
+    ↓ [/wf-spec-features-first] (orquestador automático con guardrails)
     ↓ — internamente ejecuta:
     ↓   [/wf-spec-discover --analysis _analysis.md]
     ↓   _discovery.md (mapa de features + scope RF→Feature + shared models)
@@ -114,7 +116,11 @@ features/<nombre>/<nombre>_tasks.md
 
 > Modo iterativo: si el usuario solo quiere un subset (fase 1, iteración X), invocar `wf-spec-features-first` con `--features F-001,F-002,...`. Las no incluidas quedan `PENDIENTE_GENERACIÓN` y se procesan en pasadas posteriores.
 
-> El analyze es obligatorio. `/wf-spec-features-first` lo ejecuta automáticamente si no existe `_analysis.md`.
+> Para una petición general de generar specs desde un PRD, invocar primero `/wf-spec-features-first <prd.md>`. El workflow decidirá si debe generar `_analysis.md`, detenerse por gaps críticos o recomendar subset.
+> El analyze es obligatorio. `/wf-spec-features-first` lo ejecuta automáticamente si no existe `_analysis.md`, pero en ese caso se detiene para que el usuario revise el resultado antes de continuar.
+> Si el `_analysis.md` mantiene gaps `[CRÍTICO]` pendientes, el orquestador debe pedir decisión explícita: responderlos primero o continuar con `--allow-open-critical-gaps`.
+> Si las respuestas del `_analysis.md` introducen expansión de capacidad (entidad persistente nueva, catálogo reutilizable, nueva granularidad funcional o flujo adicional no comprometido), no continúes a discovery/specs: primero `wf-prd-change`.
+> Si el discovery identifica más de 5 features y el usuario no ha pedido un subset, el flujo recomendado es iterar con `--features ...`. Solo usar `--all-features` como override explícito.
 > Para cambios post-spec: `/wf-spec-delta analyze <spec.md> --new-reqs <cambios.md>`
 > Para completar HUs `[INCOMPLETO]` con respuestas ya escritas en `_analysis.md`: `/wf-spec-gap-resolve <spec.md>`
 > Para cambios de producto (scope, prioridad, exclusiones): primero `/wf-prd-change`, luego `/wf-prd-sync-impact` y `/wf-spec-sync-from-prd`.

@@ -17,6 +17,7 @@
 | `[P-XXX]` | Pregunta pendiente de validación con el cliente | Sección Puntos pendientes |
 | `[CRÍTICO]` | Gap que impide completar las HUs afectadas — quedarán marcadas `[INCOMPLETO]` en el spec si no se responde | Sección Puntos pendientes |
 | `[INFORMATIVO]` | Gap con asunción por defecto — se aplica automáticamente si no se responde | Sección Puntos pendientes |
+| `[PUEDE_REQUERIR_CR]` | Gap cuya futura respuesta puede introducir cambio de producto y exigir `wf-prd-change` | Sección Puntos pendientes |
 | `_(pendiente)_` | Respuesta aún no proporcionada por el cliente | Campo "Respuesta" de cada gap |
 
 ---
@@ -29,7 +30,7 @@
 
 **Significado de los veredictos:**
 - `LISTO_PARA_SPECS`: el PRD está limpio (sin contaminación técnica) y no hay gaps `[CRÍTICO]` pendientes. Se puede arrancar la generación de Specs directamente.
-- `LISTO_PARA_SPECS_CON_PREGUNTAS`: el PRD está limpio, pero hay gaps `[CRÍTICO]` por responder. Se puede generar Specs igualmente — las HUs afectadas saldrán marcadas `[INCOMPLETO]` y se podrán completar luego con `/wf-spec-gap-resolve`.
+- `LISTO_PARA_SPECS_CON_PREGUNTAS`: el PRD está limpio, pero hay gaps `[CRÍTICO]` por responder. Se puede continuar hacia Specs, pero `wf-spec-features-first` pedirá una decisión explícita: responder primero esos gaps o re-ejecutar con `--allow-open-critical-gaps`. Si se continúa, las HUs afectadas saldrán marcadas `[INCOMPLETO]` y se podrán completar luego con `/wf-spec-gap-resolve`.
 - `REQUIERE_LIMPIEZA_PRD`: se detectó contaminación técnica en el PRD (Check 2). **Única condición** que requiere modificar el PRD antes de continuar.
 
 ---
@@ -96,6 +97,7 @@
 >
 > - `[CRÍTICO]`: afecta directamente a las HUs indicadas en "Afecta". Si se deja sin responder, esas HUs se marcarán como `[INCOMPLETO]` en el spec — se generarán con la información disponible pero no podrán avanzar a plan/tasks hasta completarse.
 > - `[INFORMATIVO]`: si no se responde, se aplicará la "Asunción por defecto" indicada.
+> - `[PUEDE_REQUERIR_CR]`: no cambia la severidad, pero obliga a reevaluar la respuesta con `kb-product-change-governance` si introduce expansión de capacidad.
 
 ### [P-001][CRÍTICO] [Título del gap — describe qué falta]
 - **Contexto**: [cita del documento o descripción de dónde aparece la ambigüedad]
@@ -104,7 +106,14 @@
 - **Pregunta para el cliente**: [pregunta concreta y específica, sin opciones inventadas]
 - **Respuesta**: _(pendiente)_
 
-### [P-002][INFORMATIVO] [Título del gap — describe qué falta]
+### [P-002][CRÍTICO][PUEDE_REQUERIR_CR] [Título del gap — respuesta sensible de alcance]
+- **Contexto**: [cita del documento o descripción de dónde aparece la ambigüedad]
+- **Problema**: [por qué esto bloquea o condiciona el spec]
+- **Afecta**: [HU-002]
+- **Pregunta para el cliente**: [pregunta neutra, sin empujar hacia una solución expansiva]
+- **Respuesta**: _(pendiente)_
+
+### [P-003][INFORMATIVO] [Título del gap — describe qué falta]
 - **Contexto**: [cita del documento o descripción de dónde aparece la ambigüedad]
 - **Pregunta para el cliente**: [pregunta concreta y específica, sin opciones inventadas]
 - **Respuesta**: _(pendiente)_
@@ -116,13 +125,22 @@
 
 **Si el veredicto es `LISTO_PARA_SPECS` o `LISTO_PARA_SPECS_CON_PREGUNTAS`**:
 
-1. Anota la respuesta de cada `[P-XXX]` que puedas resolver **en este archivo**, en el campo `Respuesta` (sustituye `_(pendiente)_` por la respuesta real). Si al responder descubres que cambia el producto comprometido, usa `wf-prd-change` y no trates la decisión como un simple gap.
+1. Anota la respuesta de cada `[P-XXX]` que puedas resolver **en este archivo**, en el campo `Respuesta` (sustituye `_(pendiente)_` por la respuesta real). Si al responder descubres que cambia el producto comprometido, o que la respuesta introduce una entidad persistente, un catálogo reutilizable, una nueva granularidad funcional o un flujo adicional no comprometido en el PRD, usa `wf-prd-change` y no trates la decisión como un simple gap.
 2. Los `[CRÍTICO]` que queden sin respuesta marcarán sus HUs como `[INCOMPLETO]` en el spec (se generarán pero no podrán avanzar a plan/tasks hasta completarse).
 3. Los `[INFORMATIVO]` que queden sin respuesta aplicarán su asunción por defecto.
-4. Ejecuta el flujo completo automático:
+4. Si el veredicto es `LISTO_PARA_SPECS`, ejecuta el flujo completo:
    ```
    /wf-spec-features-first [path/al/archivo.md]
    ```
+   Si el veredicto es `LISTO_PARA_SPECS_CON_PREGUNTAS`, elige una de estas dos vías:
+   ```
+   /wf-spec-features-first [path/al/archivo.md]
+   ```
+   tras responder primero los gaps `[CRÍTICO]`, o:
+   ```
+   /wf-spec-features-first [path/al/archivo.md] --allow-open-critical-gaps
+   ```
+   si quieres continuar aceptando HUs `[INCOMPLETO]`.
    O para el paso a paso (solo discovery):
    ```
    /wf-spec-discover [path/al/archivo.md] --analysis [path/al/archivo_analysis.md]

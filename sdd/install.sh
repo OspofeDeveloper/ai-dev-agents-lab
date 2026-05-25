@@ -69,6 +69,7 @@ install_agent() {
 if [ "$INSTALL_TARGET" = "prd" ]; then
   install_agent "$SCRIPT_DIR/prd/agents/prd-expert.md"
 elif [ "$INSTALL_TARGET" = "spec" ]; then
+  install_agent "$SCRIPT_DIR/prd/agents/prd-expert.md"
   install_agent "$SCRIPT_DIR/spec/agents/sdd-spec-explorer.md"
   install_agent "$SCRIPT_DIR/spec/agents/sdd-spec-planner.md"
   install_agent "$SCRIPT_DIR/spec/agents/sdd-spec-writer.md"
@@ -113,6 +114,8 @@ if [ "$INSTALL_TARGET" = "prd" ]; then
   done
 elif [ "$INSTALL_TARGET" = "spec" ]; then
   install_skill "$SCRIPT_DIR/prd/skills/kb-prd-expert"
+  install_skill "$SCRIPT_DIR/prd/skills/kb-product-change-governance"
+  install_skill "$SCRIPT_DIR/prd/skills/wf-prd-change"
 
   for skill_dir in "$SCRIPT_DIR/spec/skills"/*/; do
     install_skill "$skill_dir"

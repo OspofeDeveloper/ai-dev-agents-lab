@@ -32,6 +32,8 @@ En el directorio del PRD, busca si existen:
 - `features/*/*_plan.md`
 - `features/*/*_tasks.md`
 - `product-changelog.md`
+- `changes/CR-XXX/change-request.md`
+- `changes/CR-XXX/decision.md`
 
 ## Paso 3: Leer el contexto mínimo necesario
 
@@ -39,9 +41,12 @@ Lee:
 
 - PRD actual
 - changelog del producto si existe
+- artefactos del cambio más recientes en `changes/CR-XXX/` si existen
 - índice `_features.md` si existe
 - headers y metadata de specs, plans y tasks
 - contenido completo de los artefactos cuya sincronía no pueda decidirse solo por metadata
+
+Si existe carpeta `changes/`, úsala como fuente prioritaria para entender el alcance exacto del último cambio aprobado. `product-changelog.md` sirve como índice; `change-request.md` y `decision.md` contienen el detalle operativo.
 
 ## Paso 4: Evaluar estado por artefacto
 

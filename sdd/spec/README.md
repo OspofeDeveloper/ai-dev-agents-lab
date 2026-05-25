@@ -22,19 +22,26 @@ Tienes un PRD o documento de requisitos y quieres convertirlo en Specs SDD para 
       · mapa de elementos del Spec que se generarán desde el PRD (informativo)
       · pureza del PRD (contaminación técnica si la hay)
       · gaps [CRÍTICO] e [INFORMATIVO] para responder
+      · marcador `[PUEDE_REQUERIR_CR]` cuando una futura respuesta puede expandir el producto
   → veredicto: LISTO_PARA_SPECS | LISTO_PARA_SPECS_CON_PREGUNTAS | REQUIERE_LIMPIEZA_PRD
   Las respuestas a gaps se anotan en el `_analysis.md`. Si aparece un cambio real de producto, se formaliza con `wf-prd-change` antes de resincronizar derivados.
 
-[edita prd_analysis.md y responde los gaps [CRÍTICO]]
+[si el análisis deja gaps [CRÍTICO], decide:]
+  a) responderlos en prd_analysis.md
+  b) continuar igualmente aceptando HUs [INCOMPLETO]
 
 /wf-spec-features-first prd.md
+  → si faltaba `prd_analysis.md`, lo genera y se detiene
+  → si quedan gaps [CRÍTICO], se detiene salvo que añadas `--allow-open-critical-gaps`
+  → si las respuestas del analysis introducen expansión de capacidad, se detiene y remite a `wf-prd-change`
+  → si el discovery detecta más de 5 features, se detiene salvo que añadas `--all-features`
   → ejecuta discover + fast-track por feature en paralelo
   → genera prd_discovery.md, prd_features.md
   → genera features/<nombre>/<nombre>_spec.md por cada feature
   → ejecuta verificación de conflictos y readiness automáticamente
 ```
 
-**Cuándo usarlo**: cuando tienes un PRD que cubre todo el sistema y quieres procesar todas las features en una sola pasada.
+**Cuándo usarlo**: cuando tienes un PRD acotado y quieres procesar todas las features en una sola pasada. Si el discovery saca muchas features, el propio workflow te empuja a iterar por subset para controlar coste y contexto.
 
 ---
 
@@ -46,7 +53,7 @@ Tienes un PRD que cubre todo el producto pero solo quieres generar las specs de 
 /wf-spec-analyze prd.md
   → genera prd_analysis.md (igual que en el caso 1)
 
-[edita prd_analysis.md y responde los gaps [CRÍTICO]]
+[responde gaps [CRÍTICO] o decide continuar luego con `--allow-open-critical-gaps`]
 
 /wf-spec-discover prd.md --analysis prd_analysis.md
   → genera prd_discovery.md con el mapa completo de features (F-001..F-N)
@@ -67,6 +74,10 @@ Tienes un PRD que cubre todo el producto pero solo quieres generar las specs de 
 ```
 
 **Cuándo usarlo**: cuando el PRD describe un producto amplio pero el delivery va por fases. Permite priorizar features sin tener que rehacer el PRD ni perder la visión global del producto.
+
+**Recomendación operativa**: para PRDs con más de 5 features, este modo iterativo pasa a ser el camino por defecto. El modo full queda como override explícito con `--all-features`.
+
+**Nota de gobernanza**: si una respuesta en `_analysis.md` añade una entidad persistente, un catálogo reutilizable, una nueva granularidad funcional o un flujo adicional no comprometido en el PRD, no debe derivarse directamente a specs. Primero hay que formalizarlo con `wf-prd-change`.
 
 ---
 
@@ -274,12 +285,12 @@ Al estar especializados, su contexto es más estrecho, el contrato de cada uno e
 | `wf-spec-analyze` | `/wf-spec-analyze` | `_analysis.md` (mapa Spec, pureza del PRD, gaps de negocio) |
 | `wf-spec-validate` | `/wf-spec-validate` | Informe inline (sin archivo) |
 | `wf-spec-discover` | `/wf-spec-discover` | `_discovery.md` (mapa de features + scope RF→Feature) |
-| `wf-spec-features-first` | `/wf-spec-features-first [--features F-XXX,...]` | `_discovery.md`, `_features.md` (Project Hub incremental con `PENDIENTE_GENERACIÓN` para features aún no procesadas), `features/<x>/<x>_spec.md` |
+| `wf-spec-features-first` | `/wf-spec-features-first [--features F-XXX,...] [--allow-open-critical-gaps] [--all-features]` | `_discovery.md`, `_features.md` (Project Hub incremental con `PENDIENTE_GENERACIÓN` para features aún no procesadas), `features/<x>/<x>_spec.md` |
 | `wf-spec-fast-track` | `/wf-spec-fast-track` | `features/<x>/<x>_spec.md` directamente |
 | `wf-spec-conflict` | `/wf-spec-conflict` | `_conflict_report.md` |
 | `wf-spec-delta` | `/wf-spec-delta` | `_delta_analysis.md` (analyze), spec actualizado (apply) |
 | `wf-spec-gap-resolve` | `/wf-spec-gap-resolve` | spec actualizado desde `_analysis.md` |
-| `wf-prd-change` | `/wf-prd-change` | PRD actualizado, `product-changelog.md`, `decisions/CR-XXX.md`, `*_change_request.md` |
+| `wf-prd-change` | `/wf-prd-change` | PRD actualizado, `product-changelog.md`, `changes/CR-XXX/change-request.md`, `changes/CR-XXX/decision.md` |
 | `wf-prd-sync-impact` | `/wf-prd-sync-impact` | `_sync_report.md` |
 | `wf-spec-sync-from-prd` | `/wf-spec-sync-from-prd` | `*_sync_requirements.md`, specs resincronizados |
 | `wf-spec-readiness` | `/wf-spec-readiness` | `_readiness_report.md`, actualiza estado en `_features.md` |
@@ -309,7 +320,7 @@ Al estar especializados, su contexto es más estrecho, el contrato de cada uno e
 > - `kb-prd-expert`: `sdd-spec-explorer`, `sdd-spec-writer`, `sdd-spec-planner` (el auditor no la necesita porque audita specs ya escritos).
 > - `kb-product-change-governance`: los 4 agentes Spec.
 >
-> **Si instalas `sdd/spec/` por separado, debes instalar también estas dos kb** o los agentes Spec quedarán sin las reglas de lectura del PRD y de governance de cambios.
+> **`install.sh spec` ya instala automáticamente estas dos kb cross-fase y también `wf-prd-change` + `prd-expert`,** porque el ecosistema Spec necesita ese handoff cuando una respuesta a un gap se convierte en cambio real de producto.
 
 ---
 

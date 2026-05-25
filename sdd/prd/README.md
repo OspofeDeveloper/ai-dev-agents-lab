@@ -17,7 +17,7 @@ El objetivo de esta etapa no es generar Specs ni tomar decisiones técnicas. Su 
 | `prd-expert` | Agente worker | Ayuda a redactar, reorganizar y revisar PRDs con guía |
 | `wf-prd-create` | Workflow | Genera un `prd.md` inicial a partir de notas o brief |
 | `wf-prd-review` | Workflow | Revisión rápida de limpieza y procesabilidad antes de entrar en `spec` |
-| `wf-prd-change` | Workflow | Formaliza un cambio de producto, actualiza PRD y deja trazabilidad |
+| `wf-prd-change` | Workflow | Formaliza un cambio de producto, actualiza PRD y deja trazabilidad en `product-changelog.md` y `changes/CR-XXX/` |
 
 ## Relación con el resto del pipeline
 
@@ -43,6 +43,7 @@ Usa `wf-prd-change` cuando la decisión ya no es una aclaración menor, sino un 
 - una exclusión deja de ser válida
 - cambia una regla de negocio transversal
 - cambia qué actor puede ejecutar una capacidad
+- una respuesta a un gap introduce una entidad persistente, un catálogo reutilizable o una nueva granularidad funcional no comprometida en el PRD
 
 En esos casos, el orden correcto es:
 
@@ -51,3 +52,17 @@ En esos casos, el orden correcto es:
 2. Medir impacto con /wf-prd-sync-impact
 3. Resincronizar specs afectados con /wf-spec-sync-from-prd
 ```
+
+## Estructura recomendada para cambios de producto
+
+```text
+prd/
+├── PRD.md
+├── product-changelog.md
+└── changes/
+    └── CR-001/
+        ├── change-request.md
+        └── decision.md
+```
+
+`product-changelog.md` resume el historial global. Cada carpeta `changes/CR-XXX/` agrupa el detalle operativo y evita repartir la semántica del cambio entre archivos sueltos en la raíz del PRD.

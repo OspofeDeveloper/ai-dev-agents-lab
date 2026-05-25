@@ -54,6 +54,7 @@ Las skills PRD son bases de conocimiento que los agentes especializados cargan a
 - Si existe una workflow cerrada y claramente adecuada, úsala.
 - Si la petición es de redacción o reescritura de un PRD y no exige una pipeline cerrada, usa `prd-expert`.
 - Si la petición es una duda conceptual sobre qué debe contener un PRD, puedes resolverla delegando a `prd-expert`, que ya carga `kb-prd-expert`.
+- Si una respuesta a un gap de Spec añade una entidad persistente, un catálogo reutilizable o una nueva granularidad funcional no comprometida en el PRD, trátala como cambio de producto y activa `wf-prd-change`.
 - Los subagentes trabajan con sus `kb-*` ya cargadas; el orquestador no replica ese conocimiento.
 
 ## Principio de precondiciones

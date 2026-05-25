@@ -25,6 +25,28 @@ Este skill es el **Single Source of Truth** para todas las convenciones de gaps 
 
 ## Severidades
 
+### Marcador advisory opcional: `[PUEDE_REQUERIR_CR]`
+
+Se puede añadir como marcador complementario a un gap cuando la propia pregunta o una futura respuesta tienen alta probabilidad de convertirse en change request de producto.
+
+Formato:
+
+- `[P-001][CRÍTICO][PUEDE_REQUERIR_CR]`
+- `[P-002][INFORMATIVO][PUEDE_REQUERIR_CR]`
+
+Uso:
+
+- no cambia por sí solo la severidad del gap
+- no bloquea automáticamente el pipeline
+- obliga al agente y al usuario a reevaluar la respuesta con `kb-product-change-governance` antes de derivar discovery/specs si la respuesta introduce expansión de capacidad
+
+Casos típicos:
+
+- la respuesta puede introducir un catálogo persistente nuevo
+- la respuesta puede añadir una nueva granularidad funcional
+- la respuesta puede crear un flujo de usuario no comprometido en el PRD
+- la respuesta puede convertir una referencia implícita en una capacidad gestionable explícita
+
 ### `[CRÍTICO]`
 
 Marca las HUs afectadas como `[INCOMPLETO]` en el spec si no se responde. El spec se genera igualmente, pero las HUs incompletas no pueden avanzar a plan/tasks. Aplica cuando el gap impide:

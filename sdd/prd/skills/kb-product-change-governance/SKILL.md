@@ -57,6 +57,29 @@ Debe modificarse el PRD cuando el cambio:
 - redefine quién puede hacer qué
 - haría que una frase actual del PRD fuese falsa o engañosa
 
+## Regla 4.1: Prueba de expansión de capacidad
+
+Una respuesta a un gap deja de ser simple aclaración y pasa a requerir evaluación como change request cuando introduce alguna de estas expansiones:
+
+- un modelo persistente nuevo no comprometido explícitamente en el PRD
+- un catálogo reutilizable donde antes solo había una referencia implícita o texto libre
+- una nueva operación de usuario o flujo de gestión no descrito en el alcance vigente
+- una nueva granularidad funcional de una capacidad existente
+- una nueva superficie funcional necesaria para soportar la respuesta
+
+Ejemplos típicos:
+
+- el PRD habla de "otras personas" y la respuesta introduce un **catálogo persistente de contactos**
+- el PRD habla de presupuesto por categoría y la respuesta introduce **presupuesto por subcategoría**
+- el PRD permite editar una transacción y la respuesta añade un **flujo inline de edición coordinada** sobre entidades vinculadas
+
+La pregunta operativa no es "¿contradice una frase literal?" sino:
+
+- ¿esta respuesta añade capacidad gestionable nueva?
+- ¿obliga a redefinir el alcance funcional comprometido?
+
+Si la respuesta es sí, clasifícalo al menos como `BEHAVIOR_CHANGE`; si además amplía alcance o superficie funcional, `SCOPE_CHANGE`.
+
 ## Regla 5: Trazabilidad mínima de un cambio
 
 Todo cambio aprobado debe dejar:
@@ -71,8 +94,15 @@ Todo cambio aprobado debe dejar:
 
 Los artefactos mínimos recomendados son:
 
-- `product-changelog.md`
-- `decisions/CR-XXX.md`
+- `product-changelog.md` como índice global del PRD
+- `changes/CR-XXX/change-request.md` como informe del cambio y su impacto
+- `changes/CR-XXX/decision.md` como registro estable de la decisión aprobada
+
+La intención es separar responsabilidades:
+
+- `product-changelog.md` resume el historial del producto
+- `change-request.md` explica el diff funcional y el impacto sobre derivados
+- `decision.md` conserva la decisión aprobada como referencia auditable
 
 ## Regla 6: Editar el PRD no basta
 
@@ -95,6 +125,8 @@ Usa esta secuencia:
 
 1. ¿Cambia el producto que se prometió?  
    Si sí, modifica PRD.
+1.1. ¿La respuesta añade una capacidad, entidad o flujo que el PRD no comprometía explícitamente?
+   Si sí, trátalo como change request aunque no contradiga una frase literal.
 2. ¿Afecta a una o varias features ya derivadas?  
    Si sí, genera análisis de impacto.
 3. ¿Es una aclaración menor que no cambia alcance?  

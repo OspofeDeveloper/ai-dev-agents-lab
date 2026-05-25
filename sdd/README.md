@@ -291,10 +291,16 @@ project-root/
 #     · gaps [CRÍTICO] e [INFORMATIVO] de negocio
 # Veredicto: LISTO_PARA_SPECS | LISTO_PARA_SPECS_CON_PREGUNTAS | REQUIERE_LIMPIEZA_PRD
 
-# [HUMANO] Responder cada gap _(pendiente)_ en prd_analysis.md (NO se modifica el PRD)
+# [HUMANO] Si quedan gaps [CRÍTICO], decidir:
+#   a) responderlos en prd_analysis.md
+#   b) seguir igualmente aceptando HUs [INCOMPLETO]
 
 # Opción A — Generar specs de TODO el PRD en una sola pasada:
 /wf-spec-features-first prd.md
+# Si hay gaps [CRÍTICO] pendientes, re-ejecutar con:
+# /wf-spec-features-first prd.md --allow-open-critical-gaps
+# Si el discovery detecta más de 5 features, el workflow pedirá iterar por subset
+# salvo override explícito con `--all-features`.
 # → prd_discovery.md (mapa de features + scope RF→Feature)
 # → prd_features.md (índice de features + tabla de shared models)
 # → features/<nombre>/<nombre>_spec.md (un spec por feature, en paralelo)

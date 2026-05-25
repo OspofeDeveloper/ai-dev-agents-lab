@@ -1,6 +1,6 @@
 ---
 name: wf-prd-change
-description: Gestiona cambios de producto sobre un PRD existente. Clasifica el cambio, decide si es una aclaración o un verdadero change request, actualiza el PRD cuando corresponde y deja trazabilidad en changelog y decision log junto con una matriz de impacto sobre analysis, discovery, specs, plan y tasks. Activa en frases como "cambia el alcance del PRD", "esto pasa de fase 2 a MVP", "actualiza el PRD con esta decisión", "gestiona este cambio de producto", "abre un change request sobre el PRD".
+description: Gestiona cambios de producto sobre un PRD existente. Clasifica el cambio, decide si es una aclaración o un verdadero change request, actualiza el PRD cuando corresponde y deja trazabilidad en un changelog global y en una carpeta dedicada por cambio junto con una matriz de impacto sobre analysis, discovery, specs, plan y tasks. Activa en frases como "cambia el alcance del PRD", "esto pasa de fase 2 a MVP", "actualiza el PRD con esta decisión", "gestiona este cambio de producto", "abre un change request sobre el PRD".
 argument-hint: "<prd.md> --new-reqs <cambio.md>"
 effort: high
 allowed-tools: [Read, Write, Bash]
@@ -79,7 +79,10 @@ Nunca metas detalles técnicos.
 Escribe o actualiza:
 
 - `product-changelog.md`
-- `decisions/CR-XXX.md`
+- `changes/CR-XXX/change-request.md`
+- `changes/CR-XXX/decision.md`
+
+Usa `product-changelog.md` como índice global. Toda la documentación detallada del cambio debe quedar agrupada dentro de `changes/CR-XXX/`.
 
 La entrada mínima debe incluir:
 
@@ -92,7 +95,7 @@ La entrada mínima debe incluir:
 
 ## Paso 7: Generar impacto inicial
 
-Genera un informe `<basename>_change_request.md` con:
+Genera `changes/CR-XXX/change-request.md` con:
 
 - clasificación del cambio
 - diff funcional resumido
@@ -104,6 +107,8 @@ Genera un informe `<basename>_change_request.md` con:
   - plan
   - tasks
 - siguiente workflow recomendado
+
+Genera también `changes/CR-XXX/decision.md` con la decisión aprobada, el motivo, las secciones del PRD tocadas y el resumen de artefactos afectados.
 
 ## Paso 8: Informar siguiente paso
 

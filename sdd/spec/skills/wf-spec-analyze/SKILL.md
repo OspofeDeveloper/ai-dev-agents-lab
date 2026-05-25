@@ -84,10 +84,24 @@ Si el PRD ya incluye CAs formales (poco habitual en un PRD), cada uno debe ser v
 Si encuentras información funcional ausente o ambigua (no técnica), formúlala como pregunta para el cliente. Cada gap debe ser:
 - Concreto (no "¿qué más falta?")
 - Sin opciones inventadas (el cliente decide)
+- Neutro: no empujes hacia una solución que ya expanda el producto
 
 Consulta `kb-gap-conventions` para el formato de IDs `[P-XXX]`, las definiciones de severidad `[CRÍTICO]` / `[INFORMATIVO]`, el marcador `_(pendiente)_` y el formato exacto de cada gap en el informe.
 
 **Importante:** si el problema detectado no es una ambigüedad sino una contradicción entre el PRD vigente y una decisión nueva de negocio ("esto pasa de fase 2 a MVP", "se elimina esta exclusión", "ahora otro actor puede hacerlo"), no lo reduzcas a un gap normal. Márcalo explícitamente como **requiere change request** y remite a `wf-prd-change`.
+
+**Importante 2 — posibles respuestas que expanden capacidad:** detecta también cuándo la propia pregunta puede desembocar fácilmente en una expansión funcional no comprometida en el PRD. En esos casos:
+
+- añade el marcador advisory `[PUEDE_REQUERIR_CR]`
+- redacta la pregunta de forma neutra, sin presentar como opciones "normales" soluciones expansivas
+- deja claro que, si la respuesta introduce una entidad persistente, un catálogo reutilizable, una nueva granularidad funcional o un flujo adicional de usuario, deberá reevaluarse con `kb-product-change-governance`
+
+Ejemplo de mala formulación:
+- "¿catálogo persistente o texto libre?"
+
+Mejor:
+- "¿cómo se identifica este elemento en el producto actual?"
+- y, si la respuesta introduce catálogo persistente o gestión reutilizable, escalar a `wf-prd-change`
 
 ### Campo "Afecta" (obligatorio en CRÍTICO)
 
@@ -99,6 +113,7 @@ Consulta `kb-gap-conventions` para las definiciones completas. Resumen:
 
 - **`[CRÍTICO]`**: las HUs indicadas en "Afecta" quedarán marcadas `[INCOMPLETO]` en el spec si no se responde. Se generarán con la información disponible pero no podrán avanzar a plan/tasks.
 - **`[INFORMATIVO]`**: continúa con asunción por defecto (edge cases asumibles, preferencias menores). **Siempre incluye una "Asunción por defecto"** con lo que se aplicará si el cliente no responde.
+- **`[PUEDE_REQUERIR_CR]`**: marcador advisory opcional. Añádelo si la futura respuesta podría introducir expansión de capacidad y, por tanto, exigir `wf-prd-change` antes de derivar specs.
 
 ---
 
@@ -124,6 +139,7 @@ Tras escribir el archivo, informa:
 - Veredicto del Estado de preparación para Specs
 - Resumen: cuántos elementos del Spec se generarán desde cero vs. ya parciales en PRD, cuántas contaminaciones técnicas detectadas (si las hay), cuántos `[P-XXX]` pendientes (desglosados: CRÍTICOS e INFORMATIVOS)
 - Siguiente paso:
-  - Si veredicto = `LISTO_PARA_SPECS` o `LISTO_PARA_SPECS_CON_PREGUNTAS`: "Anota las respuestas a las preguntas marcadas como _(pendiente)_ en `<path>_analysis.md` y ejecuta `/wf-spec-features-first <archivo.md>` para el flujo completo, o `/wf-spec-discover <archivo.md> --analysis <path>_analysis.md` para el paso a paso."
+  - Si veredicto = `LISTO_PARA_SPECS`: "Anota cualquier aclaración adicional en `<path>_analysis.md` y ejecuta `/wf-spec-features-first <archivo.md>` para el flujo completo, o `/wf-spec-discover <archivo.md> --analysis <path>_analysis.md` para el paso a paso."
+  - Si veredicto = `LISTO_PARA_SPECS_CON_PREGUNTAS`: "Anota las respuestas a las preguntas marcadas como _(pendiente)_ en `<path>_analysis.md`. Después decide una de estas dos vías: (a) resolver primero los gaps `[CRÍTICO]` y ejecutar `/wf-spec-features-first <archivo.md>`; (b) continuar igualmente ejecutando `/wf-spec-features-first <archivo.md> --allow-open-critical-gaps` para aceptar HUs `[INCOMPLETO]`."
   - Si veredicto = `REQUIERE_LIMPIEZA_PRD`: "Hay contaminación técnica en el PRD. Tienes dos vías para limpiarlo: (a) aplicar tú mismo las reescrituras de la sección Pureza del análisis; (b) delegar la limpieza al agente `prd-expert` o ejecutar `/wf-prd-review <archivo.md>` para un diagnóstico previo más estructurado antes de corregir. Tras la corrección, vuelve a ejecutar `/wf-spec-analyze <archivo.md>`."
   - Si detectaste cambio de producto: "Antes de continuar con Specs, formaliza el cambio en el PRD con `/wf-prd-change <archivo.md> --new-reqs <cambio.md>` y luego evalúa impacto con `/wf-prd-sync-impact <archivo.md>`."
