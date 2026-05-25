@@ -4,8 +4,7 @@ description: Base de conocimiento para convertir Specs SDD en contratos de disen
 argument-hint: "[feature_spec.md | DESIGN.md | duda_sobre_diseno]"
 effort: high
 allowed-tools: [Read]
-context: fork
-disable-model-invocation: true
+user-invocable: false
 ---
 
 # Design Expert

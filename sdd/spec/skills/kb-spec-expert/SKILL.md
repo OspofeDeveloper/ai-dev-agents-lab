@@ -4,8 +4,7 @@ description: Experto en Spec Driven Development (SDD): qué debe y qué NO debe 
 argument-hint: "[archivo_spec.md | tema_a_revisar]"
 effort: high
 allowed-tools: [Read]
-disable-model-invocation: true
-context: fork
+user-invocable: false
 ---
 
 # Spec Expert — Analista de Requisitos SDD

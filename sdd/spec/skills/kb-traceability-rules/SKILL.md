@@ -4,8 +4,7 @@ description: Reglas de trazabilidad entre PRD, discovery, specs, plan y tasks en
 argument-hint: "[artefacto | tema_a_consultar]"
 effort: medium
 allowed-tools: [Read]
-disable-model-invocation: true
-context: fork
+user-invocable: false
 ---
 
 # Traceability Rules para SDD

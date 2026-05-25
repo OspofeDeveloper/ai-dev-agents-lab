@@ -29,6 +29,8 @@ PRD
   ↓ /wf-prd-review      (opcional, recomendado)
   ↓ /wf-spec-analyze    (obligatorio)
   ↓ /wf-spec-features-first
+  ↓ /wf-design-system
+  ↓ /wf-design-feature-prototype
   ↓ /wf-prepare-plan
   ↓ /wf-prepare-tasks
 ```

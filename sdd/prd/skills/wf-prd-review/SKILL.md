@@ -3,7 +3,7 @@ name: wf-prd-review
 description: Revisión rápida de un PRD o documento de requisitos antes de entrar en la fase Spec. Comprueba si el documento está limpio, si explicita actores y alcance, y si su estructura es procesable por el pipeline SDD. Activa en frases como "revisa mi PRD", "¿este PRD está bien para empezar?", "haz preflight del PRD", "valida el documento de requisitos antes del spec".
 argument-hint: "<archivo_prd.md>"
 effort: medium
-allowed-tools: [Read, Bash]
+allowed-tools: [Read, Write, Bash]
 context: fork
 agent: prd-expert
 ---

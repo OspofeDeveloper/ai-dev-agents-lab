@@ -4,8 +4,7 @@ description: Experto en partición de Specs SDD monolíticos en Specs por featur
 argument-hint: "[concepto_a_consultar]"
 effort: low
 allowed-tools: [Read]
-disable-model-invocation: true
-context: fork
+user-invocable: false
 ---
 
 # Decompose Expert — Partición de Specs SDD

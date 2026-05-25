@@ -37,10 +37,12 @@ allowed-tools: [...]
 context: fork
 ```
 
-**Solo en `kb-`:**
+**Solo en `kb-` cuando quieres ocultarlas al usuario pero mantenerlas disponibles para Claude/subagentes:**
 ```yaml
-disable-model-invocation: true
+user-invocable: false
 ```
+
+`disable-model-invocation: true` no se usa por defecto en `kb-*` de este repo, porque impediria la precarga en subagentes. Reservarlo para skills que deban ser exclusivamente manuales.
 
 **Solo en `wf-` cuando la skill es para un agente concreto:**
 ```yaml

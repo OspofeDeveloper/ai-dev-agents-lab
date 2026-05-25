@@ -5,6 +5,7 @@ argument-hint: "<prd_archivo.md> [--features F-001,F-002,...] [--allow-open-crit
 effort: high
 model: claude-opus-4-6
 allowed-tools: [Read, Write, Bash, Agent]
+context: fork
 ---
 
 # Workflow: FEATURES-FIRST (Orquestador)

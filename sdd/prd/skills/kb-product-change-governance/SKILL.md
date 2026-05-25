@@ -4,8 +4,7 @@ description: Reglas de gobernanza para cambios de producto en el ecosistema SDD.
 argument-hint: "[change_request | tema_a_consultar]"
 effort: medium
 allowed-tools: [Read]
-disable-model-invocation: true
-context: fork
+user-invocable: false
 ---
 
 # Product Change Governance para SDD

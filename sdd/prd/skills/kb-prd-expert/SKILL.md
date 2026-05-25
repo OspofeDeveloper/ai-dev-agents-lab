@@ -4,8 +4,7 @@ description: Experto en Product Requirements Documents (PRD) para el pipeline SD
 argument-hint: "[archivo_prd.md | tema_a_consultar]"
 effort: medium
 allowed-tools: [Read]
-disable-model-invocation: true
-context: fork
+user-invocable: false
 ---
 
 # PRD Expert — Product Requirements Document para SDD
