@@ -9,10 +9,10 @@ Repositorio de skills, agentes y conocimiento para automatizar el flujo **Spec-D
 Un ecosistema de agentes Claude Code que cubre el pipeline completo desde un PRD informal hasta tareas de implementación accionables por feature, listas para ser delegadas a agentes KMM especializados.
 
 ```
-PRD / Notas       Spec limpio       Specs por        Plan técnico      Tasks
-informales  ──►   monolítico  ──►   feature    ──►   por feature ──►  por feature
-                  (_spec.md)       (features/         (_plan.md)       (_tasks.md)
-                                    <x>_spec.md)
+PRD / Notas       Spec limpio       Specs por        Design           Plan técnico      Tasks
+informales  ──►   monolítico  ──►   feature    ──►   validado   ──►  por feature ──►  por feature
+                  (_spec.md)       (features/         (DESIGN.md,      (_plan.md)       (_tasks.md)
+                                    <x>_spec.md)      views, prompt)
                                                                             │
                                                            kmm-feature-implementer
                                                            kmm-platform-integrator
@@ -21,7 +21,7 @@ informales  ──►   monolítico  ──►   feature    ──►   por feat
 
 ---
 
-## El pipeline SDD en cinco etapas
+## El pipeline SDD en seis etapas
 
 ### Etapa 0 — PRD
 
@@ -67,7 +67,19 @@ El resultado es:
 - `_features.md` — índice de features con scope, shared models y rutas
 - `features/<nombre>/<nombre>_spec.md` — un Spec SDD completo y autocontenido por feature
 
-### Etapa 3 — Plan
+### Etapa 3 — Design
+
+Transforma cada spec de feature en un contrato visual reusable por herramientas como Stitch. Aqui no entra implementacion tecnica, sino identidad visual, flujos de interfaz, inventario de vistas y prompt estructurado para prototipado.
+
+Un Design valido produce:
+- `DESIGN.md` a nivel producto
+- `<feature>_flows.md` para secuencias y transiciones
+- `<feature>_views.md` como SSoT de pantallas, componentes y estados visuales
+- `<feature>_ui_prompt.md` como ensamblaje para Stitch
+
+La fase `design` no redefine requisitos funcionales. Si una decision cambia HUs, journeys o CAs, vuelve a `spec`.
+
+### Etapa 4 — Plan
 
 Transforma cada spec de feature en un plan técnico KMM. Aquí entra la tecnología: stack, módulos, capas, contratos de API, decisiones de expect/actual.
 
@@ -83,7 +95,7 @@ Un Plan **no debe tener**: código implementado, requisitos funcionales del usua
 
 Los shared models declarados en `_features.md` no se redefinen: la feature owner los define completos; el resto los referencia.
 
-### Etapa 4 — Tasks
+### Etapa 5 — Tasks
 
 Transforma el Plan de cada feature en tareas independientes y accionables, ordenadas por dependencias, cada una asignada a un **owner agent KMM**. Una task = un chunk implementable, con un dominio de ejecución y un responsable claro.
 
@@ -101,7 +113,7 @@ Ejemplo de task:
 
 ---
 
-## Arquitectura del ecosistema: 5 etapas × 3 capas
+## Arquitectura del ecosistema: 6 etapas × 3 capas
 
 Cada etapa sigue el mismo patrón arquitectónico de 3 capas:
 
@@ -135,11 +147,15 @@ SPECIFY    kb-decompose-         Diagnóstico               wf-spec-discover
            wf-spec-features-first
            Orquesta discover + fast-track en paralelo
 
-ETAPA 3    kb-plan-expert ──►   plan-architect ──◄── wf-prepare-plan
+ETAPA 3    kb-design-expert ─►   design-architect ─◄── wf-design-system
+DESIGN     Reglas design         Spec -> DESIGN.md     wf-design-feature-prototype
+                                  y prototipo
+
+ETAPA 4    kb-plan-expert ──►   plan-architect ──◄── wf-prepare-plan
 PLAN       Reglas Plan           Spec → Plan          /wf-prepare-plan
            + KMM arch            técnico               <spec.md>
 
-ETAPA 4    kb-tasks-expert ──►  task-generator ──◄── wf-prepare-tasks
+ETAPA 5    kb-tasks-expert ──►  task-generator ──◄── wf-prepare-tasks
 TASKS      Reglas Tasks          Plan → Tasks         /wf-prepare-tasks
            + sizing KMM          ordenados             <plan.md>
 ```
@@ -164,6 +180,7 @@ TASKS      Reglas Tasks          Plan → Tasks         /wf-prepare-tasks
 │   ├── sdd-spec-planner.md     ✅ Worker: planning Spec
 │   ├── sdd-spec-writer.md      ✅ Worker: escritura Spec
 │   ├── sdd-spec-auditor.md     ✅ Worker: auditoría Spec
+│   ├── design-architect.md     ✅ Worker: Design / Stitch
 │   ├── plan-architect.md       ✅ Worker: Plan (model: opus)
 │   └── task-generator.md       ✅ Worker: Tasks
 │
@@ -202,6 +219,14 @@ TASKS      Reglas Tasks          Plan → Tasks         /wf-prepare-tasks
     │       ├── kmm_architecture.md
     │       └── plan_structure.md
     │
+    ├── kb-design-expert/        ✅ Knowledge: Design rules
+    │   ├── SKILL.md
+    │   └── references/
+    │       ├── design_md_template.md
+    │       ├── feature_flows_template.md
+    │       ├── feature_views_template.md
+    │       └── feature_ui_prompt_template.md
+    │
     ├── kb-tasks-expert/         ✅ Knowledge: Tasks rules
     │   ├── SKILL.md
     │   └── references/
@@ -220,6 +245,14 @@ TASKS      Reglas Tasks          Plan → Tasks         /wf-prepare-tasks
     │
     ├── wf-prd-change/           ✅ Workflow: Product change management on PRD
     │   └── SKILL.md
+    │
+    ├── wf-design-system/        ✅ Workflow: Product design system
+    │   ├── SKILL.md
+    │   └── references/output_notes.md
+    │
+    ├── wf-design-feature-prototype/ ✅ Workflow: Feature prototype for Stitch
+    │   ├── SKILL.md
+    │   └── references/output_bundle_template.md
     │
     ├── wf-spec-validate/        ✅ Workflow: Audit existing spec
     │   ├── SKILL.md
@@ -261,18 +294,25 @@ TASKS      Reglas Tasks          Plan → Tasks         /wf-prepare-tasks
 
 ```
 project-root/
-├── prd.md                           # PRD original
-├── prd_analysis.md                  # /wf-spec-analyze (recomendado)
-├── prd_discovery.md                 # /wf-spec-discover — mapa de features
-├── prd_features.md                  # /wf-spec-features-first — índice de features y shared models
+├── prd.md                              # PRD original
+├── prd_analysis.md                     # /wf-spec-analyze (recomendado)
+├── prd_discovery.md                    # /wf-spec-discover — mapa de features
+├── prd_features.md                     # /wf-spec-features-first — índice de features y shared models
+├── DESIGN.md                           # /wf-design-system — sistema visual de producto
 │
 └── features/
     ├── authentication/
-    │   ├── authentication_spec.md   # /wf-spec-fast-track
-    │   ├── authentication_plan.md   # /wf-prepare-plan
-    │   └── authentication_tasks.md  # /wf-prepare-tasks
+    │   ├── authentication_spec.md      # /wf-spec-fast-track
+    │   ├── authentication_flows.md     # /wf-design-feature-prototype
+    │   ├── authentication_views.md     # /wf-design-feature-prototype
+    │   ├── authentication_ui_prompt.md # /wf-design-feature-prototype
+    │   ├── authentication_plan.md      # /wf-prepare-plan
+    │   └── authentication_tasks.md     # /wf-prepare-tasks
     ├── services/
     │   ├── services_spec.md
+    │   ├── services_flows.md
+    │   ├── services_views.md
+    │   ├── services_ui_prompt.md
     │   ├── services_plan.md
     │   └── services_tasks.md
     └── <una carpeta por feature>/
@@ -324,7 +364,21 @@ project-root/
 #          Confirmar qué feature es owner de cada shared model
 
 
-# ── Etapas 3 y 4: Por cada feature ───────────────────────────────────────────
+# ── Etapa 3: Design por producto y por feature ───────────────────────────────
+# Generar o actualizar primero el sistema visual compartido
+/wf-design-system generate features/authentication/authentication_spec.md
+# → DESIGN.md
+
+# Derivar artefactos de prototipado por feature
+/wf-design-feature-prototype generate features/authentication/authentication_spec.md
+# → features/authentication/authentication_flows.md
+# → features/authentication/authentication_views.md
+# → features/authentication/authentication_ui_prompt.md
+
+# [HUMANO] Validar con cliente las vistas generadas en Stitch antes de pasar a plan
+
+
+# ── Etapas 4 y 5: Por cada feature ───────────────────────────────────────────
 # Empezar por las features owner de shared models
 
 /wf-prepare-plan generate features/authentication/authentication_spec.md

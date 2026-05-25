@@ -1,6 +1,6 @@
 # SDD Lab — Instrucciones para el Orquestador
 
-Este repositorio implementa un pipeline de **Spec Driven Development (SDD)** desde PRD → Spec → Plan → Tasks.
+Este repositorio implementa un pipeline de **Spec Driven Development (SDD)** desde PRD → Spec → Design → Plan → Tasks.
 
 ## Tu rol: Director estratégico
 
@@ -19,6 +19,7 @@ Este `CLAUDE.md` describe el ecosistema SDD completo. Es útil como mapa documen
 Si buscas mejor rendimiento y menos carga de contexto, instala y usa el `CLAUDE.md` local de la fase correspondiente:
 - `sdd/prd/CLAUDE.md`
 - `sdd/spec/CLAUDE.md`
+- `sdd/design/CLAUDE.md`
 - `sdd/plan/CLAUDE.md` cuando exista
 - `sdd/tasks/CLAUDE.md` cuando exista
 
@@ -43,6 +44,8 @@ Si buscas mejor rendimiento y menos carga de contexto, instala y usa el `CLAUDE.
 | Actualizar un spec con requisitos nuevos (análisis) | `/wf-spec-delta` | `analyze <feature_spec.md> --new-reqs <description.md>` |
 | Aplicar un delta analysis a un spec | `/wf-spec-delta` | `apply <feature_spec.md> <delta_analysis.md>` |
 | Completar HUs incompletas (gaps respondidos en analysis) | `/wf-spec-gap-resolve` | `<feature_spec.md> [--analysis <path_analysis.md>]` |
+| Crear o actualizar el sistema visual del producto desde un feature spec | `/wf-design-system` | `generate <feature_spec.md> [--design-file DESIGN.md]` |
+| Generar flows, views y prompt de ensamblaje para Stitch desde un feature spec | `/wf-design-feature-prototype` | `generate <feature_spec.md> [--design-file DESIGN.md]` |
 | Generar el plan técnico desde un spec | `/wf-prepare-plan` | `generate <spec.md>` |
 | Generar las tasks desde un plan | `/wf-prepare-tasks` | `generate <plan.md>` |
 
@@ -50,7 +53,7 @@ Si buscas mejor rendimiento y menos carga de contexto, instala y usa el `CLAUDE.
 
 1. **Identifica la intención** usando el rootmap anterior
 2. **Invoca el skill** con los argumentos correctos
-3. **Respeta la fase actual** y sus precondiciones: PRD antes de Spec, Spec antes de Plan, Plan antes de Tasks
+3. **Respeta la fase actual** y sus precondiciones: PRD antes de Spec, Spec antes de Design, Design antes de Plan, Plan antes de Tasks
 4. **Reporta al usuario** el resultado y el siguiente paso en el pipeline
 
 Si la intención no coincide exactamente, usa matching semántico con la columna de intenciones. Si hay ambigüedad dentro de una misma fase, delega al agente planificador o explorador de esa fase antes de cargar fases ajenas.
@@ -81,6 +84,7 @@ La unidad primaria de trabajo en SDD es el **agente especializado** cuando la pe
 | `sdd-spec-planner` | Planificación del approach de trabajo dentro del ecosistema Spec |
 | `sdd-spec-writer` | Escritura y evolución de artefactos Spec |
 | `sdd-spec-auditor` | Validación, conflictos y readiness de artefactos Spec |
+| `design-architect` | Traducción de Spec a contrato visual de producto y artefactos de feature para Stitch |
 | `plan-architect` | Transformación de Spec a Plan técnico |
 | `task-generator` | Transformación de Plan a Tasks accionables |
 
@@ -107,6 +111,13 @@ _features.md (PROJECT HUB incremental: index + trazabilidad RF→HU→Feature + 
     ↓ [/wf-spec-conflict]
     ↓ [/wf-spec-readiness]
 _readiness_report.md (estado + orden de implementación)
+    ↓ [/wf-design-system generate — por producto, usando un feature spec válido]
+DESIGN.md
+    ↓ [/wf-design-feature-prototype generate — por feature]
+features/<nombre>/<nombre>_flows.md
+features/<nombre>/<nombre>_views.md
+features/<nombre>/<nombre>_ui_prompt.md
+    ↓ [Stitch / validación visual]
     ↓ [/wf-prepare-plan generate — por feature]
 features/<nombre>/<nombre>_plan.md
     ↓ [/wf-prepare-tasks generate — por feature]
@@ -124,6 +135,8 @@ features/<nombre>/<nombre>_tasks.md
 > Si el discovery identifica más de 5 features y el usuario no ha pedido un subset, el flujo recomendado es iterar con `--features ...`. Solo usar `--all-features` como override explícito.
 > Para cambios post-spec: `/wf-spec-delta analyze <spec.md> --new-reqs <cambios.md>`
 > Para completar HUs `[INCOMPLETO]` con respuestas ya escritas en `_analysis.md`: `/wf-spec-gap-resolve <spec.md>`
+> Para prototipado visual desde Specs listos: primero `/wf-design-system generate <feature_spec.md>` y luego `/wf-design-feature-prototype generate <feature_spec.md>`.
+> En la salida de Design: `flows` = secuencias y transiciones; `views` = SSoT de pantallas y estados visuales; `ui_prompt` = ensamblaje para Stitch.
 > Para cambios de producto (scope, prioridad, exclusiones): primero `/wf-prd-change`, luego `/wf-prd-sync-impact` y `/wf-spec-sync-from-prd`.
 > Tras `/wf-prepare-tasks`, cada task debe delegarse al `Owner agent` indicado en el `_tasks.md`.
 

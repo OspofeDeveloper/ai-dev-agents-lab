@@ -1,6 +1,6 @@
 #!/bin/bash
 # install.sh — Distribuye templates y despliega el ecosistema SDD al .claude del proyecto
-# Ejecutar desde el directorio sdd/: bash install.sh [all|prd|spec]
+# Ejecutar desde el directorio sdd/: bash install.sh [all|prd|spec|design]
 
 set -e
 
@@ -10,14 +10,15 @@ CLAUDE_DIR="$(pwd)/.claude"
 INSTALL_TARGET="${1:-all}"
 
 usage() {
-  echo "Uso: bash install.sh [all|prd|spec]"
+  echo "Uso: bash install.sh [all|prd|spec|design]"
   echo "  all (por defecto): instala el ecosistema SDD completo"
   echo "  prd: instala solo agentes, skills y CLAUDE.md relacionados con PRD"
   echo "  spec: instala solo agentes, skills y CLAUDE.md relacionados con Spec"
+  echo "  design: instala solo agentes, skills y CLAUDE.md relacionados con Design"
 }
 
 case "$INSTALL_TARGET" in
-  all|prd|spec)
+  all|prd|spec|design)
     ;;
   -h|--help|help)
     usage
@@ -74,12 +75,15 @@ elif [ "$INSTALL_TARGET" = "spec" ]; then
   install_agent "$SCRIPT_DIR/spec/agents/sdd-spec-planner.md"
   install_agent "$SCRIPT_DIR/spec/agents/sdd-spec-writer.md"
   install_agent "$SCRIPT_DIR/spec/agents/sdd-spec-auditor.md"
+elif [ "$INSTALL_TARGET" = "design" ]; then
+  install_agent "$SCRIPT_DIR/design/agents/design-architect.md"
 else
   install_agent "$SCRIPT_DIR/prd/agents/prd-expert.md"
   install_agent "$SCRIPT_DIR/spec/agents/sdd-spec-explorer.md"
   install_agent "$SCRIPT_DIR/spec/agents/sdd-spec-planner.md"
   install_agent "$SCRIPT_DIR/spec/agents/sdd-spec-writer.md"
   install_agent "$SCRIPT_DIR/spec/agents/sdd-spec-auditor.md"
+  install_agent "$SCRIPT_DIR/design/agents/design-architect.md"
   install_agent "$SCRIPT_DIR/plan/agents/plan-architect.md"
   install_agent "$SCRIPT_DIR/tasks/agents/task-generator.md"
 fi
@@ -121,12 +125,22 @@ elif [ "$INSTALL_TARGET" = "spec" ]; then
   for skill_dir in "$SCRIPT_DIR/spec/skills"/*/; do
     install_skill "$skill_dir"
   done
+elif [ "$INSTALL_TARGET" = "design" ]; then
+  install_skill "$SCRIPT_DIR/spec/skills/kb-spec-expert"
+
+  for skill_dir in "$SCRIPT_DIR/design/skills"/*/; do
+    install_skill "$skill_dir"
+  done
 else
   for skill_dir in "$SCRIPT_DIR/prd/skills"/*/; do
     install_skill "$skill_dir"
   done
 
   for skill_dir in "$SCRIPT_DIR/spec/skills"/*/; do
+    install_skill "$skill_dir"
+  done
+
+  for skill_dir in "$SCRIPT_DIR/design/skills"/*/; do
     install_skill "$skill_dir"
   done
 
@@ -147,6 +161,8 @@ if [ "$INSTALL_TARGET" = "prd" ]; then
   cp "$SCRIPT_DIR/prd/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
 elif [ "$INSTALL_TARGET" = "spec" ]; then
   cp "$SCRIPT_DIR/spec/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
+elif [ "$INSTALL_TARGET" = "design" ]; then
+  cp "$SCRIPT_DIR/design/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
 else
   cp "$SCRIPT_DIR/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
 fi

@@ -1,184 +1,123 @@
-# SDD — Diagramas del pipeline
+# SDD — Diagramas globales del sistema
 
-Vistas Mermaid del ecosistema SDD para entender la frontera PRD ↔ Spec ↔ Plan y el flujo de workflows. Útil para explicar el sistema a alguien nuevo o para refrescar memoria sobre qué comando ejecutar.
+Este documento contiene solo diagramas de comportamiento **global** del ecosistema SDD. Los detalles internos de cada fase viven en sus propios documentos:
 
-Los diagramas están pensados para leerse de forma independiente: cada uno responde **una sola pregunta**. Si vas a presentarlos en una sesión, el orden recomendado está al final.
+- [sdd/prd/DIAGRAMS.md](/Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/prd/DIAGRAMS.md)
+- [sdd/spec/DIAGRAMS.md](/Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/spec/DIAGRAMS.md)
+- [sdd/design/DIAGRAMS.md](/Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/design/DIAGRAMS.md)
+
+Si vas a explicar el sistema a alguien nuevo, empieza aquí y baja después al directorio concreto que quieras detallar.
 
 ---
 
-## 1. Frontera PRD vs Spec vs Plan — qué responde cada artefacto
+## 1. Pipeline end-to-end
 
-**Pregunta que responde:** ¿dónde acaba el PRD y dónde empieza el Spec?
+**Pregunta que responde:** ¿cuál es el recorrido completo desde requisitos hasta implementación?
 
 ```mermaid
 flowchart LR
-    subgraph PRD["📄 PRD — Negocio"]
-        direction TB
-        P1["¿Qué problema resuelve?"]
-        P2["¿Quién lo usa? (actores)"]
-        P3["¿Qué puede hacer cada actor? (capacidades)"]
-        P4["¿Qué queda FUERA?"]
-        P5["Reglas de negocio transversales"]
-    end
+    PRD["Etapa 0<br/>PRD"]
+    SPEC["Etapas 1-2<br/>Spec + Decompose"]
+    DESIGN["Etapa 3<br/>Design"]
+    PLAN["Etapa 4<br/>Plan"]
+    TASKS["Etapa 5<br/>Tasks"]
+    IMPL["Implementacion<br/>agentes KMM"]
 
-    subgraph SPEC["📋 Spec — Funcional"]
-        direction TB
-        S1["Historias de usuario (HU)"]
-        S2["Journeys paso a paso"]
-        S3["Criterios de aceptación (GIVEN/WHEN/THEN)"]
-        S4["Destinos de navegación"]
-        S5["Edge cases y estados de error"]
-    end
-
-    subgraph PLAN["⚙️ Plan — Técnico"]
-        direction TB
-        T1["Stack, frameworks, APIs"]
-        T2["Arquitectura, módulos, patrones"]
-        T3["Modelos de datos"]
-    end
-
-    PRD ==>|wf-spec-analyze<br/>+ wf-spec-discover| SPEC
-    SPEC ==>|wf-prepare-plan| PLAN
+    PRD -->|"wf-prd-review<br/>wf-spec-analyze"| SPEC
+    SPEC -->|"feature specs listos"| DESIGN
+    DESIGN -->|"contrato visual validado<br/>DESIGN.md + flows/views/ui_prompt"| PLAN
+    PLAN -->|"feature_plan.md"| TASKS
+    TASKS -->|"feature_tasks.md"| IMPL
 
     style PRD fill:#e3f2fd,stroke:#1976d2
     style SPEC fill:#fff3e0,stroke:#f57c00
+    style DESIGN fill:#f3e5f5,stroke:#8e24aa
+    style PLAN fill:#e8f5e9,stroke:#388e3c
+    style TASKS fill:#e0f2f1,stroke:#00897b
+    style IMPL fill:#fce4ec,stroke:#d81b60
+```
+
+**Mensaje clave:** el pipeline ya no salta directamente de spec a plan. `design` es una fase explícita para validar interfaz y flujos antes de fijar implementación.
+
+---
+
+## 2. Frontera entre artefactos
+
+**Pregunta que responde:** ¿qué tipo de verdad pertenece a cada etapa?
+
+```mermaid
+flowchart LR
+    subgraph PRD["PRD"]
+        P1["Problema, actores, alcance"]
+        P2["Reglas de negocio y exclusiones"]
+    end
+
+    subgraph SPEC["Spec"]
+        S1["Historias de usuario"]
+        S2["Journeys, CAs, comportamiento observable"]
+    end
+
+    subgraph DESIGN["Design"]
+        D1["DESIGN.md"]
+        D2["Flows, views, prompt Stitch"]
+    end
+
+    subgraph PLAN["Plan"]
+        T1["Stack, modulos, capas, contratos"]
+    end
+
+    PRD --> SPEC
+    SPEC --> DESIGN
+    DESIGN --> PLAN
+
+    style PRD fill:#e3f2fd,stroke:#1976d2
+    style SPEC fill:#fff3e0,stroke:#f57c00
+    style DESIGN fill:#f3e5f5,stroke:#8e24aa
     style PLAN fill:#e8f5e9,stroke:#388e3c
 ```
 
-**Mensaje clave:** PRD = "qué y para quién" / Spec = "cómo se comporta el sistema visto desde fuera" / Plan = "cómo se implementa". Si una frase responde "cómo se implementa", baja al Plan. Si responde "qué validar como cliente", sube al PRD.
+**Mensaje clave:** PRD decide negocio, Spec decide comportamiento, Design decide presentacion y contrato visual, Plan decide implementacion.
 
 ---
 
-## 2. Pipeline end-to-end — los workflows en orden
+## 3. Arquitectura transversal de capas
 
-**Pregunta que responde:** ¿qué comando ejecuto y cuándo?
-
-```mermaid
-flowchart TD
-    Notes[Notas / brief]
-    Notes -->|/wf-prd-create| PRD[(prd.md)]
-    PRD -->|/wf-prd-review| PRD
-    PRD -->|/wf-spec-analyze| Analysis[(_analysis.md)]
-    Analysis --> Decision{"¿Hay gaps [CRÍTICO]<br/>pendientes?"}
-    Decision -->|Sí| Resolve["Responder gaps en<br/>_analysis.md"]
-    Resolve --> Analysis
-    Decision -->|Seguir igualmente| OpenGaps["/wf-spec-features-first<br/>--allow-open-critical-gaps"]
-    Decision -->|No| FF["/wf-spec-features-first"]
-    FF --> Derived{"¿Respuestas del analysis<br/>expanden el producto?"}
-    OpenGaps --> Derived
-    Derived -->|Sí| CR["/wf-prd-change<br/>o override explícito<br/>--allow-derived-scope-from-analysis"]
-    Derived -->|No| Discovery[(_discovery.md)]
-    CR --> Discovery
-    Discovery --> Size{"¿Más de 5 features?"}
-    Size -->|Sí| Subset["Elegir subset<br/>--features F-001,F-002"]
-    Size -->|Override explícito| Full["/wf-spec-features-first<br/>--all-features"]
-    Size -->|No| Generate["Generación directa"]
-    Subset --> Features[(features/&lt;x&gt;/&lt;x&gt;_spec.md)]
-    Full --> Features
-    Generate --> Features
-    Features --> Conflict[(_conflict_report.md)]
-    Conflict --> Readiness[(_readiness_report.md)]
-    Readiness -->|/wf-prepare-plan| PlanFile[(features/&lt;x&gt;/&lt;x&gt;_plan.md)]
-    PlanFile -->|/wf-prepare-tasks| Tasks[(features/&lt;x&gt;/&lt;x&gt;_tasks.md)]
-
-    Features -.->|"si HUs quedan<br/>[INCOMPLETO]"| GapResolve[/"/wf-spec-gap-resolve"/]
-    GapResolve --> Features
-
-    Features -.->|"añadir/modificar<br/>funcionalidad"| Delta[/"/wf-spec-delta"/]
-    Delta --> Features
-
-    PRD -.->|"cambio de scope,<br/>prioridad o exclusión"| Change[/"/wf-prd-change"/]
-    Change --> PRD
-    Change --> ChangeFiles["prd/product-changelog.md<br/>+ prd/changes/CR-XXX/"]
-    Change --> Impact[/"/wf-prd-sync-impact"/]
-    Impact --> Sync[/"/wf-spec-sync-from-prd"/]
-    Sync --> Features
-
-    style PRD fill:#e3f2fd
-    style Analysis fill:#fff8e1
-    style Features fill:#fff3e0
-    style PlanFile fill:#e8f5e9
-    style Tasks fill:#e0f2f1
-```
-
-**Mensaje clave:** el flujo feliz ya no asume tres cosas implícitas: ni continuar con gaps críticos abiertos, ni derivar cambios expansivos del analysis como si fueran PRD puro, ni generar todo un PRD grande de una sola vez. El sistema fuerza esas decisiones antes de gastar contexto y tokens.
-
----
-
-## 3. Arquitectura de 3 capas — cómo se ejecuta cada workflow
-
-**Pregunta que responde:** ¿por qué hay 3 niveles de archivos? ¿qué hace cada uno?
+**Pregunta que responde:** ¿cómo se organiza internamente cada fase del ecosistema?
 
 ```mermaid
 flowchart TB
-    User([👤 Usuario])
-    Orch{Orquestador<br/>CLAUDE.md}
-    User -->|"intención<br/>(p.ej. 'revisa mi PRD')"| Orch
+    User([Usuario])
+    Orch{Orquestador}
 
-    subgraph L1["Capa 1 — Workflows (wf-*)"]
-        WF[wf-prd-review<br/>parsea args, valida<br/>archivos, orquesta]
+    subgraph L1["Capa 1 — Workflows"]
+        WF["wf-*<br/>parsean, validan, delegan"]
     end
 
     subgraph L2["Capa 2 — Agentes worker"]
-        AG[prd-expert<br/>ejecuta el trabajo<br/>real con kb cargadas]
+        AG["agentes especializados<br/>ejecutan el trabajo real"]
     end
 
-    subgraph L3["Capa 3 — Knowledge bases (kb-*)"]
-        KB1[kb-prd-expert<br/>reglas SSoT]
-        KB2[kb-product-change-governance<br/>reglas SSoT]
+    subgraph L3["Capa 3 — Knowledge bases"]
+        KB["kb-*<br/>reglas SSoT y referencias"]
     end
 
-    Orch -->|"mapea intención<br/>→ /wf-*"| L1
-    L1 -->|"Agent()<br/>tool"| L2
-    L3 -.->|"cargadas automáticamente<br/>en context: fork"| L2
+    User --> Orch
+    Orch --> L1
+    L1 --> L2
+    L3 -.-> L2
 
     style L1 fill:#e3f2fd
     style L2 fill:#fff3e0
     style L3 fill:#f3e5f5
 ```
 
-**Mensaje clave:** las kb son **solo reglas** (SSoT, lazy-loaded), los workflows son **solo procedimiento**, los agentes son **quien ejecuta**. Un cambio de regla toca solo la kb. Un cambio de procedimiento toca solo el workflow. Esta separación es lo que permite reusar las kb desde varios workflows sin duplicar conocimiento.
+**Mensaje clave:** la misma arquitectura se repite en PRD, Spec, Design, Plan y Tasks. El detalle de qué workflows, agentes y kb participan en cada fase está en su `DIAGRAMS.md` local.
 
 ---
 
-## 4. Governance de cambios — ¿gap o change request?
+## Orden de lectura recomendado
 
-**Pregunta que responde:** llega una respuesta del cliente — ¿la trato como aclaración o como cambio de producto?
-
-```mermaid
-flowchart TD
-    Q{"La respuesta del cliente..."}
-    Q -->|"¿contradice el PRD vigente?"| C1{"sí"}
-    Q -->|"¿mueve algo entre MVP y fase futura?"| C2{"sí"}
-    Q -->|"¿invalida una exclusión explícita?"| C3{"sí"}
-    Q -->|"ninguna de las anteriores"| Gap
-
-    C1 --> Change
-    C2 --> Change
-    C3 --> Change
-
-    Gap["🟢 Solo gap<br/>→ anotar respuesta en _analysis.md<br/>→ /wf-spec-gap-resolve"]
-    Change["🔴 Change request<br/>→ /wf-prd-change<br/>→ /wf-prd-sync-impact<br/>→ /wf-spec-sync-from-prd"]
-
-    style Gap fill:#e8f5e9,stroke:#388e3c
-    style Change fill:#ffebee,stroke:#c62828
-```
-
-**Mensaje clave:** este es el árbol de decisión más importante del día a día. Si te equivocas y tratas un change como gap, los specs derivan de una verdad de negocio obsoleta y se acumula deuda silenciosa. La SSoT formal de esta clasificación está en `sdd/prd/skills/kb-product-change-governance/SKILL.md`.
-
-**Artefactos esperados tras un change:** `prd/product-changelog.md` como índice global y `prd/changes/CR-XXX/` como carpeta del cambio con `change-request.md` y `decision.md`.
-
-**Señales de que una "respuesta a gap" ya es change:** introduce una entidad persistente nueva, un catálogo reutilizable, una nueva granularidad funcional, un modelo owner nuevo o un flujo adicional no comprometido en el PRD. En esos casos no debe derivarse directamente a discovery/specs, salvo override explícito dejando el alcance marcado como derivado.
-
----
-
-## Cómo presentar esto a alguien nuevo
-
-Sesión recomendada de ~15 minutos:
-
-1. **Diagrama 1** (frontera PRD/Spec/Plan) — sin esto, los siguientes no se entienden.
-2. **Diagrama 2** (pipeline end-to-end) — ahora pueden ubicar cada comando.
-3. **Diagrama 4** (governance de cambios) — el que más usarán en producción real.
-4. **Diagrama 3** (arquitectura de 3 capas) — solo si la persona va a contribuir al repo o extender el sistema; no hace falta para usarlo.
-
-Para quien solo va a usar el pipeline (no extenderlo), los diagramas 1, 2 y 4 son suficientes.
+1. Este archivo para entender el mapa global.
+2. [sdd/prd/DIAGRAMS.md](/Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/prd/DIAGRAMS.md) para entrada y gobernanza de cambios.
+3. [sdd/spec/DIAGRAMS.md](/Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/spec/DIAGRAMS.md) para generación y mantenimiento de specs.
+4. [sdd/design/DIAGRAMS.md](/Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/design/DIAGRAMS.md) para Stitch, `DESIGN.md` y prototipado por feature.
