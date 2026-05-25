@@ -42,4 +42,16 @@ Reglas de contenido:
 - Jerarquia
 - Responsive
 - Restricciones de plataforma si aplica
+
+### Notas de accesibilidad
+
+Solo si la vista introduce decisiones a11y especificas (focus order no trivial, labels custom, anuncios live, etc.). Las reglas generales viven en `DESIGN.md > Accessibility` y en `kb-a11y-expert`.
+
+- **Focus order**: orden de navegacion para teclado externo / Switch Control / Switch Access. Indicar solo si difiere del orden de lectura por defecto o si la vista contiene modales con foco atrapado.
+- **Labels de componentes interactivos**: label semantico para VoiceOver/TalkBack de cada control. Iconos decorativos puros se marcan `accessibilityHidden`.
+- **Hints / traits**: para acciones no obvias (ej. swipe para descartar) o cuando el rol semantico necesita override.
+- **Anuncios dinamicos**: estados que requieren `liveRegion` (polite | assertive). Ejemplo: error inline de formulario, badge que aparece, contador que cambia.
+- **Forms**: labels asociados, mensajes de error persistentes y orden logico de focus.
+- **Multimedia**: caption o transcripcion si la vista incluye video/audio con contenido informativo.
+- **Touch targets atipicos**: si la vista tiene controles densos, declarar como se garantiza el tamano minimo.
 ```

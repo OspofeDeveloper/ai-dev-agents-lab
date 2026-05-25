@@ -102,17 +102,22 @@ Los tokens son los valores normativos. El markdown explica intencion, tono y reg
 
 **Secciones custom** — el linter las preserva sin error; incluirlas en estas posiciones recomendadas:
 - `## Visual Personality` → despues de `## Overview`, antes de `## Colors`
-- `## Motion & Micro-interactions` → despues de `## Components`, antes de `## Do's and Don'ts`
+- `## Accessibility` → despues de `## Components`, antes de `## Motion & Micro-interactions`
+- `## Motion & Micro-interactions` → despues de `## Accessibility`, antes de `## Reference Apps`
 - `## Reference Apps` → despues de `## Motion`, antes de `## Do's and Don'ts`
 
 **Token types validos:**
 - `colors`: hex `"#RRGGBB"` en sRGB
 - `typography`: objeto con `fontFamily`, `fontSize`, `fontWeight`, `lineHeight`, `letterSpacing`. Para cifras tabuladas usar `fontFeature: "tnum"` — **nunca `fontVariantNumeric`** (no es un campo valido del schema)
 - `spacing` / `rounded`: strings con unidad (`"8px"`, `"1rem"`, `"0.875rem"`)
-- `components`: propiedades estandar (`backgroundColor`, `textColor`, `rounded`, `padding`). Referencias con `{categoria.nombre}`
-- `visual_personality` / `motion`: objetos libres — el linter los preserva sin validarlos
+- `components`: propiedades estandar reconocidas por el linter: `backgroundColor`, `textColor`, `typography`, `rounded`, `padding`, `size`, `height`, `width`. Otras propiedades (`minHeight`, `borderColor`, `placeholderColor`, etc.) son toleradas pero generan warnings. Referencias con `{categoria.nombre}`.
+- `visual_personality` / `motion` / `accessibility`: objetos libres — el linter los preserva sin validarlos. Pueden usar enteros, booleans y strings sin restriccion.
+
+**Quoting obligatorio dentro de `components:`** — todos los valores dentro de `components:` deben ser **strings entrecomillados**, incluidos numericos como `fontWeight` o dimensiones. Un valor bare integer (ej. `fontWeight: 600`) hace crashear el linter con `raw.match is not a function`, porque internamente llama `.match()` a cada valor buscando referencias `{tokens.x}`. Correcto: `fontWeight: "600"`, `padding: "16px 24px"`, `minHeight: "48dp"`. Esta restriccion **solo aplica a `components:`**; los bloques top-level (`typography`, `accessibility`, etc.) pueden usar enteros/booleans bare sin problema.
 
 Validar el resultado con `npx @google/design.md lint DESIGN.md`: cubre orden de secciones canonicas, referencias rotas, presencia de al menos un color primario y contraste WCAG AA en pares de color.
+
+> Los criterios normativos de accesibilidad (contraste, touch targets, dynamic type, motion, focus, labels, anuncios live) viven en `kb-a11y-expert`. La seccion `## Accessibility` del `DESIGN.md` materializa esos criterios para el producto; no los redefine aqui.
 
 → Templates: `references/design_md_template.md`
 
@@ -194,6 +199,7 @@ Por eso `design` debe dejar explicitado:
 - estados especiales
 - navegacion entre vistas
 - decisiones visuales que impactan arquitectura UI
+- decisiones a11y per-vista (focus order, labels de screen reader, anuncios live, hints), gobernadas por `kb-a11y-expert` y documentadas en `### Notas de accesibilidad` de cada vista
 
 Si un detalle visual afecta a navegacion, validacion o estructura de estado, debe quedar escrito en `*_views.md`, no solo en Stitch.
 

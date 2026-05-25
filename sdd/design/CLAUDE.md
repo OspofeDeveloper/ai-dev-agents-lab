@@ -50,9 +50,11 @@ Las skills Design son bases de conocimiento que los agentes especializados carga
 | Skill | Dominio |
 |---|---|
 | `kb-design-expert` | Reglas de la fase design: separacion entre `DESIGN.md` y artefactos por feature, trazabilidad a journeys/CAs, formato de `DESIGN.md` y contrato para Stitch |
+| `kb-a11y-expert` | Accesibilidad mobile (WCAG 2.2 mapeada a mobile): contraste, touch targets, dynamic type, motion, focus order, screen reader labels, anuncios live, forms. Vive en `sdd/design/skills/` y la cargan tambien `plan-architect` cross-fase |
 | `kb-spec-expert` ⚠ | Reglas del Spec cargadas por `design-architect` para no inventar comportamiento funcional (vive en `sdd/spec/`) |
 
 > ⚠ `kb-spec-expert` es una dependencia cross-fase: vive en `sdd/spec/skills/` pero la fase `design` la necesita para leer el spec de entrada sin contaminar el contrato funcional.
+> `kb-a11y-expert` es transversal: vive en `sdd/design/skills/` pero la fase `plan` tambien la carga via `plan-architect` para materializar decisiones a11y en codigo.
 
 ## Principio operativo
 

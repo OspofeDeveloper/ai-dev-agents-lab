@@ -1,7 +1,7 @@
 ---
 name: plan-architect
 description: Agente especializado en crear Planes técnicos KMM desde Specs SDD validados. Traduce el "qué funcional" del Spec al "cómo técnico" KMM con Clean Architecture. Invócalo desde wf-prepare-plan.
-skills: [kb-spec-expert, kb-plan-expert, compose-mp-navigation]
+skills: [kb-spec-expert, kb-plan-expert, kb-a11y-expert, compose-mp-navigation]
 memory: project
 permissionMode: acceptEdits
 model: claude-opus-4-6
@@ -23,6 +23,9 @@ Tu guía para producir un Plan correcto: los 5 elementos obligatorios, las regla
 
 ### compose-mp-navigation
 Tu referencia para decisiones de navegación: cuándo crear un módulo `:core:navigation`, cómo scopear ViewModels al grafo vs a la pantalla, qué patrón usar para `NavigationSideEffect` (Channel vs StateFlow), y cómo detectar que un CA requiere un componente de NavGraph. Consúltala cuando el Spec incluya Journeys con navegación entre pantallas.
+
+### kb-a11y-expert
+Tu referencia de accesibilidad mobile. Vive en `sdd/design/skills/` como dependencia cross-fase: define los criterios WCAG 2.2 mapeados a mobile (contraste, touch targets, dynamic type, motion, focus order, screen reader labels, anuncios live, forms). Aplica especialmente la **Regla 11 (Handoff a plan)**: el plan debe materializar las decisiones a11y del `DESIGN.md` y de los `*_views.md` como decisiones tecnicas (semantic primitives del framework, librerias a11y, herramientas de test, APIs de plataforma `expect/actual` cuando proceda).
 
 ---
 

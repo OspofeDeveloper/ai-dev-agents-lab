@@ -56,6 +56,13 @@ motion:
   speed: fast | balanced | slow
   easing: ease-out | ease-in-out | spring
   style: functional | expressive | playful
+accessibility:
+  wcag_target: AA
+  contrast_policy: "WCAG AA: 4.5:1 texto normal, 3:1 texto grande / UI components / focus indicators"
+  min_touch_target: "44pt iOS / 48dp Android"
+  min_touch_spacing: "8dp"
+  dynamic_type: true
+  reduce_motion: respect_system
 components:
   button-primary:
     backgroundColor: "{colors.primary}"
@@ -111,6 +118,19 @@ Explica el caracter de bordes, radios y geometria general de la identidad.
 ## Components
 
 Explica como deben sentirse formularios, listas, cards, tabs, dialogs y acciones destructivas. Incluye el tratamiento comun de estados recurrentes (loading, empty, error, success) cuando afecta a componentes.
+
+## Accessibility
+
+Politica de accesibilidad mobile del producto. Las reglas normativas viven en `kb-a11y-expert`; esta seccion materializa las decisiones concretas para este producto.
+
+- **Target de conformidad**: <AA | AAA> (WCAG 2.2 mapeada a mobile).
+- **Contraste**: confirma que la paleta de `colors` y los `components` cumplen 4.5:1 (texto normal) y 3:1 (texto grande / UI no decorativa) en todos los estados (default, focus, disabled, error).
+- **Touch targets**: tamano minimo declarado en `accessibility.min_touch_target`. Indica como se garantiza en componentes densos (ej. zona tactil ampliada en iconos pequenos, spacing en chips).
+- **Dynamic type**: estrategia para soportar font scaling hasta 200% sin perdida de contenido (line-heights relativos, reflow, truncado controlado).
+- **Reduce motion**: comportamiento cuando el sistema activa la preferencia. Animaciones decorativas se deshabilitan; animaciones funcionales tienen variante reducida.
+- **Focus visible**: descripcion del indicador de foco (color, grosor, offset) y como respeta el ratio 3:1.
+- **Screen readers**: politica general de labels (que componentes requieren label explicito, que iconos son decorativos).
+- **Imagenes**: tratamiento por defecto de imagenes informativas vs decorativas.
 
 ## Motion & Micro-interactions
 

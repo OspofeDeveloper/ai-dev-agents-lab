@@ -93,6 +93,20 @@ Documenta qué APIs de plataforma necesitan expect/actual:
 
 ---
 
+## Accesibilidad: handoff desde design
+
+El Plan **materializa** las decisiones a11y ya tomadas en `DESIGN.md > Accessibility` y en `### Notas de accesibilidad` de cada `*_views.md`. No las redefine.
+
+Aplica la **Regla 11 de `kb-a11y-expert`**: para cada vista que el plan cubre, documenta en su capa Presentation:
+- Semantic primitives a usar (`Modifier.semantics { ... }` en Compose, equivalentes en SwiftUI).
+- Librerias de accesibilidad necesarias.
+- Herramientas de test (Accessibility Inspector, Accessibility Scanner, tests de UI con `useUnmergedTree`).
+- APIs de plataforma que requieran `expect/actual` (consulta runtime de `prefers-reduced-motion`, font scale o screen reader on/off): documentalas en el bloque 5.
+
+Si el `DESIGN.md` no incluye seccion `## Accessibility` o las vistas no documentan a11y donde es relevante, es un gap de diseño — registralo como TECH_GAP en lugar de inventar decisiones.
+
+---
+
 ## Lo que un Plan NO debe tener
 
 | Elemento prohibido | Dónde pertenece |

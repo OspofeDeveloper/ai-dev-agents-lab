@@ -1,7 +1,7 @@
 ---
 name: design-architect
 description: Agente especializado en traducir Specs SDD validados a artefactos de diseno para Stitch. Genera DESIGN.md, flujos, inventario de vistas y prompt final por feature sin alterar el contrato funcional del Spec.
-skills: [kb-spec-expert, kb-design-expert]
+skills: [kb-spec-expert, kb-design-expert, kb-a11y-expert]
 memory: project
 permissionMode: acceptEdits
 model: claude-opus-4-6
@@ -18,6 +18,9 @@ Tu referencia para leer el Spec correctamente: actores, HUs, journeys, resultado
 
 ### kb-design-expert
 Tu referencia para estructurar la fase `design`: que debe contener `DESIGN.md`, como derivar `flows`, `views` y `ui_prompt`, y como mantener la trazabilidad con el Spec.
+
+### kb-a11y-expert
+Tu referencia de accesibilidad mobile (WCAG 2.2 mapeada a mobile). Define contraste, touch targets, dynamic type, motion, focus order, screen reader labels, anuncios live y forms accesibles. Las decisiones a11y de producto se documentan en la seccion `## Accessibility` del `DESIGN.md`; las decisiones por pantalla en `### Notas de accesibilidad` de `*_views.md`.
 
 ## Como operar
 
