@@ -3,7 +3,7 @@
 > **Generado por**: sdd-spec-auditor
 > **Fecha**: [YYYY-MM-DD]
 > **Features analizadas**: [N]
-> **Conflict report**: [Si — path | No encontrado]
+> **Conflict report**: [SIN_CONFLICTOS — path | CONFLICTOS_DETECTADOS — path | No encontrado | Ambiguo — revisar path]
 > **Fuente**: [path/_features.md]
 
 ---
@@ -18,13 +18,13 @@
 
 ## Matriz de readiness
 
-| Feature | Estado | HUs [INCOMPLETO] | Conflictos ALTA | Dependencias pendientes |
-|---------|--------|:-----------------:|:---------------:|------------------------|
+| Feature | Estado | HUs [INCOMPLETO] | Conflictos ALTA | Bloqueantes |
+|---------|--------|:-----------------:|:---------------:|-------------|
 | F-001: [nombre] | LISTA | 0 | 0 | — |
-| F-002: [nombre] | BLOQUEADA_POR_GAPS | 2 | 0 | — |
-| F-003: [nombre] | BLOQUEADA_POR_CONFLICTOS | 0 | 1 | — |
-| F-004: [nombre] | ESPERANDO_DEPENDENCIAS | 0 | 0 | F-002 |
-| F-005: [nombre] | LISTA_PARA_PLAN | 0 | 0 | F-001 (bloqueada) |
+| F-002: [nombre] | BLOQUEADA | 2 | 0 | gaps: P-001 |
+| F-003: [nombre] | BLOQUEADA | 0 | 1 | conflictos: CF-001 |
+| F-004: [nombre] | BLOQUEADA | 0 | 0 | dependencias: F-002 |
+| F-005: [nombre] | REQUIERE_CAMBIO_PRD | 0 | 0 | gobernanza: alcance derivado desde P-007 |
 
 <!-- Ordenar por Feature ID. Mostrar todos los bloqueos de cada feature si tiene varios. -->
 
@@ -39,14 +39,14 @@
 | Feature | Estado | Accion requerida |
 |---------|--------|------------------|
 | F-001: [nombre] | LISTA | `/wf-prepare-plan generate features/[nombre]/[nombre]_spec.md` |
-| F-005: [nombre] | BLOQUEADA_POR_GAPS | Resolver gaps [P-XXX] antes de planificar |
+| F-005: [nombre] | REQUIERE_CAMBIO_PRD | Consolidar el cambio en PRD y resincronizar derivados antes de planificar |
 
 ### Fase 2 (depende de Fase 1)
 
 | Feature | Depende de | Estado | Accion requerida |
 |---------|------------|--------|------------------|
-| F-003: [nombre] | F-001 | LISTA_PARA_PLAN | `/wf-prepare-plan generate features/[nombre]/[nombre]_spec.md` (implementar despues de F-001) |
-| F-004: [nombre] | F-001, F-003 | BLOQUEADA_POR_CONFLICTOS | Resolver CF-XXX y re-ejecutar `/wf-spec-conflict` |
+| F-003: [nombre] | F-001 | LISTA | `/wf-prepare-plan generate features/[nombre]/[nombre]_spec.md` (implementar despues de F-001) |
+| F-004: [nombre] | F-001, F-003 | BLOQUEADA | Resolver CF-XXX y re-ejecutar `/wf-spec-conflict` |
 
 ### Fase N
 
@@ -56,7 +56,7 @@
 
 ## Inventario de gaps bloqueantes
 
-<!-- Omitir esta seccion completa si no hay features BLOQUEADA_POR_GAPS -->
+<!-- Omitir esta seccion completa si no hay features BLOQUEADA por gaps -->
 
 > Los siguientes gaps criticos impiden que las HUs afectadas se completen. Hasta que se resuelvan, las features no pueden pasar a `/wf-prepare-plan`.
 
@@ -103,7 +103,7 @@
 3. Las features de fases posteriores pueden planificarse en paralelo dentro de su fase
 
 <!-- PARCIALMENTE_LISTAS -->
-1. **Features listas**: ejecuta `/wf-prepare-plan generate <feature_spec.md>` para las features LISTA y LISTA_PARA_PLAN de las primeras fases
+1. **Features listas**: ejecuta `/wf-prepare-plan generate <feature_spec.md>` para las features LISTA de las primeras fases
 2. **Features con gaps**: responde los gaps pendientes y ejecuta `/wf-spec-gap-resolve` para cada feature afectada
 3. **Features con conflictos**: edita los specs para resolver los conflictos ALTA y re-ejecuta `/wf-spec-conflict`
 4. **Re-evaluar**: despues de resolver bloqueos, ejecuta `/wf-spec-readiness` de nuevo para verificar el progreso

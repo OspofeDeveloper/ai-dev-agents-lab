@@ -18,6 +18,7 @@
 ## Resumen de conflictos
 
 <!-- Si SIN_CONFLICTOS: "No se detectaron conflictos entre los [N] specs analizados." -->
+<!-- Si SIN_CONFLICTOS: indicar explícitamente "Conflictos ALTA: 0 | Conflictos MEDIA: 0". -->
 
 | ID | Tipo | Severidad | Features involucradas |
 |----|------|:---------:|-----------------------|

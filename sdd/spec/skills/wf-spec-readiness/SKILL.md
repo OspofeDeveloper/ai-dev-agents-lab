@@ -73,15 +73,17 @@ Busca la cadena literal `[INCOMPLETO]` en el spec de la feature. Para cada HU ma
 - ID de la HU (ej: HU-003)
 - Gaps que la bloquean (referenciados en la línea que contiene `Pendiente de gap(s):` o `[P-XXX]` cercanos al marcador)
 
-Clasifica la feature como **BLOQUEADA_POR_GAPS** si tiene al menos una HU `[INCOMPLETO]`.
+Clasifica la feature como **BLOQUEADA** si tiene al menos una HU `[INCOMPLETO]`.
 
 ### 4c — Conflictos no resueltos
 
 Si existe `_conflict_report.md`:
+- Primero verifica el estado general del informe. Debe indicar explícitamente `SIN_CONFLICTOS` o `CONFLICTOS_DETECTADOS`.
+- Si el archivo existe pero no deja ese estado de forma inequívoca, trátalo como artefacto ambiguo y repórtalo en el informe de readiness.
 - Busca todos los conflictos de severidad **ALTA** que involucren esta feature.
 - Un conflicto se considera no resuelto si aparece en el informe (el informe refleja el estado en el momento de su generación; si se resolvió, el usuario debió re-ejecutar `/wf-spec-conflict`).
 
-Clasifica la feature como **BLOQUEADA_POR_CONFLICTOS** si tiene al menos un conflicto ALTA asociado.
+Clasifica la feature como **BLOQUEADA** si tiene al menos un conflicto ALTA asociado.
 
 ### 4d — Dependencias
 
@@ -112,16 +114,14 @@ Para cada feature, asigna un estado:
 
 | Estado | Condición |
 |--------|-----------|
-| `LISTA` | Sin `[INCOMPLETO]`, sin conflictos ALTA, todas las dependencias también LISTA o sin dependencias |
-| `LISTA_PARA_PLAN` | Sin `[INCOMPLETO]`, sin conflictos ALTA, pero alguna dependencia no está LISTA (la feature en sí puede planificarse, pero su implementación debe esperar) |
-| `BLOQUEADA_POR_GAPS` | Tiene HUs `[INCOMPLETO]` |
-| `BLOQUEADA_POR_CONFLICTOS` | Involucrada en conflicto(s) ALTA no resueltos |
-| `ESPERANDO_DEPENDENCIAS` | Sin gaps ni conflictos propios, pero alguna dependencia tiene gaps o conflictos que impiden planificar |
+| `LISTA` | Sin `[INCOMPLETO]`, sin conflictos ALTA, sin artefactos ambiguos y sin dependencias bloqueantes |
+| `BLOQUEADA` | Tiene HUs `[INCOMPLETO]`, conflictos ALTA, dependencias bloqueantes o artefactos ambiguos que impiden decidir con seguridad |
 | `PENDIENTE_GENERACIÓN` | Identificada en el discovery pero aún no se ha generado spec (no se ha incluido en ninguna iteración de `wf-spec-features-first`). No es un bloqueo accionable — refleja que el humano aún no ha pedido procesarla. |
+| `REQUIERE_CAMBIO_PRD` | El spec o `_features.md` declara alcance derivado desde analysis que debería consolidarse primero en PRD, o el artefacto explicita un aviso de gobernanza pendiente |
 
-Una feature puede tener múltiples bloqueos simultáneos. En ese caso, listar todos los motivos. La prioridad de display es: GAPS > CONFLICTOS > DEPENDENCIAS.
+Una feature puede tener múltiples bloqueos simultáneos. En ese caso, listar todos los motivos en la columna de bloqueantes. La prioridad de display es: CAMBIO_PRD > GAPS > CONFLICTOS > DEPENDENCIAS > AMBIGÜEDAD_DE_ARTEFACTO.
 
-**Nota importante sobre LISTA vs LISTA_PARA_PLAN**: Una feature `LISTA_PARA_PLAN` puede pasar a `/wf-prepare-plan` (no tiene bloqueos propios), pero su implementación posterior dependerá de que sus dependencias estén también planificadas e implementadas. Indica al usuario que puede planificar pero debe respetar el orden de fases para implementar.
+**Nota importante**: el readiness report usa solo estados canónicos. El detalle fino se expresa en la columna `Bloqueantes`, no creando variantes de estado adicionales.
 
 **Nota sobre `PENDIENTE_GENERACIÓN`**: estas features se incluyen en el `_features.md` y en el informe de readiness como visibilidad del backlog, pero no participan del topological sort ni del orden de implementación — no hay spec con dependencias declaradas hasta que se generen. Si otra feature ya generada declara una dependencia sobre una `PENDIENTE_GENERACIÓN`, esa dependencia se reporta como "dependencia hacia feature no generada todavía" (no bloquea readiness de la feature ya generada, pero sí señala al usuario qué generar a continuación).
 
@@ -151,10 +151,10 @@ Tras escribir el readiness report, actualiza el `_features.md` encontrado en el 
 
 Para cada bloque de feature en la sección `## Features identificadas`, actualiza (o añade si no existe) la línea:
 ```
-- **Estado**: [LISTA | LISTA_PARA_PLAN | BLOQUEADA_POR_GAPS | BLOQUEADA_POR_CONFLICTOS | ESPERANDO_DEPENDENCIAS | PENDIENTE_GENERACIÓN]
+- **Estado**: [LISTA | BLOQUEADA | PENDIENTE_GENERACIÓN | REQUIERE_CAMBIO_PRD]
 ```
 
-Usa el estado determinado en el Paso 6. Si una feature tiene múltiples bloqueos, usa el de mayor prioridad (GAPS > CONFLICTOS > DEPENDENCIAS).
+Usa el estado determinado en el Paso 6. Si una feature tiene múltiples bloqueos, usa el de mayor prioridad (CAMBIO_PRD > GAPS > CONFLICTOS > DEPENDENCIAS > AMBIGÜEDAD_DE_ARTEFACTO).
 
 ### 8.5b — Resumen de estado
 
@@ -168,7 +168,7 @@ Añade o actualiza la sección `## Resumen de estado` (justo después de `## Fea
 | Feature | Estado | Bloqueantes |
 |---------|--------|-------------|
 | F-001: [nombre] | LISTA | — |
-| F-002: [nombre] | BLOQUEADA_POR_GAPS | P-001, P-002 |
+| F-002: [nombre] | BLOQUEADA | gaps: P-001, P-002 |
 ```
 
 ### 8.5c — Historial de cambios
@@ -189,6 +189,6 @@ Si existe la sección `## Historial de cambios` en `_features.md`, añade una fi
   - N features `PENDIENTE_GENERACIÓN` (aún no procesadas en ninguna iteración)
 - Siguiente paso según el estado:
   - **Todas listas**: "Todas las features generadas están listas. Ejecuta `/wf-prepare-plan generate <feature_spec.md>` siguiendo el orden de fases del informe."
-  - **Algunas listas**: "Puedes empezar con las features LISTA y LISTA_PARA_PLAN de las primeras fases. Las features bloqueadas requieren acción — consulta el informe para los detalles."
+  - **Algunas listas**: "Puedes empezar con las features LISTA de las primeras fases. Las features bloqueadas requieren acción — consulta el informe para los detalles."
   - **Ninguna lista**: "Ninguna feature está lista para planificar. Revisa el informe para los bloqueos y resuélvelos antes de continuar."
   - **Hay PENDIENTE_GENERACIÓN**: "Quedan [N] features identificadas en el discovery que aún no se han generado: [lista de IDs]. Cuando quieras incluirlas en una próxima iteración: `/wf-spec-features-first <prd.md> --features F-XXX,F-YYY,...`"

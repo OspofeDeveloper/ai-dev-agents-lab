@@ -116,6 +116,7 @@ elif [ "$INSTALL_TARGET" = "spec" ]; then
   install_skill "$SCRIPT_DIR/prd/skills/kb-prd-expert"
   install_skill "$SCRIPT_DIR/prd/skills/kb-product-change-governance"
   install_skill "$SCRIPT_DIR/prd/skills/wf-prd-change"
+  install_skill "$SCRIPT_DIR/prd/skills/wf-prd-review"
 
   for skill_dir in "$SCRIPT_DIR/spec/skills"/*/; do
     install_skill "$skill_dir"

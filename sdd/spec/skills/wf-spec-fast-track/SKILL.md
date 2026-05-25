@@ -1,7 +1,7 @@
 ---
 name: wf-spec-fast-track
-description: Genera el Spec de una feature directamente desde un documento de requisitos acotado a una sola capacidad. Soporta modo scoped con --scope-from para filtrar un PRD completo a una feature del discovery. Acepta --analysis para usar gaps pre-resueltos de un analisis previo. Activa en frases como "genera el spec directo de esta feature", "fast-track del spec", "crea el spec de esta capability directamente", "genera spec sin análisis previo".
-argument-hint: "<archivo.md> --capability <nombre-kebab> [--analysis <analysis.md>] | <prd.md> --scope-from <discovery.md> --feature <F-00X> [--analysis <analysis.md>]"
+description: Genera el Spec de una feature directamente desde un documento de requisitos acotado a una sola capacidad. Soporta modo scoped con --scope-from para filtrar un PRD completo a una feature del discovery. Acepta --analysis para usar gaps pre-resueltos de un analisis previo. Puede detenerse si las respuestas del analysis expanden el producto, salvo override explícito para continuar marcando el resultado como scope derivado. Activa en frases como "genera el spec directo de esta feature", "fast-track del spec", "crea el spec de esta capability directamente", "genera spec sin análisis previo".
+argument-hint: "<archivo.md> --capability <nombre-kebab> [--analysis <analysis.md>] [--allow-derived-scope-from-analysis] | <prd.md> --scope-from <discovery.md> --feature <F-00X> [--analysis <analysis.md>] [--allow-derived-scope-from-analysis]"
 effort: high
 allowed-tools: [Read, Write, Bash]
 agent: sdd-spec-writer
@@ -29,6 +29,7 @@ Extrae de `$ARGUMENTS`:
 - **Modo directo**: si hay `--capability` → extraer el nombre de la capability
 - **Modo scoped**: si hay `--scope-from` y `--feature` → extraer el path del `_discovery.md` y el Feature ID (ej: `F-001`)
 - **Flag opcional**: `--analysis <path>` → path a un `_analysis.md` con gaps pre-resueltos
+- **Flag opcional**: `--allow-derived-scope-from-analysis` → permite continuar aunque el analysis introduzca expansión funcional no consolidada todavía en el PRD. Sin este flag, el workflow se detiene para remitir a `wf-prd-change`.
 
 **Validación de argumentos:**
 - Si hay `--scope-from` sin `--feature` (o viceversa) → informa: "Los flags `--scope-from` y `--feature` deben usarse juntos."
@@ -97,6 +98,15 @@ Si el scope es ambiguo pero asumible → aplícalo con una asunción [INFORMATIV
 2. Si fue respondido → usa la respuesta del cliente directamente, no crees gap ni marques `[INCOMPLETO]`
 3. Si no fue respondido (sigue como `_(pendiente)_`) → procede como si no hubiera analysis (crea gap `[CRÍTICO]` y marca HU como `[INCOMPLETO]`)
 4. Si el inline analysis detecta un gap que no existe en el analysis previo → créalo normalmente
+5. Si una respuesta resuelta introduce señales de cambio de producto según `kb-product-change-governance`:
+   - si **NO** se pasó `--allow-derived-scope-from-analysis` → **DETENERSE** con veredicto operativo `STOP_REQUIERE_PRD_CHANGE` e informar:
+     > "La respuesta a `[P-XXX]` introduce expansión funcional no consolidada en el PRD. Formaliza primero el cambio con `wf-prd-change` o re-ejecuta con `--allow-derived-scope-from-analysis` para generar el spec dejando el alcance marcado como derivado."
+   - si **SÍ** se pasó `--allow-derived-scope-from-analysis` → continuar con veredicto operativo `CONTINUAR_CON_ALCANCE_DERIVADO`. Registra internamente:
+     - gaps/respuestas que originan el alcance derivado
+     - si la expansión crea modelo owner nuevo, catálogo reutilizable, granularidad funcional nueva o flujo adicional
+     - que el spec, el README y el `_features.md` deben marcar **Origen de alcance: PRD + analysis respondido**
+
+**Regla adicional obligatoria:** si la respuesta respondida crea un nuevo modelo owner de feature o promociona una entidad antes implícita a capacidad gestionable explícita, no la trates como scope limpio. Sin `--allow-derived-scope-from-analysis`, detente siempre. Ejemplos típicos: `Contacto` persistente, presupuestos por subcategoría, CRUD explícito sobre una entidad antes implícita.
 
 Aplica los 3 checks del modo ANALYZE pero enfocados en la capability indicada:
 
@@ -133,6 +143,8 @@ Produce un `_spec.md` completo con los 8 elementos SDD siguiendo la estructura d
 > derived_from_prd_version: N/A
 > derived_from_change: N/A
 > status_sync: unknown
+> Origen de alcance: [Documento fuente | Documento fuente + analysis respondido]
+> Avisos de gobernanza: [ninguno | alcance derivado desde P-00X, P-00Y]
 ```
 
 **Header específico del fast-track (modo scoped):**
@@ -147,6 +159,15 @@ Produce un `_spec.md` completo con los 8 elementos SDD siguiendo la estructura d
 > derived_from_prd_version: [versión del PRD o unknown]
 > derived_from_change: [CR-XXX | N/A]
 > status_sync: in_sync
+> Origen de alcance: [PRD | PRD + analysis respondido]
+> Avisos de gobernanza: [ninguno | alcance derivado desde P-00X, P-00Y]
+```
+
+**Si el spec continúa con alcance derivado desde analysis**, añade después del header:
+```markdown
+## Decisiones derivadas del analysis
+
+- **[P-00X]**: [respuesta resumida] → [impacto funcional derivado]
 ```
 
 **Si hay items `[CRÍTICO]` pendientes**, añadir al final del spec (antes del Changelog si existiera):
@@ -184,10 +205,18 @@ Antes de escribir el output, aplica la Prueba de Pureza al spec completo. Consul
 - Actor principal: extraído del spec
 - Spec monolítico origen: `N/A (fast-track directo)`
 - Artefactos: Spec ✓, Plan —, Tasks —
+- Origen de alcance: `PRD` o `PRD + analysis respondido`
+- Avisos de gobernanza: `ninguno` o lista de gaps que derivaron alcance no consolidado
 
 **Índice de features (`_features.md`)**: Busca si existe algún `*_features.md` en el directorio del archivo de input:
 - **Si existe**: léelo y añade la nueva feature como entrada `F-00X` (con el siguiente ID disponible). Actualiza la tabla de shared models si la feature declara alguno.
 - **Si no existe**: genera un `_features.md` nuevo con esta feature como primera entrada `F-001`, sin spec monolítico origen y sin tabla de shared models si no hay ninguno.
+En ambos casos:
+- usa solo estados canónicos `LISTA`, `PENDIENTE_GENERACIÓN`, `BLOQUEADA`, `REQUIERE_CAMBIO_PRD`
+- añade en la entrada de la feature:
+  - `- **Origen de alcance**: [PRD | PRD + analysis respondido]`
+  - `- **Avisos de gobernanza**: [ninguno | alcance derivado desde P-00X]`
+- si el resultado se generó con alcance derivado, no lo presentes como PRD puro
 
 **Trazabilidad RF→HU (solo modo scoped):** Si se usó `--scope-from`, el discovery contiene el mapping RF→Feature. Al actualizar `_features.md`, añade o actualiza la sección `## Trazabilidad RF → HU → Feature` con las filas correspondientes a esta feature: para cada RF del scope, mapea las HUs generadas en este spec. Si la sección ya existía (de una ejecución previa de fast-track para otra feature), añade las filas nuevas sin eliminar las existentes.
 

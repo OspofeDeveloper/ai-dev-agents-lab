@@ -4,6 +4,8 @@
 > Change ref: [CR-XXX | N/A]
 > Status sync: [in_sync | needs_review | stale | unknown]
 > Generado por: wf-spec-discover
+> Origen de alcance: [PRD | PRD + analysis respondido]
+> Avisos de gobernanza: [ninguno | alcance derivado desde P-00X]
 
 ---
 
@@ -34,6 +36,8 @@
 - **Modelos propios**: [Modelo1, Modelo2]
 - **Modelos compartidos (owner)**: [ModeloX] ← esta feature lo define
 - **Modelos compartidos (ref)**: [ModeloY (owner: F-00Z)]
+- **Origen de alcance**: [PRD | PRD + analysis respondido]
+- **Avisos de gobernanza**: [ninguno | alcance derivado desde P-00X]
 
 <!-- Repetir bloque por cada feature identificada -->
 

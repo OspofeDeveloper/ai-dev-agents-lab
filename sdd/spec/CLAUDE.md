@@ -23,11 +23,11 @@ Si el usuario todavía no tiene `prd.md` o el documento base no está listo, det
 | Intención del usuario | Skill | Argumentos |
 |---|---|---|
 | Analizar un PRD/documento de requisitos para detectar gaps | `/wf-spec-analyze` | `<archivo_prd.md>` |
-| Identificar features de un PRD | `/wf-spec-discover` | `<archivo_prd.md> [--analysis <analysis.md>]` |
-| Generar todos los specs por feature desde un PRD | `/wf-spec-features-first` | `<archivo_prd.md> [--all-features] [--allow-open-critical-gaps] [--skip-conflict] [--skip-readiness]` |
-| Generar specs de un subset / iteración / fase de features | `/wf-spec-features-first` | `<archivo_prd.md> --features F-001,F-002,... [--allow-open-critical-gaps]` |
-| Generar spec directo de una feature | `/wf-spec-fast-track` | `<archivo.md> --capability <nombre> [--analysis <analysis.md>]` (acepta cualquier doc acotado a una capacidad, no solo PRD) |
-| Generar spec de una feature desde un discovery | `/wf-spec-fast-track` | `<prd.md> --scope-from <discovery.md> --feature <F-00X> [--analysis <analysis.md>]` |
+| Identificar features de un PRD | `/wf-spec-discover` | `<archivo_prd.md> [--analysis <analysis.md>] [--allow-derived-scope-from-analysis]` |
+| Generar todos los specs por feature desde un PRD | `/wf-spec-features-first` | `<archivo_prd.md> [--all-features] [--allow-open-critical-gaps] [--allow-derived-scope-from-analysis] [--skip-conflict] [--skip-readiness]` |
+| Generar specs de un subset / iteración / fase de features | `/wf-spec-features-first` | `<archivo_prd.md> --features F-001,F-002,... [--allow-open-critical-gaps] [--allow-derived-scope-from-analysis]` |
+| Generar spec directo de una feature | `/wf-spec-fast-track` | `<archivo.md> --capability <nombre> [--analysis <analysis.md>] [--allow-derived-scope-from-analysis]` (acepta cualquier doc acotado a una capacidad, no solo PRD) |
+| Generar spec de una feature desde un discovery | `/wf-spec-fast-track` | `<prd.md> --scope-from <discovery.md> --feature <F-00X> [--analysis <analysis.md>] [--allow-derived-scope-from-analysis]` |
 | Validar un spec existente | `/wf-spec-validate` | `<archivo_spec.md>` |
 | Detectar conflictos entre specs de features | `/wf-spec-conflict` | `<feature_spec.md> --features-dir <path/features/>` |
 | Ver qué features están listas y el orden de implementación | `/wf-spec-readiness` | `<path/features/>` |
@@ -70,7 +70,7 @@ Procede así:
 - Para una petición general de generar specs desde un PRD, invoca primero `/wf-spec-features-first <prd.md>`. El workflow decidirá si debe generar `_analysis.md`, detenerse por gaps críticos o recomendar subset.
 - Si no existe `_analysis.md`, el workflow lo genera y **se detiene** para que el usuario revise el análisis.
 - Si quedan gaps `[CRÍTICO]` pendientes, el workflow **se detiene** salvo que el usuario pida explícitamente continuar con `--allow-open-critical-gaps`.
-- Si las respuestas del `_analysis.md` introducen expansión de capacidad (entidad persistente nueva, catálogo reutilizable, nueva granularidad funcional o flujo adicional no comprometido), el workflow **se detiene** y remite a `wf-prd-change`.
+- Si las respuestas del `_analysis.md` introducen expansión de capacidad (entidad persistente nueva, catálogo reutilizable, nueva granularidad funcional, modelo owner nuevo o flujo adicional no comprometido), el workflow **se detiene** y remite a `wf-prd-change`, salvo override explícito con `--allow-derived-scope-from-analysis`.
 - Si el discovery detecta más de 5 features y no se ha indicado `--features`, el workflow **se detiene** y recomienda iterar por subset. Solo continúa full-run con `--all-features`.
 
 ## Agentes Spec disponibles
@@ -98,9 +98,9 @@ Las skills Spec son bases de conocimiento que los agentes especializados cargan 
 | `kb-prd-expert` ⚠ | Reglas del PRD — cargada por agentes Spec para leer el PRD de entrada (vive en `sdd/prd/`) |
 | `kb-product-change-governance` ⚠ | Reglas para distinguir gaps de cambios reales de producto (vive en `sdd/prd/`) |
 
-> ⚠ Las dos kb marcadas son cross-fase: viven en `sdd/prd/skills/` pero las cargan los agentes Spec. `install.sh spec` ya instala automáticamente esas dos kb y también `wf-prd-change` + `prd-expert`, porque la fase Spec necesita ese handoff cuando detecta un cambio real de producto.
+> ⚠ Las dos kb marcadas son cross-fase: viven en `sdd/prd/skills/` pero las cargan los agentes Spec. `install.sh spec` ya instala automáticamente esas dos kb y también `wf-prd-change`, `wf-prd-review` + `prd-expert`, porque la fase Spec necesita ese handoff cuando detecta un cambio real de producto o cuando el analyze pide limpieza funcional del PRD.
 
-> `kb-gap-conventions` puede marcar gaps con `[PUEDE_REQUERIR_CR]` cuando la futura respuesta tenga riesgo alto de expandir el producto. Ese marcador no cambia la severidad, pero obliga a reevaluar la respuesta con `kb-product-change-governance` antes de derivar discovery/specs.
+> `kb-gap-conventions` puede marcar gaps con `[PUEDE_REQUERIR_CR]` cuando la futura respuesta tenga riesgo alto de expandir el producto. Ese marcador no cambia la severidad, pero obliga a reevaluar la respuesta con `kb-product-change-governance` antes de derivar discovery/specs. Si aun así se continúa, los artefactos deben marcar `Origen de alcance: PRD + analysis respondido` y `Avisos de gobernanza`.
 
 ## Principio operativo
 

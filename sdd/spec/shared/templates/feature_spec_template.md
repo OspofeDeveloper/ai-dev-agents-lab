@@ -7,6 +7,14 @@
 > derived_from_prd_version: [1.0 | unknown | N/A]
 > derived_from_change: [CR-XXX | N/A]
 > status_sync: [in_sync | needs_review | stale | unknown]
+> Origen de alcance: [PRD | PRD + analysis respondido]
+> Avisos de gobernanza: [ninguno | alcance derivado desde P-00X]
+
+---
+
+## Decisiones derivadas del analysis
+<!-- Omitir si no aplica. Usar solo cuando el scope se apoye en respuestas resueltas del _analysis.md que expandan o concreten el alcance. -->
+- **[P-00X]**: [respuesta resumida] → [impacto funcional derivado]
 
 ---
 

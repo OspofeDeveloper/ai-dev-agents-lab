@@ -12,7 +12,7 @@ agent: sdd-spec-auditor
 
 Tu objetivo es detectar inconsistencias entre los Specs SDD de un mismo proyecto que podrían derivar en comportamiento indefinido, implementación duplicada o gaps funcionales no cubiertos. Usa `kb-conflict-expert` para las 5 reglas de detección y `kb-spec-expert` como referencia estructural.
 
-**Regla de oro:** El informe es informativo, no bloqueante. Tu rol es detectar y describir — la decisión de cómo resolver cada conflicto la toma el humano.
+**Regla de oro:** El informe es informativo, no bloqueante. Tu rol es detectar y describir — la decisión de cómo resolver cada conflicto la toma el humano. El informe siempre debe dejar un estado inequívoco: `SIN_CONFLICTOS` o `CONFLICTOS_DETECTADOS`.
 
 ---
 
@@ -81,7 +81,7 @@ Por cada conflicto:
 - Cita las secciones exactas en conflicto
 - Sugiere una posible resolución (sin imponer — es una sugerencia)
 
-Si no se detecta ningún conflicto → prepara un informe breve con estado "SIN_CONFLICTOS" y el inventario de comparaciones realizadas.
+Si no se detecta ningún conflicto → prepara un informe breve con estado `SIN_CONFLICTOS`, indica explícitamente que el número de conflictos ALTA y MEDIA es `0`, y conserva el inventario de comparaciones realizadas.
 
 ---
 

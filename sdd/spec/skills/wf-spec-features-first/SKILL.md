@@ -1,7 +1,7 @@
 ---
 name: wf-spec-features-first
-description: Orquestador completo del flujo features-first. Ejecuta discover para identificar features del PRD y luego lanza fast-track en paralelo para cada feature identificada (o solo para un subset si se pasa `--features`). Introduce dos guardrails: no continúa automáticamente con gaps críticos abiertos salvo opt-in explícito, y en PRDs grandes exige confirmación para generar todas las features en una sola pasada. Ejecuta conflict check y readiness al final. Activa en frases como "genera specs por feature del PRD", "flujo features-first completo", "specs en paralelo del PRD", "genera todas las features del PRD", "genera specs de la fase 1", "genera specs de estas features", "features-first completo".
-argument-hint: "<prd_archivo.md> [--features F-001,F-002,...] [--allow-open-critical-gaps] [--all-features] [--skip-conflict] [--skip-readiness]"
+description: Orquestador completo del flujo features-first. Ejecuta discover para identificar features del PRD y luego lanza fast-track en paralelo para cada feature identificada (o solo para un subset si se pasa `--features`). Introduce tres guardrails: no continúa automáticamente con gaps críticos abiertos salvo opt-in explícito, no deriva respuestas expansivas del analysis salvo override explícito, y en PRDs grandes exige confirmación para generar todas las features en una sola pasada. Ejecuta conflict check y readiness al final. Activa en frases como "genera specs por feature del PRD", "flujo features-first completo", "specs en paralelo del PRD", "genera todas las features del PRD", "genera specs de la fase 1", "genera specs de estas features", "features-first completo".
+argument-hint: "<prd_archivo.md> [--features F-001,F-002,...] [--allow-open-critical-gaps] [--allow-derived-scope-from-analysis] [--all-features] [--skip-conflict] [--skip-readiness]"
 effort: high
 model: claude-opus-4-6
 allowed-tools: [Read, Write, Bash, Agent]
@@ -26,15 +26,17 @@ Extrae de `$ARGUMENTS`:
 - **Flags opcionales**:
   - `--features F-001,F-002,...`: lista separada por comas de Feature IDs a procesar en esta ejecución. Si se omite, se procesan **todas** las features del discovery. Si se incluye, requiere que el `_discovery.md` exista previamente (los IDs solo se conocen tras un discover).
   - `--allow-open-critical-gaps`: confirma explícitamente que se quiere generar specs aunque el `_analysis.md` todavía tenga gaps `[CRÍTICO]` con `_(pendiente)_`. Sin este flag, el workflow se detiene para que el usuario decida.
+  - `--allow-derived-scope-from-analysis`: confirma explícitamente que se quiere continuar aunque alguna respuesta resuelta del `_analysis.md` introduzca expansión funcional no consolidada todavía en el PRD. Sin este flag, el workflow se detiene y remite a `wf-prd-change`.
   - `--all-features`: confirma explícitamente que se quiere generar **todas** las features identificadas por el discovery en una sola pasada. Se usa como override cuando el workflow detecta que el PRD es lo bastante grande como para recomendar iteración por subset.
   - `--skip-conflict`: omitir detección de conflictos al final
   - `--skip-readiness`: omitir evaluación de readiness al final
 
 Si no hay argumento, informa al usuario:
-> "Uso: `/wf-spec-features-first <prd_archivo.md> [--features F-001,F-002,...] [--allow-open-critical-gaps] [--all-features] [--skip-conflict] [--skip-readiness]`"
+> "Uso: `/wf-spec-features-first <prd_archivo.md> [--features F-001,F-002,...] [--allow-open-critical-gaps] [--allow-derived-scope-from-analysis] [--all-features] [--skip-conflict] [--skip-readiness]`"
 > "Ejemplo (todo el PRD): `/wf-spec-features-first docs/requisitos.md`"
 > "Ejemplo (iteración/fase): `/wf-spec-features-first docs/requisitos.md --features F-001,F-002,F-005`"
 > "Ejemplo (continuar con gaps críticos abiertos): `/wf-spec-features-first docs/requisitos.md --features F-001,F-002 --allow-open-critical-gaps`"
+> "Ejemplo (aceptar scope derivado desde analysis): `/wf-spec-features-first docs/requisitos.md --features F-001 --allow-derived-scope-from-analysis`"
 
 ---
 
@@ -64,8 +66,10 @@ Si no existe → informa al usuario con la ruta exacta y detén.
 5. Si hay gaps `[CRÍTICO]` pendientes y **no** se ha pasado `--allow-open-critical-gaps` → **DETENERSE** e informar al usuario:
    > "El análisis previo sigue teniendo [N] gap(s) `[CRÍTICO]` pendiente(s). Decide una de estas dos vías antes de generar specs: (a) responderlos en `<path>_analysis.md` y re-ejecutar; (b) re-ejecutar añadiendo `--allow-open-critical-gaps` para aceptar HUs `[INCOMPLETO]`."
 6. Si hay gaps `[CRÍTICO]` pendientes y **sí** se ha pasado `--allow-open-critical-gaps` → continuar al Paso 3 dejando constancia explícita de que las HUs afectadas podrán salir `[INCOMPLETO]`.
-7. Si no hay gaps `[CRÍTICO]` pendientes, inspecciona las respuestas ya resueltas. Si alguna introduce señales de cambio de producto según `kb-product-change-governance`, **DETENERSE** e informar al usuario:
-   > "Las respuestas del análisis parecen introducir cambio de producto (por ejemplo: nueva entidad persistente, catálogo reutilizable, nueva granularidad funcional o flujo adicional no comprometido en el PRD). Formaliza primero el cambio con `wf-prd-change <prd.md> --new-reqs <cambio.md>` antes de derivar discovery/specs."
+7. Si no hay gaps `[CRÍTICO]` pendientes, inspecciona las respuestas ya resueltas. Si alguna introduce señales de cambio de producto según `kb-product-change-governance`:
+   - si **NO** se ha pasado `--allow-derived-scope-from-analysis` → **DETENERSE** e informar al usuario:
+     > "Las respuestas del análisis parecen introducir cambio de producto (por ejemplo: nueva entidad persistente, catálogo reutilizable, nueva granularidad funcional o flujo adicional no comprometido en el PRD). Formaliza primero el cambio con `wf-prd-change <prd.md> --new-reqs <cambio.md>` o re-ejecuta añadiendo `--allow-derived-scope-from-analysis` si quieres continuar dejando el scope marcado como derivado."
+   - si **SÍ** se ha pasado `--allow-derived-scope-from-analysis` → continuar dejando constancia explícita de que el discovery, `_features.md` y los specs deberán marcar ese alcance como **scope derivado** y no como PRD puro.
 8. Si no hay gaps `[CRÍTICO]` pendientes y no se detectan señales de cambio → continuar al Paso 3 usando el `_analysis.md` como contexto.
 
 **Importante:** los gaps `[INFORMATIVO]` nunca bloquean. Los gaps `[CRÍTICO]` abiertos tampoco bloquean por sí solos, pero ahora requieren una decisión explícita del usuario mediante `--allow-open-critical-gaps` para evitar generación implícita con HUs `[INCOMPLETO]`.
@@ -92,7 +96,7 @@ El `_discovery.md` **debe existir previamente** (los IDs `F-XXX` solo tienen sen
 
 **Caso B — `--features` no está presente**:
 Si hay `_analysis.md` disponible (del Paso 2.5):
-- Invoca `/wf-spec-discover <prd.md> --analysis <analysis.md>`
+- Invoca `/wf-spec-discover <prd.md> --analysis <analysis.md> [--allow-derived-scope-from-analysis si aplica]`
 
 Si no hay analysis:
 - Invoca `/wf-spec-discover <prd.md>`
@@ -172,19 +176,25 @@ Si el subset está vacío tras filtrar specs preexistentes (todas las features p
 Las escrituras paralelas de `_features.md` por los fast-tracks pueden colisionar. **Regenera `_features.md` de forma consolidada y respetando lo que ya estaba:**
 
 1. Si existe `_features.md` previo, léelo para preservar:
-   - Estado de iteraciones anteriores (qué features ya estaban marcadas LISTA, BLOQUEADA_POR_GAPS, PENDIENTE_GENERACIÓN, etc.)
+   - Estado de iteraciones anteriores (qué features ya estaban marcadas LISTA, BLOQUEADA, PENDIENTE_GENERACIÓN o REQUIERE_CAMBIO_PRD)
    - Entradas previas del Historial de cambios
 2. Lee el `_discovery.md` para obtener el universo completo de features (todas las F-XXX), shared models y mapping RF→Feature.
 3. Lee todos los specs de feature presentes en `features/*/` (incluye tanto los recién generados en esta iteración como los preexistentes de iteraciones previas).
 4. Construye el `_features.md` unificado con **TODAS las features del discovery**, no solo el subset de esta iteración. Para cada una:
-   - Si tiene spec en `features/<nombre>/<nombre>_spec.md` → indexarla con su metadata (descripción, actor, journeys, CAs, modelos extraídos del spec). Estado provisional `LISTA` o `BLOQUEADA_POR_GAPS` según haya HUs `[INCOMPLETO]` (el Paso 8 lo refinará).
+   - Si tiene spec en `features/<nombre>/<nombre>_spec.md` → indexarla con su metadata (descripción, actor, journeys, CAs, modelos extraídos del spec). Estado provisional `LISTA`, `BLOQUEADA` o `REQUIERE_CAMBIO_PRD` según el contenido del spec y sus avisos de gobernanza (el Paso 8 lo refinará).
    - Si NO tiene spec todavía → indexarla con la metadata mínima del discovery (nombre, actor, scope RFs) y estado `PENDIENTE_GENERACIÓN`. Indica explícitamente: `> Esta feature está identificada en el discovery pero aún no se ha generado spec. Ejecuta /wf-spec-features-first <prd.md> --features <F-XXX> cuando quieras procesarla.`
 5. Reconcilia la tabla de shared models entre discovery y specs generados.
 6. Mantiene la trazabilidad RF → HU → Feature consolidada (los RFs cuya feature aún esté PENDIENTE_GENERACIÓN se anotan como "HUs no generadas todavía").
-7. Añade una entrada al Historial de cambios reflejando esta iteración:
+7. Usa solo estos estados canónicos en `_features.md`:
+   - `LISTA`
+   - `PENDIENTE_GENERACIÓN`
+   - `BLOQUEADA`
+   - `REQUIERE_CAMBIO_PRD`
+   El detalle del bloqueo va en texto adicional o en el readiness report; no uses variantes como `Completado`, `LISTA_PARA_PLAN` o `BLOQUEADA_POR_GAPS`.
+8. Añade una entrada al Historial de cambios reflejando esta iteración:
    - Si `--features` se usó: `[YYYY-MM-DD] | features-first (subset) | Iteración sobre [F-001, F-002, ...] — N nuevas + M preservadas`
    - Si no: `[YYYY-MM-DD] | features-first (full) | Generación completa de las N features del discovery`
-8. Escribe el `_features.md` en el mismo directorio que el PRD.
+9. Escribe el `_features.md` en el mismo directorio que el PRD.
 
 ---
 
@@ -222,8 +232,8 @@ Indica el modo: "Iteración sobre subset `[F-001, F-002, ...]`" o "Generación c
 
 | Feature | Origen | Spec | Gaps críticos | Estado |
 |---------|--------|------|---------------|--------|
-| F-001: [nombre] | Esta iteración | ✓ / ✗ | [N] | [LISTA / BLOQUEADA_POR_GAPS] |
-| F-002: [nombre] | Iteración previa | ✓ | [N] | [LISTA / BLOQUEADA_POR_GAPS] |
+| F-001: [nombre] | Esta iteración | ✓ / ✗ | [N] | [LISTA / BLOQUEADA / REQUIERE_CAMBIO_PRD] |
+| F-002: [nombre] | Iteración previa | ✓ | [N] | [LISTA / BLOQUEADA / REQUIERE_CAMBIO_PRD] |
 | F-003: [nombre] | — | — | — | PENDIENTE_GENERACIÓN |
 
 **Artefactos:**

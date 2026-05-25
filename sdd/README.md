@@ -299,6 +299,9 @@ project-root/
 /wf-spec-features-first prd.md
 # Si hay gaps [CRÍTICO] pendientes, re-ejecutar con:
 # /wf-spec-features-first prd.md --allow-open-critical-gaps
+# Si las respuestas del analysis expanden el producto pero se decide continuar
+# igualmente dejando trazabilidad de gobernanza:
+# /wf-spec-features-first prd.md --allow-derived-scope-from-analysis
 # Si el discovery detecta más de 5 features, el workflow pedirá iterar por subset
 # salvo override explícito con `--all-features`.
 # → prd_discovery.md (mapa de features + scope RF→Feature)
@@ -314,6 +317,7 @@ project-root/
 /wf-spec-features-first prd.md --features F-001,F-002,F-003
 # → Genera specs solo para las features indicadas
 # → prd_features.md marca el resto como PENDIENTE_GENERACIÓN
+# → las generadas quedan como LISTA, BLOQUEADA o REQUIERE_CAMBIO_PRD
 # Más tarde:  /wf-spec-features-first prd.md --features F-004,F-005
 
 # [HUMANO] Revisar prd_features.md: ajustar scope si es necesario

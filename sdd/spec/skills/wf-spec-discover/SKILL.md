@@ -1,7 +1,7 @@
 ---
 name: wf-spec-discover
-description: Analiza un PRD e identifica features candidatas por cohesión funcional. Genera un _discovery.md con el mapa de features, scope por feature y shared models. No genera specs — solo el roadmap para ejecutar wf-spec-fast-track por feature. Activa en frases como "identifica features del PRD", "descubre las features", "qué features tiene este PRD", "mapa de features", "features-first", "qué features hay en este documento".
-argument-hint: "<prd_archivo.md> [--analysis <analysis.md>]"
+description: Analiza un PRD e identifica features candidatas por cohesión funcional. Genera un _discovery.md con el mapa de features, scope por feature y shared models. No genera specs — solo el roadmap para ejecutar wf-spec-fast-track por feature. Puede detenerse si el analysis introduce expansión funcional no consolidada en el PRD, salvo override explícito para continuar marcando el discovery como alcance derivado. Activa en frases como "identifica features del PRD", "descubre las features", "qué features tiene este PRD", "mapa de features", "features-first", "qué features hay en este documento".
+argument-hint: "<prd_archivo.md> [--analysis <analysis.md>] [--allow-derived-scope-from-analysis]"
 effort: high
 allowed-tools: [Read, Write, Bash]
 context: fork
@@ -23,9 +23,10 @@ Tu objetivo es leer un PRD y producir un mapa de features candidatas con su scop
 Extrae de `$ARGUMENTS`:
 - **Path del PRD**: el primer argumento
 - **Flag opcional**: `--analysis <path>` — path a un `_analysis.md` generado previamente por `/wf-spec-analyze`
+- **Flag opcional**: `--allow-derived-scope-from-analysis` — permite continuar aunque el `_analysis.md` introduzca expansión funcional no consolidada todavía en el PRD. Sin este flag, el workflow se detiene y remite a `wf-prd-change`.
 
 Si no hay argumento, informa al usuario:
-> "Uso: `/wf-spec-discover <prd_archivo.md> [--analysis <analysis.md>]`"
+> "Uso: `/wf-spec-discover <prd_archivo.md> [--analysis <analysis.md>] [--allow-derived-scope-from-analysis]`"
 > "Ejemplo: `/wf-spec-discover docs/requisitos.md --analysis docs/requisitos_analysis.md`"
 
 ---
@@ -53,6 +54,20 @@ Lee el archivo PRD en su totalidad.
 - **Paso 7**: asignar shared models (las respuestas pueden aclarar ownership)
 
 Los gaps sin responder (`_(pendiente)_`) se ignoran en discover — no bloquean la identificación de features.
+
+**Guardrail de gobernanza:** antes de continuar, inspecciona si alguna respuesta resuelta del `_analysis.md` introduce señales de cambio de producto según `kb-product-change-governance`:
+- entidad persistente nueva
+- catálogo reutilizable
+- modelo owner nuevo
+- nueva granularidad funcional
+- flujo adicional no comprometido en el PRD
+
+Si detectas cualquiera de estas señales:
+- si **NO** se pasó `--allow-derived-scope-from-analysis` → **DETENTE** e informa:
+  > "El `_analysis.md` contiene respuestas resueltas que expanden el producto más allá del PRD vigente. Formaliza primero el cambio con `wf-prd-change <prd.md> --new-reqs <cambio.md>` antes de generar el discovery, o re-ejecuta con `--allow-derived-scope-from-analysis` si quieres continuar dejando el discovery marcado como alcance derivado."
+- si **SÍ** se pasó `--allow-derived-scope-from-analysis` → continúa, pero deja constancia explícita de que el `_discovery.md` no representa PRD puro sino `PRD + analysis respondido`.
+
+No derives un `_discovery.md` como si fuera PRD puro si el contexto ya indica expansión funcional no consolidada.
 
 ---
 
@@ -134,6 +149,12 @@ Este mapeo es crítico: será usado por `wf-spec-fast-track` en modo scoped para
 ## Paso 9: Generar `_discovery.md`
 
 Consulta [references/discovery_template.md](references/discovery_template.md) para la estructura exacta del artefacto.
+
+Si se usó `--analysis` y todas las respuestas resueltas eran compatibles con el PRD vigente:
+- rellena `Origen de alcance` como `PRD` o `PRD + analysis respondido` según corresponda
+- rellena `Avisos de gobernanza` como `ninguno` salvo que el contexto indique una excepción ya formalizada en el PRD o un change request explícito referenciado
+
+Si el análisis no añade nada relevante al scope, mantén `Origen de alcance: PRD`.
 
 Determina el path de salida: mismo directorio que el archivo de entrada + nombre base + `_discovery.md`.
 - Ejemplo: `docs/requisitos.md` → `docs/requisitos_discovery.md`

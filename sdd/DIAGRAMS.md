@@ -64,8 +64,11 @@ flowchart TD
     Resolve --> Analysis
     Decision -->|Seguir igualmente| OpenGaps["/wf-spec-features-first<br/>--allow-open-critical-gaps"]
     Decision -->|No| FF["/wf-spec-features-first"]
-    FF --> Discovery[(_discovery.md)]
-    OpenGaps --> Discovery
+    FF --> Derived{"¿Respuestas del analysis<br/>expanden el producto?"}
+    OpenGaps --> Derived
+    Derived -->|Sí| CR["/wf-prd-change<br/>o override explícito<br/>--allow-derived-scope-from-analysis"]
+    Derived -->|No| Discovery[(_discovery.md)]
+    CR --> Discovery
     Discovery --> Size{"¿Más de 5 features?"}
     Size -->|Sí| Subset["Elegir subset<br/>--features F-001,F-002"]
     Size -->|Override explícito| Full["/wf-spec-features-first<br/>--all-features"]
@@ -98,7 +101,7 @@ flowchart TD
     style Tasks fill:#e0f2f1
 ```
 
-**Mensaje clave:** el flujo feliz ya no asume dos cosas implícitas: ni continuar con gaps críticos abiertos ni generar todo un PRD grande de una sola vez. El sistema fuerza esa decisión antes de gastar contexto y tokens.
+**Mensaje clave:** el flujo feliz ya no asume tres cosas implícitas: ni continuar con gaps críticos abiertos, ni derivar cambios expansivos del analysis como si fueran PRD puro, ni generar todo un PRD grande de una sola vez. El sistema fuerza esas decisiones antes de gastar contexto y tokens.
 
 ---
 
@@ -165,7 +168,7 @@ flowchart TD
 
 **Artefactos esperados tras un change:** `prd/product-changelog.md` como índice global y `prd/changes/CR-XXX/` como carpeta del cambio con `change-request.md` y `decision.md`.
 
-**Señales de que una "respuesta a gap" ya es change:** introduce una entidad persistente nueva, un catálogo reutilizable, una nueva granularidad funcional o un flujo adicional no comprometido en el PRD. En esos casos no debe derivarse directamente a discovery/specs.
+**Señales de que una "respuesta a gap" ya es change:** introduce una entidad persistente nueva, un catálogo reutilizable, una nueva granularidad funcional, un modelo owner nuevo o un flujo adicional no comprometido en el PRD. En esos casos no debe derivarse directamente a discovery/specs, salvo override explícito dejando el alcance marcado como derivado.
 
 ---
 

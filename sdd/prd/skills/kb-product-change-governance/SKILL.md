@@ -66,12 +66,14 @@ Una respuesta a un gap deja de ser simple aclaración y pasa a requerir evaluaci
 - una nueva operación de usuario o flujo de gestión no descrito en el alcance vigente
 - una nueva granularidad funcional de una capacidad existente
 - una nueva superficie funcional necesaria para soportar la respuesta
+- un nuevo modelo owner de feature o una entidad antes implícita que pasa a tener gestión explícita
 
 Ejemplos típicos:
 
 - el PRD habla de "otras personas" y la respuesta introduce un **catálogo persistente de contactos**
 - el PRD habla de presupuesto por categoría y la respuesta introduce **presupuesto por subcategoría**
 - el PRD permite editar una transacción y la respuesta añade un **flujo inline de edición coordinada** sobre entidades vinculadas
+- el PRD menciona una referencia implícita y la respuesta crea un **modelo owner nuevo** con CRUD o lifecycle propio
 
 La pregunta operativa no es "¿contradice una frase literal?" sino:
 
