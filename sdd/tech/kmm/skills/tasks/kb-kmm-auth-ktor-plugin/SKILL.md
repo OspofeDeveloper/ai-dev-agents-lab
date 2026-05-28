@@ -15,7 +15,7 @@ Esta skill es una implementación concreta. Depende de:
 
 - `kb-kmm-auth-contracts` para política de sesión
 - `kb-kmm-http-ktor` para el mecanismo HTTP
-- `kb-koin` o la skill de DI activa para el registro de dependencias
+- `kb-tasks-koin` o la skill de DI activa para el registro de dependencias
 
 No define:
 

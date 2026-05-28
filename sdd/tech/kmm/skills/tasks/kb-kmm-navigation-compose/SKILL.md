@@ -24,9 +24,9 @@ No define por sí sola:
 Esas reglas viven en:
 
 - `kb-kmm-navigation-contracts`
-- `kb-kmm-navigation-viewmodel-events`
+- `kb-tasks-kmm-navigation-viewmodel-events`
 - `kb-kmm-navigation-platform-behaviors`
-- `kb-koin` si aplica
+- `kb-tasks-koin` si aplica
 
 ## Regla 2: Setup y dependencias mínimas se fijan por librería
 
@@ -134,7 +134,7 @@ El grafo Compose puede necesitar scoping de ViewModel y consumo de side effects,
 
 Para scoping y paso de parámetros, consultar la DI activa y el patrón autoritativo de navegación desde ViewModel.
 
-Para efectos de navegación y `LaunchedEffect`, la skill autoritativa es `kb-kmm-navigation-viewmodel-events`.
+Para efectos de navegación y `LaunchedEffect`, la skill autoritativa es `kb-tasks-kmm-navigation-viewmodel-events`.
 
 → Templates: `references/viewmodel-scoping.md`
 
@@ -142,7 +142,7 @@ Para efectos de navegación y `LaunchedEffect`, la skill autoritativa es `kb-kmm
 
 El testing del grafo y de la integración con `NavHost` pertenece a esta dimensión porque valida la implementación concreta de Compose Navigation.
 
-Los tests de ViewModel aislados siguen perteneciendo a `kb-kmm-navigation-viewmodel-events`, no a esta skill.
+Los tests de ViewModel aislados siguen perteneciendo a `kb-tasks-kmm-navigation-viewmodel-events`, no a esta skill.
 
 → Templates: `references/testing.md`
 

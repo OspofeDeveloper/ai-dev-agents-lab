@@ -1,5 +1,5 @@
 ---
-name: kb-kmm-navigation-viewmodel-events
+name: kb-plan-kmm-navigation-viewmodel-events
 description: "Base de conocimiento de eventos y efectos de navegación desde ViewModel en proyectos KMM: patrón Intent/Events, Channel vs StateFlow, reglas de LaunchedEffect y separación entre lógica de negocio, Composable y destino concreto."
 argument-hint: ""
 effort: low

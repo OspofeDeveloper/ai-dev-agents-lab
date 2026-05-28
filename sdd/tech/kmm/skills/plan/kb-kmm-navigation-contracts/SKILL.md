@@ -79,7 +79,7 @@ La implementación Compose Navigation vive en `kb-kmm-navigation-compose`.
 
 Cuando la navegación depende de lógica de negocio, el ViewModel emite un efecto o evento de navegación.
 
-La forma de modelar ese efecto en ViewModel/Composable vive en `kb-kmm-navigation-viewmodel-events`, no en esta skill.
+La forma de modelar ese efecto en ViewModel/Composable vive en `kb-plan-kmm-navigation-viewmodel-events`, no en esta skill.
 
 ---
 

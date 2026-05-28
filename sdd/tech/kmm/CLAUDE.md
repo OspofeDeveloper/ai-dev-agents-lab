@@ -70,11 +70,14 @@ Las skills KMM son bases de conocimiento que los agentes especializados cargan a
 | `kb-kmm-core-layer` | Dominio compartido e infraestructura transversal |
 | `kb-kmm-app-errors` | Contrato transversal `AppResult` / `AppError` y ownership de taxonomías de error |
 | `kb-kmm-feature-clean-architecture` | Microarquitectura interna de una feature |
-| `kb-koin` | Wiring de dependencias |
-| `kb-kmm-datastore-preferences` | Preferences DataStore: factory compartida, paths por plataforma y adapters de storage local |
+| `kb-plan-koin` | Koin DI — organización de módulos, tipos de registro, qualifiers (planificación) |
+| `kb-tasks-koin` | Koin DI — DSL, nativeModule expect/actual, initKoin completo (implementación) |
+| `kb-plan-kmm-datastore-preferences` | Preferences DataStore — cuándo usarlo, ownership core/feature (planificación) |
+| `kb-tasks-kmm-datastore-preferences` | Preferences DataStore — factory, path por plataforma, templates (implementación) |
 | `kb-kmm-navigation-contracts` | Contrato arquitectónico de navegación |
 | `kb-kmm-navigation-compose` | Implementación del grafo con Compose Navigation |
-| `kb-kmm-navigation-viewmodel-events` | Efectos de navegación desde ViewModel |
+| `kb-plan-kmm-navigation-viewmodel-events` | Intent/Events — patrón arquitectónico ViewModel↔Composable (planificación) |
+| `kb-tasks-kmm-navigation-viewmodel-events` | Intent/Events — Channel, LaunchedEffect, templates (implementación) |
 | `kb-kmm-navigation-platform-behaviors` | `BackHandler`, predictive back y bridges del host |
 | `kb-kmm-network-contracts` | Contratos remotos estables |
 | `kb-kmm-http-ktor` | Implementación HTTP con Ktor |
@@ -85,8 +88,12 @@ Las skills KMM son bases de conocimiento que los agentes especializados cargan a
 | `kb-kmm-environments` | Semántica de entornos |
 | `kb-kmm-android-environments` | Implementación Android de variants |
 | `kb-kmm-ios-environments` | Implementación iOS de variants |
-| `kb-kmm-resources` | Recursos compartidos: strings, imágenes, fonts, raw files, localización con compose.resources |
-| `kb-kmm-ui-text` | Patrón UiText: sealed interface para desacoplar ViewModel de strings traducibles |
+| `kb-cmp-resources` | Compose Resources — estructura, localización, qué módulos la necesitan (planificación) |
+| `kb-kmm-resources` | Compose Resources — build.gradle.kts, APIs Res.*, snippets (implementación) |
+| `kb-plan-cmp-ui` | CMP presentation — estructura commonMain, expect/actual de UI (planificación) |
+| `kb-tasks-cmp-ui` | CMP presentation — entry points Android/iOS, @Preview, initKoin (implementación) |
+| `kb-plan-kmm-ui-text` | UIText — cuándo usarlo, decisión UIText vs StringResource (planificación) |
+| `kb-tasks-kmm-ui-text` | UIText — sealed interface, Regla 10, mapping AppError→UIText (implementación) |
 
 ## Principio operativo
 

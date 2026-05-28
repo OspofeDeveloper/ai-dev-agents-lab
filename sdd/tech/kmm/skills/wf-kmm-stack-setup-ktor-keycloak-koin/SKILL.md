@@ -24,7 +24,7 @@ Aplicar:
 - `kb-kmm-core-layer` -> **Regla 7** y **Regla 13**
 - `kb-kmm-feature-clean-architecture` -> **Regla 7** y **Regla 12**
 - `kb-kmm-app-layer` -> **Regla 8**
-- `kb-koin` -> **Regla 1**, **Regla 2** y **Regla 10**
+- `kb-tasks-koin` -> **Regla 1**, **Regla 2** y **Regla 10**
 
 Con esto se decide:
 

@@ -1,7 +1,7 @@
 ---
 name: kmm-planner
 description: Agente especializado en planificar trabajo KMM usando las skills del ecosistema para separar dimensiones de verdad, elegir workflows y ordenar precondiciones antes de implementar.
-skills: [kb-kmm-clean-architecture, kb-kmm-core-layer, kb-kmm-feature-clean-architecture, kb-kmm-app-layer, kb-kmm-app-errors, kb-koin, kb-kmm-datastore-preferences, kb-kmm-navigation-contracts, kb-kmm-navigation-compose, kb-kmm-navigation-viewmodel-events, kb-kmm-navigation-platform-behaviors, kb-kmm-network-contracts, kb-kmm-http-ktor, kb-kmm-auth-contracts, kb-kmm-auth-oauth-keycloak, kb-kmm-auth-ktor-plugin, kb-kmm-brands, kb-kmm-environments, kb-kmm-android-environments, kb-kmm-ios-environments, kb-kmm-resources, kb-kmm-ui-text]
+skills: [kb-kmm-clean-architecture, kb-kmm-core-layer, kb-kmm-feature-clean-architecture, kb-kmm-app-layer, kb-kmm-app-errors, kb-plan-koin, kb-plan-kmm-datastore-preferences, kb-kmm-navigation-contracts, kb-kmm-navigation-compose, kb-plan-kmm-navigation-viewmodel-events, kb-kmm-navigation-platform-behaviors, kb-kmm-network-contracts, kb-kmm-http-ktor, kb-kmm-auth-contracts, kb-kmm-auth-oauth-keycloak, kb-kmm-auth-ktor-plugin, kb-kmm-brands, kb-kmm-environments, kb-kmm-android-environments, kb-kmm-ios-environments, kb-kmm-resources, kb-plan-kmm-ui-text]
 memory: project
 permissionMode: acceptEdits
 ---

@@ -1,10 +1,10 @@
 ---
 name: kb-cmp-resources
-description: Base de conocimiento de recursos compartidos en Compose Multiplatform con compose-resources (Res.*): estructura de carpetas, strings, drawables, fonts y configuración del plugin. Úsalo cuando haya que planificar acceso a recursos de UI en un proyecto CMP.
+description: Base de conocimiento de recursos compartidos en Compose Multiplatform con compose-resources (Res.*): qué es el sistema, estructura de carpetas, semántica de localización y qué módulos se ven afectados. Úsalo cuando haya que planificar el acceso a recursos de UI en un proyecto CMP.
 allowed-tools: [Read]
 ---
 
-# CMP Resources — compose-resources
+# CMP Resources — compose-resources (nivel planificación)
 
 ## Qué es compose-resources
 
@@ -12,57 +12,37 @@ allowed-tools: [Read]
 Genera automáticamente un objeto `Res` con accessors tipados para cada recurso declarado
 en `commonMain/composeResources/`.
 
+Todos los assets compartidos (strings, drawables, fonts, raw files) viven en este sistema,
+independientemente de la plataforma destino.
+
 ## Estructura de carpetas
 
 ```
 src/
 └── commonMain/
     └── composeResources/
-        ├── drawable/          → Imágenes vectoriales (.xml, .svg) y rasterizadas (.png, .webp)
-        ├── font/              → Fuentes (.ttf, .otf)
+        ├── drawable/    → vectoriales e imágenes rasterizadas compartidas
+        ├── font/        → fuentes (.ttf, .otf)
         └── values/
-            ├── strings.xml    → Strings localizables
-            └── colors.xml     → Colores (opcional, preferir tokens de DESIGN.md en código Kotlin)
+            ├── strings.xml    → strings localizables
+            └── colors.xml     → colores (opcional; preferir tokens Kotlin en MaterialTheme)
 ```
 
-## Acceso en código
+## Semántica de localización
 
-```kotlin
-// Strings
-stringResource(Res.string.account_name_label)
+Las traducciones viven en subcarpetas `values-{locale}/` con el mismo nombre de fichero.
+La carpeta `values/` sin sufijo actúa como fallback.
 
-// Drawables
-painterResource(Res.drawable.ic_wallet)
+## Qué módulos necesitan compose-resources
 
-// Fonts (en MaterialTheme o TextStyle)
-FontFamily(Font(Res.font.inter_regular))
-```
+El módulo compartido (`:shared` o `:composeApp`) declara la dependencia
+`compose.components.resources` y activa la generación de `Res`.
+Las features consumen `Res` desde `commonMain` sin dependencia adicional.
 
-## Localización
+## Criterios de planificación
 
-Para strings localizados, crear subcarpetas `values-es/`, `values-en/`, etc.
-La carpeta `values/` sin sufijo es el fallback.
+- Los recursos propios de plataforma (iconos de app, launch screen, splash) **no** van en `composeResources/` — van en sus carpetas nativas.
+- Los design tokens de color viven en código Kotlin (MaterialTheme), no en `colors.xml`.
+- El plan debe prever la carpeta de localización si la feature expone strings traducibles.
 
-## Configuración en build.gradle.kts
-
-```kotlin
-kotlin {
-    sourceSets {
-        commonMain.dependencies {
-            implementation(compose.components.resources)
-        }
-    }
-}
-
-compose.resources {
-    publicResClass = true
-    generateResClass = always
-}
-```
-
-## Reglas
-
-1. No usar `R.string.*` ni `R.drawable.*` de Android en código de commonMain.
-2. No declarar recursos en `androidMain/res/` para assets compartidos — usar `composeResources/`.
-3. Los recursos propios de plataforma (iconos de app, launch screen) sí van en sus carpetas nativas.
-4. Los design tokens de color viven en código Kotlin (MaterialTheme), no en `colors.xml`.
+→ Implementación concreta (build.gradle.kts, APIs Res.*): `kb-kmm-resources`

@@ -1,7 +1,7 @@
 ---
 name: kmm-platform-integrator
 description: Agente especializado en composición de app KMM, navegación, wiring de DI y configuración de brands/environments en Android e iOS.
-skills: [kb-kmm-clean-architecture, kb-kmm-core-layer, kb-kmm-feature-clean-architecture, kb-kmm-app-layer, kb-koin, kb-kmm-datastore-preferences, kb-kmm-navigation-contracts, kb-kmm-navigation-compose, kb-kmm-navigation-viewmodel-events, kb-kmm-navigation-platform-behaviors, kb-kmm-brands, kb-kmm-environments, kb-kmm-android-environments, kb-kmm-ios-environments]
+skills: [kb-kmm-clean-architecture, kb-kmm-core-layer, kb-kmm-feature-clean-architecture, kb-kmm-app-layer, kb-tasks-koin, kb-tasks-kmm-datastore-preferences, kb-kmm-navigation-contracts, kb-kmm-navigation-compose, kb-tasks-kmm-navigation-viewmodel-events, kb-kmm-navigation-platform-behaviors, kb-kmm-brands, kb-kmm-environments, kb-kmm-android-environments, kb-kmm-ios-environments]
 memory: project
 permissionMode: acceptEdits
 ---
@@ -40,11 +40,11 @@ No sustituyes la exploración inicial del proyecto ni la planificación cuando u
 | `kb-kmm-core-layer` | Para decidir si una pieza de wiring, storage o configuración global debe vivir en `core` por ser realmente transversal. |
 | `kb-kmm-feature-clean-architecture` | Para decidir cuándo una integración sigue siendo propia de una feature y no debe subirse a `core` ni absorberse en `app`. |
 | `kb-kmm-app-layer` | Siempre que el cambio afecte a `app`, composition root, wiring global, pantallas agregadas o ownership de navegación. |
-| `kb-koin` | Cuando haya que registrar o resolver dependencias, crear módulos o inicializar DI. |
-| `kb-kmm-datastore-preferences` | Cuando haya que integrar Preferences DataStore, providers por plataforma o adapters de storage local en el wiring del proyecto. |
+| `kb-tasks-koin` | Cuando haya que registrar o resolver dependencias, crear módulos o inicializar DI. |
+| `kb-tasks-kmm-datastore-preferences` | Cuando haya que integrar Preferences DataStore, providers por plataforma o adapters de storage local en el wiring del proyecto. |
 | `kb-kmm-navigation-contracts` | Para respetar ownership, separación entre features y contrato general de navegación. |
 | `kb-kmm-navigation-compose` | Para implementar el grafo Compose, rutas type-safe, back stack y shell adaptativo. |
-| `kb-kmm-navigation-viewmodel-events` | Cuando la integración necesite efectos de navegación entre ViewModel y Composable. |
+| `kb-tasks-kmm-navigation-viewmodel-events` | Cuando la integración necesite efectos de navegación entre ViewModel y Composable. |
 | `kb-kmm-navigation-platform-behaviors` | Cuando la task afecte a `BackHandler`, predictive back, deep links del host o bridges de plataforma. |
 | `kb-kmm-brands` | Cuando la configuración afecte a identidad de marca, catálogo de brands o diferencias entre productos. |
 | `kb-kmm-environments` | Cuando haya que modelar la semántica de entornos y la matriz `brand × env`. |

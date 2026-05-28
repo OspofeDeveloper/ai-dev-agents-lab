@@ -84,7 +84,7 @@ En este proyecto, cuando existe un ViewModel de pantalla, la convención preferi
 
 Si el estado se mantiene directamente en el ViewModel, la forma preferida es `var state by mutableStateOf(...)` con `private set`.
 
-La separación exacta entre `State`, `Intent` y `Events`, incluyendo qué outcomes deben salir por efectos y qué decisiones tiene prohibidas el ViewModel, se delega a `kb-kmm-navigation-viewmodel-events`.
+La separación exacta entre `State`, `Intent` y `Events`, incluyendo qué outcomes deben salir por efectos y qué decisiones tiene prohibidas el ViewModel, se delega a `kb-plan-kmm-navigation-viewmodel-events`.
 
 `presentation` no debe contener:
 

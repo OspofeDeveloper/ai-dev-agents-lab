@@ -16,20 +16,20 @@ Antes de crear nada, confirmar o inferir:
 
 1. si el storage es transversal (`core`) o propio de una feature
 2. qué consumer lo va a usar: auth, settings, app state o una feature concreta
-3. qué DI está activa, siguiendo `kb-koin` si aplica
+3. qué DI está activa, siguiendo `kb-tasks-koin` si aplica
 4. qué plataformas están activas y cómo se resuelven dependencias nativas
 
 Aplicar:
 
 - `kb-kmm-core-layer`
 - `kb-kmm-feature-clean-architecture`
-- `kb-kmm-datastore-preferences`
+- `kb-tasks-kmm-datastore-preferences`
 
 ---
 
 ## Paso 2: Crear primero la base técnica compartida
 
-Crear la pieza común de `Preferences DataStore` en `commonMain`, siguiendo la **Regla 2** y la **Regla 10** de `kb-kmm-datastore-preferences`.
+Crear la pieza común de `Preferences DataStore` en `commonMain`, siguiendo la **Regla 2** y la **Regla 10** de `kb-tasks-kmm-datastore-preferences`.
 
 Esto incluye:
 
@@ -43,7 +43,7 @@ No introducir todavía keys de negocio ni lógica de auth.
 
 ## Paso 3: Crear providers por plataforma
 
-Implementar la resolución del path físico por plataforma, siguiendo la **Regla 3** de `kb-kmm-datastore-preferences`.
+Implementar la resolución del path físico por plataforma, siguiendo la **Regla 3** de `kb-tasks-kmm-datastore-preferences`.
 
 En particular:
 
@@ -56,7 +56,7 @@ No mezclar aquí wiring de repositorios ni consumers de dominio.
 
 ## Paso 4: Crear keys y adapter con semántica explícita
 
-Crear encima del `DataStore<Preferences>` una pieza con intención clara, siguiendo la **Regla 5** y la **Regla 6** de `kb-kmm-datastore-preferences`.
+Crear encima del `DataStore<Preferences>` una pieza con intención clara, siguiendo la **Regla 5** y la **Regla 6** de `kb-tasks-kmm-datastore-preferences`.
 
 Ejemplos válidos:
 
@@ -76,7 +76,7 @@ Si el consumer final también usa red o auth, no mezclar por defecto:
 - llamadas remotas
 - refresh de sesión
 
-Seguir la **Regla 8** de `kb-kmm-datastore-preferences` y dejar el adapter local separado de la coordinación superior, salvo que el proyecto ya tenga una razón clara para otra cosa.
+Seguir la **Regla 8** de `kb-tasks-kmm-datastore-preferences` y dejar el adapter local separado de la coordinación superior, salvo que el proyecto ya tenga una razón clara para otra cosa.
 
 ---
 
@@ -89,8 +89,8 @@ Registrar:
 
 Seguir:
 
-- `kb-koin` para el wiring
-- la **Regla 4** de `kb-kmm-datastore-preferences`
+- `kb-tasks-koin` para el wiring
+- la **Regla 4** de `kb-tasks-kmm-datastore-preferences`
 
 Si la creación depende de plataforma, usar `nativeModule` o el patrón equivalente del proyecto.
 

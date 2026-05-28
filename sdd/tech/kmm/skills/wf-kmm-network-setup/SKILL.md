@@ -18,7 +18,7 @@ Confirmar con el usuario o inferir del proyecto:
 2. reglas de `core`, siguiendo la **Regla 3** y la **Regla 7** de `kb-kmm-core-layer`
 3. microarquitectura de feature, siguiendo la **Regla 2** y la **Regla 7** de `kb-kmm-feature-clean-architecture`
 4. reglas de `app`, siguiendo la **Regla 1** y la **Regla 8** de `kb-kmm-app-layer`
-5. librería de DI activa, siguiendo la **Regla 1** y la **Regla 2** de la skill correspondiente (`kb-koin` si aplica)
+5. librería de DI activa, siguiendo la **Regla 1** y la **Regla 2** de la skill correspondiente (`kb-tasks-koin` si aplica)
 6. contrato transversal de resultado y error, siguiendo la **Regla 1** y la **Regla 3** de `kb-kmm-app-errors`
 7. implementación HTTP elegida, siguiendo la **Regla 1** y la **Regla 2** de la skill concreta (`kb-kmm-http-ktor` si aplica)
 8. si existe auth y cuál es su estrategia, siguiendo `kb-kmm-auth-contracts` y la skill específica aplicable

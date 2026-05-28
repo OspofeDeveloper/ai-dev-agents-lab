@@ -34,7 +34,7 @@ En Composables se usa `stringResource()`.
 
 Fuera de Composables, `getString()` solo se usa cuando realmente se necesita el `String` materializado en ese punto.
 
-Si el proyecto usa `kb-kmm-ui-text`, el ViewModel no resuelve strings para estado/UI models: expone `UIText` o `StringResource` y la UI los materializa.
+Si el proyecto usa `kb-tasks-kmm-ui-text`, el ViewModel no resuelve strings para estado/UI models: expone `UIText` o `StringResource` y la UI los materializa.
 
 → Templates: `references/string-resources.md`
 
@@ -93,7 +93,7 @@ fun ContractType.toStringResource(): StringResource = when (this) {
 
 El Composable lo resuelve con `stringResource(field)`.
 
-Cuando el campo puede ser dinámico O traducible según condición, usar `UIText` en su lugar (`kb-kmm-ui-text`).
+Cuando el campo puede ser dinámico O traducible según condición, usar `UIText` en su lugar (`kb-tasks-kmm-ui-text`).
 
 No usar `StringResource` más primitivos auxiliares para que la UI reconstruya el texto final. Si existe una bifurcación entre texto dinámico y traducible, esa decisión ya debe venir cerrada desde presentation mediante `UIText`.
 
@@ -101,7 +101,7 @@ No usar `StringResource` más primitivos auxiliares para que la UI reconstruya e
 
 Esta skill define el sistema base de recursos compartidos.
 
-No define cómo un ViewModel expone texto traducible a UI. Ese patrón vive en `kb-kmm-ui-text`.
+No define cómo un ViewModel expone texto traducible a UI. Ese patrón vive en `kb-tasks-kmm-ui-text`.
 
 ## Regla 10: Requisitos no negociables
 

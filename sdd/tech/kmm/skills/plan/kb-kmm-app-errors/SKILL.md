@@ -177,7 +177,7 @@ Esta skill se combina con:
 - `kb-kmm-network-contracts` para la variante de error de red y el borde remoto
 - `kb-kmm-auth-contracts` para políticas de sesión y auth
 - `kb-kmm-feature-clean-architecture` para ownership y adaptación dentro de una feature
-- `kb-kmm-ui-text` para la representación visual del error
+- `kb-plan-kmm-ui-text` para la representación visual del error
 - `kb-kmm-core-layer` para decidir cuándo una taxonomía debe vivir en `core`
 
 Las otras skills no deben redefinir aquí qué es `AppError` ni cómo se usa `AppResult` como contrato transversal. Deben delegar.

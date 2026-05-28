@@ -1,5 +1,5 @@
 ---
-name: kb-kmm-datastore-preferences
+name: kb-tasks-kmm-datastore-preferences
 description: "Base de conocimiento para usar Preferences DataStore en proyectos KMM: factory compartida, resolución de path por plataforma, ownership de keys y adapters sobre storage local."
 argument-hint: "[sin argumentos]"
 effort: medium
@@ -71,7 +71,7 @@ La ubicación arquitectónica y el wiring se apoyan en:
 
 - `kb-kmm-core-layer`
 - `kb-kmm-feature-clean-architecture`
-- `kb-koin`
+- `kb-tasks-koin`
 
 ---
 
@@ -174,7 +174,7 @@ Esta skill se combina con:
 
 - `kb-kmm-core-layer` para decidir si el storage es transversal
 - `kb-kmm-feature-clean-architecture` para storage propio de feature
-- `kb-koin` para el wiring y registro
+- `kb-tasks-koin` para el wiring y registro
 - `kb-kmm-auth-contracts` o skills de feature cuando auth o settings consumen este mecanismo
 
 No duplicar aquí reglas de auth, app state o networking. Esta skill solo define cómo introducir Preferences DataStore con una frontera limpia.

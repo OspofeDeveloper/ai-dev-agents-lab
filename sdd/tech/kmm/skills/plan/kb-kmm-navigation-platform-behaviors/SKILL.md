@@ -20,9 +20,9 @@ No define:
 
 Para esos temas, delegar en:
 - `kb-kmm-navigation-contracts`
-- `kb-kmm-navigation-viewmodel-events`
+- `kb-plan-kmm-navigation-viewmodel-events`
 - `kb-kmm-navigation-compose`
-- `kb-koin` si aplica
+- `kb-plan-koin` si aplica
 
 ## Regla 1: BackHandler es un comportamiento de plataforma, no una regla de grafo
 El uso de `BackHandler` pertenece a la integración con el host y al ciclo de vida de la pantalla. No debe modelarse como si fuera parte del contrato del grafo.
