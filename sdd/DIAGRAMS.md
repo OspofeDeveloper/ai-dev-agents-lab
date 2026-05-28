@@ -58,6 +58,7 @@ flowchart LR
     end
 
     subgraph DESIGN["Design"]
+        D0["DESIGN_BRIEF.md (gate)"]
         D1["DESIGN.md"]
         D2["Flows, views, prompt Stitch"]
     end

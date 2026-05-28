@@ -1,7 +1,7 @@
 ---
 name: kb-design-expert
 description: Base de conocimiento para convertir Specs SDD en contratos de diseno reutilizables para prototipado visual y generacion de vistas con Stitch. Define que debe contener un DESIGN.md, como derivar flujos y vistas desde un _spec.md, y como mantener separadas las decisiones funcionales, visuales y tecnicas. Activa en frases como "crea el DESIGN.md", "prepara el diseno desde el spec", "como genero vistas para Stitch", "que debe llevar el contrato visual", "revisa este DESIGN.md". No activa para redactar Specs (kb-spec-expert), para planificar implementacion KMM (kb-plan-expert) ni para trocear tasks (kb-tasks-expert).
-argument-hint: "[feature_spec.md | DESIGN.md | duda_sobre_diseno]"
+argument-hint: "(cargada automaticamente por workflows y agentes de design)"
 effort: high
 allowed-tools: [Read]
 user-invocable: false
@@ -45,6 +45,7 @@ La fase `design` produce dos niveles de artefactos:
 
 ### Nivel producto
 
+- `DESIGN_BRIEF.md`
 - `DESIGN.md`
 
 ### Nivel feature
@@ -54,6 +55,7 @@ La fase `design` produce dos niveles de artefactos:
 - `<feature>_ui_prompt.md`
 
 Responsabilidad de cada uno:
+- `DESIGN_BRIEF.md`: direccion visual base, policy de autonomia y tradeoffs antes de derivar el sistema visual
 - `DESIGN.md`: identidad visual persistente y tokens
 - `*_flows.md`: secuencia de pasos, precondiciones y transiciones de navegacion
 - `*_views.md`: contrato canonico de pantallas, componentes, acciones y estados visuales
@@ -71,16 +73,20 @@ Prueba de trazabilidad:
 
 Esto incluye **condiciones de visibilidad y comportamiento condicional de elementos UI**: si el spec no dice explicitamente que un elemento debe ocultarse o mostrarse bajo cierta condicion, no introduzcas esa condicion en `*_views.md`. Las condiciones de UI no trazables al spec son comportamiento inventado.
 
-## Regla 5: Flujos primero, estilo despues
+## Regla 5: Direccion de producto primero, artefactos de feature despues
 
 El orden correcto es:
 
-1. derivar flujos desde el spec
-2. listar vistas y estados
-3. aplicar el sistema visual de `DESIGN.md`
-4. componer el prompt para Stitch
+1. cerrar `DESIGN_BRIEF.md` si hace falta
+2. derivar o actualizar `DESIGN.md` a nivel producto
+3. derivar flujos desde el spec
+4. listar vistas y estados
+5. componer el prompt para Stitch
 
-No empieces por colores, gradientes o componentes si aun no esta cerrada la estructura de pantallas.
+Implicaciones:
+- no empieces a derivar pantallas de feature sin haber fijado antes la direccion visual de producto
+- no empieces por colores, gradientes o componentes de una pantalla si aun no esta cerrada su estructura funcional
+- `DESIGN_BRIEF.md` y `DESIGN.md` pertenecen al nivel producto; `flows`, `views` y `ui_prompt` pertenecen al nivel feature
 
 ## Regla 6: DESIGN.md sigue el formato abierto de Google con orden estable
 
@@ -104,7 +110,8 @@ Los tokens son los valores normativos. El markdown explica intencion, tono y reg
 - `## Visual Personality` → despues de `## Overview`, antes de `## Colors`
 - `## Accessibility` → despues de `## Components`, antes de `## Motion & Micro-interactions`
 - `## Motion & Micro-interactions` → despues de `## Accessibility`, antes de `## Reference Apps`
-- `## Reference Apps` → despues de `## Motion`, antes de `## Do's and Don'ts`
+- `## Reference Apps` → despues de `## Motion`, antes de `## Voice & Microcopy`
+- `## Voice & Microcopy` → despues de `## Reference Apps`, antes de `## Do's and Don'ts`
 
 **Token types validos:**
 - `colors`: hex `"#RRGGBB"` en sRGB
@@ -203,30 +210,47 @@ Por eso `design` debe dejar explicitado:
 
 Si un detalle visual afecta a navegacion, validacion o estructura de estado, debe quedar escrito en `*_views.md`, no solo en Stitch.
 
-## Regla 11: Visual Personality es obligatorio en todo DESIGN.md
+## Regla 11: Visual Personality es obligatorio y estructurado en todo DESIGN.md
 
 `DESIGN.md` debe incluir la seccion `## Visual Personality` y su bloque `visual_personality:` en el frontmatter YAML. Sin esta seccion, el agente y Stitch no tienen un norte de caracter visual y el output es generico.
+
+La eleccion de estilo se rige por `kb-design-style-taxonomy`. No uses etiquetas vagas como unica decision normativa.
 
 **En el frontmatter:**
 ```yaml
 visual_personality:
+  style_family: productive-minimal
+  secondary_family: depth-material
+  density: medium
+  depth: low
+  typography_mode: utilitarian
+  color_energy: low
+  motion_level: low
   adjectives:
     - adjetivo_1: implicacion concreta en UI
     - adjetivo_2: implicacion concreta en UI
-  anti_adjectives:
+  anti_patterns:
     - evitar_1
     - evitar_2
 ```
 
+Campos:
+- `style_family`: familia principal cerrada, elegida segun `kb-design-style-taxonomy`
+- `secondary_family`: opcional, solo si ayuda a matizar sin mezclar direcciones incompatibles
+- `density`, `depth`, `typography_mode`, `color_energy`, `motion_level`: usar exclusivamente los valores validos y reglas de `kb-design-style-taxonomy`
+- `adjectives`: 5-7 adjetivos con implicacion concreta
+- `anti_patterns`: 2-4 resultados visuales a evitar
+
 **En la seccion markdown:**
 - 5-7 adjetivos de marca con su implicacion concreta en decisiones de UI (no basta listar el adjetivo sin la implicacion)
-- 2-3 anti-adjetivos: lo que este sistema visual explicitamente NO es, con el comportamiento concreto a evitar
+- 2-4 anti-patrones: lo que este sistema visual explicitamente NO es, con el comportamiento concreto a evitar
+- explicacion breve de por que la `style_family` elegida encaja con el producto, actor y tarea dominante
 
 **Como derivar los adjetivos:**
 - Del PRD: nombre del producto, vision, audiencia objetivo y diferenciadores
 - Del spec: contexto de uso (frecuencia, urgencia, tipo de datos), tipo de tarea del actor
 
-Si no hay PRD disponible, derivar desde el spec: un spec de finanzas personales con foco en velocidad operativa y legibilidad numerica conduce a adjetivos como "utilitario", "confiable", "veloz". Un spec de fitness con gamificacion conduce a "energetico", "motivador", "visual".
+Si no hay PRD disponible, derivar desde el spec: un spec de finanzas personales con foco en velocidad operativa y legibilidad numerica conduce a una familia `productive-minimal` con `typography_mode: utilitarian`. Un spec de fitness con gamificacion suele conducir a `expressive-modern` con `color_energy: high` y `motion_level: medium`.
 
 ## Regla 12: Reference Apps es obligatorio en todo DESIGN.md
 
@@ -240,3 +264,227 @@ Si no hay PRD disponible, derivar desde el spec: un spec de finanzas personales 
 Las referencias se obtienen via web research en el `wf-design-system` antes de delegar al agente. Si no hay research disponible, marcar la seccion con `[DESIGN_GAP: investigar apps de referencia en la categoria <nombre_categoria>]` en lugar de inventar referencias.
 
 Un DESIGN.md sin Reference Apps obliga a Stitch a generar el estilo sin norte → resultado amateur. Una referencia concreta ("tomar de Revolut la densidad de informacion en listas y la tipografia numerica prominente") guia al generador hacia decisiones profesionales.
+
+## Regla 13: Selecciona una familia de estilo antes de derivar tokens
+
+Antes de elegir colores, tipografia, radios o componentes, decide la familia visual base siguiendo `kb-design-style-taxonomy`.
+
+Orden correcto:
+1. contexto de producto y actor
+2. `style_family` y perfil estructurado de `visual_personality`
+3. apps de referencia
+4. tokens y componentes
+
+Si el documento salta directamente a tokens sin haber fijado `style_family`, la direccion visual queda infraespecificada y tendera a lo generico.
+
+## Regla 14: DESIGN.md materializa el brief, no lo reabre
+
+Cuando exista `DESIGN_BRIEF.md`, `DESIGN.md` debe materializar sus decisiones cerradas. No reabras variables ya fijadas en el brief salvo contradiccion clara con spec o PRD.
+
+La jerarquia de fuentes y el listado de variables gobernadas por el brief son SSoT de `kb-design-brief` Regla 10. Cuando aqui se diga "el brief manda", se entiende segun esa regla.
+
+Implicacion practica para el agente:
+- Si `DESIGN.md` propuesto contradice el brief, el agente lo corrige antes de escribir.
+- Si la contradiccion procede del spec o el PRD, el agente la senala como `DESIGN_GAP` en lugar de decidir unilateralmente.
+
+## Regla 15: Politica de evolucion del sistema visual
+
+`DESIGN.md` es de producto y persistente. Cuando llega una segunda feature (o sucesivas), el sistema visual se acumula, no se reescribe.
+
+Distincion obligatoria:
+
+- **Extender**: anadir tokens, componentes o estados nuevos que no existian. Esta permitido siempre que no choquen con los existentes. La regeneracion via `wf-design-system` debe preservar lo previo.
+- **Mutar**: cambiar valor de un token, redefinir un componente o eliminar una decision ya escrita. Requiere proceso explicito.
+
+Reglas de mutacion:
+
+1. Una regeneracion via `wf-design-system` **no debe mutar tokens existentes silenciosamente**. Si detecta una mutacion necesaria (ej. el nuevo feature obliga a un radio mayor por accesibilidad), debe marcarla como `DESIGN_GAP` y proponerla en el rationale.
+2. Las mutaciones intencionales se canalizan via `wf-design-delta analyze | apply`, no por regeneracion completa.
+3. Si el `DESIGN_BRIEF.md` cambia (cambia `style_family`, `clarity_vs_brand`, etc.), eso es por definicion una mutacion del sistema: usar `wf-design-delta` y documentar la razon.
+4. Toda mutacion aplicada debe dejar traza en la seccion `## Changelog` del `DESIGN.md` con `[feature: <id>] <que cambio y por que>`.
+
+Anti-patron: regenerar `DESIGN.md` con una segunda feature como spec de entrada y dejar que el agente "actualice" valores sin avisar. El cliente pierde la trazabilidad y los componentes implementados rompen.
+
+## Regla 16: Componentes deben declarar todos los estados aplicables
+
+Cualquier componente interactivo declarado en `DESIGN.md` o referenciado en `*_views.md` debe enumerar todos los estados que aplican a su tipologia. Esta es la causa mas comun de regresiones visuales en dev.
+
+Estados base por tipo:
+
+- **Interactivos (button, link, tab, toggle, checkbox, radio, switch)**: `default`, `hover` (solo si target_platforms incluye Web/desktop), `focus-visible`, `active` (pressed), `disabled`, `loading` (si aplica accion async), `selected` (si aplica multi-estado).
+- **Inputs (text-input, textarea, select, date-picker, file-picker)**: `default`, `focus`, `filled`, `valid`, `invalid`, `disabled`, `read-only`. Adicionales: `loading` si valida async.
+- **Contenedores con estado (card, list-item, accordion)**: `default`, `hover` (si interactivo), `selected`, `disabled`, `loading`, `expanded`/`collapsed` (si aplica).
+- **Indicadores (badge, tag, chip)**: `default`, `selected`, `removable` (si aplica), `disabled`.
+- **Vistas grandes (page, sheet, modal, drawer)**: `entering`, `default`, `exiting`. Para pantallas con datos: ver Regla 19.
+
+Reglas comunes:
+
+1. Si un estado aplica al componente segun esta tabla y no se declara, `wf-design-validate` lo marca como `[ALTO]`.
+2. Cada estado declarado debe tener decisiones visuales concretas (color, opacity, border, motion). Estado sin decision es decoracion vacia.
+3. La omision intencional de un estado (`disabled` no aplica porque el boton siempre esta activo en esa vista) debe documentarse con `# N/A: <razon>`.
+
+Anti-patron: declarar solo `default` y dejar que dev "improvise" los demas. El producto saldra inconsistente.
+
+## Regla 17: Type scale completa y obligatoria
+
+`DESIGN.md` debe declarar una type scale completa en el frontmatter YAML, no solo `font-family`. Sin scale, cada feature inventa sus tamanos.
+
+Roles minimos obligatorios:
+
+- `display`: tamano hero (40-72px segun densidad), uso en empty states, landing, milestones.
+- `h1`/`h2`/`h3`: jerarquia de pantalla. Como minimo dos niveles, idealmente tres.
+- `body`: texto base de lectura (14-17px segun densidad).
+- `body-sm`: secundario (12-14px).
+- `label`: etiquetas de campo, botones, tags (11-13px, normalmente medium weight).
+- `caption`: metadata, helper text (10-12px).
+- `code` (si aplica): tipografia monoespaciada para contenido tecnico.
+
+Cada rol declara:
+
+- `size` (px o rem)
+- `line-height` (numero o px)
+- `font-weight` (numerico: 400, 500, 600, 700)
+- `letter-spacing` (px, normalmente negativo en displays grandes y positivo en labels)
+- `text-transform` si aplica (uppercase en labels operativos, none en el resto)
+
+`typography_mode` del brief sugiere la familia de fuentes y el peso base:
+
+- `utilitarian`: family Inter/IBM Plex/SF Pro, weight base 400, labels en 500.
+- `neutral-humanist`: family Inter/Geist/SF Pro, contrastes de peso suaves.
+- `brand-forward`: dos fuentes (display custom + body neutral), pesos contrastados.
+- `editorial`: serif para display y h1-h2, sans para body.
+
+Anti-patron: declarar solo "tipografia Inter 16px" y permitir que cada vista invente jerarquia. El producto pierde jerarquia visual.
+
+## Regla 18: Color modes declarados
+
+`DESIGN.md` debe declarar al menos modo `light` y modo `dark`. El modo `high-contrast` es opcional pero recomendado si `accessibility_target: AAA`.
+
+Estructura de tokens de color en el frontmatter:
+
+```yaml
+colors:
+  light:
+    background: <token o valor>
+    surface: <token o valor>
+    surface-elevated: <token o valor>
+    on-background: <texto sobre background>
+    on-surface: <texto sobre surface>
+    primary: <token o valor>
+    on-primary: <texto sobre primary>
+    border: <token o valor>
+    success: <token o valor>
+    warning: <token o valor>
+    error: <token o valor>
+    info: <token o valor>
+  dark:
+    background: <...>
+    surface: <...>
+    # ... mismas claves que light
+```
+
+Reglas:
+
+1. Cada token de color en `light` tiene su equivalente en `dark`. Faltar uno es `DESIGN_GAP`.
+2. Cada par foreground/background (ej. `on-primary` sobre `primary`) cumple el ratio de contraste del `accessibility_target` del brief. Esto lo verifica `wf-design-a11y-audit`.
+3. Modo `dark` no es invertir colores literalmente: redefine surface, on-surface y elevation para preservar legibilidad. Usar superficies cercanas a negro puro (#0E0E10) en lugar de #000 plano.
+4. La politica de seleccion de modo (automatica via system, manual via toggle, fija) se documenta en `## Color Modes` del markdown.
+
+Anti-patron: declarar solo `light` y dejar dark mode como "lo hara el dev". Resultado: dark mode roto en produccion.
+
+## Regla 19: Estados de vista declarados en `*_views.md`
+
+Cada `*_views.md` debe declarar, por cada vista, los estados que aplican:
+
+- `default` (con contenido normal cargado)
+- `loading` (mientras se obtienen datos)
+- `empty` (cuando no hay datos legitimos para mostrar)
+- `error` (cuando la carga o accion fallo)
+- `partial` (datos parciales o stale, si aplica)
+- `success` (confirmacion de accion, si aplica)
+
+Por cada estado declarado, especificar:
+
+- decision visual (que componentes aparecen, que se oculta, color/copy)
+- microcopy esperada (delegada a `kb-design-voice` cuando este disponible)
+- accion principal (si la hay): en `empty`, suele ser "crear el primer item"; en `error`, "reintentar"; en `success`, "continuar" o cierre automatico.
+
+Reglas:
+
+1. Una vista sin `empty` ni `error` declarados es validable solo si el spec garantiza que esos estados no pueden ocurrir (caso raro).
+2. `loading` que dura mas de 1s debe usar skeleton; menos, spinner inline.
+3. `empty` no es "lista vacia" silenciosa: debe orientar al usuario sobre que hacer.
+4. `error` no es "algo fallo": indica que paso, por que (si se sabe) y como recuperarse.
+
+Anti-patron: vista que solo declara `default` y deja `loading`/`empty`/`error` a improvisacion de dev. Estos estados son el 30% del tiempo real de uso del producto.
+
+## Regla 20: Cada vista declara microcopy minimo
+
+Cada `*_views.md` debe declarar la microcopy critica de la vista: label de accion primaria, copy de empty state, copy de error tipico y copy de loading si lleva texto. Las reglas de voz, tono, estructura de errores y glosario son SSoT de `kb-design-voice` — esta regla solo obliga a documentar la microcopy, no a inventarla.
+
+Implicacion:
+- `wf-design-validate` marca como `[ALTO]` una vista que tenga empty state declarado sin copy.
+- La voz no se redefine por vista; se hereda del `DESIGN.md`. Si una vista necesita desviar (raro), debe justificarse con `> Nota:`.
+
+## Regla 21: Formularios delegan a `kb-design-forms`
+
+Si una vista contiene un formulario, no redefinir patrones de form en `*_views.md`. La SSoT es `kb-design-forms`: layout (label/field/helper/error), validacion, estados de campo, multistep, autosave, conditional fields, file upload, submit.
+
+La vista declara:
+- Lista de campos en orden, con tipo, label, obligatoriedad y regla de validacion resumida.
+- CTA primaria del form con copy concreto.
+- Estados de form: editable, submitting, success, error.
+
+Patrones de campo, errores y validacion se asumen segun `kb-design-forms`. Cualquier desviacion debe justificarse.
+
+## Regla 22: Versionado semver del DESIGN.md
+
+`DESIGN.md` lleva en el frontmatter un campo `version: MAJOR.MINOR.PATCH` que sigue semver adaptado al sistema visual:
+
+- **MAJOR**: cambio que rompe trazabilidad o impacto visual significativo:
+  - cambia `style_family` o `secondary_family`
+  - cambia `clarity_vs_brand`
+  - cambia color primary, accent o esquema de modos (introducir dark mode donde no existia, eliminar light, etc.)
+  - elimina componentes ya en uso
+  - cambia tipografia principal
+- **MINOR**: extension compatible:
+  - anade tokens nuevos sin tocar existentes
+  - anade componentes nuevos
+  - anade estados a componentes existentes
+  - amplia type scale con nuevos roles
+  - anade modo de color (high-contrast donde no existia)
+- **PATCH**: ajuste fino sin impacto en consumidores:
+  - corrige valores de spacing en componentes
+  - actualiza copy de `Do's and Don'ts`
+  - corrige referencias rotas en tokens
+  - ajusta easing curves manteniendo el rol
+  - corrige errores tipograficos en el rationale
+
+Reglas de version:
+
+1. Toda regeneracion via `wf-design-system` o `wf-design-delta apply` debe actualizar la version segun el tipo de cambio mayor detectado.
+2. `wf-design-delta analyze` determina el version bump en su propuesta; el usuario puede sobreescribirlo en `apply`.
+3. La version en el frontmatter debe coincidir con la del ultimo entry de `## Changelog`.
+4. `wf-design-export` registra la version en el manifest de tokens para que el repo de codigo pueda detectar drift.
+
+Anti-patron: bumpear PATCH cuando se rompio trazabilidad. El equipo de codigo confiara en semver para decidir si su build necesita ajustes; si mientes con la version, romperas su CI.
+
+## Regla 23: Branch, delta e intake no son intercambiables
+
+Tres workflows tocan el sistema visual de forma incremental, cada uno con su proposito. No mezclar.
+
+- **`wf-design-intake`** se usa cuando cambian variables del **brief**: `style_family`, `clarity_vs_brand`, `voice_tone`, `autonomy_policy`, `target_platforms`, `accessibility_target`. Implica que la direccion del producto se redefine y todo lo que viene aguas abajo (DESIGN.md, views, ui_prompt) debe revisarse.
+- **`wf-design-delta`** se usa cuando cambian **tokens, componentes o secciones del DESIGN.md** sin tocar el brief. La direccion del producto se mantiene; solo se ajusta como se materializa. Mutaciones requieren `analyze` + `apply` para preservar trazabilidad y bump de version coherente.
+- **`wf-design-branch`** se usa cuando se quiere **explorar** una variante sin comprometer `DESIGN.md`. La exploracion puede terminar mergeando, descartandose o quedando viva como referencia. No es production-ready hasta merge.
+- **`wf-design-variant`** se usa cuando se quieren **comparar A/B** variantes de una feature concreta, no del sistema completo. Una variant es feature-scoped; un branch es system-scoped.
+
+Decision tree:
+- ¿Cambia el brief? → `wf-design-intake`.
+- ¿Cambia el sistema visual sin tocar brief? → `wf-design-delta`.
+- ¿Quiero explorar sin tocar production? → `wf-design-branch`.
+- ¿Quiero A/B una feature concreta? → `wf-design-variant`.
+
+Anti-patrones:
+- Usar `branch` para evitar `intake` cuando el brief debe cambiar (acabas con branches que en realidad son productos distintos).
+- Usar `delta` para introducir cambios que rompen `style_family` (eso es brief, no delta; resultado: trazabilidad rota).
+- Usar `variant` para experimentar funcionalidad (eso es spec, no design).

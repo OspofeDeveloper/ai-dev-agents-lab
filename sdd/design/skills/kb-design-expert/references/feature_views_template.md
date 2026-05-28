@@ -25,17 +25,28 @@ Reglas de contenido:
 
 ### Componentes obligatorios
 
-- Componente 1
+- Componente 1 — referencia a `DESIGN.md > Components > <nombre>`, con estados aplicables explicitos (default, focus, disabled, loading, etc. — ver Regla 16 de `kb-design-expert`).
 - Componente 2
 - Componente 3
 
-### Estados a generar
+### Estados de vista (Regla 19 de kb-design-expert)
 
-- Default
-- Loading
-- Empty
-- Error
-- Success
+Por cada estado declarado, especificar: que se muestra, microcopy esperada y accion principal si aplica. Si un estado no aplica, marcar `# N/A: <razon>`.
+
+- **Default**: <que componentes aparecen con contenido normal>
+- **Loading**: <skeleton si dura > 1s; spinner inline si menor; que zonas se cubren>
+- **Empty**: <copy orientativo + accion principal "crear primer item" o equivalente — no dejar vacio silencioso>
+- **Error**: <que paso + por que si se sabe + como recuperarse; CTA "reintentar" cuando aplique>
+- **Partial** (si aplica): <datos parciales o stale, como se senala al usuario>
+- **Success** (si aplica): <confirmacion visual + duracion + transicion al estado siguiente>
+
+### Microcopy minimo (Regla 20 de kb-design-expert)
+
+Documentar la microcopy clave de la vista: label de accion primaria, copy de empty state, copy de error tipico, label de loading si tiene texto. Las reglas de tono viven en `kb-design-voice`.
+
+- **Accion primaria**: "<copy>"
+- **Empty state**: "<copy>"
+- **Error tipico**: "<copy>"
 
 ### Notas de layout
 

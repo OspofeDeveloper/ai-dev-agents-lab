@@ -4,7 +4,6 @@ description: Base de conocimiento de accesibilidad mobile. Mapea WCAG 2.2 a cont
 argument-hint: "(cargada automaticamente por agentes de design y plan)"
 effort: low
 allowed-tools: [Read]
-context: fork
 user-invocable: false
 ---
 

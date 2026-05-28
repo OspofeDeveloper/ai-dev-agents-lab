@@ -1,7 +1,7 @@
 ---
 name: wf-design-feature-prototype
-description: Orquestador SDD para derivar artefactos de prototipado visual de una feature a partir de su _spec.md y un DESIGN.md. Genera flows, views y prompt para Stitch listos para contrastar con cliente antes del plan tecnico. Activa en frases como "genera las vistas para Stitch", "crea el prototipo de la feature", "prepara flows y prompt de diseno", "deriva las pantallas desde el spec". No activa para modificar el spec, ni para generar plan o tasks.
-argument-hint: "generate <feature_spec.md> [--design-file DESIGN.md]"
+description: Orquestador SDD para derivar artefactos de prototipado visual de una feature a partir de su _spec.md, un DESIGN.md y, si existe, un DESIGN_BRIEF.md. Genera flows, views y prompt para Stitch listos para contrastar con cliente antes del plan tecnico. Activa en frases como "genera las vistas para Stitch", "crea el prototipo de la feature", "prepara flows y prompt de diseno", "deriva las pantallas desde el spec". No activa para modificar el spec, ni para generar plan o tasks.
+argument-hint: "generate <feature_spec.md> [--design-file DESIGN.md] [--brief DESIGN_BRIEF.md] [--no-brief]"
 effort: high
 allowed-tools: [Read, Write, Bash, Agent]
 context: fork
@@ -18,9 +18,11 @@ Extrae de `$ARGUMENTS`:
 - **Modo**: la primera palabra (solo `generate` esta soportado)
 - **Path del spec**: primer argumento posicional
 - **Path de DESIGN.md** mediante `--design-file` opcional
+- **Path de DESIGN_BRIEF.md** mediante `--brief` opcional
+- **Override de brief** opcional mediante `--no-brief` (solo legacy o experimental)
 
 Si no hay argumento o el modo no es valido, informa:
-> "Uso: `/wf-design-feature-prototype generate <archivo_spec.md> [--design-file DESIGN.md]`"
+> "Uso: `/wf-design-feature-prototype generate <archivo_spec.md> [--design-file DESIGN.md] [--brief DESIGN_BRIEF.md] [--no-brief]`"
 
 ## Paso 2: Verificar el Spec
 
@@ -45,7 +47,20 @@ Si no existe, deten:
 
 Lee `DESIGN.md` completo.
 
-## Paso 4: Determinar outputs
+## Paso 3b: Resolver DESIGN_BRIEF.md (gate obligatorio)
+
+El `DESIGN_BRIEF.md` es precondicion salvo override explicito: la feature debe heredar la misma policy de autonomia, `clarity_vs_brand` y `accessibility_target` que el sistema visual.
+
+1. Si se pasa `--brief <path>`, leelo y continua.
+2. Si no, busca `DESIGN_BRIEF.md`:
+   - dos niveles arriba si el spec esta en `features/<nombre>/`
+   - en el mismo directorio en otros casos
+3. Si existe, leelo completo y pasalo al agente como fuente prioritaria.
+4. Si **no existe** y **no se paso `--no-brief`**, deten el flujo con:
+   > "No hay `DESIGN_BRIEF.md`. Ejecuta primero `/wf-design-intake generate <feature_spec.md>` para fijar direccion y autonomia. Para saltar el intake (legacy o experimental), reintenta con `--no-brief`."
+5. Si se paso `--no-brief`, continua solo con `DESIGN.md` y deja documentada esta decision en el bundle resultante.
+
+## Paso 4: Determinar outputs y detectar features ya prototipadas
 
 En el mismo directorio del spec, crea:
 - `<feature>_flows.md`
@@ -54,9 +69,14 @@ En el mismo directorio del spec, crea:
 
 Donde `<feature>` es el nombre base del spec sin `_spec.md`.
 
+Antes de delegar, busca otras features ya prototipadas en el directorio hermano:
+- Lista `features/*/`* con `_views.md` y `_flows.md` existentes.
+- Si las hay, lee los `_views.md` y `_flows.md` de hasta 3 features previas (las mas recientes) y pasalos al agente para que aplique `kb-design-conflict-expert`.
+- Si es la primera feature del producto, no hace falta este chequeo.
+
 ## Paso 5: Delegar al agente design-architect
 
-Invoca al agente siguiendo la **Regla 3**, la **Regla 7**, la **Regla 8** y la **Regla 9** de `kb-design-expert`: `flows` describen secuencia y navegacion, `views` son la SSoT de la pantalla, y `ui_prompt` debe ensamblar sin volver a definir.
+Invoca al agente siguiendo la **Regla 3**, la **Regla 4**, la **Regla 7**, la **Regla 8**, la **Regla 9** y la **Regla 14** de `kb-design-expert`, mas la jerarquia de fuentes definida en `kb-design-brief` Regla 10: `flows` describen secuencia y navegacion, `views` son la SSoT de la pantalla, `ui_prompt` debe ensamblar sin volver a definir, y el brief gobierna las decisiones cerradas.
 
 Usa este prompt:
 
@@ -71,16 +91,28 @@ Contenido del DESIGN.md:
 ---
 <contenido_design>
 ---
+Contenido del DESIGN_BRIEF.md:
+---
+<contenido_brief_o_N/A>
+---
+Features ya prototipadas (views + flows resumidos, opcional):
+---
+<resumen_features_previas_o_N/A>
+---
 INSTRUCCION: produce tres artefactos separados y completos:
 1. <feature>_flows.md
 2. <feature>_views.md
 3. <feature>_ui_prompt.md
 
-Aplica las reglas de kb-design-expert que tienes en contexto:
+Si se pasan features previas, ejecuta tambien una revision de conflictos siguiendo `kb-design-conflict-expert` (Reglas 1-5). Si detectas conflictos, listalos al final del bundle con el formato de la Regla 6 y NO escribas artefactos hasta que el usuario decida; si son falsos positivos, declara `[POSIBLE-CONFLICTO-DESIGN-XX]` segun Regla 7.
+
+Aplica las reglas de kb-design-expert y kb-design-brief que tienes en contexto:
 - Regla 4: cada vista debe trazar a HU/Journey/CA del spec — condiciones de UI no trazables son comportamiento inventado
 - Regla 7: flows capturan secuencia, precondiciones y transiciones — no estados visuales ni componentes
 - Regla 8: views son la SSoT de pantalla — solo decisiones, condiciones trazables al spec, dependencias cross-feature marcadas con [Dependencia: F-XXX]
 - Regla 9: ui_prompt ensambla sin redefinir — no copies tokens ni componentes de DESIGN.md
+- Regla 14: DESIGN.md y los artefactos de feature materializan el brief, no lo reabren (la jerarquia de fuentes vive en kb-design-brief Regla 10)
+- kb-design-brief: respetar `clarity_vs_brand`, `target_platforms`, `accessibility_target`, `autonomy_policy` y guardrails relevantes ya cerrados
 
 No inventes funcionalidad fuera del spec.
 Si faltan datos criticos, devuelve DESIGN_GAPs y no produzcas artefactos parciales.
@@ -103,4 +135,4 @@ Parsea la respuesta del agente usando el formato de bundle de `references/output
 - paths generados
 - total de vistas derivadas
 - siguiente paso recomendado:
-  > "Usa `<feature>_ui_prompt.md` junto con `DESIGN.md` en Stitch para generar las vistas y, tras validar con cliente, continua con `/wf-prepare-plan generate <feature_spec.md>`"
+  > "Usa `<feature>_ui_prompt.md` junto con `DESIGN.md` y `DESIGN_BRIEF.md` si existe en Stitch para generar las vistas y, tras validar con cliente, continua con `/wf-prepare-plan generate <feature_spec.md>`"

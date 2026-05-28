@@ -44,8 +44,13 @@ Si buscas mejor rendimiento y menos carga de contexto, instala y usa el `CLAUDE.
 | Actualizar un spec con requisitos nuevos (análisis) | `/wf-spec-delta` | `analyze <feature_spec.md> --new-reqs <description.md>` |
 | Aplicar un delta analysis a un spec | `/wf-spec-delta` | `apply <feature_spec.md> <delta_analysis.md>` |
 | Completar HUs incompletas (gaps respondidos en analysis) | `/wf-spec-gap-resolve` | `<feature_spec.md> [--analysis <path_analysis.md>]` |
-| Crear o actualizar el sistema visual del producto desde un feature spec | `/wf-design-system` | `generate <feature_spec.md> [--prd <prd.md>] [--design-file DESIGN.md]` |
-| Generar flows, views y prompt de ensamblaje para Stitch desde un feature spec | `/wf-design-feature-prototype` | `generate <feature_spec.md> [--design-file DESIGN.md]` |
+| Cerrar el brief visual y policy de autonomia del producto | `/wf-design-intake` | `generate <feature_spec.md> [--prd <prd.md>] [--output DESIGN_BRIEF.md] [--mode guided\|hybrid\|auto] [--preset <name>]` |
+| Descubrir apps de referencia con research validado por el usuario | `/wf-design-discover` | `<feature_spec.md> [--prd <prd.md>] [--brief <DESIGN_BRIEF.md>] [--output <path>] [--mode interactive\|auto]` |
+| Crear o actualizar el sistema visual del producto desde un feature spec | `/wf-design-system` | `generate <feature_spec.md> [--prd <prd.md>] [--brief <DESIGN_BRIEF.md>] [--design-file DESIGN.md] [--no-brief]` |
+| Auditar un DESIGN.md existente sin regenerarlo | `/wf-design-validate` | `<DESIGN.md> [--brief <DESIGN_BRIEF.md>] [--strict]` |
+| Analizar cambios sobre un DESIGN.md existente | `/wf-design-delta` | `analyze <DESIGN.md> --new-reqs <cambios.md> [--brief <DESIGN_BRIEF.md>]` |
+| Aplicar un delta analysis a un DESIGN.md | `/wf-design-delta` | `apply <DESIGN.md> <design_delta_analysis.md>` |
+| Generar flows, views y prompt de ensamblaje para Stitch desde un feature spec | `/wf-design-feature-prototype` | `generate <feature_spec.md> [--design-file DESIGN.md] [--brief <DESIGN_BRIEF.md>] [--no-brief]` |
 | Generar el plan técnico desde un spec | `/wf-prepare-plan` | `generate <spec.md>` |
 | Generar las tasks desde un plan | `/wf-prepare-tasks` | `generate <plan.md>` |
 
@@ -111,9 +116,15 @@ _features.md (PROJECT HUB incremental: index + trazabilidad RF→HU→Feature + 
     ↓ [/wf-spec-conflict]
     ↓ [/wf-spec-readiness]
 _readiness_report.md (estado + orden de implementación)
-    ↓ [/wf-design-system generate — por producto, usando un feature spec válido]
+    ↓ [/wf-design-intake generate — cierra brief de producto, gate obligatorio]
+DESIGN_BRIEF.md
+    ↓ [/wf-design-discover — opcional, research validado por usuario]
+features/<nombre>/<nombre>_design_discovery.md
+    ↓ [/wf-design-system generate — por producto, requiere brief]
 DESIGN.md
-    ↓ [/wf-design-feature-prototype generate — por feature]
+    ↓ [/wf-design-validate — opcional, audita sin regenerar]
+    ↓ [/wf-design-delta — para evoluciones incrementales del DESIGN.md]
+    ↓ [/wf-design-feature-prototype generate — por feature, requiere brief y DESIGN.md]
 features/<nombre>/<nombre>_flows.md
 features/<nombre>/<nombre>_views.md
 features/<nombre>/<nombre>_ui_prompt.md
@@ -135,7 +146,9 @@ features/<nombre>/<nombre>_tasks.md
 > Si el discovery identifica más de 5 features y el usuario no ha pedido un subset, el flujo recomendado es iterar con `--features ...`. Solo usar `--all-features` como override explícito.
 > Para cambios post-spec: `/wf-spec-delta analyze <spec.md> --new-reqs <cambios.md>`
 > Para completar HUs `[INCOMPLETO]` con respuestas ya escritas en `_analysis.md`: `/wf-spec-gap-resolve <spec.md>`
-> Para prototipado visual desde Specs listos: primero `/wf-design-system generate <feature_spec.md>` y luego `/wf-design-feature-prototype generate <feature_spec.md>`.
+> Para prototipado visual desde Specs listos: primero `/wf-design-intake generate <feature_spec.md>` (gate obligatorio), luego opcionalmente `/wf-design-discover`, después `/wf-design-system generate <feature_spec.md> --brief DESIGN_BRIEF.md` y finalmente `/wf-design-feature-prototype generate <feature_spec.md> --brief DESIGN_BRIEF.md`.
+> Para auditar un `DESIGN.md` editado manualmente: `/wf-design-validate <DESIGN.md>`.
+> Para cambios incrementales en `DESIGN.md`: `/wf-design-delta analyze <DESIGN.md> --new-reqs <cambios.md>`.
 > En la salida de Design: `flows` = secuencias y transiciones; `views` = SSoT de pantallas y estados visuales; `ui_prompt` = ensamblaje para Stitch.
 > Para cambios de producto (scope, prioridad, exclusiones): primero `/wf-prd-change`, luego `/wf-prd-sync-impact` y `/wf-spec-sync-from-prd`.
 > Tras `/wf-prepare-tasks`, cada task debe delegarse al `Owner agent` indicado en el `_tasks.md`.
