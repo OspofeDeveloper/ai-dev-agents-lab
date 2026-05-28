@@ -1,24 +1,27 @@
 #!/bin/bash
 # install.sh — Distribuye templates y despliega el ecosistema SDD al .claude del proyecto
-# Ejecutar desde el directorio sdd/: bash install.sh [all|prd|spec|design]
+# Ejecutar desde el directorio sdd/: bash install.sh [all|prd|spec|design|plan|tasks]
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SHARED_DIR="$SCRIPT_DIR/spec/shared/templates"
 CLAUDE_DIR="$(pwd)/.claude"
+KMM_DIR="$SCRIPT_DIR/tech/kmm"
 INSTALL_TARGET="${1:-all}"
 
 usage() {
-  echo "Uso: bash install.sh [all|prd|spec|design]"
+  echo "Uso: bash install.sh [all|prd|spec|design|plan|tasks]"
   echo "  all (por defecto): instala el ecosistema SDD completo"
   echo "  prd: instala solo agentes, skills y CLAUDE.md relacionados con PRD"
   echo "  spec: instala solo agentes, skills y CLAUDE.md relacionados con Spec"
   echo "  design: instala solo agentes, skills y CLAUDE.md relacionados con Design"
+  echo "  plan: instala solo agentes, skills y CLAUDE.md relacionados con Plan"
+  echo "  tasks: instala solo agentes, skills y CLAUDE.md relacionados con Tasks"
 }
 
 case "$INSTALL_TARGET" in
-  all|prd|spec|design)
+  all|prd|spec|design|plan|tasks)
     ;;
   -h|--help|help)
     usage
@@ -77,6 +80,11 @@ elif [ "$INSTALL_TARGET" = "spec" ]; then
   install_agent "$SCRIPT_DIR/spec/agents/sdd-spec-auditor.md"
 elif [ "$INSTALL_TARGET" = "design" ]; then
   install_agent "$SCRIPT_DIR/design/agents/design-architect.md"
+elif [ "$INSTALL_TARGET" = "plan" ]; then
+  install_agent "$SCRIPT_DIR/plan/agents/plan-architect.md"
+  install_agent "$SCRIPT_DIR/plan/agents/plan-auditor.md"
+elif [ "$INSTALL_TARGET" = "tasks" ]; then
+  install_agent "$SCRIPT_DIR/tasks/agents/task-generator.md"
 else
   install_agent "$SCRIPT_DIR/prd/agents/prd-expert.md"
   install_agent "$SCRIPT_DIR/spec/agents/sdd-spec-explorer.md"
@@ -103,7 +111,7 @@ install_skill() {
   fi
   rm -rf "$CLAUDE_DIR/skills/$name"
   mkdir -p "$CLAUDE_DIR/skills/$name"
-  find "$src_dir" -not -name "README.md" -not -type d | while read -r file; do
+  find "$src_dir" -not -name "README.md" -not -name ".DS_Store" -not -type d | while read -r file; do
     rel="${file#"$src_dir/"}"
     dest="$CLAUDE_DIR/skills/$name/$rel"
     mkdir -p "$(dirname "$dest")"
@@ -131,6 +139,27 @@ elif [ "$INSTALL_TARGET" = "design" ]; then
   for skill_dir in "$SCRIPT_DIR/design/skills"/*/; do
     install_skill "$skill_dir"
   done
+elif [ "$INSTALL_TARGET" = "plan" ]; then
+  install_skill "$SCRIPT_DIR/spec/skills/kb-spec-expert"
+  install_skill "$SCRIPT_DIR/design/skills/kb-a11y-expert"
+
+  for skill_dir in "$SCRIPT_DIR/plan/skills"/*/; do
+    install_skill "$skill_dir"
+  done
+
+  for skill_dir in "$KMM_DIR/skills/plan"/*/; do
+    install_skill "$skill_dir"
+  done
+elif [ "$INSTALL_TARGET" = "tasks" ]; then
+  install_skill "$SCRIPT_DIR/plan/skills/kb-plan-expert"
+
+  for skill_dir in "$SCRIPT_DIR/tasks/skills"/*/; do
+    install_skill "$skill_dir"
+  done
+
+  for skill_dir in "$KMM_DIR/skills/plan"/*/; do
+    install_skill "$skill_dir"
+  done
 else
   for skill_dir in "$SCRIPT_DIR/prd/skills"/*/; do
     install_skill "$skill_dir"
@@ -151,6 +180,14 @@ else
   for skill_dir in "$SCRIPT_DIR/tasks/skills"/*/; do
     install_skill "$skill_dir"
   done
+
+  for skill_dir in "$KMM_DIR/skills/plan"/*/; do
+    install_skill "$skill_dir"
+  done
+
+  for skill_dir in "$KMM_DIR/skills/tasks"/*/; do
+    install_skill "$skill_dir"
+  done
 fi
 
 # ── 4. Instalar CLAUDE.md ─────────────────────────────────────────────────
@@ -163,6 +200,10 @@ elif [ "$INSTALL_TARGET" = "spec" ]; then
   cp "$SCRIPT_DIR/spec/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
 elif [ "$INSTALL_TARGET" = "design" ]; then
   cp "$SCRIPT_DIR/design/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
+elif [ "$INSTALL_TARGET" = "plan" ]; then
+  cp "$SCRIPT_DIR/plan/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
+elif [ "$INSTALL_TARGET" = "tasks" ]; then
+  cp "$SCRIPT_DIR/tasks/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
 else
   cp "$SCRIPT_DIR/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
 fi

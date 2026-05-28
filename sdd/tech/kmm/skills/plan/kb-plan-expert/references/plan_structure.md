@@ -13,7 +13,7 @@ Usa esta estructura para producir un Plan válido. Todos los campos marcados `[o
 > **Change ref:** [CR-XXX | N/A]
 > **Status sync:** [in_sync | needs_review | stale | unknown]
 > **Fecha:** [YYYY-MM-DD]
-> **Estado:** BORRADOR
+> **Estado:** [BORRADOR | VALIDADO]
 
 ---
 
@@ -119,6 +119,25 @@ NombreUiEvent:
 
 ---
 
+## Handoff desde Design [obligatorio si aplica]
+
+### Artefactos usados
+
+| Artefacto | Path | Uso en el Plan |
+|---|---|---|
+| `DESIGN.md` | `/path/DESIGN.md` | Sistema visual, accesibilidad, constraints de UI |
+| `<feature>_flows.md` | `/path/<feature>_flows.md` | Journeys, transiciones, ownership de navegación |
+| `<feature>_views.md` | `/path/<feature>_views.md` | Pantallas, estados, notas a11y y comportamiento visual |
+
+### Decisiones materializadas
+
+- Navegación o shell afectados: [sí/no + detalle]
+- Semantic primitives / accesibilidad técnica: [detalle]
+- Dependencias de plataforma derivadas del diseño: [ninguna | detalle]
+- Contradicciones con design: [ninguna | lista como `DESIGN_GAP`]
+
+---
+
 ## Expect/Actual [omitir esta sección si no aplica]
 
 | API | commonMain (expect) | androidMain | iosMain |
@@ -136,5 +155,8 @@ NombreUiEvent:
 | CA-003: [descripción breve] | — | ✗ sin cobertura → [TECH_GAP] |
 
 **CAs sin cobertura:** [ninguno | lista aquí los gaps]
+**DESIGN_GAPs:** [ninguno | descripción de cada gap de design que bloquea el plan]
 **TECH_GAPs:** [ninguno | descripción de cada gap que bloquea el plan]
+**TRACE_GAPs:** [ninguno | descripción de cada gap de trazabilidad que bloquea el plan]
+**PLAN_GAPs:** [ninguno | descripción de cada gap estructural del plan]
 ```

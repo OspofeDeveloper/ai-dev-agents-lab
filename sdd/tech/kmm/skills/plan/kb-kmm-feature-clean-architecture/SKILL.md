@@ -78,9 +78,9 @@ La capa `presentation` contiene la representación de pantalla y su coordinació
 En este proyecto, cuando existe un ViewModel de pantalla, la convención preferida es:
 
 - `<Pantalla>State` como estado de pantalla
-- `<Pantalla>Intent` como eventos de entrada UI -> ViewModel
-- `<Pantalla>Events` como efectos de salida ViewModel -> UI
-- `fun onEvent(intent: <Pantalla>Intent)` como único punto de entrada del ViewModel
+- `<Pantalla>Intent` como acciones de entrada UI -> ViewModel
+- `<Pantalla>Events` como efectos de salida one-shot ViewModel -> UI, emitidos siempre por `Channel`
+- `fun onIntent(intent: <Pantalla>Intent)` como único punto de entrada del ViewModel
 
 Si el estado se mantiene directamente en el ViewModel, la forma preferida es `var state by mutableStateOf(...)` con `private set`.
 
@@ -289,6 +289,6 @@ Si una regla depende de Koin, Ktor, SQLDelight o cualquier otra librería, no pe
 ## Checklist antes de cerrar
 
 - ¿La pantalla con ViewModel usa `presentation/<pantalla>/viewmodel/` como ubicación preferida?
-- ¿El ViewModel expone `onEvent(intent)` como único punto de entrada?
+- ¿El ViewModel expone `onIntent(intent)` como único punto de entrada?
 - ¿El estado de pantalla usa `<Pantalla>State` y no un naming genérico inconsistente con la convención del proyecto?
 - ¿La capa `presentation` evita mezclar DTOs, data sources o detalles de infraestructura?

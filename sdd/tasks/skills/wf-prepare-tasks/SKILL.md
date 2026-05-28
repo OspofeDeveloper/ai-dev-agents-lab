@@ -1,6 +1,6 @@
 ---
 name: wf-prepare-tasks
-description: Orquestador SDD para transformar Planes técnicos KMM en Tasks de implementación. Úsalo cuando tengas un _plan.md validado y quieras generar el listado de tasks para delegar a agentes KMM especializados. Activa en frases como "genera las tasks del plan", "trocéa el plan en tasks", "crea el listado de implementación", "prepara las tasks para", "¿qué tasks tengo que hacer?". No activa para generar Specs (usa wf-spec-analyze) ni para generar Planes (usa wf-prepare-plan).
+description: Orquestador SDD para transformar Planes técnicos KMM validados en Tasks de implementación. Úsalo cuando tengas un _plan.md validado y quieras generar el listado de tasks para delegar a agentes KMM especializados. Activa en frases como "genera las tasks del plan", "trocéa el plan en tasks", "crea el listado de implementación", "prepara las tasks para", "¿qué tasks tengo que hacer?". No activa para generar Specs (usa wf-spec-analyze), ni para generar Planes (usa wf-prepare-plan), ni para validar Planes (usa wf-plan-validate).
 argument-hint: "generate <plan.md>"
 effort: high
 allowed-tools: [Read, Write, Agent]
@@ -9,9 +9,9 @@ context: fork
 agent: task-generator
 ---
 
-# prepare-tasks — Orquestador del Flujo SDD (Etapa 3)
+# prepare-tasks — Orquestador del Flujo SDD (Etapa Tasks)
 
-Tu rol es de **orquestador puro**: parseas argumentos, verificas que el Plan está listo, delegas la descomposición al agente `task-generator`, y escribes el output resultante. No realizas la descomposición directamente — eso lo hace el agente especializado.
+Tu rol es de **orquestador puro**: parseas argumentos, verificas que el Plan está listo, delegas la descomposición al agente `task-generator`, y escribes el output resultante. No realizas la descomposición directamente.
 
 ---
 
@@ -33,11 +33,20 @@ Ejemplo:
 
 1. Verifica que el archivo existe.
 2. Lee el archivo completo.
-3. Comprueba que no contiene `[TECH_GAP]` sin resolver. Si los hay → lista cuáles y detén:
-   > "El Plan tiene X TECH_GAPs sin resolver. Actualiza el Spec y regenera el Plan antes de crear Tasks."
-4. Si el plan declara `status_sync: stale` o `status_sync: needs_review` → detén:
-   > "El Plan no está sincronizado con la versión vigente del PRD. Resincroniza primero el Spec/Plan antes de crear Tasks."
-5. Verifica que el archivo parece un Plan técnico (contiene "Domain Layer" o "Checklist de Trazabilidad"). Si no → informa:
+3. Revisa las líneas resumen del footer del Plan:
+   - `**DESIGN_GAPs:** ...`
+   - `**TECH_GAPs:** ...`
+   - `**TRACE_GAPs:** ...`
+   - `**PLAN_GAPs:** ...`
+   Considera que hay gaps sin resolver **solo si** alguna de esas líneas tiene contenido distinto de `ninguno`.
+   La mera presencia del nombre del gap en la plantilla no cuenta como gap abierto.
+4. Si alguna de esas líneas indica gaps abiertos → lista cuáles y detén:
+   > "❌ El Plan tiene gaps sin resolver. Actualiza Design o Spec, regenera el Plan y vuelve a validarlo antes de crear Tasks."
+5. Si el plan declara `status_sync: stale` o `status_sync: needs_review` → detén:
+   > "❌ El Plan no está sincronizado con la versión vigente del PRD. Resincroniza primero el Spec/Plan antes de crear Tasks."
+6. Si el header no contiene `Estado:` o el estado no es `VALIDADO` → detén:
+   > "❌ El Plan no está validado. Ejecuta `/wf-plan-validate <plan.md>` y corrige los hallazgos antes de generar Tasks."
+7. Verifica que el archivo parece un Plan técnico (contiene `Domain Layer` o `Checklist de Trazabilidad`). Si no → informa:
    > "Este archivo no parece un Plan técnico. Primero ejecuta `/wf-prepare-plan generate <spec.md>`"
 
 ---
@@ -50,15 +59,15 @@ Lee el `_plan.md` en su totalidad.
 
 ## Paso 4: Delegar al agente task-generator
 
-Invoca el agente `task-generator` con el siguiente prompt:
+Invoca al agente `task-generator` con el siguiente prompt:
 
-```
+```text
 Path del plan: <path_completo>
 Contenido del Plan:
 ---
 <contenido_completo_del_plan>
 ---
-INSTRUCCIÓN: Si el Plan declara metadata de trazabilidad (`Spec origen`, `PRD origen`, `PRD version`, `Change ref`, `Status sync`), propágala al header del `_tasks.md`. Si falta, usa `unknown` o `N/A` de forma explícita.
+INSTRUCCIÓN: El Plan ya viene validado. Si declara metadata de trazabilidad (`Spec origen`, `PRD origen`, `PRD version`, `Change ref`, `Status sync`), propágala al header del `_tasks.md`. Si falta, usa `unknown` o `N/A` de forma explícita.
 ```
 
 Espera a que el agente complete su ejecución y recibe su output.
@@ -68,8 +77,8 @@ Espera a que el agente complete su ejecución y recibe su output.
 ## Paso 5: Escribir el resultado
 
 Determina el path de salida:
-- Mismo directorio + nombre base + `_tasks.md`
-- Ejemplo: `docs/login_plan.md` → `docs/login_tasks.md`
+- mismo directorio + nombre base + `_tasks.md`
+- ejemplo: `docs/login_plan.md` → `docs/login_tasks.md`
 
 Escribe el output del agente en ese archivo.
 
@@ -80,4 +89,5 @@ Escribe el output del agente en ese archivo.
 - Path del archivo de tasks generado
 - Resumen: total de tasks y desglose por owner agent o dominio de ejecución
 - Orden recomendado de ejecución
-- Siguiente paso: "Delega las tasks en orden empezando por T-000 al owner agent indicado"
+- Siguiente paso:
+  > "Delega las tasks en orden empezando por T-000 al owner agent indicado"

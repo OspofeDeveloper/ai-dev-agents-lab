@@ -1,6 +1,6 @@
 ---
 name: kb-sdd-skill-architecture
-description: "Reglas transversales para decidir cuando crear una kb, workflow o agente dentro de sdd, y como repartir responsabilidades entre CLAUDE.md, README y skills sin romper SSoT ni SRP."
+description: "Reglas transversales para decidir cuando crear una kb, workflow o agente dentro de sdd, y como repartir responsabilidades entre CLAUDE.md, README y skills sin romper SSoT ni SRP. Incluye la arquitectura de tech targets (kmm, android, flutter) y su relacion con las fases del pipeline."
 argument-hint: "[pregunta o tarea sobre diseño de skills/agentes]"
 effort: low
 allowed-tools: [Read]
@@ -9,7 +9,7 @@ user-invocable: false
 
 # KB SDD Skill Architecture
 
-Usa esta knowledge base como SSoT cuando haya que crear, dividir, refactorizar o auditar skills y agentes en `sdd/prd`, `sdd/spec` y `sdd/design`.
+Usa esta knowledge base como SSoT cuando haya que crear, dividir, refactorizar o auditar skills y agentes en cualquier fase del pipeline SDD (`prd`, `spec`, `design`, `plan`, `tasks`) o en un tech target (`tech/<stack>`).
 
 ## Regla 1: Capas fijas del ecosistema SDD
 
@@ -191,3 +191,72 @@ Una familia de skills y agentes está saneada cuando:
 - las workflows componen y no redefinen
 - los agentes tienen una responsabilidad clara
 - las `kb-*` se consumen como conocimiento reusable, no como puntos de entrada ambiguos
+
+## Regla 16: Tech targets — estructura de directorio y separación de fases
+
+Un **tech target** (KMM, Android nativo, Flutter, etc.) no es una fase del pipeline SDD. Es un stack de implementación que aporta conocimiento especializado a las fases de `plan` y `tasks`.
+
+### Estructura canónica
+
+```
+sdd/
+  prd/    spec/    design/    plan/    tasks/    ← fases, tech-agnostic
+  tech/
+    <stack>/
+      agents/                  ← agentes propietarios del stack
+      skills/
+        plan/                  ← kb-* cargadas por plan-architect cuando tech=<stack>
+        tasks/                 ← kb-* cargadas por task-generator cuando tech=<stack>
+        wf-<stack>-*/          ← workflows cross-fase específicos del stack
+```
+
+Ejemplo real con `kmm`:
+
+```
+sdd/tech/kmm/
+  agents/
+  skills/
+    plan/     ← kb-kmm-clean-architecture, kb-kmm-feature-clean-architecture, ...
+    tasks/    ← kb-kmm-http-ktor, kb-kmm-environments, kb-kmm-navigation-compose, ...
+    wf-kmm-auth-setup-keycloak/
+    wf-kmm-datastore-setup/
+    ...
+```
+
+### Contrato de carga por agente
+
+Cuando `plan-architect` genera un plan técnico para el stack KMM, carga:
+
+1. `sdd/plan/skills/kb-plan-expert` (genérico de fase)
+2. `sdd/tech/kmm/skills/plan/kb-kmm-*` (específicos del stack)
+
+El agente **no** mezcla KBs de `tasks/` al planificar, ni KBs de `plan/` al generar tasks.
+
+### Criterio de ubicación para una `kb-*` de stack
+
+- Si la KB describe arquitectura, capas, contratos o estructuras conceptuales del stack → `tech/<stack>/skills/plan/`
+- Si la KB describe implementaciones concretas, plantillas de código o configuraciones de plataforma → `tech/<stack>/skills/tasks/`
+- Si la KB es transversal a plan y tasks (vocabulario o convenciones del stack) → `tech/<stack>/skills/` (raíz, sin subdirectorio de fase)
+
+### KB dual: mismo dominio, contenido diferente por fase
+
+Un dominio puede requerir una KB en `plan/` **y** otra en `tasks/` con el mismo nombre pero contenido distinto. El directorio es el discriminador; no hay conflicto de SSoT.
+
+| Fase | Nivel de contenido | Ejemplo: `kb-cmp-resources` |
+|---|---|---|
+| `plan/` | Qué implica, qué estructura genera, qué decisiones hay que tomar | Qué es compose-resources, estructura de carpetas, qué módulos se ven afectados, qué tareas debe contemplar el plan |
+| `tasks/` | Cómo se implementa exactamente | `build.gradle.kts` exacto, snippets `Res.*`, configuración de localización |
+
+Señal de que una KB necesita split dual: contiene secciones de "qué/por qué" mezcladas con secciones de "cómo/código". Extraer el nivel conceptual a `plan/` y el nivel de implementación a `tasks/`.
+
+### Añadir un nuevo tech target
+
+1. Crear `sdd/tech/<nuevo_stack>/skills/plan/` y `/tasks/`
+2. Registrar el stack y sus agentes en el `CLAUDE.md` del orquestador raíz
+3. No tocar la estructura de ninguna fase existente
+
+### Anti-patrones
+
+- Un directorio `<stack>/` al mismo nivel que las fases (`prd/`, `spec/`, etc.) rompe la separación fases/targets.
+- KBs de `tasks` cargadas en el agente de `plan` (y viceversa) introducen conocimiento accidental fuera de contexto.
+- Un stack sin `agents/` solo puede ser invocado por agentes de fase — documentar explícitamente si ese es el diseño.

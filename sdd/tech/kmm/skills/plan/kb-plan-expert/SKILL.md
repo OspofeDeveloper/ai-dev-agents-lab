@@ -4,8 +4,6 @@ description: Experto en Planes técnicos KMM con Clean Architecture. Qué debe y
 argument-hint: "[archivo_plan.md | spec_a_convertir.md]"
 effort: high
 allowed-tools: [Read]
-disable-model-invocation: true
-context: fork
 ---
 
 # Plan Expert — Arquitecto Técnico SDD
@@ -24,20 +22,40 @@ Si el usuario invocó el skill con un argumento (`$ARGUMENTS`):
 
 Un Plan es la **capa técnica del SDD**: traduce el "qué" y el "por qué" del Spec en el "cómo" concreto para tu stack tecnológico. A diferencia del Spec, **el Plan es tecnología-dependiente por definición**.
 
+La fase `plan` es el **gate técnico formal** entre `design` y `tasks`: cierra arquitectura, ownership, contratos y decisiones de plataforma antes de trocear el trabajo en unidades de implementación.
+
 ### El flujo SDD
 
 ```
-Specify (Spec)  →  Plan  →  Tasks
-   ↓                ↓          ↓
-¿Qué? ¿Por qué?  ¿Cómo?   Chunks
-(funcional)    (técnico)  implementables
+Specify (Spec)  →  Plan  →  Validate Plan  →  Tasks
+   ↓                ↓            ↓              ↓
+¿Qué? ¿Por qué?  ¿Cómo?      ¿Está listo?   Chunks
+(funcional)    (técnico)      (gate)       implementables
 ```
 
 Un Plan que no trazabiliza todos los CAs del Spec está incompleto. Un Plan que contiene código implementado ha invadido la capa de Tasks.
 
+Si una feature tiene surface UI, navegación o requisitos de accesibilidad visibles, el Plan **depende** de `DESIGN.md`, `*_flows.md` y `*_views.md` como handoff normativo. No se puede reemplazar ese input con inferencias del agente.
+
+## Regla canónica: cuándo Design es obligatorio
+
+`Design` es obligatorio cuando el Plan vaya a cerrar cualquiera de estas piezas:
+
+- una `Screen` o cualquier componente de `presentation` con surface UI visible
+- navegación entre pantallas, shell o transiciones de journey
+- decisiones técnicas de accesibilidad ligadas a UI o comportamiento visual
+
+`Design` no es obligatorio cuando el cambio es puramente:
+
+- infraestructura transversal sin surface UI
+- storage, networking, auth o wiring interno sin pantallas ni navegación nuevas
+- lógica interna que no altere journeys, estados visuales ni a11y visible
+
+Esta regla es la SSoT. Los workflows la aplican; no la redefinen.
+
 ---
 
-## Lo que un Plan DEBE tener (5 elementos obligatorios)
+## Lo que un Plan DEBE tener (5 elementos obligatorios + 1 bloque condicional)
 
 ### 1. Stack Técnico declarado
 
@@ -46,10 +64,10 @@ Lista explícita de tecnologías que se van a usar en esta feature.
 **Ejemplo:**
 ```
 - KMM: Kotlin Multiplatform Mobile
-- UI Android: Jetpack Compose
-- UI iOS: SwiftUI
+- UI: Compose Multiplatform (commonMain compartido)
+- Entry point iOS: ComposeUIViewController
 - Red: Ktor Client
-- BD Local: SQLDelight (si aplica)
+- BD Local: Room KMP (si aplica)
 - DI: Koin
 - Async: Coroutines + Flow
 ```
@@ -91,6 +109,14 @@ Documenta qué APIs de plataforma necesitan expect/actual:
 - Define la interfaz `expect` en commonMain y su propósito funcional
 - Indica qué `actual` hay que implementar en androidMain e iosMain
 
+### Bloque condicional: Handoff desde Design
+
+Si aplica la regla anterior, el Plan debe incluir un bloque `Handoff desde Design` que documente:
+- artefactos de entrada usados
+- decisiones de navegación o shell materializadas
+- decisiones técnicas de accesibilidad derivadas
+- contradicciones o gaps detectados
+
 ---
 
 ## Accesibilidad: handoff desde design
@@ -98,12 +124,44 @@ Documenta qué APIs de plataforma necesitan expect/actual:
 El Plan **materializa** las decisiones a11y ya tomadas en `DESIGN.md > Accessibility` y en `### Notas de accesibilidad` de cada `*_views.md`. No las redefine.
 
 Aplica la **Regla 11 de `kb-a11y-expert`**: para cada vista que el plan cubre, documenta en su capa Presentation:
-- Semantic primitives a usar (`Modifier.semantics { ... }` en Compose, equivalentes en SwiftUI).
+- Semantic primitives a usar (`Modifier.semantics { ... }` en Compose).
 - Librerias de accesibilidad necesarias.
 - Herramientas de test (Accessibility Inspector, Accessibility Scanner, tests de UI con `useUnmergedTree`).
 - APIs de plataforma que requieran `expect/actual` (consulta runtime de `prefers-reduced-motion`, font scale o screen reader on/off): documentalas en el bloque 5.
 
-Si el `DESIGN.md` no incluye seccion `## Accessibility` o las vistas no documentan a11y donde es relevante, es un gap de diseño — registralo como TECH_GAP en lugar de inventar decisiones.
+Si el `DESIGN.md` no incluye la sección `## Accessibility`, es una precondición dura: `wf-prepare-plan` bloquea la generación antes de invocar al agente. Si esta condición aparece durante la validación (`wf-plan-validate`), regístrala como `DESIGN_GAP`.
+
+Si las vistas no documentan a11y donde es relevante, regístralo como `DESIGN_GAP` en lugar de inventar decisiones.
+
+## Estados del Plan
+
+El header del Plan usa exactamente estos estados:
+
+- `BORRADOR`: plan generado o editado que aún no ha pasado la validación formal, o que volvió a quedar invalidado tras cambios o hallazgos
+- `VALIDADO`: plan auditado sin gaps ni contradicciones que puede pasar a `tasks`
+
+`VALIDADO` debe tratarse como una marca operativa confiable. Si la validación falla, el archivo debe quedar o volver a `BORRADOR`.
+
+## Taxonomía de gaps
+
+Los únicos tipos normativos de gaps en la fase `plan` son:
+
+- `DESIGN_GAP`: falta o contradicción en el handoff visual (`DESIGN.md`, `*_flows.md`, `*_views.md`)
+- `TECH_GAP`: ambigüedad funcional o técnica derivada del Spec que impide cerrar arquitectura
+- `TRACE_GAP`: CA sin cobertura o trazabilidad rota entre Spec y Plan
+- `PLAN_GAP`: sección obligatoria, ownership o contrato técnico incompleto dentro del propio Plan
+
+Los workflows y el agente deben reutilizar estos tipos y no inventar variantes nuevas.
+
+## Precondiciones duras de la fase
+
+Antes de generar o validar un Plan:
+
+- El `*_spec.md` debe estar validado y sin HUs `[INCOMPLETO]`, gaps `[CRÍTICO]` pendientes ni `status_sync` no fiable.
+- Si `Design` es obligatorio según la regla canónica, deben existir `DESIGN.md`, `<feature>_flows.md` y `<feature>_views.md`.
+- Si el proyecto usa `_features.md` con shared models, el Plan debe respetar esa tabla y no redefinir modelos ajenos.
+
+Si falta cualquiera de estas condiciones, la fase debe bloquearse.
 
 ---
 
@@ -138,8 +196,19 @@ Cada componente del Plan debe responder a un CA del Spec:
 ### Check 2: Completitud Técnica
 ¿Los 5 elementos obligatorios están presentes y completos?
 
+El bloque `Handoff desde Design` **no aumenta** el contador base de 5. Se evalúa como un requisito condicional separado: si `Design` es obligatorio y ese bloque falta o es insuficiente, la completitud global del Plan falla igualmente.
+
+### Check 2b: Handoff desde Design
+Si `Design` es obligatorio:
+- ¿El Plan refleja los journeys y pantallas de `*_flows.md` y `*_views.md`?
+- ¿La accesibilidad está materializada como decisiones técnicas en Presentation / expect-actual?
+- ¿Hay alguna contradicción con `DESIGN.md`? Si la hay, es `DESIGN_GAP`.
+
 ### Check 3: Independencia de Implementación
 ¿El Plan puede entregarse a un desarrollador para que implemente sin tomar decisiones arquitectónicas adicionales?
+
+### Check 4: Validación formal
+¿El Plan está listo para pasar por `wf-plan-validate` y promocionarse de `BORRADOR` a `VALIDADO` sin gaps abiertos?
 
 ### Formato de output para revisiones:
 
@@ -157,23 +226,21 @@ Cada componente del Plan debe responder a un CA del Spec:
 - [x] Contratos y Dependencias
 - [ ] Expect/Actual — no indicado (¿es necesario?)
 
+### DESIGN_GAPs detectados:
+- [DESIGN_GAP-001]: falta la seccion `## Accessibility` en `DESIGN.md` para decidir
+  las semantic primitives de la pantalla principal.
+
 ### TECH_GAPs detectados:
 - [TECH_GAP-001]: el CA-003 requiere acceso a notificaciones push pero el Spec
   no especifica qué contexto debe portar la notificación. Necesita aclaración.
+
+### TRACE_GAPs detectados:
+- [TRACE_GAP-001]: CA-004 no tiene componente técnico trazado en el checklist final.
+
+### PLAN_GAPs detectados:
+- [PLAN_GAP-001]: falta declarar el ownership de navegación entre `:app` y la feature.
 ```
 
 ---
 
-## Cómo generar un Plan desde un Spec
-
-Cuando tengas un `_spec.md` validado:
-
-1. **Lee todos los CAs** — son el contrato que el Plan debe cubrir completamente
-2. **Identifica entidades** — qué Models necesitas en domain (una entidad por concepto funcional)
-3. **Mapea UseCases** — un UseCase por acción principal del usuario
-4. **Diseña data** — para cada UseCase, ¿qué fuente necesita? (remote / local / ambas)
-5. **Diseña presentation** — para cada Journey del Spec, un ViewModel + Screen
-6. **Detecta expect/actual** — ¿algún CA requiere una API de plataforma?
-7. **Verifica trazabilidad** — todos los CAs cubiertos antes de producir el output
-
-Consulta `references/plan_structure.md` para la plantilla de output exacta.
+→ Proceso de generación: `plan-architect` contiene el procedimiento operacional completo (incluyendo verificación de shared models, detección de gaps y orden de ejecución). Consulta `references/plan_structure.md` para la plantilla de output exacta.

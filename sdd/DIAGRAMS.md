@@ -5,6 +5,7 @@ Este documento contiene solo diagramas de comportamiento **global** del ecosiste
 - [sdd/prd/DIAGRAMS.md](/Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/prd/DIAGRAMS.md)
 - [sdd/spec/DIAGRAMS.md](/Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/spec/DIAGRAMS.md)
 - [sdd/design/DIAGRAMS.md](/Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/design/DIAGRAMS.md)
+- [sdd/plan/DIAGRAMS.md](/Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/plan/DIAGRAMS.md)
 
 Si vas a explicar el sistema a alguien nuevo, empieza aquí y baja después al directorio concreto que quieras detallar.
 
@@ -122,3 +123,4 @@ flowchart TB
 2. [sdd/prd/DIAGRAMS.md](/Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/prd/DIAGRAMS.md) para entrada y gobernanza de cambios.
 3. [sdd/spec/DIAGRAMS.md](/Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/spec/DIAGRAMS.md) para generación y mantenimiento de specs.
 4. [sdd/design/DIAGRAMS.md](/Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/design/DIAGRAMS.md) para Stitch, `DESIGN.md` y prototipado por feature.
+5. [sdd/plan/DIAGRAMS.md](/Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/plan/DIAGRAMS.md) para el gate técnico entre Design y Tasks.

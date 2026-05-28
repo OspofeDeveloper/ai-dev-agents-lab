@@ -88,6 +88,7 @@ spec validado
   -> wf-design-a11y-audit      (auditoria especifica de accesibilidad)
   -> wf-design-export          (handoff a codigo: CSS, Style Dictionary, Compose, SwiftUI, Tailwind)
   -> Stitch -> wf-prepare-plan
+  -> wf-plan-validate
 ```
 
 Loops de mantenimiento:
@@ -151,6 +152,7 @@ Los workflow skills tienen sus propias validaciones. **No las bypasses.** Si un 
 - bloqueos en el spec → remite a la fase Spec (`/wf-spec-validate`, `/wf-spec-delta`, `/wf-spec-gap-resolve`).
 - falta de `DESIGN_BRIEF.md` → remite a `/wf-design-intake` salvo override explicito `--no-brief`.
 - falta de `DESIGN.md` → remite a `/wf-design-system`.
+- falta de `*_flows.md` o `*_views.md` para una feature que va a plan → remite a `/wf-design-feature-prototype`.
 - DESIGN_GAP estructural o conflictos visuales → remite a `/wf-design-validate` y, si procede, a `/wf-design-delta`.
 - problemas de accesibilidad → remite a `/wf-design-a11y-audit` y, si requiere cambios, a `/wf-design-delta`.
 - conflictos entre features → `design-architect` aplica `kb-design-conflict-expert` durante `wf-design-feature-prototype`.

@@ -135,4 +135,4 @@ Parsea la respuesta del agente usando el formato de bundle de `references/output
 - paths generados
 - total de vistas derivadas
 - siguiente paso recomendado:
-  > "Usa `<feature>_ui_prompt.md` junto con `DESIGN.md` y `DESIGN_BRIEF.md` si existe en Stitch para generar las vistas y, tras validar con cliente, continua con `/wf-prepare-plan generate <feature_spec.md>`"
+  > "Usa `<feature>_ui_prompt.md` junto con `DESIGN.md` y `DESIGN_BRIEF.md` si existe en Stitch para generar las vistas y, tras validar con cliente, continúa con `/wf-prepare-plan generate <feature_spec.md>` y después `/wf-plan-validate <feature_plan.md>`."

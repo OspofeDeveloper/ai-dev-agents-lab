@@ -66,7 +66,13 @@ install_skill() {
   echo "  ✓ skills/$name/"
 }
 
-for skill_dir in "$SKILLS_SOURCE_DIR"/*/; do
+for subdir in plan tasks; do
+  for skill_dir in "$SKILLS_SOURCE_DIR/$subdir"/*/; do
+    install_skill "$skill_dir"
+  done
+done
+
+for skill_dir in "$SKILLS_SOURCE_DIR"/wf-*/; do
   install_skill "$skill_dir"
 done
 

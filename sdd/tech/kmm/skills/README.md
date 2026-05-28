@@ -1,6 +1,40 @@
 # KMM Skills Architecture
 
-Este directorio contiene las skills reutilizables de KMM organizadas por **dimensión de verdad**. El objetivo es que arquitectura, DI, networking, auth y workflows evolucionen sin contaminarse entre sí.
+Este directorio contiene las skills reutilizables de KMM organizadas por **dimensión de verdad** y **nivel de abstracción**. El objetivo es que arquitectura, DI, networking, auth y workflows evolucionen sin contaminarse entre sí, y que cada fase del pipeline SDD importe solo las skills que necesita.
+
+## Estructura de directorios
+
+```
+skills/
+  plan/    → 10 skills de contratos y arquitectura (nivel "qué construir")
+  tasks/   → 12 skills de implementación concreta (nivel "cómo construirlo")
+  wf-*/    → 5 workflows KMM de uso interno (no se instalan en fases SDD)
+```
+
+**`plan/`** contiene las skills necesarias para generar un Plan técnico correcto:
+reglas de capas, contratos de interfaces, ownership de módulos y políticas de diseño.
+Son las skills que carga `plan-architect` al trabajar dentro del pipeline SDD.
+
+**`tasks/`** contiene las skills necesarias para implementar lo que un Plan define:
+librerías concretas, providers de plataforma, configuración de build y detalles técnicos.
+Son las skills que cargan los agentes KMM implementadores (`kmm-feature-implementer`,
+`kmm-network-auth-implementer`, `kmm-platform-integrator`, etc.).
+
+**`wf-*/`** (planos, sin subdir) son workflows de composición KMM usados únicamente
+por el ecosistema KMM directo, no por las fases SDD.
+
+### Instalación selectiva por fase SDD
+
+El `sdd/install.sh` usa esta estructura para instalar solo lo necesario:
+
+```bash
+bash sdd/install.sh plan   # instala skills/plan/
+bash sdd/install.sh tasks  # instala skills/plan/ (contexto arquitectónico)
+bash sdd/install.sh all    # instala skills/plan/ + skills/tasks/
+bash kmm/install.sh        # instala todo (plan/ + tasks/ + wf-*)
+```
+
+---
 
 La estructura está pensada para usarse dentro de una forma de trabajo con agentes más grande:
 
@@ -159,49 +193,33 @@ Cada skill debe poseer solo **una dimensión de verdad**:
 ## Esquema resumido
 
 ```text
-Arquitectura global
+skills/plan/  ─ contratos y arquitectura
   kb-kmm-clean-architecture
-
-Arquitectura por capa
   kb-kmm-app-layer
   kb-kmm-core-layer
   kb-kmm-app-errors
   kb-kmm-feature-clean-architecture
-
-Brands
-  kb-kmm-brands
-
-DI
   kb-koin
-
-Storage local
-  kb-kmm-datastore-preferences
-
-Recursos y texto
-  kb-kmm-resources
-  kb-kmm-ui-text
-
-Networking
   kb-kmm-network-contracts
-  kb-kmm-http-ktor
-
-Navegación
   kb-kmm-navigation-contracts
+  kb-kmm-navigation-viewmodel-events
+  kb-kmm-auth-contracts
+
+skills/tasks/  ─ implementación concreta
+  kb-kmm-http-ktor
+  kb-kmm-auth-ktor-plugin
+  kb-kmm-auth-oauth-keycloak
   kb-kmm-navigation-compose
   kb-kmm-navigation-platform-behaviors
-  kb-kmm-navigation-viewmodel-events
-
-Auth
-  kb-kmm-auth-contracts
-  kb-kmm-auth-oauth-keycloak
-  kb-kmm-auth-ktor-plugin
-
-Variantes y entornos
+  kb-kmm-datastore-preferences
+  kb-kmm-resources
+  kb-kmm-ui-text
+  kb-kmm-brands
   kb-kmm-environments
   kb-kmm-android-environments
   kb-kmm-ios-environments
 
-Workflows
+skills/  ─ workflows KMM (planos, uso interno)
   wf-kmm-datastore-setup
   wf-kmm-network-setup
   wf-kmm-auth-setup-keycloak

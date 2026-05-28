@@ -88,14 +88,9 @@ La ownership de esa decisión vive en `kb-kmm-app-layer`.
 
 ---
 
-## Regla 6: Elegir un único patrón de emisión por proyecto
+## Regla 6: Los efectos one-shot se emiten siempre con `Channel`
 
-Las opciones habituales son:
-
-- `Channel` con entrega única
-- `StateFlow` con reset manual
-
-Elegir uno y aplicarlo de forma consistente. No mezclar patrones arbitrariamente entre pantallas equivalentes.
+El patrón del proyecto es `Channel` con entrega única. No se usa `StateFlow` con reset manual para efectos one-shot.
 
 → Patterns: `references/viewmodel-and-navigation-events.md`
 
@@ -111,14 +106,11 @@ Cuando el patrón usa `Channel` o un stream equivalente para efectos de salida, 
 
 Ese tipo representa hechos emitidos por el ViewModel hacia la UI, no entradas del usuario ni destinos concretos.
 
-## Regla 9: La key de `LaunchedEffect` depende del patrón
+## Regla 9: La key de `LaunchedEffect` para `Channel`
 
-La key correcta no es universal:
+Con `Channel`, usar siempre `LaunchedEffect(viewModel)` como key.
 
-- con `Channel`, usar `LaunchedEffect(viewModel)`
-- con `StateFlow` con reset, usar `LaunchedEffect(uiState.effect)`
-
-`LaunchedEffect(Unit)` no es válido para este problema porque oculta cambios de owner o re-entradas relevantes.
+`LaunchedEffect(Unit)` no es válido porque oculta cambios de owner o re-entradas relevantes.
 
 → Patterns: `references/viewmodel-and-navigation-events.md`
 
@@ -187,4 +179,4 @@ La navegación concreta vive en `kb-kmm-navigation-compose`.
 - ¿El mismo hecho semántico se emite una sola vez sin bifurcarse por brand dentro del ViewModel?
 - ¿Cada efecto nombra un hecho y no un destino concreto?
 - ¿El ViewModel evita `NavController`, rutas y estrategias de routing dependientes de app?
-- ¿La recolección de efectos usa la key de `LaunchedEffect` correcta para el patrón elegido?
+- ¿La recolección de efectos usa `LaunchedEffect(viewModel)` con `Channel`?

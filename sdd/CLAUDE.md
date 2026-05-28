@@ -20,7 +20,7 @@ Si buscas mejor rendimiento y menos carga de contexto, instala y usa el `CLAUDE.
 - `sdd/prd/CLAUDE.md`
 - `sdd/spec/CLAUDE.md`
 - `sdd/design/CLAUDE.md`
-- `sdd/plan/CLAUDE.md` cuando exista
+- `sdd/plan/CLAUDE.md`
 - `sdd/tasks/CLAUDE.md` cuando exista
 
 ## Rootmap de workflow skills
@@ -52,6 +52,7 @@ Si buscas mejor rendimiento y menos carga de contexto, instala y usa el `CLAUDE.
 | Aplicar un delta analysis a un DESIGN.md | `/wf-design-delta` | `apply <DESIGN.md> <design_delta_analysis.md>` |
 | Generar flows, views y prompt de ensamblaje para Stitch desde un feature spec | `/wf-design-feature-prototype` | `generate <feature_spec.md> [--design-file DESIGN.md] [--brief <DESIGN_BRIEF.md>] [--no-brief]` |
 | Generar el plan técnico desde un spec | `/wf-prepare-plan` | `generate <spec.md>` |
+| Validar si un plan está listo para pasar a tasks | `/wf-plan-validate` | `<plan.md>` |
 | Generar las tasks desde un plan | `/wf-prepare-tasks` | `generate <plan.md>` |
 
 ## Cómo actuar ante una petición
@@ -131,6 +132,7 @@ features/<nombre>/<nombre>_ui_prompt.md
     ↓ [Stitch / validación visual]
     ↓ [/wf-prepare-plan generate — por feature]
 features/<nombre>/<nombre>_plan.md
+    ↓ [/wf-plan-validate — gate formal]
     ↓ [/wf-prepare-tasks generate — por feature]
 features/<nombre>/<nombre>_tasks.md
     ↓ [delegación del orquestador a agentes KMM owner]
@@ -150,6 +152,7 @@ features/<nombre>/<nombre>_tasks.md
 > Para auditar un `DESIGN.md` editado manualmente: `/wf-design-validate <DESIGN.md>`.
 > Para cambios incrementales en `DESIGN.md`: `/wf-design-delta analyze <DESIGN.md> --new-reqs <cambios.md>`.
 > En la salida de Design: `flows` = secuencias y transiciones; `views` = SSoT de pantallas y estados visuales; `ui_prompt` = ensamblaje para Stitch.
+> Para pasar de Plan a Tasks: `/wf-prepare-plan generate <feature_spec.md>` → `/wf-plan-validate <feature_plan.md>` → `/wf-prepare-tasks generate <feature_plan.md>`.
 > Para cambios de producto (scope, prioridad, exclusiones): primero `/wf-prd-change`, luego `/wf-prd-sync-impact` y `/wf-spec-sync-from-prd`.
 > Tras `/wf-prepare-tasks`, cada task debe delegarse al `Owner agent` indicado en el `_tasks.md`.
 

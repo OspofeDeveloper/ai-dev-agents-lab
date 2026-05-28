@@ -13,7 +13,9 @@ PRD / Notas       Spec limpio       Specs por        Design           Plan técn
 informales  ──►   monolítico  ──►   feature    ──►   validado   ──►  por feature ──►  por feature
                   (_spec.md)       (features/         (DESIGN.md,      (_plan.md)       (_tasks.md)
                                     <x>_spec.md)      views, prompt)
-                                                                            │
+                                                           │
+                                                     validación formal
+                                                           │
                                                            kmm-feature-implementer
                                                            kmm-platform-integrator
                                                            kmm-network-auth-implementer
@@ -81,7 +83,7 @@ La fase `design` no redefine requisitos funcionales. Si una decision cambia HUs,
 
 ### Etapa 4 — Plan
 
-Transforma cada spec de feature en un plan técnico KMM. Aquí entra la tecnología: stack, módulos, capas, contratos de API, decisiones de expect/actual.
+Transforma cada spec de feature y su handoff de Design en un plan técnico KMM. Aquí entra la tecnología: stack, módulos, capas, contratos, ownership y decisiones de expect/actual.
 
 Un Plan válido debe tener:
 - Stack tech explícito (KMM, Compose, Ktor, etc.)
@@ -90,8 +92,11 @@ Un Plan válido debe tener:
 - Contratos de API y DTOs
 - Dependencias entre componentes
 - Decisiones de expect/actual (Android/iOS)
+- Materialización técnica del handoff de Design y accesibilidad si aplica
 
 Un Plan **no debe tener**: código implementado, requisitos funcionales del usuario, estimaciones de tiempo.
+
+El `_plan.md` sale primero en estado `BORRADOR` y debe pasar una validación formal antes de generar Tasks.
 
 Los shared models declarados en `_features.md` no se redefinen: la feature owner los define completos; el resto los referencia.
 
@@ -152,8 +157,10 @@ DESIGN     Reglas design         Spec -> DESIGN.md     wf-design-feature-prototy
                                   y prototipo
 
 ETAPA 4    kb-plan-expert ──►   plan-architect ──◄── wf-prepare-plan
-PLAN       Reglas Plan           Spec → Plan          /wf-prepare-plan
-           + KMM arch            técnico               <spec.md>
+PLAN       Reglas Plan           Spec + Design →      /wf-prepare-plan
+           + KMM arch            Plan técnico          <spec.md>
+                                                     wf-plan-validate
+                                                     <plan.md>
 
 ETAPA 5    kb-tasks-expert ──►  task-generator ──◄── wf-prepare-tasks
 TASKS      Reglas Tasks          Plan → Tasks         /wf-prepare-tasks
@@ -281,7 +288,10 @@ TASKS      Reglas Tasks          Plan → Tasks         /wf-prepare-tasks
     ├── wf-spec-sync-from-prd/   ✅ Workflow: Resync feature specs after PRD changes
     │   └── SKILL.md
     │
-    ├── wf-prepare-plan/         ✅ Workflow: Spec → Plan
+    ├── wf-prepare-plan/         ✅ Workflow: Spec + Design → Plan
+    │   └── SKILL.md
+    │
+    ├── wf-plan-validate/        ✅ Workflow: Audit Plan before Tasks
     │   └── SKILL.md
     │
     └── wf-prepare-tasks/        ✅ Workflow: Plan → Tasks
@@ -384,11 +394,15 @@ project-root/
 /wf-prepare-plan generate features/authentication/authentication_spec.md
 # → features/authentication/authentication_plan.md
 
+/wf-plan-validate features/authentication/authentication_plan.md
+# → OK / hallazgos del plan
+
 /wf-prepare-tasks generate features/authentication/authentication_plan.md
 # → features/authentication/authentication_tasks.md
 
 # Repetir para el resto de features (pueden procesarse en paralelo)
 /wf-prepare-plan generate features/services/services_spec.md
+/wf-plan-validate features/services/services_plan.md
 /wf-prepare-tasks generate features/services/services_plan.md
 # ...
 
@@ -435,6 +449,7 @@ SDD ECOSYSTEM                              KMM ECOSYSTEM
 
 /wf-spec-analyze + /wf-spec-features-first → features/<x>_spec.md
 /wf-prepare-plan   → features/<x>_plan.md
+/wf-plan-validate  → gate formal del plan
 /wf-prepare-tasks  → features/<x>_tasks.md ──► kmm-feature-implementer
                                              kmm-platform-integrator
                                              kmm-network-auth-implementer
@@ -459,7 +474,7 @@ El `task-generator` conoce los dominios de implementación KMM y asigna cada tas
 1. Tras `wf-spec-analyze` → responder gaps de negocio _(pendiente)_ en el `_analysis.md` o, si cambió el producto comprometido, abrir `wf-prd-change`
 2. Tras `wf-spec-discover` (modo iterativo) → elegir qué Feature IDs entran en la próxima iteración
 3. Tras `wf-spec-features-first` → validar partición y ownership de shared models
-4. Tras cada `wf-prepare-plan` → revisar arquitectura antes de generar tasks
+4. Tras cada `wf-prepare-plan` → validar el plan y revisar arquitectura antes de generar tasks
 
 **Trazabilidad completa**: cada task apunta a un CA del spec de feature. Cada CA del spec de feature es rastreable al spec monolítico origen. Los artefactos derivados deben poder declarar además contra qué versión del PRD fueron generados y si siguen `in_sync`.
 
@@ -518,6 +533,7 @@ Si te importa el rendimiento del agente, instala solo la fase que necesites. Las
 | `wf-spec-features-first` | Workflow (wf) | Specify | ✅ Implementado |
 | `wf-spec-fast-track` | Workflow (wf) | Specify | ✅ Implementado |
 | `wf-spec-conflict` | Workflow (wf) | Conflict | ✅ Implementado |
+| `wf-plan-validate` | Workflow (wf) | Plan | ✅ Implementado |
 | `wf-spec-delta` | Workflow (wf) | Delta | ✅ Implementado |
 | `wf-prepare-plan` | Workflow (wf) | Plan | ✅ Implementado |
 | `wf-prepare-tasks` | Workflow (wf) | Tasks | ✅ Implementado |
