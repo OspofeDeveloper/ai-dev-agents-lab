@@ -51,6 +51,13 @@ Si buscas mejor rendimiento y menos carga de contexto, instala y usa el `CLAUDE.
 | Analizar cambios sobre un DESIGN.md existente | `/wf-design-delta` | `analyze <DESIGN.md> --new-reqs <cambios.md> [--brief <DESIGN_BRIEF.md>]` |
 | Aplicar un delta analysis a un DESIGN.md | `/wf-design-delta` | `apply <DESIGN.md> <design_delta_analysis.md>` |
 | Generar flows, views y prompt de ensamblaje para Stitch desde un feature spec | `/wf-design-feature-prototype` | `generate <feature_spec.md> [--design-file DESIGN.md] [--brief <DESIGN_BRIEF.md>] [--no-brief]` |
+| Capturar inspiración visual antes del intake (moodboard) | `/wf-design-moodboard` | `<feature_spec.md> [--prd <prd.md>] [--output <path>] [--mode interactive\|auto]` |
+| Explorar una variante paralela del DESIGN.md sin comprometer main | `/wf-design-branch` | `create <branch-name> \| list \| compare <a> <b> \| merge <branch> --into <target> \| discard <branch>` |
+| A/B testing visual de una feature concreta | `/wf-design-variant` | `create <feature_spec.md> --variants A,B [--hypothesis 'texto'] \| compare <feature_variants.md>` |
+| Exportar tokens del DESIGN.md a CSS, Style Dictionary, Compose, SwiftUI o Tailwind | `/wf-design-export` | `<DESIGN.md> --platforms <css,style-dictionary,compose,swiftui,tailwind> [--output-dir <path>] [--dry-run]` |
+| Auditoría ejecutiva de accesibilidad (contraste, touch targets, focus order) | `/wf-design-a11y-audit` | `<DESIGN.md> [--views <feature_views.md>] [--brief <DESIGN_BRIEF.md>] [--target AA\|AAA] [--strict]` |
+| Capturar feedback no estructurado de stakeholders | `/wf-design-feedback` | `capture <feedback.md\|texto> [--source ...] [--feature ...]` |
+| Triajear un feedback capturado en categorías accionables | `/wf-design-feedback` | `triage <feedback_capture.md>` |
 | Generar el plan técnico desde un spec | `/wf-prepare-plan` | `generate <spec.md>` |
 | Validar si un plan está listo para pasar a tasks | `/wf-plan-validate` | `<plan.md>` |
 | Generar las tasks desde un plan | `/wf-prepare-tasks` | `generate <plan.md>` |

@@ -28,7 +28,7 @@ Usa esta estructura para producir un Plan válido. Todos los campos marcados `[o
 | BD Local | SQLDelight (si aplica, omitir si no) |
 | DI | Koin |
 | Async | Coroutines + Flow |
-| Tests | JUnit5 + Turbine (Flows) |
+| Tests | ver `kb-kmm-testing-strategy` para la declaración del stack de testing |
 
 ---
 

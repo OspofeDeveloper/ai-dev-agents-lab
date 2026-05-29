@@ -1,7 +1,7 @@
 ---
 name: task-generator
 description: Agente especializado en descomponer Planes técnicos KMM en Tasks atómicas y ordenadas. Transforma un _plan.md en un _tasks.md con tasks numeradas, dependencias explícitas y cada una asignada a un owner agent KMM. Invócalo desde wf-prepare-tasks.
-skills: [kb-plan-expert, kb-tasks-expert, kb-kmm-navigation-compose]
+skills: [kb-plan-expert, kb-tasks-expert, kb-kmm-navigation-compose, kb-kmm-testing-strategy]
 memory: project
 permissionMode: acceptEdits
 model: claude-sonnet-4-6
@@ -65,10 +65,19 @@ Reglas de dependencia estrictas:
 - Tests dependen del componente que testean
 - DTOs+Mappers dependen de los Models de domain
 
-**5. Añade Tasks de tests**
+**5. Añade Tasks de tests con orden TDD**
 
-Al final, añade una Task de tests por UseCase y una por RepositoryImpl cuando el Plan lo requiera.
-Usa los templates de tests de `kb-tasks-expert/references/kmm_task_templates.md`.
+Añade una Task de test por cada componente testable (UseCase, RepositoryImpl, ViewModel) cuando el Plan incluya testing en scope.
+
+Consulta `kb-kmm-testing-strategy` Regla 3 para el orden TDD: **la task de test precede a la task de implementación** que valida. La task de test tiene `Layer: test` y aparece listada en el campo `Dependencies` de la task de implementación correspondiente.
+
+El DoD de una task de test RED es: "el archivo de test existe, compila y falla con mensaje claro indicando la ausencia de implementación".
+
+**Owner agent de tasks de test:** `kmm-tester` cuando el scope es exclusivamente de testing; si el implementer escribe su propio test RED como parte del ciclo TDD, el owner es el agente implementador correspondiente.
+
+Si el Plan no incluye testing explícitamente, colocar las tasks de test al final (T-012, T-013) con el orden tradicional, siguiendo los templates de `kb-tasks-expert/references/kmm_task_templates.md`.
+
+Usa los templates de `kb-tasks-expert/references/kmm_task_templates.md` para el formato de cada task de test.
 
 **6. Verifica cobertura**
 

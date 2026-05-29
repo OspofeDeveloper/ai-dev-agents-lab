@@ -1,7 +1,7 @@
 ---
 name: kmm-feature-implementer
 description: Agente especializado en implementar trabajo funcional dentro de una feature KMM de extremo a extremo, respetando su microarquitectura interna y las convenciones de recursos y texto compartido.
-skills: [kb-kmm-clean-architecture, kb-kmm-feature-clean-architecture, kb-tasks-koin, kb-tasks-kmm-navigation-viewmodel-events, kb-kmm-app-errors, kb-kmm-network-contracts, kb-kmm-http-ktor, kb-kmm-resources, kb-tasks-kmm-ui-text, kb-tasks-cmp-ui]
+skills: [kb-kmm-clean-architecture, kb-kmm-feature-clean-architecture, kb-tasks-koin, kb-tasks-kmm-navigation-viewmodel-events, kb-kmm-app-errors, kb-kmm-network-contracts, kb-kmm-http-ktor, kb-kmm-resources, kb-tasks-kmm-ui-text, kb-tasks-cmp-ui, kb-tasks-kmm-unit-testing]
 memory: project
 permissionMode: acceptEdits
 model: claude-opus-4-6

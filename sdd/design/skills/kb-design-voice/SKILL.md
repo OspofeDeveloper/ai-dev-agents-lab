@@ -2,7 +2,7 @@
 name: kb-design-voice
 description: Base de conocimiento para UX writing y voice & tone del producto. Define el tono de voz, patrones de microcopy por contexto (empty, error, success, loading), estructura de mensajes de error, consistencia lexica y politicas de uso de mayusculas, puntuacion y abreviaturas. Sin esta capa, todos los productos suenan iguales y aburridos.
 argument-hint: "(cargada automaticamente por agentes y workflows de design)"
-effort: medium
+effort: low
 allowed-tools: [Read]
 user-invocable: false
 ---

@@ -232,7 +232,7 @@ Usa estos templates para formatear cada Task en el `_tasks.md`. Sustituye los va
 
 ---
 
-## Template: Feature Tests
+## Template: Feature Tests (orden tradicional — test después de implementación)
 
 ```markdown
 ## T-00X: Feature Tests — [Nombre del componente]
@@ -247,4 +247,31 @@ Usa estos templates para formatear cada Task en el `_tasks.md`. Sustituye los va
 - **Input:** Componente a validar: `[UseCase | RepositoryImpl | ViewModel]`. Casos: `[lista]`
 - **Dependencies:** [T-00X (componente implementado)]
 - **Definition of done:** suite de tests o validación automatizada implementada con doubles apropiados y sin dependencias accidentales del runtime real.
+```
+
+---
+
+## Template: Feature Tests RED (orden TDD — test antes de implementación)
+
+Usar este template cuando el Plan incluye testing en scope. La task de test precede a la task de implementación.
+
+```markdown
+## T-00X: Feature Test RED — [NombreComponente]
+
+- **Spec CA:** [CA-XXX]
+- **Plan ref:** [§Domain Layer | §Data Layer | §Presentation Layer]
+- **Módulo:** [:feature:nombre]
+- **Layer:** test
+- **Execution domain:** feature
+- **Owner agent:** [kmm-feature-implementer | kmm-tester]
+- **Suggested workflow:** —
+- **Input:** Componente a validar: `[UseCase | RepositoryImpl | ViewModel]`. Casos mínimos: `[happy path, error path]`
+- **Dependencies:** [T-00X (Repository interface o contratos que el test necesita para compilar)]
+- **Definition of done:** archivo de test en `commonTest/` existe, compila y falla con mensaje claro indicando la ausencia de implementación. Fakes necesarios creados en `commonTest/fakes/`.
+```
+
+La task de implementación que sigue a este RED referencia esta task en su `Dependencies`:
+
+```markdown
+- **Dependencies:** [T-00X (Test RED), T-00Y (otras dependencias)]
 ```

@@ -2,7 +2,7 @@
 name: kb-design-style-taxonomy
 description: Base de conocimiento para clasificar estilos visuales de producto digital de forma operativa. Define familias de estilo, senales visuales, criterios de seleccion por contexto de producto y anti-patrones para que DESIGN.md no quede en adjetivos genericos. Activa cuando un agente necesite decidir o revisar la direccion visual de una app, derivar Visual Personality, elegir densidad, profundidad, tipografia, color y motion, o evitar resultados genericos tipo "moderno" o "minimalista" sin concretar.
 argument-hint: "(cargada automaticamente por agentes de design)"
-effort: medium
+effort: low
 allowed-tools: [Read]
 user-invocable: false
 ---

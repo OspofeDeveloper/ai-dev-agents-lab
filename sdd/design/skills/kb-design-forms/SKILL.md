@@ -2,7 +2,7 @@
 name: kb-design-forms
 description: Base de conocimiento para patrones de formulario en mobile y web. Define layout (label, field, helper, error placement), validacion (cliente vs servidor, momento de disparo), estados de campo, patrones complejos (multistep, autosave, conditional fields, file upload, search in input). 50-70% de productos B2B son formularios; sin esta kb se quedan enterrados en views genericas.
 argument-hint: "(cargada automaticamente por agentes y workflows de design)"
-effort: medium
+effort: low
 allowed-tools: [Read]
 user-invocable: false
 ---

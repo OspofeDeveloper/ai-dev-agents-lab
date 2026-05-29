@@ -1,7 +1,7 @@
 ---
 name: kmm-platform-integrator
 description: Agente especializado en composición de app KMM, navegación, wiring de DI y configuración de brands/environments en Android e iOS.
-skills: [kb-kmm-clean-architecture, kb-kmm-core-layer, kb-kmm-feature-clean-architecture, kb-kmm-app-layer, kb-tasks-koin, kb-tasks-kmm-datastore-preferences, kb-kmm-navigation-contracts, kb-kmm-navigation-compose, kb-tasks-kmm-navigation-viewmodel-events, kb-kmm-navigation-platform-behaviors, kb-kmm-brands, kb-kmm-environments, kb-kmm-android-environments, kb-kmm-ios-environments]
+skills: [kb-kmm-clean-architecture, kb-kmm-core-layer, kb-kmm-feature-clean-architecture, kb-kmm-app-layer, kb-tasks-koin, kb-tasks-kmm-datastore-preferences, kb-kmm-navigation-contracts, kb-kmm-navigation-compose, kb-tasks-kmm-navigation-viewmodel-events, kb-kmm-navigation-platform-behaviors, kb-kmm-brands, kb-kmm-environments, kb-kmm-android-environments, kb-kmm-ios-environments, kb-tasks-kmm-integration-testing]
 memory: project
 permissionMode: acceptEdits
 model: claude-opus-4-6

@@ -2,7 +2,7 @@
 name: kb-design-expert
 description: Base de conocimiento para convertir Specs SDD en contratos de diseno reutilizables para prototipado visual y generacion de vistas con Stitch. Define que debe contener un DESIGN.md, como derivar flujos y vistas desde un _spec.md, y como mantener separadas las decisiones funcionales, visuales y tecnicas. Activa en frases como "crea el DESIGN.md", "prepara el diseno desde el spec", "como genero vistas para Stitch", "que debe llevar el contrato visual", "revisa este DESIGN.md". No activa para redactar Specs (kb-spec-expert), para planificar implementacion KMM (kb-plan-expert) ni para trocear tasks (kb-tasks-expert).
 argument-hint: "(cargada automaticamente por workflows y agentes de design)"
-effort: high
+effort: low
 allowed-tools: [Read]
 user-invocable: false
 ---

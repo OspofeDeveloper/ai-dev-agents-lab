@@ -1,11 +1,10 @@
 ---
 name: kb-tasks-expert
-description: Experto en crear Tasks implementables KMM desde Planes técnicos SDD. Define cómo trocear un Plan en tasks delegables a agentes KMM especializados, cuánto debe durar una task, en qué orden van y qué agente owner debe ejecutarla. Activa en frases como "¿cómo hago las tasks del plan?", "trocéa este plan en tasks", "¿qué agente implementa esto?", "crea las tasks de implementación". No activa para validar Specs (kb-spec-expert) ni para crear Planes (kb-plan-expert).
-argument-hint: "[archivo_plan.md | duda_sobre_tasks]"
-effort: high
+description: Reglas para descomponer Planes técnicos KMM en Tasks atómicas delegables a agentes KMM especializados: formato obligatorio de task, granularidad, orden canónico de implementación, criterios de asignación de owner agent por dominio de trabajo y definición de done por task. No cubre la generación del Plan (kb-plan-expert) ni la validación de Specs (kb-spec-expert).
+effort: low
 allowed-tools: [Read]
 disable-model-invocation: true
-context: fork
+user-invocable: false
 ---
 
 # Tasks Expert — Coordinador de Implementación SDD
@@ -163,6 +162,8 @@ Antes de definir una Task, verifica:
    - asigna `Owner agent`
    - decide si existe `Suggested workflow`
 3. Define dependencias explícitas entre Tasks.
-4. Añade Tasks de tests al final.
+4. Añade Tasks de tests siguiendo el orden correcto:
+   - **Si el Plan incluye testing en scope**: aplicar orden TDD — la task de test precede a la task de implementación que valida. La task de test tiene `Layer: test` y está listada en el campo `Dependencies` de la task de implementación. El DoD de una task RED es: "el archivo de test existe, compila y falla con mensaje claro indicando la ausencia de implementación". Consulta `kb-kmm-testing-strategy` Regla 3 para los detalles del ciclo.
+   - **Si el Plan no incluye testing explícitamente**: añadir tasks de test al final (posiciones T-012, T-013) como en el orden canónico base.
 5. Verifica que todo componente del Plan tiene su Task correspondiente.
 6. Verifica que ninguna Task queda con owner ambiguo.

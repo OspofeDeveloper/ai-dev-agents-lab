@@ -2,7 +2,7 @@
 name: kb-traceability-rules
 description: Reglas de trazabilidad entre PRD, discovery, specs, plan y tasks en el ecosistema SDD. Define metadata mínima, estados de sincronización y criterios para detectar deriva entre artefactos. Úsalo cuando haya que decidir si un spec o plan está alineado con la versión actual del PRD o cuando se diseñen workflows de sync y change management.
 argument-hint: "[artefacto | tema_a_consultar]"
-effort: medium
+effort: low
 allowed-tools: [Read]
 user-invocable: false
 ---

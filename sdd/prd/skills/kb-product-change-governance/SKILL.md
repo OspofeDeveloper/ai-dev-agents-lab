@@ -2,7 +2,7 @@
 name: kb-product-change-governance
 description: Reglas de gobernanza para cambios de producto en el ecosistema SDD. Define cuándo un cambio debe modificar el PRD, cómo clasificarlo, qué trazabilidad mínima exige y cómo determinar qué artefactos derivados quedan afectados. Úsalo cuando el usuario quiera cambiar alcance, mover una capacidad entre MVP y fase futura, ajustar prioridades de roadmap, o decidir si basta con responder un gap o hay que abrir un change request.
 argument-hint: "[change_request | tema_a_consultar]"
-effort: medium
+effort: low
 allowed-tools: [Read]
 user-invocable: false
 ---

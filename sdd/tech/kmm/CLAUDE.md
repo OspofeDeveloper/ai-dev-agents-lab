@@ -21,6 +21,7 @@ Las `kb-*` viven en los subagentes y se cargan automáticamente en su contexto. 
 | Configurar infraestructura de networking en un proyecto KMM | `/wf-kmm-network-setup` | `[stack HTTP, URLs base, convenciones JSON y estrategia de auth si aplica]` |
 | Configurar auth con Keycloak en un proyecto KMM | `/wf-kmm-auth-setup-keycloak` | `[IDS_BASE_URL, realm, client_id, grant types, estrategia de refresh y mecanismo HTTP]` |
 | Configurar el stack Koin + Ktor + Keycloak de forma compuesta | `/wf-kmm-stack-setup-ktor-keycloak-koin` | `[APP_BASE_URL, IDS_BASE_URL, realm, client_id, grant types y entornos]` |
+| Configurar infraestructura de testing en un proyecto KMM | `/wf-kmm-testing-setup` | `[unit|integration|screenshot|all] [--modules <lista_módulos>]` |
 
 ## Cómo actuar ante una petición
 
@@ -45,6 +46,7 @@ La unidad primaria de implementación en KMM es el **agente especializado**, no 
 | `kmm-network-auth-implementer` | Networking, Ktor, contratos remotos, auth y piezas transversales de `core` asociadas |
 | `kmm-explorer` | Exploración, auditoría, diagnóstico y análisis previo a la implementación usando las `kb-*` para decidir ownership, detectar contradicciones y mapear el estado actual |
 | `kmm-planner` | Planificación de tareas KMM a partir de un contexto ya explorado, ordenando fases, agentes o workflows sin sustituir la exploración técnica |
+| `kmm-tester` | Diseño, escritura y auditoría de tests KMM: unit tests en commonTest, integration tests y UI tests en androidTest, screenshot regression con Roborazzi. No implementa código de producción |
 
 Usa workflows cuando exista una pipeline clara y cerrada. Si en el futuro una task de implementación llega sin workflow específico, el criterio base es delegarla al agente KMM cuyo dominio coincida con el trabajo a realizar.
 
@@ -94,6 +96,9 @@ Las skills KMM son bases de conocimiento que los agentes especializados cargan a
 | `kb-tasks-cmp-ui` | CMP presentation — entry points Android/iOS, @Preview, initKoin (implementación) |
 | `kb-plan-kmm-ui-text` | UIText — cuándo usarlo, decisión UIText vs StringResource (planificación) |
 | `kb-tasks-kmm-ui-text` | UIText — sealed interface, Regla 10, mapping AppError→UIText (implementación) |
+| `kb-kmm-testing-strategy` | Estrategia de testing — pirámide, source sets, TDD RED-GREEN-REFACTOR, fakes sobre mocks, cobertura mínima (planificación) |
+| `kb-tasks-kmm-unit-testing` | Unit tests — ViewModel con Turbine, UseCase, RepositoryImpl con fakes, kotlin.test (implementación) |
+| `kb-tasks-kmm-integration-testing` | Integration tests — composeTestRule, accesibilidad, Roborazzi, DB in-memory (implementación) |
 
 ## Principio operativo
 

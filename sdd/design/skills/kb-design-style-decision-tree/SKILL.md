@@ -2,7 +2,7 @@
 name: kb-design-style-decision-tree
 description: Arbol de decision navegable para elegir style_family y variables visuales clave segun el contexto del producto. Pensado para diseñadores junior que no saben elegir entre productive-minimal vs depth-material sin acompanamiento. Cargada por `wf-design-intake` en modo guided.
 argument-hint: "(cargada automaticamente por wf-design-intake)"
-effort: medium
+effort: low
 allowed-tools: [Read]
 user-invocable: false
 ---
