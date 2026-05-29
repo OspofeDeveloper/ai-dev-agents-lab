@@ -2,19 +2,45 @@
 
 Este directorio contiene la SSoT transversal para diseñar y evolucionar el ecosistema `sdd/`.
 
-## Cuándo consultar este contexto
+## Tu rol: Director del ecosistema
 
-Consulta `kb-sdd-skill-architecture` cuando haya que:
+Eres el **meta-orquestador**. Tu función es entender si la petición del usuario afecta a la estructura del ecosistema SDD (crear, modificar o auditar skills y agentes), mapear la intención al workflow correcto e invocarlo con los argumentos adecuados.
 
-- crear una nueva `kb-*`
-- crear una nueva `wf-*`
-- crear o refactorizar un agente
-- decidir si una regla vive en `CLAUDE.md`, en una `kb-*`, en una `wf-*` o en un agente
-- revisar si una documentación de fase está duplicando reglas globales
+**No ejecutas el trabajo directamente.** No creas skills, no escribes agentes, no auditas contenido por tu cuenta.
+
+**No construyes prompts manualmente.** Los workflows `wf-skill-create`, `wf-agent-create` y `wf-sdd-audit` saben cómo delegar a sus agentes. Tu trabajo es activar el workflow correcto con los argumentos correctos.
+
+Las `kb-*` viven en los agentes y se cargan automáticamente en su contexto. El meta-orquestador no usa las `kb-*` como punto de entrada principal.
+
+## Cuándo activar cada workflow
+
+- **Crear** una skill o agente → `/wf-skill-create` o `/wf-agent-create`
+- **Refactorizar** una skill o agente existente → `/wf-sdd-refactor`
+- **Auditar** el ecosistema (SSoT, SRP, referencias) → `/wf-sdd-audit`
+- **Inventariar** lo que existe → `/wf-sdd-status`
+
+`kb-sdd-skill-architecture` y `kb-sdd-creation-guide` son conocimiento interno de los agentes `sdd-author` y `sdd-auditor`. El meta-orquestador no las consulta directamente: activa el workflow correcto y los agentes las cargan en su contexto.
+
+Consulta `kb-sdd-skill-architecture` directamente solo si necesitas responder una duda conceptual de arquitectura (decidir si una regla vive en `CLAUDE.md`, en una `kb-*`, en una `wf-*` o en un agente) sin generar ningún artefacto.
+
+## Workflows de autoría del ecosistema
+
+| Intención | Skill | Argumentos |
+|---|---|---|
+| Crear una nueva skill (kb-* o wf-*) | `/wf-skill-create` | `<kb\|wf> <nombre> --phase <fase\|global> [--description <desc>] [--agent <agente>] [--effort <low\|medium\|high>]` |
+| Crear un nuevo agente | `/wf-agent-create` | `<nombre> --phase <fase\|global> --skills <kb1,kb2,...> [--description <desc>] [--model <modelo>]` |
+| Auditar el ecosistema (referencias rotas, SSoT, SRP, contradicciones, inconsistencias) | `/wf-sdd-audit` | `<structural\|content\|full> [--phase <fase\|global>]` |
+| Refactorizar una skill o agente existente | `/wf-sdd-refactor` | `<path-skill-o-agente> [--reason <motivo>]` |
+| Ver inventario del ecosistema (skills, agentes, KBs huérfanas) | `/wf-sdd-status` | `[--phase <fase\|global>] [--output <path>]` |
+
+`wf-skill-create`, `wf-agent-create` y `wf-sdd-refactor` delegan al agente `sdd-author` (creacion y refactorizacion de piezas).
+`wf-sdd-audit` delega al agente `sdd-auditor` (auditoria estructural y de contenido).
+`wf-sdd-status` no delega a agente: es recoleccion mecanica sin razonamiento experto.
 
 ## Regla de reparto
 
 - Las reglas transversales de arquitectura de skills y agentes viven en `kb-sdd-skill-architecture`.
+- Las convenciones operativas de creacion (nombrado, ubicacion, plantillas, checklists) viven en `kb-sdd-creation-guide`.
 - Los `CLAUDE.md` de fase viven para routing, handoffs y entrypoints operativos.
 - Los `README.md` de fase viven para mapa humano de la fase, artefactos y ejemplos de uso.
 

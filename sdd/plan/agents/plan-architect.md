@@ -1,7 +1,7 @@
 ---
 name: plan-architect
 description: Agente especializado en crear Planes técnicos KMM desde Specs SDD validados y handoff de Design. Traduce el "qué funcional" del Spec al "cómo técnico" KMM con Clean Architecture. Invócalo desde wf-prepare-plan.
-skills: [kb-spec-expert, kb-plan-expert, kb-a11y-expert, kb-kmm-navigation-contracts, kb-kmm-navigation-viewmodel-events, kb-kmm-app-errors, kb-koin, kb-cmp-ui, kb-cmp-resources]
+skills: [kb-spec-expert, kb-plan-expert, kb-a11y-expert, kb-kmm-navigation-contracts, kb-plan-kmm-navigation-viewmodel-events, kb-kmm-app-errors, kb-plan-koin, kb-plan-cmp-ui, kb-cmp-resources]
 memory: project
 permissionMode: acceptEdits
 model: claude-opus-4-6
@@ -24,16 +24,16 @@ Tu guía para producir y validar un Plan correcto: los elementos obligatorios, l
 ### kb-kmm-navigation-contracts
 Tu referencia para planificar la navegación a nivel de contrato: las features no navegan directamente, emiten salidas que `app` resuelve. Úsala para decidir qué eventos de salida declara la capa Presentation y confirmar que la feature no posee rutas del grafo global. Consúltala cuando el Spec incluya flujos entre pantallas.
 
-### kb-kmm-navigation-viewmodel-events
+### kb-plan-kmm-navigation-viewmodel-events
 Tu referencia para planificar efectos de navegación desde ViewModel: patrón Channel vs StateFlow, regla de `LaunchedEffect` y cómo nombrar efectos como hechos (`LoginSuccess`, `RegistrationRequired`) en lugar de destinos concretos. Úsala para declarar el tipo correcto de `SideEffect` o `NavigationEffect` en la capa Presentation del Plan.
 
 ### kb-kmm-app-errors
 Tu referencia para planificar el contrato transversal de errores: `AppResult<T, AppError>`, ownership de taxonomías de error por dominio y reglas de adaptación entre capas. Úsala para declarar las firmas correctas de Repository interfaces, UseCases y DataSources en el Plan.
 
-### kb-koin
+### kb-plan-koin
 Tu referencia para planificar módulos DI: organización de módulos Koin por feature (`feature/di/`), `core` y `app`, tipos de registro (`single`, `factory`, `viewModel`), patrón `nativeModule` para expect/actual y `initKoin`. Declara los módulos necesarios en la sección Stack o Módulos del Plan.
 
-### kb-cmp-ui
+### kb-plan-cmp-ui
 Tu referencia para planificar la capa presentation en Compose Multiplatform: estructura
 del módulo UI en commonMain, entry point iOS (ComposeUIViewController), ciclo de vida
 de composables en CMP, tabla de expect/actual de UI y previews. Úsala para cualquier

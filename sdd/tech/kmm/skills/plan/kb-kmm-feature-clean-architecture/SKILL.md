@@ -75,16 +75,11 @@ La capa `presentation` contiene la representación de pantalla y su coordinació
 - efectos de salida ViewModel -> UI
 - transformaciones de dominio a modelo de presentación cuando sean necesarias para renderizar
 
-En este proyecto, cuando existe un ViewModel de pantalla, la convención preferida es:
+En este proyecto, cuando existe un ViewModel de pantalla, el patrón preferido es separar entradas (`Intent`), estado (`State`) y efectos one-shot (`Events`) con un único punto de entrada `onIntent`.
 
-- `<Pantalla>State` como estado de pantalla
-- `<Pantalla>Intent` como acciones de entrada UI -> ViewModel
-- `<Pantalla>Events` como efectos de salida one-shot ViewModel -> UI, emitidos siempre por `Channel`
-- `fun onIntent(intent: <Pantalla>Intent)` como único punto de entrada del ViewModel
+→ Naming exacto, tipos, uso de `Channel` y decisiones del ViewModel: `kb-plan-kmm-navigation-viewmodel-events`
 
 Si el estado se mantiene directamente en el ViewModel, la forma preferida es `var state by mutableStateOf(...)` con `private set`.
-
-La separación exacta entre `State`, `Intent` y `Events`, incluyendo qué outcomes deben salir por efectos y qué decisiones tiene prohibidas el ViewModel, se delega a `kb-plan-kmm-navigation-viewmodel-events`.
 
 `presentation` no debe contener:
 
@@ -188,7 +183,7 @@ Cada mapper debe vivir donde se transforma una representación en otra:
 
 - DTO -> dominio en `data`
 - dominio -> UI model en `presentation`, solo si ese modelo de UI realmente existe
-- `AppError` -> `UiText` en `presentation`, cuando la UI necesite representarlo
+- `AppError` -> `UiText` en `presentation` (→ `kb-kmm-app-errors` Regla 9)
 
 No mezclar en un mismo mapper transformaciones de infraestructura y de UI. Cada capa convierte hacia la representación que necesita.
 
@@ -290,5 +285,5 @@ Si una regla depende de Koin, Ktor, SQLDelight o cualquier otra librería, no pe
 
 - ¿La pantalla con ViewModel usa `presentation/<pantalla>/viewmodel/` como ubicación preferida?
 - ¿El ViewModel expone `onIntent(intent)` como único punto de entrada?
-- ¿El estado de pantalla usa `<Pantalla>State` y no un naming genérico inconsistente con la convención del proyecto?
+- ¿El naming de `State`, `Intent` y `Events` sigue las convenciones de `kb-plan-kmm-navigation-viewmodel-events`?
 - ¿La capa `presentation` evita mezclar DTOs, data sources o detalles de infraestructura?

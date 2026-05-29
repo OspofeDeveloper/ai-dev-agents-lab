@@ -19,7 +19,7 @@ La resolución final del texto ocurre en UI.
 
 El sealed interface y sus variantes viven en `commonMain`.
 
-Está prohibido depender de `@StringRes` o de contextos específicos de Android.
+→ Prohibición de `@StringRes` en `commonMain`: `kb-kmm-resources` (Regla 5)
 
 → Templates: `references/ui-text-pattern.md`
 
@@ -50,9 +50,7 @@ Esto permite que el ViewModel construya una representación visual estable sin a
 
 ## Regla 6: El mapping `AppError -> UIText` vive en presentation
 
-Cuando el proyecto usa un error transversal como `AppError`, la conversión a `UIText` pertenece a presentation/UI.
-
-La política transversal de `AppError` vive en `kb-kmm-app-errors`; esta skill solo define su representación visual.
+→ Regla SSoT: `kb-kmm-app-errors` (Regla 9). Esta skill solo define la representación visual del error.
 
 → Templates: `references/ui-text-pattern.md`
 
@@ -90,6 +88,6 @@ La UI puede materializar `UIText`, pero no completar la lógica de selección te
 - resolución visual solo en UI mediante `asString()` en Composables
 - `UIText.Resource` para texto traducible (strings resources con o sin args)
 - `UIText.Dynamic` para texto proveniente de datos externos o dinámicos
-- mapping `AppError -> UIText` en presentation/UI
+- mapping `AppError -> UIText` en presentation/UI (→ `kb-kmm-app-errors` Regla 9)
 - en UiModels, usar `UIText` cuando un campo puede ser dinámico O traducible según condición; usar `StringResource` directamente cuando es siempre un recurso fijo
 - no dividir una misma intención textual en primitivos auxiliares para que la UI la reconstruya

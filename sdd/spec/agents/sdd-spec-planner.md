@@ -4,6 +4,7 @@ description: Agente especializado en planificar el approach de trabajo dentro de
 skills: [kb-prd-expert, kb-spec-expert, kb-decompose-expert, kb-conflict-expert, kb-gap-conventions, kb-product-change-governance, kb-traceability-rules]
 memory: project
 permissionMode: acceptEdits
+model: claude-sonnet-4-6
 ---
 
 # SDD Spec Planner

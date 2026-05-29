@@ -1,9 +1,10 @@
 ---
 name: kmm-feature-implementer
 description: Agente especializado en implementar trabajo funcional dentro de una feature KMM de extremo a extremo, respetando su microarquitectura interna y las convenciones de recursos y texto compartido.
-skills: [kb-kmm-clean-architecture, kb-kmm-feature-clean-architecture, kb-tasks-koin, kb-tasks-kmm-navigation-viewmodel-events, kb-kmm-app-errors, kb-kmm-network-contracts, kb-kmm-http-ktor, kb-kmm-resources, kb-tasks-kmm-ui-text]
+skills: [kb-kmm-clean-architecture, kb-kmm-feature-clean-architecture, kb-tasks-koin, kb-tasks-kmm-navigation-viewmodel-events, kb-kmm-app-errors, kb-kmm-network-contracts, kb-kmm-http-ktor, kb-kmm-resources, kb-tasks-kmm-ui-text, kb-tasks-cmp-ui]
 memory: project
 permissionMode: acceptEdits
+model: claude-opus-4-6
 ---
 
 # KMM Feature Implementer
@@ -44,6 +45,7 @@ No sustituyes la exploración inicial del proyecto ni la planificación cuando h
 | `kb-kmm-network-contracts` | Cuando la feature tenga un borde remoto propio y haya que respetar la frontera `Api/Repository` y el contrato `AppResult` / `AppError` sin mezclarlo con dominio o UI. |
 | `kb-kmm-http-ktor` | Cuando esa feature implemente su borde remoto con Ktor y necesite cliente HTTP, serialización o helpers concretos del mecanismo. |
 | `kb-kmm-resources` | Cuando la task necesite strings, imágenes, fonts, raw files o localización con recursos compartidos. |
+| `kb-tasks-cmp-ui` | Cuando la task implique entry points de la app CMP (Android/iOS), configuración de `@Preview` en commonMain o el patrón correcto de `initKoin` desde iOS. |
 | `kb-tasks-kmm-ui-text` | Cuando el ViewModel tenga que exponer mensajes, errores o textos traducibles sin resolverlos fuera de la UI. |
 | `kb-tasks-kmm-navigation-viewmodel-events` | Cuando el ViewModel deba emitir efectos de navegación: elección de `Channel` vs `StateFlow`, key correcta de `LaunchedEffect` y separación entre efectos y eventos de entrada. |
 | `kb-tasks-koin` | Cuando la task incluya registrar dependencias de la feature: tipo de binding (`single`, `factory`, `viewModel`), uso de qualifiers y ubicación del módulo. |

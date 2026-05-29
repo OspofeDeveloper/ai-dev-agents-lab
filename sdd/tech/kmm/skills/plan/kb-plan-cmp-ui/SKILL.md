@@ -2,6 +2,8 @@
 name: kb-plan-cmp-ui
 description: Base de conocimiento de la capa presentation en proyectos Compose Multiplatform (CMP): estructura del módulo UI compartida en commonMain, cuándo usar expect/actual de UI y relación con ViewModels KMM. Úsalo cuando el stack sea CMP y haya que planificar pantallas, navegación o componentes UI.
 allowed-tools: [Read]
+effort: low
+user-invocable: false
 ---
 
 # CMP UI — Capa Presentation en Compose Multiplatform (nivel planificación)

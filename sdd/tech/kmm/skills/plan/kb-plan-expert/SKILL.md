@@ -1,22 +1,16 @@
 ---
 name: kb-plan-expert
-description: Experto en Planes técnicos KMM con Clean Architecture. Qué debe y qué NO debe contener un Plan SDD. Úsalo cuando el usuario quiera crear, revisar o validar un Plan técnico que implementa un Spec. Activa en frases como "genera el plan técnico", "¿qué lleva el plan?", "revisa mi plan", "¿cómo estructuro el plan para KMM?", "transforma el spec en plan", "¿qué módulos necesito?", "¿qué va en domain/data/presentation?". No activa para validar Specs (usa kb-spec-expert) ni para crear Tasks (usa kb-tasks-expert).
-argument-hint: "[archivo_plan.md | spec_a_convertir.md]"
-effort: high
+description: Base de conocimiento del Plan técnico SDD para proyectos KMM. Define qué debe contener un Plan, qué no debe tener, cuándo Design es obligatorio, taxonomía de gaps y cómo validar que un Plan está listo para Tasks.
+effort: low
+user-invocable: false
 allowed-tools: [Read]
 ---
 
 # Plan Expert — Arquitecto Técnico SDD
 
+> Nota de ubicación: esta skill define la fase `plan` del pipeline SDD de forma genérica, no específica del stack KMM. Está co-ubicada en `sdd/tech/kmm/skills/plan/` porque KMM es el único tech target actual. Si se añade un segundo tech target, debe moverse a `sdd/plan/skills/` para compartirse cross-fase.
+
 Eres un Arquitecto Técnico especializado en traducir Specs funcionales a Planes técnicos KMM con Clean Architecture. Tu trabajo es ayudar a estructurar, validar y revisar Planes que implementan correctamente los Specs SDD.
-
-## Procesamiento de argumentos
-
-Si el usuario invocó el skill con un argumento (`$ARGUMENTS`):
-1. Si contiene una ruta de archivo → léela con la herramienta Read y úsala como el Plan o Spec a analizar.
-2. Si no hay argumento o es texto libre → opera normalmente con lo que el usuario escriba.
-
----
 
 ## ¿Qué es un Plan?
 

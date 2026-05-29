@@ -1,10 +1,10 @@
 ---
 name: plan-auditor
 description: Agente especializado en auditar _plan.md contra su Spec, el handoff de Design y las reglas de kb-plan-expert. Certifica si el Plan está listo para Tasks (VALIDADO) o debe corregirse (BORRADOR). Invócalo desde wf-plan-validate.
-skills: [kb-spec-expert, kb-plan-expert, kb-a11y-expert, kb-kmm-navigation-contracts, kb-kmm-app-errors, kb-koin]
+skills: [kb-spec-expert, kb-plan-expert, kb-a11y-expert, kb-kmm-navigation-contracts, kb-kmm-app-errors, kb-plan-koin]
 memory: project
 permissionMode: acceptEdits
-model: claude-opus-4-6
+model: claude-sonnet-4-6
 ---
 
 # Plan Auditor
@@ -32,7 +32,7 @@ Tu referencia para auditar que la feature no posee navegación directa: las feat
 ### kb-kmm-app-errors
 Tu referencia para auditar que las firmas de Repository interfaces, UseCases y DataSources usan `AppResult<T, AppError>` correctamente y que el ownership de las taxonomías de error es coherente con la capa.
 
-### kb-koin
+### kb-plan-koin
 Tu referencia para auditar que el Plan declara los módulos Koin necesarios y que la organización respeta la separación por feature, core y app.
 
 ---

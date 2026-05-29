@@ -2,6 +2,7 @@
 name: kb-tasks-kmm-navigation-viewmodel-events
 description: Implementación concreta del patrón Intent/Events en proyectos KMM: Channel para efectos one-shot, LaunchedEffect(viewModel), naming de sealed interfaces y coordinación ViewModel-Composable. Úsalo cuando haya que implementar navegación por efectos desde un ViewModel.
 allowed-tools: [Read]
+effort: low
 user-invocable: false
 ---
 

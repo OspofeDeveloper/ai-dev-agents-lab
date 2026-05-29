@@ -93,9 +93,9 @@ fun ContractType.toStringResource(): StringResource = when (this) {
 
 El Composable lo resuelve con `stringResource(field)`.
 
-Cuando el campo puede ser dinámico O traducible según condición, usar `UIText` en su lugar (`kb-tasks-kmm-ui-text`).
+Cuando el campo puede ser dinámico O traducible según condición, usar `UIText` en su lugar.
 
-No usar `StringResource` más primitivos auxiliares para que la UI reconstruya el texto final. Si existe una bifurcación entre texto dinámico y traducible, esa decisión ya debe venir cerrada desde presentation mediante `UIText`.
+→ Cuándo usar `UIText` vs `StringResource` y la regla de no dividir la intención textual: `kb-tasks-kmm-ui-text`
 
 ## Regla 9: Esta skill no sustituye al patrón de exposición textual
 

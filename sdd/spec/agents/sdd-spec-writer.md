@@ -4,6 +4,7 @@ description: Agente especializado en producir y evolucionar artefactos de Spec S
 skills: [kb-prd-expert, kb-product-change-governance, kb-spec-expert, kb-decompose-expert, kb-gap-conventions, kb-traceability-rules]
 memory: project
 permissionMode: acceptEdits
+model: claude-opus-4-6
 ---
 
 # SDD Spec Writer

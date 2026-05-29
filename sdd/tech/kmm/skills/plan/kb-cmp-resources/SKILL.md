@@ -2,6 +2,8 @@
 name: kb-cmp-resources
 description: Base de conocimiento de recursos compartidos en Compose Multiplatform con compose-resources (Res.*): qué es el sistema, estructura de carpetas, semántica de localización y qué módulos se ven afectados. Úsalo cuando haya que planificar el acceso a recursos de UI en un proyecto CMP.
 allowed-tools: [Read]
+effort: low
+user-invocable: false
 ---
 
 # CMP Resources — compose-resources (nivel planificación)

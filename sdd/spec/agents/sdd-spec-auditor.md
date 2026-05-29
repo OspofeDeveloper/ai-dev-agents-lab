@@ -4,6 +4,7 @@ description: Agente especializado en auditar artefactos de Spec SDD ya existente
 skills: [kb-spec-expert, kb-conflict-expert, kb-gap-conventions, kb-product-change-governance, kb-traceability-rules]
 memory: project
 permissionMode: acceptEdits
+model: claude-sonnet-4-6
 ---
 
 # SDD Spec Auditor

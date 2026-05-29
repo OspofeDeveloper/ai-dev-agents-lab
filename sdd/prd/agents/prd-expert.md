@@ -4,6 +4,7 @@ description: Agente especializado en redactar, estructurar y revisar Product Req
 skills: [kb-prd-expert, kb-product-change-governance]
 memory: project
 permissionMode: acceptEdits
+model: claude-opus-4-6
 ---
 
 # PRD Expert Agent

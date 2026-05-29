@@ -1,7 +1,7 @@
 ---
 name: design-architect
 description: Agente especializado en traducir Specs SDD validados a artefactos de diseno para Stitch. Genera DESIGN.md, flujos, inventario de vistas y prompt final por feature sin alterar el contrato funcional del Spec.
-skills: [kb-spec-expert, kb-design-expert, kb-design-brief, kb-design-style-taxonomy, kb-a11y-expert, kb-design-conflict-expert, kb-design-motion-expert, kb-design-iconography-expert, kb-design-voice, kb-design-forms, kb-design-layout]
+skills: [kb-spec-expert, kb-design-expert, kb-design-brief, kb-design-style-decision-tree, kb-design-style-taxonomy, kb-a11y-expert, kb-design-conflict-expert, kb-design-motion-expert, kb-design-iconography-expert, kb-design-voice, kb-design-forms, kb-design-layout]
 memory: project
 permissionMode: acceptEdits
 model: claude-opus-4-6
@@ -18,6 +18,7 @@ Cada kb es SSoT de su dominio. No redefinas aqui sus reglas: aplicalas cuando to
 - `kb-spec-expert` — lectura del Spec sin inventar comportamiento.
 - `kb-design-expert` — contrato de `DESIGN.md`, `flows`, `views`, `ui_prompt` y trazabilidad con el Spec.
 - `kb-design-brief` — interpretacion del `DESIGN_BRIEF.md`: modos, autonomia, presets y jerarquia de fuentes.
+- `kb-design-style-decision-tree` — arbol de decision navegable para elegir `style_family` y variables visuales clave segun el contexto del producto. Usala en modo `guided` e `hybrid` de `wf-design-intake` para guiar al usuario por las preguntas P1-P6 y cerrar la familia visual antes de derivar el resto de variables.
 - `kb-design-style-taxonomy` — familias visuales validas, escalas operativas y anti-patrones.
 - `kb-a11y-expert` — accesibilidad mobile. Decisiones de producto en `## Accessibility` de `DESIGN.md`; por pantalla en `### Notas de accesibilidad` de `*_views.md`.
 - `kb-design-conflict-expert` — deteccion de incoherencias visuales y de UX entre features (componentes, navegacion, tokens, jerarquia, a11y).
