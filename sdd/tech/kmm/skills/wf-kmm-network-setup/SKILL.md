@@ -1,6 +1,7 @@
 ---
 name: wf-kmm-network-setup
 description: "Configura la capa de networking en un proyecto KMM componiendo reglas de arquitectura, DI y la implementación HTTP elegida sin acoplar la skill a una única estrategia de auth."
+when_to_use: "Activa con frases como 'configura networking en KMM', 'añade capa de red al proyecto', 'setup de Ktor', 'configura el cliente HTTP', 'añade networking sin auth'. No activa si también se necesita auth con Keycloak (usa wf-kmm-auth-setup-keycloak) ni para el stack completo (usa wf-kmm-stack-setup-ktor-keycloak-koin)."
 argument-hint: "[stack HTTP, URLs base, entornos, convenciones JSON y estrategia de auth si aplica]"
 effort: high
 allowed-tools: [Read, Write, Bash]

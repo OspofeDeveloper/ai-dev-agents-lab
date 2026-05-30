@@ -1,6 +1,7 @@
 ---
 name: kb-spec-expert
-description: Experto en Spec Driven Development (SDD): qué debe y qué NO debe contener un Spec. Usa este skill siempre que el usuario pregunte qué es un spec, cómo escribir un spec, si su documento es un spec válido, qué diferencia hay entre Spec/Plan/Tasks, por qué su spec "se siente muy técnico", o cuando quiera revisar, limpiar o validar un spec. Activa en frases como: "¿qué lleva un spec?", "revisa mi spec", "¿está bien mi spec?", "genera el spec", "ayúdame a escribir un spec", "¿esto es un spec o un plan?", "mi spec tiene detalles técnicos", "valida el spec", "¿qué falta en mi spec?", "explícame qué es un spec". También activa cuando el usuario comparte un documento de requisitos y pregunta si está correcto o completo. No activa para tareas de planificación técnica, arquitectura, o escritura de código.
+description: "Experto en Spec Driven Development (SDD): qué debe y qué NO debe contener un Spec. Define la diferencia entre Spec, Plan y Tasks, los criterios de calidad de un Spec válido y cómo corregir Specs con detalles técnicos prematuros."
+when_to_use: "Activa cuando el usuario pregunte qué es un spec, cómo escribir un spec, si su documento es un spec válido, qué diferencia hay entre Spec/Plan/Tasks, o quiera revisar, limpiar o validar un spec. Frases típicas: '¿qué lleva un spec?', 'revisa mi spec', '¿está bien mi spec?', 'genera el spec', 'ayúdame a escribir un spec', '¿esto es un spec o un plan?', 'mi spec tiene detalles técnicos', 'valida el spec', '¿qué falta en mi spec?'. No activa para tareas de planificación técnica, arquitectura, o escritura de código."
 argument-hint: "[archivo_spec.md | tema_a_revisar]"
 effort: low
 allowed-tools: [Read]

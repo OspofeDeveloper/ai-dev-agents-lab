@@ -5,6 +5,8 @@ skills: [kb-spec-expert, kb-design-expert, kb-design-brief, kb-design-style-deci
 memory: project
 permissionMode: acceptEdits
 model: claude-opus-4-6
+effort: high
+color: pink
 ---
 
 # Design Architect

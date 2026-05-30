@@ -5,6 +5,8 @@ skills: [kb-sdd-skill-architecture, kb-sdd-creation-guide]
 memory: project
 permissionMode: acceptEdits
 model: claude-opus-4-6
+effort: high
+color: purple
 ---
 
 # SDD Author

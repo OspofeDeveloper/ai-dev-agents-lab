@@ -5,6 +5,8 @@ skills: [kb-kmm-clean-architecture, kb-kmm-core-layer, kb-kmm-feature-clean-arch
 memory: project
 permissionMode: acceptEdits
 model: claude-opus-4-6
+effort: high
+color: red
 ---
 
 # KMM Platform Integrator

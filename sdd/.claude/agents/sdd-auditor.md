@@ -5,6 +5,8 @@ skills: [kb-sdd-skill-architecture, kb-sdd-creation-guide, kb-sdd-audit-structur
 memory: project
 permissionMode: acceptEdits
 model: claude-sonnet-4-6
+disallowedTools: Write, Edit
+color: purple
 ---
 
 # SDD Auditor

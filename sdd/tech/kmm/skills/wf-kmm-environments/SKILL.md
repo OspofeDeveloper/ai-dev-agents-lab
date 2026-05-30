@@ -1,6 +1,7 @@
 ---
 name: wf-kmm-environments
 description: "Configura un sistema multi-brand/multi-environment en un proyecto KMM componiendo semántica estable de variantes y sus implementaciones Android e iOS."
+when_to_use: "Activa con frases como 'configura entornos en KMM', 'añade multi-environment al proyecto', 'setup de variantes por brand', 'necesito pre y pro en KMM', 'configura multi-brand'. No activa para el stack completo (usa wf-kmm-stack-setup-ktor-keycloak-koin) ni para configurar solo networking (usa wf-kmm-network-setup)."
 argument-hint: "[brands y entornos, ej: 'pre pro' o 'cuideo felizvita con pre y pro']"
 effort: high
 allowed-tools: [Read, Write, Bash]

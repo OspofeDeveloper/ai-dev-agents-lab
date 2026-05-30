@@ -5,6 +5,8 @@ skills: [kb-kmm-testing-strategy, kb-tasks-kmm-unit-testing, kb-tasks-kmm-integr
 memory: project
 permissionMode: acceptEdits
 model: claude-opus-4-6
+effort: high
+color: red
 ---
 
 # KMM Tester

@@ -5,6 +5,8 @@ skills: [kb-prd-expert, kb-product-change-governance, kb-spec-expert, kb-decompo
 memory: project
 permissionMode: acceptEdits
 model: claude-opus-4-6
+effort: high
+color: green
 ---
 
 # SDD Spec Writer

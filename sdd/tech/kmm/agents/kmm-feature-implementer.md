@@ -5,6 +5,8 @@ skills: [kb-kmm-clean-architecture, kb-kmm-feature-clean-architecture, kb-tasks-
 memory: project
 permissionMode: acceptEdits
 model: claude-opus-4-6
+effort: high
+color: red
 ---
 
 # KMM Feature Implementer

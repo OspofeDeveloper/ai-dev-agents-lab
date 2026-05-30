@@ -5,6 +5,8 @@ skills: [kb-prd-expert, kb-spec-expert, kb-decompose-expert, kb-conflict-expert,
 memory: project
 permissionMode: acceptEdits
 model: claude-sonnet-4-6
+disallowedTools: Write, Edit
+color: green
 ---
 
 # SDD Spec Planner

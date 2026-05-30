@@ -1,6 +1,7 @@
 ---
 name: wf-kmm-datastore-setup
 description: "Configura Preferences DataStore en un proyecto KMM componiendo arquitectura por capas, wiring de DI y providers por plataforma sin mezclar storage local con auth o networking."
+when_to_use: "Activa con frases como 'configura DataStore en KMM', 'añade storage local al proyecto', 'setup de Preferences DataStore', 'necesito persistencia local en KMM'. No activa para configurar networking (usa wf-kmm-network-setup) ni para el stack completo (usa wf-kmm-stack-setup-ktor-keycloak-koin)."
 argument-hint: "[ámbito del storage, módulo destino, DI activa y consumers previstos]"
 effort: medium
 allowed-tools: [Read, Write, Bash]

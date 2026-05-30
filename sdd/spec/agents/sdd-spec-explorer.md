@@ -5,6 +5,7 @@ skills: [kb-prd-expert, kb-product-change-governance, kb-spec-expert, kb-decompo
 memory: project
 permissionMode: acceptEdits
 model: claude-sonnet-4-6
+color: green
 ---
 
 # SDD Spec Explorer

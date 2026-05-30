@@ -1,6 +1,7 @@
 ---
 name: wf-kmm-auth-setup-keycloak
 description: "Configura autenticación OAuth con Keycloak en un proyecto KMM separando contratos de sesión, proveedor OAuth y mecanismo técnico de integración con el cliente HTTP."
+when_to_use: "Activa con frases como 'configura auth con Keycloak', 'añade autenticación OAuth al proyecto KMM', 'setup de Keycloak', 'integra autenticación con el cliente HTTP'. No activa para configurar el stack completo (usa wf-kmm-stack-setup-ktor-keycloak-koin) ni para setup de networking sin auth (usa wf-kmm-network-setup)."
 argument-hint: "[IDS_BASE_URL, realm, client_id, grant types, estrategia de refresh y mecanismo HTTP]"
 effort: high
 allowed-tools: [Read, Write, Bash]

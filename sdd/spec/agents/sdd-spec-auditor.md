@@ -5,6 +5,8 @@ skills: [kb-spec-expert, kb-conflict-expert, kb-gap-conventions, kb-product-chan
 memory: project
 permissionMode: acceptEdits
 model: claude-sonnet-4-6
+disallowedTools: Write, Edit
+color: green
 ---
 
 # SDD Spec Auditor

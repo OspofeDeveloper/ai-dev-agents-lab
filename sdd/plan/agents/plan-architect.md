@@ -5,6 +5,8 @@ skills: [kb-spec-expert, kb-plan-expert, kb-a11y-expert, kb-kmm-navigation-contr
 memory: project
 permissionMode: acceptEdits
 model: claude-opus-4-6
+effort: high
+color: orange
 ---
 
 # Plan Architect

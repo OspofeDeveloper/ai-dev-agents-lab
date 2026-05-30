@@ -1,6 +1,7 @@
 ---
 name: wf-kmm-stack-setup-ktor-keycloak-koin
 description: "Atajo para configurar el stack KMM más habitual basado en Koin, Ktor y OAuth con Keycloak, componiendo skills separadas sin convertirlas en una única fuente mezclada."
+when_to_use: "Activa con frases como 'configura el stack completo KMM', 'setup inicial del proyecto KMM con Koin Ktor y Keycloak', 'quiero el stack habitual KMM', 'configura todo el stack de una vez'. No activa si solo se necesita una parte del stack (usa wf-kmm-network-setup, wf-kmm-auth-setup-keycloak o wf-kmm-datastore-setup por separado)."
 argument-hint: "[APP_BASE_URL, IDS_BASE_URL, realm, client_id, grant types, entornos y uso opcional de $type]"
 effort: high
 allowed-tools: [Read, Write, Bash]

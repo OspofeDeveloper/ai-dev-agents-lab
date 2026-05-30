@@ -5,6 +5,7 @@ skills: [kb-kmm-clean-architecture, kb-kmm-core-layer, kb-kmm-feature-clean-arch
 memory: project
 permissionMode: acceptEdits
 model: claude-sonnet-4-6
+color: red
 ---
 
 # KMM Explorer
