@@ -1,6 +1,7 @@
 ---
 name: wf-design-branch
-description: Workflow SDD para explorar variantes paralelas del sistema visual sin comprometerse. Permite crear ramas del DESIGN.md (DESIGN.<branch>.md), compararlas, mergearlas a main o descartarlas. Pensado para hipotesis de direccion visual o presentaciones A/B al cliente. Activa en frases como "explora una variante mas brand-forward del sistema", "crea una rama del DESIGN con dark mode prominente", "compara estas dos versiones del DESIGN.md", "haz un branch para probar otra familia".
+description: Permite explorar variantes paralelas del sistema visual sin comprometerse. Crea ramas del DESIGN.md (DESIGN.<branch>.md), las compara, las mergea a main o las descarta. Pensado para hipotesis de direccion visual o presentaciones A/B al cliente.
+when_to_use: "Activa en frases como 'explora una variante mas brand-forward del sistema', 'crea una rama del DESIGN con dark mode prominente', 'compara estas dos versiones del DESIGN.md', 'haz un branch para probar otra familia'."
 argument-hint: "create <branch-name> | list | compare <branch-a> <branch-b> | merge <branch> --into <target> | discard <branch>"
 effort: medium
 allowed-tools: [Read, Write, Bash, Agent]

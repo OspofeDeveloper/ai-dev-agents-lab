@@ -69,7 +69,7 @@ Convención de ubicación y nombrado:
 
 - directorio: `commonTest/fakes/`
 - nombre de clase: `Fake<NombreInterfaz>` (ej: `FakeUserRepository`, `FakeAuthDataSource`)
-- los fakes de navegación siguen la convención establecida en `kb-kmm-navigation-compose/references/testing.md` — esa skill es el SSoT para FakeNavigation y navegación en tests, esta skill no la duplica.
+- los fakes de navegación siguen la convención establecida en `${CLAUDE_SKILL_DIR}/../../tasks/kb-kmm-navigation-compose/references/testing.md` — esa skill es el SSoT para FakeNavigation y navegación en tests, esta skill no la duplica.
 
 Un stub parcial (que solo implementa la superficie que ejercita el test) es válido solo cuando la interfaz es muy amplia y el test cubre una fracción conocida. Debe marcarse como `Stub` en el nombre, no `Fake`.
 

@@ -43,7 +43,7 @@ Regla práctica:
 
 No usar el estado persistente para modelar decisiones de flujo que la app debe traducir externamente.
 
-→ Patterns: `references/viewmodel-and-navigation-events.md`
+→ Patterns: `${CLAUDE_SKILL_DIR}/references/viewmodel-and-navigation-events.md`
 
 ---
 
@@ -92,7 +92,7 @@ La ownership de esa decisión vive en `kb-kmm-app-layer`.
 
 El patrón del proyecto es `Channel` con entrega única. No se usa `StateFlow` con reset manual para efectos one-shot.
 
-→ Patterns: `references/viewmodel-and-navigation-events.md`
+→ Patterns: `${CLAUDE_SKILL_DIR}/references/viewmodel-and-navigation-events.md`
 
 ## Regla 7: Los eventos de entrada usan el naming `Intent`
 
@@ -112,7 +112,7 @@ Con `Channel`, usar siempre `LaunchedEffect(viewModel)` como key.
 
 `LaunchedEffect(Unit)` no es válido porque oculta cambios de owner o re-entradas relevantes.
 
-→ Patterns: `references/viewmodel-and-navigation-events.md`
+→ Patterns: `${CLAUDE_SKILL_DIR}/references/viewmodel-and-navigation-events.md`
 
 ## Regla 10: Los efectos de navegación no se mezclan con `Intent`
 

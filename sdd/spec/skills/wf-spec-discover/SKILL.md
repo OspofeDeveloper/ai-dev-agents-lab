@@ -1,6 +1,7 @@
 ---
 name: wf-spec-discover
-description: Analiza un PRD e identifica features candidatas por cohesión funcional. Genera un _discovery.md con el mapa de features, scope por feature y shared models. No genera specs — solo el roadmap para ejecutar wf-spec-fast-track por feature. Puede detenerse si el analysis introduce expansión funcional no consolidada en el PRD, salvo override explícito para continuar marcando el discovery como alcance derivado. Activa en frases como "identifica features del PRD", "descubre las features", "qué features tiene este PRD", "mapa de features", "features-first", "qué features hay en este documento".
+description: "Analiza un PRD e identifica features candidatas por cohesion funcional. Genera un _discovery.md con el mapa de features, scope por feature y shared models. No genera specs — solo el roadmap para ejecutar wf-spec-fast-track por feature."
+when_to_use: "Activa en frases como 'identifica features del PRD', 'descubre las features', 'que features tiene este PRD', 'mapa de features', 'features-first', 'que features hay en este documento'."
 argument-hint: "<prd_archivo.md> [--analysis <analysis.md>] [--allow-derived-scope-from-analysis]"
 effort: high
 allowed-tools: [Read, Write, Bash]
@@ -148,7 +149,7 @@ Este mapeo es crítico: será usado por `wf-spec-fast-track` en modo scoped para
 
 ## Paso 9: Generar `_discovery.md`
 
-Consulta [references/discovery_template.md](references/discovery_template.md) para la estructura exacta del artefacto.
+Consulta `${CLAUDE_SKILL_DIR}/references/discovery_template.md` para la estructura exacta del artefacto.
 
 Si se usó `--analysis` y todas las respuestas resueltas eran compatibles con el PRD vigente:
 - rellena `Origen de alcance` como `PRD` o `PRD + analysis respondido` según corresponda

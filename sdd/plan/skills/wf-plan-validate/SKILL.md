@@ -1,6 +1,7 @@
 ---
 name: wf-plan-validate
-description: Workflow SDD que audita un _plan.md existente contra su Spec, el handoff de Design y las reglas de `kb-plan-expert`. No rediseña el contenido arquitectónico del archivo; solo audita su validez operativa y actualiza el estado (`BORRADOR` o `VALIDADO`). Activa en frases como "valida el plan", "revisa el _plan.md", "audita si el plan está listo para tasks", "comprueba que el plan cubre todos los CAs". No activa para generar el plan ni para crear tasks.
+description: "Audita un _plan.md existente contra su Spec, el handoff de Design y las reglas de kb-plan-expert. No rediseña el contenido arquitectonico del archivo; solo audita su validez operativa y actualiza el estado (BORRADOR o VALIDADO)."
+when_to_use: "Activa en frases como 'valida el plan', 'revisa el _plan.md', 'audita si el plan está listo para tasks', 'comprueba que el plan cubre todos los CAs'. No activa para generar el plan ni para crear tasks."
 argument-hint: "<plan.md>"
 effort: high
 allowed-tools: [Read, Write, Agent]

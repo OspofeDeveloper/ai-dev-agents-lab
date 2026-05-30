@@ -1,6 +1,7 @@
 ---
 name: wf-sdd-refactor
-description: "Orquestador SDD para refactorizar una skill (kb-* o wf-*) o agente existente del ecosistema. Parsea el path del artefacto y el motivo del cambio, lee el estado actual, y delega el diagnostico y la refactorizacion al agente sdd-author. Activa con frases como 'refactoriza esta skill', 'esta kb es demasiado ancha', 'separa esta skill en dos', 'esta wf mezcla responsabilidades', 'extrae una SSoT de', 'actualiza el frontmatter de', 'corrige la estructura de este agente'. No activa para crear piezas nuevas (usa wf-skill-create, wf-agent-create) ni para auditar el ecosistema en general (usa wf-sdd-audit)."
+description: "Orquestador SDD para refactorizar una skill (kb-* o wf-*) o agente existente del ecosistema. Parsea el path del artefacto y el motivo del cambio, lee el estado actual, y delega el diagnostico y la refactorizacion al agente sdd-author."
+when_to_use: "Activa con frases como 'refactoriza esta skill', 'esta kb es demasiado ancha', 'separa esta skill en dos', 'esta wf mezcla responsabilidades', 'extrae una SSoT de', 'actualiza el frontmatter de', 'corrige la estructura de este agente'. No activa para crear piezas nuevas (usa wf-skill-create, wf-agent-create) ni para auditar el ecosistema en general (usa wf-sdd-audit)."
 argument-hint: "<path-skill-o-agente> [--reason <motivo>]"
 effort: medium
 allowed-tools: [Read, Write, Bash, Agent]

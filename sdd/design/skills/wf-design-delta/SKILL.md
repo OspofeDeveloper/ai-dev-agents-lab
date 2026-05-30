@@ -1,6 +1,7 @@
 ---
 name: wf-design-delta
-description: Evoluciona un DESIGN.md existente. Modo 'analyze' produce un informe delta con tokens, componentes y secciones a anadir, modificar o eliminar; modo 'apply' integra los cambios validados preservando lo previo. Activa en frases como "actualiza el DESIGN.md con estos cambios visuales", "cambia el style_family del sistema", "anade tokens para esta feature", "evoluciona el sistema visual". No activa para regenerar DESIGN.md desde cero (eso es `wf-design-system`).
+description: "Evoluciona un DESIGN.md existente de forma incremental. Modo 'analyze' produce un informe delta con tokens, componentes y secciones a anadir, modificar o eliminar; modo 'apply' integra los cambios validados preservando lo previo."
+when_to_use: "Activa en frases como 'actualiza el DESIGN.md con estos cambios visuales', 'cambia el style_family del sistema', 'anade tokens para esta feature', 'evoluciona el sistema visual'. No activa para regenerar DESIGN.md desde cero (eso es wf-design-system)."
 argument-hint: "analyze <DESIGN.md> --new-reqs <cambios.md> [--brief <DESIGN_BRIEF.md>] | apply <DESIGN.md> <delta_analysis.md>"
 effort: high
 allowed-tools: [Read, Write, Bash, Agent]

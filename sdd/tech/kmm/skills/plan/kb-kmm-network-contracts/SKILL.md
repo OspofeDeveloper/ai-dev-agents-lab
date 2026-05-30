@@ -54,7 +54,7 @@ El principio estable es este: la capa superior no interpreta excepciones de tran
 
 La definición del contrato transversal `AppResult` / `AppError` pertenece a `kb-kmm-app-errors`. Esta skill lo consume y lo especializa para el borde remoto.
 
-→ Templates: `references/network_contracts_templates.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/network_contracts_templates.md`
 
 ---
 
@@ -82,7 +82,7 @@ La UI y el dominio superior trabajan con `AppError`; networking solo aporta una 
 
 La política general de ownership, adaptación y propagación de `AppError` pertenece a `kb-kmm-app-errors`.
 
-→ Templates: `references/network_contracts_templates.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/network_contracts_templates.md`
 
 ---
 

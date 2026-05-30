@@ -1,6 +1,7 @@
 ---
 name: wf-sdd-audit
-description: "Orquestador SDD para auditar el ecosistema de skills y agentes. Soporta tres modos: structural (referencias rotas, skills huerfanas, rootmap invalido), content (SSoT, SRP, contradicciones, inconsistencias) y full (ambos). Delega al agente sdd-auditor. Activa con frases como 'audita el ecosistema', 'revisa que las skills sean SSoT', 'comprueba si hay contradicciones', 'verifica single responsibility', 'busca inconsistencias en las skills', 'chequea el estado del ecosistema'. No activa para crear o modificar skills (usa wf-skill-create, wf-agent-create) ni para auditar artefactos del pipeline SDD como specs o planes (usa wf-spec-validate, wf-plan-validate)."
+description: "Audita el ecosistema SDD detectando referencias rotas, skills huerfanas, violaciones de SSoT/SRP, contradicciones e inconsistencias. Soporta modos structural (rapido), content (profundo) y full (ambos). Delega al agente sdd-auditor."
+when_to_use: "Activa con frases como 'audita el ecosistema', 'revisa que las skills sean SSoT', 'comprueba si hay contradicciones', 'verifica single responsibility', 'busca inconsistencias en las skills', 'chequea el estado del ecosistema'. No activa para crear o modificar skills (usa wf-skill-create, wf-agent-create) ni para auditar artefactos del pipeline SDD como specs o planes (usa wf-spec-validate, wf-plan-validate)."
 argument-hint: "<structural|content|full> [--phase <prd|spec|design|plan|tasks|tech/<stack>|global>]"
 effort: high
 allowed-tools: [Read, Write, Bash, Agent]

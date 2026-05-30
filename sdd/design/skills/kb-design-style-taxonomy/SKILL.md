@@ -145,7 +145,7 @@ visual_personality:
 
 `secondary_family` es opcional. El resto de campos son obligatorios.
 
-→ Templates: `references/style_profile_examples.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/style_profile_examples.md`
 
 ## Regla 7: Los anti-patrones son obligatorios
 

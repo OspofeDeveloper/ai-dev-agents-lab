@@ -36,7 +36,7 @@ Fuera de Composables, `getString()` solo se usa cuando realmente se necesita el 
 
 Si el proyecto usa `kb-tasks-kmm-ui-text`, el ViewModel no resuelve strings para estado/UI models: expone `UIText` o `StringResource` y la UI los materializa.
 
-→ Templates: `references/string-resources.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/string-resources.md`
 
 ## Regla 4: La localización se organiza por carpetas `values-{locale}`
 
@@ -44,7 +44,7 @@ El archivo base vive en `values/`.
 
 Las traducciones viven en carpetas `values-{locale}/` con el mismo nombre de fichero.
 
-→ Templates: `references/string-resources.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/string-resources.md`
 
 ## Regla 5: `@StringRes` no forma parte del contrato compartido
 
@@ -58,7 +58,7 @@ El módulo compartido declara `compose.components.resources` y configura la gene
 
 La estructura exacta de carpetas y la configuración Gradle son detalles de implementación.
 
-→ Templates: `references/setup-and-structure.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/setup-and-structure.md`
 
 ## Regla 7: Imágenes, fonts y raw files usan el canal de acceso correspondiente
 
@@ -70,7 +70,7 @@ Cada tipo de recurso usa su API específica:
 
 La elección del tipo de recurso pertenece a esta dimensión; su uso concreto pertenece a templates.
 
-→ Templates: `references/image-font-raw.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/image-font-raw.md`
 
 ## Regla 8: `StringResource` puede usarse directamente en UiModels para campos siempre traducibles
 

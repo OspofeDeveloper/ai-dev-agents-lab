@@ -38,7 +38,7 @@ Si el refresh token se ejecuta desde el propio mecanismo HTTP interceptado, usar
 
 La separación evita recursión o dependencias circulares durante el refresh.
 
-→ Templates: `references/ktor_auth_plugin_templates.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/ktor_auth_plugin_templates.md`
 
 ---
 
@@ -53,7 +53,7 @@ El cliente autenticado instala un plugin que:
 5. inyecta el Bearer token si existe
 6. emite evento de sesión expirada si el refresh ya no es válido
 
-→ Templates: `references/ktor_auth_plugin_templates.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/ktor_auth_plugin_templates.md`
 
 ---
 

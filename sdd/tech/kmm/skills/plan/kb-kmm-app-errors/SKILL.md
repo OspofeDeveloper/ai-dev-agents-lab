@@ -21,7 +21,7 @@ La forma estable es:
 
 Esta skill no obliga a un nombre exacto de tipos, pero sí fija el principio: el contrato transversal de la app debe ser explícito, tipado y compartido.
 
-→ Templates: `references/app_error_contract_templates.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/app_error_contract_templates.md`
 
 ---
 
@@ -56,7 +56,7 @@ Ejemplos válidos:
 
 La UI consume `AppError`; las capas inferiores pueden aportar variantes concretas.
 
-→ Templates: `references/app_error_contract_templates.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/app_error_contract_templates.md`
 
 ---
 
@@ -153,7 +153,7 @@ La dirección correcta es:
 
 Ni networking ni domain deben construir mensajes visuales como contrato principal.
 
-→ Templates: `references/app_error_contract_templates.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/app_error_contract_templates.md`
 
 ---
 

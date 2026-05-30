@@ -1,6 +1,7 @@
 ---
 name: wf-spec-conflict
-description: Detecta conflictos entre Specs SDD de un mismo proyecto (HUs duplicadas, CAs contradictorios, scope overlap, shared models inconsistentes). Activa en frases como "verifica conflictos entre specs", "hay conflictos entre features", "comprueba si este spec choca con los existentes", "detecta inconsistencias entre specs".
+description: "Detecta conflictos entre Specs SDD de un mismo proyecto: HUs duplicadas, CAs contradictorios, scope overlap, shared models inconsistentes."
+when_to_use: "Activa en frases como 'verifica conflictos entre specs', 'hay conflictos entre features', 'comprueba si este spec choca con los existentes', 'detecta inconsistencias entre specs'."
 argument-hint: "<feature_spec.md> --features-dir <path/features/>"
 effort: high
 allowed-tools: [Read, Write, Bash]
@@ -87,7 +88,7 @@ Si no se detecta ningún conflicto → prepara un informe breve con estado `SIN_
 
 ## Paso 7: Formato del informe
 
-Usa `references/conflict_report_template.md` para estructurar el informe.
+Usa `${CLAUDE_SKILL_DIR}/references/conflict_report_template.md` para estructurar el informe.
 
 ---
 

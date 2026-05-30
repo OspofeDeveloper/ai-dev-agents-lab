@@ -1,6 +1,7 @@
 ---
 name: wf-spec-validate
-description: Audita un _spec.md ya generado para detectar regresiones de pureza, testabilidad o completitud introducidas por ediciones manuales. No genera ningún archivo — imprime el informe directamente. Activa en frases como "valida el spec", "comprueba si el spec sigue siendo válido", "verifica el spec", "audita el spec".
+description: "Audita un _spec.md ya generado para detectar regresiones de pureza, testabilidad o completitud introducidas por ediciones manuales. No genera ningun archivo — imprime el informe directamente."
+when_to_use: "Activa en frases como 'valida el spec', 'comprueba si el spec sigue siendo valido', 'verifica el spec', 'audita el spec'."
 argument-hint: "<archivo_spec.md>"
 effort: high
 allowed-tools: [Read]
@@ -58,7 +59,7 @@ Aplica los 3 checks definidos en `kb-spec-expert`:
 
 ## Paso 5: Formato del informe
 
-Consulta `references/output_template.md` para la estructura exacta del informe de validación.
+Consulta `${CLAUDE_SKILL_DIR}/references/output_template.md` para la estructura exacta del informe de validación.
 
 ---
 

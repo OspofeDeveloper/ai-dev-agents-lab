@@ -1,6 +1,7 @@
 ---
 name: wf-design-variant
-description: Workflow SDD para A/B testing visual de una feature. Permite generar dos o mas variantes de los `_views.md` (y/o `_ui_prompt.md`) compartiendo el mismo spec, con hipotesis y metrica esperada declaradas. Output: `<feature>_variants.md` con tabla comparativa. Activa en frases como "quiero probar dos versiones del checkout", "haz un A/B del onboarding", "compara variantes de esta feature".
+description: "Permite el A/B testing visual de una feature. Genera dos o mas variantes de los _views.md (y/o _ui_prompt.md) compartiendo el mismo spec, con hipotesis y metrica esperada declaradas. Output: <feature>_variants.md con tabla comparativa."
+when_to_use: "Activa en frases como 'quiero probar dos versiones del checkout', 'haz un A/B del onboarding', 'compara variantes de esta feature'."
 argument-hint: "create <feature_spec.md> --variants <A,B,...> [--hypothesis <texto>] | compare <feature_variants.md>"
 effort: medium
 allowed-tools: [Read, Write, Agent]

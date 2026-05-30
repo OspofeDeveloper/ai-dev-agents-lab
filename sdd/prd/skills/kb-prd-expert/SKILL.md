@@ -68,7 +68,7 @@ Qué **no** está incluido en este producto o en esta versión, con el motivo. S
 ### 5. Reglas de negocio transversales
 Restricciones o comportamientos que afectan a múltiples features y no dependen de un actor específico. Por ejemplo: "Los documentos adjuntos no pueden superar 10 MB" o "Solo se puede fichar entrada si el servicio está activo".
 
-→ Ver estructura detallada y ejemplos: `references/prd_structure_guide.md`
+→ Ver estructura detallada y ejemplos: `${CLAUDE_SKILL_DIR}/references/prd_structure_guide.md`
 
 ---
 
@@ -136,8 +136,8 @@ El PRD describe el negocio. Todo lo que responde a "¿cómo se implementa?" pert
 > - **SÍ cambia** → es un detalle de implementación → fuera del PRD
 > - **NO cambia** → es funcional/de negocio → puede estar en el PRD
 
-→ Tabla completa de elementos prohibidos y ejemplos: `references/prd_prohibited_items.md`
-→ Patrones de error frecuentes y reescrituras: `references/prd_error_patterns.md`
+→ Tabla completa de elementos prohibidos y ejemplos: `${CLAUDE_SKILL_DIR}/references/prd_prohibited_items.md`
+→ Patrones de error frecuentes y reescrituras: `${CLAUDE_SKILL_DIR}/references/prd_error_patterns.md`
 
 ---
 

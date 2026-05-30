@@ -1,6 +1,6 @@
 ---
 name: wf-design-moodboard
-description: Workflow SDD que captura inspiracion visual no estructurada antes del discovery. El usuario describe vibes (paletas, fotografia, atmosfera, ilustracion, texturas) y la herramienta produce un `<basename>_design_moodboard.md` que alimenta wf-design-intake con material concreto para cerrar style_family y adjectives con precision. Especialmente util para disenadores junior que no saben articular direccion visual sin un mood previo.
+description: "Captura inspiracion visual no estructurada antes del discovery. El usuario describe vibes (paletas, fotografia, atmosfera, ilustracion, texturas) y produce un <basename>_design_moodboard.md que alimenta wf-design-intake con material concreto para cerrar style_family y adjectives con precision. Especialmente util para disenadores junior."
 argument-hint: "<feature_spec.md> [--prd <prd.md>] [--output <path>] [--mode interactive|auto]"
 effort: medium
 allowed-tools: [Read, Write, WebSearch]

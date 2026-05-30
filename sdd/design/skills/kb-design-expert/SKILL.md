@@ -126,7 +126,7 @@ Validar el resultado con `npx @google/design.md lint DESIGN.md`: cubre orden de 
 
 > Los criterios normativos de accesibilidad (contraste, touch targets, dynamic type, motion, focus, labels, anuncios live) viven en `kb-a11y-expert`. La seccion `## Accessibility` del `DESIGN.md` materializa esos criterios para el producto; no los redefine aqui.
 
-→ Templates: `references/design_md_template.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/design_md_template.md`
 
 ## Regla 7: Los flows describen secuencia y navegacion, no el contrato visual
 
@@ -147,7 +147,7 @@ Los estados visuales viven en `*_views.md`.
 
 Si el archivo incluye un mapa de navegacion consolidado al final, debe marcarse como derivado con la nota `> Derivado de las tablas de transiciones por flujo. La fuente normativa son dichas tablas.` Si hay conflicto entre el mapa y una tabla individual, manda la tabla del flujo individual.
 
-→ Templates: `references/feature_flows_template.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/feature_flows_template.md`
 
 ## Regla 8: Las views son la SSoT de la pantalla
 
@@ -168,7 +168,7 @@ Reglas adicionales para mantener `*_views.md` limpio:
 - **Solo decisiones, no razonamientos**: cada campo normativo contiene la decision tomada. El razonamiento que llevo a elegir una variante de componente sobre otra no va inline; si es valioso preservarlo, usa un bloque `> Nota:` al final de la vista, separado de la definicion.
 - **Dependencias cross-feature**: si una vista incluye elementos que pertenecen a otra feature (entidades, campos o estructuras definidas en otro spec), marcalos con `[Dependencia: F-XXX]`. La vista describe que existe el elemento, no define su estructura interna.
 
-→ Templates: `references/feature_views_template.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/feature_views_template.md`
 
 ## Regla 9: El prompt para Stitch debe ensamblar, no volver a definir
 
@@ -193,7 +193,7 @@ No debe:
 - convertirse en una segunda SSoT por pantalla
 - repetir valores de tokens, nombres de componentes ni reglas de formato ya definidas en `DESIGN.md`. Si quieres recordarle a Stitch el uso de un componente o token concreto, citalos por nombre y remite a `DESIGN.md` como fuente; no copies sus valores dentro del prompt.
 
-→ Templates: `references/feature_ui_prompt_template.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/feature_ui_prompt_template.md`
 
 ## Regla 10: La salida de design debe ser consumible por plan
 

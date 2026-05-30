@@ -14,28 +14,28 @@ user-invocable: false
 
 → Regla de oro de registro (`single`/`factory`/`viewModelOf`): `kb-plan-koin`
 
-→ Templates: `references/koin_templates.md` — módulo de feature, nativeModule, initKoin, qualifiers, factory expect/actual
+→ Templates: `${CLAUDE_SKILL_DIR}/references/koin_templates.md` — módulo de feature, nativeModule, initKoin, qualifiers, factory expect/actual
 
 ## nativeModule — expect/actual
 
 `nativeModule` es un `expect val` en commonMain con `actual` en androidMain e iosMain. Se registra **primero** en `initKoin`.
 
-→ Templates: `references/koin_templates.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/koin_templates.md`
 
 ## initKoin completo
 
 Una única función `initKoin(config: KoinAppDeclaration? = null)` en commonMain. Android la llama en `Application.onCreate()` con `androidLogger` y `androidContext`; iOS la llama en `ComposeUIViewController(configure = { initKoin() })`.
 
-→ Templates: `references/koin_templates.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/koin_templates.md`
 
 ## Qualifiers con enum
 
 Cuando hay múltiples instancias del mismo tipo, se usan enums como qualifiers agrupados por dominio (`NetworkQualifiers`, `AuthQualifiers`).
 
-→ Templates: `references/koin_templates.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/koin_templates.md`
 
 ## Módulo con factory function expect/actual
 
 Para una única implementación por plataforma sin qualifier: `expect fun platformModule(): Module` con `actual` por plataforma.
 
-→ Templates: `references/koin_templates.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/koin_templates.md`

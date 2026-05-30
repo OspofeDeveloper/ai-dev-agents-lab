@@ -1,6 +1,7 @@
 ---
 name: wf-design-a11y-audit
-description: Workflow SDD que audita un DESIGN.md y opcionalmente un *_views.md frente a las reglas de kb-a11y-expert. Verifica contraste real de pares foreground/background, touch targets, focus order declarado, screen reader labels, motion handling y forms accesibles. Produce un reporte con severidad. Especifico y ejecutivo, complementa a wf-design-validate. Activa en frases como "valida la accesibilidad", "audit a11y del DESIGN.md", "comprueba contraste WCAG".
+description: Audita un DESIGN.md y opcionalmente un *_views.md frente a las reglas de kb-a11y-expert. Verifica contraste real de pares foreground/background, touch targets, focus order declarado, screen reader labels, motion handling y forms accesibles. Produce un reporte con severidad. Complementa a wf-design-validate.
+when_to_use: "Activa en frases como 'valida la accesibilidad', 'audit a11y del DESIGN.md', 'comprueba contraste WCAG'."
 argument-hint: "<DESIGN.md> [--views <feature_views.md>] [--brief <DESIGN_BRIEF.md>] [--target AA|AAA] [--strict]"
 effort: medium
 allowed-tools: [Read, Write, Bash, Agent]

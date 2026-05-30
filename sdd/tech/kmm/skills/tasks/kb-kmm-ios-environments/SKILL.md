@@ -51,7 +51,7 @@ El flujo operativo estándar es:
 4. el script build phase lee esos valores
 5. el script invoca Gradle con propiedades explícitas
 
-La implementación concreta de ese script vive en `references/ios_script_build_phase_template.md`.
+La implementación concreta de ese script vive en `${CLAUDE_SKILL_DIR}/references/ios_script_build_phase_template.md`.
 
 ---
 
@@ -65,7 +65,7 @@ La configuración iOS distingue:
 
 El archivo brand×env no debe absorber por sí solo la capa debug/release; ambas se asignan desde la configuración de Xcode.
 
-→ Templates: `references/ios_xcconfig_templates.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/ios_xcconfig_templates.md`
 
 ---
 
@@ -105,7 +105,7 @@ La semántica de la variante ya viene resuelta por:
 - scheme
 - XCConfig
 
-→ Templates: `references/ios_script_build_phase_template.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/ios_script_build_phase_template.md`
 
 ---
 

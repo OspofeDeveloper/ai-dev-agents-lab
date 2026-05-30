@@ -40,7 +40,7 @@ El orden de plugins debe ser explícito y coherente con la estrategia del proyec
 
 La configuración concreta debe servir al contrato remoto del proyecto, no redefinirlo.
 
-→ Templates: `references/ktor_http_templates.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/ktor_http_templates.md`
 
 ---
 
@@ -48,7 +48,7 @@ La configuración concreta debe servir al contrato remoto del proyecto, no redef
 
 Los servicios remotos usan rutas relativas. La URL base se configura en el cliente, no se repite en cada servicio.
 
-→ Templates: `references/ktor_http_templates.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/ktor_http_templates.md`
 
 ---
 
@@ -64,7 +64,7 @@ Helpers como `tryCall`, `responseHandler` por defecto, mappers de excepción o l
 
 Esas utilidades implementan el contrato remoto estable del proyecto; no deben inventar un contrato paralelo distinto del definido en `kb-kmm-network-contracts`.
 
-→ Templates: `references/ktor_http_templates.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/ktor_http_templates.md`
 
 `tryCall` y su `responseHandler` por defecto deben devolver `AppResult<T, AppError>`. `NetworkError` es una implementación concreta de `AppError`, no el contrato principal que se propaga por la app.
 
@@ -122,7 +122,7 @@ La interpretación del `HttpResponse` no es fija: `tryCall` acepta un parámetro
 - si el handler es trivial, puede quedarse privado en la `Api`; si tiene lógica propia o crece, la preferencia es extraerlo a `data/responseHandlers/`
 - las clases `Api` no repiten parsing de status código por código fuera de su `responseHandler` específico
 
-→ Templates: `references/ktor_http_templates.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/ktor_http_templates.md`
 
 ## Checklist antes de cerrar
 

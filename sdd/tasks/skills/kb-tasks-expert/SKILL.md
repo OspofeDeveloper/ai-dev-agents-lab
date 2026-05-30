@@ -49,7 +49,7 @@ Además del bloque de Tasks individuales, el `_tasks.md` debe llevar un header d
 - **Definition of done:** [qué artefactos deben existir o quedar integrados al finalizar]
 ```
 
-Consulta `references/kmm_task_templates.md` para templates por tipo de componente.
+Consulta `${CLAUDE_SKILL_DIR}/references/kmm_task_templates.md` para templates por tipo de componente.
 
 ---
 
@@ -138,7 +138,7 @@ T-013  feature       → tests de data
 
 Este orden es un baseline. Si el Plan muestra una infraestructura transversal que deba resolverse antes, adelántala sin romper dependencias.
 
-Consulta `references/task_sizing.md` para reglas de granularidad.
+Consulta `${CLAUDE_SKILL_DIR}/references/task_sizing.md` para reglas de granularidad.
 
 ---
 

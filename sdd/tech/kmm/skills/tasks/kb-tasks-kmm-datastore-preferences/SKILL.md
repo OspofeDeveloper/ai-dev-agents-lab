@@ -37,7 +37,7 @@ Esa pieza compartida:
 - no decide paths concretos de plataforma
 - no contiene dependencias de Android o iOS
 
-→ Templates: `references/preferences_datastore_templates.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/preferences_datastore_templates.md`
 
 ---
 
@@ -53,7 +53,7 @@ La convención correcta es:
 
 La skill de DataStore no debe absorber reglas generales de platform split; solo aplica este criterio a su propio mecanismo.
 
-→ Templates: `references/preferences_datastore_templates.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/preferences_datastore_templates.md`
 
 ---
 
@@ -87,7 +87,7 @@ La convención preferida es:
 
 No usar una interfaz de repositorio como simple contenedor de keys.
 
-→ Templates: `references/preferences_datastore_templates.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/preferences_datastore_templates.md`
 
 ---
 

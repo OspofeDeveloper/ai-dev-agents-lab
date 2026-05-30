@@ -1,10 +1,12 @@
 ---
 name: wf-sdd-status
-description: "Orquestador SDD para generar un inventario rapido del ecosistema: cuantas skills y agentes hay por fase, que KBs existen, que workflows estan registrados en los rootmaps y que KBs no tienen consumidor. Produce un snapshot estructurado sin ejecutar auditoria de contenido. Activa con frases como 'que skills tenemos', 'inventario del ecosistema', 'que hay en la fase design', 'cuantos agentes existen', 'muestra el estado del ecosistema', 'que workflows hay disponibles', 'lista todo lo que hay en sdd'. No activa para detectar problemas de SSoT o referencias rotas (usa wf-sdd-audit)."
+description: "Genera un inventario rapido del ecosistema SDD: cuantas skills y agentes hay por fase, que KBs existen, que workflows estan registrados en los rootmaps y que KBs no tienen consumidor. Produce un snapshot estructurado sin ejecutar auditoria de contenido."
+when_to_use: "Activa con frases como 'que skills tenemos', 'inventario del ecosistema', 'que hay en la fase design', 'cuantos agentes existen', 'muestra el estado del ecosistema', 'que workflows hay disponibles', 'lista todo lo que hay en sdd'. No activa para detectar problemas de SSoT o referencias rotas (usa wf-sdd-audit)."
 argument-hint: "[--phase <prd|spec|design|plan|tasks|tech/<stack>|global>] [--output <path>]"
 effort: low
 allowed-tools: [Read, Bash]
 context: fork
+agent: Explore
 ---
 
 # wf-sdd-status — Inventario del Ecosistema SDD

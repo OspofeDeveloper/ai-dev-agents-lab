@@ -39,7 +39,7 @@ fun `cuando se carga la lista, el estado pasa a Success con los items`() = runTe
 
 **Para aserciones sobre UIText en el ViewModel:** la regla vive en `kb-tasks-kmm-ui-text` Regla 8. Esta skill no la duplica: los tests comparan valores `UIText` directamente, sin resolver strings.
 
-Consulta `references/unit-test-templates.md` para templates completos.
+Consulta `${CLAUDE_SKILL_DIR}/references/unit-test-templates.md` para templates completos.
 
 ---
 

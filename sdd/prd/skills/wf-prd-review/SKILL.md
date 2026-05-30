@@ -1,6 +1,7 @@
 ---
 name: wf-prd-review
-description: Revisión rápida de un PRD o documento de requisitos antes de entrar en la fase Spec. Comprueba si el documento está limpio, si explicita actores y alcance, y si su estructura es procesable por el pipeline SDD. Activa en frases como "revisa mi PRD", "¿este PRD está bien para empezar?", "haz preflight del PRD", "valida el documento de requisitos antes del spec".
+description: "Revision rapida de un PRD o documento de requisitos antes de entrar en la fase Spec. Comprueba si el documento esta limpio, si explicita actores y alcance, y si su estructura es procesable por el pipeline SDD."
+when_to_use: "Activa en frases como 'revisa mi PRD', '¿este PRD esta bien para empezar?', 'haz preflight del PRD', 'valida el documento de requisitos antes del spec'."
 argument-hint: "<archivo_prd.md>"
 effort: medium
 allowed-tools: [Read, Write, Bash]
@@ -67,7 +68,7 @@ No penalices la estructura elegida si el documento sigue siendo claro y trazable
 
 Aplica la **Prueba de Negocio** definida en `kb-prd-expert` Regla 6 a cada sección del PRD.
 
-Consulta el catálogo completo de elementos prohibidos en `references/prd_prohibited_items.md` del skill `kb-prd-expert` (incluye stack tecnológico, frameworks, patrones de diseño, endpoints, esquemas de datos, timelines, criterios técnicos de QA, pantallas como unidades de feature, etc.).
+Consulta el catálogo completo de elementos prohibidos en `${CLAUDE_SKILL_DIR}/../kb-prd-expert/references/prd_prohibited_items.md` del skill `kb-prd-expert` (incluye stack tecnológico, frameworks, patrones de diseño, endpoints, esquemas de datos, timelines, criterios técnicos de QA, pantallas como unidades de feature, etc.).
 
 Para cada fragmento problemático:
 - Cita el fragmento exacto

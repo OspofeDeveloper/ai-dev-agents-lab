@@ -96,5 +96,5 @@ Tras aplicar todos los cambios, reportar:
 
 - Lista de ficheros creados o modificados
 - Si hubo pasos manuales de Xcode pendientes (Paso 6): recordárselos explícitamente
-- Referencia de uso post-configuración: leer `references/usage_reference.md` del skill `kb-kmm-environments` y mostrar su contenido al usuario
+- Referencia de uso post-configuración: leer `${CLAUDE_SKILL_DIR}/../plan/kb-kmm-environments/references/usage_reference.md` del skill `kb-kmm-environments` y mostrar su contenido al usuario
 - Siguiente paso sugerido: verificar el build ejecutando la variante por defecto en Android y seleccionando un scheme en Xcode

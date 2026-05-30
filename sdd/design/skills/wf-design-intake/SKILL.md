@@ -1,6 +1,6 @@
 ---
 name: wf-design-intake
-description: Workflow SDD para cerrar un DESIGN_BRIEF.md antes de generar el sistema visual. Guia al usuario o a la IA para fijar modo de decision, preset, familia visual, densidad, profundidad, motion, policy de referencias y autonomia, reduciendo ambiguedades antes de crear DESIGN.md.
+description: "Cierra un DESIGN_BRIEF.md antes de generar el sistema visual. Guia al usuario o a la IA para fijar modo de decision, preset, familia visual, densidad, profundidad, motion, policy de referencias y autonomia, reduciendo ambiguedades antes de crear DESIGN.md."
 argument-hint: "generate <feature_spec.md> [--prd <prd.md>] [--output DESIGN_BRIEF.md] [--mode guided|hybrid|auto] [--preset <name>] [--learn]"
 effort: high
 allowed-tools: [Read, Write, Bash]
@@ -143,7 +143,7 @@ Comportamiento por modo:
 Si el usuario proporciona `--preset` en CLI, respeta esa eleccion y omite la deteccion.
 
 Cuando se aplica un preset:
-- carga los defaults de `references/design_presets.md` de `kb-design-brief`
+- carga los defaults de `${CLAUDE_SKILL_DIR}/../kb-design-brief/references/design_presets.md` de `kb-design-brief`
 - usa esos defaults como base
 - ajusta solo lo que contradiga al producto real
 - documenta en el brief que `product_preset` y `source: preset|user|inferred`
@@ -153,7 +153,7 @@ Si tras la deteccion ningun preset encaja, usa `none` y decide campo a campo.
 ## Paso 8: Validar consistencia
 
 Antes de escribir el archivo:
-1. Revisa conflictos con `references/consistency_checks.md`.
+1. Revisa conflictos con `${CLAUDE_SKILL_DIR}/../kb-design-brief/references/consistency_checks.md`.
 2. Si detectas una contradiccion:
    - en `guided`, pide al usuario resolverla
    - en `hybrid`, propon una correccion y pide confirmacion
@@ -163,7 +163,7 @@ No cierres un brief con conflictos silenciosos.
 
 ## Paso 9: Escribir el brief
 
-Escribe un `DESIGN_BRIEF.md` usando el formato de `references/design_brief_template.md` de `kb-design-brief`.
+Escribe un `DESIGN_BRIEF.md` usando el formato de `${CLAUDE_SKILL_DIR}/../kb-design-brief/references/design_brief_template.md` de `kb-design-brief`.
 
 El brief debe dejar claro:
 - quien decide las ambiguedades

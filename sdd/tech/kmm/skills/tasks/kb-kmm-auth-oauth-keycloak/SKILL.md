@@ -25,7 +25,7 @@ La ruta de token se construye como:
 
 `realm` es configuración del proyecto o del entorno. No se hardcodea dentro de la implementación.
 
-→ Templates: `references/keycloak_auth_templates.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/keycloak_auth_templates.md`
 
 ---
 
@@ -39,7 +39,7 @@ Parámetros habituales:
 - `username` y `password` en login
 - `refresh_token` en refresh
 
-→ Templates: `references/keycloak_auth_templates.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/keycloak_auth_templates.md`
 
 ---
 

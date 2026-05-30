@@ -1,6 +1,7 @@
 ---
 name: wf-prd-change
-description: Gestiona cambios de producto sobre un PRD existente. Clasifica el cambio, decide si es una aclaración o un verdadero change request, actualiza el PRD cuando corresponde y deja trazabilidad en un changelog global y en una carpeta dedicada por cambio junto con una matriz de impacto sobre analysis, discovery, specs, plan y tasks. Activa en frases como "cambia el alcance del PRD", "esto pasa de fase 2 a MVP", "actualiza el PRD con esta decisión", "gestiona este cambio de producto", "abre un change request sobre el PRD".
+description: "Gestiona cambios de producto sobre un PRD existente. Clasifica el cambio, decide si es una aclaracion o un verdadero change request, actualiza el PRD cuando corresponde y deja trazabilidad en un changelog global y en una carpeta dedicada con matriz de impacto sobre analysis, discovery, specs, plan y tasks."
+when_to_use: "Activa en frases como 'cambia el alcance del PRD', 'esto pasa de fase 2 a MVP', 'actualiza el PRD con esta decision', 'gestiona este cambio de producto', 'abre un change request sobre el PRD'."
 argument-hint: "<prd.md> --new-reqs <cambio.md>"
 effort: high
 allowed-tools: [Read, Write, Bash]

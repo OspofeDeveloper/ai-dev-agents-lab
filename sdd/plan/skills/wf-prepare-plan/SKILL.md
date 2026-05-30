@@ -1,6 +1,7 @@
 ---
 name: wf-prepare-plan
-description: Orquestador SDD para transformar Specs validados y el handoff de Design en Planes técnicos KMM. Úsalo cuando tengas un _spec.md sin items pendientes y una feature lista a nivel visual para generar el plan técnico de implementación. Activa en frases como "genera el plan desde el spec", "crea el plan técnico", "transforma el spec en plan", "planifica la implementación de", "prepara el plan para". No activa para analizar o generar Specs (usa wf-spec-analyze), ni para validar Planes (usa wf-plan-validate), ni para crear Tasks (usa wf-prepare-tasks).
+description: "Transforma Specs validados y el handoff de Design en Planes tecnicos KMM. Usalo cuando tengas un _spec.md sin items pendientes y una feature lista a nivel visual para generar el plan tecnico de implementacion."
+when_to_use: "Activa en frases como 'genera el plan desde el spec', 'crea el plan tecnico', 'transforma el spec en plan', 'planifica la implementacion de', 'prepara el plan para'. No activa para analizar o generar Specs (usa wf-spec-analyze), ni para validar Planes (usa wf-plan-validate), ni para crear Tasks (usa wf-prepare-tasks)."
 argument-hint: "generate <spec.md>"
 effort: high
 allowed-tools: [Read, Write, Agent]

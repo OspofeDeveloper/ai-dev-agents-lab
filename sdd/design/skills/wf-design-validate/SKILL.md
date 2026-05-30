@@ -1,6 +1,7 @@
 ---
 name: wf-design-validate
-description: Workflow SDD que audita un DESIGN.md ya existente contra el contrato visual (kb-design-expert, kb-design-style-taxonomy, kb-design-brief) y el linter oficial de Google design.md. No regenera el archivo, solo reporta DESIGN_GAP o OK. Activa en frases como "valida el DESIGN.md", "revisa que el sistema visual esta bien", "audita el design despues de editarlo", "comprueba que el DESIGN.md cumple el brief". No activa para generar o modificar el archivo.
+description: "Audita un DESIGN.md ya existente contra el contrato visual (kb-design-expert, kb-design-style-taxonomy, kb-design-brief) y el linter oficial de Google design.md. No regenera el archivo, solo reporta DESIGN_GAP o OK."
+when_to_use: "Activa en frases como 'valida el DESIGN.md', 'revisa que el sistema visual esta bien', 'audita el design despues de editarlo', 'comprueba que el DESIGN.md cumple el brief'. No activa para generar o modificar el archivo."
 argument-hint: "<DESIGN.md> [--brief <DESIGN_BRIEF.md>] [--views <feature_views.md>] [--lenient] [--pedagogical]"
 effort: medium
 allowed-tools: [Read, Bash]
@@ -195,12 +196,12 @@ Formato `--pedagogical` (cada hallazgo lleva contexto extendido):
 ```
 [ALTO] El componente `button-primary` no declara estado `loading`.
   Regla: kb-design-expert Regla 16 (estados de componente).
-  Checklist: references/component_anatomy_checklist.md > "button-primary".
+  Checklist: ${CLAUDE_SKILL_DIR}/../kb-design-expert/references/component_anatomy_checklist.md > "button-primary".
   Por que importa: un boton que dispara accion async sin estado loading
   permite doble click y deja al usuario sin saber si paso algo.
   Como arreglarlo: anade al frontmatter components.button-primary.loading
   con cambio visual (cursor, opacity, spinner inline o cambio de label).
-  Ejemplo: ver template references/design_md_template.md linea 174.
+  Ejemplo: ver template ${CLAUDE_SKILL_DIR}/../kb-design-expert/references/design_md_template.md linea 174.
 ```
 
 Usa el modo pedagogical cuando el usuario sea diseñador junior o pida `--learn` en otros workflows. En el resto, el formato estandar es mas compacto y se prefiere.

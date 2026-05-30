@@ -1,6 +1,7 @@
 ---
 name: wf-agent-create
-description: "Orquestador SDD para crear un nuevo agente dentro del ecosistema. Parsea nombre, fase y skills, verifica que no existe ya un agente con responsabilidad equivalente, comprueba que las KBs existen y delega la creacion al agente sdd-author. Activa con frases como 'crea un agente para X', 'necesito un agente que haga Y', 'añade un agente Z a la fase', 'quiero un agente especializado en'. No activa para crear skills (usa wf-skill-create), ni para generar skills o agentes del pipeline SDD (usa las wf-* de fase correspondiente)."
+description: "Orquestador SDD para crear un nuevo agente dentro del ecosistema. Parsea nombre, fase y skills, verifica que no existe ya un agente con responsabilidad equivalente, comprueba que las KBs existen y delega la creacion al agente sdd-author."
+when_to_use: "Activa con frases como 'crea un agente para X', 'necesito un agente que haga Y', 'añade un agente Z a la fase', 'quiero un agente especializado en'. No activa para crear skills (usa wf-skill-create), ni para generar skills o agentes del pipeline SDD (usa las wf-* de fase correspondiente)."
 argument-hint: "<nombre> --phase <prd|spec|design|plan|tasks|tech/<stack>|global> --skills <kb1,kb2,...> [--description <desc>] [--model <modelo>]"
 effort: medium
 allowed-tools: [Read, Write, Bash, Agent]

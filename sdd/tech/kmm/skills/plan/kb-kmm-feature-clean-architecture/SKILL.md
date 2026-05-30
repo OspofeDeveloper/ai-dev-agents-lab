@@ -42,7 +42,7 @@ Cuando una pantalla usa ViewModel, la convención preferida del proyecto es sepa
 - `presentation/<pantalla>/viewmodel/<Pantalla>Intent.kt`
 - `presentation/<pantalla>/viewmodel/<Pantalla>Events.kt`
 
-→ Templates: `references/presentation_viewmodel_patterns.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/presentation_viewmodel_patterns.md`
 
 ---
 
@@ -157,7 +157,7 @@ Cuando existe acceso remoto HTTP, la `Api` es la única pieza de `data` que toca
 
 Si un `responseHandler` HTTP deja de ser trivial, puede extraerse a `data/responseHandlers/` para separar el request-building del parsing de contratos especiales.
 
-→ Templates: `references/feature_remote_data_patterns.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/feature_remote_data_patterns.md`
 
 ---
 

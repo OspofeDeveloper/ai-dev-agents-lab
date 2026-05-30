@@ -1,6 +1,7 @@
 ---
 name: wf-spec-sync-from-prd
-description: Resincroniza specs de feature a partir de un PRD actualizado. En modo `analyze` identifica features afectadas y genera requisitos de sincronización por feature; en modo `apply` integra esos cambios usando delta sobre los specs afectados y actualiza su metadata de trazabilidad. Activa en frases como "sincroniza los specs con el PRD", "aplica el cambio de PRD a las features", "qué specs tengo que actualizar tras cambiar el PRD", "resincroniza specs desde el PRD".
+description: "Resincroniza specs de feature a partir de un PRD actualizado. En modo analyze identifica features afectadas y genera requisitos de sincronizacion por feature; en modo apply integra esos cambios usando delta sobre los specs afectados y actualiza su metadata de trazabilidad."
+when_to_use: "Activa en frases como 'sincroniza los specs con el PRD', 'aplica el cambio de PRD a las features', 'que specs tengo que actualizar tras cambiar el PRD', 'resincroniza specs desde el PRD'."
 argument-hint: "analyze <prd.md> | apply <prd.md> --features F-001,F-002,..."
 effort: high
 allowed-tools: [Read, Write, Bash]

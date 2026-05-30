@@ -153,7 +153,7 @@ Declara explícitamente qué NO está incluido en este spec. Sin esta sección, 
 
 ## Lo que un Spec NO DEBE tener
 
-Consulta `references/prohibited_items.md` para la tabla completa de elementos prohibidos y la Prueba de Pureza antes de emitir cualquier veredicto de contaminación.
+Consulta `${CLAUDE_SKILL_DIR}/references/prohibited_items.md` para la tabla completa de elementos prohibidos y la Prueba de Pureza antes de emitir cualquier veredicto de contaminación.
 
 **Regla rápida:** Si la frase responde "¿cómo se implementa?" en lugar de "¿qué hace el sistema para el usuario?", pertenece al Plan.
 
@@ -167,7 +167,7 @@ Cuando el usuario pida revisar un Spec existente, aplica esta revisión estructu
 Verifica que están presentes los 8 elementos obligatorios.
 
 ### Paso 2: Check de Pureza
-Consulta `references/error_patterns.md` para recorrer los patrones de contaminación más frecuentes antes de dar tu veredicto. Busca frases que mencionen tecnología, arquitectura, código o plataformas específicas.
+Consulta `${CLAUDE_SKILL_DIR}/references/error_patterns.md` para recorrer los patrones de contaminación más frecuentes antes de dar tu veredicto. Busca frases que mencionen tecnología, arquitectura, código o plataformas específicas.
 
 ### Paso 3: Check de Testabilidad
 Cada CA en GIVEN/WHEN/THEN debe poder verificarse de forma objetiva e independiente.

@@ -108,7 +108,8 @@ Para `kb-*` de nivel `tasks/`, la estructura mínima recomendada es:
 ```yaml
 ---
 name: wf-<nombre>
-description: "<Pipeline que orquesta. Frases de activacion. Que NO activa.>"
+description: "<Qué pipeline orquesta y qué produce. Solo la funcionalidad — sin triggers ni exclusiones.>"
+when_to_use: "<Frases de activación naturales. Exclusiones explícitas con alternativa (usa wf-X).>"
 argument-hint: "<modo|accion> <input_principal> [flags...]"
 effort: low|medium|high
 allowed-tools: [Read] | [Read, Write] | [Read, Write, Bash] | [Read, Write, Bash, Agent]
@@ -119,6 +120,10 @@ user-invocable: true
 ```
 
 `context: fork` es obligatorio en todas las `wf-*` que generan artefactos o delegan a un agente.
+
+**Separación `description` / `when_to_use`:**
+- `description`: el QUÉ — funcionalidad, modos soportados, agente al que delega. Conciso, sin triggers.
+- `when_to_use`: el CUÁNDO — frases de activación naturales ("genera specs del PRD", "crea el diseño visual") y exclusiones explícitas con la alternativa correcta ("no activa para X, usa wf-Y"). Si no hay triggers ni exclusiones relevantes, omitir el campo.
 
 **Criterio para `effort`:**
 - `low`: <= 3 pasos simples, sin delegacion de agente
@@ -203,14 +208,30 @@ Secciones prohibidas en el cuerpo de un agente:
 - [ ] Agente(s) que la consumen actualizados: añadir a su `skills: [...]`
 - [ ] Si es cross-fase: documentar dependencia en el `CLAUDE.md` de la fase consumidora
 - [ ] Si formaliza una regla que estaba inline en otros archivos: eliminar los duplicados
+- [ ] Si tiene archivos de soporte: referencias usan `${CLAUDE_SKILL_DIR}/<path>`
+
+## Referencias a archivos de soporte con `${CLAUDE_SKILL_DIR}`
+
+Cuando una skill tiene archivos en su directorio (`references/`, `scripts/`, templates, etc.) y el cuerpo del `SKILL.md` los referencia para que el agente los lea, usar siempre la variable `${CLAUDE_SKILL_DIR}`:
+
+```markdown
+Ver formato completo en `${CLAUDE_SKILL_DIR}/references/output_template.md`
+Ejecutar: `${CLAUDE_SKILL_DIR}/scripts/validate.sh`
+```
+
+`${CLAUDE_SKILL_DIR}` se sustituye por el path absoluto del directorio del `SKILL.md` antes de que el agente vea el contenido. Sin ella, el agente resuelve rutas relativas desde el directorio de trabajo actual — que no es el directorio de la skill — y los Read fallan silenciosamente.
+
+No usar rutas relativas simples (`references/template.md`) ni paths hardcoded al proyecto.
 
 ## Checklist de registro tras crear una `wf-*`
 
 - [ ] `SKILL.md` en el directorio correcto con `context: fork`
+- [ ] `description` contiene solo la funcionalidad; triggers y exclusiones en `when_to_use`
 - [ ] Entrada en el rootmap del `CLAUDE.md` de fase (o del orquestador global si es transversal)
 - [ ] Si tiene `agent:`: verificar que el agente existe y acepta el modo operativo
 - [ ] Precondiciones documentadas en el body del `SKILL.md`
 - [ ] Output explicito: que archivo escribe y en que directorio
+- [ ] Si tiene archivos de soporte: referencias usan `${CLAUDE_SKILL_DIR}/<path>`
 
 ## Checklist de registro tras crear un agente
 

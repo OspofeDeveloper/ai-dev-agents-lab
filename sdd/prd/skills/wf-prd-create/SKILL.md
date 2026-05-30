@@ -1,6 +1,7 @@
 ---
 name: wf-prd-create
-description: Crea un PRD inicial guiado para el pipeline SDD. Puede partir de notas, un brief o una idea suelta, y genera un `prd.md` limpio, orientado a negocio y listo para revisión. Activa en frases como "ayúdame a crear el PRD", "genera un PRD", "construye el documento de requisitos", "convierte estas notas en un PRD".
+description: "Crea un PRD inicial guiado para el pipeline SDD. Puede partir de notas, un brief o una idea suelta, y genera un prd.md limpio, orientado a negocio y listo para revision."
+when_to_use: "Activa en frases como 'ayudame a crear el PRD', 'genera un PRD', 'construye el documento de requisitos', 'convierte estas notas en un PRD'."
 argument-hint: "<directorio_proyecto> [--source <notas.md>] [--output <prd.md>]"
 effort: medium
 allowed-tools: [Read, Write, Bash]

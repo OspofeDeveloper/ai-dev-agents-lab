@@ -21,7 +21,7 @@ El sealed interface y sus variantes viven en `commonMain`.
 
 → Prohibición de `@StringRes` en `commonMain`: `kb-kmm-resources` (Regla 5)
 
-→ Templates: `references/ui-text-pattern.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/ui-text-pattern.md`
 
 ## Regla 3: La representación distingue texto dinámico de texto traducible
 
@@ -32,7 +32,7 @@ El patrón separa dos casos:
 
 La forma concreta del sealed interface pertenece a templates.
 
-→ Templates: `references/ui-text-pattern.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/ui-text-pattern.md`
 
 ## Regla 4: `UIText` se materializa solo en la capa UI
 
@@ -46,13 +46,13 @@ El estado de pantalla puede exponer `UIText?` para errores, mensajes y textos de
 
 Esto permite que el ViewModel construya una representación visual estable sin acoplarse al runtime UI.
 
-→ Templates: `references/ui-text-pattern.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/ui-text-pattern.md`
 
 ## Regla 6: El mapping `AppError -> UIText` vive en presentation
 
 → Regla SSoT: `kb-kmm-app-errors` (Regla 9). Esta skill solo define la representación visual del error.
 
-→ Templates: `references/ui-text-pattern.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/ui-text-pattern.md`
 
 ## Regla 7: Esta skill se apoya en `kb-kmm-resources`, no la sustituye
 
@@ -66,7 +66,7 @@ En tests de ViewModel se compara el valor `UIText` directamente.
 
 No hace falta renderizar UI ni comparar strings materializados.
 
-→ Templates: `references/ui-text-pattern.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/ui-text-pattern.md`
 
 ## Regla 9: Un `UiModel` debe exponer la intención textual completa
 
@@ -80,7 +80,7 @@ Está prohibido repartir esa decisión entre varios primitivos para que la UI re
 
 La UI puede materializar `UIText`, pero no completar la lógica de selección textual que pertenece al mapper o al ViewModel.
 
-→ Templates: `references/ui-text-pattern.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/ui-text-pattern.md`
 
 ## Regla 10: Requisitos no negociables
 

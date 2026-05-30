@@ -85,7 +85,7 @@ Aplicación práctica:
 - un `CLAUDE.md` de fase decide a quién delega; no duplica el contenido interno de las skills
 - si una regla cambia, se actualiza la skill SSoT y el resto delega
 
-→ Templates: `references/skill-architecture-patterns.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/skill-architecture-patterns.md`
 
 ## Regla 7: Single Responsibility para skills y agentes
 
@@ -141,6 +141,7 @@ Para el ecosistema SDD actual:
 - `context: fork` cuando la workflow se ejecuta como tarea separada
 - `agent:` cuando el workflow está diseñado para delegar siempre en un agente concreto
 - no usar `disable-model-invocation: true` si se espera routing desde lenguaje natural vía `CLAUDE.md`
+- `description:` solo para qué hace el workflow (funcional, conciso); `when_to_use:` para frases de activación y exclusiones explícitas — nunca mezclar ambas cosas en `description`
 
 Una `wf-*` puede ser manual-only, pero eso debe ser una excepción explícita, no la política por defecto.
 
@@ -179,7 +180,7 @@ No deben contener:
 - decisiones globales no mencionadas en `SKILL.md`
 - una segunda definición de responsabilidades ya descritas en la skill
 
-→ Templates: `references/skill-architecture-patterns.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/skill-architecture-patterns.md`
 
 ## Regla 15: Criterio para cerrar una limpieza
 

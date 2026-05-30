@@ -36,7 +36,7 @@ Si las operaciones de login, refresh o lectura técnica de sesión devuelven res
 
 La definición transversal de `AppResult` y `AppError` pertenece a `kb-kmm-app-errors`. Esta skill solo fija cómo auth se integra en ese contrato.
 
-→ Templates: `references/auth_contracts_templates.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/auth_contracts_templates.md`
 
 ---
 

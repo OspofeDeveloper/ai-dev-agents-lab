@@ -43,7 +43,7 @@ Este árbol es un mapa conceptual de wiring alineado con la arquitectura. No obl
 
 Todos los módulos se registran en `initKoin`. No hay módulos dinámicos ni carga lazy de módulos.
 
-→ Templates: `references/koin_init_templates.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/koin_init_templates.md`
 
 ---
 
@@ -56,7 +56,7 @@ Existe una única función `initKoin(config: KoinAppDeclaration? = null)` en `co
 
 El parámetro `config` permite que cada plataforma inyecte configuración específica sin que `initKoin` necesite conocer detalles de plataforma.
 
-→ Templates: `references/koin_init_templates.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/koin_init_templates.md`
 
 ---
 
@@ -92,7 +92,7 @@ Los qualifiers se agrupan por dominio, no por librería. Ejemplos habituales:
 
 Los qualifiers de plataforma se usan solo en `nativeModule` y no se consumen desde `commonMain`.
 
-→ Templates: `references/koin_feature_module_template.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/koin_feature_module_template.md`
 
 ---
 
@@ -109,7 +109,7 @@ viewModelOf -> ViewModels
 
 Ese orden es un patrón de wiring habitual, no una regla arquitectónica independiente de las skills de capa.
 
-→ Templates: `references/koin_feature_module_template.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/koin_feature_module_template.md`
 
 ---
 
@@ -119,7 +119,7 @@ Ese orden es un patrón de wiring habitual, no una regla arquitectónica indepen
 
 `nativeModule` siempre se registra **primero** en `initKoin` cuando otros módulos dependen de infraestructura de plataforma.
 
-→ Templates: `references/koin_init_templates.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/koin_init_templates.md`
 
 ---
 

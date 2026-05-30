@@ -42,7 +42,7 @@ No metas en el brief:
 - copy detallado de una pantalla
 - layouts concretos por feature
 
-→ Templates: `references/design_brief_template.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/design_brief_template.md`
 
 ## Regla 3: Los modos de intake son cerrados
 
@@ -107,7 +107,7 @@ El preset:
 
 Si el preset contradice el spec o PRD, manda el producto real.
 
-→ Templates: `references/design_presets.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/design_presets.md`
 
 ## Regla 7: Claridad vs marca debe decidirse temprano
 
@@ -147,7 +147,7 @@ Si hay conflicto, el brief debe:
 - corregir la variable
 - o documentar una justificacion breve y concreta
 
-→ Templates: `references/consistency_checks.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/consistency_checks.md`
 
 ## Regla 10: El brief gobierna al agente de design
 

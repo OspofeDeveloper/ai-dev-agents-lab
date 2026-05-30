@@ -1,6 +1,7 @@
 ---
 name: wf-design-export
-description: Workflow SDD que exporta los tokens del DESIGN.md a formatos consumibles por equipos de desarrollo (CSS variables, Style Dictionary universal, Compose para Android, SwiftUI para iOS, Tailwind config). Cierra el puente entre diseno y codigo sin duplicar SSoT. Activa en frases como "exporta los tokens", "genera tokens para iOS", "necesito el CSS de los colores", "convierte el DESIGN.md a Style Dictionary".
+description: "Exporta los tokens del DESIGN.md a formatos consumibles por equipos de desarrollo: CSS variables, Style Dictionary universal, Compose para Android, SwiftUI para iOS, Tailwind config. Cierra el puente entre diseno y codigo sin duplicar SSoT."
+when_to_use: "Activa en frases como 'exporta los tokens', 'genera tokens para iOS', 'necesito el CSS de los colores', 'convierte el DESIGN.md a Style Dictionary'."
 argument-hint: "<DESIGN.md> --platforms <css,style-dictionary,compose,swiftui,tailwind> [--output-dir <path>] [--dry-run]"
 effort: medium
 allowed-tools: [Read, Write, Bash]

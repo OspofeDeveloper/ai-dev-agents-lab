@@ -10,7 +10,7 @@ user-invocable: false
 # Tests de Integración KMM — Patrones de Implementación
 
 > Decisiones de arquitectura de testing: `kb-kmm-testing-strategy`.
-> **Patrones de test de grafo de navegación (TestNavHostController, FakeNavigation): SSoT en `kb-kmm-navigation-compose/references/testing.md`. Esta skill no los duplica.**
+> **Patrones de test de grafo de navegación (TestNavHostController, FakeNavigation): SSoT en `${CLAUDE_SKILL_DIR}/../kb-kmm-navigation-compose/references/testing.md`. Esta skill no los duplica.**
 
 ## Regla 1: Los tests de integración viven en `androidTest` cuando requieren runtime Compose
 
@@ -58,7 +58,7 @@ composeTestRule
     .assertExists()
 ```
 
-Consulta `references/compose-integration-test-templates.md` para más ejemplos.
+Consulta `${CLAUDE_SKILL_DIR}/references/compose-integration-test-templates.md` para más ejemplos.
 
 ---
 
@@ -81,7 +81,7 @@ fun `screenshot del estado Success de la pantalla`() {
 }
 ```
 
-Consulta `references/screenshot-testing.md` para configuración de Gradle y CI.
+Consulta `${CLAUDE_SKILL_DIR}/references/screenshot-testing.md` para configuración de Gradle y CI.
 
 ---
 

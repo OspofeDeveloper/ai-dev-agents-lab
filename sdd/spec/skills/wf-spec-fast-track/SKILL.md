@@ -1,6 +1,7 @@
 ---
 name: wf-spec-fast-track
-description: Genera el Spec de una feature directamente desde un documento de requisitos acotado a una sola capacidad. Soporta modo scoped con --scope-from para filtrar un PRD completo a una feature del discovery. Acepta --analysis para usar gaps pre-resueltos de un analisis previo. Puede detenerse si las respuestas del analysis expanden el producto, salvo override explícito para continuar marcando el resultado como scope derivado. Activa en frases como "genera el spec directo de esta feature", "fast-track del spec", "crea el spec de esta capability directamente", "genera spec sin análisis previo".
+description: "Genera el Spec de una feature directamente desde un documento de requisitos acotado a una sola capacidad. Soporta modo scoped con --scope-from para filtrar un PRD completo a una feature del discovery. Acepta --analysis para usar gaps pre-resueltos de un analisis previo."
+when_to_use: "Activa en frases como 'genera el spec directo de esta feature', 'fast-track del spec', 'crea el spec de esta capability directamente', 'genera spec sin analisis previo'."
 argument-hint: "<archivo.md> --capability <nombre-kebab> [--analysis <analysis.md>] [--allow-derived-scope-from-analysis] | <prd.md> --scope-from <discovery.md> --feature <F-00X> [--analysis <analysis.md>] [--allow-derived-scope-from-analysis]"
 effort: high
 allowed-tools: [Read, Write, Bash]
@@ -130,7 +131,7 @@ No genera un `_analysis.md` separado. Consulta `kb-gap-conventions` para el form
 
 ## Paso 7: Generar el Spec de feature
 
-Produce un `_spec.md` completo con los 8 elementos SDD siguiendo la estructura de `references/feature_spec_template.md`.
+Produce un `_spec.md` completo con los 8 elementos SDD siguiendo la estructura de `${CLAUDE_SKILL_DIR}/references/feature_spec_template.md`.
 
 **Header específico del fast-track (modo directo):**
 ```markdown
@@ -201,7 +202,7 @@ Antes de escribir el output, aplica la Prueba de Pureza al spec completo. Consul
 
 ## Paso 9: Generar artefactos de índice
 
-**README de la feature**: Genera el contenido completo de `features/<capability>/README.md` siguiendo `references/feature_readme_template.md`. Usa los datos del spec recién generado:
+**README de la feature**: Genera el contenido completo de `features/<capability>/README.md` siguiendo `${CLAUDE_SKILL_DIR}/references/feature_readme_template.md`. Usa los datos del spec recién generado:
 - Feature ID: F-001 si `_features.md` no existe, o el siguiente ID disponible si existe
 - Actor principal: extraído del spec
 - Spec monolítico origen: `N/A (fast-track directo)`

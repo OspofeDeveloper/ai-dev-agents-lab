@@ -1,6 +1,7 @@
 ---
 name: wf-design-system
-description: Orquestador SDD para crear o actualizar el DESIGN.md de un producto a partir de un feature spec validado y un DESIGN_BRIEF.md cerrado. Usalo cuando ya exista un _spec.md y un DESIGN_BRIEF.md y quieras definir la identidad visual persistente que alimentara Stitch y futuros prototipos de features. Activa en frases como "crea el DESIGN.md", "genera el sistema visual desde el spec", "prepara el contrato visual del producto", "actualiza el DESIGN.md". No activa para generar planes KMM ni tasks.
+description: "Crea o actualiza el DESIGN.md de un producto a partir de un feature spec validado y un DESIGN_BRIEF.md cerrado. Define la identidad visual persistente que alimentara Stitch y futuros prototipos de features."
+when_to_use: "Activa en frases como 'crea el DESIGN.md', 'genera el sistema visual desde el spec', 'prepara el contrato visual del producto', 'actualiza el DESIGN.md'. No activa para generar planes KMM ni tasks."
 argument-hint: "generate <feature_spec.md> [--prd <prd.md>] [--brief <DESIGN_BRIEF.md>] [--design-file DESIGN.md] [--no-brief]"
 effort: high
 allowed-tools: [Read, Write, Bash, Agent, WebSearch, WebFetch]
@@ -91,8 +92,8 @@ Si la policy es `preferred` u `optional`, continua.
 Si el archivo ya existe, leelo completo para usarlo como base.
 
 Si el archivo **NO existe** y el brief declara `product_preset` distinto de `none`:
-- carga el frontmatter base del preset desde `references/preset_starter_kits.md` de `kb-design-expert`
-- carga los componentes base del preset desde `references/preset_components.md` de `kb-design-expert`
+- carga el frontmatter base del preset desde `${CLAUDE_SKILL_DIR}/../kb-design-expert/references/preset_starter_kits.md` de `kb-design-expert`
+- carga los componentes base del preset desde `${CLAUDE_SKILL_DIR}/../kb-design-expert/references/preset_components.md` de `kb-design-expert`
 - arranca con ese starter kit al 70% en lugar de DESIGN.md en blanco
 - pasa este contenido base al agente como `DESIGN.md actual` para que lo precise (no parta de cero)
 
@@ -140,7 +141,7 @@ Aplica las reglas de kb-design-expert, kb-design-brief y kb-design-style-taxonom
 - kb-design-style-taxonomy: usar solo familias validas; si ninguna encaja, aplicar Regla 12 (`custom`) con sus 5 condiciones
 - Si faltan datos criticos para jerarquia, tono o patrones base, devuelve DESIGN_GAPs y no produzcas archivo final
 
-Formato de output: ver references/output_notes.md de esta skill.
+Formato de output: ver ${CLAUDE_SKILL_DIR}/references/output_notes.md
 ```
 
 ## Paso 5: Manejar DESIGN_GAPs

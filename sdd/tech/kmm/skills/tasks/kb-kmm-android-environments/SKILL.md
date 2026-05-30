@@ -33,7 +33,7 @@ La implementación Android usa `com.github.gmazzo.buildconfig` para generar un o
 
 Si el proyecto ya tiene ese plugin con otra versión, se usa la versión existente.
 
-→ Templates: `references/android_buildconfig_templates.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/android_buildconfig_templates.md`
 
 ---
 
@@ -46,7 +46,7 @@ La materialización Android usa:
 
 La combinación de ambas dimensiones produce las variantes Android.
 
-→ Templates: `references/android_buildconfig_templates.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/android_buildconfig_templates.md`
 
 ---
 
@@ -62,7 +62,7 @@ El orden de resolución es:
 
 La prioridad explícita es la vía estable para CI y para cualquier integración donde no convenga depender del nombre de la tarea.
 
-→ Templates: `references/android_buildconfig_templates.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/android_buildconfig_templates.md`
 
 ---
 
@@ -74,7 +74,7 @@ Solo contienen valores que Android no puede derivar automáticamente a partir de
 
 No deben usarse para persistir valores puramente derivados si el propio bloque `buildConfig` ya puede calcularlos.
 
-→ Templates: `references/android_properties_templates.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/android_properties_templates.md`
 
 ---
 
@@ -87,7 +87,7 @@ La implementación Android tiene dos zonas distintas:
 
 La skill no obliga a exponer todos los campos posibles; solo los que el proyecto haya decidido publicar en su contrato compartido.
 
-→ Templates: `references/android_buildconfig_templates.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/android_buildconfig_templates.md`
 
 ---
 

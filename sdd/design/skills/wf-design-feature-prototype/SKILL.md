@@ -1,6 +1,7 @@
 ---
 name: wf-design-feature-prototype
-description: Orquestador SDD para derivar artefactos de prototipado visual de una feature a partir de su _spec.md, un DESIGN.md y, si existe, un DESIGN_BRIEF.md. Genera flows, views y prompt para Stitch listos para contrastar con cliente antes del plan tecnico. Activa en frases como "genera las vistas para Stitch", "crea el prototipo de la feature", "prepara flows y prompt de diseno", "deriva las pantallas desde el spec". No activa para modificar el spec, ni para generar plan o tasks.
+description: "Deriva artefactos de prototipado visual de una feature a partir de su _spec.md, un DESIGN.md y, si existe, un DESIGN_BRIEF.md. Genera flows, views y prompt para Stitch listos para contrastar con cliente antes del plan tecnico."
+when_to_use: "Activa en frases como 'genera las vistas para Stitch', 'crea el prototipo de la feature', 'prepara flows y prompt de diseno', 'deriva las pantallas desde el spec'. No activa para modificar el spec, ni para generar plan o tasks."
 argument-hint: "generate <feature_spec.md> [--design-file DESIGN.md] [--brief DESIGN_BRIEF.md] [--no-brief]"
 effort: high
 allowed-tools: [Read, Write, Bash, Agent]
@@ -117,7 +118,7 @@ Aplica las reglas de kb-design-expert y kb-design-brief que tienes en contexto:
 No inventes funcionalidad fuera del spec.
 Si faltan datos criticos, devuelve DESIGN_GAPs y no produzcas artefactos parciales.
 
-Formato de output: usa el bundle definido en references/output_bundle_template.md de esta skill.
+Formato de output: usa el bundle definido en ${CLAUDE_SKILL_DIR}/references/output_bundle_template.md de esta skill.
 ```
 
 ## Paso 6: Manejar DESIGN_GAPs
@@ -128,7 +129,7 @@ Si el agente devuelve `DESIGN_GAP` o `DESIGN_GAPs`:
 
 ## Paso 7: Escribir resultados
 
-Parsea la respuesta del agente usando el formato de bundle de `references/output_bundle_template.md`: extrae cada bloque `===FILE: <nombre>===` como archivo separado y escribe cada uno en su path correspondiente.
+Parsea la respuesta del agente usando el formato de bundle de `${CLAUDE_SKILL_DIR}/references/output_bundle_template.md`: extrae cada bloque `===FILE: <nombre>===` como archivo separado y escribe cada uno en su path correspondiente.
 
 ## Paso 8: Informar al usuario
 

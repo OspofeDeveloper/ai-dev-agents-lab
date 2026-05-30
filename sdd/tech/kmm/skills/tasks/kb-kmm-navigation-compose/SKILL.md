@@ -36,7 +36,7 @@ Versión mínima de referencia: `org.jetbrains.androidx.navigation:navigation-co
 
 La configuración exacta de dependencias y plugin pertenece a templates, no a esta regla conceptual.
 
-→ Templates: `references/setup-and-routes.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/setup-and-routes.md`
 
 ## Regla 3: Las rutas son type-safe y viven en `commonMain`
 
@@ -50,7 +50,7 @@ Cada ruta es:
 
 Los argumentos opcionales llevan valor por defecto.
 
-→ Templates: `references/setup-and-routes.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/setup-and-routes.md`
 
 ## Regla 4: En `commonMain` se usan APIs multiplataforma de navegación
 
@@ -60,7 +60,7 @@ Está prohibido usar `SavedStateHandle.toRoute()` en `commonMain` porque depende
 
 Los argumentos complejos deben cruzar la ruta como primitivos serializables, no como objetos de plataforma.
 
-→ Templates: `references/setup-and-routes.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/setup-and-routes.md`
 
 ## Regla 5: El `NavHost` vive en `commonMain` y comparte owner con el shell
 
@@ -72,7 +72,7 @@ Esto garantiza que el mismo `navController` se comparta entre el `NavHost` y el 
 
 No usar `LocalNavController` como `CompositionLocal`, porque empeora testabilidad y oculta ownership.
 
-→ Templates: `references/navhost-and-backstack.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/navhost-and-backstack.md`
 
 ## Regla 6: El back stack se manipula con criterios explícitos de flujo
 
@@ -84,7 +84,7 @@ La combinación `popUpTo`, `inclusive`, `launchSingleTop`, `saveState` y `restor
 
 `popBackStack()` y `navigateUp()` no son intercambiables semánticamente. Si un destino puede recibirse vía deep link, ignorar el `Boolean` de `popBackStack()` está prohibido y debe existir fallback explícito.
 
-→ Templates: `references/navhost-and-backstack.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/navhost-and-backstack.md`
 
 ## Regla 7: Los nested graphs preservan la frontera entre features y `app`
 
@@ -100,7 +100,7 @@ La feature:
 
 Las rutas compartidas y el `NavController` permanecen centralizados en `app`.
 
-→ Templates: `references/nested-graphs-and-multimodule.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/nested-graphs-and-multimodule.md`
 
 ## Regla 8: El shell adaptativo es responsabilidad del runtime Compose, no del contrato de navegación
 
@@ -116,7 +116,7 @@ En entornos adaptativos:
 
 La implementación concreta del shell y sus layouts vive en templates.
 
-→ Templates: `references/bottom-nav-and-adaptive.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/bottom-nav-and-adaptive.md`
 
 ## Regla 9: Esta skill resuelve deep links dentro del grafo, no la integración del host
 
@@ -126,7 +126,7 @@ La configuración de plataforma que conecta URLs, intents, universal links o bri
 
 Los placeholders del URI deben coincidir con los nombres de los parámetros de la ruta `@Serializable`.
 
-→ Templates: `references/deeplinks.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/deeplinks.md`
 
 ## Regla 10: El scoping de ViewModel y los side effects se consumen desde sus skills autoritativas
 
@@ -136,7 +136,7 @@ Para scoping y paso de parámetros, consultar la DI activa y el patrón autorita
 
 Para efectos de navegación y `LaunchedEffect`, la skill autoritativa es `kb-tasks-kmm-navigation-viewmodel-events`.
 
-→ Templates: `references/viewmodel-scoping.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/viewmodel-scoping.md`
 
 ## Regla 11: Testing del grafo pertenece a la implementación Compose
 
@@ -144,7 +144,7 @@ El testing del grafo y de la integración con `NavHost` pertenece a esta dimensi
 
 Los tests de ViewModel aislados siguen perteneciendo a `kb-tasks-kmm-navigation-viewmodel-events`, no a esta skill.
 
-→ Templates: `references/testing.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/testing.md`
 
 ## Regla 12: Las transiciones son un detalle de implementación del `NavHost`
 
@@ -152,7 +152,7 @@ Las transiciones globales se definen en el `NavHost`; las transiciones por ruta 
 
 En iOS deben preferirse transiciones compatibles con Compose Multiplatform. Predictive back animation no convierte Android en fuente de verdad del diseño del grafo.
 
-→ Templates: `references/animations.md`
+→ Templates: `${CLAUDE_SKILL_DIR}/references/animations.md`
 
 ## Regla 13: Los comportamientos de plataforma no contaminan esta skill
 

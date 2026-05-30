@@ -77,7 +77,7 @@ Define qué módulos Gradle se crean o modifican:
 :app                 → wiring DI + rutas de navegación
 ```
 
-Consulta `references/kmm_architecture.md` para las convenciones de módulos.
+Consulta `${CLAUDE_SKILL_DIR}/references/kmm_architecture.md` para las convenciones de módulos.
 
 ### 3. Diseño por Capa
 
@@ -87,7 +87,7 @@ Para cada módulo de feature, describe sus tres capas.
 **Data:** RepositoryImpl, DTOs, Mappers, DataSources (remote/local)
 **Presentation:** ViewModel, UiState, UiEvent, Screen Composable
 
-Consulta `references/kmm_architecture.md` para las reglas de cada capa.
+Consulta `${CLAUDE_SKILL_DIR}/references/kmm_architecture.md` para las reglas de cada capa.
 
 ### 4. Contratos y Dependencias entre componentes
 
@@ -237,4 +237,4 @@ Si `Design` es obligatorio:
 
 ---
 
-→ Proceso de generación: `plan-architect` contiene el procedimiento operacional completo (incluyendo verificación de shared models, detección de gaps y orden de ejecución). Consulta `references/plan_structure.md` para la plantilla de output exacta.
+→ Proceso de generación: `plan-architect` contiene el procedimiento operacional completo (incluyendo verificación de shared models, detección de gaps y orden de ejecución). Consulta `${CLAUDE_SKILL_DIR}/references/plan_structure.md` para la plantilla de output exacta.
