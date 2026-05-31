@@ -4,7 +4,7 @@ description: Agente especializado en crear y refactorizar skills (kb-*, wf-*) y 
 skills: [kb-sdd-skill-architecture, kb-sdd-creation-guide]
 memory: project
 permissionMode: acceptEdits
-model: claude-opus-4-6
+model: claude-opus-4-7
 effort: high
 color: purple
 ---

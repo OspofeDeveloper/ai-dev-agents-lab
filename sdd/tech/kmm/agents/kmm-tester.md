@@ -4,7 +4,7 @@ description: Agente especializado en diseñar, escribir y auditar tests en proye
 skills: [kb-kmm-testing-strategy, kb-tasks-kmm-unit-testing, kb-tasks-kmm-integration-testing]
 memory: project
 permissionMode: acceptEdits
-model: claude-opus-4-6
+model: claude-sonnet-4-6
 effort: high
 color: red
 ---

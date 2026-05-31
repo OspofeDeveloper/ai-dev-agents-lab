@@ -261,3 +261,39 @@ Señal de que una KB necesita split dual: contiene secciones de "qué/por qué" 
 - Un directorio `<stack>/` al mismo nivel que las fases (`prd/`, `spec/`, etc.) rompe la separación fases/targets.
 - KBs de `tasks` cargadas en el agente de `plan` (y viceversa) introducen conocimiento accidental fuera de contexto.
 - Un stack sin `agents/` solo puede ser invocado por agentes de fase — documentar explícitamente si ese es el diseño.
+
+## Regla 17: Umbral de delegación — inline vs agente vs pipeline
+
+No toda operación merece un subagente. Clasificar cada paso según su coste real:
+
+**Hacer inline (sin delegar):**
+- parseo de argumentos y flags
+- verificación de precondiciones (archivo existe, nombre válido, naming convention)
+- colección mecánica de rutas o listas (find, grep estructural)
+- escritura de un artefacto cuyo contenido ya fue generado por el agente
+
+**Delegar a un agente:**
+- generación de contenido complejo (frontmatter + body de skill o agente)
+- diagnóstico de violaciones de SSoT/SRP que requiere juicio sobre el ecosistema
+- exploración de contexto amplio con razonamiento cruzado entre archivos
+- decisiones de partición arquitectónica o refactorización de múltiples piezas
+
+**Usar pipeline completo (wf-* que delega a agente):**
+- tarea ambigua entre dominios que requiere precondiciones + razonamiento experto
+- operación con impacto en invariantes del ecosistema (afecta rootmaps, registros, referencias cruzadas)
+- flujo con guardrails y output concreto definido
+
+Anti-patrones:
+- hacer una ceremonia de subagente para un parseo de argumentos (overhead sin beneficio)
+- intentar generar contenido complejo inline (contamina contexto, mezcla roles)
+
+Ejemplo canónico en el ecosistema: `wf-sdd-status` no delega a ningún agente porque es colección mecánica de inventario — caso 1 puro.
+
+## Regla 18: Skill Registry — índice persistente del ecosistema
+
+`sdd/.claude/skill-registry.md` es el índice central de todas las skills del ecosistema.
+
+- Lo genera y actualiza `wf-sdd-status` automáticamente en cada run global.
+- Lo leen agentes que necesitan descubrir skills sin explorar el filesystem: `sdd-author` (detección de duplicados), `sdd-auditor` (cobertura estructural).
+- No es una segunda SSoT: cada regla sigue viviendo en su `SKILL.md`. El registry solo almacena nombre, descripción de una línea, invocabilidad y path.
+- No se edita manualmente. Si está desactualizado: ejecutar `wf-sdd-status`.

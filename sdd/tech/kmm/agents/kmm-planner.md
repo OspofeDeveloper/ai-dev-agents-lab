@@ -4,7 +4,7 @@ description: Agente especializado en planificar trabajo KMM usando las skills de
 skills: [kb-kmm-clean-architecture, kb-kmm-core-layer, kb-kmm-feature-clean-architecture, kb-kmm-app-layer, kb-kmm-app-errors, kb-plan-koin, kb-plan-kmm-datastore-preferences, kb-kmm-navigation-contracts, kb-plan-kmm-navigation-viewmodel-events, kb-kmm-navigation-platform-behaviors, kb-kmm-network-contracts, kb-kmm-auth-contracts, kb-kmm-brands, kb-kmm-environments, kb-plan-kmm-ui-text, kb-plan-expert, kb-cmp-resources, kb-plan-cmp-ui, kb-kmm-testing-strategy]
 memory: project
 permissionMode: acceptEdits
-model: claude-opus-4-6
+model: claude-sonnet-4-6
 disallowedTools: Write, Edit
 color: red
 ---

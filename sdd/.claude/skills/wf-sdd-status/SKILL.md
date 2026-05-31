@@ -1,6 +1,6 @@
 ---
 name: wf-sdd-status
-description: "Genera un inventario rapido del ecosistema SDD: cuantas skills y agentes hay por fase, que KBs existen, que workflows estan registrados en los rootmaps y que KBs no tienen consumidor. Produce un snapshot estructurado sin ejecutar auditoria de contenido."
+description: "Genera un inventario rapido del ecosistema SDD y actualiza sdd/.claude/skill-registry.md: cuantas skills y agentes hay por fase, que KBs existen, que workflows estan registrados en los rootmaps y que KBs no tienen consumidor. Produce un snapshot estructurado sin ejecutar auditoria de contenido."
 when_to_use: "Activa con frases como 'que skills tenemos', 'inventario del ecosistema', 'que hay en la fase design', 'cuantos agentes existen', 'muestra el estado del ecosistema', 'que workflows hay disponibles', 'lista todo lo que hay en sdd'. No activa para detectar problemas de SSoT o referencias rotas (usa wf-sdd-audit)."
 argument-hint: "[--phase <prd|spec|design|plan|tasks|tech/<stack>|global>] [--output <path>]"
 effort: low
@@ -116,10 +116,47 @@ wf-* (Z):
 
 ---
 
+## Paso 6.5: Actualizar skill-registry.md
+
+Si el run es global (sin `--phase` o `--phase global`), genera o sobreescribe `sdd/.claude/skill-registry.md` con todas las skills encontradas en el Paso 2, organizadas por fase/scope.
+
+Formato del registry:
+
+```markdown
+# SDD Skill Registry
+<!-- Auto-generado por wf-sdd-status. No editar manualmente. -->
+<!-- Total: X skills | Y user-invocable | Z kb-* -->
+
+## Meta-Ecosistema (.claude/)
+| Skill | Descripción | Invocable | Path |
+|---|---|---|---|
+| <nombre> | <primera línea de description> | true/false | <path relativo desde sdd/> |
+
+## Fase: PRD
+...
+## Fase: Spec
+...
+## Fase: Design
+...
+## Fase: Plan
+...
+## Fase: Tasks
+...
+## Tech: KMM — Plan
+## Tech: KMM — Tasks
+## Tech: KMM — Workflows
+```
+
+`Path` siempre relativo desde `sdd/` (ejemplo: `.claude/skills/kb-sdd-audit-content/SKILL.md`).
+
+Este paso no bloquea el resto del workflow — si falla la escritura, continúa al Paso 7 e informa con `⚠ No se pudo actualizar skill-registry.md`.
+
+---
+
 ## Paso 7: Output
 
 Si se especifico `--output`:
-- Escribe el snapshot en el path indicado.
+- Escribe el snapshot de estado en el path indicado (no el registry — ese siempre va a `sdd/.claude/skill-registry.md`).
 - Informa: `"Snapshot guardado en <path>."`
 
 Si no se especifico `--output`:

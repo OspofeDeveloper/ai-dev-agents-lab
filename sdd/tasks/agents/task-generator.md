@@ -4,7 +4,7 @@ description: Agente especializado en descomponer Planes técnicos KMM en Tasks a
 skills: [kb-plan-expert, kb-tasks-expert, kb-kmm-navigation-compose, kb-kmm-testing-strategy]
 memory: project
 permissionMode: acceptEdits
-model: claude-opus-4-6
+model: claude-sonnet-4-6
 effort: high
 color: cyan
 ---

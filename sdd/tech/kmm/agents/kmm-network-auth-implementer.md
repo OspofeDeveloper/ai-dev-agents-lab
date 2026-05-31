@@ -4,7 +4,7 @@ description: Agente especializado en infraestructura remota KMM: contratos de re
 skills: [kb-kmm-clean-architecture, kb-kmm-core-layer, kb-kmm-feature-clean-architecture, kb-kmm-app-layer, kb-tasks-koin, kb-kmm-app-errors, kb-kmm-network-contracts, kb-kmm-http-ktor, kb-kmm-auth-contracts, kb-kmm-auth-oauth-keycloak, kb-kmm-auth-ktor-plugin, kb-tasks-kmm-unit-testing, kb-tasks-kmm-integration-testing]
 memory: project
 permissionMode: acceptEdits
-model: claude-opus-4-6
+model: claude-opus-4-7
 effort: high
 color: red
 ---

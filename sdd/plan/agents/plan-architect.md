@@ -4,7 +4,7 @@ description: Agente especializado en crear Planes técnicos KMM desde Specs SDD 
 skills: [kb-spec-expert, kb-plan-expert, kb-a11y-expert, kb-kmm-navigation-contracts, kb-plan-kmm-navigation-viewmodel-events, kb-kmm-app-errors, kb-plan-koin, kb-plan-cmp-ui, kb-cmp-resources]
 memory: project
 permissionMode: acceptEdits
-model: claude-opus-4-6
+model: claude-opus-4-7
 effort: high
 color: orange
 ---

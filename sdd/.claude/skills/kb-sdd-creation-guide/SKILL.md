@@ -154,6 +154,22 @@ Patron de mensajes de bloqueo:
 
 Ultimo paso siempre: informar al usuario del output generado y el siguiente paso sugerido.
 
+### Qué va inline y qué se delega
+
+Aplicar Regla 17 de `kb-sdd-skill-architecture` al diseñar los pasos:
+
+| Tipo de paso | Ejecutar |
+|---|---|
+| Parseo de argumentos y flags | Inline |
+| Verificación de precondiciones (archivo existe, nombre válido) | Inline |
+| Colección mecánica de rutas o conteos | Inline |
+| Generación de contenido (skill body, frontmatter, artefactos) | Delegar al agente |
+| Diagnóstico de violaciones o decisiones arquitectónicas | Delegar al agente |
+| Escritura del artefacto generado por el agente | Inline |
+| Reporte final al usuario | Inline |
+
+Una `wf-*` que genera contenido sin delegar a un agente es una señal de alarma: está haciendo razonamiento que no le corresponde.
+
 ## Frontmatter para agentes
 
 ```yaml
@@ -163,7 +179,7 @@ description: "<Razonamiento especializado. Artefactos que produce. Que NO cubre.
 skills: [kb-<1>, kb-<2>, ...]
 memory: project
 permissionMode: acceptEdits
-model: claude-opus-4-6 | claude-sonnet-4-6
+model: claude-opus-4-7 | claude-sonnet-4-6
 effort: high                    # solo en agentes escritores/implementadores
 disallowedTools: Write, Edit    # solo en auditores/planificadores puros
 color: <color-por-fase>
@@ -171,8 +187,21 @@ color: <color-por-fase>
 ```
 
 **Criterio para `model`:**
-- `claude-opus-4-6`: agentes que **generan artefactos** (specs, planes, diseños, tasks, PRDs, código) o tienen razonamiento técnico sostenido multi-paso con contexto rico.
-- `claude-sonnet-4-6`: agentes que **leen, auditan, diagnostican o planifican el approach** sin producir un artefacto nuevo complejo (auditores, exploradores, planificadores de approach).
+
+El modelo se asigna por **tipo de trabajo**, no por si el agente genera un artefacto o no.
+
+- `claude-opus-4-7`: agentes que toman **decisiones arquitectónicas** (diseño visual, arquitectura técnica, redacción de PRDs, autoría del ecosistema) o realizan **codificación agéntica compleja** (implementadores KMM). Usar también cuando el output esperado supera los 64k tokens.
+- `claude-sonnet-4-6`: agentes que ejecutan **trabajo estructurado con template definido** (escritura de specs, descomposición de tasks), **exploración**, **auditoría** o **planificación de approach**. Sonnet 4.6 incluye extended thinking — para razonamiento en cadena con output <64k puede superar a Opus en precisión con menor coste.
+- `claude-haiku-4-5`: **no usar en este ecosistema**. Su ventana de 200k tokens es insuficiente para agentes que cargan múltiples KBs + artefactos grandes simultáneamente.
+
+Tabla de referencia:
+
+| Tipo de trabajo | Modelo |
+|---|---|
+| Decisión arquitectónica (diseño, plan técnico, PRD, autoría de ecosistema) | `claude-opus-4-7` |
+| Codificación agéntica compleja (implementadores KMM) | `claude-opus-4-7` |
+| Escritura estructurada con template (specs, tasks) | `claude-sonnet-4-6` |
+| Exploración, auditoría, planificación de approach | `claude-sonnet-4-6` |
 
 **Criterio para `effort`:**
 - `effort: high`: agentes escritores/implementadores que generan artefactos complejos (specs, planes técnicos, diseño, tasks, código). Activa razonamiento extendido independientemente del nivel de la sesión principal.
@@ -232,6 +261,7 @@ Secciones prohibidas en el cuerpo de un agente:
 - [ ] Si es cross-fase: documentar dependencia en el `CLAUDE.md` de la fase consumidora
 - [ ] Si formaliza una regla que estaba inline en otros archivos: eliminar los duplicados
 - [ ] Si tiene archivos de soporte: referencias usan `${CLAUDE_SKILL_DIR}/<path>`
+- [ ] Ejecutar `wf-sdd-status` para regenerar `sdd/.claude/skill-registry.md`
 
 ## Referencias a archivos de soporte con `${CLAUDE_SKILL_DIR}`
 
@@ -255,17 +285,19 @@ No usar rutas relativas simples (`references/template.md`) ni paths hardcoded al
 - [ ] Precondiciones documentadas en el body del `SKILL.md`
 - [ ] Output explicito: que archivo escribe y en que directorio
 - [ ] Si tiene archivos de soporte: referencias usan `${CLAUDE_SKILL_DIR}/<path>`
+- [ ] Ejecutar `wf-sdd-status` para regenerar `sdd/.claude/skill-registry.md`
 
 ## Checklist de registro tras crear un agente
 
 - [ ] Archivo `.md` con frontmatter correcto en `agents/`
-- [ ] `model` seleccionado según criterio escritor (`opus`) vs auditor/explorador (`sonnet`)
+- [ ] `model` seleccionado según tabla de criterios: decisión arquitectónica/codificación agéntica → `claude-opus-4-7`; escritura estructurada/exploración/auditoría/planificación → `claude-sonnet-4-6`
 - [ ] `effort: high` añadido si el agente genera artefactos complejos
 - [ ] `disallowedTools: Write, Edit` añadido si el system prompt declara que no escribe archivos (y el agente no produce artefactos diagnósticos intermedios)
 - [ ] `color` asignado según fase/dominio del agente (tabla de criterios anterior)
 - [ ] Sección `## Agentes disponibles` del `CLAUDE.md` de fase actualizada
 - [ ] Todas las `kb-*` en `skills: [...]` existen fisicamente
 - [ ] Si el agente es el target de una `wf-*`: verificar que `agent: <nombre>` apunta al nombre correcto
+- [ ] Ejecutar `wf-sdd-status` para regenerar `sdd/.claude/skill-registry.md`
 
 ## Prevencion de duplicados
 
@@ -323,6 +355,7 @@ Secciones prohibidas en `CLAUDE.md`:
 - [ ] No duplica reglas de `kb-sdd-skill-architecture` ni `kb-sdd-creation-guide`
 - [ ] No contiene plantillas de frontmatter, comandos shell ni listas de pasos operativos
 - [ ] Si es un `CLAUDE.md` de fase: solo referencia agentes y skills de esa fase
+- [ ] El orquestador no contiene lógica de ejecución inline: delega siempre a una `wf-*` o agente (Regla 17 de `kb-sdd-skill-architecture`)
 
 ## Checklist para actualizar un `CLAUDE.md` existente
 
