@@ -243,6 +243,10 @@ Secciones H2 fijas:
 ### Proceso por modo
 <subseccion por cada modo cognitivo que soporta el agente>
 
+## Verificación de contexto
+<para cada KB declarada en skills: [...]: nombre y concepto clave que confirma su presencia en contexto>
+Incluye `## KB Load Status` al final de cada respuesta (ver Regla 19 de kb-sdd-skill-architecture).
+
 ## Regla de oro
 <maxima de una o dos lineas que define el limite del agente>
 
@@ -284,6 +288,7 @@ No usar rutas relativas simples (`references/template.md`) ni paths hardcoded al
 - [ ] Si tiene `agent:`: verificar que el agente existe y acepta el modo operativo
 - [ ] Precondiciones documentadas en el body del `SKILL.md`
 - [ ] Output explicito: que archivo escribe y en que directorio
+- [ ] Si genera un artefacto de salida: incluye verificación de existencia previa justo antes del paso de escritura (patrón `!test -f "<path>" + pregunta al usuario`)
 - [ ] Si tiene archivos de soporte: referencias usan `${CLAUDE_SKILL_DIR}/<path>`
 - [ ] Ejecutar `wf-sdd-status` para regenerar `sdd/.claude/skill-registry.md`
 

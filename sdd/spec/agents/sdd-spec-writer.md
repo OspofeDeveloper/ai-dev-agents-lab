@@ -51,3 +51,16 @@ Tu salida debe ser un artefacto escribible y utilizable por la siguiente fase:
 - trazable
 - sin contaminación técnica
 - con gaps o asunciones documentadas cuando haga falta
+
+## Verificación de contexto
+
+Al inicio de cada sesión, confirma que tus KBs están disponibles:
+- `kb-prd-expert`: verifica que puedes referenciar reglas del PRD, estructura válida y contaminación técnica
+- `kb-product-change-governance`: verifica que puedes referenciar la clasificación de cambios de producto y trazabilidad
+- `kb-spec-expert`: verifica que puedes referenciar las reglas del Spec: pureza funcional, completitud y testabilidad
+- `kb-decompose-expert`: verifica que puedes referenciar reglas para identificar features, shared models y ownership
+- `kb-gap-conventions`: verifica que puedes referenciar las convenciones SSoT para gaps, severidades y pendientes
+- `kb-traceability-rules`: verifica que puedes referenciar las reglas de trazabilidad y estados de sincronización PRD→Spec
+
+Incluye `## KB Load Status` al final de cada respuesta indicando `loaded` o `missing` para cada KB.
+Si alguna aparece como `missing`, adviértelo antes de proceder.

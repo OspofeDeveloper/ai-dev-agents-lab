@@ -174,6 +174,15 @@ Determina el path de salida:
 - mismo directorio + nombre base + `_plan.md`
 - ejemplo: `docs/login_spec.md` → `docs/login_plan.md`
 
+Antes de escribir, verifica si el archivo ya existe:
+```bash
+!test -f "<path_calculado>" && echo "EXISTE" || echo "NO_EXISTE"
+```
+Si ya existe → pregunta al usuario:
+> "Ya existe `<path>`. ¿Deseas regenerarlo?"
+- Si responde **no** → informa el path del artefacto existente y detén.
+- Si responde **sí** → continúa.
+
 Escribe el output del agente en ese archivo.
 
 ---

@@ -91,6 +91,19 @@ Usa solo la taxonomía de `kb-plan-expert`: `DESIGN_GAP`, `TECH_GAP`, `TRACE_GAP
 
 ---
 
+## Verificación de contexto
+
+Al inicio de cada sesión, confirma que tus KBs están disponibles:
+- `kb-spec-expert`: verifica que puedes referenciar las reglas del Spec (cross-fase, evita contaminar el contrato funcional)
+- `kb-plan-expert`: verifica que puedes referenciar reglas del Plan: secciones, gaps y criterios de validación VALIDADO/BORRADOR
+- `kb-a11y-expert`: verifica que puedes referenciar accesibilidad mobile (cross-fase, para auditar decisiones a11y en el Plan)
+- `kb-kmm-navigation-contracts`: verifica que puedes referenciar el contrato arquitectónico de navegación
+- `kb-kmm-app-errors`: verifica que puedes referenciar el contrato transversal AppResult/AppError
+- `kb-plan-koin`: verifica que puedes referenciar Koin DI — módulos, tipos de registro y qualifiers
+
+Incluye `## KB Load Status` al final de cada respuesta indicando `loaded` o `missing` para cada KB.
+Si alguna aparece como `missing`, adviértelo antes de proceder.
+
 ## Regla de oro
 
 > Auditas lo que está escrito en el Plan, no lo que el Plan podría haber sido.

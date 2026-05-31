@@ -70,6 +70,15 @@ En el mismo directorio del spec, crea:
 
 Donde `<feature>` es el nombre base del spec sin `_spec.md`.
 
+Antes de continuar, verifica si el artefacto principal ya existe:
+```bash
+!test -f "<feature>_flows.md" && echo "EXISTE" || echo "NO_EXISTE"
+```
+Si ya existe → pregunta al usuario:
+> "Ya existen los artefactos de prototipado para `<feature>` (`_flows.md`, `_views.md`, `_ui_prompt.md`). ¿Deseas regenerarlos?"
+- Si responde **no** → informa los paths existentes y detén.
+- Si responde **sí** → continúa.
+
 Antes de delegar, busca otras features ya prototipadas en el directorio hermano:
 - Lista `features/*/`* con `_views.md` y `_flows.md` existentes.
 - Si las hay, lee los `_views.md` y `_flows.md` de hasta 3 features previas (las mas recientes) y pasalos al agente para que aplique `kb-design-conflict-expert`.

@@ -129,6 +129,15 @@ Consulta [output_template.md](output_template.md) para la estructura exacta del 
 Determina el path de salida: mismo directorio que el archivo de entrada + nombre base + `_analysis.md`.
 - Ejemplo: `docs/requisitos.md` → `docs/requisitos_analysis.md`
 
+Antes de escribir, verifica si el archivo ya existe:
+```bash
+!test -f "<path_calculado>" && echo "EXISTE" || echo "NO_EXISTE"
+```
+Si ya existe → pregunta al usuario:
+> "Ya existe `<path>`. ¿Deseas regenerarlo?"
+- Si responde **no** → informa el path del artefacto existente y detén.
+- Si responde **sí** → continúa.
+
 Escribe el informe generado en ese path.
 
 ---

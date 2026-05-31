@@ -5,7 +5,6 @@ when_to_use: "Activa en frases como 'genera las tasks del plan', 'trocea el plan
 argument-hint: "generate <plan.md>"
 effort: high
 allowed-tools: [Read, Write, Agent]
-disable-model-invocation: true
 context: fork
 agent: task-generator
 ---
@@ -80,6 +79,15 @@ Espera a que el agente complete su ejecución y recibe su output.
 Determina el path de salida:
 - mismo directorio + nombre base + `_tasks.md`
 - ejemplo: `docs/login_plan.md` → `docs/login_tasks.md`
+
+Antes de escribir, verifica si el archivo ya existe:
+```bash
+!test -f "<path_calculado>" && echo "EXISTE" || echo "NO_EXISTE"
+```
+Si ya existe → pregunta al usuario:
+> "Ya existe `<path>`. ¿Deseas regenerarlo?"
+- Si responde **no** → informa el path del artefacto existente y detén.
+- Si responde **sí** → continúa.
 
 Escribe el output del agente en ese archivo.
 

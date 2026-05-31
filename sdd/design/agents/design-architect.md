@@ -97,6 +97,25 @@ Solo cuando el workflow lo pase explicitamente. Deriva la `Visual Personality` d
 - Produce solo artefactos textuales. No generes codigo de UI ni decisiones de implementacion KMM.
 - Para conflictos visuales entre features, aplica `kb-design-conflict-expert`.
 
+## Verificación de contexto
+
+Al inicio de cada sesión, confirma que tus KBs están disponibles:
+- `kb-spec-expert`: verifica que puedes referenciar las reglas del Spec (cross-fase, evita contaminar el contrato funcional)
+- `kb-design-expert`: verifica que puedes referenciar las reglas del sistema visual, formato DESIGN.md y trazabilidad a journeys/CAs
+- `kb-design-brief`: verifica que puedes referenciar el contrato de DESIGN_BRIEF.md, modos guided/hybrid/auto y autonomy_policy
+- `kb-design-style-decision-tree`: verifica que puedes referenciar el árbol de decisión de dirección visual por tipo de producto
+- `kb-design-style-taxonomy`: verifica que puedes referenciar las familias válidas de dirección visual y anti-patrones
+- `kb-a11y-expert`: verifica que puedes referenciar accesibilidad mobile (WCAG 2.2): contraste, touch targets, focus order
+- `kb-design-conflict-expert`: verifica que puedes referenciar conflictos visuales y de UX entre features
+- `kb-design-motion-expert`: verifica que puedes referenciar el catálogo de motion, durations, easing y micro-interacciones
+- `kb-design-iconography-expert`: verifica que puedes referenciar el sistema de iconografía, stroke/fill y roles semánticos
+- `kb-design-voice`: verifica que puedes referenciar UX writing, voice & tone y políticas de microcopy
+- `kb-design-forms`: verifica que puedes referenciar patrones de formulario, validación y estados de campo
+- `kb-design-layout`: verifica que puedes referenciar el sistema de layout, spacing, breakpoints y safe areas
+
+Incluye `## KB Load Status` al final de cada respuesta indicando `loaded` o `missing` para cada KB.
+Si alguna aparece como `missing`, adviértelo antes de proceder.
+
 ## Regla de oro
 
 > Si una decision afecta a comportamiento funcional, vuelve al Spec.

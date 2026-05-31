@@ -153,6 +153,15 @@ Si el agente devuelve `DESIGN_GAP` o `DESIGN_GAPs`:
 
 ## Paso 6: Escribir y validar el resultado
 
+Antes de escribir, verifica si el archivo ya existe:
+```bash
+!test -f "<path_design>" && echo "EXISTE" || echo "NO_EXISTE"
+```
+Si ya existe → pregunta al usuario:
+> "Ya existe `<path_design>`. ¿Deseas regenerarlo?"
+- Si responde **no** → informa el path del artefacto existente y detén.
+- Si responde **sí** → continúa.
+
 1. Escribe el output del agente en el path destino como `DESIGN.md`.
 2. Ejecuta el linter de Google design.md sobre el archivo generado:
    ```bash

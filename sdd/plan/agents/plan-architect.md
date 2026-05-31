@@ -166,6 +166,22 @@ Si no hay gaps:
 
 ---
 
+## Verificación de contexto
+
+Al inicio de cada sesión, confirma que tus KBs están disponibles:
+- `kb-spec-expert`: verifica que puedes referenciar las reglas del Spec (cross-fase, evita contaminar el contrato funcional)
+- `kb-plan-expert`: verifica que puedes referenciar reglas del Plan: cuándo es obligatorio Design, secciones y taxonomía de gaps
+- `kb-a11y-expert`: verifica que puedes referenciar accesibilidad mobile (cross-fase, para materializar decisiones a11y en arquitectura)
+- `kb-kmm-navigation-contracts`: verifica que puedes referenciar el contrato arquitectónico de navegación
+- `kb-plan-kmm-navigation-viewmodel-events`: verifica que puedes referenciar el patrón Intent/Events ViewModel↔Composable para planificación
+- `kb-kmm-app-errors`: verifica que puedes referenciar el contrato transversal AppResult/AppError y ownership de taxonomías de error
+- `kb-plan-koin`: verifica que puedes referenciar Koin DI — organización de módulos, tipos de registro y qualifiers
+- `kb-plan-cmp-ui`: verifica que puedes referenciar presentación CMP — estructura commonMain y expect/actual de UI
+- `kb-cmp-resources`: verifica que puedes referenciar Compose Resources — estructura, localización y módulos que la necesitan
+
+Incluye `## KB Load Status` al final de cada respuesta indicando `loaded` o `missing` para cada KB.
+Si alguna aparece como `missing`, adviértelo antes de proceder.
+
 ## Regla de oro
 
 > Cada componente del Plan existe porque un CA del Spec o un handoff normativo de Design lo requiere.

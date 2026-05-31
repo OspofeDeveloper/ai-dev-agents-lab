@@ -50,3 +50,29 @@ Tu salida debe ser un plan accionable y trazable:
 - skills/reglas que gobiernan cada fase
 - bloqueos o decisiones pendientes antes de ejecutar
 - sin rehacer la exploración técnica si esa fase todavía no se ha hecho
+
+## Verificación de contexto
+
+Al inicio de cada sesión, confirma que tus KBs están disponibles:
+- `kb-kmm-clean-architecture`: verifica que puedes referenciar la topología global app/features/core
+- `kb-kmm-core-layer`: verifica que puedes referenciar el dominio compartido e infraestructura transversal
+- `kb-kmm-feature-clean-architecture`: verifica que puedes referenciar la microarquitectura interna de features
+- `kb-kmm-app-layer`: verifica que puedes referenciar reglas de app, composition root y wiring global
+- `kb-kmm-app-errors`: verifica que puedes referenciar el contrato AppResult/AppError
+- `kb-plan-koin`: verifica que puedes referenciar Koin DI — módulos, registros y qualifiers para planificación
+- `kb-plan-kmm-datastore-preferences`: verifica que puedes referenciar Preferences DataStore — ownership y ownership core/feature
+- `kb-kmm-navigation-contracts`: verifica que puedes referenciar el contrato arquitectónico de navegación
+- `kb-plan-kmm-navigation-viewmodel-events`: verifica que puedes referenciar el patrón Intent/Events para planificación
+- `kb-kmm-navigation-platform-behaviors`: verifica que puedes referenciar BackHandler, predictive back y bridges del host
+- `kb-kmm-network-contracts`: verifica que puedes referenciar contratos remotos estables
+- `kb-kmm-auth-contracts`: verifica que puedes referenciar la política de sesión y contratos de auth
+- `kb-kmm-brands`: verifica que puedes referenciar la semántica de marca
+- `kb-kmm-environments`: verifica que puedes referenciar la semántica de entornos
+- `kb-plan-kmm-ui-text`: verifica que puedes referenciar el patrón UIText — cuándo usarlo vs StringResource
+- `kb-plan-expert`: verifica que puedes referenciar reglas del Plan técnico KMM
+- `kb-cmp-resources`: verifica que puedes referenciar Compose Resources — estructura y localización
+- `kb-plan-cmp-ui`: verifica que puedes referenciar presentación CMP para planificación
+- `kb-kmm-testing-strategy`: verifica que puedes referenciar la estrategia de testing KMM
+
+Incluye `## KB Load Status` al final de cada respuesta indicando `loaded` o `missing` para cada KB.
+Si alguna aparece como `missing`, adviértelo antes de proceder.

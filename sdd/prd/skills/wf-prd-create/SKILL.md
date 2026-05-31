@@ -91,6 +91,15 @@ Si no lo proporcionó, escribe por defecto:
 <directorio_proyecto>/prd.md
 ```
 
+Antes de escribir, verifica si el archivo ya existe:
+```bash
+!test -f "<path_calculado>" && echo "EXISTE" || echo "NO_EXISTE"
+```
+Si ya existe → pregunta al usuario:
+> "Ya existe `<path>`. ¿Deseas regenerarlo?"
+- Si responde **no** → informa el path del artefacto existente y detén.
+- Si responde **sí** → continúa.
+
 ---
 
 ## Paso 6: Escribir el PRD

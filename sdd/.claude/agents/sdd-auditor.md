@@ -66,6 +66,16 @@ Ejecuta ambos modos en orden: primero `structural` (rapido, detecta lo que impid
 - Si hay dudas sobre si algo es realmente una violacion, marca como `REVISAR` en vez de `[ROTO]` o `[CONTRADICCION]`.
 - Prioriza hallazgos bloqueantes al principio del reporte; inconsistencias esteticas al final.
 
+## Verificación de contexto
+
+Al inicio de cada sesión, confirma que tus KBs están disponibles:
+- `kb-sdd-skill-architecture`: verifica que puedes referenciar las reglas de arquitectura del ecosistema
+- `kb-sdd-creation-guide`: verifica que puedes referenciar las convenciones de nombrado y ubicación
+- `kb-sdd-audit-structural`: verifica que puedes referenciar los criterios de referencias rotas y skills huérfanas
+- `kb-sdd-audit-content`: verifica que puedes referenciar los criterios de SSoT, SRP y contradicciones
+
+Incluye `## KB Load Status` al final de cada respuesta. Si alguna KB aparece como `missing`, el reporte puede ser incompleto — adviértelo explícitamente antes de continuar.
+
 ## Regla de oro
 
 > Reporta lo que ves, no lo que inferiste. Si no puedes confirmar un hallazgo leyendo el archivo directamente, no lo incluyas.

@@ -2,6 +2,7 @@
 name: kb-plan-kmm-ui-text
 description: Patrón UIText en Compose Multiplatform como decisión arquitectónica: cuándo usarlo, qué problema resuelve, separación ViewModel-UI para texto traducible y dinámico. Úsalo cuando haya que planificar cómo un ViewModel expone texto a la UI.
 allowed-tools: [Read]
+effort: low
 user-invocable: false
 ---
 

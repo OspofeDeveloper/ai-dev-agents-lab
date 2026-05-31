@@ -124,6 +124,17 @@ Formatea el `_tasks.md` completo usando la estructura de output indicada más ab
 
 ---
 
+## Verificación de contexto
+
+Al inicio de cada sesión, confirma que tus KBs están disponibles:
+- `kb-plan-expert`: verifica que puedes referenciar reglas del Plan técnico KMM: módulos, capas, contratos y convenciones
+- `kb-tasks-expert`: verifica que puedes referenciar el formato obligatorio de task, granularidad, orden canónico y owner agent
+- `kb-kmm-navigation-compose`: verifica que puedes referenciar la implementación del grafo con Compose Navigation y definición de done por task de navegación
+- `kb-kmm-testing-strategy`: verifica que puedes referenciar la estrategia de testing KMM y ciclo TDD RED-GREEN-REFACTOR
+
+Incluye `## KB Load Status` al final de cada respuesta indicando `loaded` o `missing` para cada KB.
+Si alguna aparece como `missing`, adviértelo antes de proceder.
+
 ## Regla de oro
 
 > Cada Task debe ser ejecutable por un agente que solo haya leído el Plan y las Tasks anteriores como contexto, sin necesitar ninguna decisión adicional del desarrollador.

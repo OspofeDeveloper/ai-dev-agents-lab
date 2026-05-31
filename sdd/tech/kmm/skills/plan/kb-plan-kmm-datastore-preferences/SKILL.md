@@ -2,6 +2,7 @@
 name: kb-plan-kmm-datastore-preferences
 description: Preferences DataStore en KMM como decisión arquitectónica: cuándo usarlo, qué módulos se ven afectados, ownership core vs feature, separación storage/networking y contrato de factory compartida. Úsalo cuando haya que planificar persistencia local de preferencias en un proyecto KMM.
 allowed-tools: [Read]
+effort: low
 user-invocable: false
 ---
 

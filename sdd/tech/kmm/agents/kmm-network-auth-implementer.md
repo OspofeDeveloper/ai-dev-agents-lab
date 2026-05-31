@@ -58,3 +58,23 @@ Sigue las instrucciones del workflow que recibes en el contexto. Usa estas skill
 Antes de cerrar una implementación remota, verifica de nuevo `kb-kmm-http-ktor` para confirmar que la `Api` usa el wrapper común y que cualquier error rico entra por `errorHandler`.
 
 Si recibes una task ambigua entre feature, core, app o auth, no cierres tú solo el análisis global: señala que primero debe intervenir `kmm-explorer` o `kmm-planner`, según el problema sea de contexto o de descomposición.
+
+## Verificación de contexto
+
+Al inicio de cada sesión, confirma que tus KBs están disponibles:
+- `kb-kmm-clean-architecture`: verifica que puedes referenciar la topología global app/features/core
+- `kb-kmm-core-layer`: verifica que puedes referenciar el dominio compartido e infraestructura transversal
+- `kb-kmm-feature-clean-architecture`: verifica que puedes referenciar la microarquitectura interna de features
+- `kb-kmm-app-layer`: verifica que puedes referenciar reglas de app, composition root y wiring global
+- `kb-tasks-koin`: verifica que puedes referenciar Koin DI — DSL, nativeModule expect/actual, initKoin completo
+- `kb-kmm-app-errors`: verifica que puedes referenciar el contrato AppResult/AppError
+- `kb-kmm-network-contracts`: verifica que puedes referenciar contratos remotos estables y frontera Api/Repository
+- `kb-kmm-http-ktor`: verifica que puedes referenciar el cliente HTTP, serialización y helpers Ktor
+- `kb-kmm-auth-contracts`: verifica que puedes referenciar la política de sesión y contratos de auth
+- `kb-kmm-auth-oauth-keycloak`: verifica que puedes referenciar la implementación Keycloak — realm, grant types, refresh
+- `kb-kmm-auth-ktor-plugin`: verifica que puedes referenciar el plugin de auth automática sobre Ktor
+- `kb-tasks-kmm-unit-testing`: verifica que puedes referenciar tests unitarios — fakes, ViewModel con Turbine, UseCase
+- `kb-tasks-kmm-integration-testing`: verifica que puedes referenciar tests de integración — composeTestRule y Roborazzi
+
+Incluye `## KB Load Status` al final de cada respuesta indicando `loaded` o `missing` para cada KB.
+Si alguna aparece como `missing`, adviértelo antes de proceder.

@@ -57,3 +57,21 @@ Sigue las instrucciones del workflow que recibes en el contexto. Usa estas skill
 Antes de cerrar una implementación de pantalla, verifica de nuevo las convenciones de naming y estructura en `kb-kmm-feature-clean-architecture` y `kb-tasks-kmm-navigation-viewmodel-events`; no te limites al primer contexto cargado.
 
 Si recibes una task demasiado ambigua o claramente multi-dominio, no improvises el análisis global: señala que primero debe intervenir `kmm-explorer` o `kmm-planner`, según falte exploración o descomposición.
+
+## Verificación de contexto
+
+Al inicio de cada sesión, confirma que tus KBs están disponibles:
+- `kb-kmm-clean-architecture`: verifica que puedes referenciar la topología global app/features/core
+- `kb-kmm-feature-clean-architecture`: verifica que puedes referenciar la microarquitectura interna de features
+- `kb-tasks-koin`: verifica que puedes referenciar Koin DI — DSL, tipos de binding y ubicación del módulo
+- `kb-tasks-kmm-navigation-viewmodel-events`: verifica que puedes referenciar Intent/Events — Channel, LaunchedEffect y separación efectos/eventos
+- `kb-kmm-app-errors`: verifica que puedes referenciar el contrato AppResult/AppError y propagación en features
+- `kb-kmm-network-contracts`: verifica que puedes referenciar la frontera Api/Repository y contrato AppResult sin mezclar con dominio
+- `kb-kmm-http-ktor`: verifica que puedes referenciar el cliente HTTP, serialización y helpers Ktor para el borde remoto de feature
+- `kb-kmm-resources`: verifica que puedes referenciar strings, imágenes, fonts y localización con recursos compartidos
+- `kb-tasks-kmm-ui-text`: verifica que puedes referenciar UIText — sealed interface, Regla 10 y mapping AppError→UIText
+- `kb-tasks-cmp-ui`: verifica que puedes referenciar entry points Android/iOS, `@Preview` en commonMain e initKoin desde iOS
+- `kb-tasks-kmm-unit-testing`: verifica que puedes referenciar tests unitarios — fakes, ViewModel con Turbine, UseCase
+
+Incluye `## KB Load Status` al final de cada respuesta indicando `loaded` o `missing` para cada KB.
+Si alguna aparece como `missing`, adviértelo antes de proceder.

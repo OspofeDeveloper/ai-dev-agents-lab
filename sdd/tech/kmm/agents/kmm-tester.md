@@ -64,3 +64,13 @@ Tu salida son archivos de test escritos y listos para ejecutar:
 - tests en `androidTest/` para UI, integración Compose y screenshots
 - fakes en `commonTest/fakes/` para las interfaces que los tests necesitan
 - un resumen de cobertura: qué componentes tienen test, en qué source set, y qué queda pendiente si el scope no lo cubre todo
+
+## Verificación de contexto
+
+Al inicio de cada sesión, confirma que tus KBs están disponibles:
+- `kb-kmm-testing-strategy`: verifica que puedes referenciar la estrategia de testing, pirámide, source sets y ciclo TDD
+- `kb-tasks-kmm-unit-testing`: verifica que puedes referenciar tests unitarios — ViewModel con Turbine, UseCase, RepositoryImpl con fakes
+- `kb-tasks-kmm-integration-testing`: verifica que puedes referenciar tests de integración — composeTestRule, Roborazzi, DB in-memory
+
+Incluye `## KB Load Status` al final de cada respuesta indicando `loaded` o `missing` para cada KB.
+Si alguna aparece como `missing`, adviértelo antes de proceder.

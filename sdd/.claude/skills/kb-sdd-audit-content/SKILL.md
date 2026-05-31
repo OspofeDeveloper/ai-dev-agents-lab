@@ -79,6 +79,47 @@ Como detectar: comparar skills del mismo tipo dentro de una fase. Las inconsiste
 
 Severidad: **baja** cuando es solo estetica. **Media** cuando puede confundir a un agente que carga varias skills y recibe senales contradictorias sobre el nivel de prescripcion esperado.
 
+## Criterio 5: Conformidad de agentes con Regla 19 — KB Load Status
+
+La Regla 19 de `kb-sdd-skill-architecture` establece que todo agente que declare `skills: [...]` en frontmatter DEBE incluir una sección `## Verificación de contexto` en su body con instrucción de emitir `## KB Load Status` en sus respuestas.
+
+Qué verificar para cada agente con `skills: [...]` en frontmatter:
+
+1. ¿Tiene sección `## Verificación de contexto`?
+2. ¿La sección lista cada KB declarada en `skills: [...]`?
+3. ¿Incluye instrucción explícita de emitir `## KB Load Status` al final de cada respuesta?
+
+Hallazgos:
+
+- Sección `## Verificación de contexto` ausente → `[INCONSISTENCIA]` media
+- Sección presente pero con KBs faltantes respecto al frontmatter → `[INCONSISTENCIA]` media
+- Sección presente pero sin instrucción de emitir `## KB Load Status` → `[INCONSISTENCIA]` baja
+
+Cómo detectar: para cada agente, leer su frontmatter y extraer `skills: [...]`. Buscar la sección `## Verificación de contexto` en el body. Verificar que cada KB declarada en `skills: [...]` aparece referenciada en esa sección. Si la sección no existe o está incompleta, registrar hallazgo.
+
+Severidad: **media** — no rompe la estructura pero deja al orquestador ciego ante fallos silenciosos de carga de KBs.
+
+## Criterio 6: Ausencia de verificación de artefacto existente en `wf-*` generadoras
+
+Una `wf-*` que produce un artefacto de salida (archivo que escribe) debe incluir una verificación de existencia previa justo antes del paso de escritura. El patrón estándar es:
+
+```bash
+!test -f "<path_calculado>" && echo "EXISTE" || echo "NO_EXISTE"
+```
+
+Seguido de una pregunta al usuario si el archivo existe, con opciones de regenerar o detener.
+
+Señales de violación:
+
+- Un `wf-*` que tiene un paso de escritura (`Escribe el...`, `Write el...`) sin un bloque `!test -f` inmediatamente antes.
+- Un `wf-*` que determina el path de salida en un paso y escribe en otro, sin ningún check de existencia entre ambos.
+
+Cómo detectar: leer el body de cada `wf-*` que declara `Write` en `allowed-tools`. Buscar si existe un bloque `!test -f "<path>"` antes de la instrucción de escritura del artefacto principal. Si no existe → hallazgo.
+
+Excepción: `wf-*` de auditoría o validación que no generan artefactos persistentes (p.ej. `wf-spec-validate`, `wf-plan-validate`), `wf-*` que solo actualizan artefactos existentes (p.ej. `wf-spec-delta apply`), y `wf-*` que ya tienen el check integrado en un paso de precondición distinto (p.ej. `wf-design-intake` Paso 4).
+
+Severidad: **media** — no rompe el pipeline, pero puede causar sobreescrituras silenciosas en conversaciones largas o con re-intentos.
+
 ## Formato de reporte de contenido
 
 Por cada hallazgo:

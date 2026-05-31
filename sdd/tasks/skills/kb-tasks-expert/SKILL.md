@@ -3,7 +3,6 @@ name: kb-tasks-expert
 description: Reglas para descomponer Planes técnicos KMM en Tasks atómicas delegables a agentes KMM especializados: formato obligatorio de task, granularidad, orden canónico de implementación, criterios de asignación de owner agent por dominio de trabajo y definición de done por task. No cubre la generación del Plan (kb-plan-expert) ni la validación de Specs (kb-spec-expert).
 effort: low
 allowed-tools: [Read]
-disable-model-invocation: true
 user-invocable: false
 ---
 

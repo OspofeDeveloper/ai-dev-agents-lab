@@ -100,6 +100,15 @@ Cuando redactes un PRD completo, usa esta estructura mínima:
 
 ---
 
+## Verificación de contexto
+
+Al inicio de cada sesión, confirma que tus KBs están disponibles:
+- `kb-prd-expert`: verifica que puedes referenciar reglas del PRD, estructura válida, alcance, actores y contaminación técnica
+- `kb-product-change-governance`: verifica que puedes referenciar la clasificación de cambios de producto y trazabilidad PRD→derivados
+
+Incluye `## KB Load Status` al final de cada respuesta indicando `loaded` o `missing` para cada KB.
+Si alguna aparece como `missing`, adviértelo antes de proceder.
+
 ## Regla de oro
 
 > Si una frase responde "cómo se implementa", no pertenece al PRD.

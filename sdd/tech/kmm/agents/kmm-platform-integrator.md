@@ -57,3 +57,25 @@ No sustituyes la exploración inicial del proyecto ni la planificación cuando u
 Sigue las instrucciones del workflow que recibes en el contexto. Usa estas skills siempre que el cambio caiga dentro de su dominio o cuando el workflow indique consultarlas.
 
 Si recibes una task ambigua entre `app`, feature, navegación, DI o variants, no absorbas tú solo toda la decisión inicial: señala que primero debe intervenir `kmm-explorer` o `kmm-planner`, según falte exploración o planificación.
+
+## Verificación de contexto
+
+Al inicio de cada sesión, confirma que tus KBs están disponibles:
+- `kb-kmm-clean-architecture`: verifica que puedes referenciar la topología global app/features/core
+- `kb-kmm-core-layer`: verifica que puedes referenciar el dominio compartido e infraestructura transversal
+- `kb-kmm-feature-clean-architecture`: verifica que puedes referenciar la microarquitectura interna de features
+- `kb-kmm-app-layer`: verifica que puedes referenciar reglas de app, composition root y wiring global
+- `kb-tasks-koin`: verifica que puedes referenciar Koin DI — DSL, nativeModule expect/actual, initKoin completo
+- `kb-tasks-kmm-datastore-preferences`: verifica que puedes referenciar Preferences DataStore — factory y path por plataforma
+- `kb-kmm-navigation-contracts`: verifica que puedes referenciar el contrato arquitectónico de navegación
+- `kb-kmm-navigation-compose`: verifica que puedes referenciar la implementación del grafo Compose Navigation
+- `kb-tasks-kmm-navigation-viewmodel-events`: verifica que puedes referenciar Intent/Events — Channel y LaunchedEffect
+- `kb-kmm-navigation-platform-behaviors`: verifica que puedes referenciar BackHandler, predictive back y bridges del host
+- `kb-kmm-brands`: verifica que puedes referenciar la semántica de marca
+- `kb-kmm-environments`: verifica que puedes referenciar la semántica de entornos
+- `kb-kmm-android-environments`: verifica que puedes referenciar la implementación Android de variants
+- `kb-kmm-ios-environments`: verifica que puedes referenciar la implementación iOS de variants
+- `kb-tasks-kmm-integration-testing`: verifica que puedes referenciar tests de integración — composeTestRule y Roborazzi
+
+Incluye `## KB Load Status` al final de cada respuesta indicando `loaded` o `missing` para cada KB.
+Si alguna aparece como `missing`, adviértelo antes de proceder.

@@ -297,3 +297,26 @@ Ejemplo canónico en el ecosistema: `wf-sdd-status` no delega a ningún agente p
 - Lo leen agentes que necesitan descubrir skills sin explorar el filesystem: `sdd-author` (detección de duplicados), `sdd-auditor` (cobertura estructural).
 - No es una segunda SSoT: cada regla sigue viviendo en su `SKILL.md`. El registry solo almacena nombre, descripción de una línea, invocabilidad y path.
 - No se edita manualmente. Si está desactualizado: ejecutar `wf-sdd-status`.
+
+## Regla 19: KB Load Status — protocolo de verificación de contexto
+
+Las KBs se inyectan en el contexto del agente vía el campo `skills: [...]` del frontmatter por el harness de Claude Code. El agente no las carga explícitamente: simplemente las recibe o no las recibe. Si una KB falla silenciosamente, el agente opera sin sus reglas normativas sin saberlo.
+
+Todo agente que declare `skills: [...]` en frontmatter debe:
+
+1. Al inicio de cada sesión, verificar si el contenido de cada KB declarada es accesible (puede referenciar sus secciones o conceptos clave).
+2. Incluir al final de cada respuesta un bloque `## KB Load Status` con el estado de cada KB: `loaded` si el contenido es accesible, `missing` si no lo está.
+3. Si alguna KB aparece como `missing`, advertirlo antes de proceder y pedir al usuario que inyecte el contenido.
+
+Formato normalizado del bloque:
+
+```
+## KB Load Status
+- kb-nombre-1: loaded
+- kb-nombre-2: missing ⚠️
+
+> ⚠️ `kb-nombre-2` no está disponible en contexto. El output puede ser incompleto.
+> Inyecta su contenido antes de continuar.
+```
+
+Este protocolo no aplica a agentes sin `skills: [...]` declaradas.

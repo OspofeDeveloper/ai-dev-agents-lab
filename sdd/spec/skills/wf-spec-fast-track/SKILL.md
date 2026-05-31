@@ -226,6 +226,15 @@ En ambos casos:
 
 ## Paso 10: Escribir los artefactos
 
+Antes de escribir, verifica si el spec ya existe:
+```bash
+!test -f "features/<capability>/<capability>_spec.md" && echo "EXISTE" || echo "NO_EXISTE"
+```
+Si ya existe → pregunta al usuario:
+> "Ya existe `features/<capability>/<capability>_spec.md`. ¿Deseas regenerarlo?"
+- Si responde **no** → informa el path del spec existente y detén.
+- Si responde **sí** → continúa.
+
 Escribe los 3 artefactos (crea directorios si no existen), todos relativos al directorio del archivo de entrada:
 
 1. **Spec**: `features/<capability>/<capability>_spec.md`

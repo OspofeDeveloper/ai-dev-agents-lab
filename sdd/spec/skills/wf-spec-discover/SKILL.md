@@ -160,6 +160,15 @@ Si el análisis no añade nada relevante al scope, mantén `Origen de alcance: P
 Determina el path de salida: mismo directorio que el archivo de entrada + nombre base + `_discovery.md`.
 - Ejemplo: `docs/requisitos.md` → `docs/requisitos_discovery.md`
 
+Antes de escribir, verifica si el archivo ya existe:
+```bash
+!test -f "<path_calculado>" && echo "EXISTE" || echo "NO_EXISTE"
+```
+Si ya existe → pregunta al usuario:
+> "Ya existe `<path>`. ¿Deseas regenerarlo?"
+- Si responde **no** → informa el path del artefacto existente y detén.
+- Si responde **sí** → continúa.
+
 Escribe el artefacto generado en ese path.
 
 ---
