@@ -323,6 +323,8 @@ Reglas comunes:
 2. Cada estado declarado debe tener decisiones visuales concretas (color, opacity, border, motion). Estado sin decision es decoracion vacia.
 3. La omision intencional de un estado (`disabled` no aplica porque el boton siempre esta activo en esa vista) debe documentarse con `# N/A: <razon>`.
 
+→ Checklist detallado por componente: `${CLAUDE_SKILL_DIR}/references/component_anatomy_checklist.md`
+
 Anti-patron: declarar solo `default` y dejar que dev "improvise" los demas. El producto saldra inconsistente.
 
 ## Regla 17: Type scale completa y obligatoria

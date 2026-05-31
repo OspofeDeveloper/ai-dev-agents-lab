@@ -281,9 +281,4 @@ Esta skill solo fija la microarquitectura interna de una feature.
 
 Si una regla depende de Koin, Ktor, SQLDelight o cualquier otra librería, no pertenece aquí.
 
-## Checklist antes de cerrar
-
-- ¿La pantalla con ViewModel usa `presentation/<pantalla>/viewmodel/` como ubicación preferida?
-- ¿El ViewModel expone `onIntent(intent)` como único punto de entrada?
-- ¿El naming de `State`, `Intent` y `Events` sigue las convenciones de `kb-plan-kmm-navigation-viewmodel-events`?
-- ¿La capa `presentation` evita mezclar DTOs, data sources o detalles de infraestructura?
+→ Checklist de cierre: `${CLAUDE_SKILL_DIR}/references/feature-checklist.md`

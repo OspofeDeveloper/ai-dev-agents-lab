@@ -38,62 +38,23 @@ Para producto digital mobile o app-like, usa una de estas familias como base pri
 
 Una direccion visual puede combinar una familia principal con una secundaria, pero nunca mezclar mas de dos. Si hay dos, una debe declararse dominante.
 
-## Regla 3: Cada familia implica senales visuales concretas
+## Regla 3: Cada familia implica señales visuales concretas
 
-Mapeo normativo por familia:
+Cada familia cierra las variables de `density`, `depth`, `typography_mode`, `color_energy`, `motion_level` e `iconography_base`. Si los campos del DESIGN.md contradicen la familia elegida, la dirección visual está mal definida.
 
-- `productive-minimal`
-  - densidad: media o alta
-  - depth: flat o low
-  - typography_mode: utilitarian
-  - color_energy: low o medium
-  - motion_level: low
-  - iconography_base: outline (Lucide / Phosphor), stroke 1.5, grid 20-24
-  - motion_roles_activos: feedback + transition discretos
-- `calm-minimal`
-  - densidad: baja o media
-  - depth: flat o low
-  - typography_mode: neutral-humanist
-  - color_energy: low
-  - motion_level: low o medium
-  - iconography_base: outline ligero (Phosphor light), stroke 1.5, grid 24
-  - motion_roles_activos: feedback + transition + attention sutil
-- `expressive-modern`
-  - densidad: media
-  - depth: low o medium
-  - typography_mode: brand-forward
-  - color_energy: medium o high
-  - motion_level: medium
-  - iconography_base: fill o duo-tone (Phosphor fill, Solar), grid 24
-  - motion_roles_activos: feedback + transition + attention + expression en momentos clave
-- `editorial-premium`
-  - densidad: baja o media
-  - depth: flat o low
-  - typography_mode: editorial
-  - color_energy: low o medium
-  - motion_level: low o medium
-  - iconography_base: outline fino editorial (Tabler / custom), stroke 1, grid 24
-  - motion_roles_activos: transition con duraciones `medium`/`slow` tipo cinematografico
-- `depth-material`
-  - densidad: media
-  - depth: medium o high
-  - typography_mode: neutral-humanist o utilitarian
-  - color_energy: low o medium
-  - motion_level: medium
-  - iconography_base: Material Symbols rounded/filled, grid 24
-  - motion_roles_activos: orientation y transition refuerzan la jerarquia espacial
+→ Mapeo normativo completo por familia: `${CLAUDE_SKILL_DIR}/references/style-families.md`
 
-Las pautas de motion concretas (durations, easing por rol) viven en `kb-design-motion-expert`. Las pautas de iconografia (stroke, fill rule, tamanos por rol) viven en `kb-design-iconography-expert`.
+Las pautas de motion concretas (durations, easing por rol) viven en `kb-design-motion-expert`. Las pautas de iconografia (stroke, fill rule, tamaños por rol) viven en `kb-design-iconography-expert`.
 
-**Cuando NO usar cada familia (contraejemplos pedagogicos):**
+**Cuando NO usar cada familia (contraejemplos pedagógicos):**
 
 - `productive-minimal` **NO** se usa cuando: el producto necesita expresividad de marca como ventaja comercial; es entertainment/lifestyle; los datos son escasos y el contenido es narrativo.
 - `calm-minimal` **NO** se usa cuando: el producto requiere alta densidad informacional; el dominio es transaccional intenso (trading, e-commerce de alta velocidad); la marca demanda energia y urgencia.
-- `expressive-modern` **NO** se usa cuando: el producto es regulado o financiero serio; el actor pasa horas al dia operando; la legibilidad de datos numericos es critica.
-- `editorial-premium` **NO** se usa cuando: la densidad de informacion es media-alta; el producto es transaccional; el actor entra y sale rapido sin tiempo de inmersion.
-- `depth-material` **NO** se usa cuando: la interfaz es simple y lineal sin jerarquia espacial real; el producto no tiene paneles, mapas, overlays ni colecciones multi-capa; se aplica solo "porque queda moderno".
+- `expressive-modern` **NO** se usa cuando: el producto es regulado o financiero serio; el actor pasa horas al día operando; la legibilidad de datos numéricos es crítica.
+- `editorial-premium` **NO** se usa cuando: la densidad de información es media-alta; el producto es transaccional; el actor entra y sale rápido sin tiempo de inmersión.
+- `depth-material` **NO** se usa cuando: la interfaz es simple y lineal sin jerarquía espacial real; el producto no tiene paneles, mapas, overlays ni colecciones multi-capa; se aplica solo "porque queda moderno".
 
-Si dudas, vuelve a la heuristica de Regla 4 (contexto > marca) y al arbol de decision de `kb-design-style-decision-tree`.
+Si dudas, vuelve a la heurística de Regla 4 (contexto > marca) y al árbol de decisión de `kb-design-style-decision-tree`.
 
 Si el resto de campos contradice la familia elegida, la direccion visual esta mal definida.
 

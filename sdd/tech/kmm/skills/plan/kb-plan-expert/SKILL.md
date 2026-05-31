@@ -53,31 +53,16 @@ Esta regla es la SSoT. Los workflows la aplican; no la redefinen.
 
 ### 1. Stack Técnico declarado
 
-Lista explícita de tecnologías que se van a usar en esta feature.
+Lista explícita de tecnologías que se van a usar en esta feature: plataforma, UI, red, BD local, DI, async, testing.
 
-**Ejemplo:**
-```
-- KMM: Kotlin Multiplatform Mobile
-- UI: Compose Multiplatform (commonMain compartido)
-- Entry point iOS: ComposeUIViewController
-- Red: Ktor Client
-- BD Local: Room KMP (si aplica)
-- DI: Koin
-- Async: Coroutines + Flow
-```
+→ Ejemplo completo: `${CLAUDE_SKILL_DIR}/references/plan_structure.md` (sección Stack Técnico)
 
 ### 2. Mapa de Módulos Gradle
 
-Define qué módulos Gradle se crean o modifican:
-
-**Ejemplo:**
-```
-:feature:auth        → nueva feature
-:core:network        → cliente HTTP compartido (existente, sin cambios)
-:app                 → wiring DI + rutas de navegación
-```
+Define qué módulos Gradle se crean o modifican, con su estado (NUEVO / EXISTENTE / MODIFICADO) y descripción de cambio.
 
 Consulta `${CLAUDE_SKILL_DIR}/references/kmm_architecture.md` para las convenciones de módulos.
+→ Ejemplo completo: `${CLAUDE_SKILL_DIR}/references/plan_structure.md` (sección Módulos Gradle)
 
 ### 3. Diseño por Capa
 

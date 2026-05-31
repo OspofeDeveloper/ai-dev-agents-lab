@@ -9,7 +9,7 @@ user-invocable: false
 
 # KB SDD Creation Guide
 
-Guia operativa para materializar decisiones de diseno del ecosistema SDD. Las reglas de _cuando_ y _por que_ crear cada pieza viven en `kb-sdd-skill-architecture`. Esta KB cubre el _como_.
+Guia operativa para materializar decisiones de diseño del ecosistema SDD. Las reglas de _cuando_ y _por que_ crear cada pieza viven en `kb-sdd-skill-architecture`. Esta KB cubre el _como_.
 
 ## Convenciones de nombrado
 
@@ -75,55 +75,35 @@ Correcto:
 
 ## Frontmatter para `kb-*`
 
-```yaml
----
-name: kb-<nombre>
-description: "<Que conocimiento normativo contiene. Cuando debe cargarse. Que NO cubre.>"
-effort: low
-allowed-tools: [Read]
-user-invocable: false
----
-```
-
 Campos obligatorios: `name`, `description`, `effort`, `allowed-tools`, `user-invocable`.
 Nunca añadir `context: fork`, `agent:` ni `argument-hint` a una `kb-*`.
 
+→ Template completo: `${CLAUDE_SKILL_DIR}/references/frontmatter-templates.md`
+
 ## Estructura del cuerpo de una `kb-*`
 
-Dos formatos son válidos; la elección depende del tipo de contenido:
+Dos formatos válidos; la elección depende del tipo de contenido:
 
 **Formato A — Reglas numeradas (`## Regla N: <enunciado>`):** usar cuando la skill contiene reglas discretas y cross-referenciables. Permite que workflows y agentes citen "Regla N de kb-X". Es el formato preferido para la mayoría de `kb-*` técnicas y de stack.
 
 **Formato B — Secciones descriptivas (`## <Título descriptivo>`):** usar cuando la skill describe un proceso, criterios de decisión complejos o tiene estructura narrativa. Apropiado para skills meta y skills con pocas reglas largas.
 
-No mezclar ambos formatos dentro de una misma skill. Ambos son válidos; lo que no es válido es la inconsistencia interna.
+No mezclar ambos formatos dentro de una misma skill.
 
 Para `kb-*` de nivel `tasks/`, la estructura mínima recomendada es:
 1. Referencia a la `kb-*` de nivel `plan/` equivalente (si existe)
 2. Templates o código concreto por sección
 3. Checklist de implementación (opcional pero recomendado)
 
-## Frontmatter para `wf-*`
+→ Template de estructura: `${CLAUDE_SKILL_DIR}/references/body-templates.md`
 
-```yaml
----
-name: wf-<nombre>
-description: "<Qué pipeline orquesta y qué produce. Solo la funcionalidad — sin triggers ni exclusiones.>"
-when_to_use: "<Frases de activación naturales. Exclusiones explícitas con alternativa (usa wf-X).>"
-argument-hint: "<modo|accion> <input_principal> [flags...]"
-effort: low|medium|high
-allowed-tools: [Read] | [Read, Write] | [Read, Write, Bash] | [Read, Write, Bash, Agent]
-context: fork
-agent: <nombre-agente>   # solo si delega siempre al mismo agente
-user-invocable: true
----
-```
+## Frontmatter para `wf-*`
 
 `context: fork` es obligatorio en todas las `wf-*` que generan artefactos o delegan a un agente.
 
 **Separación `description` / `when_to_use`:**
 - `description`: el QUÉ — funcionalidad, modos soportados, agente al que delega. Conciso, sin triggers.
-- `when_to_use`: el CUÁNDO — frases de activación naturales ("genera specs del PRD", "crea el diseño visual") y exclusiones explícitas con la alternativa correcta ("no activa para X, usa wf-Y"). Si no hay triggers ni exclusiones relevantes, omitir el campo.
+- `when_to_use`: el CUÁNDO — frases de activación naturales y exclusiones explícitas con la alternativa correcta. Si no hay triggers ni exclusiones relevantes, omitir el campo.
 
 **Criterio para `effort`:**
 - `low`: <= 3 pasos simples, sin delegacion de agente
@@ -135,56 +115,11 @@ user-invocable: true
 - `[Read, Write]` — lee y escribe artefactos sin shell
 - `[Read, Write, Bash]` — necesita comandos shell (find, grep, lint, etc.)
 - `[Read, Write, Bash, Agent]` — delega a agente especializado
-- Anadir `WebSearch, WebFetch` solo si el workflow hace research externo
+- Añadir `WebSearch, WebFetch` solo si el workflow hace research externo
 
-## Estructura del cuerpo de una `wf-*`
-
-Pasos numerados con encabezados `## Paso N: <accion>`. Cada paso incluye:
-
-1. Que hace (una linea)
-2. Que verifica o valida
-3. Que produce o escribe
-4. Como maneja bloqueos (con mensajes estandar)
-
-Patron de mensajes de bloqueo:
-```
-> "❌ <condicion bloqueante>. <Accion correctiva con comando concreto>."
-> "⚠ <advertencia no bloqueante>. <Descripcion del impacto>."
-```
-
-Ultimo paso siempre: informar al usuario del output generado y el siguiente paso sugerido.
-
-### Qué va inline y qué se delega
-
-Aplicar Regla 17 de `kb-sdd-skill-architecture` al diseñar los pasos:
-
-| Tipo de paso | Ejecutar |
-|---|---|
-| Parseo de argumentos y flags | Inline |
-| Verificación de precondiciones (archivo existe, nombre válido) | Inline |
-| Colección mecánica de rutas o conteos | Inline |
-| Generación de contenido (skill body, frontmatter, artefactos) | Delegar al agente |
-| Diagnóstico de violaciones o decisiones arquitectónicas | Delegar al agente |
-| Escritura del artefacto generado por el agente | Inline |
-| Reporte final al usuario | Inline |
-
-Una `wf-*` que genera contenido sin delegar a un agente es una señal de alarma: está haciendo razonamiento que no le corresponde.
+→ Template completo de frontmatter y cuerpo: `${CLAUDE_SKILL_DIR}/references/frontmatter-templates.md` y `${CLAUDE_SKILL_DIR}/references/body-templates.md`
 
 ## Frontmatter para agentes
-
-```yaml
----
-name: <nombre>
-description: "<Razonamiento especializado. Artefactos que produce. Que NO cubre.>"
-skills: [kb-<1>, kb-<2>, ...]
-memory: project
-permissionMode: acceptEdits
-model: claude-opus-4-7 | claude-sonnet-4-6
-effort: high                    # solo en agentes escritores/implementadores
-disallowedTools: Write, Edit    # solo en auditores/planificadores puros
-color: <color-por-fase>
----
-```
 
 **Criterio para `model`:**
 
@@ -205,67 +140,19 @@ Tabla de referencia:
 
 **Criterio para `effort`:**
 - `effort: high`: agentes escritores/implementadores que generan artefactos complejos (specs, planes técnicos, diseño, tasks, código). Activa razonamiento extendido independientemente del nivel de la sesión principal.
-- Omitir (hereda de sesión): auditores, exploradores y planificadores de approach — el nivel de sesión es suficiente para lectura y diagnóstico.
+- Omitir (hereda de sesión): auditores, exploradores y planificadores de approach.
 
 **Criterio para `disallowedTools`:**
 - `disallowedTools: Write, Edit`: agentes auditores o planificadores cuyo system prompt declara explícitamente que **no modifican archivos**. Refuerza el contrato estructuralmente, no solo mediante instrucciones.
-- No aplicar si el agente produce artefactos diagnósticos intermedios aunque no sea su rol principal (p.ej. un explorador que genera `_analysis.md` o `_discovery.md`).
-
-**Criterio para `color` (por fase/dominio):**
-
-| Fase / Dominio | Color |
-|---|---|
-| Meta / transversal SDD (`.claude/agents/`) | `purple` |
-| PRD (`prd/agents/`) | `blue` |
-| Spec (`spec/agents/`) | `green` |
-| Design (`design/agents/`) | `pink` |
-| Plan (`plan/agents/`) | `orange` |
-| Tasks (`tasks/agents/`) | `cyan` |
-| Tech targets (`tech/*/agents/`) | `red` |
+- No aplicar si el agente produce artefactos diagnósticos intermedios.
 
 **Criterio para `skills`:**
 - Solo cargar KBs que el agente usa en su razonamiento real
 - Ordenar: KB del dominio propio → cross-fase → especializadas
 - No cargar KBs de otras fases salvo que el agente sea transversal
 
-## Estructura del cuerpo de un agente
-
-Secciones H2 fijas:
-
-```markdown
-## Skills disponibles
-<lista de kb con una linea: que aporta cada una a este agente>
-
-## Como operar
-### Entrada que recibes
-<lista de inputs esperados por el workflow o el orquestador>
-
-### Proceso por modo
-<subseccion por cada modo cognitivo que soporta el agente>
-
-## Verificación de contexto
-<para cada KB declarada en skills: [...]: nombre y concepto clave que confirma su presencia en contexto>
-Incluye `## KB Load Status` al final de cada respuesta (ver Regla 19 de kb-sdd-skill-architecture).
-
-## Regla de oro
-<maxima de una o dos lineas que define el limite del agente>
-
-## Nota de evolucion (opcional)
-<cuando conviene partir el agente; mantener como ancla para decision futura>
-```
-
-Secciones prohibidas en el cuerpo de un agente:
-- listas de pasos shell o comandos a ejecutar (eso es una `wf-*`)
-- politica global de frontmatters o arquitectura del ecosistema (eso es `kb-sdd-skill-architecture`)
-
-## Checklist de registro tras crear una `kb-*`
-
-- [ ] `SKILL.md` con frontmatter correcto en el directorio correcto
-- [ ] Agente(s) que la consumen actualizados: añadir a su `skills: [...]`
-- [ ] Si es cross-fase: documentar dependencia en el `CLAUDE.md` de la fase consumidora
-- [ ] Si formaliza una regla que estaba inline en otros archivos: eliminar los duplicados
-- [ ] Si tiene archivos de soporte: referencias usan `${CLAUDE_SKILL_DIR}/<path>`
-- [ ] Ejecutar `wf-sdd-status` para regenerar `sdd/.claude/skill-registry.md`
+→ Template completo (frontmatter + tabla de colores por fase): `${CLAUDE_SKILL_DIR}/references/frontmatter-templates.md`
+→ Template de estructura del cuerpo: `${CLAUDE_SKILL_DIR}/references/body-templates.md`
 
 ## Referencias a archivos de soporte con `${CLAUDE_SKILL_DIR}`
 
@@ -279,30 +166,6 @@ Ejecutar: `${CLAUDE_SKILL_DIR}/scripts/validate.sh`
 `${CLAUDE_SKILL_DIR}` se sustituye por el path absoluto del directorio del `SKILL.md` antes de que el agente vea el contenido. Sin ella, el agente resuelve rutas relativas desde el directorio de trabajo actual — que no es el directorio de la skill — y los Read fallan silenciosamente.
 
 No usar rutas relativas simples (`references/template.md`) ni paths hardcoded al proyecto.
-
-## Checklist de registro tras crear una `wf-*`
-
-- [ ] `SKILL.md` en el directorio correcto con `context: fork`
-- [ ] `description` contiene solo la funcionalidad; triggers y exclusiones en `when_to_use`
-- [ ] Entrada en el rootmap del `CLAUDE.md` de fase (o del orquestador global si es transversal)
-- [ ] Si tiene `agent:`: verificar que el agente existe y acepta el modo operativo
-- [ ] Precondiciones documentadas en el body del `SKILL.md`
-- [ ] Output explicito: que archivo escribe y en que directorio
-- [ ] Si genera un artefacto de salida: incluye verificación de existencia previa justo antes del paso de escritura (patrón `!test -f "<path>" + pregunta al usuario`)
-- [ ] Si tiene archivos de soporte: referencias usan `${CLAUDE_SKILL_DIR}/<path>`
-- [ ] Ejecutar `wf-sdd-status` para regenerar `sdd/.claude/skill-registry.md`
-
-## Checklist de registro tras crear un agente
-
-- [ ] Archivo `.md` con frontmatter correcto en `agents/`
-- [ ] `model` seleccionado según tabla de criterios: decisión arquitectónica/codificación agéntica → `claude-opus-4-7`; escritura estructurada/exploración/auditoría/planificación → `claude-sonnet-4-6`
-- [ ] `effort: high` añadido si el agente genera artefactos complejos
-- [ ] `disallowedTools: Write, Edit` añadido si el system prompt declara que no escribe archivos (y el agente no produce artefactos diagnósticos intermedios)
-- [ ] `color` asignado según fase/dominio del agente (tabla de criterios anterior)
-- [ ] Sección `## Agentes disponibles` del `CLAUDE.md` de fase actualizada
-- [ ] Todas las `kb-*` en `skills: [...]` existen fisicamente
-- [ ] Si el agente es el target de una `wf-*`: verificar que `agent: <nombre>` apunta al nombre correcto
-- [ ] Ejecutar `wf-sdd-status` para regenerar `sdd/.claude/skill-registry.md`
 
 ## Prevencion de duplicados
 
@@ -320,52 +183,6 @@ Si existe algo similar:
 
 **Señal de duplicado peligroso:** dos archivos que responden la misma pregunta con formulaciones distintas. Resolver siempre consolidando en la SSoT mas estable.
 
-## Estructura de un `CLAUDE.md` de fase
+## Registro tras crear o actualizar piezas
 
-Un `CLAUDE.md` de fase actúa como orquestador local: recibe intenciones del usuario, selecciona el workflow o agente correcto y describe handoffs. No define política global de skills ni duplica conocimiento de las `kb-*`.
-
-Secciones H2 fijas:
-
-```markdown
-## Tu rol: <título del orquestador>
-<Una o dos frases: qué hace y qué NO hace.>
-<Ej: "No ejecutas el trabajo directamente. No construyes prompts manualmente.">
-
-## Rootmap de workflow skills
-| Intención del usuario | Skill | Argumentos |
-|---|---|---|
-| <frase de intención natural> | `/wf-<nombre>` | `<args>` |
-
-## Cómo actuar ante una petición
-<Reglas de matching semántico, patrones especiales y bloqueos. Solo lo que no cubre el rootmap.>
-
-## Agentes disponibles  ← solo si los agentes son accesibles directamente desde el orquestador
-| Agente | Dominio |
-|---|---|
-| `<nombre>` | <una línea de dominio> |
-```
-
-Secciones prohibidas en `CLAUDE.md`:
-- plantillas de frontmatter o convenciones de nombrado (eso es `kb-sdd-creation-guide`)
-- reglas de arquitectura transversal (eso es `kb-sdd-skill-architecture`)
-- listas de pasos operativos (eso es una `wf-*`)
-- descripción interna del razonamiento de skills o agentes
-
-## Checklist para crear un nuevo `CLAUDE.md`
-
-- [ ] Sección `## Tu rol` con límites explícitos (qué hace y qué NO hace)
-- [ ] Rootmap completo con todas las `wf-*` y agentes accesibles desde esta fase
-- [ ] Cada `wf-*` del rootmap existe físicamente en `skills/`
-- [ ] Cada agente referenciado existe físicamente en `agents/`
-- [ ] No duplica reglas de `kb-sdd-skill-architecture` ni `kb-sdd-creation-guide`
-- [ ] No contiene plantillas de frontmatter, comandos shell ni listas de pasos operativos
-- [ ] Si es un `CLAUDE.md` de fase: solo referencia agentes y skills de esa fase
-- [ ] El orquestador no contiene lógica de ejecución inline: delega siempre a una `wf-*` o agente (Regla 17 de `kb-sdd-skill-architecture`)
-
-## Checklist para actualizar un `CLAUDE.md` existente
-
-- [ ] Nueva `wf-*` añadida al rootmap con intención, nombre y argumentos correctos
-- [ ] Nuevo agente añadido a `## Agentes disponibles` si es accesible directamente
-- [ ] Si se eliminó una `wf-*` o agente: entrada eliminada del rootmap
-- [ ] Si se renombró: referencia actualizada en rootmap y sección de agentes
-- [ ] Sección `## Cómo actuar` sigue siendo coherente con el estado actual del rootmap
+→ Checklists completos (kb-*, wf-*, agente, CLAUDE.md): `${CLAUDE_SKILL_DIR}/references/checklists.md`
