@@ -1,7 +1,7 @@
 # SDD Skill Registry
 <!-- Auto-generado por wf-sdd-status. No editar manualmente. -->
-<!-- Total: 96 skills | 29 user-invocable (wf-*) | 67 kb-* -->
-<!-- Última actualización: 2026-05-30 -->
+<!-- Total: 99 skills | 29 user-invocable (wf-*) | 70 kb-* -->
+<!-- Última actualización: 2026-06-01 -->
 
 ## Meta-Ecosistema (.claude/)
 
@@ -55,13 +55,16 @@
 | kb-a11y-expert | Criterios WCAG 2.2 mapeados a mobile: contraste, touch targets, focus order, screen reader | false | design/skills/kb-a11y-expert/SKILL.md |
 | kb-design-brief | Contrato de DESIGN_BRIEF.md: modos guided/hybrid/auto, autonomy_policy, presets, validaciones | false | design/skills/kb-design-brief/SKILL.md |
 | kb-design-conflict-expert | Detección de conflictos visuales entre features: componentes duplicados, navegación incoherente, tokens contradichos | false | design/skills/kb-design-conflict-expert/SKILL.md |
-| kb-design-expert | Reglas de la fase design: separación DESIGN.md/artefactos por feature, trazabilidad, contrato para Stitch | false | design/skills/kb-design-expert/SKILL.md |
+| kb-design-expert | Marco de la fase design: principios estructurales, separación producto/feature, orden del pipeline; SSoT delegada a kb-design-system-contract, kb-design-feature-artifacts y kb-design-governance | false | design/skills/kb-design-expert/SKILL.md |
+| kb-design-feature-artifacts | Contrato de artefactos por feature: flows (secuencia y navegación), views (SSoT de pantallas con todos los estados), ui_prompt para Stitch. Trazabilidad obligatoria a journeys y CAs | false | design/skills/kb-design-feature-artifacts/SKILL.md |
 | kb-design-forms | Patrones de formulario: layout, validación, estados de campo, multistep, autosave, file upload | false | design/skills/kb-design-forms/SKILL.md |
+| kb-design-governance | Gobernanza del sistema visual: handoff a plan, política extender vs mutar, versionado semver MAJOR.MINOR.PATCH, distinción operativa entre wf-design-intake/delta/branch/variant | false | design/skills/kb-design-governance/SKILL.md |
 | kb-design-iconography-expert | Sistema de iconografía: librería base, stroke/fill rule, grid, tamaños por rol, política de custom icons | false | design/skills/kb-design-iconography-expert/SKILL.md |
 | kb-design-layout | Sistema de layout: spacing, breakpoints, grid, adaptive vs responsive, safe areas, foldables | false | design/skills/kb-design-layout/SKILL.md |
 | kb-design-motion-expert | Catálogo de motion: roles, durations, easing curves, micro-interacciones, prefers-reduced-motion | false | design/skills/kb-design-motion-expert/SKILL.md |
 | kb-design-style-decision-tree | Árbol de decisión navegable para elegir style_family y variables visuales por contexto de producto | false | design/skills/kb-design-style-decision-tree/SKILL.md |
 | kb-design-style-taxonomy | Clasificación operativa de estilos visuales: familias, señales de selección, anti-patrones | false | design/skills/kb-design-style-taxonomy/SKILL.md |
+| kb-design-system-contract | Contrato del DESIGN.md: frontmatter YAML, secciones canónicas, visual_personality, color modes light/dark, type scale completa, componentes con todos los estados aplicables | false | design/skills/kb-design-system-contract/SKILL.md |
 | kb-design-voice | UX writing y voice & tone: ejes de voz, estructura de errores, microcopy, glosario, políticas | false | design/skills/kb-design-voice/SKILL.md |
 | wf-design-a11y-audit | Auditoría ejecutiva de accesibilidad: contraste, touch targets, focus order; targets AA/AAA | true | design/skills/wf-design-a11y-audit/SKILL.md |
 | wf-design-branch | Explora variante paralela del DESIGN.md sin comprometer main; create/list/compare/merge/discard | true | design/skills/wf-design-branch/SKILL.md |

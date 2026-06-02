@@ -126,35 +126,7 @@ Si los pasos 3-7 producen hallazgos que requieren razonamiento contextual (ej. e
 
 ## Paso 9: Producir reporte
 
-Escribe siempre el reporte en `<dir_design>/a11y_audit_<fecha>.md` y muestra el mismo contenido al usuario:
-
-```
-=== A11Y AUDIT REPORT ===
-Path: <design_path>
-Views: <views_path o N/A>
-Target: <AA|AAA>
-Fecha: <ISO>
-
-== Contraste ==
-[CRITICO] light: on-surface-muted/surface = 3.2:1 (requerido 4.5:1)
-[CRITICO] dark:  on-warning/warning = 2.8:1 (requerido 4.5:1)
-
-== Touch targets ==
-[ALTO] chip-removable: 32x32 (minimo 44pt)
-
-== Motion ==
-OK
-
-== Declaraciones ==
-[MEDIO] Falta documentar politica de dynamic type en seccion Accessibility
-
-== Vistas (si aplica) ==
-[ALTO] login_views.md > Vista 'login': focus order no declarado en modal
-
-== Total ==
-2 criticos, 2 altos, 1 medio.
-Estado: FAIL
-```
+Escribe siempre el reporte en `<dir_design>/a11y_audit_<fecha>.md` y muestra el mismo contenido al usuario, siguiendo la estructura de `${CLAUDE_SKILL_DIR}/references/a11y_report_template.md`.
 
 ## Paso 10: Informar al usuario
 

@@ -99,50 +99,9 @@ Si el archivo **NO existe** y el brief declara `product_preset` distinto de `non
 
 ## Paso 4: Delegar al agente design-architect
 
-Invoca al agente siguiendo la **Regla 2**, la **Regla 3**, la **Regla 6**, la **Regla 11**, la **Regla 12**, la **Regla 13**, la **Regla 14** y la **Regla 15** de `kb-design-expert`, mas la jerarquia de `kb-design-brief`, y aplicando la taxonomia de `kb-design-style-taxonomy`: `DESIGN.md` es de producto, SSoT visual persistente, con una familia de estilo seleccionada antes de derivar tokens, materializa el brief cerrado sin reabrirlo, preserva tokens previos cuando ya hay `DESIGN.md`, y mantiene secciones de Visual Personality y Reference Apps obligatorias ademas del orden canonico de Google design.md.
+Invoca al agente siguiendo las **Reglas 2, 3, 6, 11, 12, 13, 14 y 15** de `kb-design-expert`, la jerarquía de `kb-design-brief` y la taxonomía de `kb-design-style-taxonomy`.
 
-Usa este prompt:
-
-```text
-Modo: design-system
-Path del spec: <path_spec>
-Path del DESIGN.md destino: <path_design>
-Contenido del Spec:
----
-<contenido_completo_spec>
----
-PRD del producto:
----
-<contenido_prd_o_N/A>
----
-DESIGN_BRIEF del producto:
----
-<contenido_brief_o_N/A>
----
-Research de apps de referencia:
----
-<resumen_research_o_N/A>
----
-DESIGN.md actual:
----
-<contenido_actual_o_N/A>
----
-INSTRUCCION: produce un DESIGN.md de producto reutilizable por Stitch y futuras features. No introduzcas funcionalidades no presentes en el spec. Contrato visual persistente de producto, no de una sola feature.
-
-Aplica las reglas de kb-design-expert, kb-design-brief y kb-design-style-taxonomy que tienes en contexto:
-- Regla 2: DESIGN.md es de producto, no de feature
-- Regla 6: formato @google/design.md (front matter YAML + markdown), orden de secciones canonicas y token types validos
-- Regla 11: Visual Personality derivada del PRD (si disponible) o del spec; obligatoria en todo DESIGN.md y con perfil estructurado completo
-- Regla 12: Reference Apps con el research (si disponible); obligatoria en todo DESIGN.md
-- Regla 13: elegir `style_family` antes de tokens y componentes
-- Regla 14: DESIGN.md materializa el brief, no lo reabre (jerarquia de fuentes vive en kb-design-brief Regla 10)
-- Regla 15: si ya existe DESIGN.md, preserva tokens y componentes previos; toda mutacion debe marcarse y justificarse en `## Changelog`, o derivarse a `wf-design-delta` si afecta a valores existentes
-- kb-design-brief: respetar `autonomy_policy`, `clarity_vs_brand`, `reference_apps_policy` y el resto de variables cerradas
-- kb-design-style-taxonomy: usar solo familias validas; si ninguna encaja, aplicar Regla 12 (`custom`) con sus 5 condiciones
-- Si faltan datos criticos para jerarquia, tono o patrones base, devuelve DESIGN_GAPs y no produzcas archivo final
-
-Formato de output: ver ${CLAUDE_SKILL_DIR}/references/output_notes.md
-```
+Construye el prompt usando la plantilla de `${CLAUDE_SKILL_DIR}/references/design_system_prompt.md`, pasando el contenido de: spec, PRD (si existe), brief (si existe), research de apps (si existe), y DESIGN.md actual (si existe).
 
 ## Paso 5: Manejar DESIGN_GAPs
 

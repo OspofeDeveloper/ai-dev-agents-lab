@@ -100,6 +100,9 @@ Determina el path de salida:
 - Si se verificaron todos los specs del directorio: raíz del directorio de features + `_conflict_report.md`
   - Ejemplo: `features/` → `features/_conflict_report.md`
 
+Antes de escribir, verifica si el archivo ya existe:
+- `!test -f "<path>"` — si existe, informa al usuario del path y pregunta: `[sobreescribir | cancelar]`. Continua solo si elige sobreescribir.
+
 Escribe el informe en el archivo correspondiente.
 
 ---

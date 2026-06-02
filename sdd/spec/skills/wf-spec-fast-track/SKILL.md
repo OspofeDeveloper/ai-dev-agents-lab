@@ -13,14 +13,7 @@ agent: sdd-spec-writer
 
 Tu objetivo es generar un Spec de feature SDD completo y válido directamente desde un documento de requisitos enfocado en una sola capacidad. Usa `kb-spec-expert` para garantizar pureza y los 8 elementos, y `kb-decompose-expert` para verificar que el scope es el de una sola feature válida.
 
-**Dos modos de operación:**
-- **Modo directo** (`--capability`): el documento de entrada está acotado a una sola capacidad. Es el modo original.
-- **Modo scoped** (`--scope-from` + `--feature`): el documento de entrada es un PRD completo, pero se filtra a una sola feature usando el scope definido en un `_discovery.md` previo generado por `/wf-spec-discover`.
-
-**Cuándo usar fast-track vs. flujo estándar:**
-- Fast-track es para documentar **una sola capacidad** en un proyecto donde el resto ya está documentado (o no se quiere documentar todavía).
-- En modo scoped, fast-track opera sobre un PRD completo pero restringido al scope de una feature del discovery.
-- Si el documento describe múltiples capacidades independientes y no hay `--scope-from` → informar que debe usar el flujo estándar o `/wf-spec-discover` primero.
+**Dos modos:** directo (`--capability`): documento acotado a una sola capacidad; scoped (`--scope-from` + `--feature`): PRD completo filtrado al scope de una feature del discovery. Si el documento describe múltiples capacidades sin `--scope-from`, remitir al flujo estándar o `/wf-spec-discover`.
 
 ---
 
@@ -33,22 +26,13 @@ Extrae de `$ARGUMENTS`:
 - **Flag opcional**: `--analysis <path>` → path a un `_analysis.md` con gaps pre-resueltos
 - **Flag opcional**: `--allow-derived-scope-from-analysis` → permite continuar aunque el analysis introduzca expansión funcional no consolidada todavía en el PRD. Sin este flag, el workflow se detiene para remitir a `wf-prd-change`.
 
-**Validación de argumentos:**
-- Si hay `--scope-from` sin `--feature` (o viceversa) → informa: "Los flags `--scope-from` y `--feature` deben usarse juntos."
-- Si no hay ni `--capability` ni `--scope-from` → informa:
-> "Uso modo directo: `/wf-spec-fast-track <archivo.md> --capability <nombre-kebab-case>`"
-> "Uso modo scoped: `/wf-spec-fast-track <prd.md> --scope-from <discovery.md> --feature <F-00X>`"
+Si hay `--scope-from` sin `--feature` (o viceversa) → error: "Los flags `--scope-from` y `--feature` deben usarse juntos." Si no hay ni `--capability` ni `--scope-from` → mostrar uso de ambos modos y detener.
 
 ---
 
 ## Paso 2: Verificar el archivo
 
-Verifica que el archivo existe:
-```
-!test -f "<path>" && echo "EXISTE" || echo "NO_EXISTE"
-```
-
-Si no existe → informa al usuario con la ruta exacta y detén.
+Verifica que el archivo existe; si no → informa con ruta exacta y detén.
 
 ---
 
@@ -72,15 +56,7 @@ Si el Feature ID no existe en el discovery → informa:
 
 ### Modo directo (--capability)
 
-Verifica que el documento describe una única capability SDD válida. Consulta `kb-decompose-expert` para los criterios:
-- Actor principal identificable
-- Journeys funcionalmente independientes de otras features potenciales
-- Al menos 3 CAs verificables asumibles (incluso si el documento no los tiene todos explícitos, deben ser derivables con asunciones razonables)
-
-Si el documento claramente describe **múltiples features independientes** → devuelve:
-> "Este documento describe [N] capacidades distintas: [lista]. Para documentar todas, usa `/wf-spec-discover <archivo.md>` para identificar features y luego `/wf-spec-features-first <archivo.md>` para generar los specs. Para una sola, extrae solo esa capacidad en un documento separado y vuelve a ejecutar fast-track."
-
-Si el scope es ambiguo pero asumible → aplícalo con una asunción [INFORMATIVO] documentada.
+Verifica (con `kb-decompose-expert`) que el documento describe una única capability SDD válida: actor identificable, journeys independientes, ≥3 CAs asumibles. Si describe múltiples features independientes → remite al usuario a `/wf-spec-discover` + `/wf-spec-features-first`. Si el scope es ambiguo pero asumible → aplica con asunción `[INFORMATIVO]`.
 
 ### Modo scoped (--scope-from + --feature)
 
@@ -133,64 +109,14 @@ No genera un `_analysis.md` separado. Consulta `kb-gap-conventions` para el form
 
 Produce un `_spec.md` completo con los 8 elementos SDD siguiendo la estructura de `${CLAUDE_SKILL_DIR}/references/feature_spec_template.md`.
 
-**Header específico del fast-track (modo directo):**
-```markdown
-# Spec: [Nombre de la Capability]
-> Versión: 1.0 | Fecha: [YYYY-MM-DD]
-> Generado via: fast-track desde [path/del/documento.md]
-> Feature ID: F-001
-> Spec monolítico origen: N/A (fast-track directo)
-> Source requirements: [path/del/documento.md]
-> derived_from_prd: N/A
-> derived_from_prd_version: N/A
-> derived_from_change: N/A
-> status_sync: unknown
-> Origen de alcance: [Documento fuente | Documento fuente + analysis respondido]
-> Avisos de gobernanza: [ninguno | alcance derivado desde P-00X, P-00Y]
-```
+Usa las plantillas de cabecera de `${CLAUDE_SKILL_DIR}/references/spec_header_templates.md`:
+- **Modo directo**: cabecera con `Generado via: fast-track desde [path]`, `Feature ID: F-001`, `derived_from_prd: N/A`
+- **Modo scoped**: cabecera con `Generado via: fast-track desde [prd.md] (scope: F-00X via [discovery.md])`, `status_sync: in_sync`
 
-**Header específico del fast-track (modo scoped):**
-```markdown
-# Spec: [Nombre de la Capability]
-> Versión: 1.0 | Fecha: [YYYY-MM-DD]
-> Generado via: fast-track desde [path/del/prd.md] (scope: F-00X via [discovery.md])
-> Feature ID: F-00X
-> Spec monolítico origen: N/A (features-first via discover)
-> Source requirements: [path/del/prd.md]
-> derived_from_prd: [path/del/prd.md]
-> derived_from_prd_version: [versión del PRD o unknown]
-> derived_from_change: [CR-XXX | N/A]
-> status_sync: in_sync
-> Origen de alcance: [PRD | PRD + analysis respondido]
-> Avisos de gobernanza: [ninguno | alcance derivado desde P-00X, P-00Y]
-```
-
-**Si el spec continúa con alcance derivado desde analysis**, añade después del header:
-```markdown
-## Decisiones derivadas del analysis
-
-- **[P-00X]**: [respuesta resumida] → [impacto funcional derivado]
-```
-
-**Si hay items `[CRÍTICO]` pendientes**, añadir al final del spec (antes del Changelog si existiera):
-```markdown
-## Items Pendientes
-
-> ⚠️ Este spec tiene gaps **críticos** sin resolver. Las HUs afectadas están marcadas `[INCOMPLETO]` y `/wf-prepare-plan` quedará bloqueado hasta que se resuelvan.
-> Para resolverlos: responde los gaps en el `_analysis.md` y ejecuta `/wf-spec-gap-resolve <path>_spec.md`.
-
-### [P-001][CRÍTICO] [Título del gap]
-- **Afecta**: [HU-001, HU-003]
-- **Pregunta**: [pregunta concreta]
-- **Respuesta**: _(pendiente)_
-```
-
-**Si hay asunciones aplicadas**, añadir:
-```markdown
-## Asunciones Aplicadas
-
-- **[A-001]**: [descripción de la asunción aplicada y su justificación]
-```
+Añade las secciones opcionales según corresponda (plantillas en `spec_header_templates.md`):
+- `## Decisiones derivadas del analysis` si se usó `--allow-derived-scope-from-analysis`
+- `## Items Pendientes` si hay gaps `[CRÍTICO]` sin respuesta
+- `## Asunciones Aplicadas` si hay asunciones `[INFORMATIVO]` aplicadas
 
 ---
 
@@ -210,45 +136,19 @@ Antes de escribir el output, aplica la Prueba de Pureza al spec completo. Consul
 - Origen de alcance: `PRD` o `PRD + analysis respondido`
 - Avisos de gobernanza: `ninguno` o lista de gaps que derivaron alcance no consolidado
 
-**Índice de features (`_features.md`)**: Busca si existe algún `*_features.md` en el directorio del archivo de input:
-- **Si existe**: léelo y añade la nueva feature como entrada `F-00X` (con el siguiente ID disponible). Actualiza la tabla de shared models si la feature declara alguno.
-- **Si no existe**: genera un `_features.md` nuevo con esta feature como primera entrada `F-001`, sin spec monolítico origen y sin tabla de shared models si no hay ninguno.
-En ambos casos:
-- usa solo estados canónicos `LISTA`, `PENDIENTE_GENERACIÓN`, `BLOQUEADA`, `REQUIERE_CAMBIO_PRD`
-- añade en la entrada de la feature:
-  - `- **Origen de alcance**: [PRD | PRD + analysis respondido]`
-  - `- **Avisos de gobernanza**: [ninguno | alcance derivado desde P-00X]`
-- si el resultado se generó con alcance derivado, no lo presentes como PRD puro
-
-**Trazabilidad RF→HU (solo modo scoped):** Si se usó `--scope-from`, el discovery contiene el mapping RF→Feature. Al actualizar `_features.md`, añade o actualiza la sección `## Trazabilidad RF → HU → Feature` con las filas correspondientes a esta feature: para cada RF del scope, mapea las HUs generadas en este spec. Si la sección ya existía (de una ejecución previa de fast-track para otra feature), añade las filas nuevas sin eliminar las existentes.
+**Índice de features (`_features.md`)**: Sigue la guía de `${CLAUDE_SKILL_DIR}/references/artefact_index_update.md` para añadir/crear la entrada de la feature, usar estados canónicos, campos de origen de alcance y trazabilidad RF→HU en modo scoped.
 
 ---
 
 ## Paso 10: Escribir los artefactos
 
-Antes de escribir, verifica si el spec ya existe:
-```bash
-!test -f "features/<capability>/<capability>_spec.md" && echo "EXISTE" || echo "NO_EXISTE"
-```
-Si ya existe → pregunta al usuario:
-> "Ya existe `features/<capability>/<capability>_spec.md`. ¿Deseas regenerarlo?"
-- Si responde **no** → informa el path del spec existente y detén.
-- Si responde **sí** → continúa.
-
-Escribe los 3 artefactos (crea directorios si no existen), todos relativos al directorio del archivo de entrada:
-
+Verifica si `features/<capability>/<capability>_spec.md` ya existe; si existe → pregunta al usuario si desea regenerarlo (no → informa del path y detén). Escribe los 3 artefactos (crea directorios si no existen), todos relativos al directorio del archivo de entrada:
 1. **Spec**: `features/<capability>/<capability>_spec.md`
 2. **README**: `features/<capability>/README.md`
-3. **Features index**: `<nombre_base>_features.md` en el directorio del archivo de entrada (o actualiza el existente)
+3. **Features index**: `<nombre_base>_features.md` (o actualiza el existente)
 
 ---
 
 ## Paso 11: Informar al usuario
 
-Tras escribir los artefactos, informa:
-- Path del spec generado
-- Path del README generado
-- Path del `_features.md` creado o actualizado (indicar si era nuevo o actualización)
-- Si hay items `[CRÍTICO]` pendientes en el spec: listarlos y advertir que bloquean `/wf-prepare-plan`
-- Si se aplicaron asunciones: mencionar cuántas y dónde están documentadas en el spec
-- Siguiente paso: "Revisa el spec generado. Si está listo, continúa con `/wf-prepare-plan generate <path>_spec.md`"
+Informa: paths generados (spec, README, `_features.md` nuevo/actualizado). Si hay `[CRÍTICO]` pendientes: listarlos (bloquean `/wf-prepare-plan`). Si se aplicaron asunciones: cuántas y dónde. Siguiente paso: `/wf-prepare-plan generate <path>_spec.md`.

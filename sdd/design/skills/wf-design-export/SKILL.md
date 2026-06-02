@@ -56,125 +56,16 @@ Si alguna seccion critica falta, marca `EXPORT_GAP: <seccion>` y omite ese bloqu
 
 ## Paso 5: Generar por plataforma
 
-### `css`
+Para cada plataforma solicitada, genera el archivo de tokens siguiendo el formato y estructura de `${CLAUDE_SKILL_DIR}/references/export_examples.md`.
 
-Output: `<output-dir>/tokens.css`
+Salidas por plataforma:
+- `css`: `<output-dir>/tokens.css` — variables `:root` (light) + `[data-theme="dark"]` + `@media (prefers-contrast: more)` si existe high-contrast
+- `style-dictionary`: `<output-dir>/tokens.json` — formato W3C Design Tokens
+- `compose`: `<output-dir>/DesignTokens.kt` — `object DesignTokens` con companion objects por categoría
+- `swiftui`: `<output-dir>/DesignTokens.swift` — `enum DesignTokens` con enums y extensions
+- `tailwind`: `<output-dir>/tailwind.config.js` — objeto parcial `theme.extend` para integrar a config existente
 
-Estructura:
-- `:root` con tokens del modo light.
-- `[data-theme="dark"]` con tokens del modo dark.
-- `@media (prefers-contrast: more)` con tokens high-contrast si existe.
-- Tokens de typography como variables: `--font-h1-size`, `--font-h1-weight`, etc.
-- Spacing, rounded, elevation como variables.
-
-Ejemplo:
-```css
-:root {
-  --color-background: #F7F7F5;
-  --color-surface: #FFFFFF;
-  --color-primary: #0E0E10;
-  --spacing-md: 16px;
-  --rounded-md: 16px;
-}
-
-[data-theme="dark"] {
-  --color-background: #0E0E10;
-  --color-surface: #1A1A1D;
-  --color-primary: #FFFFFF;
-}
-```
-
-### `style-dictionary`
-
-Output: `<output-dir>/tokens.json` siguiendo el formato W3C Design Tokens.
-
-Estructura:
-```json
-{
-  "color": {
-    "light": {
-      "background": { "value": "#F7F7F5", "type": "color" }
-    },
-    "dark": {
-      "background": { "value": "#0E0E10", "type": "color" }
-    }
-  },
-  "spacing": {
-    "md": { "value": "16px", "type": "dimension" }
-  }
-}
-```
-
-### `compose` (Android)
-
-Output: `<output-dir>/DesignTokens.kt`
-
-Genera un object Kotlin con companion objects por categoria:
-
-```kotlin
-object DesignTokens {
-    object Colors {
-        val backgroundLight = Color(0xFFF7F7F5)
-        val backgroundDark = Color(0xFF0E0E10)
-        val surfaceLight = Color(0xFFFFFFFF)
-        // ...
-    }
-    object Spacing {
-        val md = 16.dp
-    }
-    object Typography {
-        val h1 = TextStyle(
-            fontSize = 32.sp,
-            fontWeight = FontWeight.W700,
-            lineHeight = 36.8.sp
-        )
-    }
-}
-```
-
-### `swiftui` (iOS)
-
-Output: `<output-dir>/DesignTokens.swift`
-
-Genera enums y extensions:
-
-```swift
-import SwiftUI
-
-enum DesignTokens {
-    enum Colors {
-        static let backgroundLight = Color(hex: "#F7F7F5")
-        static let backgroundDark = Color(hex: "#0E0E10")
-    }
-    enum Spacing {
-        static let md: CGFloat = 16
-    }
-}
-```
-
-### `tailwind`
-
-Output: `<output-dir>/tailwind.config.js` (parcial; el usuario integra a su config existente).
-
-Estructura:
-```js
-module.exports = {
-  theme: {
-    extend: {
-      colors: {
-        background: { light: '#F7F7F5', DEFAULT: '#F7F7F5', dark: '#0E0E10' },
-        surface: { light: '#FFFFFF', DEFAULT: '#FFFFFF', dark: '#1A1A1D' }
-      },
-      spacing: {
-        md: '16px'
-      },
-      borderRadius: {
-        md: '16px'
-      }
-    }
-  }
-}
-```
+Si una sección crítica del DESIGN.md falta, marca `EXPORT_GAP: <sección>` y omite ese bloque en la salida.
 
 ## Paso 6: Generar manifest
 

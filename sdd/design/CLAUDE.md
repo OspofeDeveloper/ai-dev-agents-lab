@@ -111,7 +111,7 @@ Cargado por defecto si el orquestador detecta dudas conceptuales repetidas en un
 
 | Agente | Dominio |
 |---|---|
-| `design-architect` | Agente unico de la fase Design. Cubre cinco modos cognitivos: generacion (`wf-design-system`, `wf-design-feature-prototype`), validacion (`wf-design-validate`), evolucion (`wf-design-delta analyze | apply`), auditoria (`wf-design-a11y-audit`), comparacion y exploracion (`wf-design-branch compare`, `wf-design-variant`) y triage de feedback (`wf-design-feedback triage`). Tiene cargadas las 11 kbs del dominio mas `kb-spec-expert` cross-fase |
+| `design-architect` | Agente unico de la fase Design. Cubre siete modos cognitivos: cierre de brief (`wf-design-intake`), articulacion de moodboard (`wf-design-moodboard`), generacion (`wf-design-system`, `wf-design-feature-prototype`), validacion (`wf-design-validate`), evolucion (`wf-design-delta analyze | apply`), auditoria (`wf-design-a11y-audit`), comparacion y exploracion (`wf-design-branch compare`, `wf-design-variant`) y triage de feedback (`wf-design-feedback triage`). Tiene cargadas las 11 kbs del dominio mas `kb-spec-expert` cross-fase |
 
 Usa workflows cuando exista una pipeline clara y cerrada. Si la peticion no requiere una workflow exacta pero si ayuda experta para estructurar la fase `design`, delega a `design-architect`.
 
@@ -180,19 +180,4 @@ Cada capa es responsable de su nivel de decision. Si existe workflow, la activas
 
 ## Nota sobre `DESIGN.md`
 
-`DESIGN.md` sigue el formato abierto de Google: tokens normativos en YAML y rationale en markdown. El linter `npx @google/design.md lint DESIGN.md` se ejecuta automaticamente al final de `wf-design-system` y `wf-design-delta apply`.
-
-Estructura ampliada del frontmatter (Reglas 6, 11, 16-19, 22 de `kb-design-expert`):
-
-- `version: MAJOR.MINOR.PATCH` — semver del sistema visual (Regla 22).
-- `visual_personality` — `style_family`, `secondary_family`, `density`, `depth`, `typography_mode`, `color_energy`, `motion_level`, `adjectives`, `anti_patterns`.
-- `colors.light` y `colors.dark` — modo dark obligatorio; high-contrast opcional segun `accessibility_target` (Regla 18).
-- `typography` — type scale completa con `display`, `h1`-`h3`, `body`, `body-sm`, `label`, `caption`, `code` (Regla 17).
-- `iconography` — libreria base unica, stroke/fill, grid, tamanos por rol (`kb-design-iconography-expert`).
-- `motion` — `level`, `reduced_motion_policy`, `durations`, `easing` por rol (`kb-design-motion-expert`).
-- `voice` — formality, expertise, warmth, playfulness, emoji_policy (`kb-design-voice`).
-- `components` — cada componente con todos los estados aplicables (Regla 16; ver `references/component_anatomy_checklist.md`).
-
-Secciones markdown obligatorias: `## Overview`, `## Visual Personality`, `## Colors`, `## Color Modes`, `## Typography`, `## Layout`, `## Elevation & Depth`, `## Shapes`, `## Components`, `## Iconography`, `## Accessibility`, `## Motion & Micro-interactions`, `## Reference Apps`, `## Voice & Microcopy`, `## Do's and Don'ts`, `## Changelog`.
-
-`DESIGN_BRIEF.md` no sustituye a `DESIGN.md`: fija direccion, autonomia y tradeoffs. `DESIGN.md` materializa esas decisiones en sistema visual. Cuando el brief declara un `product_preset` distinto de `none`, `wf-design-system` arranca desde un starter kit ya escrito al 70% (`kb-design-expert/references/preset_starter_kits.md` y `preset_components.md`), no desde archivo en blanco.
+El contrato normativo de `DESIGN.md` (estructura del frontmatter YAML, secciones markdown obligatorias, presets y starter kits) vive en `kb-design-system-contract`. Las reglas de gobernanza del artefacto (versioning, ownership, gate de validacion) viven en `kb-design-governance`. No redefinas esas reglas aqui.

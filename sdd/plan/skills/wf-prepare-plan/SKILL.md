@@ -90,55 +90,12 @@ Si **no requiere** handoff de Design:
 
 ## Paso 5: Delegar al agente plan-architect
 
-Construye el prompt para el agente.
-
-Base mínima:
-```text
-Modo: generate-plan
-Path del spec: <path_completo>
-Contenido del Spec:
----
-<contenido_completo_del_spec>
----
-```
-
-Si existe `_features.md`, añade:
-```text
-Shared models del proyecto (NO redefinir — solo referenciar):
----
-<sección relevante o contenido completo de _features.md>
----
-INSTRUCCIÓN: Si algún modelo de la tabla anterior aparece en el Spec de esta feature, no lo redefinas en el Plan salvo que esta feature sea la owner.
-```
-
-Si la feature requiere handoff de Design, añade:
-```text
-La feature requiere handoff de Design.
-Contenido de DESIGN.md:
----
-<contenido_design>
----
-Contenido de <feature>_flows.md:
----
-<contenido_flows>
----
-Contenido de <feature>_views.md:
----
-<contenido_views>
----
-INSTRUCCIÓN: trata estos artefactos como fuentes normativas para UI, navegación y accesibilidad. Si detectas contradicciones o falta información crítica, devuelve `DESIGN_GAPs` y no produzcas el Plan.
-```
-
-Si la feature no requiere handoff de Design, añade:
-```text
-La feature no tiene superficie UI visible. No se adjunta handoff de Design.
-```
-
-Añade siempre:
-```text
-INSTRUCCIÓN: Propaga al header del Plan cualquier metadata de trazabilidad presente en el Spec (`derived_from_prd`, `derived_from_prd_version`, `derived_from_change`, `status_sync`). Si falta, usa `unknown`.
-INSTRUCCIÓN: El Plan generado debe salir con `Estado: BORRADOR`.
-```
+Construye el prompt para el agente ensamblando los bloques de `${CLAUDE_SKILL_DIR}/references/plan_prompt_templates.md`:
+- Bloque base (siempre): spec completo
+- Bloque shared models (si existe `_features.md`): instrucción de no redefinir owners ajenos
+- Bloque handoff de Design (si la feature lo requiere): DESIGN.md + flows + views, con instrucción normativa
+- Bloque sin Design (si la feature no tiene UI): nota explícita
+- Bloque final (siempre): propagación de metadata de trazabilidad y estado `BORRADOR`
 
 Invoca el agente `plan-architect` con el prompt construido.
 

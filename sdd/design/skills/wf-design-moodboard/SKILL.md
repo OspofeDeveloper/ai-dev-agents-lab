@@ -3,14 +3,15 @@ name: wf-design-moodboard
 description: "Captura inspiracion visual no estructurada antes del discovery. El usuario describe vibes (paletas, fotografia, atmosfera, ilustracion, texturas) y produce un <basename>_design_moodboard.md que alimenta wf-design-intake con material concreto para cerrar style_family y adjectives con precision. Especialmente util para disenadores junior."
 when_to_use: "Activa con frases como 'quiero capturar inspiración visual', 'crea un moodboard', 'tengo referencias de estilo', 'quiero definir vibes antes del brief', 'captura referencias de diseño'. No activa para cerrar el brief formal (usa wf-design-intake) ni para generar el sistema visual (usa wf-design-system)."
 argument-hint: "<feature_spec.md> [--prd <prd.md>] [--output <path>] [--mode interactive|auto]"
-effort: medium
-allowed-tools: [Read, Write, WebSearch]
+effort: high
+allowed-tools: [Read, Write, Bash, Agent, WebSearch]
 context: fork
+agent: design-architect
 ---
 
 # design-moodboard — Captura de inspiracion visual
 
-Tu rol es producir un mood board textual a partir de la descripcion del usuario, antes de cerrar familia visual y adjectives en el brief. No decides; ayudas a articular lo que esta latente.
+Tu rol como orquestador es facilitar la captura de inspiracion del usuario y delegar al agente `design-architect` la articulacion del material crudo en candidatos visuales concretos (familia, adjetivos, atmosfera, paleta intuitiva traducida al taxonomy). No interpretas las respuestas del usuario tu mismo; tu trabajo es recogerlas con fidelidad y pasarselas al agente, que aplicara `kb-design-style-taxonomy` y `kb-design-style-decision-tree` para producir el mood board.
 
 ## Paso 1: Parsear argumentos
 
@@ -39,11 +40,11 @@ Si `--prd` se paso, leelo. Si no, intenta resolver `prd.md` en la raiz del produ
 - Si `--output` se paso, usalo.
 - Si no, escribe `<basename>_design_moodboard.md` en el mismo directorio del spec.
 
-## Paso 5: Captura del mood
+## Paso 5: Captura del material crudo
 
 ### Modo `interactive` (por defecto)
 
-Realiza al usuario una serie de preguntas abiertas, sin forzar opciones cerradas. Adapta las preguntas al contexto del spec:
+Realiza al usuario una serie de preguntas abiertas, sin forzar opciones cerradas. No interpretes las respuestas; transcribelas literales para pasarselas al agente. Adapta las preguntas al contexto del spec:
 
 1. **Vibe general en una frase**: "Si tuvieras que describir como deberia sentirse esta app en una frase, sin pensar en colores ni botones, ¿que dirias?"
 2. **Apps que admiras**: "¿Hay una app o producto que admires por como se siente — no por funcionalidad, por sensacion? ¿Cuales?"
@@ -57,89 +58,40 @@ Permite respuestas vacias ("no se", "no me importa"). No fuerces decisiones. Rec
 
 ### Modo `auto`
 
-Deriva el mood directamente del spec y PRD:
-- Sector y dominio del producto.
-- Actor principal (perfil, contexto de uso).
-- Tono funcional del spec (urgencia, calma, repeticion, exploracion).
-- Cualquier mencion de marca en el PRD.
+No preguntes al usuario. Pasa el spec y PRD al agente con la senal de modo `auto` para que derive el mood directamente del material funcional.
 
-Genera el mood sin preguntar, con menos resolucion que en modo interactivo pero suficiente para alimentar el intake.
+## Paso 6: Delegar al agente design-architect
 
-## Paso 6: Research complementario (opcional)
+Construye el prompt para el agente con:
 
-Si el usuario menciono apps o referencias en la captura, hacer WebSearch ligero para confirmar y enriquecer:
-- ¿Existe esa app? ¿Que aspecto destacan los reviews / award sites?
-- Si menciono un sector o estilo amplio, buscar 2-3 referencias profesionales del sector.
+```text
+Modo cognitivo: moodboard-articulate
+Spec path: <path>
+PRD path: <path o "ninguno">
+Modo de captura: <interactive | auto>
+[Si interactive] Respuestas literales del usuario:
+1. Vibe general: <texto>
+2. Apps admiradas: <texto>
+3. Lo que NO quiere: <texto>
+4. Atmosfera: <texto>
+5. Paleta intuitiva: <texto>
+6. Fotografia/ilustracion: <texto>
+7. Tono al hablar: <texto>
+Output path: <basename>_design_moodboard.md
+Template del artefacto: ${CLAUDE_SKILL_DIR}/references/moodboard_template.md
 
-Si las busquedas no aportan, no insistir.
+INSTRUCCION:
+- Articula el material crudo en candidatos a `style_family` aplicando `kb-design-style-taxonomy` y `kb-design-style-decision-tree`.
+- Traduce la paleta intuitiva ("madera clara", "cielo de tarde") a familias de color compatibles con el taxonomy, sin cerrar tokens (eso es trabajo de wf-design-system).
+- Si hay apps mencionadas, valida brevemente con WebSearch ligero (2-3 lookups maximo) — no es discovery formal.
+- Genera el contenido del moodboard segun la plantilla. No escribas el archivo: devuelvelo para que el orquestador lo escriba.
+```
+
+Invoca el agente `design-architect`.
 
 ## Paso 7: Escribir el mood board
 
-Escribe `<basename>_design_moodboard.md` con esta estructura:
-
-```markdown
----
-spec: <path_spec>
-mode: interactive | auto
-generated_at: <fecha ISO>
----
-
-# Design Moodboard — <feature name>
-
-## Vibe en una frase
-
-> <la frase del usuario o derivada del spec>
-
-## Atmosfera
-
-<descripcion textual del espacio o sensacion fisica analoga>
-
-## Paleta intuitiva
-
-- Colores o referencias del mundo real mencionadas: <lista>
-- Energia cromatica probable: <low | medium | high> (inferida)
-- Modo dominante probable: <light | dark | ambos>
-
-## Imagery
-
-- Tipo de imagery deseada: <fotografia | ilustracion | sin imagery | mixto>
-- Caracter: <documental | aspiracional | minimal | abstracto | hand-drawn | otro>
-- Notas: <si las hay>
-
-## Tono al hablar
-
-<resumen del tono deseado en una linea>
-
-## Referencias mencionadas por el usuario
-
-- **<App o producto 1>**: <que aspecto destacan, segun usuario o research>
-- **<App o producto 2>**: <...>
-
-## Lo que NO se quiere
-
-- <anti-patron 1>
-- <anti-patron 2>
-
-## Pistas para style_family (inferencia, no decision)
-
-Basandose en el mood capturado, los candidatos a `style_family` son:
-
-1. **<candidato principal>** — porque <razon corta>
-2. **<candidato alternativo>** — porque <razon corta>
-
-Esta inferencia se materializa en `wf-design-intake`, no aqui. El moodboard es entrada, no decision.
-
-## Pistas para adjectives
-
-Adjetivos sugeridos derivados del mood (entre 8-12, sin filtrar):
-
-- <adjetivo>: <implicacion intuitiva>
-- ...
-
-## Notas finales
-
-<cualquier observacion del usuario que no encaje en las secciones anteriores>
-```
+Escribe `<basename>_design_moodboard.md` con el contenido devuelto por el agente.
 
 ## Paso 8: Informar al usuario
 

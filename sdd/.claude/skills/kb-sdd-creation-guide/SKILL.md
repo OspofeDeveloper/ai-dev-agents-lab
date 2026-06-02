@@ -97,6 +97,18 @@ Para `kb-*` de nivel `tasks/`, la estructura mínima recomendada es:
 
 → Template de estructura: `${CLAUDE_SKILL_DIR}/references/body-templates.md`
 
+## Criterios de densidad
+
+Los límites son señales de SRP, no hard caps. Superarlos es una invitación a revisar si la pieza está bien cortada, no un error automático.
+
+| Tipo | Objetivo (líneas de body) | Si supera |
+|---|---|---|
+| `kb-*` normativa o meta | ≤ 300 | Revisar SRP: candidata a dividir → `wf-sdd-refactor` |
+| `kb-*` de stack `tasks/` | ≤ 500 | Contiene templates de código — si supera, dividir por submódulo |
+| `wf-*` body (sin frontmatter) | ≤ 150 | Mover pasos detallados a `references/` |
+
+El frontmatter no cuenta. El contador parte desde la primera línea del body (`# <Título>`).
+
 ## Frontmatter para `wf-*`
 
 `context: fork` es obligatorio en todas las `wf-*` que generan artefactos o delegan a un agente.

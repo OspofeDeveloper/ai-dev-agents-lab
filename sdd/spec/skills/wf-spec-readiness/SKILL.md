@@ -140,56 +140,22 @@ Path de salida: directorio padre del directorio de features + `<basename>_readin
 - El basename se toma del `_features.md` encontrado (ej: si es `prd-hogar-sad_features.md` → `prd-hogar-sad_readiness_report.md`)
 - Ejemplo: `docs/prd-hogar-sad_features.md` → `docs/prd-hogar-sad_readiness_report.md`
 
+Antes de escribir, verifica si el archivo ya existe:
+- `!test -f "<path>"` — si existe, informa al usuario del path y pregunta: `[sobreescribir | cancelar]`. Continua solo si elige sobreescribir.
+
 Escribe el informe en el archivo correspondiente.
 
 ---
 
 ## Paso 8.5: Actualizar estado en `_features.md`
 
-Tras escribir el readiness report, actualiza el `_features.md` encontrado en el Paso 2:
-
-### 8.5a — Estado por feature
-
-Para cada bloque de feature en la sección `## Features identificadas`, actualiza (o añade si no existe) la línea:
-```
-- **Estado**: [LISTA | BLOQUEADA | PENDIENTE_GENERACIÓN | REQUIERE_CAMBIO_PRD]
-```
-
-Usa el estado determinado en el Paso 6. Si una feature tiene múltiples bloqueos, usa el de mayor prioridad (CAMBIO_PRD > GAPS > CONFLICTOS > DEPENDENCIAS > AMBIGÜEDAD_DE_ARTEFACTO).
-
-### 8.5b — Resumen de estado
-
-Añade o actualiza la sección `## Resumen de estado` (justo después de `## Features identificadas`, antes de `## Tabla de shared models`):
-
-```markdown
-## Resumen de estado
-
-> Última actualización: [YYYY-MM-DD] | Fuente: `<path>_readiness_report.md`
-
-| Feature | Estado | Bloqueantes |
-|---------|--------|-------------|
-| F-001: [nombre] | LISTA | — |
-| F-002: [nombre] | BLOQUEADA | gaps: P-001, P-002 |
-```
-
-### 8.5c — Historial de cambios
-
-Si existe la sección `## Historial de cambios` en `_features.md`, añade una fila:
-```
-| [versión+1] | [YYYY-MM-DD] | readiness | Estado actualizado desde wf-spec-readiness |
-```
+Sigue la guía de `${CLAUDE_SKILL_DIR}/references/features_update_guide.md` para:
+- **8.5a**: actualizar la línea `- **Estado**: [...]` por feature usando el estado de mayor prioridad
+- **8.5b**: añadir o actualizar `## Resumen de estado` con tabla de estado actual
+- **8.5c**: añadir fila al `## Historial de cambios` si la sección existe
 
 ---
 
 ## Paso 9: Informar al usuario
 
-- Path del informe generado
-- Resumen rápido:
-  - N features listas de M totales con spec generado
-  - N features bloqueadas (desglose por tipo de bloqueo)
-  - N features `PENDIENTE_GENERACIÓN` (aún no procesadas en ninguna iteración)
-- Siguiente paso según el estado:
-  - **Todas listas**: "Todas las features generadas están listas. Ejecuta `/wf-prepare-plan generate <feature_spec.md>` siguiendo el orden de fases del informe."
-  - **Algunas listas**: "Puedes empezar con las features LISTA de las primeras fases. Las features bloqueadas requieren acción — consulta el informe para los detalles."
-  - **Ninguna lista**: "Ninguna feature está lista para planificar. Revisa el informe para los bloqueos y resuélvelos antes de continuar."
-  - **Hay PENDIENTE_GENERACIÓN**: "Quedan [N] features identificadas en el discovery que aún no se han generado: [lista de IDs]. Cuando quieras incluirlas en una próxima iteración: `/wf-spec-features-first <prd.md> --features F-XXX,F-YYY,...`"
+Informa: path del informe, resumen (N listas de M totales, N bloqueadas por tipo, N `PENDIENTE_GENERACIÓN`). Siguientes pasos según estado: si todas listas → ejecutar `/wf-prepare-plan generate` por fase; si algunas listas → empezar con primeras fases; si ninguna → resolver bloqueos; si hay `PENDIENTE_GENERACIÓN` → proporcionar comando `/wf-spec-features-first <prd.md> --features ...`.

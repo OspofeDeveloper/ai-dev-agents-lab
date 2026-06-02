@@ -58,6 +58,35 @@ Sí, si la respuesta es "sí" a dos o más:
 - ¿No basta con un procedimiento fijo?
 - ¿La responsabilidad encaja mejor como modo cognitivo especializado?
 
+## Tech Target Directory Structure
+
+### Estructura canónica
+
+```
+sdd/
+  prd/    spec/    design/    plan/    tasks/    ← fases, tech-agnostic
+  tech/
+    <stack>/
+      agents/                  ← agentes propietarios del stack
+      skills/
+        plan/                  ← kb-* cargadas por plan-architect cuando tech=<stack>
+        tasks/                 ← kb-* cargadas por task-generator cuando tech=<stack>
+        wf-<stack>-*/          ← workflows cross-fase específicos del stack
+```
+
+### Ejemplo real con `kmm`
+
+```
+sdd/tech/kmm/
+  agents/
+  skills/
+    plan/     ← kb-kmm-clean-architecture, kb-kmm-feature-clean-architecture, ...
+    tasks/    ← kb-kmm-http-ktor, kb-kmm-environments, kb-kmm-navigation-compose, ...
+    wf-kmm-auth-setup-keycloak/
+    wf-kmm-datastore-setup/
+    ...
+```
+
 ## Antipatrones a evitar
 
 - `README.md` de fase definiendo política global de frontmatters

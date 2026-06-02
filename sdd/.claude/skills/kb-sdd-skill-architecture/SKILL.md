@@ -163,6 +163,7 @@ Divide una pieza si empieza a mezclar:
 - política estable y ejecución operativa
 - contrato y detalle accidental
 - conocimiento reusable y un pipeline específico
+- supera los criterios de densidad de `kb-sdd-creation-guide` (≥ 300 líneas para `kb-*` normativas, ≥ 150 para `wf-*`)
 
 Orden recomendado:
 
@@ -197,32 +198,7 @@ Una familia de skills y agentes está saneada cuando:
 
 Un **tech target** (KMM, Android nativo, Flutter, etc.) no es una fase del pipeline SDD. Es un stack de implementación que aporta conocimiento especializado a las fases de `plan` y `tasks`.
 
-### Estructura canónica
-
-```
-sdd/
-  prd/    spec/    design/    plan/    tasks/    ← fases, tech-agnostic
-  tech/
-    <stack>/
-      agents/                  ← agentes propietarios del stack
-      skills/
-        plan/                  ← kb-* cargadas por plan-architect cuando tech=<stack>
-        tasks/                 ← kb-* cargadas por task-generator cuando tech=<stack>
-        wf-<stack>-*/          ← workflows cross-fase específicos del stack
-```
-
-Ejemplo real con `kmm`:
-
-```
-sdd/tech/kmm/
-  agents/
-  skills/
-    plan/     ← kb-kmm-clean-architecture, kb-kmm-feature-clean-architecture, ...
-    tasks/    ← kb-kmm-http-ktor, kb-kmm-environments, kb-kmm-navigation-compose, ...
-    wf-kmm-auth-setup-keycloak/
-    wf-kmm-datastore-setup/
-    ...
-```
+→ Estructura canónica y ejemplo KMM: `${CLAUDE_SKILL_DIR}/references/skill-architecture-patterns.md` (sección Tech Target Directory Structure)
 
 ### Contrato de carga por agente
 

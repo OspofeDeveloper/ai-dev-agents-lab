@@ -4,7 +4,7 @@ description: "Genera un inventario rapido del ecosistema SDD y actualiza sdd/.cl
 when_to_use: "Activa con frases como 'que skills tenemos', 'inventario del ecosistema', 'que hay en la fase design', 'cuantos agentes existen', 'muestra el estado del ecosistema', 'que workflows hay disponibles', 'lista todo lo que hay en sdd'. No activa para detectar problemas de SSoT o referencias rotas (usa wf-sdd-audit)."
 argument-hint: "[--phase <prd|spec|design|plan|tasks|tech/<stack>|global>] [--output <path>]"
 effort: low
-allowed-tools: [Read, Bash]
+allowed-tools: [Read, Write, Bash]
 context: fork
 ---
 
@@ -79,77 +79,15 @@ Marca como `[SIN REGISTRAR]` las que no aparezcan en ningun rootmap.
 
 ## Paso 6: Construir el snapshot
 
-Estructura el inventario con este formato:
-
-```
-# SDD Ecosystem Status
-Fecha: <fecha>
-Alcance: <fase o global>
-
-## Resumen
-- Skills totales: X (Y kb-*, Z wf-*)
-- Agentes totales: N
-- KBs sin consumidor: M
-- Workflows sin registrar en rootmap: P
-
-## Por fase
-
-### <fase> (o .claude para meta-ecosistema)
-Agentes (N):
-  - <nombre> — <primera linea de description>
-
-kb-* (Y):
-  - <nombre> — <primera linea de description>
-
-wf-* (Z):
-  - <nombre> [SIN REGISTRAR?] — <primera linea de description>
-
-### tech/<stack>
-  [misma estructura]
-
-## KBs sin consumidor
-  - <path> — <nombre>
-
-## Workflows sin registrar en rootmap
-  - <path> — <nombre>
-```
+Estructura el inventario siguiendo el formato de snapshot en `${CLAUDE_SKILL_DIR}/references/inventory_templates.md`.
 
 ---
 
 ## Paso 6.5: Actualizar skill-registry.md
 
-Si el run es global (sin `--phase` o `--phase global`), genera o sobreescribe `sdd/.claude/skill-registry.md` con todas las skills encontradas en el Paso 2, organizadas por fase/scope.
+Si el run es global (sin `--phase` o `--phase global`), genera o sobreescribe `sdd/.claude/skill-registry.md` con todas las skills encontradas en el Paso 2, organizadas por fase/scope, siguiendo el formato de registry en `${CLAUDE_SKILL_DIR}/references/inventory_templates.md`.
 
-Formato del registry:
-
-```markdown
-# SDD Skill Registry
-<!-- Auto-generado por wf-sdd-status. No editar manualmente. -->
-<!-- Total: X skills | Y user-invocable | Z kb-* -->
-
-## Meta-Ecosistema (.claude/)
-| Skill | Descripción | Invocable | Path |
-|---|---|---|---|
-| <nombre> | <primera línea de description> | true/false | <path relativo desde sdd/> |
-
-## Fase: PRD
-...
-## Fase: Spec
-...
-## Fase: Design
-...
-## Fase: Plan
-...
-## Fase: Tasks
-...
-## Tech: KMM — Plan
-## Tech: KMM — Tasks
-## Tech: KMM — Workflows
-```
-
-`Path` siempre relativo desde `sdd/` (ejemplo: `.claude/skills/kb-sdd-audit-content/SKILL.md`).
-
-Este paso no bloquea el resto del workflow — si falla la escritura, continúa al Paso 7 e informa con `⚠ No se pudo actualizar skill-registry.md`.
+`Path` siempre relativo desde `sdd/`. Este paso no bloquea el flujo — si falla la escritura, informa con `⚠ No se pudo actualizar skill-registry.md`.
 
 ---
 

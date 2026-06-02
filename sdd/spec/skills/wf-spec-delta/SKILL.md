@@ -107,73 +107,17 @@ Si hay gaps `[CRÍTICO]` con `_(pendiente)_` en el delta analysis → informa al
 
 ### Paso 5B: Integrar los cambios
 
-Reglas de integración:
-- **No interpretar**: el texto aprobado va tal cual
-- **No ampliar**: si la respuesta cubre el gap, no expandirla
-- **No inferir**: si algo quedó sin responder pero era [INFORMATIVO], usa solo la Asunción por defecto
-
-Para cada tipo de cambio:
-
-- **HUs AÑADIDAS**: insertar después de la última HU existente con numeración consecutiva (ej: si el spec llega hasta HU-006, la primera nueva es HU-007)
-- **HUs MODIFICADAS**: reemplazar solo el texto de la HU afectada; mantener el ID original
-- **HUs ELIMINADAS**: eliminar la HU y todos sus CAs asociados; renumerar para mantener secuencia sin huecos
-- **CAs NUEVOS**: insertar al final de los CAs de su HU padre con numeración consecutiva. Incluir `← HU-XXX`
-- **CAs MODIFICADOS**: reemplazar solo el GIVEN/WHEN/THEN del CA afectado; mantener el ID
-- **CAs ELIMINADOS**: eliminar y renumerar los CAs restantes para eliminar huecos
-- **Journeys**: actualizar añadiendo/modificando/eliminando pasos según los cambios de HUs
-- **Instrucciones Inambiguas**: añadir/modificar/eliminar reglas según el delta
-- **Fuera de Alcance**: actualizar si el delta lo especifica
+Aplica los cambios siguiendo las reglas de `${CLAUDE_SKILL_DIR}/references/spec_delta_integration_rules.md` (no interpretar, no ampliar, no inferir; reglas por tipo: HUs añadidas/modificadas/eliminadas, CAs, Journeys, Instrucciones Inambiguas, Fuera de Alcance).
 
 ### Paso 6B: Actualizar versionado y Changelog
 
 Incrementar la versión en el header del spec (1.0 → 1.1, 1.2 → 1.3, 2.0 → 2.1).
 
-Añadir o actualizar la sección Changelog al final del spec (orden cronológico inverso):
-
-```markdown
-## Changelog
-
-### v[X.Y] — [YYYY-MM-DD]
-- **Añadidas**: HU-XXX "[título]"
-- **Modificadas**: HU-XXX "[título original]" — [descripción breve del cambio]
-- **Eliminadas**: HU-XXX "[título]" (y sus CAs asociados)
-- **CAs nuevos**: CA-XXX a CA-YYY
-- **CAs modificados**: CA-XXX "[título]"
-- **CAs eliminados**: CA-XXX "[título]"
-- **Reglas**: [nueva/modificada/eliminada] "[descripción breve]"
-```
-
-Si se aplicaron asunciones de gaps `[INFORMATIVO]`, añadir antes del Changelog:
-
-```markdown
-## Asunciones Aplicadas (v[X.Y])
-
-- **[D-XXX]**: [descripción de la asunción aplicada por defecto]
-```
+Añadir o actualizar `## Changelog` al final del spec (orden cronológico inverso) siguiendo la plantilla de `${CLAUDE_SKILL_DIR}/references/changelog_template.md`. Si se aplicaron asunciones `[INFORMATIVO]`, añadir también `## Asunciones Aplicadas (v[X.Y])` antes del Changelog.
 
 ### Paso 6B.5: Actualizar trazabilidad en `_features.md` (si existe)
 
-Busca `_features.md` en el directorio base del proyecto:
-- Si el spec está en `features/<nombre>/`: busca dos niveles arriba (ej: `features/auth/auth_spec.md` → busca en el directorio que contiene la carpeta `features/`)
-- Si el spec es monolítico: busca en el mismo directorio
-
-**Si existe el archivo y contiene la sección `## Trazabilidad RF → HU → Feature`:**
-
-Para cada tipo de cambio aplicado en este delta:
-
-- **HUs AÑADIDAS**: añade una fila nueva por cada HU con:
-  - RF inferido del delta analysis (busca el RF de origen mencionado en el delta o en el documento de nuevos requisitos)
-  - HU con su nuevo ID y título
-  - Feature: nombre del feature spec actual
-  - Estado: `activo`
-- **HUs MODIFICADAS**: actualiza el Título HU en la fila correspondiente; el ID y el RF no cambian
-- **HUs ELIMINADAS**: cambia el Estado de la fila a `eliminado vX.Y` (usando la nueva versión del spec); **NO eliminar la fila** — se conserva para auditoría
-
-Actualiza la tabla `## Cobertura por RF` con las HUs y features modificadas.
-
-Añade una fila al `## Historial de cambios` con la nueva versión del spec, la fecha de hoy, tipo "delta apply" y una descripción breve del conjunto de cambios.
-
-**Si no existe el archivo o no tiene sección de trazabilidad:** omite este paso silenciosamente — no bloquea ni avisa.
+Sigue la guía de `${CLAUDE_SKILL_DIR}/references/trazabilidad_delta_guide.md` para actualizar filas de HUs añadidas/modificadas/eliminadas, cobertura por RF e historial de cambios. Si no existe `_features.md` o no tiene sección de trazabilidad, omitir silenciosamente.
 
 ---
 
@@ -208,18 +152,6 @@ Este paso es **informativo y no bloquea** el flujo.
 
 ## Paso N: Informar al usuario
 
-**Tras analyze:**
-- Path del delta analysis generado
-- Resumen de impacto: cuántas HUs añadidas/modificadas/eliminadas, cuántos CAs afectados
-- Cuántos gaps `[CRÍTICO]` pendientes y cuántos `[INFORMATIVO]`
-- Siguiente paso: "Revisa `<path>_delta_analysis.md`, responde los gaps `[CRÍTICO]` marcados como _(pendiente)_ y luego ejecuta `/wf-spec-delta apply <spec.md> <delta_analysis.md>`"
+**Tras analyze:** path del delta generado, impacto (HUs añadidas/modificadas/eliminadas, CAs afectados), nº de gaps `[CRÍTICO]` e `[INFORMATIVO]` pendientes. Siguiente paso: responder gaps críticos y ejecutar `/wf-spec-delta apply`.
 
-**Tras apply:**
-- Path del spec actualizado
-- Nueva versión del spec (ej: v1.0 → v1.1)
-- Resumen de cambios integrados: HUs y CAs añadidos/modificados/eliminados
-- Estado de la trazabilidad: si se actualizó `_features.md`, indicar: "✓ Trazabilidad actualizada en `_features.md`."
-- Resultado de la verificación de conflictos:
-  - Sin conflictos o sin `_features.md`: omitir o indicar brevemente
-  - Con conflictos: "⚠ Se detectaron conflictos. Revisa `<path>_conflict_report.md` antes de continuar con `/wf-prepare-plan`."
-- Siguiente paso: "Puedes validar la integridad del spec actualizado con `/wf-spec-validate <path>_spec.md`"
+**Tras apply:** path del spec actualizado, nueva versión, resumen de cambios (HUs/CAs). Si se actualizó `_features.md`: indicar "✓ Trazabilidad actualizada". Si hay conflictos: referenciar `_conflict_report.md`. Siguiente paso: `/wf-spec-validate <path>_spec.md`.

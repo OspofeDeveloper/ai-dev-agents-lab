@@ -34,15 +34,7 @@ Si no hay argumento, informa al usuario:
 
 ## Paso 2: Verificar el archivo
 
-Verifica que el archivo existe:
-```
-!test -f "<path>" && echo "EXISTE" || echo "NO_EXISTE"
-```
-
-Si no existe → informa al usuario con la ruta exacta y detén.
-
-Si el nombre termina en `_spec.md`, `_plan.md` o `_tasks.md` → informa:
-> "Este archivo parece un artefacto posterior del pipeline SDD. `/wf-spec-discover` opera sobre PRDs o documentos de requisitos previos a Spec."
+Verifica que el archivo existe; si no → informa con ruta exacta y detén. Si el nombre termina en `_spec.md`, `_plan.md` o `_tasks.md` → informa que este skill opera sobre PRDs, no sobre artefactos derivados del pipeline.
 
 ---
 
@@ -56,19 +48,7 @@ Lee el archivo PRD en su totalidad.
 
 Los gaps sin responder (`_(pendiente)_`) se ignoran en discover — no bloquean la identificación de features.
 
-**Guardrail de gobernanza:** antes de continuar, inspecciona si alguna respuesta resuelta del `_analysis.md` introduce señales de cambio de producto según `kb-product-change-governance`:
-- entidad persistente nueva
-- catálogo reutilizable
-- modelo owner nuevo
-- nueva granularidad funcional
-- flujo adicional no comprometido en el PRD
-
-Si detectas cualquiera de estas señales:
-- si **NO** se pasó `--allow-derived-scope-from-analysis` → **DETENTE** e informa:
-  > "El `_analysis.md` contiene respuestas resueltas que expanden el producto más allá del PRD vigente. Formaliza primero el cambio con `wf-prd-change <prd.md> --new-reqs <cambio.md>` antes de generar el discovery, o re-ejecuta con `--allow-derived-scope-from-analysis` si quieres continuar dejando el discovery marcado como alcance derivado."
-- si **SÍ** se pasó `--allow-derived-scope-from-analysis` → continúa, pero deja constancia explícita de que el `_discovery.md` no representa PRD puro sino `PRD + analysis respondido`.
-
-No derives un `_discovery.md` como si fuera PRD puro si el contexto ya indica expansión funcional no consolidada.
+**Guardrail de gobernanza:** inspecciona si alguna respuesta resuelta del `_analysis.md` introduce señales de cambio de producto según `kb-product-change-governance`. Si detectas alguna: sin `--allow-derived-scope-from-analysis` → **DETENTE** e informa al usuario de formalizar el cambio con `wf-prd-change` o re-ejecutar con el flag; con el flag → continúa marcando el `_discovery.md` como `PRD + analysis respondido`.
 
 ---
 
@@ -93,9 +73,7 @@ Consulta `kb-decompose-expert` y aplica el algoritmo de identificación por cohe
 3. **Agrupa por objetivo**: un objetivo principal = una feature candidata
 4. **Nombra cada candidata** en kebab-case descriptivo (ej: `appointment-management`, `time-tracking`)
 
-**Nota:** Aquí trabajas con un PRD crudo, no con un spec validado. No existen HUs ni CAs formales aún. Debes razonar sobre:
-- **Journeys anticipados**: qué recorridos de usuario se pueden prever a partir del PRD
-- **CAs derivables**: qué criterios de aceptación verificables se podrían generar razonablemente
+**Nota:** No existen HUs/CAs formales aún — razona sobre journeys anticipados y CAs derivables del contenido del PRD.
 
 ---
 
@@ -175,26 +153,6 @@ Escribe el artefacto generado en ese path.
 
 ## Paso 10: Informar al usuario
 
-Tras escribir el archivo, informa:
-- Path del archivo generado
-- Número de features identificadas
-- Tabla resumen:
+Tras escribir el archivo, informa: path generado, número de features, tabla resumen (Feature | Actor principal | RFs cubiertos | Shared models). Si hubo merges: listar candidatas fusionadas y razón. Si hay ownership ambiguo pendiente: listarlo. Si se usó `--analysis`: mencionar que se utilizó como contexto.
 
-| Feature | Actor principal | RFs cubiertos | Shared models |
-|---------|----------------|---------------|---------------|
-
-- Si hubo merges: lista de candidatas fusionadas y razón
-- Si hay shared models con ownership ambiguo pendiente de confirmación: listarlos
-- Si se usó `--analysis`: "Se utilizó el análisis previo (`<path>`) como contexto adicional para la identificación de features."
-
-**Siguiente paso** (mostrar siempre):
-
-> Para generar todos los specs en paralelo:
-> ```
-> /wf-spec-features-first <prd.md>
-> ```
->
-> Para generar el spec de una feature individual:
-> ```
-> /wf-spec-fast-track <prd.md> --scope-from <path>_discovery.md --feature F-001
-> ```
+Siempre mostrar siguientes pasos: `/wf-spec-features-first <prd.md>` para todos los specs en paralelo, o `/wf-spec-fast-track <prd.md> --scope-from <path>_discovery.md --feature F-001` para una feature individual.
