@@ -14,7 +14,7 @@ Indica el modo: "Iteración sobre subset `[F-001, F-002, ...]`" o "Generación c
 
 - Discovery: `<path>_discovery.md`
 - Features index: `<path>_features.md` (actualizado incrementalmente)
-- Specs: `features/<nombre>/<nombre>_spec.md` (recién generados + preexistentes)
+- Specs: `features/<nombre>/spec/<nombre>_spec.md` (recién generados + preexistentes; features planas legacy: sin subcarpeta)
 - Conflict report: `<path>_conflict_report.md` (si aplica)
 - Readiness report: `<path>_readiness_report.md` (si aplica)
 
@@ -32,7 +32,7 @@ Indica el modo: "Iteración sobre subset `[F-001, F-002, ...]`" o "Generación c
 **Si hay features LISTA:**
 > "Las features marcadas como LISTA pueden avanzar a planificación:"
 > ```
-> /wf-prepare-plan generate features/<nombre>/<nombre>_spec.md
+> /wf-prepare-plan generate features/<nombre>/spec/<nombre>_spec.md
 > ```
 
 **Si hay features `PENDIENTE_GENERACIÓN`:**

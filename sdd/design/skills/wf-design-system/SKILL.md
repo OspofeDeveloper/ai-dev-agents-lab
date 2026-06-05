@@ -44,7 +44,8 @@ El `DESIGN_BRIEF.md` es precondicion de este workflow salvo override explicito. 
 
 1. Si se paso `--brief <path>`, lee ese archivo directamente y continua.
 2. Si no se paso `--brief`, busca `DESIGN_BRIEF.md` en la raiz del producto:
-   - si el spec esta en `features/<nombre>/`, usa dos niveles arriba
+   - si `.sdd/project-init.json` declara `artifacts.design`, en ese directorio
+   - si el spec esta dentro de `features/<nombre>/` (directamente o en su subcarpeta `spec/`), en el directorio que contiene `features/`
    - en otros casos, usa el mismo directorio del spec
 3. Si existe, leelo y usalo como fuente prioritaria para direccion visual.
 4. Si **no existe** y **no se paso `--no-brief`**, deten el flujo con:
@@ -64,7 +65,7 @@ El PRD enriquece la derivacion de Visual Personality con nombre, vision y audien
 
 ## Paso 2d: Research de apps de referencia
 
-1. Busca `<basename>_design_discovery.md` en el mismo directorio del spec (donde `<basename>` es el nombre del spec sin `_spec.md`).
+1. Busca `<basename>_design_discovery.md` (donde `<basename>` es el nombre del spec sin `_spec.md`): en la subcarpeta `design/` de la feature si el spec esta en `features/<nombre>/spec/`; si no, en el mismo directorio del spec (layout plano legacy).
 2. **Si existe**: leelo completo y usalo como input de Reference Apps en el Paso 4. Salta el research inline.
 3. **Si no existe**: ejecuta research inline ligero:
    - Deriva 2-3 queries adaptadas (sector + actor + flujos dominantes + tono funcional).
@@ -87,7 +88,7 @@ Si la policy es `preferred` u `optional`, continua.
 - Si se paso `--design-file`, usa ese path.
 - Si no (regla de layout): si `.sdd/project-init.json` (en el directorio actual o un ancestro) declara `artifacts.design`, crea o actualiza `<raíz>/<artifacts.design>/DESIGN.md`.
 - En otro caso, crea o actualiza `DESIGN.md` en el directorio raiz del producto:
-  - si el spec esta en `features/<nombre>/`, usa dos niveles arriba
+  - si el spec esta dentro de `features/<nombre>/` (directamente o en su subcarpeta `spec/`), usa el directorio que contiene `features/`
   - en otros casos, usa el mismo directorio del spec
 
 Si el archivo ya existe, leelo completo para usarlo como base.

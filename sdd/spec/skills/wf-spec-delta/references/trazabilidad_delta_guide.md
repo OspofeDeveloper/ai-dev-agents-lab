@@ -2,7 +2,7 @@
 
 ## Localizar el archivo
 
-- Si el spec está en `features/<nombre>/`: busca dos niveles arriba (`../../*_features.md`)
+- Si el spec está dentro de `features/<nombre>/` (directamente — layout plano legacy — o en su subcarpeta `spec/`): busca `*_features.md` en el directorio que contiene `features/`
 - Si el spec es monolítico: busca en el mismo directorio
 
 Si no existe el archivo o no tiene `## Trazabilidad RF → HU → Feature`: omitir este paso silenciosamente.

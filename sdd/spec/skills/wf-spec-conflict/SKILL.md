@@ -27,14 +27,14 @@ Si no hay `--features-dir`, intenta inferir el directorio de features como `feat
 
 Si no hay argumento, informa al usuario:
 > "Uso: `/wf-spec-conflict <feature_spec.md> --features-dir <path/features/>`"
-> "Ejemplo: `/wf-spec-conflict features/auth/auth_spec.md --features-dir features/`"
+> "Ejemplo: `/wf-spec-conflict features/auth/spec/auth_spec.md --features-dir features/`"
 
 ---
 
 ## Paso 2: Localizar todos los specs
 
 1. Verifica que el spec objetivo existe.
-2. Busca todos los archivos `*_spec.md` dentro del directorio `--features-dir` (un nivel de profundidad: `features/*/<nombre>_spec.md`).
+2. Busca todos los archivos `*_spec.md` dentro del directorio `--features-dir`, cubriendo ambos layouts de feature: `features/*/spec/*_spec.md` (subcarpetas) y `features/*/*_spec.md` (plano legacy).
 3. Si no hay specs en el directorio → informa: "No se encontraron specs en `<features-dir>`. Asegúrate de haber ejecutado `/wf-spec-features-first` o `/wf-spec-fast-track` o de que la ruta es correcta."
 4. Si solo hay 1 spec en total (contando el objetivo) → informa: "Solo hay 1 spec. Se necesitan al menos 2 specs para verificar conflictos."
 
@@ -96,7 +96,7 @@ Usa `${CLAUDE_SKILL_DIR}/references/conflict_report_template.md` para estructura
 
 Determina el path de salida:
 - Si se verificó un spec específico: mismo directorio del spec objetivo + `<nombre_base>_conflict_report.md`
-  - Ejemplo: `features/auth/auth_spec.md` → `features/auth/auth_conflict_report.md`
+  - Ejemplo: `features/auth/spec/auth_spec.md` → `features/auth/spec/auth_conflict_report.md`
 - Si se verificaron todos los specs del directorio: raíz del directorio de features + `_conflict_report.md`
   - Ejemplo: `features/` → `features/_conflict_report.md`
 

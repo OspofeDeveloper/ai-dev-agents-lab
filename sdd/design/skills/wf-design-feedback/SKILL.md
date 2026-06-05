@@ -38,7 +38,7 @@ Si no hay argumento, informa:
 
 ### 2.2 Determinar output path
 
-- Si hay `--feature`, escribir en el mismo directorio del spec: `<basename>_design_feedback.md`.
+- Si hay `--feature`, escribir `<basename>_design_feedback.md`: en la subcarpeta `design/` de la feature si el spec esta en `features/<nombre>/spec/` (crea el directorio si no existe); en el mismo directorio del spec en otros casos (layout plano legacy).
 - Si no, escribir en `<dir_producto>/design_feedback_<fecha>.md`.
 
 ### 2.3 Estructurar la captura

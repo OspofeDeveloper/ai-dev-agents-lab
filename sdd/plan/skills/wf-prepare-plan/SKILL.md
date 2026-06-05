@@ -62,7 +62,7 @@ Antes de verificar el Spec, determina el contexto técnico del proyecto. Busca `
 Lee el `_spec.md` en su totalidad.
 
 Busca si existe un `_features.md` en el proyecto:
-- si el spec está en `features/<nombre>/`, busca `../../*_features.md`
+- si el spec está dentro de `features/<nombre>/` (directamente — layout plano legacy — o en su subcarpeta `spec/`), busca `*_features.md` en el directorio que contiene `features/`
 - si el spec está en el directorio raíz, busca `*_features.md` en ese mismo directorio
 
 Si existe `_features.md`, léelo completo.
@@ -83,9 +83,10 @@ Determina si la feature requiere handoff de Design exactamente según esa regla 
 Si **sí requiere** handoff de Design:
 
 1. Resuelve `DESIGN.md`:
-   - dos niveles arriba si el spec está en `features/<nombre>/`
+   - si `.sdd/project-init.json` (en el directorio actual o un ancestro) declara `artifacts.design`, búscalo en ese directorio
+   - si el spec está dentro de `features/<nombre>/` (directamente o en su subcarpeta `spec/`), búscalo en el directorio que contiene `features/`
    - en el mismo directorio en otros casos
-2. Resuelve `<feature>_flows.md` y `<feature>_views.md` en el mismo directorio del spec.
+2. Resuelve `<feature>_flows.md` y `<feature>_views.md`: en la subcarpeta `design/` de la feature (`features/<nombre>/design/`); si no existe, en el mismo directorio del spec (layout plano legacy).
 3. Lee los tres archivos completos.
 4. Si falta alguno, **detén la ejecución**:
    > "❌ La feature requiere handoff de Design pero falta uno o más artefactos (`DESIGN.md`, `<feature>_flows.md`, `<feature>_views.md`). Ejecuta `/wf-design-system` y `/wf-design-feature-prototype` antes de generar el Plan."
@@ -138,8 +139,9 @@ Si el agente devuelve otros gaps normativos (`TRACE_GAPs`, `PLAN_GAPs`):
 ## Paso 7: Escribir el resultado
 
 Determina el path de salida:
-- mismo directorio + nombre base + `_plan.md`
-- ejemplo: `docs/login_spec.md` → `docs/login_plan.md`
+- si el spec está en la subcarpeta `spec/` de una feature → subcarpeta hermana `plan/`: `features/<nombre>/plan/<nombre>_plan.md` (crea el directorio si no existe)
+- si el spec está directamente en `features/<nombre>/` (layout plano legacy) o fuera de una feature → mismo directorio + nombre base + `_plan.md`
+- ejemplos: `features/login/spec/login_spec.md` → `features/login/plan/login_plan.md`; `docs/login_spec.md` → `docs/login_plan.md`
 
 Antes de escribir, verifica si el archivo ya existe:
 ```bash
@@ -151,6 +153,8 @@ Si ya existe → pregunta al usuario:
 - Si responde **sí** → continúa.
 
 Escribe el output del agente en ese archivo.
+
+Antes de cerrar, verifica que el header `Spec origen` del plan resuelve como ruta relativa **desde la ubicación final del `_plan.md`** (con subcarpetas: `../spec/<nombre>_spec.md`; layout plano: `<nombre>_spec.md`). Si no resuelve, corrígelo — el sellador de `/wf-plan-validate` lo comprueba.
 
 ---
 

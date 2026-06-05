@@ -39,7 +39,7 @@ Si `--prd` se paso, leelo. El brief y el PRD ayudan a guiar el research, pero no
 ## Paso 4: Determinar path de salida
 
 - Si `--output` se paso, usalo.
-- Si no, escribe `<basename>_design_discovery.md` en el mismo directorio del spec, donde `<basename>` es el nombre del spec sin `_spec.md`.
+- Si no, escribe `<basename>_design_discovery.md` (donde `<basename>` es el nombre del spec sin `_spec.md`): en la subcarpeta `design/` de la feature si el spec esta en `features/<nombre>/spec/` (crea el directorio si no existe); en el mismo directorio del spec en otros casos (layout plano legacy).
 
 ## Paso 5: Derivar contexto base
 

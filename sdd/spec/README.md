@@ -39,7 +39,7 @@ Tienes un PRD o documento de requisitos y quieres convertirlo en Specs SDD para 
   → si el discovery detecta más de 5 features, se detiene salvo que añadas `--all-features`
   → ejecuta discover + fast-track por feature en paralelo
   → genera prd_discovery.md, prd_features.md
-  → genera features/<nombre>/<nombre>_spec.md por cada feature
+  → genera features/<nombre>/spec/<nombre>_spec.md por cada feature
   → ejecuta verificación de conflictos y readiness automáticamente
 ```
 
@@ -93,7 +93,7 @@ Quieres documentar solo una capacidad concreta sin pasar por el spec monolítico
 
 ```
 /wf-spec-fast-track notifications.md --capability push-notifications
-  → genera features/push-notifications/push-notifications_spec.md directamente
+  → genera features/push-notifications/spec/push-notifications_spec.md directamente
 ```
 
 **Cuándo usarlo**: cuando el documento de entrada ya describe una sola capacidad acotada y no necesitas documentar el sistema completo. El spec resultante puede tener `## Items Pendientes` si hay gaps críticos, y `## Asunciones Aplicadas` si se resolvieron gaps informativos con asunciones razonables.
@@ -105,12 +105,12 @@ Quieres documentar solo una capacidad concreta sin pasar por el spec monolítico
 El software ya existe, hay un `_spec.md` en producción y quieres añadir o modificar una funcionalidad sin regenerar todo.
 
 ```
-/wf-spec-delta analyze features/auth/auth_spec.md --new-reqs new_auth_requirements.md
-  → genera features/auth/auth_delta_analysis.md con HUs/CAs añadidos, modificados, eliminados
+/wf-spec-delta analyze features/auth/spec/auth_spec.md --new-reqs new_auth_requirements.md
+  → genera features/auth/spec/auth_delta_analysis.md con HUs/CAs añadidos, modificados, eliminados
 
 [revisa el delta, responde gaps [CRÍTICO]]
 
-/wf-spec-delta apply features/auth/auth_spec.md features/auth/auth_delta_analysis.md
+/wf-spec-delta apply features/auth/spec/auth_spec.md features/auth/spec/auth_delta_analysis.md
   → actualiza auth_spec.md (versión 1.0 → 1.1) con sección Changelog
 ```
 
@@ -123,7 +123,7 @@ Si el spec tiene HUs marcadas `[INCOMPLETO]` por gaps `[CRÍTICO]` sin responder
 ```
 [responde los gaps [P-XXX] en el _analysis.md]
 
-/wf-spec-gap-resolve features/auth/auth_spec.md
+/wf-spec-gap-resolve features/auth/spec/auth_spec.md
   → auto-descubre el _analysis.md, integra respuestas, completa HUs y CAs, versión 1.0 → 1.1
 ```
 
@@ -156,7 +156,7 @@ Si la "respuesta" realmente cambia el alcance o el roadmap del producto:
 Editas manualmente un `_spec.md` y quieres verificar que no introdujiste contaminación técnica ni rompiste la estructura SDD.
 
 ```
-/wf-spec-validate features/auth/auth_spec.md
+/wf-spec-validate features/auth/spec/auth_spec.md
   → imprime informe APROBADO / REQUIERE_REVISIÓN (no genera archivo)
 ```
 
@@ -169,8 +169,8 @@ Editas manualmente un `_spec.md` y quieres verificar que no introdujiste contami
 Quieres verificar que los specs de las diferentes features del proyecto son coherentes entre sí: sin HUs duplicadas, CAs contradictorios ni scope overlap.
 
 ```
-/wf-spec-conflict features/auth/auth_spec.md --features-dir features/
-  → genera features/auth/auth_conflict_report.md si hay conflictos
+/wf-spec-conflict features/auth/spec/auth_spec.md --features-dir features/
+  → genera features/auth/spec/auth_conflict_report.md si hay conflictos
 ```
 
 **Cuándo usarlo**: después de modificar un spec existente o añadir una nueva feature con fast-track o delta, para verificar que el cambio no choca con el resto del sistema. También se ejecuta automáticamente al final de `/wf-spec-features-first` (modo no bloqueante).
@@ -235,9 +235,9 @@ La lógica exacta de routing y la política de skills viven en [CLAUDE.md](/User
 |-------|---------|---------|
 | `wf-spec-analyze` | `/wf-spec-analyze` | `_analysis.md` (mapa Spec, pureza del PRD, gaps de negocio) |
 | `wf-spec-validate` | `/wf-spec-validate` | Informe inline (sin archivo) |
-| `wf-spec-features-first` | `/wf-spec-features-first [--features F-XXX,...] [--allow-open-critical-gaps] [--allow-derived-scope-from-analysis] [--all-features]` | `_discovery.md`, `_features.md` (Project Hub incremental con estados canónicos y trazabilidad de gobernanza), `features/<x>/<x>_spec.md` |
+| `wf-spec-features-first` | `/wf-spec-features-first [--features F-XXX,...] [--allow-open-critical-gaps] [--allow-derived-scope-from-analysis] [--all-features]` | `_discovery.md`, `_features.md` (Project Hub incremental con estados canónicos y trazabilidad de gobernanza), `features/<x>/spec/<x>_spec.md` |
 | `wf-spec-discover` | `/wf-spec-discover [--analysis <analysis.md>] [--allow-derived-scope-from-analysis]` | `_discovery.md` con mapa de features y metadata de gobernanza |
-| `wf-spec-fast-track` | `/wf-spec-fast-track` | `features/<x>/<x>_spec.md` directamente, con marca de origen de alcance si aplica |
+| `wf-spec-fast-track` | `/wf-spec-fast-track` | `features/<x>/spec/<x>_spec.md` directamente, con marca de origen de alcance si aplica |
 | `wf-spec-conflict` | `/wf-spec-conflict` | `_conflict_report.md` |
 | `wf-spec-delta` | `/wf-spec-delta` | `_delta_analysis.md` (analyze), spec actualizado (apply) |
 | `wf-spec-gap-resolve` | `/wf-spec-gap-resolve` | spec actualizado desde `_analysis.md` |
@@ -289,13 +289,19 @@ proyecto/
 └── features/
     └── <nombre-feature>/
         ├── README.md                         ← /wf-spec-fast-track
-        ├── <nombre>_spec.md                  ← /wf-spec-fast-track
-        ├── <nombre>_delta_analysis.md        ← /wf-spec-delta analyze
-        ├── <nombre>_sync_requirements.md     ← /wf-spec-sync-from-prd analyze
-        ├── <nombre>_conflict_report.md       ← /wf-spec-conflict
-        ├── <nombre>_plan.md                  ← /wf-prepare-plan (etapa siguiente)
-        └── <nombre>_tasks.md                 ← /wf-prepare-tasks (etapa siguiente)
+        ├── spec/
+        │   ├── <nombre>_spec.md              ← /wf-spec-fast-track
+        │   ├── <nombre>_delta_analysis.md    ← /wf-spec-delta analyze
+        │   ├── <nombre>_sync_requirements.md ← /wf-spec-sync-from-prd analyze
+        │   └── <nombre>_conflict_report.md   ← /wf-spec-conflict
+        ├── design/                           ← etapa Design (flows, views, ui_prompt)
+        ├── plan/
+        │   └── <nombre>_plan.md              ← /wf-prepare-plan (etapa siguiente)
+        └── tasks/
+            └── <nombre>_tasks.md             ← /wf-prepare-tasks (etapa siguiente)
 ```
+
+> Features creadas con el layout plano legacy (todos los artefactos directamente en `features/<nombre>/`) siguen siendo válidas: los workflows leen ambos layouts y no los mezclan dentro de una misma feature.
 
 ---
 

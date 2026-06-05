@@ -67,7 +67,7 @@ Esta etapa también identifica los **shared models**: modelos de domain que son 
 
 El resultado es:
 - `_features.md` — índice de features con scope, shared models y rutas
-- `features/<nombre>/<nombre>_spec.md` — un Spec SDD completo y autocontenido por feature
+- `features/<nombre>/spec/<nombre>_spec.md` — un Spec SDD completo y autocontenido por feature
 
 ### Etapa 3 — Design
 
@@ -312,21 +312,21 @@ project-root/
 │
 └── features/
     ├── authentication/
-    │   ├── authentication_spec.md      # /wf-spec-fast-track
-    │   ├── authentication_flows.md     # /wf-design-feature-prototype
-    │   ├── authentication_views.md     # /wf-design-feature-prototype
-    │   ├── authentication_ui_prompt.md # /wf-design-feature-prototype
-    │   ├── authentication_plan.md      # /wf-prepare-plan
-    │   └── authentication_tasks.md     # /wf-prepare-tasks
-    ├── services/
-    │   ├── services_spec.md
-    │   ├── services_flows.md
-    │   ├── services_views.md
-    │   ├── services_ui_prompt.md
-    │   ├── services_plan.md
-    │   └── services_tasks.md
+    │   ├── README.md                       # /wf-spec-fast-track
+    │   ├── spec/
+    │   │   └── authentication_spec.md      # /wf-spec-fast-track
+    │   ├── design/
+    │   │   ├── authentication_flows.md     # /wf-design-feature-prototype
+    │   │   ├── authentication_views.md     # /wf-design-feature-prototype
+    │   │   └── authentication_ui_prompt.md # /wf-design-feature-prototype
+    │   ├── plan/
+    │   │   └── authentication_plan.md      # /wf-prepare-plan
+    │   └── tasks/
+    │       └── authentication_tasks.md     # /wf-prepare-tasks
     └── <una carpeta por feature>/
 ```
+
+> Features creadas con el layout plano legacy (todos los artefactos directamente en `features/<nombre>/`) siguen siendo válidas: los workflows leen ambos layouts y no los mezclan dentro de una misma feature.
 
 ---
 
@@ -356,7 +356,7 @@ project-root/
 # salvo override explícito con `--all-features`.
 # → prd_discovery.md (mapa de features + scope RF→Feature)
 # → prd_features.md (índice de features + tabla de shared models)
-# → features/<nombre>/<nombre>_spec.md (un spec por feature, en paralelo)
+# → features/<nombre>/spec/<nombre>_spec.md (un spec por feature, en paralelo)
 
 # Opción B — Iterativo por fases / subset (delivery por fases):
 /wf-spec-discover prd.md --analysis prd_analysis.md

@@ -219,8 +219,8 @@ mkdir -p "$CLAUDE_DIR/rules"
 phase_globs() {
   case "$1" in
     prd)    printf '%s\n' "prd/**" "**/prd*.md" "**/*_analysis.md" "**/*_discovery.md" ;;
-    spec)   printf '%s\n' "spec/**" "**/*_spec.md" "**/*_features.md" ;;
-    design) printf '%s\n' "design/**" "**/DESIGN*.md" "**/*_flows.md" "**/*_views.md" "**/*_ui_prompt.md" ;;
+    spec)   printf '%s\n' "spec/**" "**/features/*/spec/**" "**/*_spec.md" "**/*_features.md" ;;
+    design) printf '%s\n' "design/**" "**/features/*/design/**" "**/DESIGN*.md" "**/*_flows.md" "**/*_views.md" "**/*_ui_prompt.md" ;;
     plan)   printf '%s\n' "**/*_plan.md" ;;
     tasks)  printf '%s\n' "**/*_tasks.md" ;;
   esac

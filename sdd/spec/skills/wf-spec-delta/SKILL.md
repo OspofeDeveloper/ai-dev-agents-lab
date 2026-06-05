@@ -33,8 +33,8 @@ Si no hay argumento o el modo no es válido, informa al usuario:
 > - "`/wf-spec-delta apply <feature_spec.md> <feature_delta_analysis.md>`"
 
 Ejemplos:
-- `analyze features/auth/auth_spec.md --new-reqs new_requirements.md`
-- `apply features/auth/auth_spec.md features/auth/auth_delta_analysis.md`
+- `analyze features/auth/spec/auth_spec.md --new-reqs new_requirements.md`
+- `apply features/auth/spec/auth_spec.md features/auth/spec/auth_delta_analysis.md`
 
 Si el usuario intenta usar `resolve`, remítele a:
 > "`/wf-spec-gap-resolve <feature_spec.md> [--analysis <path_analysis.md>]`"
@@ -134,14 +134,14 @@ Revisa que el spec resultante sigue teniendo los 8 elementos SDD. Si alguno ha q
 ## Paso N-1: Escribir el resultado
 
 - **Modo `analyze`**: mismo directorio que el spec + nombre base + `_delta_analysis.md`
-  - Ejemplo: `features/auth/auth_spec.md` → `features/auth/auth_delta_analysis.md`
+  - Ejemplo: `features/auth/spec/auth_spec.md` → `features/auth/spec/auth_delta_analysis.md`
 - **Modo `apply`**: sobreescribe el spec existente con la versión actualizada
 
 ---
 
 ## Paso N-0.5: Verificación de conflictos tras apply (no bloqueante)
 
-Solo en modo `apply`. Busca si existe un `_features.md` en el proyecto (dos niveles arriba si el spec está en `features/<nombre>/`, o en el mismo directorio):
+Solo en modo `apply`. Busca si existe un `_features.md` en el proyecto (si el spec está dentro de `features/<nombre>/` — directamente o en su subcarpeta `spec/` — búscalo en el directorio que contiene `features/`; en otro caso, en el mismo directorio):
 
 - **Si existe `_features.md`**: lee todos los specs `*_spec.md` de las features declaradas. Ejecuta el workflow `wf-spec-conflict` con el spec recién actualizado + todos los otros specs. Si detecta conflictos → escribe el informe en `<nombre>_conflict_report.md` en el mismo directorio que el spec.
 - **Si no existe `_features.md`**: omitir este paso.

@@ -57,9 +57,9 @@ Para cada feature potencialmente afectada:
 
 ### Paso 4A: Generar requisitos de sync por feature
 
-Para cada feature afectada, escribe un archivo:
+Para cada feature afectada, escribe un archivo junto al spec de la feature (en el mismo directorio donde vive su `_spec.md`, sea `features/<nombre>/spec/` o `features/<nombre>/` en layout plano legacy):
 
-`features/<nombre>/<nombre>_sync_requirements.md`
+`<directorio_del_spec>/<nombre>_sync_requirements.md`
 
 Debe contener:
 

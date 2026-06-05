@@ -93,7 +93,7 @@ Si no hay `--features` y el discovery contiene >5 features: sin `--all-features`
 
 ### 4b — Detectar specs preexistentes
 
-Para cada feature del subset: si ya existe `features/<nombre>/<nombre>_spec.md` → no relances (preservar trabajo previo), excluye del fast-track y anota como "ya generada". Informa al usuario: N_total totales, N_subset a procesar, N_a_generar nuevas, N_pendientes futuras.
+Para cada feature del subset: si ya existe su spec — `features/<nombre>/spec/<nombre>_spec.md` (subcarpetas) o `features/<nombre>/<nombre>_spec.md` (plano legacy) — → no relances (preservar trabajo previo), excluye del fast-track y anota como "ya generada". Informa al usuario: N_total totales, N_subset a procesar, N_a_generar nuevas, N_pendientes futuras.
 
 ---
 

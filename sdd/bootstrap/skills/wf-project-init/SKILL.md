@@ -334,10 +334,21 @@ Los artefactos de cada fase viven en el directorio declarado en `artifacts` de `
 | Fase | Directorio de artefactos | Qué contiene |
 |---|---|---|
 | PRD | `<artifacts.prd>/` | `prd.md`, `*_analysis.md`, `*_discovery.md` |
-| Spec | `<artifacts.spec>/` | `_features.md`, `features/<nombre>/` (specs, README) |
+| Spec | `<artifacts.spec>/` | `_features.md`, `features/<nombre>/` (una carpeta por feature) |
 | Design | `<artifacts.design>/` | `DESIGN_BRIEF.md`, `DESIGN.md`, `tokens/` |
 
-Los `_plan.md` y `_tasks.md` de cada feature viven SIEMPRE junto a su spec (`features/<nombre>/`) para preservar la trazabilidad por rutas relativas. Los workflows resuelven sus rutas de salida desde este mapa — no escribas artefactos fuera de él.
+Cada feature organiza sus artefactos en subcarpetas por fase, con el `README.md` en su raíz:
+
+```
+features/<nombre>/
+  README.md
+  spec/    <nombre>_spec.md (+ deltas, sync_requirements, conflict_report)
+  design/  <nombre>_flows.md, _views.md, _ui_prompt.md (+ discovery, moodboard, variantes)
+  plan/    <nombre>_plan.md
+  tasks/   <nombre>_tasks.md
+```
+
+Los `_plan.md` y `_tasks.md` de cada feature viven SIEMPRE dentro de su carpeta de feature para preservar la trazabilidad por rutas relativas (`Spec origen: ../spec/<nombre>_spec.md`). Las features creadas con el layout plano legacy (artefactos directamente en `features/<nombre>/`) siguen siendo válidas: los workflows leen ambos layouts y no los mezclan dentro de una misma feature. Los workflows resuelven sus rutas de salida desde este mapa — no escribas artefactos fuera de él.
 
 ## Fases y sus reglas
 
@@ -379,7 +390,7 @@ En `MODE=extend`, regenerar con la unión de fases. En el flujo de init, este ar
 }
 ```
 
-(`targets` solo si multiplataforma; en otro caso omitir esa clave. `specialist_workflow` solo si el stack es concreto Y existe `wf-<stack>-init`. `artifacts` sale de `ARTIFACTS_MAP` (5.7): una clave por fase instalada de entre `prd`/`spec`/`design`, valor relativo a la raíz — canónico es el nombre de la fase, p. ej. `"spec": "spec"`. plan/tasks no tienen clave: sus artefactos viven junto al spec de cada feature.)
+(`targets` solo si multiplataforma; en otro caso omitir esa clave. `specialist_workflow` solo si el stack es concreto Y existe `wf-<stack>-init`. `artifacts` sale de `ARTIFACTS_MAP` (5.7): una clave por fase instalada de entre `prd`/`spec`/`design`, valor relativo a la raíz — canónico es el nombre de la fase, p. ej. `"spec": "spec"`. plan/tasks no tienen clave: sus artefactos viven dentro de la carpeta de cada feature — subcarpetas `plan/` y `tasks/`, hermanas de `spec/`.)
 
 3. Escribir `.claude/sdd-mode.json`:
 

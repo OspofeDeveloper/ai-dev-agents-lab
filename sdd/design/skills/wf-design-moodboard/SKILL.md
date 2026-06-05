@@ -38,7 +38,7 @@ Si `--prd` se paso, leelo. Si no, intenta resolver `prd.md` en la raiz del produ
 ## Paso 4: Determinar path de salida
 
 - Si `--output` se paso, usalo.
-- Si no, escribe `<basename>_design_moodboard.md` en el mismo directorio del spec.
+- Si no, escribe `<basename>_design_moodboard.md`: en la subcarpeta `design/` de la feature si el spec esta en `features/<nombre>/spec/` (crea el directorio si no existe); en el mismo directorio del spec en otros casos (layout plano legacy).
 
 ## Paso 5: Captura del material crudo
 
@@ -104,7 +104,7 @@ Reporta:
 
 ## Paso 9: Integracion con `wf-design-intake`
 
-`wf-design-intake` debe, en su Paso 5 (derivar contexto base), buscar `<basename>_design_moodboard.md` en el mismo directorio del spec. Si existe:
+`wf-design-intake` debe, en su Paso 5 (derivar contexto base), buscar `<basename>_design_moodboard.md` en la subcarpeta `design/` de la feature o en el mismo directorio del spec (layout plano legacy). Si existe:
 - usar las pistas de `style_family` como propuestas iniciales del arbol de decision
 - usar los adjetivos sugeridos como punto de partida para `adjectives`
 - usar la atmosfera y referencias como input adicional para Visual Personality

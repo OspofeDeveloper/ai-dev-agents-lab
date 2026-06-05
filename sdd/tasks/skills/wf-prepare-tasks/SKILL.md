@@ -87,8 +87,9 @@ Espera a que el agente complete su ejecución y recibe su output.
 ## Paso 5: Escribir el resultado
 
 Determina el path de salida:
-- mismo directorio + nombre base + `_tasks.md`
-- ejemplo: `docs/login_plan.md` → `docs/login_tasks.md`
+- si el plan está en la subcarpeta `plan/` de una feature → subcarpeta hermana `tasks/`: `features/<nombre>/tasks/<nombre>_tasks.md` (crea el directorio si no existe)
+- si el plan está directamente en `features/<nombre>/` (layout plano legacy) o fuera de una feature → mismo directorio + nombre base + `_tasks.md`
+- ejemplos: `features/login/plan/login_plan.md` → `features/login/tasks/login_tasks.md`; `docs/login_plan.md` → `docs/login_tasks.md`
 
 Antes de escribir, verifica si el archivo ya existe:
 ```bash

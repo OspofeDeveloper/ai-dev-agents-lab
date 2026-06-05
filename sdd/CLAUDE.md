@@ -118,7 +118,7 @@ _analysis.md → [usuario responde gaps o acepta continuar con `--allow-open-cri
     ↓   [/wf-spec-fast-track --analysis _analysis.md] (en paralelo por feature
     ↓                                                 — todas o solo el subset --features)
     ↓
-features/<nombre>/<nombre>_spec.md
+features/<nombre>/spec/<nombre>_spec.md
 _features.md (PROJECT HUB incremental: index + trazabilidad RF→HU→Feature + estado
               incluyendo PENDIENTE_GENERACIÓN para features aún no procesadas)
     ↓ [/wf-spec-conflict]
@@ -127,24 +127,25 @@ _readiness_report.md (estado + orden de implementación)
     ↓ [/wf-design-intake generate — cierra brief de producto, gate obligatorio]
 DESIGN_BRIEF.md
     ↓ [/wf-design-discover — opcional, research validado por usuario]
-features/<nombre>/<nombre>_design_discovery.md
+features/<nombre>/design/<nombre>_design_discovery.md
     ↓ [/wf-design-system generate — por producto, requiere brief]
 DESIGN.md
     ↓ [/wf-design-validate — opcional, audita sin regenerar]
     ↓ [/wf-design-delta — para evoluciones incrementales del DESIGN.md]
     ↓ [/wf-design-feature-prototype generate — por feature, requiere brief y DESIGN.md]
-features/<nombre>/<nombre>_flows.md
-features/<nombre>/<nombre>_views.md
-features/<nombre>/<nombre>_ui_prompt.md
+features/<nombre>/design/<nombre>_flows.md
+features/<nombre>/design/<nombre>_views.md
+features/<nombre>/design/<nombre>_ui_prompt.md
     ↓ [Stitch / validación visual]
     ↓ [/wf-prepare-plan generate — por feature]
-features/<nombre>/<nombre>_plan.md
+features/<nombre>/plan/<nombre>_plan.md
     ↓ [/wf-plan-validate — gate formal]
     ↓ [/wf-prepare-tasks generate — por feature]
-features/<nombre>/<nombre>_tasks.md
+features/<nombre>/tasks/<nombre>_tasks.md
     ↓ [delegación del orquestador al owner de cada task (agentes del stack u orquestador)]
 ```
 
+> Layout de feature: cada feature usa subcarpetas por fase (`spec/`, `design/`, `plan/`, `tasks/`; `README.md` en la raíz de la feature). Las features creadas con el layout plano legacy (todo directamente en `features/<nombre>/`) siguen siendo válidas: los workflows leen ambos layouts y no los mezclan dentro de una misma feature.
 > Modo iterativo: si el usuario solo quiere un subset (fase 1, iteración X), invocar `wf-spec-features-first` con `--features F-001,F-002,...`. Las no incluidas quedan `PENDIENTE_GENERACIÓN` y se procesan en pasadas posteriores.
 
 > Para una petición general de generar specs desde un PRD, invocar primero `/wf-spec-features-first <prd.md>`. El workflow decidirá si debe generar `_analysis.md`, detenerse por gaps críticos o recomendar subset.

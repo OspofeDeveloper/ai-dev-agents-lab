@@ -24,7 +24,7 @@ flowchart TD
     Size -->|No| Generate["Generacion"]
     Subset --> FF["wf-spec-features-first"]
     Generate --> FF
-    FF --> Features[features/<x>/<x>_spec.md]
+    FF --> Features[features/<x>/spec/<x>_spec.md]
     Features --> Conflict["wf-spec-conflict"]
     Conflict --> Readiness["wf-spec-readiness"]
 
@@ -96,9 +96,9 @@ flowchart LR
     F2 --> A2["sdd-spec-writer<br/>wf-spec-fast-track"]
     F3 --> A3["sdd-spec-writer<br/>wf-spec-fast-track"]
 
-    A1 --> S1["features/f1/f1_spec.md"]
-    A2 --> S2["features/f2/f2_spec.md"]
-    A3 --> S3["features/f3/f3_spec.md"]
+    A1 --> S1["features/f1/spec/f1_spec.md"]
+    A2 --> S2["features/f2/spec/f2_spec.md"]
+    A3 --> S3["features/f3/spec/f3_spec.md"]
 
     S1 --> Hub[prd_features.md consolidado]
     S2 --> Hub

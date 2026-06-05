@@ -40,7 +40,8 @@ Si no hay argumento o el modo no es valido, informa:
 
 - Si se pasa `--design-file`, usalo.
 - Si no, busca `DESIGN.md`:
-  - dos niveles arriba si el spec esta en `features/<nombre>/`
+  - si `.sdd/project-init.json` (en el directorio actual o un ancestro) declara `artifacts.design`, en ese directorio
+  - si el spec esta dentro de `features/<nombre>/` (directamente o en su subcarpeta `spec/`), en el directorio que contiene `features/`
   - en el mismo directorio en otros casos
 
 Si no existe, deten:
@@ -54,7 +55,8 @@ El `DESIGN_BRIEF.md` es precondicion salvo override explicito: la feature debe h
 
 1. Si se pasa `--brief <path>`, leelo y continua.
 2. Si no, busca `DESIGN_BRIEF.md`:
-   - dos niveles arriba si el spec esta en `features/<nombre>/`
+   - si `.sdd/project-init.json` declara `artifacts.design`, en ese directorio
+   - si el spec esta dentro de `features/<nombre>/` (directamente o en su subcarpeta `spec/`), en el directorio que contiene `features/`
    - en el mismo directorio en otros casos
 3. Si existe, leelo completo y pasalo al agente como fuente prioritaria.
 4. Si **no existe** y **no se paso `--no-brief`**, deten el flujo con:
@@ -63,7 +65,11 @@ El `DESIGN_BRIEF.md` es precondicion salvo override explicito: la feature debe h
 
 ## Paso 4: Determinar outputs y detectar features ya prototipadas
 
-En el mismo directorio del spec, crea:
+Determina el directorio de salida:
+- si el spec esta en la subcarpeta `spec/` de una feature → subcarpeta hermana `design/`: `features/<nombre>/design/` (crea el directorio si no existe)
+- si el spec esta directamente en `features/<nombre>/` (layout plano legacy) o fuera de una feature → el mismo directorio del spec
+
+Alli crea:
 - `<feature>_flows.md`
 - `<feature>_views.md`
 - `<feature>_ui_prompt.md`
@@ -80,7 +86,7 @@ Si ya existe → pregunta al usuario:
 - Si responde **sí** → continúa.
 
 Antes de delegar, busca otras features ya prototipadas en el directorio hermano:
-- Lista `features/*/`* con `_views.md` y `_flows.md` existentes.
+- Lista las features con `_views.md` y `_flows.md` existentes, en ambos layouts: `features/*/design/*` (subcarpetas) y `features/*/*` (plano legacy).
 - Si las hay, lee los `_views.md` y `_flows.md` de hasta 3 features previas (las mas recientes) y pasalos al agente para que aplique `kb-design-conflict-expert`.
 - Si es la primera feature del producto, no hace falta este chequeo.
 

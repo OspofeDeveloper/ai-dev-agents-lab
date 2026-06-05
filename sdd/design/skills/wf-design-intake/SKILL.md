@@ -46,7 +46,7 @@ Si no se paso, continua sin PRD. El PRD mejora la calidad del brief, pero no es 
 1. Resolver path:
    - Si se paso `--output`, usalo.
    - Si no (regla de layout): si `.sdd/project-init.json` (en el directorio actual o un ancestro) declara `artifacts.design`, usa `<raíz>/<artifacts.design>/DESIGN_BRIEF.md`.
-   - En otro caso, usa `DESIGN_BRIEF.md` en la raiz del producto (dos niveles arriba si el spec esta en `features/<nombre>/`, en el mismo directorio en otros casos).
+   - En otro caso, usa `DESIGN_BRIEF.md` en la raiz del producto (el directorio que contiene `features/` si el spec esta dentro de `features/<nombre>/` — directamente o en su subcarpeta `spec/` —, el mismo directorio en otros casos).
 
 2. Comprobar si el archivo ya existe:
    - **Si existe**: leelo completo. Pregunta al usuario:
@@ -58,7 +58,7 @@ Pasa el contenido del brief existente (si lo hay) al agente como base. Cualquier
 
 ## Paso 5: Buscar moodboard opcional
 
-Busca `<basename>_design_moodboard.md` en el mismo directorio del spec.
+Busca `<basename>_design_moodboard.md`: en la subcarpeta `design/` de la feature si el spec esta en `features/<nombre>/spec/`; si no, en el mismo directorio del spec (layout plano legacy).
 
 - Si existe, leelo completo y pasalo al agente como input adicional para `style_family`, `adjectives` y Visual Personality.
 - Si no existe y el modo es `guided` o `hybrid` con `--learn` activo, sugiere al usuario ejecutar primero `/wf-design-moodboard`. Si rechaza o el modo es `auto`, continua sin moodboard.

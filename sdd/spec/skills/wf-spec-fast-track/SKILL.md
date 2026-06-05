@@ -132,7 +132,7 @@ Antes de escribir el output, aplica la Prueba de Pureza al spec completo. Consul
 - Feature ID: F-001 si `_features.md` no existe, o el siguiente ID disponible si existe
 - Actor principal: extraído del spec
 - Spec monolítico origen: `N/A (fast-track directo)`
-- Artefactos: Spec ✓, Plan —, Tasks —
+- Artefactos: Spec ✓, Plan —, Tasks — (rutas relativas a la raíz de la feature según su layout: `spec/<nombre>_spec.md` con subcarpetas, `<nombre>_spec.md` si la feature es plana legacy)
 - Origen de alcance: `PRD` o `PRD + analysis respondido`
 - Avisos de gobernanza: `ninguno` o lista de gaps que derivaron alcance no consolidado
 
@@ -144,9 +144,11 @@ Antes de escribir el output, aplica la Prueba de Pureza al spec completo. Consul
 
 Determina el directorio raíz de los artefactos spec (regla de layout): si `.sdd/project-init.json` (en el directorio actual o un ancestro) declara `artifacts.spec`, usa ese directorio (relativo a la raíz que contiene `.sdd/`); si no, usa el directorio del archivo de entrada.
 
-Verifica si `<raíz_spec>/features/<capability>/<capability>_spec.md` ya existe; si existe → pregunta al usuario si desea regenerarlo (no → informa del path y detén). Escribe los 3 artefactos (crea directorios si no existen), todos relativos a esa raíz:
-1. **Spec**: `<raíz_spec>/features/<capability>/<capability>_spec.md`
-2. **README**: `<raíz_spec>/features/<capability>/README.md`
+**Layout de feature**: cada feature organiza sus artefactos en subcarpetas por fase (`features/<nombre>/spec/`, `design/`, `plan/`, `tasks/`; el `README.md` vive en la raíz de la feature). Si la feature ya existe con layout plano legacy (artefactos directamente en `features/<nombre>/`), consérvalo — no mezcles layouts dentro de una misma feature.
+
+Verifica si el spec ya existe — en `<raíz_spec>/features/<capability>/spec/<capability>_spec.md` (subcarpetas) o `<raíz_spec>/features/<capability>/<capability>_spec.md` (plano legacy); si existe → pregunta al usuario si desea regenerarlo (no → informa del path y detén; sí → reescribe en su ubicación actual). Escribe los 3 artefactos (crea directorios si no existen), todos relativos a esa raíz:
+1. **Spec**: `<raíz_spec>/features/<capability>/spec/<capability>_spec.md`
+2. **README**: `<raíz_spec>/features/<capability>/README.md` (siempre en la raíz de la feature)
 3. **Features index**: `<raíz_spec>/<nombre_base>_features.md` (o actualiza el existente)
 
 ---

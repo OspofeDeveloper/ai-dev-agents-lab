@@ -75,11 +75,11 @@ Por cada variante (`A`, `B`, ...):
 
    Documenta en cada artefacto que es variante <X> y enlaza a la hipotesis.
    ```
-3. Escribir los archivos resultantes.
+3. Escribir los archivos resultantes en el mismo directorio que los artefactos de prototipado de la feature: la subcarpeta `design/` de la feature si el spec esta en `features/<nombre>/spec/` (crea el directorio si no existe); el mismo directorio del spec en otros casos (layout plano legacy).
 
 ### 2.4 Generar `<feature>_variants.md`
 
-Documento maestro siguiendo la plantilla de `${CLAUDE_SKILL_DIR}/references/variant_templates.md`.
+Documento maestro siguiendo la plantilla de `${CLAUDE_SKILL_DIR}/references/variant_templates.md`, en el mismo directorio que las variantes.
 
 ### 2.5 Informar al usuario
 

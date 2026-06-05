@@ -17,15 +17,17 @@ No responde todavía al orden exacto de implementación ni al troceado en tareas
 
 ## Artefactos de entrada
 
-- `features/<feature>/<feature>_spec.md`
+- `features/<feature>/spec/<feature>_spec.md`
 - `DESIGN.md` cuando la regla canónica de `kb-plan-expert` determine que `Design` es obligatorio
-- `features/<feature>/<feature>_flows.md` cuando aplique esa misma regla
-- `features/<feature>/<feature>_views.md` cuando aplique esa misma regla
+- `features/<feature>/design/<feature>_flows.md` cuando aplique esa misma regla
+- `features/<feature>/design/<feature>_views.md` cuando aplique esa misma regla
 - `*_features.md` si el proyecto usa shared models
+
+(Features con layout plano legacy: los mismos artefactos directamente en `features/<feature>/`.)
 
 ## Artefactos de salida
 
-- `features/<feature>/<feature>_plan.md`
+- `features/<feature>/plan/<feature>_plan.md` (layout plano legacy: junto al spec)
 
 Estado esperado del plan:
 - `BORRADOR` tras `wf-prepare-plan`

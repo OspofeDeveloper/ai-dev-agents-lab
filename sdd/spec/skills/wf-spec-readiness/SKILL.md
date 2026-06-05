@@ -33,7 +33,7 @@ Si no hay argumento y no se puede inferir, informa al usuario:
 ## Paso 2: Localizar artefactos
 
 1. Busca `*_features.md` en el directorio padre del directorio de features (ej: si features/ está en `docs/features/`, busca `docs/*_features.md`).
-2. Busca todos los `*_spec.md` dentro de `<features-dir>/*/<nombre>_spec.md` (un nivel de profundidad).
+2. Busca todos los `*_spec.md` cubriendo ambos layouts de feature: `<features-dir>/*/spec/*_spec.md` (subcarpetas) y `<features-dir>/*/*_spec.md` (plano legacy).
 3. Busca todos los `README.md` dentro de `<features-dir>/*/README.md`.
 4. Busca `*_conflict_report.md` en el directorio padre del directorio de features (opcional — puede no existir).
 
