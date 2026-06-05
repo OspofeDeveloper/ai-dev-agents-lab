@@ -1,35 +1,19 @@
 #!/bin/bash
 # install.sh — Despliega el ecosistema KMM al .claude del proyecto
 # Ejecutar desde el directorio del proyecto KMM destino:
-#   bash /path/to/kmm/install.sh [normal|optimized]
+#   bash /path/to/kmm/install.sh
 
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CLAUDE_DIR="$(pwd)/.claude"
-SKILL_VARIANT="${1:-normal}"
 AGENTS_SOURCE_DIR="$SCRIPT_DIR/agents"
 SKILLS_SOURCE_DIR="$SCRIPT_DIR/skills"
 CLAUDE_SOURCE_FILE="$SCRIPT_DIR/CLAUDE.md"
 shopt -s nullglob
 
-case "$SKILL_VARIANT" in
-  normal)
-    ;;
-  optimized)
-    AGENTS_SOURCE_DIR="$SCRIPT_DIR/agents_optimized"
-    SKILLS_SOURCE_DIR="$SCRIPT_DIR/skills_optimized"
-    CLAUDE_SOURCE_FILE="$SCRIPT_DIR/CLAUDE_optimized.md"
-    ;;
-  *)
-    echo "Uso: bash /path/to/kmm/install.sh [normal|optimized]"
-    exit 1
-    ;;
-esac
-
 # ── 1. Instalar agentes ────────────────────────────────────────────────────
 
-echo "Instalando agentes..."
 echo "Instalando agentes desde $(basename "$AGENTS_SOURCE_DIR")..."
 mkdir -p "$CLAUDE_DIR/agents"
 
@@ -72,6 +56,12 @@ for subdir in plan tasks; do
   done
 done
 
+# KBs transversales en la raíz de skills/ (p. ej. kb-kmm-project-state-protocol,
+# precondición de los agentes KMM)
+for skill_dir in "$SKILLS_SOURCE_DIR"/kb-*/; do
+  install_skill "$skill_dir"
+done
+
 for skill_dir in "$SKILLS_SOURCE_DIR"/wf-*/; do
   install_skill "$skill_dir"
 done
@@ -83,12 +73,22 @@ echo "Instalando CLAUDE.md desde $(basename "$CLAUDE_SOURCE_FILE")..."
 cp "$CLAUDE_SOURCE_FILE" "$CLAUDE_DIR/CLAUDE.md"
 echo "  ✓ CLAUDE.md"
 
-# ── 4. Instalar settings.json ──────────────────────────────────────────────
+# ── 4. Instalar settings.json (merge, sin pisar el del proyecto) ───────────
 
 echo ""
 echo "Instalando settings.json..."
-cp "$SCRIPT_DIR/settings.json" "$CLAUDE_DIR/settings.json"
-echo "  ✓ settings.json"
+SDD_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+if [ ! -f "$CLAUDE_DIR/settings.json" ]; then
+  cp "$SCRIPT_DIR/settings.json" "$CLAUDE_DIR/settings.json"
+  echo "  ✓ settings.json"
+elif command -v python3 >/dev/null 2>&1; then
+  python3 "$SDD_ROOT/scripts/merge-claude-settings.py" \
+    "$SCRIPT_DIR/settings.json" "$CLAUDE_DIR/settings.json"
+  echo "  ✓ settings.json (merge sobre el existente)"
+else
+  echo "  ⚠ settings.json existente y python3 no disponible: no se modifica."
+  echo "    Revisa manualmente que los hooks de $SCRIPT_DIR/settings.json esten presentes."
+fi
 
 echo ""
 echo "Done. Reinicia Claude Code para activar los agentes y skills."

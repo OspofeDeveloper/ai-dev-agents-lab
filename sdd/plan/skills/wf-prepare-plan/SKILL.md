@@ -1,6 +1,6 @@
 ---
 name: wf-prepare-plan
-description: "Transforma Specs validados y el handoff de Design en Planes tecnicos KMM. Usalo cuando tengas un _spec.md sin items pendientes y una feature lista a nivel visual para generar el plan tecnico de implementacion."
+description: "Transforma Specs validados y el handoff de Design en Planes tecnicos. Usalo cuando tengas un _spec.md sin items pendientes y una feature lista a nivel visual para generar el plan tecnico de implementacion. El plan se especializa segun el stack del proyecto (overlay tech, p. ej. KMM) o en modo generico para stacks agnosticos."
 when_to_use: "Activa en frases como 'genera el plan desde el spec', 'crea el plan tecnico', 'transforma el spec en plan', 'planifica la implementacion de', 'prepara el plan para'. No activa para analizar o generar Specs (usa wf-spec-analyze), ni para validar Planes (usa wf-plan-validate), ni para crear Tasks (usa wf-prepare-tasks)."
 argument-hint: "generate <spec.md>"
 effort: high
@@ -30,6 +30,16 @@ Ejemplo:
 ---
 
 ## Paso 2: Verificar el Spec
+
+Antes de verificar el Spec, determina el contexto técnico del proyecto. Busca `.sdd/project-init.json` (en el directorio actual o en el raíz del proyecto):
+
+- **Stack con especialista** (`specialist_workflow` no nulo, p. ej. `kmm`): exige `<stack>_project_state.md` (directorio actual o raíz). Si falta, detén:
+  > "❌ El stack `<stack>` no tiene su estado técnico generado. Ejecuta `/wf-<stack>-init` antes de producir el Plan."
+- **Stack agnóstico** (`"stack": "agnostico"`): modo genérico — no exijas ningún project_state. El Plan debe fundamentarse en la exploración del repositorio (estructura, lenguajes, convenciones existentes) y en `kb-plan-expert`.
+- **Stack pendiente** (`"stack": null`): la entrevista técnica del proyecto no se ha hecho (init de perfil no técnico). Detén:
+  > "❌ Este proyecto aún no tiene configurado su stack. Ejecuta `/wf-project-init` → 'Completar / ampliar' (perfil Desarrollo) antes de producir el Plan."
+- **Sin `.sdd/project-init.json`**: si existe `kmm_project_state.md` (compatibilidad con proyectos antiguos), continúa en modo KMM. Si no, detén:
+  > "❌ Este proyecto no está inicializado. Ejecuta primero `/wf-project-init` antes de producir el Plan."
 
 1. Verifica que el archivo existe.
 2. Lee el archivo completo.

@@ -1,6 +1,6 @@
 # Tasks Lab — Instrucciones para el Orquestador
 
-Este directorio define un paquete focalizado en la etapa de **Tasks** dentro del pipeline SDD: transformación de un `_plan.md` validado en un `_tasks.md` con tasks atómicas, ordenadas y asignadas a agentes KMM especializados.
+Este directorio define un paquete focalizado en la etapa de **Tasks** dentro del pipeline SDD: transformación de un `_plan.md` validado en un `_tasks.md` con tasks atómicas, ordenadas y asignadas a su owner (agentes del overlay de stack, u orquestador en modo genérico).
 
 ## Tu rol: Director de implementación de fase
 
@@ -47,7 +47,7 @@ plan validado (_plan.md con Estado: VALIDADO)
 
 | Agente | Dominio |
 |---|---|
-| `task-generator` | Descomposición de `_plan.md` validados en tasks atómicas ordenadas. Asigna owner agent KMM, orden canónico, dependencias explícitas y definition of done por task. |
+| `task-generator` | Descomposición de `_plan.md` validados en tasks atómicas ordenadas. Asigna owner (agente del overlay de stack u orquestador en modo genérico), orden canónico por dependencias, dependencias explícitas y definition of done por task. El overlay de stack puede sustituirlo por una variante especializada con el mismo nombre. |
 
 Usa el workflow cuando el usuario quiera generar el `_tasks.md`. Si la petición es una duda conceptual sobre cómo estructurar tasks, delega directamente a `task-generator`.
 

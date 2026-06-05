@@ -4,29 +4,21 @@
 
 ## Principio fundamental
 
-> Una Task debe poder ser completada por un único agente KMM owner y producir artefactos coherentes con el resto del proyecto.
+> Una Task debe poder ser completada por un único owner y producir artefactos coherentes con el resto del proyecto.
 
 ---
 
 ## Tamaño correcto por tipo de componente
 
-| Componente | Tamaño recomendado | Owner agent por defecto | Notas |
-|---|---|---|---|
-| Scaffold de módulo o wiring base | 1 Task por feature o bloque estructural | `kmm-platform-integrator` | Siempre T-000 |
-| Un Model de feature | 1 Task (puede agrupar modelos relacionados simples) | `kmm-feature-implementer` | Si son entidades independientes → Tasks separadas |
-| Un Repository interface de feature | 1 Task | `kmm-feature-implementer` | Puede agruparse con el Model si es inseparable |
-| Un UseCase | 1 Task | `kmm-feature-implementer` | Un UseCase por acción principal |
-| DTOs + Mapper de una entidad de feature | 1 Task | `kmm-feature-implementer` | DTO y mapper van juntos |
-| Un DataSource remote compartido o transversal | 1 Task | `kmm-network-auth-implementer` | Si vive en `core` o sirve a varias features |
-| Un DataSource remote específico de feature | 1 Task | `kmm-feature-implementer` | Si es borde local de una sola feature |
-| Un DataSource local | 1 Task | `kmm-feature-implementer` | Interfaz + implementación juntas |
-| Un RepositoryImpl | 1 Task | `kmm-feature-implementer` | Puede necesitar dividirse si hay múltiples DataSources |
-| Expect/actual o bridge de plataforma | 1 Task | `kmm-platform-integrator` | commonMain + androidMain + iosMain |
-| ViewModel + UiState + UiEvent | 1 Task | `kmm-feature-implementer` | Los tres van siempre juntos |
-| Screen Composable | 1 Task | `kmm-feature-implementer` | Separada del ViewModel |
-| NavGraph / rutas / wiring de app | 1 Task | `kmm-platform-integrator` | No pertenece al feature por sí solo |
-| Tests de un UseCase | 1 Task | `kmm-feature-implementer` | Happy path + error + edge cases |
-| Tests de un RepositoryImpl | 1 Task | `kmm-feature-implementer` | Fakes de DataSources, no red real |
+| Componente | Tamaño recomendado | Notas |
+|---|---|---|
+| Scaffold o preparación estructural | 1 Task por feature o bloque estructural | Siempre T-000 si el Plan la requiere |
+| Un contrato (interfaz, modelo, esquema) | 1 Task (puede agrupar contratos relacionados simples) | Si son entidades independientes → Tasks separadas |
+| Una implementación de contrato | 1 Task | Puede dividirse si depende de varias piezas externas |
+| Una pieza de integración (wiring, registro, conexión) | 1 Task | No mezclar con la implementación que conecta |
+| Una superficie (pantalla, comando CLI, endpoint, doc de uso) | 1 Task | Separada de la lógica que presenta |
+| Infraestructura transversal (build, config, tooling) | 1 Task por pieza | Si sirve a varias features, va antes que ellas |
+| Tests de un componente | 1 Task | Happy path + errores + edge cases del componente |
 
 ---
 
@@ -35,16 +27,16 @@
 - La descripción contiene "y también" o "además"
 - El campo `Input` menciona más de 2 entidades de negocio distintas
 - La `Definition of done` lista más de 6 artefactos significativos
-- La Task mezcla dos owner agents potenciales
+- La Task mezcla dos dominios de ejecución sin relación de dependencia directa
 
-**Solución:** divide en dos Tasks con dependencia explícita y owner agent distinto si hace falta.
+**Solución:** divide en dos Tasks con dependencia explícita.
 
 ---
 
 ## Señales de que una Task es demasiado pequeña
 
 - La Task solo crea un archivo de menos de 10 líneas reales
-- La Task no puede compilar ni tener valor sin otra Task inmediata e inseparable
+- La Task no puede validarse ni tener valor sin otra Task inmediata e inseparable
 
 **Solución:** agrupa con la Task relacionada.
 
@@ -54,38 +46,27 @@
 
 | Tipo | Artefactos que deben existir al completar |
 |---|---|
-| Scaffold | Directorios estructurales + `build.gradle.kts` o wiring base actualizado |
-| Domain Model | `NombreModel.kt` en `domain/model/` — data class pura |
-| Repository Interface | `NombreRepository.kt` en `domain/repository/` |
-| UseCase | `NombreUseCase.kt` en `domain/usecase/` con `operator fun invoke()` |
-| DTO + Mapper | `NombreDto.kt` + `NombreMapper.kt` |
-| DataSource Remote | interfaz + implementación remota coherente con el borde de red definido |
-| DataSource Local | interfaz + implementación local coherente con la persistencia elegida |
-| RepositoryImpl | `NombreRepositoryImpl.kt` en `data/repository/` |
-| Expect/Actual | `expect` en `commonMain` + `actual` en plataformas requeridas |
-| ViewModel | `NombreViewModel.kt` + `NombreUiState.kt` + `NombreUiEvent.kt` |
-| Screen | `NombreScreen.kt` en `presentation/screen/` |
-| Navigation | grafo, rutas o wiring de navegación integrados en `app` o módulo correspondiente |
-| Tests UseCase | `NombreUseCaseTest.kt` en `commonTest/` o suite equivalente |
-| Tests Repository | `NombreRepositoryImplTest.kt` en `commonTest/` o suite equivalente |
+| Scaffold | Estructura de directorios/config base creada y referenciada por el Plan |
+| Contrato | Archivo(s) del contrato en la ruta definida — sin lógica de implementación |
+| Implementación | Pieza implementada cumpliendo el contrato, en la ruta definida |
+| Integración | Piezas conectadas; el punto de entrada o registro refleja el cambio |
+| Superficie | Superficie operativa y conectada a la lógica que expone |
+| Tests | Suite creada y pasando con el comando real del proyecto |
+
+La definition of done siempre referencia rutas y comandos **reales del repositorio**, nunca convenciones de un framework que el repo no usa.
 
 ---
 
-## Orden canónico detallado (dentro de cada feature)
+## Orden canónico detallado (por dependencias)
 
 ```text
-1.  Scaffold / wiring base
-2.  Models de domain
-3.  Repository interfaces
-4.  UseCases
-5.  DTOs + Mappers de feature
-6.  DataSources remote/local de feature
-7.  Infraestructura remota o auth transversal (si aplica)
-8.  RepositoryImpl
-9.  Expect/Actual o bridges de plataforma
-10. ViewModel + State + Events
-11. Screen Composable
-12. Navegación / wiring de app
-13. Tests de domain
-14. Tests de data
+1. Scaffold / preparación estructural (si aplica)
+2. Contratos y modelos (lo que otras piezas consumen)
+3. Implementaciones de los contratos
+4. Infraestructura transversal que las implementaciones requieren
+5. Integración / wiring entre piezas
+6. Superficies (UI, CLI, API pública, docs de uso)
+7. Tests de cada bloque (acompañando al bloque que validan)
 ```
+
+Regla: nada se implementa antes que el contrato que lo define; nada se integra antes de existir; ninguna superficie antes que la lógica que expone.

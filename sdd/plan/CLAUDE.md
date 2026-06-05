@@ -1,6 +1,6 @@
 # Plan Lab — Instrucciones para el Orquestador
 
-Este directorio define un paquete focalizado en la etapa de **Plan** dentro del pipeline SDD: traducción de un `*_spec.md` validado y su handoff de Design a un `_plan.md` técnico KMM, seguido de una validación formal antes de pasar a Tasks.
+Este directorio define un paquete focalizado en la etapa de **Plan** dentro del pipeline SDD: traducción de un `*_spec.md` validado y su handoff de Design a un `_plan.md` técnico (especializado por el overlay de stack si existe; genérico si el stack es agnóstico), seguido de una validación formal antes de pasar a Tasks.
 
 ## Tu rol: Director técnico de fase
 
@@ -53,8 +53,10 @@ spec validado
 
 | Agente | Dominio |
 |---|---|
-| `plan-architect` | Traducción de Spec + Design a arquitectura técnica KMM. Genera `_plan.md` en estado `BORRADOR`. |
+| `plan-architect` | Traducción de Spec + Design a arquitectura técnica. Genera `_plan.md` en estado `BORRADOR`. |
 | `plan-auditor` | Auditoría formal del `_plan.md` contra Spec, Design y `kb-plan-expert`. Certifica `VALIDADO` o devuelve hallazgos. |
+
+> El overlay de stack (p. ej. KMM) puede sustituir `plan-architect` y `plan-auditor` por variantes especializadas con el mismo nombre, que añaden las KBs de arquitectura del stack. En modo genérico (stack agnóstico) operan fundamentando las decisiones en la exploración real del repositorio.
 
 Usa workflows cuando exista una pipeline clara y cerrada. Si la petición no requiere una workflow exacta pero sí ayuda experta para estructurar la fase `plan`, delega a `plan-architect`.
 
@@ -62,19 +64,29 @@ Usa workflows cuando exista una pipeline clara y cerrada. Si la petición no req
 
 Las skills Plan son bases de conocimiento que los agentes especializados cargan automáticamente en su contexto. No son el punto de entrada principal del orquestador.
 
+### Skills genéricas de fase
+
 | Skill | Dominio | Fase origen |
 |---|---|---|
-| `kb-plan-expert` | Reglas del Plan: cuándo es obligatorio el handoff de Design, qué secciones debe contener `_plan.md`, taxonomía de gaps y criterios de validación | `tech/kmm/skills/plan/` |
+| `kb-plan-expert` | Reglas del Plan: cuándo es obligatorio el handoff de Design, qué secciones debe contener `_plan.md`, taxonomía de gaps y criterios de validación (metodología stack-agnóstica) | `plan/skills/` |
 | `kb-spec-expert` ⚠ | Reglas del Spec — cargada cross-fase para leer el spec de entrada sin contaminar el contrato funcional | `spec/skills/` |
 | `kb-a11y-expert` ⚠ | Accesibilidad mobile — cargada cross-fase para materializar decisiones a11y en arquitectura técnica | `design/skills/` |
+
+> ⚠ `kb-spec-expert` vive en `sdd/spec/skills/` y `kb-a11y-expert` en `sdd/design/skills/`. Ambas son cross-fase: necesarias para que `plan-architect` lea el spec de entrada sin contaminar el contrato funcional y materialice decisiones de accesibilidad en la arquitectura técnica.
+
+### Skills del overlay KMM (solo proyectos KMM)
+
+Estas skills las instala `wf-kmm-init` sobre la fase `plan` cuando el proyecto usa el stack KMM. Sustituyen y amplían la versión genérica de `kb-plan-expert` con las capas, librerías y convenciones concretas de KMM. No están presentes en proyectos con stack agnóstico.
+
+| Skill | Dominio | Fase origen |
+|---|---|---|
+| `kb-plan-expert` (variante KMM) | Reglas del Plan especializadas para KMM con Clean Architecture: capas, módulos Gradle, expect/actual | `tech/kmm/skills/plan/` |
 | `kb-kmm-navigation-contracts` | Contrato arquitectónico de navegación | `tech/kmm/skills/plan/` |
 | `kb-plan-kmm-navigation-viewmodel-events` | Intent/Events — patrón arquitectónico ViewModel↔Composable | `tech/kmm/skills/plan/` |
 | `kb-kmm-app-errors` | Contrato transversal `AppResult` / `AppError` y ownership de taxonomías de error | `tech/kmm/skills/plan/` |
 | `kb-plan-koin` | Koin DI — organización de módulos, tipos de registro, qualifiers | `tech/kmm/skills/plan/` |
 | `kb-plan-cmp-ui` | CMP presentation — estructura commonMain, expect/actual de UI | `tech/kmm/skills/plan/` |
 | `kb-cmp-resources` | Compose Resources — estructura, localización, qué módulos la necesitan | `tech/kmm/skills/plan/` |
-
-> ⚠ `kb-spec-expert` vive en `sdd/spec/skills/` y `kb-a11y-expert` en `sdd/design/skills/`. Ambas son cross-fase: necesarias para que `plan-architect` lea el spec de entrada sin contaminar el contrato funcional y materialice decisiones de accesibilidad en la arquitectura técnica.
 
 ## Principio operativo
 

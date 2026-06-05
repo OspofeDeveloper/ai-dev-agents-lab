@@ -1,6 +1,6 @@
 ---
 name: wf-prepare-tasks
-description: "Transforma Planes tecnicos KMM validados en Tasks de implementacion. Usalo cuando tengas un _plan.md validado y quieras generar el listado de tasks para delegar a agentes KMM especializados."
+description: "Transforma Planes tecnicos validados en Tasks de implementacion. Usalo cuando tengas un _plan.md validado y quieras generar el listado de tasks delegables. Los owners se asignan segun el stack del proyecto (agentes del overlay tech, p. ej. KMM) o al orquestador en modo generico."
 when_to_use: "Activa en frases como 'genera las tasks del plan', 'trocea el plan en tasks', 'crea el listado de implementacion', 'prepara las tasks para', '¿que tasks tengo que hacer?'. No activa para generar Specs (usa wf-spec-analyze), ni para generar Planes (usa wf-prepare-plan), ni para validar Planes (usa wf-plan-validate)."
 argument-hint: "generate <plan.md>"
 effort: high
@@ -30,6 +30,16 @@ Ejemplo:
 ---
 
 ## Paso 2: Verificar el Plan
+
+Antes de verificar el Plan, determina el contexto técnico del proyecto. Busca `.sdd/project-init.json` (en el directorio actual o en el raíz del proyecto):
+
+- **Stack con especialista** (`specialist_workflow` no nulo, p. ej. `kmm`): exige `<stack>_project_state.md` (directorio actual o raíz). Si falta, detén:
+  > "❌ El stack `<stack>` no tiene su estado técnico generado. Ejecuta `/wf-<stack>-init` antes de producir las Tasks."
+- **Stack agnóstico** (`"stack": "agnostico"`): modo genérico — no exijas ningún project_state. Las Tasks se asignan según `kb-tasks-expert` en modo genérico (owner = implementación directa del orquestador cuando no hay agentes de stack).
+- **Stack pendiente** (`"stack": null`): la entrevista técnica del proyecto no se ha hecho (init de perfil no técnico). Detén:
+  > "❌ Este proyecto aún no tiene configurado su stack. Ejecuta `/wf-project-init` → 'Completar / ampliar' (perfil Desarrollo) antes de producir las Tasks."
+- **Sin `.sdd/project-init.json`**: si existe `kmm_project_state.md` (compatibilidad con proyectos antiguos), continúa en modo KMM. Si no, detén:
+  > "❌ Este proyecto no está inicializado. Ejecuta primero `/wf-project-init` antes de producir las Tasks."
 
 1. Verifica que el archivo existe.
 2. Lee el archivo completo.

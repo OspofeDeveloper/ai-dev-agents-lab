@@ -1,6 +1,12 @@
 #!/bin/bash
 # install.sh — Distribuye templates y despliega el ecosistema SDD al .claude del proyecto
-# Ejecutar desde el directorio sdd/: bash install.sh [all|prd|spec|design|plan|tasks]
+#
+# Uso:
+#   bash install.sh                        — instala el ecosistema SDD completo
+#   bash install.sh all                    — idem
+#   bash install.sh prd                    — solo fase PRD
+#   bash install.sh prd,spec               — varias fases separadas por comas
+#   bash install.sh prd,spec,design,plan   — combinacion de fases
 
 set -e
 
@@ -8,31 +14,44 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SHARED_DIR="$SCRIPT_DIR/spec/shared/templates"
 CLAUDE_DIR="$(pwd)/.claude"
 KMM_DIR="$SCRIPT_DIR/tech/kmm"
-INSTALL_TARGET="${1:-all}"
+
+RAW_ARG="${1:-all}"
 
 usage() {
-  echo "Uso: bash install.sh [all|prd|spec|design|plan|tasks]"
+  echo "Uso: bash install.sh [all|prd|spec|design|plan|tasks|<fase1,fase2,...>]"
   echo "  all (por defecto): instala el ecosistema SDD completo"
-  echo "  prd: instala solo agentes, skills y CLAUDE.md relacionados con PRD"
-  echo "  spec: instala solo agentes, skills y CLAUDE.md relacionados con Spec"
-  echo "  design: instala solo agentes, skills y CLAUDE.md relacionados con Design"
-  echo "  plan: instala solo agentes, skills y CLAUDE.md relacionados con Plan"
-  echo "  tasks: instala solo agentes, skills y CLAUDE.md relacionados con Tasks"
+  echo "  prd,spec          : instala PRD y Spec"
+  echo "  prd,spec,design   : instala PRD, Spec y Design"
 }
 
-case "$INSTALL_TARGET" in
-  all|prd|spec|design|plan|tasks)
-    ;;
-  -h|--help|help)
-    usage
-    exit 0
-    ;;
-  *)
-    echo "ERROR: argumento no soportado: $INSTALL_TARGET"
-    usage
-    exit 1
-    ;;
-esac
+# Construir lista de fases a instalar
+PHASES=()
+if [ "$RAW_ARG" = "all" ]; then
+  PHASES=(all)
+else
+  IFS=',' read -ra PHASES <<< "$RAW_ARG"
+  for phase in "${PHASES[@]}"; do
+    case "$phase" in
+      prd|spec|design|plan|tasks) ;;
+      -h|--help|help) usage; exit 0 ;;
+      *)
+        echo "ERROR: fase no reconocida: '$phase'"
+        usage
+        exit 1
+        ;;
+    esac
+  done
+fi
+
+# Helper: comprueba si una fase está en la lista seleccionada
+has_phase() {
+  local target="$1"
+  for p in "${PHASES[@]}"; do
+    [ "$p" = "all" ] && return 0
+    [ "$p" = "$target" ] && return 0
+  done
+  return 1
+}
 
 # ── 1. Distribuir templates compartidos a las skills que los necesitan ─────
 
@@ -50,7 +69,7 @@ copy_template() {
   echo "  ✓ ${dst#"$SCRIPT_DIR/"}"
 }
 
-if [ "$INSTALL_TARGET" = "all" ]; then
+if has_phase "spec"; then
   echo "Distribuyendo templates compartidos..."
   copy_template "feature_spec_template.md"   "$SCRIPT_DIR/spec/skills/wf-spec-fast-track/references"
   copy_template "feature_readme_template.md" "$SCRIPT_DIR/spec/skills/wf-spec-fast-track/references"
@@ -70,29 +89,24 @@ install_agent() {
   echo "  ✓ agents/$name"
 }
 
-if [ "$INSTALL_TARGET" = "prd" ]; then
+if has_phase "prd"; then
   install_agent "$SCRIPT_DIR/prd/agents/prd-expert.md"
-elif [ "$INSTALL_TARGET" = "spec" ]; then
-  install_agent "$SCRIPT_DIR/prd/agents/prd-expert.md"
+fi
+if has_phase "spec"; then
+  install_agent "$SCRIPT_DIR/prd/agents/prd-expert.md" 2>/dev/null || true
   install_agent "$SCRIPT_DIR/spec/agents/sdd-spec-explorer.md"
   install_agent "$SCRIPT_DIR/spec/agents/sdd-spec-planner.md"
   install_agent "$SCRIPT_DIR/spec/agents/sdd-spec-writer.md"
   install_agent "$SCRIPT_DIR/spec/agents/sdd-spec-auditor.md"
-elif [ "$INSTALL_TARGET" = "design" ]; then
+fi
+if has_phase "design"; then
   install_agent "$SCRIPT_DIR/design/agents/design-architect.md"
-elif [ "$INSTALL_TARGET" = "plan" ]; then
+fi
+if has_phase "plan"; then
   install_agent "$SCRIPT_DIR/plan/agents/plan-architect.md"
   install_agent "$SCRIPT_DIR/plan/agents/plan-auditor.md"
-elif [ "$INSTALL_TARGET" = "tasks" ]; then
-  install_agent "$SCRIPT_DIR/tasks/agents/task-generator.md"
-else
-  install_agent "$SCRIPT_DIR/prd/agents/prd-expert.md"
-  install_agent "$SCRIPT_DIR/spec/agents/sdd-spec-explorer.md"
-  install_agent "$SCRIPT_DIR/spec/agents/sdd-spec-planner.md"
-  install_agent "$SCRIPT_DIR/spec/agents/sdd-spec-writer.md"
-  install_agent "$SCRIPT_DIR/spec/agents/sdd-spec-auditor.md"
-  install_agent "$SCRIPT_DIR/design/agents/design-architect.md"
-  install_agent "$SCRIPT_DIR/plan/agents/plan-architect.md"
+fi
+if has_phase "tasks"; then
   install_agent "$SCRIPT_DIR/tasks/agents/task-generator.md"
 fi
 
@@ -120,11 +134,14 @@ install_skill() {
   echo "  ✓ skills/$name/"
 }
 
-if [ "$INSTALL_TARGET" = "prd" ]; then
+if has_phase "prd"; then
   for skill_dir in "$SCRIPT_DIR/prd/skills"/*/; do
     install_skill "$skill_dir"
   done
-elif [ "$INSTALL_TARGET" = "spec" ]; then
+fi
+
+if has_phase "spec"; then
+  # spec necesita algunas skills de prd como dependencia
   install_skill "$SCRIPT_DIR/prd/skills/kb-prd-expert"
   install_skill "$SCRIPT_DIR/prd/skills/kb-product-change-governance"
   install_skill "$SCRIPT_DIR/prd/skills/wf-prd-change"
@@ -133,88 +150,77 @@ elif [ "$INSTALL_TARGET" = "spec" ]; then
   for skill_dir in "$SCRIPT_DIR/spec/skills"/*/; do
     install_skill "$skill_dir"
   done
-elif [ "$INSTALL_TARGET" = "design" ]; then
+fi
+
+if has_phase "design"; then
+  # design necesita kb-spec-expert como dependencia
   install_skill "$SCRIPT_DIR/spec/skills/kb-spec-expert"
 
   for skill_dir in "$SCRIPT_DIR/design/skills"/*/; do
     install_skill "$skill_dir"
   done
-elif [ "$INSTALL_TARGET" = "plan" ]; then
+fi
+
+if has_phase "plan"; then
+  # plan necesita kb-spec-expert y kb-a11y-expert como dependencias
   install_skill "$SCRIPT_DIR/spec/skills/kb-spec-expert"
   install_skill "$SCRIPT_DIR/design/skills/kb-a11y-expert"
 
   for skill_dir in "$SCRIPT_DIR/plan/skills"/*/; do
     install_skill "$skill_dir"
   done
+fi
 
-  for skill_dir in "$KMM_DIR/skills/plan"/*/; do
-    install_skill "$skill_dir"
-  done
-elif [ "$INSTALL_TARGET" = "tasks" ]; then
+if has_phase "tasks"; then
+  # tasks necesita kb-plan-expert como dependencia
   install_skill "$SCRIPT_DIR/plan/skills/kb-plan-expert"
 
   for skill_dir in "$SCRIPT_DIR/tasks/skills"/*/; do
     install_skill "$skill_dir"
   done
-
-  for skill_dir in "$KMM_DIR/skills/plan"/*/; do
-    install_skill "$skill_dir"
-  done
-else
-  for skill_dir in "$SCRIPT_DIR/prd/skills"/*/; do
-    install_skill "$skill_dir"
-  done
-
-  for skill_dir in "$SCRIPT_DIR/spec/skills"/*/; do
-    install_skill "$skill_dir"
-  done
-
-  for skill_dir in "$SCRIPT_DIR/design/skills"/*/; do
-    install_skill "$skill_dir"
-  done
-
-  for skill_dir in "$SCRIPT_DIR/plan/skills"/*/; do
-    install_skill "$skill_dir"
-  done
-
-  for skill_dir in "$SCRIPT_DIR/tasks/skills"/*/; do
-    install_skill "$skill_dir"
-  done
-
-  for skill_dir in "$KMM_DIR/skills/plan"/*/; do
-    install_skill "$skill_dir"
-  done
-
-  for skill_dir in "$KMM_DIR/skills/tasks"/*/; do
-    install_skill "$skill_dir"
-  done
 fi
+
+# Las skills tecnicas de stack (tech/<stack>/skills/plan y tasks) NO se instalan
+# aqui: las instala el overlay del stack (wf-<stack>-init → tech/<stack>/install.sh),
+# que ademas sobreescribe por nombre las piezas genericas con su variante especializada.
 
 # ── 4. Instalar CLAUDE.md ─────────────────────────────────────────────────
 
 echo ""
 echo "Instalando CLAUDE.md..."
-if [ "$INSTALL_TARGET" = "prd" ]; then
-  cp "$SCRIPT_DIR/prd/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
-elif [ "$INSTALL_TARGET" = "spec" ]; then
-  cp "$SCRIPT_DIR/spec/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
-elif [ "$INSTALL_TARGET" = "design" ]; then
-  cp "$SCRIPT_DIR/design/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
-elif [ "$INSTALL_TARGET" = "plan" ]; then
-  cp "$SCRIPT_DIR/plan/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
-elif [ "$INSTALL_TARGET" = "tasks" ]; then
-  cp "$SCRIPT_DIR/tasks/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
-else
+# Con múltiples fases, instalar el CLAUDE.md del pipeline completo si hay más de una fase,
+# o el de la fase concreta si solo se pide una.
+PHASE_COUNT="${#PHASES[@]}"
+if has_phase "all" || [ "$PHASE_COUNT" -gt 1 ]; then
   cp "$SCRIPT_DIR/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
+elif has_phase "prd"; then
+  cp "$SCRIPT_DIR/prd/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
+elif has_phase "spec"; then
+  cp "$SCRIPT_DIR/spec/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
+elif has_phase "design"; then
+  cp "$SCRIPT_DIR/design/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
+elif has_phase "plan"; then
+  cp "$SCRIPT_DIR/plan/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
+elif has_phase "tasks"; then
+  cp "$SCRIPT_DIR/tasks/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
 fi
 echo "  ✓ CLAUDE.md"
 
-# ── 5. Instalar settings.json ──────────────────────────────────────────────
+# ── 5. Instalar settings.json (merge, sin pisar el del proyecto) ───────────
 
 echo ""
 echo "Instalando settings.json..."
-cp "$SCRIPT_DIR/settings.json" "$CLAUDE_DIR/settings.json"
-echo "  ✓ settings.json"
+if [ ! -f "$CLAUDE_DIR/settings.json" ]; then
+  cp "$SCRIPT_DIR/settings.json" "$CLAUDE_DIR/settings.json"
+  echo "  ✓ settings.json"
+elif command -v python3 >/dev/null 2>&1; then
+  python3 "$SCRIPT_DIR/scripts/merge-claude-settings.py" \
+    "$SCRIPT_DIR/settings.json" "$CLAUDE_DIR/settings.json"
+  echo "  ✓ settings.json (merge sobre el existente)"
+else
+  echo "  ⚠ settings.json existente y python3 no disponible: no se modifica."
+  echo "    Revisa manualmente que los hooks de $SCRIPT_DIR/settings.json esten presentes."
+fi
 
 echo ""
 echo "Done. Reinicia Claude Code para activar los agentes y skills."

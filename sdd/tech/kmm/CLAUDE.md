@@ -16,6 +16,8 @@ Las `kb-*` viven en los subagentes y se cargan automáticamente en su contexto. 
 
 | Intención del usuario | Skill | Argumentos |
 |---|---|---|
+| Inicializar o calibrar el estado técnico de un proyecto KMM (nuevo o existente) | `/wf-kmm-init` | `[--mode detect\|configure] [--force] [--output <path>]` |
+| Inicializar o ampliar un proyecto SDD eligiendo perfil, fases y stack | `/wf-project-init` | `[--profile <dev\|product\|design\|custom>] [--type <app\|web\|backend>] [--stack <nombre>] [--force]` |
 | Configurar entornos, brands, flavors o variantes de build en un proyecto KMM | `/wf-kmm-environments` | `[brands y entornos, ej: 'pre pro' o 'cuideo felizvita con pre y pro']` |
 | Configurar Preferences DataStore en un proyecto KMM | `/wf-kmm-datastore-setup` | `[ámbito del storage, módulo destino, DI activa y consumers previstos]` |
 | Configurar infraestructura de networking en un proyecto KMM | `/wf-kmm-network-setup` | `[stack HTTP, URLs base, convenciones JSON y estrategia de auth si aplica]` |
@@ -96,6 +98,7 @@ Las skills KMM son bases de conocimiento que los agentes especializados cargan a
 | `kb-tasks-cmp-ui` | CMP presentation — entry points Android/iOS, @Preview, initKoin (implementación) |
 | `kb-plan-kmm-ui-text` | UIText — cuándo usarlo, decisión UIText vs StringResource (planificación) |
 | `kb-tasks-kmm-ui-text` | UIText — sealed interface, Regla 10, mapping AppError→UIText (implementación) |
+| `kb-kmm-project-state-protocol` | Protocolo de precondición de contexto técnico — todos los agentes KMM deben leer `kmm_project_state.md` antes de operar |
 | `kb-kmm-testing-strategy` | Estrategia de testing — pirámide, source sets, TDD RED-GREEN-REFACTOR, fakes sobre mocks, cobertura mínima (planificación) |
 | `kb-tasks-kmm-unit-testing` | Unit tests — ViewModel con Turbine, UseCase, RepositoryImpl con fakes, kotlin.test (implementación) |
 | `kb-tasks-kmm-integration-testing` | Integration tests — composeTestRule, accesibilidad, Roborazzi, DB in-memory (implementación) |

@@ -142,7 +142,7 @@ features/<nombre>/<nombre>_plan.md
     ↓ [/wf-plan-validate — gate formal]
     ↓ [/wf-prepare-tasks generate — por feature]
 features/<nombre>/<nombre>_tasks.md
-    ↓ [delegación del orquestador a agentes KMM owner]
+    ↓ [delegación del orquestador al owner de cada task (agentes del stack u orquestador)]
 ```
 
 > Modo iterativo: si el usuario solo quiere un subset (fase 1, iteración X), invocar `wf-spec-features-first` con `--features F-001,F-002,...`. Las no incluidas quedan `PENDIENTE_GENERACIÓN` y se procesan en pasadas posteriores.
@@ -161,7 +161,7 @@ features/<nombre>/<nombre>_tasks.md
 > En la salida de Design: `flows` = secuencias y transiciones; `views` = SSoT de pantallas y estados visuales; `ui_prompt` = ensamblaje para Stitch.
 > Para pasar de Plan a Tasks: `/wf-prepare-plan generate <feature_spec.md>` → `/wf-plan-validate <feature_plan.md>` → `/wf-prepare-tasks generate <feature_plan.md>`.
 > Para cambios de producto (scope, prioridad, exclusiones): primero `/wf-prd-change`, luego `/wf-prd-sync-impact` y `/wf-spec-sync-from-prd`.
-> Tras `/wf-prepare-tasks`, cada task debe delegarse al `Owner agent` indicado en el `_tasks.md`.
+> Tras `/wf-prepare-tasks`, cada task debe delegarse al `Owner agent` indicado en el `_tasks.md` (agentes del overlay de stack, u orquestador en modo genérico).
 
 ## Principio de precondiciones
 
