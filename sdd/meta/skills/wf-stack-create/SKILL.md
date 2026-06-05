@@ -75,7 +75,7 @@ Invoca `sdd-author` con este encargo:
 Tras el OK de `sdd-author`:
 
 1. **Detección**: añade la condición `--detect` a la tabla del Paso 4 de `bootstrap/skills/wf-project-init/SKILL.md` (fila nueva: condición → stack).
-2. **Registry**: ejecuta `/wf-sdd-status` para regenerar `sdd/meta/skill-registry.md`.
+2. **Registry**: ejecuta `python3 sdd/scripts/generate-skill-registry.py` para regenerar `sdd/meta/skill-registry.md`.
 3. **Verificación**: instala el overlay en un directorio temporal sobre un install base de `plan,tasks` y comprueba que el override por nombre y la estructura son correctos.
 
 ---

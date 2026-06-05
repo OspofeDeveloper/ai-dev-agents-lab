@@ -336,7 +336,7 @@ Sistema de iconografia del producto segun `kb-design-iconography-expert`:
 Politica de accesibilidad mobile del producto. Las reglas normativas viven en `kb-a11y-expert`; esta seccion materializa las decisiones concretas para este producto.
 
 - **Target de conformidad**: <AA | AAA> (WCAG 2.2 mapeada a mobile).
-- **Contraste**: confirma que cada par foreground/background en `colors.light` y `colors.dark` cumple el ratio (4.5:1 texto normal, 3:1 texto grande / UI / focus). En `--strict`, esto lo verifica `wf-design-a11y-audit`.
+- **Contraste**: confirma que cada par foreground/background en `colors.light` y `colors.dark` cumple el ratio (4.5:1 texto normal, 3:1 texto grande / UI / focus). El calculo real de ratios lo verifica `wf-design-a11y-audit`.
 - **Touch targets**: tamano minimo declarado en `accessibility.min_touch_target`. Como se garantiza en componentes densos.
 - **Dynamic type**: estrategia para soportar font scaling hasta 200% sin perdida de contenido (line-heights relativos, reflow, truncado controlado).
 - **Reduce motion**: comportamiento cuando el sistema activa la preferencia, alineado con `motion.reduced_motion_policy`.

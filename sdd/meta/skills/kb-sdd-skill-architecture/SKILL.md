@@ -270,10 +270,11 @@ Ejemplo canónico en el ecosistema: `wf-sdd-status` no delega a ningún agente p
 
 `sdd/meta/skill-registry.md` es el índice central de todas las skills del ecosistema.
 
-- Lo genera y actualiza `wf-sdd-status` automáticamente en cada run global.
+- Lo genera el script determinista `sdd/scripts/generate-skill-registry.py` (SSoT de generación: escanea el filesystem, no puede mentir).
+- Lo ejecutan: `wf-sdd-status` en cada run global, y los workflows que alteran el inventario (`wf-skill-create`, `wf-stack-create`, `wf-sdd-refactor`) al cerrar.
 - Lo leen agentes que necesitan descubrir skills sin explorar el filesystem: `sdd-author` (detección de duplicados), `sdd-auditor` (cobertura estructural).
 - No es una segunda SSoT: cada regla sigue viviendo en su `SKILL.md`. El registry solo almacena nombre, descripción de una línea, invocabilidad y path.
-- No se edita manualmente. Si está desactualizado: ejecutar `wf-sdd-status`.
+- No se edita manualmente. Si está desactualizado: `python3 sdd/scripts/generate-skill-registry.py` (o `/wf-sdd-status`).
 
 ## Regla 19: KB Load Status — protocolo de verificación de contexto
 

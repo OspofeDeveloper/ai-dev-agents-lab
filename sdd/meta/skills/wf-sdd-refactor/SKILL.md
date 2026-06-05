@@ -106,7 +106,12 @@ Si el agente indica que la refactorizacion requiere crear nuevas piezas (extracc
 
 ---
 
-## Paso 6: Informar al usuario
+## Paso 6: Actualizar el registry e informar al usuario
+
+Si la refactorizacion cambio el `name:`, la `description:` o la ubicacion del artefacto, regenera el skill registry (no bloqueante; si falla, avisa con `⚠`):
+```bash
+python3 sdd/scripts/generate-skill-registry.py
+```
 
 Reporta:
 - Que cambio se aplico y por que

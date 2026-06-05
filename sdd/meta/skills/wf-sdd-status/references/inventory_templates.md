@@ -37,29 +37,4 @@ wf-* (Z):
 
 ## Formato del skill-registry (Paso 6.5)
 
-```markdown
-# SDD Skill Registry
-<!-- Auto-generado por wf-sdd-status. No editar manualmente. -->
-<!-- Total: X skills | Y user-invocable | Z kb-* -->
-
-## Meta-Ecosistema (meta/)
-| Skill | Descripción | Invocable | Path |
-|---|---|---|---|
-| <nombre> | <primera línea de description> | true/false | <path relativo desde sdd/> |
-
-## Fase: PRD
-...
-## Fase: Spec
-...
-## Fase: Design
-...
-## Fase: Plan
-...
-## Fase: Tasks
-...
-## Tech: KMM — Plan
-## Tech: KMM — Tasks
-## Tech: KMM — Workflows
-```
-
-`Path` siempre relativo desde `sdd/` (ejemplo: `meta/skills/kb-sdd-audit-content/SKILL.md`).
+El formato del registry vive en el generador determinista `sdd/scripts/generate-skill-registry.py` (SSoT de generación). El Paso 6.5 ejecuta ese script; no existe plantilla manual del registry para evitar una segunda fuente de verdad.

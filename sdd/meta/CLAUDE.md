@@ -52,6 +52,6 @@ Consulta `kb-sdd-skill-architecture` directamente solo si necesitas responder un
 - Las convenciones operativas de creacion (nombrado, ubicacion, plantillas, checklists) viven en `kb-sdd-creation-guide`.
 - Los `CLAUDE.md` de fase viven para routing, handoffs y entrypoints operativos.
 - Los `README.md` de fase viven para mapa humano de la fase, artefactos y ejemplos de uso.
-- `sdd/meta/skill-registry.md` es el índice persistente de todas las skills del ecosistema. Se genera con `wf-sdd-status`. Leerlo cuando se necesita descubrir skills sin explorar el filesystem.
+- `sdd/meta/skill-registry.md` es el índice persistente de todas las skills del ecosistema. Lo genera el script determinista `sdd/scripts/generate-skill-registry.py` (ejecutado por `wf-sdd-status` y por los workflows de creación/refactor al cerrar). Leerlo cuando se necesita descubrir skills sin explorar el filesystem; nunca editarlo a mano.
 
 Si una regla aplica a varias fases de `sdd/`, no debe definirse otra vez en `prd/`, `spec/` o `design/`. Se delega a `kb-sdd-skill-architecture`.

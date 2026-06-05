@@ -7,6 +7,9 @@
 #   bash install.sh prd                    — solo fase PRD
 #   bash install.sh prd,spec               — varias fases separadas por comas
 #   bash install.sh prd,spec,design,plan   — combinacion de fases
+#   bash install.sh prd,spec --prune       — ademas, elimina skills/agents SDD
+#                                            de fases NO seleccionadas que queden
+#                                            en .claude/ de un install anterior
 
 set -e
 
@@ -15,14 +18,23 @@ SHARED_DIR="$SCRIPT_DIR/spec/shared/templates"
 CLAUDE_DIR="$(pwd)/.claude"
 KMM_DIR="$SCRIPT_DIR/tech/kmm"
 
-RAW_ARG="${1:-all}"
-
 usage() {
-  echo "Uso: bash install.sh [all|prd|spec|design|plan|tasks|<fase1,fase2,...>]"
+  echo "Uso: bash install.sh [all|prd|spec|design|plan|tasks|<fase1,fase2,...>] [--prune]"
   echo "  all (por defecto): instala el ecosistema SDD completo"
   echo "  prd,spec          : instala PRD y Spec"
   echo "  prd,spec,design   : instala PRD, Spec y Design"
+  echo "  --prune           : elimina del .claude/ las skills/agents SDD de fases no seleccionadas"
 }
+
+RAW_ARG="all"
+PRUNE=0
+for arg in "$@"; do
+  case "$arg" in
+    --prune) PRUNE=1 ;;
+    -h|--help|help) usage; exit 0 ;;
+    *) RAW_ARG="$arg" ;;
+  esac
+done
 
 # Construir lista de fases a instalar
 PHASES=()
@@ -81,11 +93,16 @@ echo ""
 echo "Instalando agentes..."
 mkdir -p "$CLAUDE_DIR/agents"
 
+# Registro de lo instalado en este run (para la reconciliacion final)
+INSTALLED_AGENTS=""
+INSTALLED_SKILLS=""
+
 install_agent() {
   local src="$1"
   local name
   name=$(basename "$src")
   cp "$src" "$CLAUDE_DIR/agents/$name"
+  INSTALLED_AGENTS="$INSTALLED_AGENTS $name"
   echo "  ✓ agents/$name"
 }
 
@@ -131,6 +148,7 @@ install_skill() {
     mkdir -p "$(dirname "$dest")"
     cp "$file" "$dest"
   done
+  INSTALLED_SKILLS="$INSTALLED_SKILLS $name"
   echo "  ✓ skills/$name/"
 }
 
@@ -220,6 +238,66 @@ elif command -v python3 >/dev/null 2>&1; then
 else
   echo "  ⚠ settings.json existente y python3 no disponible: no se modifica."
   echo "    Revisa manualmente que los hooks de $SCRIPT_DIR/settings.json esten presentes."
+fi
+
+# ── 6. Reconciliar piezas SDD de fases no seleccionadas ─────────────────────
+# Detecta skills/agents que pertenecen al ecosistema SDD (existen en alguna
+# fase del framework) pero NO se instalaron en este run: huerfanos de un
+# install anterior con mas fases. Solo toca piezas SDD — las skills/agents
+# propios del proyecto y los overlays de stack (tech/<stack>) no se tocan.
+
+in_list() {
+  case " $2 " in *" $1 "*) return 0 ;; esac
+  return 1
+}
+
+MANAGED_SKILLS=""
+MANAGED_AGENTS=""
+for d in prd spec design plan tasks; do
+  for s in "$SCRIPT_DIR/$d/skills"/*/; do
+    [ -d "$s" ] && MANAGED_SKILLS="$MANAGED_SKILLS $(basename "$s")"
+  done
+  for a in "$SCRIPT_DIR/$d/agents"/*.md; do
+    [ -f "$a" ] && MANAGED_AGENTS="$MANAGED_AGENTS $(basename "$a")"
+  done
+done
+
+ORPHAN_SKILLS=""
+for dir in "$CLAUDE_DIR/skills"/*/; do
+  [ -d "$dir" ] || continue
+  name=$(basename "$dir")
+  if in_list "$name" "$MANAGED_SKILLS" && ! in_list "$name" "$INSTALLED_SKILLS"; then
+    ORPHAN_SKILLS="$ORPHAN_SKILLS $name"
+  fi
+done
+
+ORPHAN_AGENTS=""
+for f in "$CLAUDE_DIR/agents"/*.md; do
+  [ -f "$f" ] || continue
+  name=$(basename "$f")
+  if in_list "$name" "$MANAGED_AGENTS" && ! in_list "$name" "$INSTALLED_AGENTS"; then
+    ORPHAN_AGENTS="$ORPHAN_AGENTS $name"
+  fi
+done
+
+if [ -n "$ORPHAN_SKILLS" ] || [ -n "$ORPHAN_AGENTS" ]; then
+  echo ""
+  if [ "$PRUNE" = "1" ]; then
+    echo "Eliminando piezas SDD de fases no seleccionadas (--prune)..."
+    for name in $ORPHAN_SKILLS; do
+      rm -rf "$CLAUDE_DIR/skills/$name"
+      echo "  ✗ skills/$name/ eliminada"
+    done
+    for name in $ORPHAN_AGENTS; do
+      rm -f "$CLAUDE_DIR/agents/$name"
+      echo "  ✗ agents/$name eliminado"
+    done
+  else
+    echo "⚠ Piezas SDD de fases no seleccionadas detectadas en .claude/ (de un install anterior):"
+    for name in $ORPHAN_SKILLS; do echo "    skills/$name/"; done
+    for name in $ORPHAN_AGENTS; do echo "    agents/$name"; done
+    echo "  Siguen instaladas e invocables. Para eliminarlas: bash install.sh $RAW_ARG --prune"
+  fi
 fi
 
 echo ""

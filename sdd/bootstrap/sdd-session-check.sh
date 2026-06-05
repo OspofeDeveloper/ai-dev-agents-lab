@@ -24,15 +24,46 @@ if [ -n "$SDD_HOME" ]; then
   case "$PROJECT_DIR/" in
     "$SDD_HOME/"*) exit 0 ;;
   esac
+  # Tambien el repo git que contiene el framework (SDD_HOME puede ser un
+  # subdirectorio, p. ej. <repo>/sdd): una sesion en ese repo es desarrollo
+  # del ecosistema, no un proyecto consumidor. Si git no esta disponible,
+  # se omite esta exclusion adicional. Se compara con rutas fisicas porque
+  # git devuelve el toplevel resuelto (sin symlinks).
+  SDD_REPO="$(git -C "$SDD_HOME" rev-parse --show-toplevel 2>/dev/null || true)"
+  if [ -n "$SDD_REPO" ]; then
+    PROJECT_DIR_PHYS="$(pwd -P)"
+    case "$PROJECT_DIR_PHYS/" in
+      "$SDD_REPO/"*) exit 0 ;;
+    esac
+  fi
 fi
 
 # 1. Proyecto SDD inicializado → verificar que el init esta completo
 if [ -f .sdd/project-init.json ]; then
-  PHASES_LINE="$(tr -d '\n' < .sdd/project-init.json | grep -o '"phases"[[:space:]]*:[[:space:]]*\[[^]]*\]' || true)"
+  # Extraer las fases declaradas. Parser primario: python3 (JSON real).
+  # Fallback sin python3: extraccion textual del array. Ante JSON malformado,
+  # PHASES_LIST queda vacia y no se inyecta nada (conservador: mejor no
+  # disparar init-incomplete espurio en cada sesion).
+  if command -v python3 >/dev/null 2>&1; then
+    PHASES_LIST="$(python3 -c '
+import json
+try:
+    with open(".sdd/project-init.json") as f:
+        phases = json.load(f).get("phases", [])
+    if isinstance(phases, list):
+        print(" ".join(p for p in phases if isinstance(p, str)))
+except Exception:
+    pass
+' 2>/dev/null || true)"
+  else
+    PHASES_LIST="$(tr -d '\n' < .sdd/project-init.json \
+      | grep -o '"phases"[[:space:]]*:[[:space:]]*\[[^]]*\]' \
+      | grep -o '"[a-z]*"' | tr -d '"' | grep -vx 'phases' | tr '\n' ' ' || true)"
+  fi
   MISSING=""
   for f in prd spec design plan tasks; do
-    case "$PHASES_LINE" in
-      *"\"$f\""*) [ -f "$f/.claude/CLAUDE.md" ] || MISSING="$MISSING $f" ;;
+    case " $PHASES_LIST " in
+      *" $f "*) [ -f "$f/.claude/CLAUDE.md" ] || MISSING="$MISSING $f" ;;
     esac
   done
   if [ -n "$MISSING" ]; then

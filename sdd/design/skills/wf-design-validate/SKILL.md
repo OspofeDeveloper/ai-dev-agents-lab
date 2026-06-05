@@ -69,11 +69,16 @@ DESIGN_BRIEF.md (si existe):
 ---
 <contenido_brief_o_N/A>
 ---
+*_views.md (si se pasó --views):
+---
+<contenido_views_o_N/A>
+---
 Resultado del linter:
 ---
 <resultado_linter>
 ---
-Flag --strict: <true|false>
+Flag --lenient: <true|false>
+Flag --pedagogical: <true|false>
 
 Checklist de validación:
 ---

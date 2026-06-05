@@ -85,9 +85,13 @@ Estructura el inventario siguiendo el formato de snapshot en `${CLAUDE_SKILL_DIR
 
 ## Paso 6.5: Actualizar skill-registry.md
 
-Si el run es global (sin `--phase` o `--phase global`), genera o sobreescribe `sdd/meta/skill-registry.md` con todas las skills encontradas en el Paso 2, organizadas por fase/scope, siguiendo el formato de registry en `${CLAUDE_SKILL_DIR}/references/inventory_templates.md`.
+Si el run es global (sin `--phase` o `--phase global`), regenera el registry ejecutando el generador determinista:
 
-`Path` siempre relativo desde `sdd/`. Este paso no bloquea el flujo — si falla la escritura, informa con `⚠ No se pudo actualizar skill-registry.md`.
+```bash
+python3 sdd/scripts/generate-skill-registry.py
+```
+
+El script escanea el filesystem y sobreescribe `sdd/meta/skill-registry.md` completo (es la SSoT de generación del registry: no lo redactes a mano ni edites el archivo directamente). Este paso no bloquea el flujo — si python3 no está disponible o el script falla, informa con `⚠ No se pudo actualizar skill-registry.md`.
 
 ---
 

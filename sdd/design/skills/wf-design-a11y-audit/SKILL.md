@@ -2,7 +2,7 @@
 name: wf-design-a11y-audit
 description: Audita un DESIGN.md y opcionalmente un *_views.md frente a las reglas de kb-a11y-expert. Verifica contraste real de pares foreground/background, touch targets, focus order declarado, screen reader labels, motion handling y forms accesibles. Produce un reporte con severidad. Complementa a wf-design-validate.
 when_to_use: "Activa en frases como 'valida la accesibilidad', 'audit a11y del DESIGN.md', 'comprueba contraste WCAG'."
-argument-hint: "<DESIGN.md> [--views <feature_views.md>] [--brief <DESIGN_BRIEF.md>] [--target AA|AAA] [--strict]"
+argument-hint: "<DESIGN.md> [--views <feature_views.md>] [--brief <DESIGN_BRIEF.md>] [--target AA|AAA] [--lenient]"
 effort: medium
 allowed-tools: [Read, Write, Bash, Agent]
 context: fork
@@ -20,10 +20,10 @@ Extrae de `$ARGUMENTS`:
 - **Path de un `*_views.md`** opcional via `--views`.
 - **Path del brief** opcional via `--brief`.
 - **Target WCAG** opcional via `--target` (`AA` o `AAA`). Si no se pasa, hereda del frontmatter `accessibility.wcag_target` del DESIGN.md o del brief.
-- **`--strict`**: cualquier hallazgo cuenta como fallo bloqueante.
+- **Flag `--lenient`** opcional: relaja el comportamiento por defecto; solo los hallazgos `[CRITICO]` bloquean. Por defecto la auditoria es **estricta** (cualquier `[CRITICO]` o `[ALTO]` cuenta como fallo). Misma semantica que `wf-design-validate`.
 
 Si falta path, informa:
-> "Uso: `/wf-design-a11y-audit <DESIGN.md> [--views <feature_views.md>] [--brief <DESIGN_BRIEF.md>] [--target AA|AAA] [--strict]`"
+> "Uso: `/wf-design-a11y-audit <DESIGN.md> [--views <feature_views.md>] [--brief <DESIGN_BRIEF.md>] [--target AA|AAA] [--lenient]`"
 
 ## Paso 2: Verificar el DESIGN.md
 
@@ -127,6 +127,10 @@ Si los pasos 3-7 producen hallazgos que requieren razonamiento contextual (ej. e
 ## Paso 9: Producir reporte
 
 Escribe siempre el reporte en `<dir_design>/a11y_audit_<fecha>.md` y muestra el mismo contenido al usuario, siguiendo la estructura de `${CLAUDE_SKILL_DIR}/references/a11y_report_template.md`.
+
+Reglas de `Estado` del reporte (mismas que `wf-design-validate`):
+- Por defecto (estricto): `FAIL` si hay al menos un `[CRITICO]` o `[ALTO]`; `PASS_WITH_GAPS` si solo hay `[MEDIO]`/`[BAJO]`; `PASS` sin hallazgos.
+- Con `--lenient`: `FAIL` solo si hay `[CRITICO]`; cualquier otro hallazgo → `PASS_WITH_GAPS`.
 
 ## Paso 10: Informar al usuario
 

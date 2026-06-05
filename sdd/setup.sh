@@ -33,6 +33,19 @@ if [ ! -d "$SOURCE" ]; then
   exit 1
 fi
 
+# Precondicion: python3 es necesario para el merge de ~/.claude/settings.json
+# (paso 4). Se verifica ANTES de tocar nada para no dejar el bootstrap a medias
+# (hook copiado pero sin registrar).
+if ! command -v python3 >/dev/null 2>&1; then
+  echo "Error: python3 no esta disponible y setup.sh lo necesita para registrar"
+  echo "el hook en ~/.claude/settings.json sin pisar tu configuracion existente."
+  echo "Instalalo y reintenta:"
+  echo "  macOS : xcode-select --install   (o: brew install python3)"
+  echo "  Linux : sudo apt install python3 (o equivalente de tu distro)"
+  echo "No se ha modificado nada."
+  exit 1
+fi
+
 # ── 1. Skill global wf-project-init ─────────────────────────────────────────
 mkdir -p "$GLOBAL_SKILLS_DIR"
 rm -rf "$TARGET"

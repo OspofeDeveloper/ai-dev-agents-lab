@@ -37,7 +37,7 @@ Si no existe `DESIGN_BRIEF.md`, ejecuta primero `/wf-design-intake`. Los workflo
 | Explorar una variante paralela del DESIGN.md sin comprometer main | `/wf-design-branch` | `create <branch-name> \| list \| compare <a> <b> \| merge <branch> --into <target> \| discard <branch>` |
 | A/B testing visual de una feature concreta | `/wf-design-variant` | `create <feature_spec.md> --variants A,B [--hypothesis 'texto'] \| compare <feature_variants.md>` |
 | Exportar tokens del DESIGN.md a CSS, Style Dictionary, Compose, SwiftUI o Tailwind | `/wf-design-export` | `<DESIGN.md> --platforms <css,style-dictionary,compose,swiftui,tailwind> [--output-dir <path>] [--dry-run]` |
-| Auditoria ejecutiva de accesibilidad (contraste, touch targets, focus order) | `/wf-design-a11y-audit` | `<DESIGN.md> [--views <feature_views.md>] [--brief <DESIGN_BRIEF.md>] [--target AA\|AAA] [--strict]` |
+| Auditoria ejecutiva de accesibilidad (contraste, touch targets, focus order) | `/wf-design-a11y-audit` | `<DESIGN.md> [--views <feature_views.md>] [--brief <DESIGN_BRIEF.md>] [--target AA\|AAA] [--lenient]` |
 | Capturar feedback no estructurado de stakeholders | `/wf-design-feedback` | `capture <feedback.md\|texto> [--source ...] [--feature ...]` |
 | Triajear un feedback capturado en categorias accionables | `/wf-design-feedback` | `triage <feedback_capture.md>` |
 | Generar flows, views y prompt de ensamblaje para Stitch desde una feature | `/wf-design-feature-prototype` | `generate <feature_spec.md> [--design-file DESIGN.md] [--brief <DESIGN_BRIEF.md>] [--no-brief]` |

@@ -123,7 +123,12 @@ Escribe el contenido generado por el agente en `<directorio_destino>/SKILL.md`.
 
 ---
 
-## Paso 8: Informar al usuario
+## Paso 8: Actualizar el registry e informar al usuario
+
+Regenera el skill registry con el generador determinista (no bloqueante: si python3 no está disponible o el script falla, avisa con `⚠ skill-registry.md no actualizado`):
+```bash
+python3 sdd/scripts/generate-skill-registry.py
+```
 
 Reporta:
 - Path del archivo creado
