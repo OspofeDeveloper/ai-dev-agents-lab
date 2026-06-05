@@ -4,7 +4,7 @@ description: "Audita un _plan.md existente contra su Spec, el handoff de Design 
 when_to_use: "Activa en frases como 'valida el plan', 'revisa el _plan.md', 'audita si el plan está listo para tasks', 'comprueba que el plan cubre todos los CAs'. No activa para generar el plan ni para crear tasks."
 argument-hint: "<plan.md>"
 effort: high
-allowed-tools: [Read, Write, Agent]
+allowed-tools: [Read, Write, Bash, Agent]
 context: fork
 agent: plan-auditor
 ---
@@ -95,22 +95,29 @@ INSTRUCCIÓN: si no está listo, devuelve un reporte con hallazgos y severidad, 
 Usa `ninguno` cuando una categoría no tenga gaps.
 ```
 
-## Paso 5: Sellar el estado operativo
+## Paso 5: Sellar el estado operativo (sellador determinista)
+
+El estado del plan **solo** lo escribe el script `.sdd/scripts/sdd-seal.py` (separación autor/sellador: el veredicto del agente es necesario pero no suficiente). Nunca edites la línea `Estado:` a mano.
 
 Si el agente devuelve `OK`:
-- actualiza el header del `_plan.md` reemplazando `Estado: BORRADOR` por `Estado: VALIDADO`
 - actualiza las líneas resumen del footer a:
   - `**DESIGN_GAPs:** ninguno`
   - `**TECH_GAPs:** ninguno`
   - `**TRACE_GAPs:** ninguno`
   - `**PLAN_GAPs:** ninguno`
-- informa que el Plan está listo para Tasks
-- siguiente paso:
+- ejecuta el sellador:
+  ```bash
+  python3 .sdd/scripts/sdd-seal.py plan <path_plan> --seal
+  ```
+- **exit 0** → el plan queda `VALIDADO`. Informa que está listo para Tasks:
   > "Ejecuta `/wf-prepare-tasks generate <plan.md>`"
+- **exit 2** → el veredicto del agente no superó la verificación mecánica (el script muestra qué condición falló: CA sin cubrir, gap abierto, spec con `[CRÍTICO]`, `status_sync` no fiable...). El plan queda en `BORRADOR`. Muestra los checks `✗` al usuario y trata cada uno como hallazgo a resolver. No sugieras pasar a Tasks.
+- **script no encontrado** → NO selles manualmente. Informa:
+  > "⚠ Falta `.sdd/scripts/sdd-seal.py`. Re-ejecuta la instalación del ecosistema (`install.sh`) para reponer los scripts de enforcement."
 
 Si el agente devuelve hallazgos:
-- actualiza el header del `_plan.md` a `Estado: BORRADOR`
 - sustituye en el footer las cuatro líneas resumen por el bloque normalizado devuelto por el agente
-- muéstralos tal cual
+- ejecuta `python3 .sdd/scripts/sdd-seal.py plan <path_plan> --unseal` (downgrade a `BORRADOR`; si el script falta, en este caso sí puedes escribir `Estado: BORRADOR` a mano — degradar siempre es seguro)
+- muestra los hallazgos tal cual
 - indica que el plan sigue en `BORRADOR`
 - no sugieras pasar a Tasks hasta resolverlos

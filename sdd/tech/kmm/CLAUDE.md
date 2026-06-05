@@ -65,43 +65,7 @@ En una petición típica de implementación de feature, el flujo preferido es:
 
 ## Skills de conocimiento KMM
 
-Las skills KMM son bases de conocimiento que los agentes especializados cargan automáticamente en su contexto. No son el punto de entrada principal del orquestador.
-
-| Skill | Dominio |
-|---|---|
-| `kb-kmm-clean-architecture` | Topología global `app / features / core` |
-| `kb-kmm-app-layer` | Reglas de `app`, composition root y wiring global |
-| `kb-kmm-core-layer` | Dominio compartido e infraestructura transversal |
-| `kb-kmm-app-errors` | Contrato transversal `AppResult` / `AppError` y ownership de taxonomías de error |
-| `kb-kmm-feature-clean-architecture` | Microarquitectura interna de una feature |
-| `kb-plan-koin` | Koin DI — organización de módulos, tipos de registro, qualifiers (planificación) |
-| `kb-tasks-koin` | Koin DI — DSL, nativeModule expect/actual, initKoin completo (implementación) |
-| `kb-plan-kmm-datastore-preferences` | Preferences DataStore — cuándo usarlo, ownership core/feature (planificación) |
-| `kb-tasks-kmm-datastore-preferences` | Preferences DataStore — factory, path por plataforma, templates (implementación) |
-| `kb-kmm-navigation-contracts` | Contrato arquitectónico de navegación |
-| `kb-kmm-navigation-compose` | Implementación del grafo con Compose Navigation |
-| `kb-plan-kmm-navigation-viewmodel-events` | Intent/Events — patrón arquitectónico ViewModel↔Composable (planificación) |
-| `kb-tasks-kmm-navigation-viewmodel-events` | Intent/Events — Channel, LaunchedEffect, templates (implementación) |
-| `kb-kmm-navigation-platform-behaviors` | `BackHandler`, predictive back y bridges del host |
-| `kb-kmm-network-contracts` | Contratos remotos estables |
-| `kb-kmm-http-ktor` | Implementación HTTP con Ktor |
-| `kb-kmm-auth-contracts` | Política de sesión |
-| `kb-kmm-auth-oauth-keycloak` | Proveedor Keycloak |
-| `kb-kmm-auth-ktor-plugin` | Auth automática sobre Ktor |
-| `kb-kmm-brands` | Semántica de marca |
-| `kb-kmm-environments` | Semántica de entornos |
-| `kb-kmm-android-environments` | Implementación Android de variants |
-| `kb-kmm-ios-environments` | Implementación iOS de variants |
-| `kb-cmp-resources` | Compose Resources — estructura, localización, qué módulos la necesitan (planificación) |
-| `kb-kmm-resources` | Compose Resources — build.gradle.kts, APIs Res.*, snippets (implementación) |
-| `kb-plan-cmp-ui` | CMP presentation — estructura commonMain, expect/actual de UI (planificación) |
-| `kb-tasks-cmp-ui` | CMP presentation — entry points Android/iOS, @Preview, initKoin (implementación) |
-| `kb-plan-kmm-ui-text` | UIText — cuándo usarlo, decisión UIText vs StringResource (planificación) |
-| `kb-tasks-kmm-ui-text` | UIText — sealed interface, Regla 10, mapping AppError→UIText (implementación) |
-| `kb-kmm-project-state-protocol` | Protocolo de precondición de contexto técnico — todos los agentes KMM deben leer `kmm_project_state.md` antes de operar |
-| `kb-kmm-testing-strategy` | Estrategia de testing — pirámide, source sets, TDD RED-GREEN-REFACTOR, fakes sobre mocks, cobertura mínima (planificación) |
-| `kb-tasks-kmm-unit-testing` | Unit tests — ViewModel con Turbine, UseCase, RepositoryImpl con fakes, kotlin.test (implementación) |
-| `kb-tasks-kmm-integration-testing` | Integration tests — composeTestRule, accesibilidad, Roborazzi, DB in-memory (implementación) |
+Las `kb-*` del stack viven en el frontmatter `skills: [...]` de los agentes KMM; el harness las inyecta en el contexto del subagente. El orquestador no las consulta ni necesita su inventario: vive en `sdd/meta/skill-registry.md` (secciones Tech: KMM).
 
 ## Principio operativo
 

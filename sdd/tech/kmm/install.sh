@@ -66,12 +66,26 @@ for skill_dir in "$SKILLS_SOURCE_DIR"/wf-*/; do
   install_skill "$skill_dir"
 done
 
-# ── 3. Instalar CLAUDE.md ──────────────────────────────────────────────────
+# ── 3. Instalar CLAUDE.md del stack como regla de carga perezosa ───────────
+# Va a .claude/rules/sdd-kmm.md con frontmatter `paths:`: el harness carga el
+# orquestador del stack solo al tocar código Kotlin o artefactos de plan/tasks.
+# NO se sobreescribe el CLAUDE.md raíz del proyecto.
 
 echo ""
-echo "Instalando CLAUDE.md desde $(basename "$CLAUDE_SOURCE_FILE")..."
-cp "$CLAUDE_SOURCE_FILE" "$CLAUDE_DIR/CLAUDE.md"
-echo "  ✓ CLAUDE.md"
+echo "Instalando regla del stack desde $(basename "$CLAUDE_SOURCE_FILE")..."
+mkdir -p "$CLAUDE_DIR/rules"
+{
+  echo "---"
+  echo "paths:"
+  echo '  - "**/*.kt"'
+  echo '  - "**/*.kts"'
+  echo '  - "**/*_plan.md"'
+  echo '  - "**/*_tasks.md"'
+  echo "---"
+  echo ""
+  cat "$CLAUDE_SOURCE_FILE"
+} > "$CLAUDE_DIR/rules/sdd-kmm.md"
+echo "  ✓ rules/sdd-kmm.md"
 
 # ── 4. Instalar settings.json (merge, sin pisar el del proyecto) ───────────
 

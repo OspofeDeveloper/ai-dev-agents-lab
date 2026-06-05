@@ -135,8 +135,8 @@ Si se usó `--analysis` y todas las respuestas resueltas eran compatibles con el
 
 Si el análisis no añade nada relevante al scope, mantén `Origen de alcance: PRD`.
 
-Determina el path de salida: mismo directorio que el archivo de entrada + nombre base + `_discovery.md`.
-- Ejemplo: `docs/requisitos.md` → `docs/requisitos_discovery.md`
+Determina el directorio de salida (regla de layout): si `.sdd/project-init.json` (en el directorio actual o un ancestro) declara `artifacts.prd`, usa ese directorio (relativo a la raíz que contiene `.sdd/`); si no, usa el mismo directorio que el archivo de entrada. Nombre: nombre base del archivo de entrada + `_discovery.md`.
+- Ejemplo (sin mapa): `docs/requisitos.md` → `docs/requisitos_discovery.md`
 
 Antes de escribir, verifica si el archivo ya existe:
 ```bash

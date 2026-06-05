@@ -45,7 +45,8 @@ Si no se paso, continua sin PRD. El PRD mejora la calidad del brief, pero no es 
 
 1. Resolver path:
    - Si se paso `--output`, usalo.
-   - Si no, usa `DESIGN_BRIEF.md` en la raiz del producto (dos niveles arriba si el spec esta en `features/<nombre>/`, en el mismo directorio en otros casos).
+   - Si no (regla de layout): si `.sdd/project-init.json` (en el directorio actual o un ancestro) declara `artifacts.design`, usa `<raíz>/<artifacts.design>/DESIGN_BRIEF.md`.
+   - En otro caso, usa `DESIGN_BRIEF.md` en la raiz del producto (dos niveles arriba si el spec esta en `features/<nombre>/`, en el mismo directorio en otros casos).
 
 2. Comprobar si el archivo ya existe:
    - **Si existe**: leelo completo. Pregunta al usuario:

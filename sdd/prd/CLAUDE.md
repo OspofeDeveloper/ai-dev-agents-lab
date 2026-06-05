@@ -41,12 +41,7 @@ Usa workflows cuando exista una pipeline clara y cerrada. Si la petición no req
 
 ## Skills de conocimiento PRD
 
-Las skills PRD son bases de conocimiento que los agentes especializados cargan automáticamente en su contexto. No son el punto de entrada principal del orquestador.
-
-| Skill | Dominio |
-|---|---|
-| `kb-prd-expert` | Reglas del PRD: rol en SDD, estructura válida, alcance, actores, fuera de alcance y contaminación técnica. **Cross-fase**: la cargan también los agentes Spec para leer el PRD de entrada. |
-| `kb-product-change-governance` | Clasificación de cambios, control de alcance y trazabilidad entre PRD y derivados. **Cross-fase**: la cargan también los agentes Spec para distinguir gaps de change requests. |
+Las `kb-*` viven en el frontmatter `skills: [...]` de los agentes de la fase; el harness las inyecta en el contexto del subagente. El orquestador no las consulta ni necesita su inventario: vive en `sdd/meta/skill-registry.md` (mapa humano: el `README.md` de la fase).
 
 ## Principio operativo
 

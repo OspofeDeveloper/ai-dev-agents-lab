@@ -58,6 +58,7 @@ fi
 # Helper: comprueba si una fase está en la lista seleccionada
 has_phase() {
   local target="$1"
+  local p
   for p in "${PHASES[@]}"; do
     [ "$p" = "all" ] && return 0
     [ "$p" = "$target" ] && return 0
@@ -202,27 +203,77 @@ fi
 # aqui: las instala el overlay del stack (wf-<stack>-init → tech/<stack>/install.sh),
 # que ademas sobreescribe por nombre las piezas genericas con su variante especializada.
 
-# ── 4. Instalar CLAUDE.md ─────────────────────────────────────────────────
+# ── 4. Instalar CLAUDE.md raíz y reglas de fase ────────────────────────────
 
 echo ""
-echo "Instalando CLAUDE.md..."
-# Con múltiples fases, instalar el CLAUDE.md del pipeline completo si hay más de una fase,
-# o el de la fase concreta si solo se pide una.
+echo "Instalando CLAUDE.md y reglas de fase..."
+
+# Reglas de fase con carga perezosa NATIVA por path (.claude/rules/ con
+# frontmatter `paths:`): el harness carga las instrucciones de la fase solo
+# cuando se tocan ficheros que matchean los globs — sin depender de que el
+# modelo obedezca prosa. Los globs por defecto combinan el directorio canónico
+# de la fase con patrones por nombre de artefacto (independientes del layout);
+# wf-project-init añade el directorio real del mapa `artifacts` del proyecto.
+mkdir -p "$CLAUDE_DIR/rules"
+
+phase_globs() {
+  case "$1" in
+    prd)    printf '%s\n' "prd/**" "**/prd*.md" "**/*_analysis.md" "**/*_discovery.md" ;;
+    spec)   printf '%s\n' "spec/**" "**/*_spec.md" "**/*_features.md" ;;
+    design) printf '%s\n' "design/**" "**/DESIGN*.md" "**/*_flows.md" "**/*_views.md" "**/*_ui_prompt.md" ;;
+    plan)   printf '%s\n' "**/*_plan.md" ;;
+    tasks)  printf '%s\n' "**/*_tasks.md" ;;
+  esac
+}
+
+install_phase_rule() {
+  local p="$1"
+  {
+    echo "---"
+    echo "paths:"
+    phase_globs "$p" | while read -r g; do echo "  - \"$g\""; done
+    echo "---"
+    echo ""
+    cat "$SCRIPT_DIR/$p/CLAUDE.md"
+  } > "$CLAUDE_DIR/rules/sdd-$p.md"
+  echo "  ✓ rules/sdd-$p.md"
+}
+
+for p in prd spec design plan tasks; do
+  if has_phase "$p"; then
+    install_phase_rule "$p"
+  fi
+done
+
+# CLAUDE.md raíz: pipeline completo si hay varias fases, el de la fase si es una.
+# En el flujo wf-project-init este archivo se regenera después (Paso 7) con la
+# plantilla del proyecto, que siempre lo sobreescribe.
 PHASE_COUNT="${#PHASES[@]}"
 if has_phase "all" || [ "$PHASE_COUNT" -gt 1 ]; then
   cp "$SCRIPT_DIR/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
-elif has_phase "prd"; then
-  cp "$SCRIPT_DIR/prd/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
-elif has_phase "spec"; then
-  cp "$SCRIPT_DIR/spec/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
-elif has_phase "design"; then
-  cp "$SCRIPT_DIR/design/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
-elif has_phase "plan"; then
-  cp "$SCRIPT_DIR/plan/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
-elif has_phase "tasks"; then
-  cp "$SCRIPT_DIR/tasks/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
+else
+  for p in prd spec design plan tasks; do
+    if has_phase "$p"; then
+      cp "$SCRIPT_DIR/$p/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
+    fi
+  done
 fi
 echo "  ✓ CLAUDE.md"
+
+# ── 4b. Instalar scripts de enforcement en .sdd/scripts/ ───────────────────
+# Van a .sdd/ (no a .claude/) porque son parte del proyecto: committeables y
+# ejecutables en CI sin depender de ~/.sdd-home de cada dev.
+# SDD_PROJECT_ROOT permite a wf-project-init (que instala cada fase con cwd en
+# su subdirectorio) dirigirlos a la raíz real del proyecto.
+
+ENFORCE_ROOT="${SDD_PROJECT_ROOT:-$(pwd)}"
+echo ""
+echo "Instalando scripts de enforcement..."
+mkdir -p "$ENFORCE_ROOT/.sdd/scripts"
+for script in sdd-seal.py sdd-gate-check.py; do
+  cp "$SCRIPT_DIR/scripts/$script" "$ENFORCE_ROOT/.sdd/scripts/$script"
+  echo "  ✓ $ENFORCE_ROOT/.sdd/scripts/$script"
+done
 
 # ── 5. Instalar settings.json (merge, sin pisar el del proyecto) ───────────
 
@@ -280,7 +331,14 @@ for f in "$CLAUDE_DIR/agents"/*.md; do
   fi
 done
 
-if [ -n "$ORPHAN_SKILLS" ] || [ -n "$ORPHAN_AGENTS" ]; then
+ORPHAN_PHASE_DOCS=""
+for p in prd spec design plan tasks; do
+  if { [ -f "$CLAUDE_DIR/rules/sdd-$p.md" ] || [ -f "$CLAUDE_DIR/phases/$p.md" ]; } && ! has_phase "$p"; then
+    ORPHAN_PHASE_DOCS="$ORPHAN_PHASE_DOCS $p"
+  fi
+done
+
+if [ -n "$ORPHAN_SKILLS" ] || [ -n "$ORPHAN_AGENTS" ] || [ -n "$ORPHAN_PHASE_DOCS" ]; then
   echo ""
   if [ "$PRUNE" = "1" ]; then
     echo "Eliminando piezas SDD de fases no seleccionadas (--prune)..."
@@ -292,10 +350,15 @@ if [ -n "$ORPHAN_SKILLS" ] || [ -n "$ORPHAN_AGENTS" ]; then
       rm -f "$CLAUDE_DIR/agents/$name"
       echo "  ✗ agents/$name eliminado"
     done
+    for p in $ORPHAN_PHASE_DOCS; do
+      rm -f "$CLAUDE_DIR/rules/sdd-$p.md" "$CLAUDE_DIR/phases/$p.md"
+      echo "  ✗ rules/sdd-$p.md eliminado"
+    done
   else
     echo "⚠ Piezas SDD de fases no seleccionadas detectadas en .claude/ (de un install anterior):"
     for name in $ORPHAN_SKILLS; do echo "    skills/$name/"; done
     for name in $ORPHAN_AGENTS; do echo "    agents/$name"; done
+    for p in $ORPHAN_PHASE_DOCS; do echo "    rules/sdd-$p.md"; done
     echo "  Siguen instaladas e invocables. Para eliminarlas: bash install.sh $RAW_ARG --prune"
   fi
 fi

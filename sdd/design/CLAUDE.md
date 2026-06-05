@@ -111,31 +111,13 @@ Cargado por defecto si el orquestador detecta dudas conceptuales repetidas en un
 
 | Agente | Dominio |
 |---|---|
-| `design-architect` | Agente unico de la fase Design. Cubre siete modos cognitivos: cierre de brief (`wf-design-intake`), articulacion de moodboard (`wf-design-moodboard`), generacion (`wf-design-system`, `wf-design-feature-prototype`), validacion (`wf-design-validate`), evolucion (`wf-design-delta analyze | apply`), auditoria (`wf-design-a11y-audit`), comparacion y exploracion (`wf-design-branch compare`, `wf-design-variant`) y triage de feedback (`wf-design-feedback triage`). Tiene cargadas las 11 kbs del dominio mas `kb-spec-expert` cross-fase |
+| `design-architect` | Agente unico de la fase Design. Cubre siete modos cognitivos: cierre de brief (`wf-design-intake`), articulacion de moodboard (`wf-design-moodboard`), generacion (`wf-design-system`, `wf-design-feature-prototype`), validacion (`wf-design-validate`), evolucion (`wf-design-delta analyze | apply`), auditoria (`wf-design-a11y-audit`), comparacion y exploracion (`wf-design-branch compare`, `wf-design-variant`) y triage de feedback (`wf-design-feedback triage`). Sus KBs las declara su frontmatter `skills: [...]` (SSoT del wiring) |
 
 Usa workflows cuando exista una pipeline clara y cerrada. Si la peticion no requiere una workflow exacta pero si ayuda experta para estructurar la fase `design`, delega a `design-architect`.
 
 ## Skills de conocimiento Design
 
-Las skills Design son bases de conocimiento que los agentes especializados cargan automaticamente en su contexto. No son el punto de entrada principal del orquestador.
-
-| Skill | Dominio |
-|---|---|
-| `kb-design-brief` | Contrato de `DESIGN_BRIEF.md`: modos `guided/hybrid/auto`, `autonomy_policy`, presets, validaciones de consistencia y variables minimas que deben cerrarse antes de generar `DESIGN.md` |
-| `kb-design-expert` | Reglas de la fase design: separacion entre `DESIGN.md` y artefactos por feature, trazabilidad a journeys/CAs, formato de `DESIGN.md` y contrato para Stitch |
-| `kb-design-style-taxonomy` | Taxonomia de direccion visual: familias validas, criterios de seleccion por tipo de producto, densidad, profundidad, tipografia, energia de color, motion y anti-patrones |
-| `kb-a11y-expert` | Accesibilidad mobile (WCAG 2.2 mapeada a mobile): contraste, touch targets, dynamic type, motion, focus order, screen reader labels, anuncios live, forms. Vive en `sdd/design/skills/` y la cargan tambien `plan-architect` cross-fase |
-| `kb-design-conflict-expert` | Deteccion de conflictos visuales y de UX entre features (componentes con doble comportamiento, navegacion incoherente, tokens contradichos, jerarquia rota, a11y inconsistente). Cargada por `design-architect`. |
-| `kb-design-motion-expert` | Catalogo operativo de motion: roles (feedback, transition, attention, expression, orientation), escala de durations, easing curves por rol, micro-interacciones por componente, anti-patrones y politica de `prefers-reduced-motion` |
-| `kb-design-iconography-expert` | Sistema de iconografia: libreria base unica por producto, stroke/fill rule, grid de icono, tamanos por rol, roles semanticos y politica de custom icons |
-| `kb-design-voice` | UX writing y voice & tone: ejes de voz (formality/expertise/warmth/playfulness), estructura de errores, patrones de microcopy por contexto, glosario de producto, politicas de mayusculas y emojis |
-| `kb-design-forms` | Patrones de formulario: layout (label/field/helper/error), validacion cliente/servidor, estados de campo, multistep, autosave, conditional fields, file upload, submit |
-| `kb-design-layout` | Sistema de layout y responsive: spacing, breakpoints, grid, adaptive vs responsive, safe areas, orientacion, foldables. Aplica con mayor intensidad si target_platforms incluye web o tablet |
-| `kb-design-style-decision-tree` | Arbol de decision navegable para elegir style_family y variables visuales por contexto del producto. Pensado para diseñadores junior. Cargada por `wf-design-intake` |
-| `kb-spec-expert` ⚠ | Reglas del Spec cargadas por `design-architect` para no inventar comportamiento funcional (vive en `sdd/spec/`) |
-
-> ⚠ `kb-spec-expert` es una dependencia cross-fase: vive en `sdd/spec/skills/` pero la fase `design` la necesita para leer el spec de entrada sin contaminar el contrato funcional.
-> `kb-a11y-expert` es transversal: vive en `sdd/design/skills/` pero la fase `plan` tambien la carga via `plan-architect` para materializar decisiones a11y en codigo.
+Las `kb-*` viven en el frontmatter `skills: [...]` de los agentes de la fase; el harness las inyecta en el contexto del subagente. El orquestador no las consulta ni necesita su inventario: vive en `sdd/meta/skill-registry.md` (mapa humano: el `README.md` de la fase). Las dependencias cross-fase (`kb-spec-expert`) las resuelve `install.sh design` automáticamente.
 
 ## Principio operativo
 

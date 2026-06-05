@@ -63,11 +63,15 @@ except Exception:
   MISSING=""
   for f in prd spec design plan tasks; do
     case " $PHASES_LIST " in
-      *" $f "*) [ -f "$f/.claude/CLAUDE.md" ] || MISSING="$MISSING $f" ;;
+      *" $f "*)
+        # Layout actual: regla de fase en .claude/rules/sdd-<fase>.md
+        # Layouts legacy: .claude/phases/<fase>.md y <fase>/.claude/CLAUDE.md
+        [ -f ".claude/rules/sdd-$f.md" ] || [ -f ".claude/phases/$f.md" ] || [ -f "$f/.claude/CLAUDE.md" ] || MISSING="$MISSING $f"
+        ;;
     esac
   done
   if [ -n "$MISSING" ]; then
-    echo "[SDD-PROTOCOL] init-incomplete — Este proyecto declara las fases [$MISSING ] en .sdd/project-init.json pero no estan instaladas (falta <fase>/.claude/CLAUDE.md). Antes de atender la peticion del usuario, invoca el skill wf-project-init (opcion 'Completar / ampliar') para reparar la instalacion. No repitas el wizard de modo."
+    echo "[SDD-PROTOCOL] init-incomplete — Este proyecto declara las fases [$MISSING ] en .sdd/project-init.json pero no estan instaladas (falta .claude/phases/<fase>.md). Antes de atender la peticion del usuario, invoca el skill wf-project-init (opcion 'Completar / ampliar') para reparar la instalacion. No repitas el wizard de modo."
   fi
   exit 0
 fi

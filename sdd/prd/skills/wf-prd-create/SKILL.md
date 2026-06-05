@@ -86,7 +86,7 @@ Indícale explícitamente:
 
 Si el usuario proporcionó `--output`, úsalo.
 
-Si no lo proporcionó, escribe por defecto:
+Si no lo proporcionó (regla de layout): si `.sdd/project-init.json` (en el directorio actual o un ancestro) declara `artifacts.prd`, escribe en `<raíz>/<artifacts.prd>/prd.md`; si no, escribe por defecto:
 ```
 <directorio_proyecto>/prd.md
 ```

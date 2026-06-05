@@ -85,7 +85,8 @@ Si la policy es `preferred` u `optional`, continua.
 ## Paso 3: Determinar paths y cargar starter kit
 
 - Si se paso `--design-file`, usa ese path.
-- Si no, crea o actualiza `DESIGN.md` en el directorio raiz del producto:
+- Si no (regla de layout): si `.sdd/project-init.json` (en el directorio actual o un ancestro) declara `artifacts.design`, crea o actualiza `<raíz>/<artifacts.design>/DESIGN.md`.
+- En otro caso, crea o actualiza `DESIGN.md` en el directorio raiz del producto:
   - si el spec esta en `features/<nombre>/`, usa dos niveles arriba
   - en otros casos, usa el mismo directorio del spec
 

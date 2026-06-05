@@ -10,6 +10,17 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "if command -v python3 >/dev/null 2>&1 && [ -f \"$CLAUDE_PROJECT_DIR/.sdd/scripts/sdd-gate-check.py\" ]; then python3 \"$CLAUDE_PROJECT_DIR/.sdd/scripts/sdd-gate-check.py\"; fi"
+          }
+        ]
+      }
     ]
   }
 }

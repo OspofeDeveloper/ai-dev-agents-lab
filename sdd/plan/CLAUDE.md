@@ -62,31 +62,7 @@ Usa workflows cuando exista una pipeline clara y cerrada. Si la petición no req
 
 ## Skills de conocimiento Plan
 
-Las skills Plan son bases de conocimiento que los agentes especializados cargan automáticamente en su contexto. No son el punto de entrada principal del orquestador.
-
-### Skills genéricas de fase
-
-| Skill | Dominio | Fase origen |
-|---|---|---|
-| `kb-plan-expert` | Reglas del Plan: cuándo es obligatorio el handoff de Design, qué secciones debe contener `_plan.md`, taxonomía de gaps y criterios de validación (metodología stack-agnóstica) | `plan/skills/` |
-| `kb-spec-expert` ⚠ | Reglas del Spec — cargada cross-fase para leer el spec de entrada sin contaminar el contrato funcional | `spec/skills/` |
-| `kb-a11y-expert` ⚠ | Accesibilidad mobile — cargada cross-fase para materializar decisiones a11y en arquitectura técnica | `design/skills/` |
-
-> ⚠ `kb-spec-expert` vive en `sdd/spec/skills/` y `kb-a11y-expert` en `sdd/design/skills/`. Ambas son cross-fase: necesarias para que `plan-architect` lea el spec de entrada sin contaminar el contrato funcional y materialice decisiones de accesibilidad en la arquitectura técnica.
-
-### Skills del overlay KMM (solo proyectos KMM)
-
-Estas skills las instala `wf-kmm-init` sobre la fase `plan` cuando el proyecto usa el stack KMM. Sustituyen y amplían la versión genérica de `kb-plan-expert` con las capas, librerías y convenciones concretas de KMM. No están presentes en proyectos con stack agnóstico.
-
-| Skill | Dominio | Fase origen |
-|---|---|---|
-| `kb-plan-expert` (variante KMM) | Reglas del Plan especializadas para KMM con Clean Architecture: capas, módulos Gradle, expect/actual | `tech/kmm/skills/plan/` |
-| `kb-kmm-navigation-contracts` | Contrato arquitectónico de navegación | `tech/kmm/skills/plan/` |
-| `kb-plan-kmm-navigation-viewmodel-events` | Intent/Events — patrón arquitectónico ViewModel↔Composable | `tech/kmm/skills/plan/` |
-| `kb-kmm-app-errors` | Contrato transversal `AppResult` / `AppError` y ownership de taxonomías de error | `tech/kmm/skills/plan/` |
-| `kb-plan-koin` | Koin DI — organización de módulos, tipos de registro, qualifiers | `tech/kmm/skills/plan/` |
-| `kb-plan-cmp-ui` | CMP presentation — estructura commonMain, expect/actual de UI | `tech/kmm/skills/plan/` |
-| `kb-cmp-resources` | Compose Resources — estructura, localización, qué módulos la necesitan | `tech/kmm/skills/plan/` |
+Las `kb-*` viven en el frontmatter `skills: [...]` de los agentes de la fase; el harness las inyecta en el contexto del subagente. El orquestador no las consulta ni necesita su inventario: vive en `sdd/meta/skill-registry.md` (mapa humano: el `README.md` de la fase). El overlay de stack (`wf-<stack>-init`) sustituye y amplía las KBs genéricas por variantes especializadas con el mismo mecanismo — en modo agnóstico no está presente.
 
 ## Principio operativo
 

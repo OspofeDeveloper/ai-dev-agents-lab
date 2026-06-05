@@ -142,10 +142,12 @@ Antes de escribir el output, aplica la Prueba de Pureza al spec completo. Consul
 
 ## Paso 10: Escribir los artefactos
 
-Verifica si `features/<capability>/<capability>_spec.md` ya existe; si existe → pregunta al usuario si desea regenerarlo (no → informa del path y detén). Escribe los 3 artefactos (crea directorios si no existen), todos relativos al directorio del archivo de entrada:
-1. **Spec**: `features/<capability>/<capability>_spec.md`
-2. **README**: `features/<capability>/README.md`
-3. **Features index**: `<nombre_base>_features.md` (o actualiza el existente)
+Determina el directorio raíz de los artefactos spec (regla de layout): si `.sdd/project-init.json` (en el directorio actual o un ancestro) declara `artifacts.spec`, usa ese directorio (relativo a la raíz que contiene `.sdd/`); si no, usa el directorio del archivo de entrada.
+
+Verifica si `<raíz_spec>/features/<capability>/<capability>_spec.md` ya existe; si existe → pregunta al usuario si desea regenerarlo (no → informa del path y detén). Escribe los 3 artefactos (crea directorios si no existen), todos relativos a esa raíz:
+1. **Spec**: `<raíz_spec>/features/<capability>/<capability>_spec.md`
+2. **README**: `<raíz_spec>/features/<capability>/README.md`
+3. **Features index**: `<raíz_spec>/<nombre_base>_features.md` (o actualiza el existente)
 
 ---
 

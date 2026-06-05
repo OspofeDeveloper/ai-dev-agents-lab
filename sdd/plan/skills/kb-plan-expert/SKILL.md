@@ -122,6 +122,8 @@ El header del Plan usa exactamente estos estados:
 
 `VALIDADO` debe tratarse como una marca operativa confiable. Si la validación falla, el archivo debe quedar o volver a `BORRADOR`.
 
+El sello lo escribe **exclusivamente** el script determinista `.sdd/scripts/sdd-seal.py` (invocado por `wf-plan-validate`), que verifica condiciones mecánicas (gaps del footer en `ninguno`, sin `[INCOMPLETO]`, spec origen legible y sin `[CRÍTICO]`, `status_sync` fiable, cobertura de todos los CA-XXX del spec) además del veredicto del agente auditor. Ningún agente ni orquestador edita la línea `Estado:` a mano — la única excepción es el downgrade a `BORRADOR`, que siempre es seguro.
+
 ## Taxonomía de gaps
 
 Los únicos tipos normativos de gaps en la fase `plan` son:

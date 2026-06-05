@@ -48,8 +48,12 @@ Verificar que existe `$SDD_HOME/install.sh`. Si no, abortar explicándolo.
 ```bash
 test -f .sdd/project-init.json && echo "init-found"
 test -f .claude/sdd-mode.json && echo "mode-found"
-for f in prd spec design plan tasks; do test -f "$f/.claude/CLAUDE.md" && echo "phase-installed:$f"; done
+for f in prd spec design plan tasks; do
+  test -f ".claude/rules/sdd-$f.md" -o -f "$f/.claude/CLAUDE.md" && echo "phase-installed:$f"
+done
 ```
+
+(El segundo test cubre proyectos con el layout legacy de fases en subdirectorios.)
 
 **3a. Modo libre.** Si `sdd-mode.json` tiene `"mode": "free"`, confirmar con AskUserQuestion ("Sí, convertir a SDD" / "No, mantener modo libre"). "No" → cerrar sin tocar nada.
 
@@ -70,6 +74,16 @@ opciones:
 `MODE=extend` mantiene lo instalado y solo pregunta lo que falte (ej. un PM inicializó y ahora un dev completa la entrevista técnica). Si hay `--force` como argumento, rehacer sin preguntar.
 
 **3c. Artefactos.** Refinar `KNOWN_STATE`: `prd/PRD.md` → `use_prd=true`; `design/DESIGN.md` o `DESIGN_BRIEF.md` → `design_strategy="existing_design"`; specs existentes (`spec/features/` o specs detectados en otra ruta) → `specs_exist=true` (anotar la ruta real si no es la canónica).
+
+**3d. Carpetas candidatas de artefactos.** Detectar carpetas propias del proyecto que puedan ser el hogar de los artefactos de cada fase:
+
+```bash
+for d in specs docs/specs documentation/specs; do test -d "$d" && echo "candidate:spec:$d"; done
+for d in docs/prd product docs/product requirements; do test -d "$d" && echo "candidate:prd:$d"; done
+for d in docs/design design-system; do test -d "$d" && echo "candidate:design:$d"; done
+```
+
+Guardar en `KNOWN_STATE.artifact_candidates`. Estas carpetas alimentan la pregunta 5.7 (solo se pregunta si hay candidatas).
 
 ---
 
@@ -115,6 +129,7 @@ Secuencia única para todos los perfiles — lo que varía es qué pasos aplican
 5.4 Framework  → SOLO perfil dev y tipo app
 5.5 Targets    → SOLO framework multiplataforma
 5.6 Stack      → derivar sin preguntar
+5.7 Artefactos → SOLO si hay carpetas candidatas detectadas (3d)
 5.9 Resumen    → siempre
 ```
 
@@ -232,6 +247,22 @@ Mínimo uno. Guardar en minúscula.
 
 > `null` ≠ `agnostico`: `null` significa "aún no se ha hecho la entrevista técnica" (el gate de plan la exigirá); `agnostico` significa "este software no tiene stack especialista, modo genérico".
 
+### 5.7 — Ubicación de artefactos [SOLO si `KNOWN_STATE.artifact_candidates` no está vacío]
+
+El layout por defecto es el canónico: los artefactos de cada fase viven en su directorio (`prd/`, `spec/`, `design/`). Si el proyecto ya tiene carpetas propias (3d), preguntar **una vez por fase con candidata**:
+
+```
+question: "He detectado la carpeta `<candidata>`. ¿Dónde deben vivir los artefactos de la fase <fase>?"
+header: "Artefactos"
+opciones:
+  - label: "Usar <candidata>"
+    description: "Los artefactos de <fase> (specs, análisis, features/...) se crearán bajo <candidata>/"
+  - label: "Usar la canónica (<fase>/)"
+    description: "Layout estándar del pipeline SDD"
+```
+
+Resultado → `ARTIFACTS_MAP` con un directorio por fase instalada (canónico si no se preguntó). Sin candidatas: `ARTIFACTS_MAP` canónico sin preguntar.
+
 ### 5.9 — Resumen y confirmación [siempre]
 
 ```
@@ -260,20 +291,30 @@ design según tabla 5.3 == sí     → insertar design tras spec
 
 Orden canónico: `prd → spec → design → plan → tasks` (solo las presentes).
 
-Para cada fase **no instalada ya** (en `MODE=extend` saltar las existentes; con `--force` reinstalar):
+Instalación única **desde la raíz del proyecto** (toda la infraestructura va al `.claude/` raíz; los CLAUDE.md de fase quedan como reglas de carga perezosa por path en `.claude/rules/sdd-<fase>.md`):
 
 ```bash
-mkdir -p <fase>/features
-(cd <fase> && bash "$SDD_HOME/install.sh" <fase>)
+bash "$SDD_HOME/install.sh" <fase1,fase2,...>
 ```
 
-No continuar al Paso 7 sin haber ejecutado el install de TODAS las fases seleccionadas.
+En `MODE=extend`, pasar solo las fases que falten. Con `--force`, pasar todas.
+
+Crear además los directorios de artefactos según `ARTIFACTS_MAP` (5.7):
+
+```bash
+mkdir -p <artifacts.prd> <artifacts.design>          # solo las fases instaladas
+mkdir -p <artifacts.spec>/features
+```
+
+**Ajustar los globs de las reglas al layout del proyecto**: si algún directorio de `ARTIFACTS_MAP` difiere del canónico, edita el frontmatter `paths:` de la regla correspondiente (`.claude/rules/sdd-prd.md`, `sdd-spec.md`, `sdd-design.md`) sustituyendo el glob del directorio canónico (p. ej. `"spec/**"`) por el real (p. ej. `"specs/**"`). Los globs por nombre de artefacto (`**/*_spec.md`...) no se tocan: son independientes del layout.
+
+No continuar al Paso 7 sin haber ejecutado el install con TODAS las fases seleccionadas.
 
 ---
 
 ## Paso 7: Generar CLAUDE.md raíz
 
-**No copiar `$SDD_HOME/CLAUDE.md`.** Generar `.claude/CLAUDE.md` con esta plantilla (solo filas de fases instaladas):
+**No copiar `$SDD_HOME/CLAUDE.md`.** Generar `.claude/CLAUDE.md` con esta plantilla (solo filas de fases instaladas). **Siempre se sobreescribe** el que `install.sh` haya copiado en el Paso 6 — la plantilla del proyecto manda:
 
 ```markdown
 # <nombre-proyecto> — Proyecto SDD
@@ -282,22 +323,38 @@ Proyecto gestionado con Spec Driven Development. Fases instaladas: <lista en ord
 
 ## Cómo operar
 
-- Cada fase vive en su directorio (`<fase>/`) con su propio `.claude/CLAUDE.md`: al trabajar una fase, opera desde ese directorio siguiendo sus instrucciones. No improvises workflows.
+- Toda la infraestructura (skills, agentes, reglas) vive en este `.claude/`. Las instrucciones detalladas de cada fase son reglas de carga perezosa (`.claude/rules/sdd-<fase>.md`): el harness las carga automáticamente al tocar los artefactos de esa fase. Si vas a operar una fase sin haber tocado aún sus artefactos, léelas primero. No improvises workflows.
 - Respeta el orden del pipeline: una fase consume artefactos de la anterior.
 - Estado del proyecto: `.sdd/project-init.json`. Para completar la entrevista técnica o añadir fases: `/wf-project-init` → "Completar / ampliar".
 
-## Entrypoints por fase
+## Layout de artefactos
 
-| Fase | Directorio | Primer paso |
+Los artefactos de cada fase viven en el directorio declarado en `artifacts` de `.sdd/project-init.json` (rutas relativas a la raíz del proyecto):
+
+| Fase | Directorio de artefactos | Qué contiene |
 |---|---|---|
-| PRD | `prd/` | `/wf-prd-create` para redactar, `/wf-prd-review` si ya existe |
-| Spec | `spec/` | `/wf-spec-analyze <doc>` y después `/wf-spec-features-first <prd>` |
-| Design | `design/` | `/wf-design-intake generate <feature_spec>` (gate obligatorio) |
-| Plan | `plan/` | `/wf-prepare-plan generate <feature_spec>` |
-| Tasks | `tasks/` | `/wf-prepare-tasks generate <feature_plan>` tras `/wf-plan-validate` |
+| PRD | `<artifacts.prd>/` | `prd.md`, `*_analysis.md`, `*_discovery.md` |
+| Spec | `<artifacts.spec>/` | `_features.md`, `features/<nombre>/` (specs, README) |
+| Design | `<artifacts.design>/` | `DESIGN_BRIEF.md`, `DESIGN.md`, `tokens/` |
+
+Los `_plan.md` y `_tasks.md` de cada feature viven SIEMPRE junto a su spec (`features/<nombre>/`) para preservar la trazabilidad por rutas relativas. Los workflows resuelven sus rutas de salida desde este mapa — no escribas artefactos fuera de él.
+
+## Fases y sus reglas
+
+| Fase | Regla (se carga sola al tocar sus artefactos) |
+|---|---|
+| PRD | `.claude/rules/sdd-prd.md` |
+| Spec | `.claude/rules/sdd-spec.md` |
+| Design | `.claude/rules/sdd-design.md` |
+| Plan | `.claude/rules/sdd-plan.md` |
+| Tasks | `.claude/rules/sdd-tasks.md` |
+
+El rootmap de workflows de cada fase vive en su regla, no aquí: este orquestador no conoce detalles de ninguna fase. Para arrancar una fase cuyos artefactos aún no existen, lee su regla primero.
 ```
 
-En `MODE=extend`, regenerar con la unión de fases. Sin extend ni `--force`, no sobreescribir uno existente.
+(Solo filas de fases instaladas. Si hay stack especialista, añadir la fila `| Stack <stack> | .claude/rules/sdd-<stack>.md |`.)
+
+En `MODE=extend`, regenerar con la unión de fases. En el flujo de init, este archivo siempre sustituye al que `install.sh` copió en el Paso 6.
 
 ---
 
@@ -314,6 +371,7 @@ En `MODE=extend`, regenerar con la unión de fases. Sin extend ni `--force`, no 
   "stack": "<stack|agnostico|null>",
   "targets": ["..."] ,
   "phases": ["<fases en orden canónico>"],
+  "artifacts": { "prd": "<dir>", "spec": "<dir>", "design": "<dir>" },
   "initialized_at": "<salida de date -u>",
   "dispatcher": "wf-project-init",
   "specialist_workflow": "<wf-<stack>-init | null>",
@@ -321,7 +379,7 @@ En `MODE=extend`, regenerar con la unión de fases. Sin extend ni `--force`, no 
 }
 ```
 
-(`targets` solo si multiplataforma; en otro caso omitir esa clave. `specialist_workflow` solo si el stack es concreto Y existe `wf-<stack>-init`.)
+(`targets` solo si multiplataforma; en otro caso omitir esa clave. `specialist_workflow` solo si el stack es concreto Y existe `wf-<stack>-init`. `artifacts` sale de `ARTIFACTS_MAP` (5.7): una clave por fase instalada de entre `prd`/`spec`/`design`, valor relativo a la raíz — canónico es el nombre de la fase, p. ej. `"spec": "spec"`. plan/tasks no tienen clave: sus artefactos viven junto al spec de cada feature.)
 
 3. Escribir `.claude/sdd-mode.json`:
 
@@ -339,11 +397,13 @@ Ejecutar y mostrar el resultado. Si algún check falla, corregirlo y re-verifica
 
 ```bash
 for f in <SELECTED_PHASES>; do
-  test -f "$f/.claude/CLAUDE.md" && echo "OK fase $f" || echo "FALLO fase $f — ejecutar: (cd $f && bash $SDD_HOME/install.sh $f)"
+  test -f ".claude/rules/sdd-$f.md" && echo "OK fase $f" || echo "FALLO fase $f — ejecutar: bash $SDD_HOME/install.sh $f"
 done
 test -f .claude/CLAUDE.md && echo "OK claude-md" || echo "FALLO claude-md"
 test -f .sdd/project-init.json && echo "OK init-json" || echo "FALLO init-json"
 grep -q '"dispatcher": "wf-project-init"' .sdd/project-init.json && echo "OK schema" || echo "FALLO schema — reescribir con los campos exactos del Paso 8"
+grep -q '"artifacts"' .sdd/project-init.json && echo "OK artifacts-map" || echo "FALLO artifacts-map — añadir el mapa artifacts del Paso 8"
+test -f .sdd/scripts/sdd-gate-check.py && test -f .sdd/scripts/sdd-seal.py && echo "OK enforcement-scripts" || echo "FALLO enforcement-scripts — copiar desde $SDD_HOME/scripts/ (Paso 6)"
 ```
 
 ---
@@ -354,4 +414,4 @@ grep -q '"dispatcher": "wf-project-init"' .sdd/project-init.json && echo "OK sch
 - **Stack**: configurado y despachado / agnóstico (modo genérico) / **pendiente de entrevista técnica** (indicar que desarrollo deberá ejecutar `/wf-project-init` → "Completar / ampliar")
 - **Verificación**: resultado de los checks del Paso 9
 - **Siguiente paso según perfil**: prd → `/wf-prd-create` o `/wf-prd-review`; product sin prd → `/wf-spec-analyze`; design → `/wf-design-intake generate <feature_spec>`; dev → primer paso de la fase más temprana
-- Si en el Paso 3c se detectaron artefactos en rutas no canónicas (ej. specs bajo `prd/features/`), avisar al usuario: el pipeline espera `spec/features/`; ofrecer moverlos o anotar la ruta real
+- Si en el Paso 3c se detectaron artefactos fuera del directorio que declara `artifacts` (ej. specs bajo el directorio del PRD), avisar al usuario: el pipeline espera `<artifacts.spec>/features/`; ofrecer moverlos o actualizar el mapa `artifacts` para reflejar la ruta real

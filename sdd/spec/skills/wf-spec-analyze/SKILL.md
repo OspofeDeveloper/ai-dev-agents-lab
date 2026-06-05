@@ -126,8 +126,9 @@ Consulta [output_template.md](output_template.md) para la estructura exacta del 
 
 ## Paso 7: Escribir el resultado
 
-Determina el path de salida: mismo directorio que el archivo de entrada + nombre base + `_analysis.md`.
-- Ejemplo: `docs/requisitos.md` → `docs/requisitos_analysis.md`
+Determina el directorio de salida (regla de layout): si `.sdd/project-init.json` (en el directorio actual o un ancestro) declara `artifacts.prd`, usa ese directorio (relativo a la raíz que contiene `.sdd/`); si no, usa el mismo directorio que el archivo de entrada. Nombre: nombre base del archivo de entrada + `_analysis.md`.
+- Ejemplo (sin mapa): `docs/requisitos.md` → `docs/requisitos_analysis.md`
+- Ejemplo (con `"artifacts": {"prd": "docs/prd"}`): → `docs/prd/requisitos_analysis.md`
 
 Antes de escribir, verifica si el archivo ya existe:
 ```bash

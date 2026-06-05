@@ -58,7 +58,7 @@ Las features no se definen en el PRD: las genera `wf-spec-discover`. Por tanto, 
 
 Procede así:
 
-1. **Verifica si existe `<basename>_discovery.md`** junto al PRD.
+1. **Verifica si existe `<basename>_discovery.md`** — en el directorio de artefactos prd (`artifacts.prd` de `.sdd/project-init.json`, si está declarado) o junto al PRD.
 2. **Si NO existe** → ejecuta `/wf-spec-discover <prd.md>` primero. Tras la generación, presenta al usuario el mapa de features (ID, nombre, actor, RFs cubiertos) y **pregúntale qué IDs incluir en esta iteración**.
 3. **Si SÍ existe** → presenta el mapa actual y pregunta qué IDs incluir.
 4. Una vez el usuario confirma, invoca `/wf-spec-features-first <prd.md> --features F-XXX,F-YYY,...`.
@@ -86,21 +86,9 @@ Usa workflows cuando exista una pipeline clara y cerrada. Si la petición no req
 
 ## Skills de conocimiento Spec
 
-Las skills Spec son bases de conocimiento que los agentes especializados cargan automáticamente en su contexto. No son el punto de entrada principal del orquestador.
+Las `kb-*` viven en el frontmatter `skills: [...]` de los agentes de la fase; el harness las inyecta en el contexto del subagente. El orquestador no las consulta ni necesita su inventario: vive en `sdd/meta/skill-registry.md` (mapa humano: el `README.md` de la fase). Las dependencias cross-fase (kb y workflows de PRD que esta fase necesita) las resuelve `install.sh spec` automáticamente.
 
-| Skill | Dominio |
-|---|---|
-| `kb-spec-expert` | Reglas del Spec: pureza funcional, completitud, testabilidad |
-| `kb-decompose-expert` | Reglas para identificar features, shared models y ownership |
-| `kb-conflict-expert` | Reglas de detección de conflictos entre specs |
-| `kb-gap-conventions` | Convenciones SSoT para gaps, severidades y pendientes |
-| `kb-traceability-rules` | Reglas de trazabilidad y estados de sincronización entre PRD y derivados |
-| `kb-prd-expert` ⚠ | Reglas del PRD — cargada por agentes Spec para leer el PRD de entrada (vive en `sdd/prd/`) |
-| `kb-product-change-governance` ⚠ | Reglas para distinguir gaps de cambios reales de producto (vive en `sdd/prd/`) |
-
-> ⚠ Las dos kb marcadas son cross-fase: viven en `sdd/prd/skills/` pero las cargan los agentes Spec. `install.sh spec` ya instala automáticamente esas dos kb y también `wf-prd-change`, `wf-prd-review` + `prd-expert`, porque la fase Spec necesita ese handoff cuando detecta un cambio real de producto o cuando el analyze pide limpieza funcional del PRD.
-
-> `kb-gap-conventions` puede marcar gaps con `[PUEDE_REQUERIR_CR]` cuando la futura respuesta tenga riesgo alto de expandir el producto. Ese marcador no cambia la severidad, pero obliga a reevaluar la respuesta con `kb-product-change-governance` antes de derivar discovery/specs. Si aun así se continúa, los artefactos deben marcar `Origen de alcance: PRD + analysis respondido` y `Avisos de gobernanza`.
+> Los gaps pueden venir marcados con `[PUEDE_REQUERIR_CR]` cuando la futura respuesta tenga riesgo alto de expandir el producto. Ese marcador no cambia la severidad, pero obliga a reevaluar la respuesta con la gobernanza de cambios de producto antes de derivar discovery/specs. Si aun así se continúa, los artefactos deben marcar `Origen de alcance: PRD + analysis respondido` y `Avisos de gobernanza`.
 
 ## Principio operativo
 

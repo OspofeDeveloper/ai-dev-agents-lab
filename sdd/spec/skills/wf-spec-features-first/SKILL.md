@@ -38,7 +38,7 @@ Verifica que el archivo PRD existe; si no → informa con ruta exacta y detén.
 
 ## Paso 2.5: Análisis de gaps (obligatorio)
 
-1. Busca si existe un `*_analysis.md` para este PRD en el mismo directorio (convención: `<basename>_analysis.md`)
+1. Busca si existe un `*_analysis.md` para este PRD (convención: `<basename>_analysis.md`). Búscalo en el directorio de artefactos prd (`artifacts.prd` de `.sdd/project-init.json`, si está declarado) y en el mismo directorio del PRD.
 2. **Si NO existe** → invocar `/wf-spec-analyze <prd.md>`. Tras la ejecución, **DETENERSE** e informar al usuario:
    > "Se ha generado el análisis de gaps en `<path>_analysis.md`. Edita el archivo, responde las preguntas marcadas como _(pendiente)_ (las `[CRÍTICO]` son obligatorias para specs completos) y vuelve a ejecutar `/wf-spec-features-first <prd.md>`."
 3. **Si existe** → léelo y determina: veredicto (`LISTO_PARA_SPECS`, `LISTO_PARA_SPECS_CON_PREGUNTAS`, `REQUIERE_LIMPIEZA_PRD`), gaps `[CRÍTICO]` pendientes, presencia de `[PUEDE_REQUERIR_CR]`, y si hay respuestas resueltas que introducen expansión funcional no comprometida.
@@ -60,7 +60,7 @@ Verifica que el archivo PRD existe; si no → informa con ruta exacta y detén.
 ## Paso 3: Ejecutar discover (o reutilizarlo)
 
 **Caso A — `--features` está presente**:
-El `_discovery.md` **debe existir previamente** (los IDs `F-XXX` solo tienen sentido contra un discovery existente). Busca `<basename>_discovery.md` en el mismo directorio del PRD.
+El `_discovery.md` **debe existir previamente** (los IDs `F-XXX` solo tienen sentido contra un discovery existente). Busca `<basename>_discovery.md` en el directorio de artefactos prd (`artifacts.prd` de `.sdd/project-init.json`, si está declarado) y en el mismo directorio del PRD.
 - Si existe → continúa al Paso 4 reutilizándolo.
 - Si NO existe → **detente** e informa al usuario:
   > "Has indicado `--features <IDs>`, pero no existe `<path>_discovery.md`. Las features se identifican en el discovery — ejecuta primero `/wf-spec-discover <prd.md>`, revisa el mapa generado y vuelve a ejecutar con los IDs que correspondan."
@@ -129,6 +129,8 @@ Si el subset está vacío tras filtrar specs preexistentes (todas las features p
 
 Las escrituras paralelas de `_features.md` por los fast-tracks pueden colisionar. Regenera `_features.md` de forma consolidada respetando lo existente, siguiendo las reglas de `${CLAUDE_SKILL_DIR}/references/features_consolidation_rules.md`. El resultado cubre TODAS las features del discovery (no solo el subset de esta iteración), preserva estados de iteraciones anteriores y añade una entrada al Historial de cambios.
 
+`_features.md` y `features/` viven en el directorio raíz de artefactos spec (regla de layout: `artifacts.spec` de `.sdd/project-init.json` si está declarado; si no, el directorio del PRD de entrada) — el mismo que usan los fast-tracks.
+
 ---
 
 ## Paso 7: Conflict check (si no `--skip-conflict`)
@@ -139,7 +141,7 @@ Opera sobre **todas las features con spec en `features/`**, incluyendo preexiste
 
 ## Paso 8: Readiness check (si no `--skip-readiness`)
 
-Invoca `/wf-spec-readiness <features_dir>/`. Genera `_readiness_report.md` en el directorio del PRD y actualiza `_features.md` con el estado de cada feature (incluyendo `PENDIENTE_GENERACIÓN` para las no procesadas aún).
+Invoca `/wf-spec-readiness <features_dir>/`. Genera `_readiness_report.md` en el directorio raíz de artefactos spec (junto a `_features.md`) y actualiza `_features.md` con el estado de cada feature (incluyendo `PENDIENTE_GENERACIÓN` para las no procesadas aún).
 
 ---
 
