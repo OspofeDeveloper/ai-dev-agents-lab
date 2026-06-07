@@ -405,6 +405,12 @@ Los `_plan.md` y `_tasks.md` de cada feature viven SIEMPRE dentro de su carpeta 
 | Tasks | `.claude/rules/sdd-tasks.md` |
 
 El rootmap de workflows de cada fase vive en su regla, no aquí: este orquestador no conoce detalles de ninguna fase. Para arrancar una fase cuyos artefactos aún no existen, lee su regla primero.
+
+## Política de git
+
+- Se commitea TODO `.claude/` (skills, agentes, rules, settings.json) y TODO `.sdd/` (estado, scripts de enforcement, sello de versión): el repo funciona para cualquier dev y en CI sin tener el ecosistema SDD instalado.
+- Excepción única: `.claude/settings.local.json` (permisos personales de sesión) — está en `.gitignore` y nunca se commitea.
+- Los artefactos SDD (PRD, `features/`, design) son el producto del pipeline: se commitean siempre.
 ```
 
 (Solo filas de fases instaladas. Si hay stack especialista, añadir la fila `| Stack <stack> | .claude/rules/sdd-<stack>.md |`.)
@@ -423,6 +429,8 @@ Los PRD/specs/design de este producto viven en el repo SSoT: `<artifacts_source>
 ```
 
 En `MODE=extend`, regenerar con la unión de fases. En el flujo de init, este archivo siempre sustituye al que `install.sh` copió en el Paso 6.
+
+**`.gitignore` del proyecto**: asegura que contiene la línea `.claude/settings.local.json` — añádela si falta (crea el archivo si no existe; nunca toques el resto del contenido). Es la única pieza SDD que no se commitea (política de git de la plantilla de arriba).
 
 ---
 
@@ -486,6 +494,7 @@ grep -q '"dispatcher": "wf-project-init"' .sdd/project-init.json && echo "OK sch
 grep -q '"artifacts"' .sdd/project-init.json && echo "OK artifacts-map" || echo "FALLO artifacts-map — añadir el mapa artifacts del Paso 8"
 test -f .sdd/scripts/sdd-gate-check.py && test -f .sdd/scripts/sdd-seal.py && test -f .sdd/scripts/sdd-task-state.py && test -f .sdd/scripts/sdd-sync-check.py && test -f .sdd/scripts/sdd-skill-allow.py && echo "OK enforcement-scripts" || echo "FALLO enforcement-scripts — copiar desde $SDD_HOME/scripts/ (Paso 6)"
 test -f .sdd/sdd-version.json && echo "OK sdd-version" || echo "FALLO sdd-version — re-ejecutar install.sh (Paso 6) para sellar la versión"
+grep -qx '\.claude/settings\.local\.json' .gitignore 2>/dev/null && echo "OK gitignore" || echo "FALLO gitignore — añadir la línea .claude/settings.local.json (Paso 7)"
 ```
 
 ---

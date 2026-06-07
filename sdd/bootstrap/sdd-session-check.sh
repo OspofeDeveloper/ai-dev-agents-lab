@@ -15,6 +15,15 @@ set -u
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$PWD}"
 cd "$PROJECT_DIR" 2>/dev/null || exit 0
 
+# Modo CI/headless: en runners no interactivos el protocolo de sesion se
+# suprime por completo — no hay humano para el wizard, el init ni decisiones
+# de update. SDD_NON_INTERACTIVE=1 es el opt-out explicito; CI=true es el
+# estandar de facto de los runners (GitHub Actions, GitLab CI, CircleCI...).
+# El opt-out commiteable por repo sigue siendo .claude/sdd-mode.json.
+if [ "${SDD_NON_INTERACTIVE:-}" = "1" ] || [ "${CI:-}" = "true" ]; then
+  exit 0
+fi
+
 # No aplicar en el home del usuario (una sesion en ~ no es un proyecto)
 [ "$PROJECT_DIR" = "$HOME" ] && exit 0
 

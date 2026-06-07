@@ -482,28 +482,46 @@ El `task-generator` conoce los dominios de implementación KMM y asigna cada tas
 
 ## Instalación
 
-Este repositorio es la fuente de verdad. El script `install.sh` copia todo a `~/.claude/` donde Claude Code lo carga automáticamente.
+Este repositorio es la fuente de verdad. La instalación tiene dos niveles: un **bootstrap global** por máquina y una **instalación por proyecto**.
+
+### Bootstrap global (una vez por máquina)
 
 ```bash
-# Clonar el repo
 git clone <repo-url>
 cd ai-dev-agents-lab
-
-# Instalar en ~/.claude/
-chmod +x install.sh
-./install.sh          # ecosistema completo
-./install.sh prd      # solo fase PRD
-./install.sh spec     # solo fase Spec
-
-# Reiniciar Claude Code para cargar los nuevos skills y agentes
+bash sdd/setup.sh
 ```
 
-Para actualizar tras un `git pull`:
-```bash
-git pull && ./install.sh
-```
+Registra el hook de sesión (`~/.claude/hooks/sdd-session-check.sh`), el bloque de protocolo SDD en `~/.claude/CLAUDE.md`, las skills globales (`wf-project-init`, `wf-sdd-update`) y apunta `~/.sdd-home` a este checkout. Tras un `git pull`: `bash sdd/setup.sh --update`.
 
-Si te importa el rendimiento del agente, instala solo la fase que necesites. Las fases están diseñadas para trabajar con precondiciones duras y no necesitan cargar el ecosistema completo a la vez.
+### Instalación por proyecto
+
+Abre Claude Code en el proyecto: el hook ofrece el wizard (Modo SDD / Modo libre) y `wf-project-init` hace la entrevista e instala las fases elegidas en el `.claude/` **del proyecto** (no en el global). Vía manual: `bash <SDD_HOME>/install.sh <fase1,fase2,...>` desde la raíz del proyecto. Para actualizar un proyecto a la versión vigente del ecosistema: `/wf-sdd-update` (respeta overlays de stack y no re-entrevista).
+
+Si te importa el rendimiento del agente, instala solo las fases que necesites. Las fases están diseñadas para trabajar con precondiciones duras y no necesitan cargar el ecosistema completo a la vez.
+
+---
+
+## Onboarding y política de git
+
+### Qué se commitea en un proyecto SDD
+
+| Path | ¿Git? | Por qué |
+|---|---|---|
+| `.claude/` (skills, agents, rules, settings.json) | ✅ | El proyecto funciona para cualquier dev y en CI sin tener el ecosistema instalado |
+| `.claude/settings.local.json` | ❌ nunca | Permisos personales de sesión con paths absolutos (`wf-project-init` lo añade a `.gitignore`) |
+| `.sdd/` (project-init.json, scripts/, sdd-version.json) | ✅ | Estado del proyecto + scripts de enforcement (gates, sellador) ejecutables en CI |
+| Artefactos (PRD, `features/`, design) | ✅ | Son el producto del pipeline |
+
+### Dev nuevo en un proyecto ya inicializado
+
+1. Clona el proyecto → **funciona ya**: skills, agentes, rules, hooks de gates y scripts de enforcement viajan commiteados.
+2. (Recomendado) Clona también este ecosistema y ejecuta `bash sdd/setup.sh`: habilita el protocolo de sesión, `/wf-sdd-update` y el init de proyectos nuevos.
+
+### CI / runners headless
+
+- Los gates PreToolUse y el sellador funcionan en CI sin el ecosistema al lado: viven commiteados en `.sdd/scripts/` con su sello de versión.
+- El protocolo de sesión se suprime con `SDD_NON_INTERACTIVE=1` (o automáticamente con `CI=true`). El opt-out commiteable por repo es `.claude/sdd-mode.json`.
 
 ---
 

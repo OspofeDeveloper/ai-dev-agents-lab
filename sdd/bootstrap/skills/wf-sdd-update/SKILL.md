@@ -77,6 +77,10 @@ print("sdd_version =", data["sdd_version"])
 EOF
 ```
 
+## Paso 5b: Asegurar `.gitignore`
+
+Asegura que el `.gitignore` del proyecto contiene la línea `.claude/settings.local.json` — añádela si falta (crea el archivo si no existe; nunca toques el resto del contenido). Es la única pieza SDD que no se commitea; los proyectos inicializados antes de la 0.5.0 no la tienen.
+
 ## Paso 6: Verificar y reportar
 
 1. Checks mecánicos:
@@ -85,4 +89,4 @@ EOF
    !for f in $(python3 -c "import json;print(' '.join(json.load(open('.sdd/project-init.json'))['phases']))" 2>/dev/null); do test -f ".claude/rules/sdd-$f.md" && echo "OK rule sdd-$f" || echo "FALTA rule sdd-$f"; done
    ```
 2. Reporta: versión vieja → nueva, fases reinstaladas, overlay re-aplicado (sí/no), avisos `⚠` aplicables, y piezas eliminadas por `--prune` si las hubo.
-3. Recuerda: reiniciar Claude Code para recargar skills/agents, y commitear los cambios de `.claude/` y `.sdd/` si el equipo los versiona.
+3. Recuerda: reiniciar Claude Code para recargar skills/agents, y commitear los cambios de `.claude/` y `.sdd/` (la política de git del proyecto los versiona; la única excepción es `settings.local.json`).

@@ -46,6 +46,10 @@ La instalación SDD del proyecto es de una versión anterior a la del ecosistema
 
 No hagas ninguna comprobación SDD adicional: o el proyecto ya está inicializado (su `.claude/CLAUDE.md` de proyecto define cómo operar), o está en modo libre, o no aplica.
 
+## Modo CI/headless
+
+En runners no interactivos el hook se silencia solo: con `SDD_NON_INTERACTIVE=1` (opt-out explícito) o `CI=true` (estándar de los runners) no emite ninguna directiva — sin wizard, sin init, sin aviso de versión. No apliques tampoco el fallback manual de abajo si detectas esas variables. El opt-out commiteable por repo es `.claude/sdd-mode.json` (modo `free`, o modo `sdd` ya inicializado): viaja en git y vale para cualquier runner o dev sin variables de entorno.
+
 ## Fallback si el hook no está activo
 
 Si no recibes directiva pero tampoco hay evidencia de que el hook se haya ejecutado (p. ej. tras una reinstalación), aplica manualmente esta máquina de estados al inicio de la sesión en un proyecto:

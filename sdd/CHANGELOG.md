@@ -2,6 +2,15 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.5.0 — 2026-06-07
+
+Modo CI/headless y política de git (ROADMAP 5.2 y 5.3):
+
+- El hook de sesión se silencia por completo con `SDD_NON_INTERACTIVE=1` (opt-out explícito) o `CI=true` (estándar de runners): sin wizard, sin init, sin aviso de versión. El opt-out commiteable por repo sigue siendo `.claude/sdd-mode.json`. Documentado en el bloque global de protocolo.
+- Política de git documentada y aplicada: se commitea TODO `.claude/` y `.sdd/` (el proyecto funciona para cualquier dev y en CI sin el ecosistema instalado); única excepción `.claude/settings.local.json`, que `wf-project-init` añade a `.gitignore` (check nuevo en su Paso 9) y la plantilla del CLAUDE.md raíz declara. Guía de onboarding (dev nuevo + CI) en el README del ecosistema, con la sección de instalación reescrita al modelo actual (setup.sh global + install por proyecto — describía el modelo antiguo de copiar a `~/.claude/`).
+- ⚠ `wf-sdd-update` ahora asegura la línea de `.gitignore` al actualizar (Paso 5b): los proyectos pre-0.5.0 la reciben con el update.
+- ⚠ Pendiente del usuario tras actualizar el ecosistema: `bash sdd/setup.sh --update` para sincronizar el hook y el bloque global de `~/.claude` (cambiados por 5.2).
+
 ## 0.4.0 — 2026-06-07
 
 Perfil QA — cierre del ciclo "CAs testables" (ROADMAP 2.4):
