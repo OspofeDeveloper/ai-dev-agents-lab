@@ -72,6 +72,22 @@ except Exception:
   done
   if [ -n "$MISSING" ]; then
     echo "[SDD-PROTOCOL] init-incomplete — Este proyecto declara las fases [$MISSING ] en .sdd/project-init.json pero no estan instaladas (falta .claude/phases/<fase>.md). Antes de atender la peticion del usuario, invoca el skill wf-project-init (opcion 'Completar / ampliar') para reparar la instalacion. No repitas el wizard de modo."
+    exit 0
+  fi
+
+  # Deteccion de deriva de version (informativa, nunca bloquea): compara el
+  # sello de la instalacion (.sdd/sdd-version.json) con el VERSION del
+  # ecosistema. Solo avisa si ambos lados son legibles y difieren.
+  if [ -n "$SDD_HOME" ] && [ -f "$SDD_HOME/VERSION" ] && [ -f .sdd/sdd-version.json ]; then
+    ECO_VERSION="$(tr -d '[:space:]' < "$SDD_HOME/VERSION" 2>/dev/null || true)"
+    ECO_COMMIT="$(git -C "$SDD_HOME" rev-parse --short HEAD 2>/dev/null || true)"
+    PROJ_VERSION="$(grep -o '"version"[[:space:]]*:[[:space:]]*"[^"]*"' .sdd/sdd-version.json | head -1 | sed 's/.*"\([^"]*\)"$/\1/' || true)"
+    PROJ_COMMIT="$(grep -o '"commit"[[:space:]]*:[[:space:]]*"[^"]*"' .sdd/sdd-version.json | head -1 | sed 's/.*"\([^"]*\)"$/\1/' || true)"
+    if [ -n "$ECO_VERSION" ] && [ -n "$PROJ_VERSION" ]; then
+      if [ "$ECO_VERSION" != "$PROJ_VERSION" ] || { [ -n "$ECO_COMMIT" ] && [ -n "$PROJ_COMMIT" ] && [ "$ECO_COMMIT" != "$PROJ_COMMIT" ]; }; then
+        echo "[SDD-PROTOCOL] version-drift — La instalacion SDD de este proyecto es de la version $PROJ_VERSION+${PROJ_COMMIT:-?} y el ecosistema esta en $ECO_VERSION+${ECO_COMMIT:-?}. Es solo un aviso: menciona brevemente al usuario que puede actualizar con /wf-sdd-update cuando le convenga, y continua con su peticion con normalidad. No actualices sin que lo pida."
+      fi
+    fi
   fi
   exit 0
 fi

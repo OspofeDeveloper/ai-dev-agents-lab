@@ -2,7 +2,7 @@
 name: wf-spec-features-first
 description: "Orquestador completo del flujo features-first. Ejecuta discover para identificar features del PRD y luego lanza fast-track en paralelo por feature (o solo para un subset con --features). Introduce guardrails: no continua con gaps criticos abiertos, no deriva alcance expansivo del analysis, y en PRDs grandes exige confirmacion antes de full-run. Ejecuta conflict check y readiness al final."
 when_to_use: "Activa en frases como 'genera specs por feature del PRD', 'flujo features-first completo', 'specs en paralelo del PRD', 'genera todas las features del PRD', 'genera specs de la fase 1', 'genera specs de estas features', 'features-first completo'."
-argument-hint: "<prd_archivo.md> [--features F-001,F-002,...] [--allow-open-critical-gaps] [--allow-derived-scope-from-analysis] [--all-features] [--skip-conflict] [--skip-readiness]"
+argument-hint: "<prd_archivo.md> [--features F-001,F-002,...] [--light|--standard] [--allow-open-critical-gaps] [--allow-derived-scope-from-analysis] [--all-features] [--skip-conflict] [--skip-readiness]"
 effort: high
 allowed-tools: [Read, Write, Bash, Agent]
 context: fork
@@ -24,7 +24,7 @@ Tu objetivo es ejecutar el flujo features-first: identificar features de un PRD 
 
 Extrae de `$ARGUMENTS`:
 - **Path del PRD**: el primer argumento
-- **Flags opcionales**: `--features F-001,...` (IDs a procesar, requiere discovery previo); `--allow-open-critical-gaps` (genera con gaps críticos abiertos → HUs `[INCOMPLETO]`); `--allow-derived-scope-from-analysis` (continúa aunque el analysis expanda el PRD); `--all-features` (full-run override para PRDs grandes); `--skip-conflict`/`--skip-readiness` (omitir checks finales).
+- **Flags opcionales**: `--features F-001,...` (IDs a procesar, requiere discovery previo); `--light`/`--standard` (modo del pipeline — se propaga a cada fast-track; sin flag rige `pipeline_mode` de `.sdd/project-init.json`); `--allow-open-critical-gaps` (genera con gaps críticos abiertos → HUs `[INCOMPLETO]`); `--allow-derived-scope-from-analysis` (continúa aunque el analysis expanda el PRD); `--all-features` (full-run override para PRDs grandes); `--skip-conflict`/`--skip-readiness` (omitir checks finales).
 
 Si no hay argumento, informa el uso con todos los flags opcionales y ejemplos de los modos principales: completo sin flags, subset con `--features`, con `--allow-open-critical-gaps`, con `--allow-derived-scope-from-analysis`.
 
@@ -106,7 +106,7 @@ Para cada feature F-00X a generar, lanza un subagente con el `Agent` tool usando
 ```
 Agent(
   subagent_type: "sdd-spec-writer",
-  prompt: "Ejecuta el skill /wf-spec-fast-track con los siguientes argumentos: <prd.md> --scope-from <discovery.md> --feature F-00X [--analysis <analysis.md> si disponible]"
+  prompt: "Ejecuta el skill /wf-spec-fast-track con los siguientes argumentos: <prd.md> --scope-from <discovery.md> --feature F-00X [--light|--standard si se pasó o si project-init declara pipeline_mode] [--analysis <analysis.md> si disponible]"
 )
 ```
 

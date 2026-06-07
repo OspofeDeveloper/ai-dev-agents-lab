@@ -1,7 +1,7 @@
 ---
 name: wf-spec-gap-resolve
-description: "Completa HUs y CAs marcadas como [INCOMPLETO] a partir de respuestas ya escritas en un _analysis.md, sin tratar el cambio como un delta funcional amplio. Es la via recomendada para resolver gaps del analyze cuando no ha cambiado el alcance del producto."
-when_to_use: "Activa en frases como 'resuelve estos gaps del spec', 'completa incompletos desde el analysis', 'aplica respuestas del analysis al spec', 'cerrar HUs incompletas'."
+description: "Completa HUs y CAs marcadas como [INCOMPLETO] a partir de respuestas ya escritas en un _analysis.md, y confirma CAs [INFERIDO] de specs de caracterización con el usuario. Es la via recomendada para resolver gaps sin tratar el cambio como delta funcional amplio."
+when_to_use: "Activa en frases como 'resuelve estos gaps del spec', 'completa incompletos desde el analysis', 'aplica respuestas del analysis al spec', 'cerrar HUs incompletas', 'confirma los inferidos del spec'."
 argument-hint: "<feature_spec.md> [--analysis <analysis.md>]"
 effort: high
 allowed-tools: [Read, Write, Bash]
@@ -42,8 +42,16 @@ Lee el spec y detecta:
 
 - HUs `[INCOMPLETO]`
 - IDs `[P-XXX]` referenciados
+- CAs `[INFERIDO]` (specs de caracterización, `Origen: characterization`)
 
-Lee el `_analysis.md` y recupera las respuestas existentes.
+Lee el `_analysis.md` (si existe) y recupera las respuestas existentes.
+
+### Caso `[INFERIDO]` — confirmación humana, no analysis
+
+Los `[INFERIDO]` no se resuelven desde un `_analysis.md`: la fuente de confirmación es el usuario (o evidencia nueva que aporte). Para cada CA `[INFERIDO]`, presenta el comportamiento deducido + su `Confirmación pendiente` y pregunta:
+- **Confirmado** → elimina el marcador y actualiza `Evidencia:` a `confirmado por <usuario> el <fecha>` (mantén la evidencia parcial original).
+- **Incorrecto** → corrige el CA con el comportamiento real que indique el usuario (con su nueva evidencia si la aporta) o elimínalo si la capacidad no existe.
+- **No lo sé** → el marcador se queda; ese CA sigue bloqueando el plan (regla de `kb-spec-characterization`).
 
 ## Paso 4: Validar que sigue siendo un gap y no un change request
 
@@ -75,8 +83,11 @@ Incrementa versión menor del spec y registra en changelog:
 
 ## Paso 7: Informar siguiente paso
 
-Si ya no quedan HUs `[INCOMPLETO]`:
+Si ya no quedan HUs `[INCOMPLETO]` ni CAs `[INFERIDO]`:
 > "El spec quedó completo. Puedes validarlo con `/wf-spec-validate <spec.md>` y después avanzar a `/wf-prepare-plan generate <spec.md>`."
 
 Si quedan gaps sin respuesta:
 > "Quedan gaps pendientes en el `_analysis.md`. Responde esos items antes de volver a ejecutar `wf-spec-gap-resolve`."
+
+Si quedan `[INFERIDO]` sin confirmar:
+> "Quedan N CAs [INFERIDO] sin confirmar — siguen bloqueando `/wf-prepare-plan`. Confirma o corrige esos comportamientos cuando tengas la evidencia."

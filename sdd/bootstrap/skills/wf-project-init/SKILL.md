@@ -130,6 +130,7 @@ Secuencia única para todos los perfiles — lo que varía es qué pasos aplican
 5.5 Targets    → SOLO framework multiplataforma
 5.6 Stack      → derivar sin preguntar
 5.7 Artefactos → SOLO si hay carpetas candidatas detectadas (3d)
+5.8 Pipeline   → siempre (salvo ampliación con valor previo)
 5.9 Resumen    → siempre
 ```
 
@@ -151,7 +152,25 @@ opciones:
 
 `PROFILE = dev | product | design | custom`.
 
-### 5.1 — PRD [siempre]
+### 5.0b — Topología [SOLO perfil dev]
+
+```
+question: "¿Este repo contiene sus propios specs o los consume de otro repo?"
+header: "Topología"
+opciones:
+  - label: "Specs propios (Recomendado)"
+    description: "Monorepo o producto único: PRD/specs y código viven aquí. Pipeline completo"
+  - label: "Consume specs de otro repo"
+    description: "Repo técnico (server, app, web) de un producto multi-repo: los specs viven en un repo SSoT compartido. Aquí solo se instalan plan y tasks (+ overlay de stack)"
+```
+
+Si **consume** → `TOPOLOGY = consumer` y preguntar (texto libre vía "Other") el **path local al checkout del repo SSoT** (sibling `../<repo>` o submodule). Validar: el path existe y contiene specs (`features/` o `*_features.md`, buscando también bajo `artifacts.spec` de SU `project-init.json` si lo tiene). Si no valida → re-preguntar o detener con instrucciones de clonarlo. Guardar `ARTIFACTS_SOURCE = <path>` y el pin `ARTIFACTS_SOURCE_PIN = git -C <path> rev-parse --short HEAD` (si es repo git; si no, `unknown`).
+
+En modo consumer: **saltar 5.1 (PRD), 5.3 (Diseño) y 5.7 (Artefactos)** — la autoría vive en el repo SSoT. La entrevista técnica (5.2, 5.4-5.6) aplica igual: este repo ES el código.
+
+Si specs propios → `TOPOLOGY = standalone` (comportamiento de siempre, no guardar campos extra).
+
+### 5.1 — PRD [siempre, salvo consumer]
 
 ```
 question: "¿Vas a partir de un PRD o vas a crear uno?"
@@ -263,6 +282,20 @@ opciones:
 
 Resultado → `ARTIFACTS_MAP` con un directorio por fase instalada (canónico si no se preguntó). Sin candidatas: `ARTIFACTS_MAP` canónico sin preguntar.
 
+### 5.8 — Modo del pipeline [siempre, salvo ampliación con valor previo]
+
+```
+question: "¿Qué rigor de pipeline quieres por defecto en este proyecto?"
+header: "Pipeline"
+opciones:
+  - label: "Standard (Recomendado)"
+    description: "Specs completos (8 elementos, ≥3 CAs), análisis previo como artefacto. Para productos con specs estables"
+  - label: "Ligero"
+    description: "Specs proporcionales (núcleo de 4 elementos, ≥1 CA), análisis inline. Para scrum cambiante y features pequeñas. Los gates anti-alucinación son idénticos; cada feature puede forzar el otro modo con --light/--standard"
+```
+
+Resultado → `PIPELINE_MODE` (`standard` | `light`).
+
 ### 5.9 — Resumen y confirmación [siempre]
 
 ```
@@ -273,6 +306,7 @@ Tipo:      <App / Web / Backend / Otro software>
 Fases:     <prd → spec → design → plan → tasks>   (backbone spec/plan/tasks + las elegidas)
 Stack:     <stack / agnóstico / pendiente de entrevista técnica>
 Targets:   <android, ios, desktop>                [solo si multiplataforma]
+Pipeline:  <standard / ligero>
 Modo:      <instalación nueva / ampliación>
 ──────────────────────────────────────────────────
 ```
@@ -284,9 +318,16 @@ Confirmar con AskUserQuestion ("Instalar" / "Cambiar algo" → vuelve a 5.0).
 ## Paso 6: Derivar fases e instalar
 
 ```
-SELECTED_PHASES = [spec, plan, tasks]                              ← SIEMPRE
-use_prd == true                  → anteponer prd
-design según tabla 5.3 == sí     → insertar design tras spec
+TOPOLOGY == standalone:
+  SELECTED_PHASES = [spec, plan, tasks]                            ← backbone
+  use_prd == true                  → anteponer prd
+  design según tabla 5.3 == sí     → insertar design tras spec
+
+TOPOLOGY == consumer:
+  SELECTED_PHASES = [plan, tasks]                                  ← sin autoría
+  (la autoría de prd/spec/design vive en el repo SSoT; las kb de lectura
+   cross-fase — kb-spec-expert, kb-a11y-expert — las trae install.sh plan
+   como dependencia)
 ```
 
 Orden canónico: `prd → spec → design → plan → tasks` (solo las presentes).
@@ -305,6 +346,8 @@ Crear además los directorios de artefactos según `ARTIFACTS_MAP` (5.7):
 mkdir -p <artifacts.prd> <artifacts.design>          # solo las fases instaladas
 mkdir -p <artifacts.spec>/features
 ```
+
+En `TOPOLOGY=consumer` no hay `ARTIFACTS_MAP`: crear solo `mkdir -p features` (ahí vivirán las subcarpetas `plan/` y `tasks/` de cada feature, con `Spec origen` apuntando al checkout del SSoT).
 
 **Ajustar los globs de las reglas al layout del proyecto**: si algún directorio de `ARTIFACTS_MAP` difiere del canónico, edita el frontmatter `paths:` de la regla correspondiente (`.claude/rules/sdd-prd.md`, `sdd-spec.md`, `sdd-design.md`) sustituyendo el glob del directorio canónico (p. ej. `"spec/**"`) por el real (p. ej. `"specs/**"`). Los globs por nombre de artefacto (`**/*_spec.md`...) no se tocan: son independientes del layout.
 
@@ -325,6 +368,7 @@ Proyecto gestionado con Spec Driven Development. Fases instaladas: <lista en ord
 
 - Toda la infraestructura (skills, agentes, reglas) vive en este `.claude/`. Las instrucciones detalladas de cada fase son reglas de carga perezosa (`.claude/rules/sdd-<fase>.md`): el harness las carga automáticamente al tocar los artefactos de esa fase. Si vas a operar una fase sin haber tocado aún sus artefactos, léelas primero. No improvises workflows.
 - Respeta el orden del pipeline: una fase consume artefactos de la anterior.
+- Modo de pipeline por defecto: **<standard|ligero>** (`pipeline_mode` de `.sdd/project-init.json`). Cada feature puede forzar el otro modo con `--light`/`--standard` al generar su spec; los gates anti-alucinación son idénticos en ambos.
 - Estado del proyecto: `.sdd/project-init.json`. Para completar la entrevista técnica o añadir fases: `/wf-project-init` → "Completar / ampliar".
 
 ## Layout de artefactos
@@ -365,6 +409,19 @@ El rootmap de workflows de cada fase vive en su regla, no aquí: este orquestado
 
 (Solo filas de fases instaladas. Si hay stack especialista, añadir la fila `| Stack <stack> | .claude/rules/sdd-<stack>.md |`.)
 
+**Variante consumer** (`TOPOLOGY=consumer`): sustituir la sección "Layout de artefactos" por:
+
+```markdown
+## Topología: repo consumidor
+
+Los PRD/specs/design de este producto viven en el repo SSoT: `<artifacts_source>` (checkout local). Este repo solo PLANIFICA y EJECUTA:
+
+- Specs (solo lectura): `<artifacts_source>/.../features/<nombre>/spec/<nombre>_spec.md`
+- Planes y tasks (de este repo): `features/<nombre>/plan/` y `features/<nombre>/tasks/` — cada repo consumidor tiene SU propio plan de la misma feature, con `Spec origen` apuntando al checkout del SSoT.
+- Cambios de spec → se piden en el repo SSoT, nunca se editan aquí.
+- Pin de specs: `artifacts_source_pin` en `.sdd/project-init.json` — si el SSoT avanza, los workflows de plan avisan.
+```
+
 En `MODE=extend`, regenerar con la unión de fases. En el flujo de init, este archivo siempre sustituye al que `install.sh` copió en el Paso 6.
 
 ---
@@ -372,7 +429,7 @@ En `MODE=extend`, regenerar con la unión de fases. En el flujo de init, este ar
 ## Paso 8: Registrar estado y despachar
 
 1. `mkdir -p .sdd`. Timestamp real: ejecutar `date -u +%Y-%m-%dT%H:%M:%SZ` y usar SU SALIDA — nunca escribir un timestamp de memoria.
-2. Escribir `.sdd/project-init.json` con **EXACTAMENTE estos campos — ni uno más, ni uno menos**. No añadir `version`, ni objetos por fase, ni estado de features (eso vive en `_features.md`):
+2. Escribir `.sdd/project-init.json` con **EXACTAMENTE estos campos — ni uno más, ni uno menos**. No añadir objetos por fase ni estado de features (eso vive en `_features.md`):
 
 ```json
 {
@@ -383,12 +440,25 @@ En `MODE=extend`, regenerar con la unión de fases. En el flujo de init, este ar
   "targets": ["..."] ,
   "phases": ["<fases en orden canónico>"],
   "artifacts": { "prd": "<dir>", "spec": "<dir>", "design": "<dir>" },
+  "pipeline_mode": "<standard|light>",
+  "sdd_version": "<version+commit del sello>",
   "initialized_at": "<salida de date -u>",
   "dispatcher": "wf-project-init",
   "specialist_workflow": "<wf-<stack>-init | null>",
   "stack_workflows_run": []
 }
 ```
+
+(`sdd_version` sale de `.sdd/sdd-version.json` — lo escribe `install.sh` en el Paso 6: concatenar `<version>+<commit>`. Si el sello no existe (instalación anómala), usar `unknown`. Las actualizaciones posteriores las gestiona `/wf-sdd-update`, no este workflow. `pipeline_mode` sale de la pregunta 5.8: es el default del proyecto — cada feature puede forzar el otro modo con `--light`/`--standard`.)
+
+**Variante consumer** (`TOPOLOGY=consumer`, 5.0b): sustituir la clave `artifacts` por estas dos:
+
+```json
+  "artifacts_source": "<path local al checkout del repo SSoT>",
+  "artifacts_source_pin": "<commit corto del SSoT al hacer el init | unknown>"
+```
+
+(`phases` será `["plan", "tasks"]`. El pin registra contra qué versión de los specs se inicializó este repo: los workflows de plan avisan — sin bloquear — si el checkout del SSoT avanzó respecto al pin. Para refrescar el pin tras revisar los cambios: actualizar el valor con `git -C <artifacts_source> rev-parse --short HEAD`.)
 
 (`targets` solo si multiplataforma; en otro caso omitir esa clave. `specialist_workflow` solo si el stack es concreto Y existe `wf-<stack>-init`. `artifacts` sale de `ARTIFACTS_MAP` (5.7): una clave por fase instalada de entre `prd`/`spec`/`design`, valor relativo a la raíz — canónico es el nombre de la fase, p. ej. `"spec": "spec"`. plan/tasks no tienen clave: sus artefactos viven dentro de la carpeta de cada feature — subcarpetas `plan/` y `tasks/`, hermanas de `spec/`.)
 
@@ -415,6 +485,7 @@ test -f .sdd/project-init.json && echo "OK init-json" || echo "FALLO init-json"
 grep -q '"dispatcher": "wf-project-init"' .sdd/project-init.json && echo "OK schema" || echo "FALLO schema — reescribir con los campos exactos del Paso 8"
 grep -q '"artifacts"' .sdd/project-init.json && echo "OK artifacts-map" || echo "FALLO artifacts-map — añadir el mapa artifacts del Paso 8"
 test -f .sdd/scripts/sdd-gate-check.py && test -f .sdd/scripts/sdd-seal.py && test -f .sdd/scripts/sdd-task-state.py && echo "OK enforcement-scripts" || echo "FALLO enforcement-scripts — copiar desde $SDD_HOME/scripts/ (Paso 6)"
+test -f .sdd/sdd-version.json && echo "OK sdd-version" || echo "FALLO sdd-version — re-ejecutar install.sh (Paso 6) para sellar la versión"
 ```
 
 ---

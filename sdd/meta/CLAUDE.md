@@ -29,6 +29,7 @@ Consulta `kb-sdd-skill-architecture` directamente solo si necesitas responder un
 | Intención | Skill | Argumentos |
 |---|---|---|
 | Inicializar o ampliar un proyecto SDD segun perfil (desarrollo, producto, diseño, personalizado) | `/wf-project-init` | `[--profile <dev\|product\|design\|custom>] [--type <app\|web\|backend\|other>] [--stack <nombre>] [--name <nombre>] [--sdd-path <path>] [--force]` |
+| Actualizar la instalación SDD de un proyecto a la versión actual del ecosistema | `/wf-sdd-update` | `[--force]` |
 | Inicializar o calibrar el estado técnico de un proyecto KMM | `/wf-kmm-init` | `[--mode detect\|configure] [--force] [--output <path>]` |
 
 ## Workflows de autoría del ecosistema

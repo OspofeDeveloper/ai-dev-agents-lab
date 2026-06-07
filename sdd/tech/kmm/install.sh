@@ -104,5 +104,22 @@ else
   echo "    Revisa manualmente que los hooks de $SCRIPT_DIR/settings.json esten presentes."
 fi
 
+# ── 5. Refrescar el sello de versión (el overlay forma parte del ecosistema) ─
+
+ENFORCE_ROOT="${SDD_PROJECT_ROOT:-$(pwd)}"
+SDD_VERSION="$(cat "$SDD_ROOT/VERSION" 2>/dev/null | tr -d '[:space:]')"
+[ -n "$SDD_VERSION" ] || SDD_VERSION="unknown"
+SDD_COMMIT="$(git -C "$SDD_ROOT" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+mkdir -p "$ENFORCE_ROOT/.sdd"
+cat > "$ENFORCE_ROOT/.sdd/sdd-version.json" <<EOF
+{
+  "version": "$SDD_VERSION",
+  "commit": "$SDD_COMMIT",
+  "installed_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "installed_by": "tech/kmm/install.sh"
+}
+EOF
+echo "  ✓ .sdd/sdd-version.json (sdd $SDD_VERSION+$SDD_COMMIT)"
+
 echo ""
 echo "Done. Reinicia Claude Code para activar los agentes y skills."

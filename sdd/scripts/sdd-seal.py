@@ -19,7 +19,7 @@ Condiciones verificadas para `plan`:
      (DESIGN_GAPs, TECH_GAPs, TRACE_GAPs, PLAN_GAPs).
   3. El plan no contiene marcadores `[INCOMPLETO]`.
   4. El header `Spec origen` resuelve a un archivo legible.
-  5. El spec origen no contiene `[INCOMPLETO]` ni gaps `[CRÍTICO]`.
+  5. El spec origen no contiene `[INCOMPLETO]`, gaps `[CRÍTICO]` ni CAs `[INFERIDO]`.
   6. Si el spec declara `status_sync`, su valor es `in_sync`.
   7. Trazabilidad: todo CA-XXX definido en el spec (encabezados `### CA-XXX`)
      aparece referenciado en el plan.
@@ -94,11 +94,13 @@ def check_plan(plan_path: Path):
         add(False, f"Spec origen NO legible: {spec_path}")
         return checks, False
 
-    # 5. Spec sin [INCOMPLETO] ni [CRÍTICO] abiertos
+    # 5. Spec sin [INCOMPLETO], [CRÍTICO] ni [INFERIDO] abiertos
     n_spec_inc = len(re.findall(r"\[INCOMPLETO\]", spec_text))
     add(n_spec_inc == 0, f"Spec sin [INCOMPLETO] (encontrados: {n_spec_inc})")
     n_spec_crit = len(re.findall(r"\[CR[IÍ]TICO\]", spec_text))
     add(n_spec_crit == 0, f"Spec sin gaps [CRÍTICO] (encontrados: {n_spec_crit})")
+    n_spec_inf = len(re.findall(r"\[INFERIDO\]", spec_text))
+    add(n_spec_inf == 0, f"Spec sin CAs [INFERIDO] sin confirmar (encontrados: {n_spec_inf})")
 
     # 6. status_sync del spec (si declarado) debe ser in_sync
     sync_m = re.search(r"status_sync\s*:\s*[\"']?(\w+)", spec_text)

@@ -7,7 +7,9 @@
 > derived_from_prd_version: [1.0 | unknown | N/A]
 > derived_from_change: [CR-XXX | N/A]
 > status_sync: [in_sync | needs_review | stale | unknown]
-> Origen de alcance: [PRD | PRD + analysis respondido]
+> Origen de alcance: [PRD | PRD + analysis respondido | characterization]
+<!-- Specs de caracterización (wf-spec-from-code): añadir Origen: characterization,
+     Evidencia base: commit SHA, y campo Evidencia en cada CA — ver kb-spec-characterization. -->
 > Avisos de gobernanza: [ninguno | alcance derivado desde P-00X]
 
 ---

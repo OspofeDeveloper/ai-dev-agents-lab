@@ -2,7 +2,7 @@
 name: wf-spec-fast-track
 description: "Genera el Spec de una feature directamente desde un documento de requisitos acotado a una sola capacidad. Soporta modo scoped con --scope-from para filtrar un PRD completo a una feature del discovery. Acepta --analysis para usar gaps pre-resueltos de un analisis previo."
 when_to_use: "Activa en frases como 'genera el spec directo de esta feature', 'fast-track del spec', 'crea el spec de esta capability directamente', 'genera spec sin analisis previo'."
-argument-hint: "<archivo.md> --capability <nombre-kebab> [--analysis <analysis.md>] [--allow-derived-scope-from-analysis] | <prd.md> --scope-from <discovery.md> --feature <F-00X> [--analysis <analysis.md>] [--allow-derived-scope-from-analysis]"
+argument-hint: "<archivo.md> --capability <nombre-kebab> [--light|--standard] [--analysis <analysis.md>] [--allow-derived-scope-from-analysis] | <prd.md> --scope-from <discovery.md> --feature <F-00X> [--light|--standard] [--analysis <analysis.md>] [--allow-derived-scope-from-analysis]"
 effort: high
 allowed-tools: [Read, Write, Bash]
 context: fork
@@ -25,6 +25,9 @@ Extrae de `$ARGUMENTS`:
 - **Modo scoped**: si hay `--scope-from` y `--feature` → extraer el path del `_discovery.md` y el Feature ID (ej: `F-001`)
 - **Flag opcional**: `--analysis <path>` → path a un `_analysis.md` con gaps pre-resueltos
 - **Flag opcional**: `--allow-derived-scope-from-analysis` → permite continuar aunque el analysis introduzca expansión funcional no consolidada todavía en el PRD. Sin este flag, el workflow se detiene para remitir a `wf-prd-change`.
+- **Flag opcional**: `--light` / `--standard` → fuerza el modo del pipeline para esta feature.
+
+**Resolución del modo** (en este orden): flag explícito > `pipeline_mode` de `.sdd/project-init.json` (directorio actual o ancestro) > `standard`. Las reglas exactas de qué relaja el modo ligero viven en `kb-spec-expert` ("Modo ligero — proporcionalidad declarada"); los invariantes (CAs testables, trazabilidad, marcadores, pureza, gobernanza) son idénticos en ambos modos.
 
 Si hay `--scope-from` sin `--feature` (o viceversa) → error: "Los flags `--scope-from` y `--feature` deben usarse juntos." Si no hay ni `--capability` ni `--scope-from` → mostrar uso de ambos modos y detener.
 
@@ -56,7 +59,7 @@ Si el Feature ID no existe en el discovery → informa:
 
 ### Modo directo (--capability)
 
-Verifica (con `kb-decompose-expert`) que el documento describe una única capability SDD válida: actor identificable, journeys independientes, ≥3 CAs asumibles. Si describe múltiples features independientes → remite al usuario a `/wf-spec-discover` + `/wf-spec-features-first`. Si el scope es ambiguo pero asumible → aplica con asunción `[INFORMATIVO]`.
+Verifica (con `kb-decompose-expert`) que el documento describe una única capability SDD válida: actor identificable, journeys independientes, ≥3 CAs asumibles (modo ligero: ≥1 CA asumible). Si describe múltiples features independientes → remite al usuario a `/wf-spec-discover` + `/wf-spec-features-first`. Si el scope es ambiguo pero asumible → aplica con asunción `[INFORMATIVO]`.
 
 ### Modo scoped (--scope-from + --feature)
 
@@ -64,7 +67,7 @@ Verifica (con `kb-decompose-expert`) que el documento describe una única capabi
 
 1. Filtra mentalmente el PRD a solo los RFs y secciones listados en el scope de la feature
 2. Lee el PRD completo para entender el contexto general, pero **solo genera HUs/CAs para los RFs del scope de esta feature**
-3. Verifica que el scope filtrado contiene suficiente información para generar un spec válido (actor identificable, journeys derivables, mínimo 3 CAs)
+3. Verifica que el scope filtrado contiene suficiente información para generar un spec válido (actor identificable, journeys derivables, mínimo 3 CAs — modo ligero: mínimo 1)
 4. Si la información es insuficiente → informa: "El scope del feature `<F-00X>` en el PRD no contiene suficiente información funcional para generar un spec válido. Revisa el `_discovery.md` y ajusta el scope."
 
 ---
@@ -107,7 +110,10 @@ No genera un `_analysis.md` separado. Consulta `kb-gap-conventions` para el form
 
 ## Paso 7: Generar el Spec de feature
 
-Produce un `_spec.md` completo con los 8 elementos SDD siguiendo la estructura de `${CLAUDE_SKILL_DIR}/references/feature_spec_template.md`.
+Produce un `_spec.md` completo siguiendo la estructura de `${CLAUDE_SKILL_DIR}/references/feature_spec_template.md`:
+
+- **Modo standard**: los 8 elementos SDD completos.
+- **Modo ligero**: el núcleo de 4 (Actores, HUs, CAs, Fuera de Alcance); las demás secciones solo si aportan, y si se omiten quedan presentes con `N/A — modo ligero` explícito (regla de `kb-spec-expert` — nunca rellenar por inventar). Añade `> Modo: ligero` al header del spec.
 
 Usa las plantillas de cabecera de `${CLAUDE_SKILL_DIR}/references/spec_header_templates.md`:
 - **Modo directo**: cabecera con `Generado via: fast-track desde [path]`, `Feature ID: F-001`, `derived_from_prd: N/A`

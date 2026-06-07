@@ -267,13 +267,42 @@ echo "  ✓ CLAUDE.md"
 # su subdirectorio) dirigirlos a la raíz real del proyecto.
 
 ENFORCE_ROOT="${SDD_PROJECT_ROOT:-$(pwd)}"
+
+# Versión del ecosistema: VERSION (SSoT) + commit como respaldo de precisión.
+SDD_VERSION="$(cat "$SCRIPT_DIR/VERSION" 2>/dev/null | tr -d '[:space:]')"
+[ -n "$SDD_VERSION" ] || SDD_VERSION="unknown"
+SDD_COMMIT="$(git -C "$SCRIPT_DIR" rev-parse --short HEAD 2>/dev/null || echo unknown)"
+
 echo ""
 echo "Instalando scripts de enforcement..."
 mkdir -p "$ENFORCE_ROOT/.sdd/scripts"
 for script in sdd-seal.py sdd-gate-check.py sdd-task-state.py; do
   cp "$SCRIPT_DIR/scripts/$script" "$ENFORCE_ROOT/.sdd/scripts/$script"
+  # Sello de versión en el propio script: viaja commiteado al repo del proyecto
+  # y a CI, donde no hay ~/.sdd-home al lado para preguntarle.
+  if command -v python3 >/dev/null 2>&1; then
+    SDD_STAMP="$SDD_VERSION+$SDD_COMMIT" python3 - "$ENFORCE_ROOT/.sdd/scripts/$script" <<'PYEOF'
+import os, sys
+from pathlib import Path
+p = Path(sys.argv[1]); lines = p.read_text(encoding="utf-8").splitlines(keepends=True)
+stamp = f"# sdd-version: {os.environ['SDD_STAMP']}\n"
+out = [lines[0], stamp] + [l for l in lines[1:] if not l.startswith("# sdd-version:")]
+p.write_text("".join(out), encoding="utf-8")
+PYEOF
+  fi
   echo "  ✓ $ENFORCE_ROOT/.sdd/scripts/$script"
 done
+
+# Sello de instalación del proyecto: qué versión del ecosistema produjo esta copia.
+cat > "$ENFORCE_ROOT/.sdd/sdd-version.json" <<EOF
+{
+  "version": "$SDD_VERSION",
+  "commit": "$SDD_COMMIT",
+  "installed_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "installed_by": "install.sh"
+}
+EOF
+echo "  ✓ $ENFORCE_ROOT/.sdd/sdd-version.json (sdd $SDD_VERSION+$SDD_COMMIT)"
 
 # ── 5. Instalar settings.json (merge, sin pisar el del proyecto) ───────────
 

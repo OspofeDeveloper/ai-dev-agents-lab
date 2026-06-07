@@ -152,6 +152,42 @@ Declara explícitamente qué NO está incluido en este spec. Sin esta sección, 
 
 ---
 
+## Modo ligero (proporcionalidad declarada)
+
+Para features pequeñas y sprints cortos existe un modo ligero del pipeline. **No es un spec peor: es un spec proporcional.** Se declara, nunca se improvisa:
+
+- **Default del proyecto**: `pipeline_mode` en `.sdd/project-init.json` (`standard` | `light`).
+- **Override por feature**: flag `--light` / `--standard` al generar el spec.
+- **Marca en el artefacto**: el spec ligero lleva `> Modo: ligero` en el header — las fases posteriores leen de ahí qué exigir, sin re-flags.
+
+### Qué NO cambia (irrenunciable en ambos modos)
+
+| Invariante | Por qué no se relaja |
+|---|---|
+| CAs en GIVEN/WHEN/THEN testables, cada uno `← HU-XXX` | Sin CA verificable no hay contrato — es el núcleo anti-alucinación |
+| Headers de trazabilidad + `status_sync` | La trazabilidad rota no se repara después |
+| Los marcadores bloquean (`[INCOMPLETO]`/`[CRÍTICO]`/`[INFERIDO]`) | Los gates deterministas no distinguen modos |
+| Pureza funcional (nada de implementación) | La contaminación cuesta lo mismo en una feature pequeña |
+| Gobernanza de expansión de alcance (`wf-prd-change`) | El scope creep no es proporcional al tamaño |
+
+### Qué se relaja en modo ligero
+
+| Elemento | Standard | Ligero |
+|---|---|---|
+| CAs mínimos | ≥3 | **≥1** |
+| Elementos obligatorios | los 8 | **núcleo de 4**: Actores, HUs, CAs, Fuera de Alcance |
+| Journeys, Resultados, Instrucciones inambiguas, Checklists | obligatorios | solo si aportan; si se omiten → sección presente con `N/A — modo ligero` **explícito** (nunca rellenada por inventar) |
+| `_analysis.md` previo | artefacto separado obligatorio | mini-análisis inline; artefacto solo si aparecen gaps |
+| Cadena design | intake → system → prototype | solo si la feature tiene UI, reutilizando el `DESIGN_BRIEF.md` y `DESIGN.md` de producto existentes (no re-intake por feature; si no existen, la primera feature con UI los crea) |
+| conflict / readiness | automáticos en features-first | opcionales si la feature no toca shared models |
+| Versionado del spec | changelog completo | mínimo (versión + fecha) |
+
+### Validación de un spec ligero
+
+Un spec con `Modo: ligero` se valida contra el núcleo de 4 + N/A explícitos: completitud `X/4`, y las secciones omitidas deben decir `N/A — modo ligero` (una sección ausente sin esa marca ES un hallazgo). Pureza y testabilidad se validan igual que en standard.
+
+---
+
 ## Lo que un Spec NO DEBE tener
 
 Consulta `${CLAUDE_SKILL_DIR}/references/prohibited_items.md` para la tabla completa de elementos prohibidos y la Prueba de Pureza antes de emitir cualquier veredicto de contaminación.

@@ -18,16 +18,19 @@ La etapa Spec **requiere un PRD existente** como artefacto de entrada. Ese PRD p
 
 Si el usuario todavía no tiene `prd.md` o el documento base no está listo, detén el flujo de Spec y redirígelo a la fase PRD.
 
+**Excepción brownfield**: si no hay PRD porque el sistema ya existe (legacy, proyecto heredado), el onramp es `/wf-spec-from-code` — genera specs de caracterización con el código como fuente de verdad (CAs con evidencia; los `[INFERIDO]` bloquean el plan hasta confirmación humana vía `/wf-spec-gap-resolve`).
+
 ## Rootmap de workflow skills
 
 | Intención del usuario | Skill | Argumentos |
 |---|---|---|
 | Analizar un PRD/documento de requisitos para detectar gaps | `/wf-spec-analyze` | `<archivo_prd.md>` |
+| Generar specs desde código existente (brownfield, sin PRD) | `/wf-spec-from-code` | `discover <path_codigo> [--scope <subdir>] \| generate <path_codigo> --feature <F-C-00X>` |
 | Identificar features de un PRD | `/wf-spec-discover` | `<archivo_prd.md> [--analysis <analysis.md>] [--allow-derived-scope-from-analysis]` |
-| Generar todos los specs por feature desde un PRD | `/wf-spec-features-first` | `<archivo_prd.md> [--all-features] [--allow-open-critical-gaps] [--allow-derived-scope-from-analysis] [--skip-conflict] [--skip-readiness]` |
+| Generar todos los specs por feature desde un PRD | `/wf-spec-features-first` | `<archivo_prd.md> [--light\|--standard] [--all-features] [--allow-open-critical-gaps] [--allow-derived-scope-from-analysis] [--skip-conflict] [--skip-readiness]` |
 | Generar specs de un subset / iteración / fase de features | `/wf-spec-features-first` | `<archivo_prd.md> --features F-001,F-002,... [--allow-open-critical-gaps] [--allow-derived-scope-from-analysis]` |
-| Generar spec directo de una feature | `/wf-spec-fast-track` | `<archivo.md> --capability <nombre> [--analysis <analysis.md>] [--allow-derived-scope-from-analysis]` (acepta cualquier doc acotado a una capacidad, no solo PRD) |
-| Generar spec de una feature desde un discovery | `/wf-spec-fast-track` | `<prd.md> --scope-from <discovery.md> --feature <F-00X> [--analysis <analysis.md>] [--allow-derived-scope-from-analysis]` |
+| Generar spec directo de una feature | `/wf-spec-fast-track` | `<archivo.md> --capability <nombre> [--light\|--standard] [--analysis <analysis.md>] [--allow-derived-scope-from-analysis]` (acepta cualquier doc acotado a una capacidad, no solo PRD) |
+| Generar spec de una feature desde un discovery | `/wf-spec-fast-track` | `<prd.md> --scope-from <discovery.md> --feature <F-00X> [--light\|--standard] [--analysis <analysis.md>] [--allow-derived-scope-from-analysis]` |
 | Validar un spec existente | `/wf-spec-validate` | `<archivo_spec.md>` |
 | Detectar conflictos entre specs de features | `/wf-spec-conflict` | `<feature_spec.md> --features-dir <path/features/>` |
 | Ver qué features están listas y el orden de implementación | `/wf-spec-readiness` | `<path/features/>` |

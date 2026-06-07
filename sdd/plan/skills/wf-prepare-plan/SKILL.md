@@ -54,6 +54,8 @@ Antes de verificar el Spec, determina el contexto técnico del proyecto. Busca `
      > "⚠ El Spec tiene X items [INFORMATIVO] sin responder. Se usarán los valores por defecto. Puedes responderlos después si quieres más precisión."
 4. Verifica que el archivo parece un Spec validado (contiene "Criterios de Aceptación" e "Historias de Usuario"). Si parece un PRD sin procesar → informa:
    > "Este archivo no parece un Spec procesado. Primero ejecuta `/wf-spec-analyze <archivo.md>`"
+5. **Pin del SSoT (solo repos consumidores)**: si `.sdd/project-init.json` declara `artifacts_source` y `artifacts_source_pin`, compara el pin con `git -C <artifacts_source> rev-parse --short HEAD`. Si difieren → **advierte y continúa** (no bloquea):
+   > "⚠ El repo de specs (`<artifacts_source>`) está en `<HEAD>` pero este repo planificó por última vez contra `<pin>`. Revisa los cambios de specs desde entonces y actualiza `artifacts_source_pin` en `.sdd/project-init.json` cuando los hayas asumido."
 
 ---
 
@@ -139,9 +141,10 @@ Si el agente devuelve otros gaps normativos (`TRACE_GAPs`, `PLAN_GAPs`):
 ## Paso 7: Escribir el resultado
 
 Determina el path de salida:
+- **repo consumidor** (si `.sdd/project-init.json` del directorio actual o un ancestro declara `artifacts_source`): el plan vive en ESTE repo, no junto al spec del SSoT → `<raíz_consumidor>/features/<nombre>/plan/<nombre>_plan.md` (crea los directorios; `<nombre>` = el de la carpeta de feature del spec en el SSoT)
 - si el spec está en la subcarpeta `spec/` de una feature → subcarpeta hermana `plan/`: `features/<nombre>/plan/<nombre>_plan.md` (crea el directorio si no existe)
 - si el spec está directamente en `features/<nombre>/` (layout plano legacy) o fuera de una feature → mismo directorio + nombre base + `_plan.md`
-- ejemplos: `features/login/spec/login_spec.md` → `features/login/plan/login_plan.md`; `docs/login_spec.md` → `docs/login_plan.md`
+- ejemplos: `features/login/spec/login_spec.md` → `features/login/plan/login_plan.md`; `docs/login_spec.md` → `docs/login_plan.md`; consumidor con spec en `../product-ssot/spec/features/login/spec/login_spec.md` → `features/login/plan/login_plan.md` (local)
 
 Antes de escribir, verifica si el archivo ya existe:
 ```bash
@@ -154,7 +157,7 @@ Si ya existe → pregunta al usuario:
 
 Escribe el output del agente en ese archivo.
 
-Antes de cerrar, verifica que el header `Spec origen` del plan resuelve como ruta relativa **desde la ubicación final del `_plan.md`** (con subcarpetas: `../spec/<nombre>_spec.md`; layout plano: `<nombre>_spec.md`). Si no resuelve, corrígelo — el sellador de `/wf-plan-validate` lo comprueba.
+Antes de cerrar, verifica que el header `Spec origen` del plan resuelve como ruta relativa **desde la ubicación final del `_plan.md`** (con subcarpetas: `../spec/<nombre>_spec.md`; layout plano: `<nombre>_spec.md`; repo consumidor: la ruta relativa hasta el checkout del SSoT, p. ej. `../../../product-ssot/spec/features/login/spec/login_spec.md`). Si no resuelve, corrígelo — el sellador de `/wf-plan-validate` lo comprueba.
 
 ---
 

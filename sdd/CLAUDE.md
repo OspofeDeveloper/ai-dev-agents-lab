@@ -33,12 +33,13 @@ Si buscas mejor rendimiento y menos carga de contexto, instala y usa el `CLAUDE.
 | Medir impacto de un cambio de PRD sobre artefactos derivados | `/wf-prd-sync-impact` | `<archivo_prd.md>` |
 | Resincronizar specs tras un cambio de PRD | `/wf-spec-sync-from-prd` | `analyze <prd.md> \| apply <prd.md> --features F-001,F-002,...` |
 | Analizar un PRD/documento para detectar gaps | `/wf-spec-analyze` | `<archivo.md>` |
+| Generar specs desde código existente (brownfield, sin PRD) | `/wf-spec-from-code` | `discover <path_codigo> [--scope <subdir>] \| generate <path_codigo> --feature <F-C-00X>` |
 | Validar un spec existente | `/wf-spec-validate` | `<archivo_spec.md>` |
 | Identificar features de un PRD | `/wf-spec-discover` | `<archivo_prd.md> [--analysis <analysis.md>]` |
-| Generar todos los specs por feature (flujo completo) | `/wf-spec-features-first` | `<archivo_prd.md> [--all-features] [--allow-open-critical-gaps] [--allow-derived-scope-from-analysis]` |
+| Generar todos los specs por feature (flujo completo) | `/wf-spec-features-first` | `<archivo_prd.md> [--light\|--standard] [--all-features] [--allow-open-critical-gaps] [--allow-derived-scope-from-analysis]` |
 | Generar specs de un subset / iteración / fase de features | `/wf-spec-features-first` | `<archivo_prd.md> --features F-001,F-002,... [--allow-open-critical-gaps] [--allow-derived-scope-from-analysis]` |
-| Generar spec directo de una feature | `/wf-spec-fast-track` | `<archivo.md> --capability <nombre> [--analysis <analysis.md>] [--allow-derived-scope-from-analysis]` |
-| Generar spec de una feature desde un discovery | `/wf-spec-fast-track` | `<prd.md> --scope-from <discovery.md> --feature <F-00X> [--analysis <analysis.md>] [--allow-derived-scope-from-analysis]` |
+| Generar spec directo de una feature | `/wf-spec-fast-track` | `<archivo.md> --capability <nombre> [--light\|--standard] [--analysis <analysis.md>] [--allow-derived-scope-from-analysis]` |
+| Generar spec de una feature desde un discovery | `/wf-spec-fast-track` | `<prd.md> --scope-from <discovery.md> --feature <F-00X> [--light\|--standard] [--analysis <analysis.md>] [--allow-derived-scope-from-analysis]` |
 | Detectar conflictos entre specs de features | `/wf-spec-conflict` | `<feature_spec.md> --features-dir <path/features/>` |
 | Qué features están listas / orden de implementación | `/wf-spec-readiness` | `<path/features/>` |
 | Actualizar un spec con requisitos nuevos (análisis) | `/wf-spec-delta` | `analyze <feature_spec.md> --new-reqs <description.md>` |

@@ -1,14 +1,14 @@
 # [Feature Name]
 
 > **Feature ID**: F-00X
-> **Spec**: [nombre]_spec.md
+> **Spec**: spec/[nombre]_spec.md
 > **Actor principal**: [quién usa esta feature]
 > **Spec monolítico origen**: [path/_spec.md]
 > **PRD origen**: [path/al/PRD.md | N/A]
 > **PRD version**: [1.0 | unknown | N/A]
 > **Change ref**: [CR-XXX | N/A]
 > **Status sync**: [in_sync | needs_review | stale | unknown]
-> **Origen de alcance**: [PRD | PRD + analysis respondido]
+> **Origen de alcance**: [PRD | PRD + analysis respondido | characterization (código, commit SHA)]
 > **Avisos de gobernanza**: [ninguno | alcance derivado desde P-00X]
 
 ## Descripción
@@ -26,9 +26,11 @@
 
 | Etapa | Archivo | Estado |
 |-------|---------|--------|
-| Spec | [nombre]_spec.md | ✓ |
-| Plan | [nombre]_plan.md | — |
-| Tasks | [nombre]_tasks.md | — |
+| Spec | spec/[nombre]_spec.md | ✓ |
+| Plan | plan/[nombre]_plan.md | — |
+| Tasks | tasks/[nombre]_tasks.md | — |
+
+<!-- Si la feature usa layout plano legacy, omite los prefijos de subcarpeta (spec/, plan/, tasks/) en las rutas de este README. -->
 
 ## Dependencias
 

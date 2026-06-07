@@ -81,6 +81,8 @@ Marca como `[SIN REGISTRAR]` las que no aparezcan en ningun rootmap.
 
 Estructura el inventario siguiendo el formato de snapshot en `${CLAUDE_SKILL_DIR}/references/inventory_templates.md`.
 
+Incluye la versión del ecosistema en la cabecera del snapshot: `cat sdd/VERSION` + `git -C sdd rev-parse --short HEAD`. Si el run es sobre un proyecto consumidor (existe `.sdd/sdd-version.json` en el cwd), compara su sello con la versión del ecosistema y reporta la deriva si difieren (sugerencia: `/wf-sdd-update`).
+
 ---
 
 ## Paso 6.5: Actualizar skill-registry.md

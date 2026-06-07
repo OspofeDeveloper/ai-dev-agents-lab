@@ -1,6 +1,6 @@
 # SDD Skill Registry
 <!-- Auto-generado por scripts/generate-skill-registry.py. No editar manualmente. -->
-<!-- Total: 108 skills | 45 wf-* (user-invocable) | 63 kb-* -->
+<!-- Total: 111 skills | 47 wf-* (user-invocable) | 64 kb-* -->
 <!-- Última actualización: 2026-06-07 -->
 
 ## Meta-Ecosistema (meta/)
@@ -17,6 +17,7 @@
 | wf-sdd-audit | Audita el ecosistema SDD detectando referencias rotas, skills huerfanas, violaciones de SSoT/SRP, contradicciones e inconsistencias | true | meta/skills/wf-sdd-audit/SKILL.md |
 | wf-sdd-refactor | Orquestador SDD para refactorizar una skill (kb-* o wf-*) o agente existente del ecosistema | true | meta/skills/wf-sdd-refactor/SKILL.md |
 | wf-sdd-status | Genera un inventario rapido del ecosistema SDD y actualiza sdd/meta/skill-registry.md: cuantas skills y agentes hay por fase, que KBs existen, que workflows es… | true | meta/skills/wf-sdd-status/SKILL.md |
+| wf-sdd-update | Actualiza la instalación SDD de un proyecto a la versión actual del ecosistema, sin re-entrevistar: relee fases y stack de project-init.json, reinstala con --p… | true | bootstrap/skills/wf-sdd-update/SKILL.md |
 | wf-skill-create | Orquestador SDD para crear una nueva skill (kb-* o wf-*) en el ecosistema | true | meta/skills/wf-skill-create/SKILL.md |
 | wf-stack-create | Orquestador SDD para crear el esqueleto de un nuevo overlay de stack (tech/<stack>) conforme a kb-sdd-stack-overlay-contract: estructura de directorios, instal… | true | meta/skills/wf-stack-create/SKILL.md |
 
@@ -37,6 +38,7 @@
 | kb-conflict-expert | Experto en detección de conflictos entre Specs SDD de features | false | spec/skills/kb-conflict-expert/SKILL.md |
 | kb-decompose-expert | Experto en partición de Specs SDD monolíticos en Specs por feature | false | spec/skills/kb-decompose-expert/SKILL.md |
 | kb-gap-conventions | Convenciones SSoT para el sistema de gaps y marcadores del pipeline SDD | false | spec/skills/kb-gap-conventions/SKILL.md |
+| kb-spec-characterization | Reglas para specs de caracterización brownfield: evidencia obligatoria por CA, marcador [INFERIDO], qué no especular y degradación sin tests | false | spec/skills/kb-spec-characterization/SKILL.md |
 | kb-spec-expert | Experto en Spec Driven Development (SDD): qué debe y qué NO debe contener un Spec | false | spec/skills/kb-spec-expert/SKILL.md |
 | kb-traceability-rules | Reglas de trazabilidad entre PRD, discovery, specs, plan y tasks en el ecosistema SDD | false | spec/skills/kb-traceability-rules/SKILL.md |
 | wf-prd-sync-impact | Analiza el impacto de un PRD actualizado sobre los artefactos SDD ya generados | true | spec/skills/wf-prd-sync-impact/SKILL.md |
@@ -46,7 +48,8 @@
 | wf-spec-discover | Analiza un PRD e identifica features candidatas por cohesion funcional | true | spec/skills/wf-spec-discover/SKILL.md |
 | wf-spec-fast-track | Genera el Spec de una feature directamente desde un documento de requisitos acotado a una sola capacidad | true | spec/skills/wf-spec-fast-track/SKILL.md |
 | wf-spec-features-first | Orquestador completo del flujo features-first | true | spec/skills/wf-spec-features-first/SKILL.md |
-| wf-spec-gap-resolve | Completa HUs y CAs marcadas como [INCOMPLETO] a partir de respuestas ya escritas en un _analysis.md, sin tratar el cambio como un delta funcional amplio | true | spec/skills/wf-spec-gap-resolve/SKILL.md |
+| wf-spec-from-code | Ingeniería inversa de specs desde código existente (brownfield): descubre capacidades con evidencia (archivo:línea, rutas, tests) y genera specs de caracteriza… | true | spec/skills/wf-spec-from-code/SKILL.md |
+| wf-spec-gap-resolve | Completa HUs y CAs marcadas como [INCOMPLETO] a partir de respuestas ya escritas en un _analysis.md, y confirma CAs [INFERIDO] de specs de caracterización con… | true | spec/skills/wf-spec-gap-resolve/SKILL.md |
 | wf-spec-readiness | Analiza los artefactos post-spec-generation (specs de feature, READMEs, _features.md, _conflict_report.md) y genera un informe de readiness que indica que feat… | true | spec/skills/wf-spec-readiness/SKILL.md |
 | wf-spec-sync-from-prd | Resincroniza specs de feature a partir de un PRD actualizado | true | spec/skills/wf-spec-sync-from-prd/SKILL.md |
 | wf-spec-validate | Audita un _spec.md ya generado para detectar regresiones de pureza, testabilidad o completitud introducidas por ediciones manuales | true | spec/skills/wf-spec-validate/SKILL.md |

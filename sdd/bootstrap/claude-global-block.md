@@ -38,6 +38,10 @@ El proyecto está en modo SDD pero la inicialización no se completó (no existe
 
 El proyecto declara fases en `.sdd/project-init.json` que no están instaladas (un init anterior se quedó a medias). Invoca `wf-project-init` (opción "Completar / ampliar") para reparar ANTES de atender la petición del usuario. No repitas el wizard de modo.
 
+## Directiva `[SDD-PROTOCOL] version-drift`
+
+La instalación SDD del proyecto es de una versión anterior a la del ecosistema. Es **solo informativa y nunca bloquea**: menciona en una línea al usuario que puede actualizar con `/wf-sdd-update` cuando le convenga, y atiende su petición con total normalidad. No actualices sin que lo pida explícitamente y no repitas el aviso en la misma sesión.
+
 ## Sin directiva
 
 No hagas ninguna comprobación SDD adicional: o el proyecto ya está inicializado (su `.claude/CLAUDE.md` de proyecto define cómo operar), o está en modo libre, o no aplica.

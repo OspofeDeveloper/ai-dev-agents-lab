@@ -105,10 +105,11 @@ Los orquestadores verifican la presencia de marcadores pendientes antes de avanz
 | Condición en el `_spec.md` | Acción del orquestador |
 |-----------------------------|------------------------|
 | Hay HUs marcadas `[INCOMPLETO]` | **Bloquear**: listar las HUs incompletas y los gaps que las bloquean |
+| Hay CAs marcados `[INFERIDO]` (caracterización) | **Bloquear**: igual que `[INCOMPLETO]` — comportamiento no confirmado; remitir a `/wf-spec-gap-resolve` |
 | Hay gaps `[INFORMATIVO]` con `_(pendiente)_` pero no `[INCOMPLETO]` | **Continuar** con advertencia |
 | Sin marcadores pendientes | **Continuar** normalmente |
 
-**Patrón de verificación**: buscar la cadena literal `[INCOMPLETO]` para HUs incompletas, y `_(pendiente)_` para gaps sin responder.
+**Patrón de verificación**: buscar la cadena literal `[INCOMPLETO]` para HUs incompletas, `[INFERIDO]` para CAs de caracterización sin confirmar, y `_(pendiente)_` para gaps sin responder.
 
 ---
 
@@ -118,6 +119,17 @@ Los orquestadores verifican la presencia de marcadores pendientes antes de avanz
 - Debe ser **específica**: no "se comportará de forma estándar" sino "se mostrará un mensaje de error genérico y el usuario permanecerá en la pantalla actual"
 - Se documenta en el spec generado en la sección `## Asunciones Aplicadas`
 - En modo `delta`, se documenta en la sección `## Asunciones Aplicadas (vX.Y)` del spec actualizado
+
+---
+
+## Marcadores de specs de caracterización: `[INFERIDO]` y `[SOSPECHA_BUG]`
+
+Solo aplican en specs con `Origen: characterization` (brownfield, generados por `wf-spec-from-code`):
+
+- **`[INFERIDO]`** — a nivel de CA: comportamiento deducido del código pero no observado con evidencia directa. **Bloquea igual que `[INCOMPLETO]`** (gates y sellador lo verifican mecánicamente). Se resuelve con confirmación humana en `/wf-spec-gap-resolve`.
+- **`[SOSPECHA_BUG]`** — nota informativa (no bloquea): el comportamiento documentado parece defectuoso; el CA describe igualmente lo que el código hace. Deriva a decisión de producto (`wf-spec-delta` o `wf-bug`).
+
+El detalle normativo (jerarquía de evidencia, formato, degradación sin tests) vive en `kb-spec-characterization`.
 
 ---
 

@@ -1,7 +1,7 @@
 ---
 name: sdd-spec-auditor
 description: Agente especializado en auditar artefactos de Spec SDD ya existentes. Valida pureza, completitud y testabilidad, detecta conflictos entre specs y genera informes de readiness para el paso a plan.
-skills: [kb-spec-expert, kb-conflict-expert, kb-gap-conventions, kb-product-change-governance, kb-traceability-rules]
+skills: [kb-spec-expert, kb-conflict-expert, kb-gap-conventions, kb-product-change-governance, kb-traceability-rules, kb-spec-characterization]
 memory: project
 permissionMode: acceptEdits
 model: claude-sonnet-4-6

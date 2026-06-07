@@ -8,7 +8,7 @@
 > **PRD version**: [1.0 | unknown | N/A]
 > **Change ref**: [CR-XXX | N/A]
 > **Status sync**: [in_sync | needs_review | stale | unknown]
-> **Origen de alcance**: [PRD | PRD + analysis respondido]
+> **Origen de alcance**: [PRD | PRD + analysis respondido | characterization (código, commit SHA)]
 > **Avisos de gobernanza**: [ninguno | alcance derivado desde P-00X]
 
 ## Descripción

@@ -46,10 +46,12 @@ if ! command -v python3 >/dev/null 2>&1; then
   exit 1
 fi
 
-# ── 1. Skill global wf-project-init ─────────────────────────────────────────
+# ── 1. Skills globales de bootstrap (wf-project-init, wf-sdd-update) ────────
 mkdir -p "$GLOBAL_SKILLS_DIR"
 rm -rf "$TARGET"
 cp -r "$SOURCE" "$TARGET"
+rm -rf "$GLOBAL_SKILLS_DIR/wf-sdd-update"
+cp -r "$SCRIPT_DIR/bootstrap/skills/wf-sdd-update" "$GLOBAL_SKILLS_DIR/wf-sdd-update"
 
 # ── 2. SDD_HOME en ~/.sdd-home ──────────────────────────────────────────────
 echo "$SCRIPT_DIR" > "$HOME/.sdd-home"
@@ -123,8 +125,9 @@ if [ "$DEV_MODE" = "1" ]; then
     skill="${skill%/}"
     ln -sfn "$skill" "$REPO_CLAUDE/skills/$(basename "$skill")"
   done
-  # wf-project-init tambien activo en el repo para probarlo sin instalar global
+  # skills de bootstrap tambien activas en el repo para probarlas sin instalar global
   ln -sfn "$SCRIPT_DIR/bootstrap/skills/wf-project-init" "$REPO_CLAUDE/skills/wf-project-init"
+  ln -sfn "$SCRIPT_DIR/bootstrap/skills/wf-sdd-update" "$REPO_CLAUDE/skills/wf-sdd-update"
   echo "Modo dev: meta-orquestador symlinkeado en $REPO_CLAUDE"
 fi
 
@@ -132,6 +135,7 @@ fi
 echo ""
 echo "SDD bootstrap completado."
 echo "  wf-project-init     → $TARGET"
+echo "  wf-sdd-update       → $GLOBAL_SKILLS_DIR/wf-sdd-update"
 echo "  SDD_HOME            → $HOME/.sdd-home ($SCRIPT_DIR)"
 echo "  Hook SessionStart   → $HOOK_TARGET"
 echo "  Protocolo global    → bloque SDD-BOOTSTRAP en $GLOBAL_MD"

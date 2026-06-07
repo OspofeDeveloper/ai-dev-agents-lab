@@ -78,6 +78,10 @@ def gate_spec_fiable(args: str):
     n_crit = len(re.findall(r"\[CR[IÍ]TICO\]", text))
     if n_crit:
         return f"El spec '{spec_path}' tiene {n_crit} gap(s) [CRITICO] abiertos. Resuelvelos antes de continuar."
+    n_inf = len(re.findall(r"\[INFERIDO\]", text))
+    if n_inf:
+        return (f"El spec '{spec_path}' tiene {n_inf} CA(s) [INFERIDO] sin confirmar (caracterizacion brownfield). "
+                f"Confirmalos con /wf-spec-gap-resolve antes de construir nada encima.")
     sync = re.search(r"status_sync\s*:\s*[\"']?(\w+)", text)
     if sync and sync.group(1) != "in_sync":
         return f"El spec '{spec_path}' declara status_sync: {sync.group(1)} (no fiable). Resincroniza con /wf-spec-sync-from-prd antes de continuar."
