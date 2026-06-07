@@ -126,6 +126,7 @@ if has_phase "plan"; then
 fi
 if has_phase "tasks"; then
   install_agent "$SCRIPT_DIR/tasks/agents/task-generator.md"
+  install_agent "$SCRIPT_DIR/tasks/agents/qa-engineer.md"
 fi
 
 # ── 3. Instalar skills ─────────────────────────────────────────────────────
@@ -191,8 +192,9 @@ if has_phase "plan"; then
 fi
 
 if has_phase "tasks"; then
-  # tasks necesita kb-plan-expert como dependencia
+  # tasks necesita kb-plan-expert y kb-spec-expert (qa-engineer) como dependencias
   install_skill "$SCRIPT_DIR/plan/skills/kb-plan-expert"
+  install_skill "$SCRIPT_DIR/spec/skills/kb-spec-expert"
 
   for skill_dir in "$SCRIPT_DIR/tasks/skills"/*/; do
     install_skill "$skill_dir"
@@ -222,7 +224,7 @@ phase_globs() {
     spec)   printf '%s\n' "spec/**" "**/features/*/spec/**" "**/*_spec.md" "**/*_features.md" ;;
     design) printf '%s\n' "design/**" "**/features/*/design/**" "**/DESIGN*.md" "**/*_flows.md" "**/*_views.md" "**/*_ui_prompt.md" ;;
     plan)   printf '%s\n' "**/*_plan.md" ;;
-    tasks)  printf '%s\n' "**/*_tasks.md" ;;
+    tasks)  printf '%s\n' "**/*_tasks.md" "**/*_bugs.md" "**/*_qa_plan.md" "**/*_qa_report.md" ;;
   esac
 }
 

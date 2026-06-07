@@ -110,4 +110,4 @@ Salvo `--no-commit`:
 - Task(s) ejecutada(s), estado final y commit(s).
 - Resumen de la tabla `## Progreso` (X/N HECHA).
 - Resultado de la verificación ejecutable (o su ausencia, explícita).
-- Siguiente paso: la task que devuelve `next`, o si `COMPLETO` → "Feature implementada. Considera `/wf-spec-readiness` para el estado global o cerrar la feature."
+- Siguiente paso: la task que devuelve `next`, o si `COMPLETO` → "Feature implementada. Cierra el ciclo QA con `/wf-qa-verify <path>_qa_plan.md` (si no existe el QA plan: `/wf-qa-plan generate <path>_spec.md` primero); `/wf-spec-readiness` para el estado global."

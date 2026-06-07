@@ -22,6 +22,7 @@ Gates (tabla GATES):
   wf-design-system            → idem sobre el spec de entrada
   wf-design-feature-prototype → idem sobre el spec de entrada
   wf-task-run                 → el `Plan origen` del `*_tasks.md` sigue `Estado: VALIDADO`
+  wf-qa-plan                  → idem gate de spec fiable (un QA plan de un spec inestable nace muerto)
 """
 import hashlib
 import json
@@ -113,8 +114,11 @@ def gate_spec_fiable(args: str):
     if n_inf:
         return (f"El spec '{spec_path}' tiene {n_inf} CA(s) [INFERIDO] sin confirmar (caracterizacion brownfield). "
                 f"Confirmalos con /wf-spec-gap-resolve antes de construir nada encima.")
+    # Bloquean solo los estados con evidencia de desalineacion (kb-traceability-rules,
+    # Regla 8). `unknown` es legitimo en specs sin PRD (fast-track directo) y la
+    # deriva real con PRD la caza el check de hash de abajo.
     sync = re.search(r"status_sync\s*:\s*[\"']?(\w+)", text)
-    if sync and sync.group(1) != "in_sync":
+    if sync and sync.group(1) in ("stale", "needs_review"):
         return f"El spec '{spec_path}' declara status_sync: {sync.group(1)} (no fiable). Resincroniza con /wf-spec-sync-from-prd antes de continuar."
     drift = prd_drift(spec_path, text)
     if drift:
@@ -152,6 +156,7 @@ GATES = {
     "wf-design-system": gate_spec_fiable,
     "wf-design-feature-prototype": gate_spec_fiable,
     "wf-task-run": gate_tasks_plan_vigente,
+    "wf-qa-plan": gate_spec_fiable,
 }
 
 

@@ -63,6 +63,8 @@ Si buscas mejor rendimiento y menos carga de contexto, instala y usa el `CLAUDE.
 | Validar si un plan está listo para pasar a tasks | `/wf-plan-validate` | `<plan.md>` |
 | Generar las tasks desde un plan | `/wf-prepare-tasks` | `generate <plan.md>` |
 | Ejecutar tasks con estado y commits trazables | `/wf-task-run` | `<feature_tasks.md> [--task T-00X \| --next \| --all] [--no-commit]` |
+| Derivar los casos de prueba de una feature desde sus CAs | `/wf-qa-plan` | `generate <feature_spec.md>` |
+| Verificar la cobertura real de CAs tras implementar | `/wf-qa-verify` | `<feature_qa_plan.md>` |
 | Reportar o arreglar un bug de una feature entregada | `/wf-bug` | `<descripcion.md\|texto> [--feature <nombre>]` |
 
 ## Cómo actuar ante una petición
@@ -103,6 +105,7 @@ La unidad primaria de trabajo en SDD es el **agente especializado** cuando la pe
 | `design-architect` | Traducción de Spec a contrato visual de producto y artefactos de feature para Stitch |
 | `plan-architect` | Transformación de Spec a Plan técnico |
 | `task-generator` | Transformación de Plan a Tasks accionables |
+| `qa-engineer` | Derivación de casos de prueba desde CAs y auditoría de cobertura con evidencia ejecutada |
 
 Usa workflows cuando exista una pipeline clara y cerrada. Si no existe una workflow exacta, delega al agente cuyo dominio coincida con la intención real del usuario.
 
@@ -145,7 +148,11 @@ features/<nombre>/plan/<nombre>_plan.md
     ↓ [/wf-plan-validate — gate formal]
     ↓ [/wf-prepare-tasks generate — por feature]
 features/<nombre>/tasks/<nombre>_tasks.md
+    ↓ [/wf-qa-plan generate — deriva TC-XXX trazables desde los CAs; puede ejecutarse desde que el spec es fiable]
+features/<nombre>/tasks/<nombre>_qa_plan.md
     ↓ [/wf-task-run — ejecuta cada task con su owner, estado persistente y commit trazable T-00X [CA-XXX]]
+    ↓ [/wf-qa-verify — cobertura real de CAs con evidencia ejecutada → veredicto APTO/APTO_CON_RESERVAS/NO_APTO]
+features/<nombre>/tasks/<nombre>_qa_report.md
     ↓ [mantenimiento posterior: /wf-bug — triaje contra CA, registro B-00X en features/<nombre>/tasks/<nombre>_bugs.md]
 ```
 
@@ -169,6 +176,7 @@ features/<nombre>/tasks/<nombre>_tasks.md
 > Para cambios de producto (scope, prioridad, exclusiones): primero `/wf-prd-change`, luego `/wf-prd-sync-impact` y `/wf-spec-sync-from-prd`.
 > Tras `/wf-prepare-tasks`, la ejecución es `/wf-task-run <tasks.md>`: delega cada task a su `Owner agent` (agentes del overlay de stack, u orquestador en modo genérico), con estado persistente gestionado por `sdd-task-state.py` y un commit por task.
 > Para bugs sobre features ya entregadas: `/wf-bug <descripción>` — triaje contra el CA del spec; solo escala a `/wf-spec-delta` si el comportamiento esperado cambia.
+> Para cerrar el ciclo QA: `/wf-qa-plan generate <spec.md>` (matriz TC-XXX desde los CAs, gate de spec fiable) y, tras implementar, `/wf-qa-verify <qa_plan.md>` (cobertura con evidencia ejecutada; un test que falla contra un CA es DIVERGENTE → `/wf-bug`, nunca se ajusta el TC).
 
 ## Principio de precondiciones
 

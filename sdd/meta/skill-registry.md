@@ -1,6 +1,6 @@
 # SDD Skill Registry
 <!-- Auto-generado por scripts/generate-skill-registry.py. No editar manualmente. -->
-<!-- Total: 111 skills | 47 wf-* (user-invocable) | 64 kb-* -->
+<!-- Total: 114 skills | 49 wf-* (user-invocable) | 65 kb-* -->
 <!-- Última actualización: 2026-06-07 -->
 
 ## Meta-Ecosistema (meta/)
@@ -97,9 +97,12 @@
 
 | Skill | Descripción | Invocable | Path |
 |---|---|---|---|
+| kb-qa-expert | Metodologia QA del pipeline SDD: derivacion de casos de prueba TC-XXX desde los CAs GIVEN/WHEN/THEN del spec, niveles y tipos de prueba, trazabilidad CA→TC y c… | false | tasks/skills/kb-qa-expert/SKILL.md |
 | kb-tasks-expert | Reglas tech-neutral para descomponer Planes técnicos en Tasks atómicas delegables a un owner claro: formato obligatorio de task, granularidad, orden canónico p… | false | tasks/skills/kb-tasks-expert/SKILL.md |
 | wf-bug | Fast-lane de mantenimiento: triaje de un bug contra los specs de la feature, fix con trazabilidad (B-00X, CA-XXX) y registro en <feature>_bugs.md | true | tasks/skills/wf-bug/SKILL.md |
 | wf-prepare-tasks | Transforma Planes tecnicos validados en Tasks de implementacion | true | tasks/skills/wf-prepare-tasks/SKILL.md |
+| wf-qa-plan | Genera el plan de QA de una feature: deriva casos de prueba TC-XXX trazables desde los CAs GIVEN/WHEN/THEN del feature spec (afinados con plan/tasks y project… | true | tasks/skills/wf-qa-plan/SKILL.md |
+| wf-qa-verify | Verifica la cobertura real de CAs de una feature tras implementar: localiza y ejecuta los tests que ejercitan cada TC del qa_plan, registra evidencia, escribe… | true | tasks/skills/wf-qa-verify/SKILL.md |
 | wf-task-run | Ejecuta las tasks de un _tasks.md con estado persistente, validación de DoD y commits trazables (T-00X, CA-XXX) | true | tasks/skills/wf-task-run/SKILL.md |
 
 ## Tech: KMM — Global

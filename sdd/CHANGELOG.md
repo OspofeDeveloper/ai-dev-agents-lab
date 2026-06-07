@@ -2,6 +2,15 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.4.0 — 2026-06-07
+
+Perfil QA — cierre del ciclo "CAs testables" (ROADMAP 2.4):
+
+- Piezas nuevas en la fase tasks: `kb-qa-expert` (SSoT de metodología QA: formato TC-XXX, derivación CA→TC, niveles, criterios de cobertura con evidencia, veredictos), agente `qa-engineer` y workflows `wf-qa-plan` (CAs → matriz de casos de prueba en `<feature>_qa_plan.md`) y `wf-qa-verify` (localiza y ejecuta los tests de cada TC, estados con evidencia, `<feature>_qa_report.md` con veredicto APTO/APTO_CON_RESERVAS/NO_APTO). Un test que falla contra un CA es DIVERGENTE → `/wf-bug`, nunca se ajusta el TC.
+- `wf-qa-plan` entra en la tabla de gates deterministas (`sdd-gate-check.py`): mismo gate de spec fiable que `wf-prepare-plan`.
+- ⚠ Corregido bug preexistente de los gates y el sellador: `status_sync: unknown` ya NO bloquea (es legítimo en specs sin PRD, fast-track directo — la deriva real la caza el hash de 1.3); bloquean solo `stale` y `needs_review`, conforme a `kb-traceability-rules` Regla 8.
+- ⚠ La rule de tasks ahora también se activa con `*_bugs.md`, `*_qa_plan.md` y `*_qa_report.md` (el glob de `_bugs.md` faltaba desde 2.2). Requiere `/wf-sdd-update` para refrescar piezas y rules.
+
 ## 0.3.0 — 2026-06-07
 
 Cierre verificable de implementadores, overlay a prueba de reinstalación y pins de modelo (ROADMAP 2.3, 6.6 y 9.10):

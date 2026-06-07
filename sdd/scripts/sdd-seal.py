@@ -20,7 +20,8 @@ Condiciones verificadas para `plan`:
   3. El plan no contiene marcadores `[INCOMPLETO]`.
   4. El header `Spec origen` resuelve a un archivo legible.
   5. El spec origen no contiene `[INCOMPLETO]`, gaps `[CRÍTICO]` ni CAs `[INFERIDO]`.
-  6. Si el spec declara `status_sync`, su valor es `in_sync`.
+  6. Si el spec declara `status_sync`, no esta desalineado (bloquean: stale, needs_review;
+     `unknown` es legitimo en specs sin PRD).
   6b. Si el spec declara `derived_from_prd_hash` y su PRD origen es resoluble,
       el hash actual del PRD coincide (sin deriva PRD→spec; ver sdd-sync-check.py).
   7. Trazabilidad: todo CA-XXX definido en el spec (encabezados `### CA-XXX`)
@@ -105,10 +106,14 @@ def check_plan(plan_path: Path):
     n_spec_inf = len(re.findall(r"\[INFERIDO\]", spec_text))
     add(n_spec_inf == 0, f"Spec sin CAs [INFERIDO] sin confirmar (encontrados: {n_spec_inf})")
 
-    # 6. status_sync del spec (si declarado) debe ser in_sync
+    # 6. status_sync del spec (si declarado) no debe estar desalineado.
+    # Bloquean solo `stale` y `needs_review` (kb-traceability-rules, Regla 8);
+    # `unknown` es legitimo en specs sin PRD (fast-track directo) y la deriva
+    # real con PRD la caza el check 6b por hash.
     sync_m = re.search(r"status_sync\s*:\s*[\"']?(\w+)", spec_text)
     if sync_m:
-        add(sync_m.group(1) == "in_sync", f"Spec `status_sync: {sync_m.group(1)}` (requerido: in_sync)")
+        add(sync_m.group(1) not in ("stale", "needs_review"),
+            f"Spec `status_sync: {sync_m.group(1)}` (bloquean: stale, needs_review)")
 
     # 6b. Deriva PRD→spec por hash sellado (SSoT del mecanismo: sdd-sync-check.py).
     # Solo se evalua con evidencia completa: sello declarado + PRD origen resoluble.

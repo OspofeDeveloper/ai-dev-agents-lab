@@ -27,6 +27,8 @@ Si el plan está en `BORRADOR` o tiene gaps, redirige a `/wf-plan-validate` ante
 |---|---|---|
 | Generar las tasks desde un plan validado | `/wf-prepare-tasks` | `generate <feature_plan.md>` |
 | Ejecutar tasks (la siguiente, una concreta o todas) | `/wf-task-run` | `<feature_tasks.md> [--task T-00X \| --next \| --all] [--no-commit]` |
+| Derivar los casos de prueba de una feature desde sus CAs | `/wf-qa-plan` | `generate <feature_spec.md>` |
+| Verificar la cobertura real de CAs tras implementar | `/wf-qa-verify` | `<feature_qa_plan.md>` |
 | Reportar o arreglar un bug de una feature entregada | `/wf-bug` | `<descripcion.md\|texto> [--feature <nombre>]` |
 
 ## Cómo actuar ante una petición
@@ -48,22 +50,27 @@ plan validado (_plan.md con Estado: VALIDADO)
        estado persistente vía .sdd/scripts/sdd-task-state.py (transiciones validadas)
        commit por task: "T-00X: <título> [CA-XXX]"
   -> ... repetir hasta COMPLETO
+  -> wf-qa-verify <qa_plan.md>         (cobertura real de CAs con evidencia → _qa_report.md)
   -> mantenimiento posterior: wf-bug (registro B-00X en <feature>_bugs.md)
 ```
 
-## Agente Tasks disponible
+El QA plan (`wf-qa-plan generate <spec.md>`) puede generarse en cualquier momento desde que el spec está fiable — antes o en paralelo a la implementación; lo natural es derivarlo pronto para que las tasks de test sepan qué cubrir. `wf-qa-verify` cierra el ciclo cuando la feature está implementada: cada `DIVERGENTE` que encuentre se canaliza por `/wf-bug` (nunca se ajusta el TC para que pase).
+
+## Agentes Tasks disponibles
 
 | Agente | Dominio |
 |---|---|
 | `task-generator` | Descomposición de `_plan.md` validados en tasks atómicas ordenadas. Asigna owner (agente del overlay de stack u orquestador en modo genérico), orden canónico por dependencias, dependencias explícitas y definition of done por task. El overlay de stack puede sustituirlo por una variante especializada con el mismo nombre. |
+| `qa-engineer` | Derivación de casos de prueba TC-XXX desde los CAs del spec y auditoría de cobertura con evidencia ejecutada. No escribe tests ni corrige código. |
 
-Usa el workflow cuando el usuario quiera generar el `_tasks.md`. Si la petición es una duda conceptual sobre cómo estructurar tasks, delega directamente a `task-generator`.
+Usa el workflow cuando el usuario quiera generar el `_tasks.md`. Si la petición es una duda conceptual sobre cómo estructurar tasks, delega directamente a `task-generator`; si es una duda sobre casos de prueba, niveles o criterios de cobertura, delega a `qa-engineer`.
 
 ## Principio operativo
 
 - `wf-prepare-tasks` genera el `_tasks.md` completo.
 - El output incluye header de trazabilidad (Plan, Spec, PRD, version, change ref, status sync).
 - `wf-task-run` ejecuta las tasks: los estados (`PENDIENTE|EN_CURSO|HECHA|BLOQUEADA`) los escribe SOLO `sdd-task-state.py` — nunca a mano.
+- `wf-qa-plan` deriva la matriz de TCs desde los CAs (≥1 TC por CA, trazabilidad estricta); el campo `Estado` de cada TC lo escribe SOLO `wf-qa-verify`, con evidencia ejecutada — cobertura sin evidencia no existe (`kb-qa-expert`).
 - `wf-bug` es la vía de mantenimiento: triaje contra el CA del spec antes de tocar código; fix silencioso sin CA = prohibido.
 - Esta fase cierra la descomposición y ejecución de implementación; no toma decisiones de arquitectura.
 
