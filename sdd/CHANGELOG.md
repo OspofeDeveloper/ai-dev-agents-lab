@@ -2,6 +2,16 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.6.0 — 2026-06-07
+
+Back-edge tasks→spec — enmienda desde implementación (ROADMAP 4.2):
+
+- Nueva `wf-spec-amend` (fase spec): cuando el dev descubre implementando que un CA es ambiguo, la vía corta corrige el texto del CA (solo ACLARACIÓN estricta — cualquier cambio de comportamiento escala a `wf-spec-delta`), con confirmación humana, versión menor y entrada de changelog trazable `E-00X: aclaración CA-XXX desde T-00X`.
+- Stale puntual sobre el plan: nuevo script de enforcement `sdd-amend.py` (único escritor de la anotación `> **Enmienda pendiente:** CA-XXX (E-00X, fecha)` en el header del plan; asigna la numeración E-00X escaneando plan + changelog del spec). El plan conserva `Estado: VALIDADO`: solo se retienen las tasks que referencian el CA enmendado.
+- Retención selectiva determinista: `sdd-gate-check.py` deniega `wf-task-run --task` sobre tasks retenidas y `wf-prepare-tasks` sobre planes con enmiendas abiertas; `sdd-task-state.py next` salta las retenidas (`RETENIDAS_POR_ENMIENDA` si no queda otra cosa), `check` las marca y `set EN_CURSO` las rechaza salvo `--force`. Cierre por revisión scoped (`sdd-amend.py clear`) o re-validación completa (`sdd-seal.py --seal` absorbe las anotaciones).
+- `wf-task-run` integra la salida: el owner que detecta un CA ambiguo lo reporta sin elegir interpretación; bloqueo por ambigüedad → `BLOQUEADA` + remisión a `/wf-spec-amend` (ya no se re-desciende el waterfall por una aclaración). Semántica documentada como Regla 9 de `kb-traceability-rules`.
+- ⚠ Proyectos ya inicializados: `/wf-sdd-update` para recibir `sdd-amend.py` en `.sdd/scripts/` y las versiones nuevas de `sdd-gate-check.py`/`sdd-task-state.py`/`sdd-seal.py` (sin actualizar, los gates antiguos siguen funcionando como hasta ahora; la retención selectiva simplemente no aplica).
+
 ## 0.5.0 — 2026-06-07
 
 Modo CI/headless y política de git (ROADMAP 5.2 y 5.3):

@@ -37,6 +37,7 @@ Si el usuario todavía no tiene `prd.md` o el documento base no está listo, det
 | Analizar cambios sobre un spec existente | `/wf-spec-delta` | `analyze <feature_spec.md> --new-reqs <description.md>` |
 | Aplicar un delta analysis a un spec | `/wf-spec-delta` | `apply <feature_spec.md> <delta_analysis.md>` |
 | Completar HUs incompletas desde un analysis | `/wf-spec-gap-resolve` | `<feature_spec.md> [--analysis <path_analysis.md>]` |
+| Aclarar un CA ambiguo descubierto al implementar (back-edge) | `/wf-spec-amend` | `<feature_spec.md> --ca CA-XXX [--from-task T-00X] [--reason 'texto']` |
 | Formalizar un cambio de producto antes de resincronizar specs ⚠ | `/wf-prd-change` | `<archivo_prd.md> --new-reqs <cambio.md>` |
 | Analizar impacto de un cambio de PRD sobre artefactos Spec | `/wf-prd-sync-impact` | `<archivo_prd.md>` |
 | Resincronizar specs tras un cambio de PRD | `/wf-spec-sync-from-prd` | `analyze <prd.md> \| apply <prd.md> --features F-001,F-002,...` |

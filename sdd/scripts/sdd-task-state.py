@@ -22,6 +22,13 @@ Estados y transiciones validas:
 Elegibilidad (`next`): la primera task en orden de documento con estado
 PENDIENTE cuyas Dependencies estan todas HECHA (o son `ninguna`).
 
+Retencion por enmienda (ROADMAP 4.2): si el `Plan origen` del _tasks.md tiene
+anotaciones `Enmienda pendiente: CA-XXX (E-00X)` (unico escritor: sdd-amend.py),
+las tasks cuyo `Spec CA` referencia un CA enmendado quedan RETENIDAS: `next` las
+salta, `check` las marca y `set ... EN_CURSO` las rechaza salvo --force. Es la
+mitad determinista del "stale puntual": el resto de la feature sigue ejecutable.
+Conservador: plan origen no resoluble → sin retencion.
+
 Exit codes: 0 = OK; 1 = error de uso o IO; 2 = transicion invalida / no elegible /
             tasks sin inicializar (en `next`).
 """
@@ -46,6 +53,17 @@ ESTADO_LINE_RE = re.compile(
 DEPS_LINE_RE = re.compile(
     r"^\s*(?:[-*]\s*)?\**Dependencies:?\**\s*:?\s*(?P<deps>.+?)\s*$",
     re.MULTILINE | re.IGNORECASE,
+)
+SPEC_CA_LINE_RE = re.compile(
+    r"^\s*(?:[-*>]\s*)?\**Spec CA:?\**\s*:?\s*(?P<cas>.+?)\s*$",
+    re.MULTILINE | re.IGNORECASE,
+)
+PLAN_ORIGEN_RE = re.compile(r"Plan origen(?:\*\*)?\s*:?\**\s*`?(?P<path>[^`\s|]+)`?", re.IGNORECASE)
+# Anotacion de enmienda pendiente en el plan (unico escritor: sdd-amend.py)
+AMEND_RE = re.compile(
+    r"^[ \t]*(?:[-*>][ \t]*)?\**Enmienda pendiente:?\**[ \t]*:?[ \t]*"
+    r"(?P<ca>CA-\d{3,4})[ \t]*\([ \t]*(?P<ref>E-\d{3,4})[^)\n]*\)[ \t]*$",
+    re.MULTILINE,
 )
 PROGRESO_HEADER = "## Progreso"
 
@@ -74,6 +92,7 @@ def parse_tasks(text):
         block = text[start:end]
         em = ESTADO_LINE_RE.search(block)
         dm = DEPS_LINE_RE.search(block)
+        cm = SPEC_CA_LINE_RE.search(block)
         deps = []
         if dm:
             raw = dm.group("deps")
@@ -86,8 +105,32 @@ def parse_tasks(text):
             "estado": em.group("value") if em else None,
             "motivo": (em.group("motivo") or "").strip(" —").strip() if em else "",
             "deps": deps,
+            "cas": re.findall(r"CA-\d{3,4}", cm.group("cas")) if cm else [],
         })
     return tasks
+
+
+def amended_cas(text, tasks_path):
+    """CAs con `Enmienda pendiente` en el `Plan origen` del _tasks.md → {ca: ref}.
+
+    Conservador: sin header `Plan origen` o plan no legible → {} (sin retencion).
+    """
+    m = PLAN_ORIGEN_RE.search(text)
+    if m is None:
+        return {}
+    plan_path = Path(m.group("path"))
+    if not plan_path.is_absolute():
+        plan_path = (tasks_path.parent / plan_path).resolve()
+    try:
+        plan_text = plan_path.read_text(encoding="utf-8")
+    except OSError:
+        return {}
+    return {ca: ref for ca, ref in AMEND_RE.findall(plan_text)}
+
+
+def retained_by(task, amends):
+    """Refs de enmienda que retienen esta task ({} si ninguna)."""
+    return {ca: amends[ca] for ca in task["cas"] if ca in amends}
 
 
 def progreso_table(tasks):
@@ -178,11 +221,15 @@ def cmd_check(path):
         print(f"ERROR: {path} no contiene tasks (`## T-XXX:`)", file=sys.stderr)
         sys.exit(1)
     by_id = {t["id"]: t for t in tasks}
+    amends = amended_cas(text, path)
     print(f"=== sdd-task-state check — {path} ===")
     for t in tasks:
-        marker = "→" if eligible(t, by_id) else " "
+        held = retained_by(t, amends)
+        marker = "→" if eligible(t, by_id) and not held else " "
         motivo = f" — {t['motivo']}" if t["motivo"] else ""
-        print(f"  {marker} {t['id']}: {t['estado'] or 'SIN_ESTADO'}{motivo}")
+        retencion = (" [RETENIDA por enmienda: "
+                     + ", ".join(f"{ca} ({ref})" for ca, ref in held.items()) + "]") if held else ""
+        print(f"  {marker} {t['id']}: {t['estado'] or 'SIN_ESTADO'}{motivo}{retencion}")
     total = len(tasks)
     done = sum(1 for t in tasks if t["estado"] == "HECHA")
     print(f"RESULTADO: {done}/{total} HECHA")
@@ -199,13 +246,30 @@ def cmd_next(path):
         print("SIN_INICIALIZAR: ejecuta `init` primero", file=sys.stderr)
         sys.exit(2)
     by_id = {t["id"]: t for t in tasks}
+    amends = amended_cas(text, path)
+    retained = []
     for t in tasks:
-        if eligible(t, by_id):
-            print(t["id"])
-            sys.exit(0)
+        if not eligible(t, by_id):
+            continue
+        held = retained_by(t, amends)
+        if held:
+            retained.append((t["id"], held))
+            continue
+        if retained:
+            # Visibilidad de lo saltado sin contaminar stdout (que es solo el ID)
+            for tid, h in retained:
+                print(f"RETENIDA: {tid} ({', '.join(f'{ca} ({ref})' for ca, ref in h.items())})",
+                      file=sys.stderr)
+        print(t["id"])
+        sys.exit(0)
     if all(t["estado"] == "HECHA" for t in tasks):
         print("COMPLETO")
         sys.exit(0)
+    if retained:
+        detail = "; ".join(f"{tid} ({', '.join(f'{ca} ({ref})' for ca, ref in h.items())})"
+                           for tid, h in retained)
+        print(f"RETENIDAS_POR_ENMIENDA: {detail}")
+        sys.exit(2)
     print("NINGUNA_ELEGIBLE")
     sys.exit(2)
 
@@ -235,6 +299,14 @@ def cmd_set(path, task_id, new_state, motivo, force):
     if new_state == "BLOQUEADA" and not motivo:
         print("ERROR: BLOQUEADA exige --motivo", file=sys.stderr)
         sys.exit(2)
+    if new_state == "EN_CURSO" and not force:
+        held = retained_by(task, amended_cas(text, path))
+        if held:
+            detail = ", ".join(f"{ca} ({ref})" for ca, ref in held.items())
+            print(f"RETENIDA POR ENMIENDA: {task_id} referencia {detail} con enmienda pendiente "
+                  "en el plan origen. Cierra la revision del plan (sdd-amend.py clear o "
+                  "/wf-plan-validate) o usa --force solo si sabes lo que haces.", file=sys.stderr)
+            sys.exit(2)
     if new_state == "HECHA" and not force:
         missing = [d for d in task["deps"] if by_id.get(d, {}).get("estado") != "HECHA"]
         if missing:

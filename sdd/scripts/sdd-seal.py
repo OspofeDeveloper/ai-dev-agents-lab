@@ -29,6 +29,11 @@ Condiciones verificadas para `plan`:
 
 El sello es una marca operativa confiable (kb-plan-expert, "Estados del Plan"):
 si cualquier condicion falla, el plan queda/vuelve a BORRADOR.
+
+Enmiendas (ROADMAP 4.2): al sellar con --seal se limpian las anotaciones
+`Enmienda pendiente` del plan (escritas por sdd-amend.py) — la re-validacion
+completa verifica contra el spec vigente, que ya incorpora la enmienda, asi
+que quedan absorbidas. `--check` nunca las toca ni bloquea por ellas.
 """
 import hashlib
 import re
@@ -44,6 +49,12 @@ ESTADO_RE = re.compile(
 )
 SPEC_ORIGEN_RE = re.compile(r"Spec origen(?:\*\*)?\s*:?\**\s*`?(?P<path>[^`\s|]+)`?", re.IGNORECASE)
 CA_DEF_RE = re.compile(r"^#{2,4}\s*(?P<ca>CA-\d{3,4})\b", re.MULTILINE)
+# Anotacion de enmienda pendiente (unico escritor: sdd-amend.py; absorbida al re-sellar)
+AMEND_LINE_RE = re.compile(
+    r"^[ \t]*(?:[-*>][ \t]*)?\**Enmienda pendiente:?\**[ \t]*:?[ \t]*"
+    r"(?P<ca>CA-\d{3,4})[ \t]*\([ \t]*(?P<ref>E-\d{3,4})[^)\n]*\)[ \t]*$\n?",
+    re.MULTILINE,
+)
 
 
 def fail_usage(msg):
@@ -186,6 +197,15 @@ def main() -> int:
     if mode == "--check":
         print("RESULTADO: condiciones cumplidas — el plan es sellable.")
         return 0
+
+    # --seal: absorber enmiendas pendientes — la validacion completa que precede
+    # al sellado ya audito el plan contra el spec vigente (con la enmienda dentro).
+    text = plan_path.read_text(encoding="utf-8")
+    absorbed = AMEND_LINE_RE.findall(text)
+    if absorbed:
+        plan_path.write_text(AMEND_LINE_RE.sub("", text), encoding="utf-8")
+        for ca, ref in absorbed:
+            print(f"Enmienda absorbida por re-validacion: {ca} ({ref}) — anotacion limpiada.")
 
     return 0 if write_estado(plan_path, "VALIDADO") else 1
 

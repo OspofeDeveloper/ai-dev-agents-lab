@@ -40,6 +40,8 @@ Si el plan está en `BORRADOR` o tiene gaps, redirige a `/wf-plan-validate` ante
 
 Distinción clave entre las dos vías de ejecución: **task pendiente** del `_tasks.md` → `/wf-task-run`; **divergencia entre spec y código ya entregado** → `/wf-bug` (que triajea contra el CA y solo escala a `/wf-spec-delta` si el comportamiento esperado cambia).
 
+Tercera vía — **CA ambiguo descubierto al implementar** (la task se bloquea porque el spec admite varias lecturas): `/wf-spec-amend <spec.md> --ca CA-XXX --from-task T-00X` ⚠ (vive en la fase spec; este orquestador la lista porque es el back-edge correcto desde la ejecución). Solo aclara texto sin cambiar comportamiento; el plan recibe una anotación `Enmienda pendiente` que retiene SOLO las tasks que referencian ese CA (`sdd-task-state.py next` las salta y el gate las deniega) — el resto de la feature sigue ejecutable.
+
 ## Camino canónico
 
 ```

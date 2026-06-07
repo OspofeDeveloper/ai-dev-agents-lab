@@ -49,7 +49,7 @@ No bypasses este gate: existe también como verificación determinista en `.sdd/
 ## Paso 4: Seleccionar task
 
 - `--task T-00X`: verifica con `check` que está `PENDIENTE` (o `EN_CURSO` ya iniciada) y sus `Dependencies` HECHAS. Si no es elegible → informa qué dependencias faltan y detén.
-- `--next` (default): `python3 .sdd/scripts/sdd-task-state.py next <tasks.md>` → usa el ID devuelto. Si devuelve `COMPLETO` → informa y termina. Si `NINGUNA_ELEGIBLE` → muestra el `check` (qué está bloqueado y por qué) y termina.
+- `--next` (default): `python3 .sdd/scripts/sdd-task-state.py next <tasks.md>` → usa el ID devuelto. Si devuelve `COMPLETO` → informa y termina. Si `NINGUNA_ELEGIBLE` → muestra el `check` (qué está bloqueado y por qué) y termina. Si `RETENIDAS_POR_ENMIENDA` → solo quedan tasks retenidas por una enmienda pendiente en el plan (stale puntual de `/wf-spec-amend`); informa y remite a cerrar la revisión del plan (la dejó indicada el amend) o a `/wf-plan-validate <plan.md>` (el re-sellado absorbe la enmienda) — no las fuerces.
 - `--all`: repite el ciclo Pasos 5-8 mientras `next` devuelva IDs.
 
 ## Paso 5: Marcar EN_CURSO y delegar al owner
@@ -73,6 +73,7 @@ INSTRUCCIONES:
 - Implementa EXACTAMENTE lo que define la task. No expandas alcance ni toques componentes de otras tasks.
 - El Definition of done es tu contrato de salida. Reporta evidencia concreta de cada punto del DoD (archivos creados/modificados, salida de compilación/tests).
 - Si descubres que la task no es implementable tal cual (falta un contrato, contradicción con el código), NO improvises: reporta el bloqueo con detalle.
+- Si el bloqueo es que un CA del spec es AMBIGUO (admite más de una implementación y el texto no determina cuál), repórtalo identificando el CA-XXX y las interpretaciones posibles — no elijas una por tu cuenta.
 - Reporta honestamente: si algo falla, di qué y por qué. Un reporte de fallo es un resultado válido; uno falsamente verde no.
 ```
 
@@ -91,7 +92,10 @@ INSTRUCCIONES:
 
 - **DoD cumplido** → `set T-00X HECHA`. Si el script devuelve exit 2 (deps no hechas), algo está mal en el orden: detén e informa, no uses `--force`.
 - **DoD no cumplido pero recuperable** (falta un detalle, test en rojo inesperado) → deja `EN_CURSO`, informa qué falta y detén (en `--all`, detén el lote).
-- **Bloqueo real** (dependencia externa, contradicción con el plan) → `set T-00X BLOQUEADA --motivo "<motivo concreto>"`. Si el bloqueo revela un gap del plan/spec, remite a `/wf-plan-validate` o `/wf-spec-delta`.
+- **Bloqueo real** (dependencia externa, contradicción con el plan) → `set T-00X BLOQUEADA --motivo "<motivo concreto>"`. Según el origen del bloqueo:
+  - **CA ambiguo** (la intención no cambia, pero el texto admite varias implementaciones) → back-edge corto: `/wf-spec-amend <spec.md> --ca CA-XXX --from-task T-00X`. No re-desciendas el waterfall por una aclaración.
+  - **El comportamiento esperado debe cambiar** → `/wf-spec-delta analyze <spec.md> --new-reqs <descripción>`.
+  - **Contradicción del plan con el repo** → `/wf-plan-validate <plan.md>`.
 
 ## Paso 8: Commit trazable
 

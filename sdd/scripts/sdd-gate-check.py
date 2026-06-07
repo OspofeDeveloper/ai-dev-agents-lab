@@ -17,11 +17,14 @@ las validaciones de prosa del workflow siguen aplicando.
 
 Gates (tabla GATES):
   wf-prepare-tasks            → el `*_plan.md` del arg debe tener `Estado: VALIDADO`
+                                y sin `Enmienda pendiente` (ver sdd-amend.py)
   wf-prepare-plan             → el `*_spec.md` del arg sin [INCOMPLETO]/[CRITICO], status_sync fiable
                                 y sin deriva PRD→spec (hash sellado por sdd-sync-check.py)
   wf-design-system            → idem sobre el spec de entrada
   wf-design-feature-prototype → idem sobre el spec de entrada
-  wf-task-run                 → el `Plan origen` del `*_tasks.md` sigue `Estado: VALIDADO`
+  wf-task-run                 → el `Plan origen` del `*_tasks.md` sigue `Estado: VALIDADO`;
+                                con `--task T-00X`, la task no referencia (Spec CA) un CA
+                                con `Enmienda pendiente` en el plan (retencion selectiva)
   wf-qa-plan                  → idem gate de spec fiable (un QA plan de un spec inestable nace muerto)
 """
 import hashlib
@@ -32,6 +35,12 @@ from pathlib import Path
 
 ESTADO_RE = re.compile(
     r"^\s*(?:[-*>]\s*)?\**Estado:?\**\s*:?\s*(?P<value>BORRADOR|VALIDADO)\s*\**\s*$",
+    re.MULTILINE,
+)
+# Anotacion de enmienda pendiente en el plan (unico escritor: sdd-amend.py)
+AMEND_RE = re.compile(
+    r"^[ \t]*(?:[-*>][ \t]*)?\**Enmienda pendiente:?\**[ \t]*:?[ \t]*"
+    r"(?P<ca>CA-\d{3,4})[ \t]*\([ \t]*(?P<ref>E-\d{3,4})[^)\n]*\)[ \t]*$",
     re.MULTILINE,
 )
 
@@ -63,6 +72,11 @@ def gate_plan_validado(args: str):
         return f"'{plan_path}' no tiene linea `Estado:` reconocible — no parece un plan SDD sellable. Ejecuta /wf-plan-validate {plan_path} primero."
     if m.group("value") != "VALIDADO":
         return f"El plan '{plan_path}' esta en Estado: {m.group('value')}. Ejecuta /wf-plan-validate {plan_path} y resuelve sus hallazgos antes de generar tasks."
+    amends = AMEND_RE.findall(text)
+    if amends:
+        detail = ", ".join(f"{ca} ({ref})" for ca, ref in amends)
+        return (f"El plan '{plan_path}' tiene enmienda(s) pendiente(s) de revision: {detail}. "
+                f"Cierra la revision scoped que dejo indicada /wf-spec-amend o re-valida con /wf-plan-validate {plan_path} antes de generar tasks.")
     return None
 
 
@@ -147,6 +161,28 @@ def gate_tasks_plan_vigente(args: str):
     if pm and pm.group("value") != "VALIDADO":
         return (f"El plan origen '{plan_path}' esta en Estado: {pm.group('value')} — fue degradado tras generar las tasks. "
                 f"Ejecuta /wf-plan-validate {plan_path} antes de ejecutar tasks.")
+
+    # Retencion selectiva por enmienda (sdd-amend.py): si la invocacion apunta a
+    # una task concreta (--task T-00X) y esa task referencia (Spec CA) un CA con
+    # `Enmienda pendiente` en el plan, se deniega SOLO esa task; el resto de la
+    # feature sigue ejecutable. Sin --task no se bloquea aqui: `sdd-task-state.py
+    # next` salta las retenidas de forma determinista.
+    amends = {ca: ref for ca, ref in AMEND_RE.findall(plan_text)}
+    task_m = re.search(r"--task\s+(?P<id>T-\d{3,4})\b", args or "")
+    if amends and task_m:
+        task_id = task_m.group("id")
+        block_m = re.search(rf"^##\s+{task_id}\s*:.*?(?=^##\s|\Z)", text, re.MULTILINE | re.DOTALL)
+        if block_m:
+            ca_line = re.search(r"^\s*(?:[-*>]\s*)?\**Spec CA:?\**\s*:?\s*(?P<cas>.+)$",
+                                block_m.group(0), re.MULTILINE | re.IGNORECASE)
+            if ca_line:
+                task_cas = set(re.findall(r"CA-\d{3,4}", ca_line.group("cas")))
+                held = sorted(task_cas & set(amends))
+                if held:
+                    detail = ", ".join(f"{ca} ({amends[ca]})" for ca in held)
+                    return (f"la task {task_id} esta retenida por enmienda pendiente sobre {detail}. "
+                            f"Revisa la seccion del plan que cubre ese CA y limpia la anotacion "
+                            f"(sdd-amend.py clear) o re-valida con /wf-plan-validate {plan_path}.")
     return None
 
 

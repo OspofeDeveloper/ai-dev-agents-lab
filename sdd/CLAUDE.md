@@ -45,6 +45,7 @@ Si buscas mejor rendimiento y menos carga de contexto, instala y usa el `CLAUDE.
 | Actualizar un spec con requisitos nuevos (análisis) | `/wf-spec-delta` | `analyze <feature_spec.md> --new-reqs <description.md>` |
 | Aplicar un delta analysis a un spec | `/wf-spec-delta` | `apply <feature_spec.md> <delta_analysis.md>` |
 | Completar HUs incompletas (gaps respondidos en analysis) | `/wf-spec-gap-resolve` | `<feature_spec.md> [--analysis <path_analysis.md>]` |
+| Aclarar un CA ambiguo descubierto al implementar (back-edge) | `/wf-spec-amend` | `<feature_spec.md> --ca CA-XXX [--from-task T-00X] [--reason 'texto']` |
 | Cerrar el brief visual y policy de autonomia del producto | `/wf-design-intake` | `generate <feature_spec.md> [--prd <prd.md>] [--output DESIGN_BRIEF.md] [--mode guided\|hybrid\|auto] [--preset <name>]` |
 | Descubrir apps de referencia con research validado por el usuario | `/wf-design-discover` | `<feature_spec.md> [--prd <prd.md>] [--brief <DESIGN_BRIEF.md>] [--output <path>] [--mode interactive\|auto]` |
 | Crear o actualizar el sistema visual del producto desde un feature spec | `/wf-design-system` | `generate <feature_spec.md> [--prd <prd.md>] [--brief <DESIGN_BRIEF.md>] [--design-file DESIGN.md] [--no-brief]` |
@@ -176,6 +177,7 @@ features/<nombre>/tasks/<nombre>_qa_report.md
 > Para cambios de producto (scope, prioridad, exclusiones): primero `/wf-prd-change`, luego `/wf-prd-sync-impact` y `/wf-spec-sync-from-prd`.
 > Tras `/wf-prepare-tasks`, la ejecución es `/wf-task-run <tasks.md>`: delega cada task a su `Owner agent` (agentes del overlay de stack, u orquestador en modo genérico), con estado persistente gestionado por `sdd-task-state.py` y un commit por task.
 > Para bugs sobre features ya entregadas: `/wf-bug <descripción>` — triaje contra el CA del spec; solo escala a `/wf-spec-delta` si el comportamiento esperado cambia.
+> Para un CA ambiguo descubierto DURANTE la implementación (back-edge tasks→spec): `/wf-spec-amend <spec.md> --ca CA-XXX --from-task T-00X` — aclaración quirúrgica sin re-descender el waterfall. El plan se marca con `Enmienda pendiente` (solo lo escribe `sdd-amend.py`) y solo quedan retenidas las tasks que referencian ese CA; si el comportamiento esperado cambia, no es enmienda: es `/wf-spec-delta`.
 > Para cerrar el ciclo QA: `/wf-qa-plan generate <spec.md>` (matriz TC-XXX desde los CAs, gate de spec fiable) y, tras implementar, `/wf-qa-verify <qa_plan.md>` (cobertura con evidencia ejecutada; un test que falla contra un CA es DIVERGENTE → `/wf-bug`, nunca se ajusta el TC).
 
 ## Principio de precondiciones

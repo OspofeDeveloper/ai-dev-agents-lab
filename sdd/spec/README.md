@@ -129,6 +129,19 @@ Si el spec tiene HUs marcadas `[INCOMPLETO]` por gaps `[CRÍTICO]` sin responder
 
 **Cuándo usarlo**: después de generar un feature spec que dejó HUs incompletas por gaps sin responder. El usuario responde los gaps en el `_analysis.md` y `wf-spec-gap-resolve` integra las respuestas en el feature spec.
 
+#### CA ambiguo descubierto al implementar (back-edge tasks→spec)
+
+Si durante `wf-task-run` el dev descubre que un CA admite varias implementaciones y el texto no determina cuál:
+
+```
+/wf-spec-amend features/auth/spec/auth_spec.md --ca CA-003 --from-task T-004
+  → gate de clasificación (¿aclaración o cambio de comportamiento?), confirmación humana,
+    edición quirúrgica del CA con changelog E-00X, anotación `Enmienda pendiente` en el plan
+    (solo retiene las tasks que referencian ese CA — el resto sigue ejecutable)
+```
+
+**Cuándo usarlo**: solo para ACLARACIONES estrictas (la intención del CA no cambia; el texto era ambiguo). Si el comportamiento esperado cambia, la vía es `/wf-spec-delta`; si la divergencia es sobre código ya entregado, `/wf-bug`.
+
 #### Cambio de producto tras entrar en Spec
 
 Si la "respuesta" realmente cambia el alcance o el roadmap del producto:
@@ -241,6 +254,7 @@ La lógica exacta de routing y la política de skills viven en [CLAUDE.md](/User
 | `wf-spec-conflict` | `/wf-spec-conflict` | `_conflict_report.md` |
 | `wf-spec-delta` | `/wf-spec-delta` | `_delta_analysis.md` (analyze), spec actualizado (apply) |
 | `wf-spec-gap-resolve` | `/wf-spec-gap-resolve` | spec actualizado desde `_analysis.md` |
+| `wf-spec-amend` | `/wf-spec-amend --ca CA-XXX [--from-task T-00X]` | CA aclarado con changelog `E-00X`, anotación `Enmienda pendiente` en el `_plan.md` (vía `sdd-amend.py`) |
 | `wf-prd-change` | `/wf-prd-change` | PRD actualizado, `product-changelog.md`, `changes/CR-XXX/change-request.md`, `changes/CR-XXX/decision.md` |
 | `wf-prd-sync-impact` | `/wf-prd-sync-impact` | `_sync_report.md` |
 | `wf-spec-sync-from-prd` | `/wf-spec-sync-from-prd` | `*_sync_requirements.md`, specs resincronizados |
@@ -252,7 +266,7 @@ La lógica exacta de routing y la política de skills viven en [CLAUDE.md](/User
 |--------|-----------------|----------------|
 | `sdd-spec-explorer` | diagnóstico de PRD/spec, análisis de gaps, discovery | `wf-spec-analyze`, `wf-spec-discover`, exploración directa |
 | `sdd-spec-planner` | planificación de approach | uso directo por el orquestador cuando la petición es ambigua |
-| `sdd-spec-writer` | fast-track, delta apply, sync desde PRD, escritura de artefactos | `wf-spec-fast-track`, `wf-spec-delta`, `wf-spec-gap-resolve`, `wf-spec-sync-from-prd`, `wf-spec-features-first` |
+| `sdd-spec-writer` | fast-track, delta apply, sync desde PRD, escritura de artefactos | `wf-spec-fast-track`, `wf-spec-delta`, `wf-spec-gap-resolve`, `wf-spec-amend`, `wf-spec-sync-from-prd`, `wf-spec-features-first` |
 | `sdd-spec-auditor` | validate, conflict, readiness, sync impact | `wf-spec-validate`, `wf-spec-conflict`, `wf-spec-readiness`, `wf-prd-sync-impact` |
 
 ### Knowledge bases

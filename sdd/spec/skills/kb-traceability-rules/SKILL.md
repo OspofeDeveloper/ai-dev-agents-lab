@@ -89,3 +89,17 @@ Debe bloquearse el avance a Plan cuando:
 - el spec está `needs_review` por un `SCOPE_CHANGE` o `BEHAVIOR_CHANGE` sin aplicar
 
 Las tasks deberían bloquearse si el plan está `stale`.
+
+## Regla 9: Enmienda de CA y stale puntual (back-edge tasks→spec)
+
+Cuando una **aclaración** de un CA (la intención no cambia; solo se precisa texto ambiguo — `wf-spec-amend`) se aplica con el plan de la feature ya generado, la deriva resultante es **puntual, no global**: no degrada `status_sync` ni el `Estado:` del plan. Se registra como anotación en el header del plan:
+
+```
+> **Enmienda pendiente:** CA-003 (E-002, 2026-06-07)
+```
+
+- **Único escritor**: `sdd-amend.py` (`mark`/`clear`) — mismo principio autor≠marcador que el sellador. La numeración `E-00X` también la asigna el script (escaneando plan + changelog del spec), nunca la prosa.
+- **Consumidores**: `sdd-gate-check.py` (deniega `wf-task-run --task` sobre tasks cuyo `Spec CA` referencia un CA enmendado, y `wf-prepare-tasks` sobre planes con enmiendas abiertas) y `sdd-task-state.py` (`next` salta las tasks retenidas; `set EN_CURSO` las rechaza salvo `--force`). El resto de tasks de la feature sigue ejecutable — esa es la diferencia con `stale`/`needs_review`, que son por artefacto completo.
+- **Cierre**: revisión scoped de las secciones del plan que referencian el CA (`wf-spec-amend` Paso 8 → `clear`), o re-validación completa (`wf-plan-validate` → `sdd-seal.py --seal` absorbe las anotaciones).
+- **Trazabilidad en el spec**: la enmienda queda en el changelog (`E-00X: aclaración CA-XXX desde T-00X`) con versión menor.
+- Si el cambio NO es una aclaración (el comportamiento esperado cambia), este mecanismo no aplica: es `wf-spec-delta` y rigen las Reglas 5, 6 y 8.

@@ -1,6 +1,6 @@
 # SDD Skill Registry
 <!-- Auto-generado por scripts/generate-skill-registry.py. No editar manualmente. -->
-<!-- Total: 114 skills | 49 wf-* (user-invocable) | 65 kb-* -->
+<!-- Total: 115 skills | 50 wf-* (user-invocable) | 65 kb-* -->
 <!-- Última actualización: 2026-06-07 -->
 
 ## Meta-Ecosistema (meta/)
@@ -42,6 +42,7 @@
 | kb-spec-expert | Experto en Spec Driven Development (SDD): qué debe y qué NO debe contener un Spec | false | spec/skills/kb-spec-expert/SKILL.md |
 | kb-traceability-rules | Reglas de trazabilidad entre PRD, discovery, specs, plan y tasks en el ecosistema SDD | false | spec/skills/kb-traceability-rules/SKILL.md |
 | wf-prd-sync-impact | Analiza el impacto de un PRD actualizado sobre los artefactos SDD ya generados | true | spec/skills/wf-prd-sync-impact/SKILL.md |
+| wf-spec-amend | Enmienda quirúrgica de un CA ambiguo descubierto durante la implementación (back-edge tasks→spec) | true | spec/skills/wf-spec-amend/SKILL.md |
 | wf-spec-analyze | Recopila las decisiones de negocio que necesitaran los Specs a partir de un PRD vigente | true | spec/skills/wf-spec-analyze/SKILL.md |
 | wf-spec-conflict | Detecta conflictos entre Specs SDD de un mismo proyecto: HUs duplicadas, CAs contradictorios, scope overlap, shared models inconsistentes | true | spec/skills/wf-spec-conflict/SKILL.md |
 | wf-spec-delta | Evoluciona un Spec de feature existente de forma incremental | true | spec/skills/wf-spec-delta/SKILL.md |
