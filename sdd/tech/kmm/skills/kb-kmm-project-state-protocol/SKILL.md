@@ -1,6 +1,6 @@
 ---
 name: kb-kmm-project-state-protocol
-description: "Protocolo de precondicion de contexto tecnico para agentes KMM. Define la obligacion de leer kmm_project_state.md al inicio de la operacion si existe, el bloqueo con mensaje de error estandar si no existe, y la excepcion unica para kmm-explorer cuando es invocado por wf-kmm-init en modo detect (su trabajo es generar el archivo). SSoT del protocolo compartido por kmm-explorer, kmm-planner, kmm-feature-implementer, kmm-platform-integrator, kmm-network-auth-implementer y kmm-tester."
+description: "Protocolo de precondicion de contexto tecnico para agentes KMM. Define la obligacion de leer kmm_project_state.md al inicio de la operacion si existe, el bloqueo con mensaje de error estandar si no existe, la excepcion unica para kmm-explorer invocado por wf-kmm-init en modo detect, y el contrato de cierre verificable de los agentes implementadores (build y tests con los comandos del project state, reporte honesto). SSoT del protocolo compartido por kmm-explorer, kmm-planner, kmm-feature-implementer, kmm-platform-integrator, kmm-network-auth-implementer y kmm-tester."
 effort: low
 allowed-tools: [Read]
 user-invocable: false
@@ -69,3 +69,14 @@ Cualquier mencion del protocolo en agentes, workflows o documentacion debe refer
 2. Mantener solo el mensaje de bloqueo de la Regla 2 si el agente lo emite literalmente; el resto del protocolo se delega a esta KB.
 
 Cambios futuros en el mensaje, la lista de agentes afectados o las condiciones de excepcion se hacen aqui primero y se propagan a los consumidores.
+
+## Regla 6: Contrato de cierre verificable (agentes implementadores)
+
+Aplica a los agentes que modifican codigo: `kmm-feature-implementer`, `kmm-platform-integrator`, `kmm-network-auth-implementer` (y a `kmm-tester` cuando escribe tests). Una implementacion NO esta terminada hasta cumplir este contrato:
+
+1. **Build y tests ejecutados de verdad.** Antes de declarar el trabajo hecho, compila los modulos afectados y ejecuta la suite relevante usando los comandos de build/test declarados en `kmm_project_state.md`. Si la seccion de comandos no existe o esta incompleta, usa `./gradlew` con los targets estandar del modulo afectado y sennala la laguna del project state.
+2. **El resultado esperado depende del orden TDD.** En una task `Layer: test` con DoD RED, el cierre correcto es: el test compila y FALLA con mensaje claro (verde prematuro = fallo de DoD). En el resto de casos, el cierre correcto es build verde y suite pasando.
+3. **Reporte honesto, siempre.** El reporte de cierre incluye el comando ejecutado y un resumen real de su salida. Si el build falla o hay tests rojos no esperados, se reporta tal cual y el trabajo queda como NO terminado — esta prohibido declarar "compila" o "los tests pasan" sin haberlos ejecutado, y prohibido maquillar un fallo como exito parcial.
+4. **Ausencia de verificacion = declaracion explicita.** Si no hay forma razonable de ejecutar nada (entorno sin toolchain, sandbox sin gradle), el cierre debe decir literalmente "verificacion ejecutable: no disponible — <motivo>". Nunca presentar como verificado lo que no se ejecuto.
+
+Este contrato es la contraparte dentro del agente de lo que `wf-task-run` (Paso 6) y `wf-bug` (Paso 4) exigen desde fuera: ambos lados deben coincidir. El criterio generico para cualquier stack vive en `kb-sdd-stack-overlay-contract` (invariante de cierre verificable); esta regla es su concrecion KMM.

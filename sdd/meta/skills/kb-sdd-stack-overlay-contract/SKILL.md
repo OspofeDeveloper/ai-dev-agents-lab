@@ -66,6 +66,7 @@ Reglas para una variante válida:
 2. **Idempotencia**: reinstalar el overlay produce el mismo resultado; `wf-<stack>-init` detecta estado previo y pregunta antes de rehacer.
 3. **Project state como precondición, no como cache**: si el proyecto cambia de forma relevante, se regenera con `wf-<stack>-init --force`; los agentes no lo editan a mano.
 4. **El overlay no toca `prd/`, `spec/` ni `design/`** del proyecto destino.
+5. **Cierre verificable de los agentes implementadores**: todo agente del overlay que modifique código debe cerrar con verificación ejecutable — build de los módulos afectados y tests relevantes usando los comandos declarados en `<stack>_project_state.md`, reporte honesto del comando y su salida real (un fallo se reporta tal cual, nunca como éxito), y declaración explícita "verificación ejecutable: no disponible — <motivo>" cuando no se pueda ejecutar nada. Es la contraparte dentro del agente de lo que `wf-task-run` (Paso 6) y `wf-bug` (Paso 4) exigen desde fuera. La concreción del contrato vive en la KB de protocolo del stack (referencia canónica: `kb-kmm-project-state-protocol`, Regla 6) y los agentes la referencian con una sección corta de cierre, sin reescribirla inline.
 
 ---
 
@@ -74,6 +75,7 @@ Reglas para una variante válida:
 - [ ] `tech/<stack>/install.sh` ejecutable y con el mismo mecanismo de copia por basename
 - [ ] `wf-<stack>-init` con modos detect/configure, manejo de estado previo y registro en `stack_workflows_run`
 - [ ] `<stack>_project_state.md` generado con secciones mínimas: targets/runtime, arquitectura, dependencias clave, comandos build/test
+- [ ] Agentes implementadores con contrato de cierre verificable (invariante 5): sección de cierre que referencia la regla del protocolo del stack
 - [ ] Variantes de override (si las hay) conservan el contrato externo de la pieza genérica
 - [ ] Condición de detección añadida a `wf-project-init` Paso 4
 - [ ] Registrado en `skill-registry.md` via `wf-sdd-status`

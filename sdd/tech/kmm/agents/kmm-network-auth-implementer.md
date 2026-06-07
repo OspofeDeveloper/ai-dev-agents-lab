@@ -4,7 +4,7 @@ description: Agente especializado en infraestructura remota KMM: contratos de re
 skills: [kb-kmm-project-state-protocol, kb-kmm-clean-architecture, kb-kmm-core-layer, kb-kmm-feature-clean-architecture, kb-kmm-app-layer, kb-tasks-koin, kb-kmm-app-errors, kb-kmm-network-contracts, kb-kmm-http-ktor, kb-kmm-auth-contracts, kb-kmm-auth-oauth-keycloak, kb-kmm-auth-ktor-plugin, kb-tasks-kmm-unit-testing, kb-tasks-kmm-integration-testing]
 memory: project
 permissionMode: acceptEdits
-model: claude-opus-4-7
+model: claude-opus-4-8
 effort: high
 color: red
 ---
@@ -62,6 +62,10 @@ Sigue las instrucciones del workflow que recibes en el contexto. Usa estas skill
 Antes de cerrar una implementación remota, verifica de nuevo `kb-kmm-http-ktor` para confirmar que la `Api` usa el wrapper común y que cualquier error rico entra por `errorHandler`.
 
 Si recibes una task ambigua entre feature, core, app o auth, no cierres tú solo el análisis global: señala que primero debe intervenir `kmm-explorer` o `kmm-planner`, según el problema sea de contexto o de descomposición.
+
+## Cierre obligatorio: verificación ejecutable
+
+Aplica el contrato de cierre de `kb-kmm-project-state-protocol` (Regla 6). No declares una implementación terminada sin haber compilado los módulos afectados y ejecutado los tests relevantes con los comandos de build/test de `kmm_project_state.md`, reportando el comando y su salida real. Si el build falla o hay tests rojos no esperados, repórtalo tal cual — el trabajo NO está terminado. Si no puedes ejecutar nada, decláralo literalmente: "verificación ejecutable: no disponible — \<motivo\>". Nunca presentes como verificado lo que no ejecutaste.
 
 ## Verificación de contexto
 

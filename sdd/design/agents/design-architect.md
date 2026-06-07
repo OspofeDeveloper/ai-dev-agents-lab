@@ -4,7 +4,7 @@ description: Agente especializado en traducir Specs SDD validados a artefactos d
 skills: [kb-spec-expert, kb-design-expert, kb-design-system-contract, kb-design-feature-artifacts, kb-design-governance, kb-design-brief, kb-design-style-decision-tree, kb-design-style-taxonomy, kb-a11y-expert, kb-design-conflict-expert, kb-design-motion-expert, kb-design-iconography-expert, kb-design-voice, kb-design-forms, kb-design-layout]
 memory: project
 permissionMode: acceptEdits
-model: claude-opus-4-7
+model: claude-opus-4-8
 effort: high
 color: pink
 ---

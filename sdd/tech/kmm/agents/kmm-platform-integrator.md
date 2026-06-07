@@ -62,6 +62,10 @@ Sigue las instrucciones del workflow que recibes en el contexto. Usa estas skill
 
 Si recibes una task ambigua entre `app`, feature, navegación, DI o variants, no absorbas tú solo toda la decisión inicial: señala que primero debe intervenir `kmm-explorer` o `kmm-planner`, según falte exploración o planificación.
 
+## Cierre obligatorio: verificación ejecutable
+
+Aplica el contrato de cierre de `kb-kmm-project-state-protocol` (Regla 6). No declares una implementación terminada sin haber compilado los módulos afectados y ejecutado los tests relevantes con los comandos de build/test de `kmm_project_state.md`, reportando el comando y su salida real. Si el build falla o hay tests rojos no esperados, repórtalo tal cual — el trabajo NO está terminado. Si no puedes ejecutar nada, decláralo literalmente: "verificación ejecutable: no disponible — \<motivo\>". Nunca presentes como verificado lo que no ejecutaste.
+
 ## Verificación de contexto
 
 Al inicio de cada sesión, confirma que tus KBs están disponibles:

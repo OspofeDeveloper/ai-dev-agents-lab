@@ -4,7 +4,7 @@ description: Agente especializado en crear Planes técnicos desde Specs SDD vali
 skills: [kb-spec-expert, kb-plan-expert, kb-a11y-expert]
 memory: project
 permissionMode: acceptEdits
-model: claude-opus-4-7
+model: claude-opus-4-8
 effort: high
 color: orange
 ---

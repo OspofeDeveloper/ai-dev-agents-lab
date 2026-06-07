@@ -137,7 +137,7 @@ El frontmatter no cuenta. El contador parte desde la primera línea del body (`#
 
 El modelo se asigna por **tipo de trabajo**, no por si el agente genera un artefacto o no.
 
-- `claude-opus-4-7`: agentes que toman **decisiones arquitectónicas** (diseño visual, arquitectura técnica, redacción de PRDs, autoría del ecosistema) o realizan **codificación agéntica compleja** (implementadores KMM). Usar también cuando el output esperado supera los 64k tokens.
+- `claude-opus-4-8`: agentes que toman **decisiones arquitectónicas** (diseño visual, arquitectura técnica, redacción de PRDs, autoría del ecosistema) o realizan **codificación agéntica compleja** (implementadores KMM). Usar también cuando el output esperado supera los 64k tokens.
 - `claude-sonnet-4-6`: agentes que ejecutan **trabajo estructurado con template definido** (escritura de specs, descomposición de tasks), **exploración**, **auditoría** o **planificación de approach**. Sonnet 4.6 incluye extended thinking — para razonamiento en cadena con output <64k puede superar a Opus en precisión con menor coste.
 - `claude-haiku-4-5`: **no usar en este ecosistema**. Su ventana de 200k tokens es insuficiente para agentes que cargan múltiples KBs + artefactos grandes simultáneamente.
 
@@ -145,8 +145,8 @@ Tabla de referencia:
 
 | Tipo de trabajo | Modelo |
 |---|---|
-| Decisión arquitectónica (diseño, plan técnico, PRD, autoría de ecosistema) | `claude-opus-4-7` |
-| Codificación agéntica compleja (implementadores KMM) | `claude-opus-4-7` |
+| Decisión arquitectónica (diseño, plan técnico, PRD, autoría de ecosistema) | `claude-opus-4-8` |
+| Codificación agéntica compleja (implementadores KMM) | `claude-opus-4-8` |
 | Escritura estructurada con template (specs, tasks) | `claude-sonnet-4-6` |
 | Exploración, auditoría, planificación de approach | `claude-sonnet-4-6` |
 

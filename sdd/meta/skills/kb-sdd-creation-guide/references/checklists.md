@@ -32,7 +32,7 @@ Checklists completos para verificar que cada pieza del ecosistema queda correcta
 ## Tras crear un agente
 
 - [ ] Archivo `.md` con frontmatter correcto en `agents/`
-- [ ] `model` seleccionado según tabla de criterios: decisión arquitectónica/codificación agéntica → `claude-opus-4-7`; escritura estructurada/exploración/auditoría/planificación → `claude-sonnet-4-6`
+- [ ] `model` seleccionado según tabla de criterios: decisión arquitectónica/codificación agéntica → `claude-opus-4-8`; escritura estructurada/exploración/auditoría/planificación → `claude-sonnet-4-6`
 - [ ] `effort: high` añadido si el agente genera artefactos complejos
 - [ ] `disallowedTools: Write, Edit` añadido si el system prompt declara que no escribe archivos (y el agente no produce artefactos diagnósticos intermedios)
 - [ ] `color` asignado según fase/dominio del agente (tabla en `frontmatter-templates.md`)

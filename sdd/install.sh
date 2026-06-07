@@ -392,5 +392,39 @@ if [ -n "$ORPHAN_SKILLS" ] || [ -n "$ORPHAN_AGENTS" ] || [ -n "$ORPHAN_PHASE_DOC
   fi
 fi
 
+# ── 7. Re-aplicar el overlay de stack si el proyecto lo declara ─────────────
+# La instalación de fases genéricas copia por basename y PISA las variantes
+# del overlay (plan-architect.md, kb-plan-expert...). Si el proyecto declara
+# un stack en .sdd/project-init.json, re-aplicar el overlay al final restaura
+# las variantes. (/wf-sdd-update ya sigue este orden; esto cubre la ejecución
+# manual de install.sh, que antes degradaba el proyecto en silencio.)
+
+PROJECT_STACK=""
+if command -v python3 >/dev/null 2>&1 && [ -f "$ENFORCE_ROOT/.sdd/project-init.json" ]; then
+  PROJECT_STACK="$(python3 - "$ENFORCE_ROOT/.sdd/project-init.json" <<'PYEOF'
+import json, sys
+try:
+    stack = json.load(open(sys.argv[1])).get("stack")
+    print(stack if isinstance(stack, str) and stack.replace("-", "").isalnum() else "")
+except Exception:
+    print("")
+PYEOF
+)"
+fi
+
+if [ -n "$PROJECT_STACK" ] && { has_phase plan || has_phase tasks; }; then
+  if [ -f "$SCRIPT_DIR/tech/$PROJECT_STACK/install.sh" ]; then
+    echo ""
+    echo "Proyecto con stack '$PROJECT_STACK' declarado: re-aplicando el overlay"
+    echo "(la instalación genérica de plan/tasks pisa sus variantes por basename)..."
+    (cd "$ENFORCE_ROOT" && bash "$SCRIPT_DIR/tech/$PROJECT_STACK/install.sh")
+  else
+    echo ""
+    echo "⚠ El proyecto declara stack '$PROJECT_STACK' pero este ecosistema no tiene"
+    echo "  tech/$PROJECT_STACK/install.sh. Las variantes del overlay pueden haber quedado"
+    echo "  pisadas por las piezas genéricas de plan/tasks — re-aplica el overlay manualmente."
+  fi
+fi
+
 echo ""
 echo "Done. Reinicia Claude Code para activar los agentes y skills."

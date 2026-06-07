@@ -4,7 +4,7 @@ description: Agente especializado en crear y refactorizar skills (kb-*, wf-*) y 
 skills: [kb-sdd-skill-architecture, kb-sdd-creation-guide, kb-sdd-stack-overlay-contract]
 memory: project
 permissionMode: acceptEdits
-model: claude-opus-4-7
+model: claude-opus-4-8
 effort: high
 color: purple
 ---

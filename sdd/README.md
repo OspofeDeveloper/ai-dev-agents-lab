@@ -464,7 +464,7 @@ El `task-generator` conoce los dominios de implementación KMM y asigna cada tas
 **Evolución independiente**: cada knowledge base (Capa 3) evoluciona sola. Actualizar `kmm_architecture.md` en `kb-plan-expert` no afecta a `kb-spec-expert`, `kb-decompose-expert` ni `kb-tasks-expert`.
 
 **Modelo por complejidad**:
-- `plan-architect` → `claude-opus-4-6` (decisiones arquitectónicas complejas)
+- `plan-architect` → `claude-opus-4-8` (decisiones arquitectónicas complejas)
 - `task-generator` → `claude-sonnet-4-6` (formateo estructurado)
 - agentes Spec → modelo por defecto, con responsabilidad separada por tipo de trabajo
 

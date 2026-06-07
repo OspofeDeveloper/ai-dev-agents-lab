@@ -2,6 +2,14 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.3.0 — 2026-06-07
+
+Cierre verificable de implementadores, overlay a prueba de reinstalación y pins de modelo (ROADMAP 2.3, 6.6 y 9.10):
+
+- Contrato de cierre verificable dentro de los agentes implementadores: nueva Regla 6 en `kb-kmm-project-state-protocol` (build + tests con los comandos del `kmm_project_state.md`, RED esperado en orden TDD, reporte honesto del comando y salida real, ausencia de verificación declarada explícitamente) y sección dura de cierre en `kmm-feature-implementer`, `kmm-network-auth-implementer`, `kmm-platform-integrator` y `kmm-tester`. Generalizado al contrato de overlay (`kb-sdd-stack-overlay-contract`, invariante 5 + checklist): los stacks futuros nacen con la obligación.
+- ⚠ `install.sh` ya no degrada proyectos con overlay: si `.sdd/project-init.json` declara `stack`, re-aplica `tech/<stack>/install.sh` al final de instalar plan/tasks (las variantes del overlay sobreviven a la reinstalación manual); si el ecosistema no tiene ese overlay, avisa en vez de callar.
+- Pins de modelo actualizados a `claude-opus-4-8` (canon de `kb-sdd-creation-guide` + 7 agentes); los 13 `claude-sonnet-4-6` se mantienen (versión Sonnet vigente, asignación por rol conforme al canon).
+
 ## 0.2.0 — 2026-06-07
 
 Enforcement de sincronía PRD→spec y auto-allow acotado (ROADMAP 1.3 y 1.4):

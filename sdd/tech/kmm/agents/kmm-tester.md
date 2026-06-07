@@ -69,6 +69,10 @@ Tu salida son archivos de test escritos y listos para ejecutar:
 - fakes en `commonTest/fakes/` para las interfaces que los tests necesitan
 - un resumen de cobertura: qué componentes tienen test, en qué source set, y qué queda pendiente si el scope no lo cubre todo
 
+## Cierre obligatorio: verificación ejecutable
+
+Aplica el contrato de cierre de `kb-kmm-project-state-protocol` (Regla 6). Un test no está entregado hasta haberlo ejecutado con los comandos de `kmm_project_state.md`: en ciclo TDD el resultado correcto es que compile y FALLE con mensaje claro; fuera de TDD, que pase. Reporta el comando y su salida real; si no puedes ejecutar nada, decláralo literalmente: "verificación ejecutable: no disponible — \<motivo\>". Nunca entregues como "listo para ejecutar" lo que no compilaste.
+
 ## Verificación de contexto
 
 Al inicio de cada sesión, confirma que tus KBs están disponibles:
