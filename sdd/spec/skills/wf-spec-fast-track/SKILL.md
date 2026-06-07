@@ -157,6 +157,15 @@ Verifica si el spec ya existe — en `<raíz_spec>/features/<capability>/spec/<c
 2. **README**: `<raíz_spec>/features/<capability>/README.md` (siempre en la raíz de la feature)
 3. **Features index**: `<raíz_spec>/<nombre_base>_features.md` (o actualiza el existente)
 
+**Sellar la trazabilidad PRD→spec** (solo si `derived_from_prd` es un path real — modo scoped): tras escribir el spec, ejecuta desde la raíz del proyecto (el directorio que contiene `.sdd/`):
+
+```
+python3 .sdd/scripts/sdd-sync-check.py seal <path_del_spec>
+```
+
+El script calcula el hash del PRD origen y escribe `derived_from_prd_hash` en el header. NUNCA rellenes ese campo a mano (separación autor/verificador: es la evidencia con la que los gates y el sellador de planes detectan deriva del PRD). Si el script no existe:
+> "⚠ Falta `.sdd/scripts/sdd-sync-check.py`. Re-ejecuta la instalación del ecosistema (`install.sh`) para reponer los scripts de enforcement. El spec queda con `derived_from_prd_hash: N/A` (sin detección de deriva)."
+
 ---
 
 ## Paso 11: Informar al usuario

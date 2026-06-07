@@ -5,6 +5,7 @@
 > Source requirements: [path/al/documento_origen.md]
 > derived_from_prd: [path/al/PRD.md | N/A]
 > derived_from_prd_version: [1.0 | unknown | N/A]
+> derived_from_prd_hash: [N/A — lo escribe `sdd-sync-check.py seal`, nunca a mano]
 > derived_from_change: [CR-XXX | N/A]
 > status_sync: [in_sync | needs_review | stale | unknown]
 > Origen de alcance: [PRD | PRD + analysis respondido | characterization]

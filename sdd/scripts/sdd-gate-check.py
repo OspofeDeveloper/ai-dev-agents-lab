@@ -17,11 +17,13 @@ las validaciones de prosa del workflow siguen aplicando.
 
 Gates (tabla GATES):
   wf-prepare-tasks            → el `*_plan.md` del arg debe tener `Estado: VALIDADO`
-  wf-prepare-plan             → el `*_spec.md` del arg sin [INCOMPLETO]/[CRITICO] y status_sync fiable
+  wf-prepare-plan             → el `*_spec.md` del arg sin [INCOMPLETO]/[CRITICO], status_sync fiable
+                                y sin deriva PRD→spec (hash sellado por sdd-sync-check.py)
   wf-design-system            → idem sobre el spec de entrada
   wf-design-feature-prototype → idem sobre el spec de entrada
   wf-task-run                 → el `Plan origen` del `*_tasks.md` sigue `Estado: VALIDADO`
 """
+import hashlib
 import json
 import re
 import sys
@@ -63,6 +65,35 @@ def gate_plan_validado(args: str):
     return None
 
 
+def prd_drift(spec_path: Path, spec_text: str):
+    """Deriva PRD→spec por hash sellado (SSoT del mecanismo: sdd-sync-check.py).
+
+    Devuelve mensaje si el spec declara `derived_from_prd_hash` y el PRD origen
+    resoluble ya no coincide. Conservador: sin sello, PRD N/A o no resoluble →
+    None (no bloquear).
+    """
+    h = re.search(r"derived_from_prd_hash\s*:\s*sha256:([0-9a-fA-F]{8,64})", spec_text)
+    if h is None:
+        return None
+    # `derived_from_prd:` exige `:` tras "prd" — no matchea _version ni _hash
+    p = re.search(r"derived_from_prd\s*:\s*`?([^`\s|]+)", spec_text)
+    if p is None or p.group(1).upper() in ("N/A", "UNKNOWN"):
+        return None
+    prd = Path(p.group(1))
+    candidates = [prd] if prd.is_absolute() else [spec_path.parent / prd, prd]
+    for c in candidates:
+        prd_text = read(c)
+        if prd_text is None:
+            continue
+        digest = hashlib.sha256(prd_text.replace("\r\n", "\n").encode("utf-8")).hexdigest()
+        if digest.startswith(h.group(1).lower()):
+            return None
+        return (f"el PRD origen '{c}' cambió desde que se generó/sincronizó el spec "
+                f"(deriva detectada por hash). Analiza el impacto con /wf-prd-sync-impact {c} "
+                f"y resincroniza con /wf-spec-sync-from-prd antes de continuar.")
+    return None  # PRD no resoluble → permitir (política conservadora)
+
+
 def gate_spec_fiable(args: str):
     # Nota: el DESIGN_BRIEF.md no se verifica aqui (su ubicacion es ambigua
     # desde los args); ese gate sigue siendo de la prosa del workflow.
@@ -85,6 +116,9 @@ def gate_spec_fiable(args: str):
     sync = re.search(r"status_sync\s*:\s*[\"']?(\w+)", text)
     if sync and sync.group(1) != "in_sync":
         return f"El spec '{spec_path}' declara status_sync: {sync.group(1)} (no fiable). Resincroniza con /wf-spec-sync-from-prd antes de continuar."
+    drift = prd_drift(spec_path, text)
+    if drift:
+        return f"El spec '{spec_path}' está desincronizado: {drift}"
     return None
 
 

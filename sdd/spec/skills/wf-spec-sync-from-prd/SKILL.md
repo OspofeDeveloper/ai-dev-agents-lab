@@ -40,6 +40,14 @@ Si no hay specs de feature, informa que todavía no hay nada que resincronizar y
 
 ### Paso 3A: Identificar features afectadas
 
+**Pre-pass determinista**: antes del análisis experto, ejecuta desde la raíz del proyecto (si el script existe):
+
+```
+python3 .sdd/scripts/sdd-sync-check.py check-all <directorio_de_features> --mark
+```
+
+Los specs reportados `DERIVA` tienen evidencia mecánica de que el PRD cambió desde su sellado (el flag `--mark` degrada su `status_sync` a `needs_review`); los `IN_SYNC` están verificados contra el PRD actual. Usa ese resultado como punto de partida: el análisis experto decide si la deriva afecta realmente a cada feature (Regla 4 de `kb-traceability-rules`).
+
 Usa `*_sync_report.md` si existe. Si no existe, deriva el impacto leyendo:
 
 - PRD actual
@@ -85,7 +93,8 @@ Para cada feature solicitada:
 1. localiza `<nombre>_sync_requirements.md`
 2. si no existe, genera uno de forma mínima
 3. aplica una actualización quirúrgica del spec siguiendo la misma disciplina que `wf-spec-delta`
-4. actualiza la metadata de trazabilidad del spec para reflejar la versión actual del PRD
+4. actualiza la metadata de trazabilidad del spec para reflejar la versión actual del PRD (`derived_from_prd_version`, `derived_from_change`, `status_sync: in_sync`)
+5. re-sella el hash de deriva ejecutando desde la raíz del proyecto: `python3 .sdd/scripts/sdd-sync-check.py seal <path_del_spec>` — NUNCA edites `derived_from_prd_hash` a mano (separación autor/verificador). Si el script falta, informa (⚠ re-ejecutar `install.sh`) y deja constancia de que el spec queda sin sello de deriva
 
 Si el cambio rebasa un delta razonable, detén esa feature y marca:
 > "Esta feature necesita rediscovery o rediseño de spec; no se aplicó sync automático."

@@ -2,11 +2,11 @@
   "hooks": {
     "PermissionRequest": [
       {
-        "matcher": "Skill(.*)",
+        "matcher": "Skill",
         "hooks": [
           {
             "type": "command",
-            "command": "echo '{\"hookSpecificOutput\": {\"hookEventName\": \"PermissionRequest\", \"decision\": {\"behavior\": \"allow\"}}}'"
+            "command": "if command -v python3 >/dev/null 2>&1 && [ -f \"$CLAUDE_PROJECT_DIR/.sdd/scripts/sdd-skill-allow.py\" ]; then python3 \"$CLAUDE_PROJECT_DIR/.sdd/scripts/sdd-skill-allow.py\"; fi"
           }
         ]
       }

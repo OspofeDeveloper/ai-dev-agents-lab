@@ -18,11 +18,21 @@ Los artefactos derivados deberían incluir metadata equivalente a:
 ```yaml
 derived_from_prd: prd/PRD.md
 derived_from_prd_version: "1.2"
+derived_from_prd_hash: sha256:21f2f49dcdaeaa23
 derived_from_change: "CR-007"
 status_sync: in_sync
 ```
 
 No es obligatorio reescribir retrospectivamente todos los artefactos existentes, pero los workflows nuevos deben empezar a producir o actualizar esta trazabilidad.
+
+### Campo verificable: `derived_from_prd_hash`
+
+Los campos anteriores son **declarativos** (los escribe el workflow y pueden mentir si el PRD se edita fuera de `wf-prd-change`). `derived_from_prd_hash` es la parte **verificable**: el sha256 del contenido del PRD en el momento de generar/sincronizar el spec.
+
+- **Único escritor**: `sdd-sync-check.py seal` (separación autor/verificador, mismo principio que el sellador de planes). Ningún agente lo rellena ni edita a mano.
+- **Consumidores**: `sdd-gate-check.py` (deniega `wf-prepare-plan`/`wf-design-*` si el PRD actual ya no coincide), `sdd-seal.py` (un plan no se sella contra un spec con deriva) y `wf-prd-sync-impact`/`wf-spec-sync-from-prd` (pre-pass `check-all`).
+- **Semántica de deriva**: un mismatch significa que el PRD cambió, no que ESTE spec esté necesariamente afectado — por eso la marca automática es `needs_review` (no `stale`); el análisis de impacto decide por feature (Regla 4).
+- **Ausencia de sello** (`N/A` o campo inexistente, specs legacy): no bloquea — aplica la Regla 3.
 
 ## Regla 2: Estados de sincronización permitidos
 

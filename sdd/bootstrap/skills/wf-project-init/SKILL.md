@@ -484,7 +484,7 @@ test -f .claude/CLAUDE.md && echo "OK claude-md" || echo "FALLO claude-md"
 test -f .sdd/project-init.json && echo "OK init-json" || echo "FALLO init-json"
 grep -q '"dispatcher": "wf-project-init"' .sdd/project-init.json && echo "OK schema" || echo "FALLO schema — reescribir con los campos exactos del Paso 8"
 grep -q '"artifacts"' .sdd/project-init.json && echo "OK artifacts-map" || echo "FALLO artifacts-map — añadir el mapa artifacts del Paso 8"
-test -f .sdd/scripts/sdd-gate-check.py && test -f .sdd/scripts/sdd-seal.py && test -f .sdd/scripts/sdd-task-state.py && echo "OK enforcement-scripts" || echo "FALLO enforcement-scripts — copiar desde $SDD_HOME/scripts/ (Paso 6)"
+test -f .sdd/scripts/sdd-gate-check.py && test -f .sdd/scripts/sdd-seal.py && test -f .sdd/scripts/sdd-task-state.py && test -f .sdd/scripts/sdd-sync-check.py && test -f .sdd/scripts/sdd-skill-allow.py && echo "OK enforcement-scripts" || echo "FALLO enforcement-scripts — copiar desde $SDD_HOME/scripts/ (Paso 6)"
 test -f .sdd/sdd-version.json && echo "OK sdd-version" || echo "FALLO sdd-version — re-ejecutar install.sh (Paso 6) para sellar la versión"
 ```
 

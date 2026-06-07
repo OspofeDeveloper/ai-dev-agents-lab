@@ -51,6 +51,14 @@ Si existe carpeta `changes/`, úsala como fuente prioritaria para entender el al
 
 ## Paso 4: Evaluar estado por artefacto
 
+**Pre-pass determinista sobre los specs**: ejecuta desde la raíz del proyecto (si el script existe):
+
+```
+python3 .sdd/scripts/sdd-sync-check.py check-all <directorio_de_features> --mark
+```
+
+El resultado es evidencia mecánica, no opinión: `DERIVA` = el PRD cambió desde el sellado del spec (su `status_sync` queda en `needs_review`); `IN_SYNC` = verificado por hash contra el PRD actual; `SIN_SELLO`/`PRD_NO_RESUELVE` = sin evidencia (aplica el criterio conservador de `kb-traceability-rules`, Regla 3). Nunca marques `in_sync` un spec que el script reporta `DERIVA`.
+
 Para cada artefacto, asigna uno de estos estados:
 
 - `in_sync`
@@ -62,6 +70,7 @@ Justifica el estado con una línea concreta.
 
 Reglas:
 
+- si el script reporta `DERIVA` para un spec, al menos `needs_review` (evidencia por hash)
 - si el PRD cambió en una sección que afecta claramente al artefacto, al menos `needs_review`
 - si el artefacto contradice el PRD actual, `stale`
 - si no hay metadata ni evidencia suficiente, `unknown`

@@ -11,11 +11,38 @@ Uso: merge-claude-settings.py <source_settings.json> <dest_settings.json>
     * resto de claves de primer nivel del source: solo se anaden si no existen
       en el dest (el valor del proyecto siempre gana).
 - Idempotente: re-ejecutar no duplica entradas.
+- Migracion: elimina del dest los hooks SDD obsoletos (identificados por su
+  comando EXACTO en DEPRECATED_HOOK_COMMANDS) antes de mergear, para que la
+  entrada que los sustituye pueda entrar. Nunca toca hooks ajenos al SDD.
 
 Compartido por sdd/install.sh y tech/<stack>/install.sh (SSoT del merge).
 """
 import json
 import sys
+
+# Comandos de hooks SDD de versiones anteriores, sustituidos por otra entrada.
+# Solo se eliminan por coincidencia EXACTA del comando (jamas por matcher).
+DEPRECATED_HOOK_COMMANDS = {
+    # <=0.1.0: auto-allow universal de Skills — sustituido por sdd-skill-allow.py
+    # (solo aprueba wf-*; ROADMAP 1.4)
+    'echo \'{"hookSpecificOutput": {"hookEventName": "PermissionRequest", "decision": {"behavior": "allow"}}}\'',
+}
+
+
+def drop_deprecated(dest) -> bool:
+    """Elimina hooks obsoletos del dest. Devuelve True si cambio algo."""
+    changed = False
+    for event, entries in (dest.get("hooks") or {}).items():
+        for entry in list(entries):
+            hooks = entry.get("hooks") or []
+            kept = [h for h in hooks if h.get("command") not in DEPRECATED_HOOK_COMMANDS]
+            if len(kept) != len(hooks):
+                changed = True
+                if kept:
+                    entry["hooks"] = kept
+                else:
+                    entries.remove(entry)
+    return changed
 
 
 def main() -> int:
@@ -41,7 +68,7 @@ def main() -> int:
         print(f"settings.json creado en {dest_path}")
         return 0
 
-    changed = False
+    changed = drop_deprecated(dest)
 
     # Merge de hooks: anadir matchers del source ausentes en el dest
     for event, src_entries in src.get("hooks", {}).items():

@@ -21,12 +21,15 @@ Condiciones verificadas para `plan`:
   4. El header `Spec origen` resuelve a un archivo legible.
   5. El spec origen no contiene `[INCOMPLETO]`, gaps `[CRÍTICO]` ni CAs `[INFERIDO]`.
   6. Si el spec declara `status_sync`, su valor es `in_sync`.
+  6b. Si el spec declara `derived_from_prd_hash` y su PRD origen es resoluble,
+      el hash actual del PRD coincide (sin deriva PRD→spec; ver sdd-sync-check.py).
   7. Trazabilidad: todo CA-XXX definido en el spec (encabezados `### CA-XXX`)
      aparece referenciado en el plan.
 
 El sello es una marca operativa confiable (kb-plan-expert, "Estados del Plan"):
 si cualquier condicion falla, el plan queda/vuelve a BORRADOR.
 """
+import hashlib
 import re
 import sys
 from pathlib import Path
@@ -106,6 +109,24 @@ def check_plan(plan_path: Path):
     sync_m = re.search(r"status_sync\s*:\s*[\"']?(\w+)", spec_text)
     if sync_m:
         add(sync_m.group(1) == "in_sync", f"Spec `status_sync: {sync_m.group(1)}` (requerido: in_sync)")
+
+    # 6b. Deriva PRD→spec por hash sellado (SSoT del mecanismo: sdd-sync-check.py).
+    # Solo se evalua con evidencia completa: sello declarado + PRD origen resoluble.
+    hash_m = re.search(r"derived_from_prd_hash\s*:\s*sha256:([0-9a-fA-F]{8,64})", spec_text)
+    prd_m = re.search(r"derived_from_prd\s*:\s*`?([^`\s|]+)", spec_text)
+    if hash_m and prd_m and prd_m.group(1).upper() not in ("N/A", "UNKNOWN"):
+        prd_p = Path(prd_m.group(1))
+        candidates = [prd_p] if prd_p.is_absolute() else [spec_path.parent / prd_p, prd_p]
+        for c in candidates:
+            try:
+                prd_text = c.read_text(encoding="utf-8")
+            except OSError:
+                continue
+            digest = hashlib.sha256(prd_text.replace("\r\n", "\n").encode("utf-8")).hexdigest()
+            in_sync = digest.startswith(hash_m.group(1).lower())
+            add(in_sync, f"Spec sin deriva respecto a su PRD origen ({c})" if in_sync
+                else f"El PRD origen ({c}) cambió desde que se sincronizó el spec — resincroniza con /wf-spec-sync-from-prd")
+            break
 
     # 7. Cobertura de CAs: todo CA definido en el spec aparece en el plan
     spec_cas = sorted(set(CA_DEF_RE.findall(spec_text)))
