@@ -2,6 +2,14 @@
 
 Este directorio introduce la fase `design` del pipeline SDD. Su responsabilidad es transformar un `*_spec.md` validado en un contrato visual reutilizable por Stitch y en artefactos por feature que permitan validar flujos y vistas antes de entrar en el plan tecnico.
 
+## Fit declarado
+
+| | |
+|---|---|
+| **Para quién es** | Equipos sin diseñador dedicado; productos greenfield (el sistema visual nace aquí); prototipado mobile-first con Stitch como destino |
+| **Qué no cubre** | Integración Figma (import/export de tokens); ingeniería inversa de UI ya en producción; equipos con diseñador que ya produce specs visuales (pueden escribir `DESIGN.md` a mano respetando el contrato y auditarlo con `wf-design-validate`) |
+| **Cuándo saltarla** | Por proyecto: la fase es opcional en el init. Por feature: sin superficie de UI visible, Spec pasa a Plan directamente — la regla canónica de cuándo Design es obligatorio vive en `kb-plan-expert` y la aplica `wf-prepare-plan` |
+
 Diagramas detallados de esta fase: [DIAGRAMS.md](/Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/design/DIAGRAMS.md).
 
 ## Objetivo de la fase

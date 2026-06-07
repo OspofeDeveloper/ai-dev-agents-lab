@@ -160,6 +160,7 @@ features/<nombre>/tasks/<nombre>_tasks.md
 > Si el discovery identifica más de 5 features y el usuario no ha pedido un subset, el flujo recomendado es iterar con `--features ...`. Solo usar `--all-features` como override explícito.
 > Para cambios post-spec: `/wf-spec-delta analyze <spec.md> --new-reqs <cambios.md>`
 > Para completar HUs `[INCOMPLETO]` con respuestas ya escritas en `_analysis.md`: `/wf-spec-gap-resolve <spec.md>`
+> La fase Design es **saltable por feature**: si la feature no tiene superficie de UI visible, Spec pasa a Plan directamente (la regla canónica de cuándo Design es obligatorio vive en `kb-plan-expert` y la aplica `wf-prepare-plan`). Su fit declarado (equipos sin diseñador, greenfield, Stitch; no cubre Figma ni reverse de UI existente) vive en `design/CLAUDE.md`.
 > Para prototipado visual desde Specs listos: primero `/wf-design-intake generate <feature_spec.md>` (gate obligatorio), luego opcionalmente `/wf-design-discover`, después `/wf-design-system generate <feature_spec.md> --brief DESIGN_BRIEF.md` y finalmente `/wf-design-feature-prototype generate <feature_spec.md> --brief DESIGN_BRIEF.md`.
 > Para auditar un `DESIGN.md` editado manualmente: `/wf-design-validate <DESIGN.md>`.
 > Para cambios incrementales en `DESIGN.md`: `/wf-design-delta analyze <DESIGN.md> --new-reqs <cambios.md>`.

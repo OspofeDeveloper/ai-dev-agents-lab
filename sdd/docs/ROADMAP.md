@@ -107,7 +107,7 @@ Solo existe KMM; los overlays son mutuamente excluyentes por diseño; el proyect
 
 Su encaje natural hoy es greenfield mobile sin diseñador con Stitch como destino — pero no está declarado, y genera falsas expectativas.
 
-- [ ] 🟠 **7.1 — Declarar el fit explícitamente** en `design/README.md` y `design/CLAUDE.md`: para quién es (equipos sin diseñador / greenfield), qué no cubre (integración Figma, reverse de UI existente), y que es saltable por feature sin UI (hoy esa señal solo vive en `plan/`; propagarla a `sdd/CLAUDE.md` y a la propia fase).
+- [x] 🟠 **7.1 — Declarar el fit explícitamente** en `design/README.md` y `design/CLAUDE.md`: para quién es (equipos sin diseñador / greenfield), qué no cubre (integración Figma, reverse de UI existente), y que es saltable por feature sin UI (hoy esa señal solo vive en `plan/`; propagarla a `sdd/CLAUDE.md` y a la propia fase). ✅ *2026-06-07: (a) `design/CLAUDE.md` — sección nueva "Fit de esta fase": para quién ES (sin diseñador / greenfield / mobile-first con Stitch), qué NO cubre hoy (Figma, reverse de UI existente, equipos con diseñador propio — con la vía de escape documentada: DESIGN.md a mano respetando `kb-design-system-contract` + `wf-design-validate`), saltable por proyecto y por feature, e instrucción al orquestador de decirlo en cuanto detecte un caso "NO cubre" — antes de generar artefactos inútiles; (b) `design/README.md` — tabla "Fit declarado" equivalente para el lector humano; (c) `sdd/CLAUDE.md` — nota en el pipeline: Design saltable por feature sin UI, regla canónica en `kb-plan-expert` aplicada por `wf-prepare-plan` (la señal ya no vive solo en plan/). La decisión formal sobre Figma queda en 7.6 (el fit dice "no cubre HOY", sin cerrar la puerta).*
 - [ ] 🟡 **7.2 — Anclar la dirección visual cuando no hay brief.** Con `--no-brief` + research pobre, `style_family`/paleta/motion son invención plausible con formato de autoridad. → Exigir confirmación humana explícita de la dirección visual en modo `auto`, o marcar el `DESIGN.md` resultante como `provisional` hasta validación.
 - [ ] 🟡 **7.3 — Variante web de a11y y prototipado no-Stitch** (WCAG completo, targets no-táctiles). *(= B4 de IMPROVEMENTS)*
 - [ ] 🟡 **7.4 — Resolver solapamiento `kb-design-style-decision-tree` vs `kb-design-style-taxonomy`.** El árbol re-deriva los mismos criterios (B2B→high density…) que la taxonomy define — divergencia futura asegurada. → Una de las dos es la SSoT; la otra referencia.
@@ -181,7 +181,7 @@ Puntos a verificar cuando se pruebe el ecosistema en proyectos reales — no son
 | 5 | **3.1** (`wf-spec-from-code`) ✅ | Abre todo el mercado brownfield — la mayoría del trabajo real |
 | 6 | **5.1** (versionado + update) ✅ | Prerequisito para usar el ecosistema en >1 repo / >1 dev |
 | 7 | **4.1** (modo ligero) + **10.2** (multi-repo) ✅ | Adopción en scrum real y topologías de producto multi-repo |
-| 8 | **7.1** (declarar fit de design) | Barato y elimina falsas expectativas |
+| 8 | **7.1** (declarar fit de design) ✅ | Barato y elimina falsas expectativas |
 | 9 | Resto por severidad | — |
 
 ---

@@ -12,6 +12,16 @@ Eres el **orquestador**. Tu funcion es entender la peticion del usuario, decidir
 
 Las `kb-*` viven en los subagentes y se cargan automaticamente en su contexto. El orquestador no usa las `kb-*` como punto de entrada principal.
 
+## Fit de esta fase (para quien es y para quien no)
+
+Esta fase esta disenada para un encaje concreto. Declararlo evita falsas expectativas:
+
+- **Para quien ES**: equipos **sin disenador dedicado** que necesitan un contrato visual consistente; productos **greenfield** (el sistema visual nace aqui); prototipado **mobile-first con Stitch** como destino de ensamblaje.
+- **Lo que NO cubre hoy**: integracion con Figma (ni import de variables ni export de Figma Tokens); ingenieria inversa de una UI ya en produccion (derivar `DESIGN.md` de CSS/capturas/componentes existentes); el flujo de un equipo con disenador que ya produce sus propios specs visuales — en ese caso el `DESIGN.md` puede escribirse a mano respetando el contrato (`kb-design-system-contract`) y auditarse con `/wf-design-validate`, pero los workflows generativos sobran.
+- **Es saltable**: por proyecto (la fase es opcional en el init) y **por feature** — una feature sin superficie de UI visible pasa de Spec a Plan directamente. La regla canonica de cuando Design es obligatorio vive en `kb-plan-expert` y la aplica `wf-prepare-plan`; esta fase no fuerza su propio uso.
+
+Si el proyecto encaja en un "NO cubre", dilo al usuario en cuanto se detecte — antes de generar artefactos que no va a usar.
+
 ## Precondiciones de esta fase
 
 La etapa Design requiere:
