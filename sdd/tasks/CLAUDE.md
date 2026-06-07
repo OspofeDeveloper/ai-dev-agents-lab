@@ -26,21 +26,29 @@ Si el plan está en `BORRADOR` o tiene gaps, redirige a `/wf-plan-validate` ante
 | Intención del usuario | Skill | Argumentos |
 |---|---|---|
 | Generar las tasks desde un plan validado | `/wf-prepare-tasks` | `generate <feature_plan.md>` |
+| Ejecutar tasks (la siguiente, una concreta o todas) | `/wf-task-run` | `<feature_tasks.md> [--task T-00X \| --next \| --all] [--no-commit]` |
+| Reportar o arreglar un bug de una feature entregada | `/wf-bug` | `<descripcion.md\|texto> [--feature <nombre>]` |
 
 ## Cómo actuar ante una petición
 
 1. **Verifica las precondiciones**: el `_plan.md` existe y está `VALIDADO`.
-2. **Si encaja en la `wf-*` cerrada**, invócala con el path del plan.
+2. **Si encaja en una `wf-*` cerrada**, invócala con los argumentos correctos.
 3. **Si la petición es una duda conceptual** sobre granularidad, owners o formato de tasks, delega a `task-generator`.
 4. **Reporta al usuario** el resultado: path del `_tasks.md`, total de tasks, desglose por owner y orden recomendado de ejecución.
+
+Distinción clave entre las dos vías de ejecución: **task pendiente** del `_tasks.md` → `/wf-task-run`; **divergencia entre spec y código ya entregado** → `/wf-bug` (que triajea contra el CA y solo escala a `/wf-spec-delta` si el comportamiento esperado cambia).
 
 ## Camino canónico
 
 ```
 plan validado (_plan.md con Estado: VALIDADO)
   -> wf-prepare-tasks generate <plan.md>
-  -> _tasks.md con tasks ordenadas por dominio de ejecución
-  -> delegar T-000 → T-N al owner agent indicado en cada task
+  -> _tasks.md con tasks ordenadas por dominio de ejecución (Estado: PENDIENTE)
+  -> wf-task-run <tasks.md>            (una task elegible por invocación; --all para lote)
+       estado persistente vía .sdd/scripts/sdd-task-state.py (transiciones validadas)
+       commit por task: "T-00X: <título> [CA-XXX]"
+  -> ... repetir hasta COMPLETO
+  -> mantenimiento posterior: wf-bug (registro B-00X en <feature>_bugs.md)
 ```
 
 ## Agente Tasks disponible
@@ -55,8 +63,9 @@ Usa el workflow cuando el usuario quiera generar el `_tasks.md`. Si la petición
 
 - `wf-prepare-tasks` genera el `_tasks.md` completo.
 - El output incluye header de trazabilidad (Plan, Spec, PRD, version, change ref, status sync).
-- Tras generar tasks, el siguiente paso es delegar cada task al agente owner indicado.
-- Esta fase cierra la descomposición de implementación; no toma decisiones de arquitectura.
+- `wf-task-run` ejecuta las tasks: los estados (`PENDIENTE|EN_CURSO|HECHA|BLOQUEADA`) los escribe SOLO `sdd-task-state.py` — nunca a mano.
+- `wf-bug` es la vía de mantenimiento: triaje contra el CA del spec antes de tocar código; fix silencioso sin CA = prohibido.
+- Esta fase cierra la descomposición y ejecución de implementación; no toma decisiones de arquitectura.
 
 ## Principio de precondiciones
 

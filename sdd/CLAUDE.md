@@ -61,6 +61,8 @@ Si buscas mejor rendimiento y menos carga de contexto, instala y usa el `CLAUDE.
 | Generar el plan técnico desde un spec | `/wf-prepare-plan` | `generate <spec.md>` |
 | Validar si un plan está listo para pasar a tasks | `/wf-plan-validate` | `<plan.md>` |
 | Generar las tasks desde un plan | `/wf-prepare-tasks` | `generate <plan.md>` |
+| Ejecutar tasks con estado y commits trazables | `/wf-task-run` | `<feature_tasks.md> [--task T-00X \| --next \| --all] [--no-commit]` |
+| Reportar o arreglar un bug de una feature entregada | `/wf-bug` | `<descripcion.md\|texto> [--feature <nombre>]` |
 
 ## Cómo actuar ante una petición
 
@@ -142,7 +144,8 @@ features/<nombre>/plan/<nombre>_plan.md
     ↓ [/wf-plan-validate — gate formal]
     ↓ [/wf-prepare-tasks generate — por feature]
 features/<nombre>/tasks/<nombre>_tasks.md
-    ↓ [delegación del orquestador al owner de cada task (agentes del stack u orquestador)]
+    ↓ [/wf-task-run — ejecuta cada task con su owner, estado persistente y commit trazable T-00X [CA-XXX]]
+    ↓ [mantenimiento posterior: /wf-bug — triaje contra CA, registro B-00X en features/<nombre>/tasks/<nombre>_bugs.md]
 ```
 
 > Layout de feature: cada feature usa subcarpetas por fase (`spec/`, `design/`, `plan/`, `tasks/`; `README.md` en la raíz de la feature). Las features creadas con el layout plano legacy (todo directamente en `features/<nombre>/`) siguen siendo válidas: los workflows leen ambos layouts y no los mezclan dentro de una misma feature.
@@ -162,7 +165,8 @@ features/<nombre>/tasks/<nombre>_tasks.md
 > En la salida de Design: `flows` = secuencias y transiciones; `views` = SSoT de pantallas y estados visuales; `ui_prompt` = ensamblaje para Stitch.
 > Para pasar de Plan a Tasks: `/wf-prepare-plan generate <feature_spec.md>` → `/wf-plan-validate <feature_plan.md>` → `/wf-prepare-tasks generate <feature_plan.md>`.
 > Para cambios de producto (scope, prioridad, exclusiones): primero `/wf-prd-change`, luego `/wf-prd-sync-impact` y `/wf-spec-sync-from-prd`.
-> Tras `/wf-prepare-tasks`, cada task debe delegarse al `Owner agent` indicado en el `_tasks.md` (agentes del overlay de stack, u orquestador en modo genérico).
+> Tras `/wf-prepare-tasks`, la ejecución es `/wf-task-run <tasks.md>`: delega cada task a su `Owner agent` (agentes del overlay de stack, u orquestador en modo genérico), con estado persistente gestionado por `sdd-task-state.py` y un commit por task.
+> Para bugs sobre features ya entregadas: `/wf-bug <descripción>` — triaje contra el CA del spec; solo escala a `/wf-spec-delta` si el comportamiento esperado cambia.
 
 ## Principio de precondiciones
 

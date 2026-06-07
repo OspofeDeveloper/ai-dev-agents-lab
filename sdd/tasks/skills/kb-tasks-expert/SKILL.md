@@ -36,6 +36,7 @@ Además del bloque de Tasks individuales, el `_tasks.md` debe llevar un header d
 ```markdown
 ## T-[número]: [Área] — [Nombre del componente]
 
+- **Estado:** PENDIENTE
 - **Spec CA:** [CA-XXX que implementa, o — si no aplica]
 - **Plan ref:** [§sección del Plan]
 - **Componente:** [módulo, paquete o ruta del repositorio según el Plan]
@@ -49,6 +50,8 @@ Además del bloque de Tasks individuales, el `_tasks.md` debe llevar un header d
 ```
 
 Consulta `${CLAUDE_SKILL_DIR}/references/task_templates.md` para templates por tipo de componente.
+
+**Estado** es el campo de ejecución persistente (`PENDIENTE | EN_CURSO | HECHA | BLOQUEADA`). Se genera siempre como `PENDIENTE`. A partir de ahí **solo lo escribe el script determinista** `.sdd/scripts/sdd-task-state.py` (invocado por `wf-task-run`), que valida transiciones y dependencias y regenera la tabla `## Progreso` — nunca se edita a mano. Archivos `_tasks.md` anteriores a este campo se inicializan con `sdd-task-state.py init`.
 
 ---
 

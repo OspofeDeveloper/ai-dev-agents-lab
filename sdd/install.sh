@@ -270,7 +270,7 @@ ENFORCE_ROOT="${SDD_PROJECT_ROOT:-$(pwd)}"
 echo ""
 echo "Instalando scripts de enforcement..."
 mkdir -p "$ENFORCE_ROOT/.sdd/scripts"
-for script in sdd-seal.py sdd-gate-check.py; do
+for script in sdd-seal.py sdd-gate-check.py sdd-task-state.py; do
   cp "$SCRIPT_DIR/scripts/$script" "$ENFORCE_ROOT/.sdd/scripts/$script"
   echo "  ✓ $ENFORCE_ROOT/.sdd/scripts/$script"
 done

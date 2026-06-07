@@ -345,7 +345,7 @@ features/<nombre>/
   spec/    <nombre>_spec.md (+ deltas, sync_requirements, conflict_report)
   design/  <nombre>_flows.md, _views.md, _ui_prompt.md (+ discovery, moodboard, variantes)
   plan/    <nombre>_plan.md
-  tasks/   <nombre>_tasks.md
+  tasks/   <nombre>_tasks.md (+ <nombre>_bugs.md, mantenimiento)
 ```
 
 Los `_plan.md` y `_tasks.md` de cada feature viven SIEMPRE dentro de su carpeta de feature para preservar la trazabilidad por rutas relativas (`Spec origen: ../spec/<nombre>_spec.md`). Las features creadas con el layout plano legacy (artefactos directamente en `features/<nombre>/`) siguen siendo válidas: los workflows leen ambos layouts y no los mezclan dentro de una misma feature. Los workflows resuelven sus rutas de salida desde este mapa — no escribas artefactos fuera de él.
@@ -414,7 +414,7 @@ test -f .claude/CLAUDE.md && echo "OK claude-md" || echo "FALLO claude-md"
 test -f .sdd/project-init.json && echo "OK init-json" || echo "FALLO init-json"
 grep -q '"dispatcher": "wf-project-init"' .sdd/project-init.json && echo "OK schema" || echo "FALLO schema — reescribir con los campos exactos del Paso 8"
 grep -q '"artifacts"' .sdd/project-init.json && echo "OK artifacts-map" || echo "FALLO artifacts-map — añadir el mapa artifacts del Paso 8"
-test -f .sdd/scripts/sdd-gate-check.py && test -f .sdd/scripts/sdd-seal.py && echo "OK enforcement-scripts" || echo "FALLO enforcement-scripts — copiar desde $SDD_HOME/scripts/ (Paso 6)"
+test -f .sdd/scripts/sdd-gate-check.py && test -f .sdd/scripts/sdd-seal.py && test -f .sdd/scripts/sdd-task-state.py && echo "OK enforcement-scripts" || echo "FALLO enforcement-scripts — copiar desde $SDD_HOME/scripts/ (Paso 6)"
 ```
 
 ---
