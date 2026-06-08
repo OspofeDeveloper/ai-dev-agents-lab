@@ -121,5 +121,17 @@ cat > "$ENFORCE_ROOT/.sdd/sdd-version.json" <<EOF
 EOF
 echo "  ✓ .sdd/sdd-version.json (sdd $SDD_VERSION+$SDD_COMMIT)"
 
+# ── 6. Verificar KBs de los agentes del overlay (ROADMAP 1.5) ───────────────
+# Los agentes KMM declaran muchas KBs de stack; este check determinista avisa
+# si alguna no quedó instalada. No bloquea.
+
+if command -v python3 >/dev/null 2>&1 && [ -f "$ENFORCE_ROOT/.sdd/scripts/sdd-kb-check.py" ]; then
+  echo ""
+  echo "Verificando KBs de los agentes instalados..."
+  if ! python3 "$ENFORCE_ROOT/.sdd/scripts/sdd-kb-check.py" --claude-dir "$CLAUDE_DIR" --all; then
+    echo "  ⚠ Algún agente declara KBs no instaladas (ver arriba)."
+  fi
+fi
+
 echo ""
 echo "Done. Reinicia Claude Code para activar los agentes y skills."

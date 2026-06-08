@@ -278,7 +278,7 @@ SDD_COMMIT="$(git -C "$SCRIPT_DIR" rev-parse --short HEAD 2>/dev/null || echo un
 echo ""
 echo "Instalando scripts de enforcement..."
 mkdir -p "$ENFORCE_ROOT/.sdd/scripts"
-for script in sdd-seal.py sdd-gate-check.py sdd-task-state.py sdd-sync-check.py sdd-skill-allow.py sdd-amend.py sdd-features-index.py sdd-project-status.py; do
+for script in sdd-seal.py sdd-gate-check.py sdd-task-state.py sdd-sync-check.py sdd-skill-allow.py sdd-amend.py sdd-features-index.py sdd-project-status.py sdd-kb-check.py; do
   cp "$SCRIPT_DIR/scripts/$script" "$ENFORCE_ROOT/.sdd/scripts/$script"
   # Sello de versión en el propio script: viaja commiteado al repo del proyecto
   # y a CI, donde no hay ~/.sdd-home al lado para preguntarle.
@@ -425,6 +425,22 @@ if [ -n "$PROJECT_STACK" ] && { has_phase plan || has_phase tasks; }; then
     echo "⚠ El proyecto declara stack '$PROJECT_STACK' pero este ecosistema no tiene"
     echo "  tech/$PROJECT_STACK/install.sh. Las variantes del overlay pueden haber quedado"
     echo "  pisadas por las piezas genéricas de plan/tasks — re-aplica el overlay manualmente."
+  fi
+fi
+
+# ── 8. Verificar que las KBs declaradas por los agentes están instaladas ────
+# (ROADMAP 1.5) Check determinista: el auto-reporte "KB Load Status" del agente
+# es señal secundaria; esta es la autoritativa. No bloquea — avisa de instalaciones
+# incompletas (agente presente con alguna KB de su frontmatter sin instalar).
+
+if command -v python3 >/dev/null 2>&1 && [ -f "$ENFORCE_ROOT/.sdd/scripts/sdd-kb-check.py" ]; then
+  echo ""
+  echo "Verificando KBs de los agentes instalados..."
+  if python3 "$ENFORCE_ROOT/.sdd/scripts/sdd-kb-check.py" --claude-dir "$CLAUDE_DIR" --all; then
+    :
+  else
+    echo "  ⚠ Algún agente declara KBs no instaladas (ver arriba). Si era una"
+    echo "    instalación por fases, reinstala con la fase/overlay que las aporta."
   fi
 fi
 

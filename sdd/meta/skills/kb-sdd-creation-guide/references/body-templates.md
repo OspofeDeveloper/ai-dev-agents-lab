@@ -71,7 +71,7 @@ Secciones H2 fijas:
 
 ## Verificación de contexto
 <para cada KB declarada en skills: [...]: nombre y concepto clave que confirma su presencia>
-Incluye `## KB Load Status` al final de cada respuesta (ver Regla 19 de kb-sdd-skill-architecture).
+Incluye `## KB Load Status` al final de cada respuesta (ver Regla 19 de kb-sdd-skill-architecture). Es una señal **secundaria** (auto-reporte); la verificación autoritativa de que las KBs existen instaladas es `sdd-kb-check.py` (determinista, lo corre `install.sh`).
 
 ## Regla de oro
 <máxima de una o dos líneas que define el límite del agente>

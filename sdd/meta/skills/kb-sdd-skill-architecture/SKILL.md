@@ -298,3 +298,16 @@ Formato normalizado del bloque:
 ```
 
 Este protocolo no aplica a agentes sin `skills: [...]` declaradas.
+
+### Verificación determinista (autoritativa) vs auto-reporte (secundario)
+
+El bloque `## KB Load Status` lo **auto-reporta el agente**: es el propio emisor diciendo si sus KBs llegaron. Misma debilidad que cualquier veredicto auto-emitido (la que el sellador y los gates resuelven para planes y specs). La señal **autoritativa** de que las KBs declaradas existen es un check determinista sobre la instalación, no la palabra del agente:
+
+```
+python3 .sdd/scripts/sdd-kb-check.py --all          # todos los agentes instalados
+python3 .sdd/scripts/sdd-kb-check.py --agent <name> # uno
+```
+
+`sdd-kb-check.py` lee el frontmatter `skills:` de cada agente en `.claude/agents/` y verifica que cada KB existe como `.claude/skills/<kb>/SKILL.md`. Exit 2 si falta alguna. El set de KBs de un agente es **fijo** (su frontmatter) y no cambia entre delegaciones, así que el punto de verificación eficiente es la **instalación y el arranque**, no "antes de cada delegación": `install.sh` (y el overlay) lo ejecutan al cerrar y avisan de instalaciones incompletas; también es invocable a demanda y en CI.
+
+**Reparto:** el check determinista detecta la KB que falta de la instalación (causa raíz: install incompleto, dependencia no traída, overlay no re-aplicado); el `## KB Load Status` del agente queda como sanity-check secundario en contexto (puede captar un fallo de inyección puntual que el filesystem no refleja). Si el check determinista falla, no se confía en el auto-reporte: se repara la instalación.

@@ -2,6 +2,15 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.12.0 — 2026-06-08
+
+KB Load Status verificable (ROADMAP 1.5 — cierra la Fase 1 de enforcement):
+
+- El `## KB Load Status` que cada agente incluye al final de su respuesta es **auto-reportado** (misma debilidad que cualquier veredicto auto-emitido). Nuevo script determinista `sdd-kb-check.py`: lee el frontmatter `skills:` de cada agente instalado y verifica que cada KB existe como `.claude/skills/<kb>/SKILL.md`. `--all` / `--agent <name>`, exit 2 si falta alguna (CI). El set de KBs de un agente es fijo → se verifica en **instalación y arranque**, no por delegación.
+- `install.sh` y el overlay KMM ejecutan la verificación al cerrar (paso nuevo, no bloqueante): avisan de instalaciones incompletas (agente presente con alguna KB de su frontmatter sin instalar — el fallo real que hacía importar el auto-reporte). Capta además dependencias cross-phase no traídas y overlays no re-aplicados.
+- **Regla 19 de `kb-sdd-skill-architecture`** actualizada: el check determinista es la señal **autoritativa**; el `## KB Load Status` del agente queda como sanity-check **secundario** en contexto. Reflejado en el template de agente (`body-templates.md`). Cierra el hilo "verdad mecánica sobre auto-reporte" que comparten sellador, gates, features-index y project-status.
+- ⚠ Proyectos ya inicializados: `/wf-sdd-update` trae `sdd-kb-check.py` a `.sdd/scripts/` y la verificación en el installer. Sin cambios de comportamiento en los agentes (su auto-reporte sigue igual, solo se reclasifica como secundario).
+
 ## 0.11.0 — 2026-06-08
 
 Informe PM read-only del estado del proyecto (ROADMAP 2.6):
