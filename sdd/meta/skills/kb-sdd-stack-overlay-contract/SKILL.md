@@ -41,6 +41,8 @@ Principio rector: **el modo genérico es el caso base; el overlay especializa, n
 1. `install.sh` (base) instala las piezas genéricas de fase en `<fase>/.claude/` del proyecto.
 2. `tech/<stack>/install.sh` se ejecuta **después** y copia por basename (`rm -rf` + copia): toda pieza del overlay con el mismo nombre que una genérica la **sustituye**.
 
+> **Limitación transitoria conocida (single-stack).** El override por basename sobre un único `.claude/` raíz hace que **solo pueda haber un overlay activo por repositorio**: dos stacks compartiendo proyecto colisionarían sobre los mismos archivos genéricos. Es una limitación reconocida, no un invariante de diseño. El modelo objetivo que la levanta vive en la sección [Modelo objetivo: multi-stack por ubicación](#modelo-objetivo-multi-stack-por-ubicación-roadmap-61--diseño-no-implementado). Hasta entonces: **ningún overlay ni pieza nueva debe profundizar la suposición de stack único** (objetivo "no cavar más hondo" de ROADMAP 6.1). En concreto, las piezas nuevas no deben leer un stack global como verdad fija más allá de lo que ya hacen los gates de hoy, ni hardcodear el supuesto de "un solo `<stack>_project_state.md`" en sitios nuevos.
+
 Reglas para una variante válida:
 
 - **Conserva el contrato externo**: misma metodología, misma taxonomía de gaps (`DESIGN_GAP`/`TECH_GAP`/`TRACE_GAP`/`PLAN_GAP`), mismos estados (`BORRADOR`/`VALIDADO`), mismo formato de artefacto de salida y misma regla canónica de Design. Solo especializa el **cómo** (capas, librerías, owners, templates).
@@ -71,6 +73,33 @@ Reglas para una variante válida:
 
 ---
 
+## Modelo objetivo: multi-stack por ubicación (ROADMAP 6.1 — diseño, no implementado)
+
+Esta sección es **normativa para la dirección del diseño, no para la implementación de hoy**. Describe el contrato OBJETIVO al que el ecosistema debe poder migrar sin reescritura cuando exista un 2º overlay real (ROADMAP 6.5). No hay resolver implementado todavía (ROADMAP 6.1 explícitamente lo difiere); el propósito de fijarlo ahora es evitar que las piezas nuevas caven más hondo en el supuesto de stack único.
+
+### Declaración de stacks en `project-init.json`
+
+| Forma | Declaración | Estado |
+|---|---|---|
+| **Stack único (transitoria)** | `"stack": "<stack\|agnostico\|null>"` + `"specialist_workflow": "<wf-<stack>-init\|null>"` | Forma **actual y transitoria**. Es el caso de un solo overlay (o ninguno) por repo. Sigue siendo válida y es lo que produce hoy `wf-project-init`. |
+| **Multi-stack (objetivo)** | `"stacks": [ { "path": "<ruta-raíz-del-subproyecto>", "stack": "<stack>", "specialist_workflow": "wf-<stack>-init" }, ... ]` | Forma **destino**. Cada entrada asocia una **ubicación del repo** (módulo, paquete, subdirectorio) con su stack y su init especialista. `"stack": "<único>"` se reinterpreta entonces como el azúcar de un `stacks` de un solo elemento con `path` = raíz del proyecto. |
+
+La migración es aditiva: un proyecto single-stack existente equivale a `stacks: [{ path: ".", stack: <su stack>, specialist_workflow: <el suyo> }]`. Ningún consumidor del modelo objetivo debe romper al leer la forma transitoria.
+
+### Regla de resolución por ubicación de la feature
+
+En el modelo objetivo, **qué variante de stack aplica se resuelve por la UBICACIÓN de la feature, no por una variable global del proyecto**. Los gates de `wf-prepare-plan`/`wf-prepare-tasks` (y los workflows que dependen de ellos) resuelven, para la feature concreta sobre la que operan, qué entrada de `stacks` cubre su ruta — y exigen el `<stack>_project_state.md` de ESE stack, no de un stack único global. Una feature cuya ubicación no cae bajo ninguna entrada de `stacks` opera en modo genérico (caso base del pipeline).
+
+Hoy esa resolución vive en **prosa de los workflows/gates** (la tabla de "Puntos de integración" decide por el campo global `specialist_workflow`). El modelo objetivo la lleva a una **resolución determinista por ruta en los gates**: misma decisión, pero parametrizada por la ubicación de la feature en lugar de por un único campo de proyecto. Mientras 6.1 no se implemente, los gates siguen leyendo el campo único; lo que esta sección fija es que el punto de decisión correcto es el gate (determinista), no nueva prosa dispersa ni una variable global ampliada.
+
+### Qué NO incluye este diseño
+
+- **No** especifica el algoritmo del resolver (prefijo más largo de ruta, glob, precedencia entre entradas solapadas): queda para 6.1-implementación, cuando un 2º overlay real (6.5) dé los casos de prueba.
+- **No** cambia el mecanismo de override por basename: levantar la exclusividad mutua de overlays sobre un único `.claude/` raíz es parte de la implementación, no del contrato.
+- **No** toca `install.sh`, el schema real de `project-init.json` ni los gates. Es solo el contrato/diseño.
+
+---
+
 ## Checklist de conformidad
 
 - [ ] `tech/<stack>/install.sh` ejecutable y con el mismo mecanismo de copia por basename
@@ -80,4 +109,5 @@ Reglas para una variante válida:
 - [ ] Variantes de override (si las hay) conservan el contrato externo de la pieza genérica
 - [ ] Variantes de `plan-architect`/`plan-auditor`/`task-generator` cargan la method KB compartida (`kb-plan-method`/`kb-tasks-method`) y solo aportan la especialización de stack — no re-copian el procedimiento
 - [ ] Condición de detección añadida a `wf-project-init` Paso 4
+- [ ] No cava más hondo en stack único (ROADMAP 6.1): la pieza nueva no introduce una nueva variable global de stack ni hardcodea "un solo `<stack>_project_state.md`" en sitios nuevos; la resolución de stack, si la necesita, la delega al gate
 - [ ] Registrado en `skill-registry.md` via `wf-sdd-status`
