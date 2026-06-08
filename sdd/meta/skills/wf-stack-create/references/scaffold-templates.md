@@ -53,7 +53,7 @@ echo "Done. Reinicia Claude Code para activar el overlay <stack>."
 ```yaml
 ---
 name: wf-<stack>-init
-description: "Init especialista del stack <stack>. Produce <stack>_project_state.md con el estado tecnico del proyecto: [targets/runtime], [arquitectura], [dependencias clave], comandos de build y test. Soporta modo detect (auto-exploracion de proyectos existentes) y configure (preguntas con opciones para proyectos nuevos). Si ya existe <stack>_project_state.md muestra el estado y pregunta si rehacerlo. Registra el run en stack_workflows_run dentro de .sdd/project-init.json."
+description: "Init especialista del stack <stack>. Produce <stack>_project_state.md con el estado tecnico del proyecto: [targets/runtime], [arquitectura], [dependencias clave], comandos de build y test. Soporta modo detect (auto-exploracion de proyectos existentes) y configure (preguntas con opciones para proyectos nuevos). Si ya existe <stack>_project_state.md muestra el estado y pregunta si rehacerlo. Registra el run en el log append-only .sdd/stack-runs.jsonl."
 when_to_use: "Activa con frases como 'init de <stack>', 'inicializa el stack <stack>', 'detecta el estado <stack> del proyecto'. No activa para el init generico (usa wf-project-init, que despacha a este)."
 argument-hint: "[--mode detect|configure] [--force] [--output <path>]"
 effort: medium
@@ -69,7 +69,7 @@ Pasos mínimos del cuerpo (modelo: `tech/kmm/skills/wf-kmm-init/SKILL.md`):
 3. Inferir modo: indicios de proyecto existente → `detect`; proyecto vacío → `configure`
 4. `detect`: explorar [archivos canónicos del stack] y derivar el estado real. `configure`: AskUserQuestion con opciones cerradas por cada dimensión del brief
 5. Escribir `<stack>_project_state.md` (secciones mínimas: Targets/Runtime, Arquitectura, Dependencias clave, Comandos build/test, Fecha del init)
-6. Registrar en `.sdd/project-init.json` → `stack_workflows_run += ["wf-<stack>-init@<timestamp>"]`
+6. Registrar el run (append-only) → `echo '{"workflow":"wf-<stack>-init","stack":"<stack>","mode":"<detect|configure>","executed_at":"<date -u>","output":"<path>"}' >> .sdd/stack-runs.jsonl` (crea `.sdd/` si no existe; nunca reescribir líneas previas). `project-init.json` no se toca.
 7. Informe final con siguiente paso
 
 ---

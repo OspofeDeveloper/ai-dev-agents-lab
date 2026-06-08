@@ -1,6 +1,6 @@
 ---
 name: wf-kmm-init
-description: "Init especialista del stack KMM. Produce kmm_project_state.md con el estado tecnico del proyecto: targets (Android, iOS, desktop), arquitectura (clean architecture KMM, capas app/features/core), DI (Koin), networking (Ktor), auth, storage (DataStore), recursos (Compose Resources), navegacion, testing y build commands. Soporta modo detect (auto-exploracion sobre proyectos existentes delegando en kmm-explorer) y modo configure (preguntas con listas de opciones para proyectos nuevos). Si ya existe kmm_project_state.md muestra el estado actual y pregunta si rehacerlo. Registra el run en stack_workflows_run dentro de .sdd/project-init.json. El archivo resultante lo leen todos los agentes KMM al inicio si existe."
+description: "Init especialista del stack KMM. Produce kmm_project_state.md con el estado tecnico del proyecto: targets (Android, iOS, desktop), arquitectura (clean architecture KMM, capas app/features/core), DI (Koin), networking (Ktor), auth, storage (DataStore), recursos (Compose Resources), navegacion, testing y build commands. Soporta modo detect (auto-exploracion sobre proyectos existentes delegando en kmm-explorer) y modo configure (preguntas con listas de opciones para proyectos nuevos). Si ya existe kmm_project_state.md muestra el estado actual y pregunta si rehacerlo. Registra el run en el log append-only .sdd/stack-runs.jsonl. El archivo resultante lo leen todos los agentes KMM al inicio si existe."
 when_to_use: "Activa con frases como 'init de KMM', 'inicializa el stack KMM', 'detecta el estado KMM del proyecto', 'configura un nuevo proyecto KMM', 'arranca el setup KMM', 'genera el estado tecnico KMM'. No activa para el init generico de stack desconocido (usa wf-project-init que despacha a este) ni para configurar piezas concretas como auth o networking (usa wf-kmm-auth-setup-keycloak, wf-kmm-network-setup, wf-kmm-stack-setup-ktor-keycloak-koin)."
 argument-hint: "[--mode detect|configure] [--force] [--output <path>]"
 effort: medium
@@ -282,25 +282,19 @@ Escribir el resultado en el path indicado por `--output` o `kmm_project_state.md
 
 ---
 
-## Paso 7: Registrar el run en `.sdd/project-init.json`
+## Paso 7: Registrar el run en `.sdd/stack-runs.jsonl`
 
-Si existe `.sdd/project-init.json`:
+El registro de ejecuciones del init es un **log append-only**, no un array dentro de `project-init.json` (eso garantizaba conflicto de merge entre devs sobre un fichero de config compartido). Añade una línea JSON al final de `.sdd/stack-runs.jsonl` (crea el archivo si no existe; `mkdir -p .sdd` antes). **Nunca reescribas líneas anteriores** — solo se añade al final.
 
-1. Leerlo.
-2. Añadir o actualizar la entrada en `stack_workflows_run`:
+Timestamp real: ejecuta `date -u +%Y-%m-%dT%H:%M:%SZ` y usa SU salida.
 
-```json
-{
-  "workflow": "wf-kmm-init",
-  "mode": "detect|configure",
-  "executed_at": "<ISO-8601>",
-  "output": "<path de kmm_project_state.md>"
-}
+```
+echo '{"workflow":"wf-kmm-init","stack":"kmm","mode":"detect|configure","executed_at":"<salida de date -u>","output":"<path de kmm_project_state.md>"}' >> .sdd/stack-runs.jsonl
 ```
 
-3. Reescribir el archivo manteniendo el resto del estado intacto.
+(Un objeto JSON compacto por línea — formato JSON Lines. El `>>` en modo append es seguro ante escrituras concurrentes de líneas cortas.)
 
-Si no existe `.sdd/project-init.json`, crear uno minimo con `stack: kmm` y registrar el run igual. Avisar al usuario que el flujo recomendado es invocar primero `wf-project-init`.
+`project-init.json` no se toca aquí. Si no existe `.sdd/project-init.json`, registra el run igual en el log y avisa al usuario de que el flujo recomendado es invocar primero `wf-project-init`.
 
 ---
 

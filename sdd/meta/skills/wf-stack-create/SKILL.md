@@ -61,7 +61,7 @@ Invoca `sdd-author` con este encargo:
 > Crea el esqueleto del overlay `tech/<stack>/` siguiendo `kb-sdd-stack-overlay-contract` y los templates de `${CLAUDE_SKILL_DIR}/references/scaffold-templates.md`:
 >
 > 1. `tech/<stack>/install.sh` — desde el template, ajustando subdirectorios reales.
-> 2. `tech/<stack>/skills/wf-<stack>-init/SKILL.md` — init especialista con modos detect/configure, manejo de estado previo, generación de `<stack>_project_state.md` y registro en `stack_workflows_run`. Modelo de referencia: `tech/kmm/skills/wf-kmm-init/SKILL.md`.
+> 2. `tech/<stack>/skills/wf-<stack>-init/SKILL.md` — init especialista con modos detect/configure, manejo de estado previo, generación de `<stack>_project_state.md` y registro del run en el log append-only `.sdd/stack-runs.jsonl`. Modelo de referencia: `tech/kmm/skills/wf-kmm-init/SKILL.md`.
 > 3. `tech/<stack>/CLAUDE.md` — orquestador del overlay con rootmap mínimo.
 > 4. `tech/<stack>/skills/plan/` y `skills/tasks/` — vacíos con `README.md` indicando qué tipo de KBs alojan, salvo que el brief aporte dominios concretos.
 > 5. Solo con `--with-agents`: variantes de `plan-architect.md`, `plan-auditor.md` y `task-generator.md` en `tech/<stack>/agents/` que conserven el contrato externo de las genéricas (gaps, estados, formato) y especialicen arquitectura y owners.

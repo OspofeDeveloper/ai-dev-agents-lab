@@ -411,6 +411,12 @@ El rootmap de workflows de cada fase vive en su regla, no aquí: este orquestado
 - Se commitea TODO `.claude/` (skills, agentes, rules, settings.json) y TODO `.sdd/` (estado, scripts de enforcement, sello de versión): el repo funciona para cualquier dev y en CI sin tener el ecosistema SDD instalado.
 - Excepción única: `.claude/settings.local.json` (permisos personales de sesión) — está en `.gitignore` y nunca se commitea.
 - Los artefactos SDD (PRD, `features/`, design) son el producto del pipeline: se commitean siempre.
+
+### Trabajo en paralelo: una feature por rama
+
+- **Una feature = una rama.** Cada feature vive en su carpeta `features/<nombre>/` (spec, design, plan, tasks): dos devs en features distintas tocan ficheros distintos y no colisionan.
+- **`_features.md` es un índice GENERADO, no se edita a mano.** Lo regenera `python3 .sdd/scripts/sdd-features-index.py <raíz_spec>` desde el discovery + los specs + el readiness report. Un conflicto de merge sobre `_features.md` es ruido: acéptalo o regéneralo tras el merge (`git checkout --theirs`/`--ours` da igual; la verdad se reconstruye del disco).
+- El registro de inits de stack es el log append-only `.sdd/stack-runs.jsonl` (no un array en `project-init.json`): los `>>` de ramas distintas se combinan sin pisarse.
 ```
 
 (Solo filas de fases instaladas. Si hay stack especialista, añadir la fila `| Stack <stack> | .claude/rules/sdd-<stack>.md |`.)
@@ -452,10 +458,11 @@ En `MODE=extend`, regenerar con la unión de fases. En el flujo de init, este ar
   "sdd_version": "<version+commit del sello>",
   "initialized_at": "<salida de date -u>",
   "dispatcher": "wf-project-init",
-  "specialist_workflow": "<wf-<stack>-init | null>",
-  "stack_workflows_run": []
+  "specialist_workflow": "<wf-<stack>-init | null>"
 }
 ```
+
+> El registro de ejecuciones del init de stack **no** vive en `project-init.json` (sería un array creciente dentro de un fichero de config compartido → conflicto de merge garantizado con varios devs). Vive en un log append-only aparte, `.sdd/stack-runs.jsonl` (una línea JSON por run), que lo escribe `wf-<stack>-init`. `project-init.json` queda como config estable.
 
 (`sdd_version` sale de `.sdd/sdd-version.json` — lo escribe `install.sh` en el Paso 6: concatenar `<version>+<commit>`. Si el sello no existe (instalación anómala), usar `unknown`. Las actualizaciones posteriores las gestiona `/wf-sdd-update`, no este workflow. `pipeline_mode` sale de la pregunta 5.8: es el default del proyecto — cada feature puede forzar el otro modo con `--light`/`--standard`.)
 

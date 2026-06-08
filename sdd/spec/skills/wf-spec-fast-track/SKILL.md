@@ -142,7 +142,7 @@ Antes de escribir el output, aplica la Prueba de Pureza al spec completo. Consul
 - Origen de alcance: `PRD` o `PRD + analysis respondido`
 - Avisos de gobernanza: `ninguno` o lista de gaps que derivaron alcance no consolidado
 
-**Índice de features (`_features.md`)**: Sigue la guía de `${CLAUDE_SKILL_DIR}/references/artefact_index_update.md` para añadir/crear la entrada de la feature, usar estados canónicos, campos de origen de alcance y trazabilidad RF→HU en modo scoped.
+**Índice de features (`_features.md`)**: NO lo escribas a mano. `_features.md` es un artefacto **generado** por `sdd-features-index.py` (regenerador determinista) a partir del discovery + los specs presentes + el readiness report. Tú escribes el spec y el README de la feature; el índice se regenera en el Paso 10. Esto elimina la colisión de escrituras paralelas (varios fast-tracks lanzados a la vez por `wf-spec-features-first`) y los conflictos de merge entre devs sobre el hub monolítico. Los campos del índice (estado canónico, origen de alcance, trazabilidad RF→HU) los deriva el script de sus fuentes: tú solo debes asegurarte de que el header del spec los declare correctamente (`> Feature ID:`, `> Origen de alcance:`, `> Avisos de gobernanza:`).
 
 ---
 
@@ -152,10 +152,11 @@ Determina el directorio raíz de los artefactos spec (regla de layout): si `.sdd
 
 **Layout de feature**: cada feature organiza sus artefactos en subcarpetas por fase (`features/<nombre>/spec/`, `design/`, `plan/`, `tasks/`; el `README.md` vive en la raíz de la feature). Si la feature ya existe con layout plano legacy (artefactos directamente en `features/<nombre>/`), consérvalo — no mezcles layouts dentro de una misma feature.
 
-Verifica si el spec ya existe — en `<raíz_spec>/features/<capability>/spec/<capability>_spec.md` (subcarpetas) o `<raíz_spec>/features/<capability>/<capability>_spec.md` (plano legacy); si existe → pregunta al usuario si desea regenerarlo (no → informa del path y detén; sí → reescribe en su ubicación actual). Escribe los 3 artefactos (crea directorios si no existen), todos relativos a esa raíz:
+Verifica si el spec ya existe — en `<raíz_spec>/features/<capability>/spec/<capability>_spec.md` (subcarpetas) o `<raíz_spec>/features/<capability>/<capability>_spec.md` (plano legacy); si existe → pregunta al usuario si desea regenerarlo (no → informa del path y detén; sí → reescribe en su ubicación actual). Escribe los 2 artefactos que tú compones (crea directorios si no existen), relativos a esa raíz:
 1. **Spec**: `<raíz_spec>/features/<capability>/spec/<capability>_spec.md`
 2. **README**: `<raíz_spec>/features/<capability>/README.md` (siempre en la raíz de la feature)
-3. **Features index**: `<raíz_spec>/<nombre_base>_features.md` (o actualiza el existente)
+
+El `_features.md` NO se escribe aquí: es un índice generado, se regenera más abajo.
 
 **Sellar la trazabilidad PRD→spec** (solo si `derived_from_prd` es un path real — modo scoped): tras escribir el spec, ejecuta desde la raíz del proyecto (el directorio que contiene `.sdd/`):
 
@@ -166,8 +167,17 @@ python3 .sdd/scripts/sdd-sync-check.py seal <path_del_spec>
 El script calcula el hash del PRD origen y escribe `derived_from_prd_hash` en el header. NUNCA rellenes ese campo a mano (separación autor/verificador: es la evidencia con la que los gates y el sellador de planes detectan deriva del PRD). Si el script no existe:
 > "⚠ Falta `.sdd/scripts/sdd-sync-check.py`. Re-ejecuta la instalación del ecosistema (`install.sh`) para reponer los scripts de enforcement. El spec queda con `derived_from_prd_hash: N/A` (sin detección de deriva)."
 
+**Regenerar el índice de features**: tras escribir el spec, regenera `_features.md` ejecutando desde la raíz del proyecto (el directorio que contiene `.sdd/`):
+
+```
+python3 .sdd/scripts/sdd-features-index.py <raíz_spec>
+```
+
+`<raíz_spec>` es el directorio que contiene `features/` y el `_features.md` (el mismo de arriba). El script escanea el discovery + todos los specs + el readiness report (si existe) y regenera el índice de forma determinista y atómica — por eso es seguro aunque varios fast-tracks corran en paralelo. NUNCA edites `_features.md` a mano (separación autor/generador). Si el script no existe:
+> "⚠ Falta `.sdd/scripts/sdd-features-index.py`. Re-ejecuta la instalación del ecosistema (`install.sh`) para reponer los scripts de enforcement. El índice `_features.md` no se ha regenerado."
+
 ---
 
 ## Paso 11: Informar al usuario
 
-Informa: paths generados (spec, README, `_features.md` nuevo/actualizado). Si hay `[CRÍTICO]` pendientes: listarlos (bloquean `/wf-prepare-plan`). Si se aplicaron asunciones: cuántas y dónde. Siguiente paso: `/wf-prepare-plan generate <path>_spec.md`.
+Informa: paths generados (spec, README) y `_features.md` regenerado. Si hay `[CRÍTICO]` pendientes: listarlos (bloquean `/wf-prepare-plan`). Si se aplicaron asunciones: cuántas y dónde. Siguiente paso: `/wf-prepare-plan generate <path>_spec.md`.

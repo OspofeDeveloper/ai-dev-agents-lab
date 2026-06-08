@@ -125,11 +125,18 @@ Si el subset está vacío tras filtrar specs preexistentes (todas las features p
 
 ---
 
-## Paso 6: Consolidar `_features.md` (incremental)
+## Paso 6: Regenerar `_features.md` (pasada autoritativa)
 
-Las escrituras paralelas de `_features.md` por los fast-tracks pueden colisionar. Regenera `_features.md` de forma consolidada respetando lo existente, siguiendo las reglas de `${CLAUDE_SKILL_DIR}/references/features_consolidation_rules.md`. El resultado cubre TODAS las features del discovery (no solo el subset de esta iteración), preserva estados de iteraciones anteriores y añade una entrada al Historial de cambios.
+`_features.md` es un artefacto **generado**, no editado a mano: lo produce el regenerador determinista `sdd-features-index.py` escaneando el discovery (universo de features + shared models + RF→Feature) + todos los specs presentes (estado real por marcadores, HUs/CAs) + el readiness report si existe (veredicto). Esto elimina de raíz la colisión de escrituras paralelas de los fast-tracks **y** los conflictos de merge entre devs sobre el hub monolítico (un conflicto en `_features.md` pasa a ser ruido: se regenera tras el merge).
 
-`_features.md` y `features/` viven en el directorio raíz de artefactos spec (regla de layout: `artifacts.spec` de `.sdd/project-init.json` si está declarado; si no, el directorio del PRD de entrada) — el mismo que usan los fast-tracks.
+Tras esperar a que terminen todos los fast-tracks, ejecuta la pasada autoritativa **una sola vez** desde la raíz del proyecto (el directorio que contiene `.sdd/`):
+
+```
+python3 .sdd/scripts/sdd-features-index.py <raíz_spec>
+```
+
+`<raíz_spec>` es el directorio raíz de artefactos spec donde viven `features/` y `_features.md` (regla de layout: `artifacts.spec` de `.sdd/project-init.json` si está declarado; si no, el directorio del PRD de entrada). El resultado cubre TODAS las features del discovery: las del subset recién generadas quedan con su estado real, las preexistentes se reflejan tal cual desde sus specs en disco, y las que aún no tienen spec aparecen como `PENDIENTE_GENERACIÓN` — sin que tú tengas que preservar estado a mano. Si el script no existe:
+> "⚠ Falta `.sdd/scripts/sdd-features-index.py`. Re-ejecuta la instalación del ecosistema (`install.sh`) para reponer los scripts de enforcement. El índice `_features.md` no se ha regenerado."
 
 ---
 

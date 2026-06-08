@@ -518,10 +518,17 @@ Si te importa el rendimiento del agente, instala solo las fases que necesites. L
 1. Clona el proyecto → **funciona ya**: skills, agentes, rules, hooks de gates y scripts de enforcement viajan commiteados.
 2. (Recomendado) Clona también este ecosistema y ejecuta `bash sdd/setup.sh`: habilita el protocolo de sesión, `/wf-sdd-update` y el init de proyectos nuevos.
 
+### Varios devs en paralelo: una feature por rama
+
+- **Una feature = una rama.** Cada feature vive aislada en `features/<nombre>/` (spec, design, plan, tasks): devs en features distintas no colisionan.
+- **`_features.md` es un índice generado**, no se edita a mano: lo regenera `python3 .sdd/scripts/sdd-features-index.py <raíz_spec>` desde el discovery + los specs en disco + el readiness report. Un conflicto de merge sobre él es ruido — se regenera tras el merge (la verdad vive repartida por feature, no en el hub). Mismo principio que el registry generado.
+- El registro de inits de stack es el log append-only `.sdd/stack-runs.jsonl` (no un array en `project-init.json`): ramas distintas se combinan sin pisarse.
+
 ### CI / runners headless
 
 - Los gates PreToolUse y el sellador funcionan en CI sin el ecosistema al lado: viven commiteados en `.sdd/scripts/` con su sello de versión.
 - El protocolo de sesión se suprime con `SDD_NON_INTERACTIVE=1` (o automáticamente con `CI=true`). El opt-out commiteable por repo es `.claude/sdd-mode.json`.
+- `sdd-features-index.py --check <raíz_spec>` falla (exit 2) si `_features.md` está desactualizado respecto a sus fuentes: útil como check de CI para detectar índices a mano sin regenerar.
 
 ---
 

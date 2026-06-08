@@ -2,6 +2,17 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.9.0 — 2026-06-08
+
+Concurrencia de artefactos hub — `_features.md` generado y `stack_workflows_run` como log append-only (ROADMAP 5.4):
+
+- `_features.md` deja de ser un hub monolítico editado a mano (que varios fast-tracks pisaban en paralelo y dos devs en ramas distintas colisionaban en cada merge) y pasa a ser un **índice GENERADO** por el script determinista nuevo `sdd-features-index.py`. La salida es función pura de las fuentes (sin timestamp de reloj) → idempotente: regenerar tras un merge da bytes idénticos y un conflicto sobre el hub es ruido. Mismo principio que `generate-skill-registry.py`.
+- SSoT repartido y co-localizado: `_discovery.md` = universo de features + shared models + RF→Feature; cada `spec` = que la feature está generada + sus marcadores reales + HUs/CAs; `_readiness_report.md` (su `## Matriz de readiness`) = veredicto autoritativo del estado. El script agrega fuentes estructuradas, no parsea prosa libre. Cierra de paso el candidato de prosa→script anotado en 11.2.
+- Productores reconectados (ya no escriben `_features.md` a mano; llaman al script): `wf-spec-fast-track`, `wf-spec-features-first` (pasada autoritativa final), `wf-spec-readiness` (regenera desde su report — realinea con su propia declaración de "no modifica artefactos"), `wf-spec-delta` y `wf-spec-from-code`. Escritura atómica (tempfile + `os.replace`) → segura ante regeneraciones concurrentes. Eliminadas 4 guías de referencia huérfanas; `kb-decompose-expert` documenta el formato generado (sin `## Historial de cambios` manual: el audit-trail vive en el changelog de cada spec + git).
+- `stack_workflows_run` sale de `project-init.json` (un array creciente en config compartida = conflicto garantizado) → log **append-only** `.sdd/stack-runs.jsonl`, una línea JSON por run. Escrito por `wf-<stack>-init` con `>>`. `project-init.json` queda como config estable.
+- Guía "una feature por rama" + `_features.md` generado en el CLAUDE.md raíz que genera `wf-project-init` y en el README. `sdd-features-index.py --check` (exit 2 si está desactualizado) sirve como check de CI.
+- ⚠ Proyectos ya inicializados: `/wf-sdd-update` para recibir `sdd-features-index.py` en `.sdd/scripts/` y las piezas de spec/stack actualizadas. El campo `stack_workflows_run` de un `project-init.json` antiguo queda obsoleto pero inerte (nadie lo lee); los nuevos runs de stack se anotan en `.sdd/stack-runs.jsonl`. Un `_features.md` heredado (escrito a mano) sigue siendo legible; se normaliza al formato generado en la primera regeneración.
+
 ## 0.8.0 — 2026-06-08
 
 Núcleo metodológico compartido de los agentes override (ROADMAP 6.2):

@@ -93,25 +93,66 @@ La feature owner **define** el modelo completo en su Plan. Las features que lo r
 
 ---
 
-## Formato de `_features.md`
+## `_features.md` es un artefacto GENERADO
+
+`_features.md` **no se edita a mano** y ningún workflow lo escribe componiendo texto. Lo regenera de forma determinista el script `sdd-features-index.py` (igual que `generate-skill-registry.py` regenera el registry). El motivo es de concurrencia: era un hub monolítico que varios fast-tracks escribían en paralelo y que dos devs en ramas distintas pisaban en cada merge aunque tocaran features distintas. Al ser generado, un conflicto de merge sobre `_features.md` es ruido — se regenera tras el merge — y la SSoT real vive repartida y co-localizada por feature.
+
+**Reparto de SSoT (ninguna fuente redefine lo de otra):**
+
+| Fuente | SSoT de |
+|---|---|
+| `_discovery.md` | universo de features (todas las F-XXX, incluidas las aún no generadas), shared models + ownership, mapeo RF→Feature |
+| `features/<n>/spec/<n>_spec.md` | que la feature **está generada** + su estado real (marcadores `[INCOMPLETO]`/`[CRÍTICO]`/`[INFERIDO]`), `Feature ID`, HUs y CAs |
+| `_readiness_report.md` (opcional) | veredicto refinado por feature (conflictos ALTA, dependencias) — su `## Matriz de readiness` |
+
+**Derivación de Estado por feature** (la calcula el script, no se escribe a mano):
+
+- sin spec → `PENDIENTE_GENERACIÓN`
+- con spec y con veredicto en el readiness report → ese veredicto (autoridad)
+- con spec, sin readiness → provisional: marcador presente → `BLOQUEADA`; avisos de gobernanza ≠ ninguno → `REQUIERE_CAMBIO_PRD`; limpio → `LISTA`
+
+Estados canónicos (sin variantes): `LISTA`, `BLOQUEADA`, `PENDIENTE_GENERACIÓN`, `REQUIERE_CAMBIO_PRD`.
+
+**Regenerar** (desde la raíz del proyecto, el directorio que contiene `.sdd/`):
+
+```
+python3 .sdd/scripts/sdd-features-index.py <raíz_spec>
+```
+
+Lo invocan `wf-spec-fast-track` y `wf-spec-from-code` (tras escribir un spec), `wf-spec-features-first` (pasada autoritativa final), `wf-spec-readiness` (tras escribir su report) y `wf-spec-delta` (tras aplicar). La salida es función pura de las entradas (sin timestamp de reloj) → idempotente.
+
+**Estructura emitida** (no editar; documentada solo para lectores):
 
 ```markdown
 # Features Index: [nombre del proyecto]
-> Spec origen: [path/_spec.md] | Fecha: [YYYY-MM-DD]
+> GENERADO por `sdd-features-index.py` — NO editar a mano. Regenera con: `python3 .sdd/scripts/sdd-features-index.py <dir>`
+> Fuentes: discovery=[sí|no], specs=[N], readiness=[sí|no]
+> Spec origen: [PRD origen del discovery | omitido]
 
 ## Features identificadas
 
 ### F-001: [nombre-kebab-case]
-- **Descripción**: [una frase del objetivo de esta feature]
-- **Actor principal**: [quién]
-- **Journeys propios**: [Journey 1, Journey 2, ...]
-- **CAs propios**: [CA-001 a CA-00X]
-- **Modelos propios**: [Modelo1, Modelo2]
-- **Modelos compartidos (owner)**: [ModeloX] ← esta feature lo define
-- **Modelos compartidos (ref)**: [ModeloY (owner: F-00Z)]
-- **Ruta spec**: features/[nombre]/[nombre]_spec.md
+- **Descripción**: [del discovery]
+- **Actor principal**: [del discovery]
+- **Journeys propios**: [del discovery]
+- **CAs propios**: [CA-001 a CA-00X — del spec si existe; derivables del discovery si no]
+- **Modelos propios**: [del discovery]
+- **Modelos compartidos (owner)**: [del discovery]
+- **Modelos compartidos (ref)**: [del discovery]
+- **Ruta spec**: features/[nombre]/spec/[nombre]_spec.md  [o "(pendiente de generación)"]
+- **Estado**: [LISTA | BLOQUEADA | PENDIENTE_GENERACIÓN | REQUIERE_CAMBIO_PRD]
+- **Origen de alcance**: [del spec o del discovery]
+- **Avisos de gobernanza**: [del spec o del discovery]
 
-[Repetir por cada feature]
+[Repetir por cada feature. Las PENDIENTE_GENERACIÓN llevan la nota de cómo procesarlas.]
+
+---
+
+## Resumen de estado
+
+| Feature | Estado | Bloqueantes |
+|---------|--------|-------------|
+| F-001: [nombre] | LISTA | — |
 
 ---
 
@@ -120,7 +161,17 @@ La feature owner **define** el modelo completo en su Plan. Las features que lo r
 | Modelo | Feature Owner | Features que lo referencian |
 |---|---|---|
 | [NombreModelo] | F-00X: [nombre] | F-00Y, F-00Z |
+
+---
+
+## Trazabilidad RF → HU → Feature
+
+| RF | Feature | HU | Estado |
+|---|---|---|---|
+| RF-001 | F-001: [nombre] | HU-001, HU-002 | LISTA |
 ```
+
+> No hay `## Historial de cambios` manual: el audit-trail de cada cambio vive en el `## Changelog` de cada spec y en git. Un índice generado no necesita narrar su propia historia.
 
 ---
 

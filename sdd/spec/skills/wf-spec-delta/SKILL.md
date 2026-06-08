@@ -115,9 +115,15 @@ Incrementar la versión en el header del spec (1.0 → 1.1, 1.2 → 1.3, 2.0 →
 
 Añadir o actualizar `## Changelog` al final del spec (orden cronológico inverso) siguiendo la plantilla de `${CLAUDE_SKILL_DIR}/references/changelog_template.md`. Si se aplicaron asunciones `[INFORMATIVO]`, añadir también `## Asunciones Aplicadas (v[X.Y])` antes del Changelog.
 
-### Paso 6B.5: Actualizar trazabilidad en `_features.md` (si existe)
+### Paso 6B.5: Regenerar `_features.md` (si existe)
 
-Sigue la guía de `${CLAUDE_SKILL_DIR}/references/trazabilidad_delta_guide.md` para actualizar filas de HUs añadidas/modificadas/eliminadas, cobertura por RF e historial de cambios. Si no existe `_features.md` o no tiene sección de trazabilidad, omitir silenciosamente.
+`_features.md` es un índice **generado** (no se edita a mano): la trazabilidad RF→HU→Feature y el estado se derivan de los specs en disco. Tras escribir el spec actualizado, regenera el índice desde la raíz del proyecto (el directorio que contiene `.sdd/`):
+
+```
+python3 .sdd/scripts/sdd-features-index.py <raíz_spec>
+```
+
+`<raíz_spec>` es el directorio que contiene `features/` y `_features.md` (si el spec está en `features/<nombre>/` —directamente o en `spec/`— es el directorio que contiene `features/`; en otro caso, el del propio spec). Si no existe `_features.md` ni discovery, o falta el script, omitir silenciosamente (el delta del spec ya está aplicado).
 
 ---
 

@@ -100,12 +100,12 @@ flowchart LR
     A2 --> S2["features/f2/spec/f2_spec.md"]
     A3 --> S3["features/f3/spec/f3_spec.md"]
 
-    S1 --> Hub[prd_features.md consolidado]
+    S1 --> Hub[["sdd-features-index.py<br/>regenera prd_features.md"]]
     S2 --> Hub
     S3 --> Hub
 ```
 
-**Mensaje clave:** el paralelismo vive en la generacion por feature; la consolidacion de `_features.md` vuelve a ser centralizada.
+**Mensaje clave:** el paralelismo vive en la generacion por feature; `_features.md` no se escribe a mano ni se consolida con prosa — es un **indice generado** por `sdd-features-index.py` a partir del discovery + los specs en disco + el readiness report. Un conflicto de merge sobre el hub es ruido: se regenera tras el merge.
 
 ---
 

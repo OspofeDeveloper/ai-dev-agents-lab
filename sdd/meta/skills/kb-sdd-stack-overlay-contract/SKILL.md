@@ -19,7 +19,7 @@ Principio rector: **el modo genérico es el caso base; el overlay especializa, n
 | Pieza | Path | Responsabilidad |
 |---|---|---|
 | Installer del overlay | `tech/<stack>/install.sh` | Copia agentes y skills del overlay al `.claude` del proyecto destino. Se ejecuta SIEMPRE después del install base de fases |
-| Init especialista | `tech/<stack>/skills/wf-<stack>-init/` | Genera `<stack>_project_state.md` con el estado técnico real del proyecto. Modos `detect` (exploración de proyecto existente) y `configure` (preguntas para proyecto nuevo). Registra su ejecución en `stack_workflows_run` de `.sdd/project-init.json` |
+| Init especialista | `tech/<stack>/skills/wf-<stack>-init/` | Genera `<stack>_project_state.md` con el estado técnico real del proyecto. Modos `detect` (exploración de proyecto existente) y `configure` (preguntas para proyecto nuevo). Registra su ejecución (append-only, una línea JSON por run) en `.sdd/stack-runs.jsonl` — nunca en un array dentro de `project-init.json` (config compartida = conflicto de merge) |
 | Project state | `<stack>_project_state.md` (raíz del proyecto destino) | SSoT del estado técnico: targets, arquitectura, librerías, comandos de build/test. Lo leen todos los agentes del stack antes de operar |
 | CLAUDE.md del overlay | `tech/<stack>/CLAUDE.md` | Orquestador del stack: rootmap de sus `wf-*`, tabla de sus agentes y principios de delegación |
 
@@ -103,7 +103,7 @@ Hoy esa resolución vive en **prosa de los workflows/gates** (la tabla de "Punto
 ## Checklist de conformidad
 
 - [ ] `tech/<stack>/install.sh` ejecutable y con el mismo mecanismo de copia por basename
-- [ ] `wf-<stack>-init` con modos detect/configure, manejo de estado previo y registro en `stack_workflows_run`
+- [ ] `wf-<stack>-init` con modos detect/configure, manejo de estado previo y registro del run (append-only) en `.sdd/stack-runs.jsonl`
 - [ ] `<stack>_project_state.md` generado con secciones mínimas: targets/runtime, arquitectura, dependencias clave, comandos build/test
 - [ ] Agentes implementadores con contrato de cierre verificable (invariante 5): sección de cierre que referencia la regla del protocolo del stack
 - [ ] Variantes de override (si las hay) conservan el contrato externo de la pieza genérica

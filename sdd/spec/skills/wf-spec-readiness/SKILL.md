@@ -147,12 +147,16 @@ Escribe el informe en el archivo correspondiente.
 
 ---
 
-## Paso 8.5: Actualizar estado en `_features.md`
+## Paso 8.5: Regenerar `_features.md` desde el report
 
-Sigue la guía de `${CLAUDE_SKILL_DIR}/references/features_update_guide.md` para:
-- **8.5a**: actualizar la línea `- **Estado**: [...]` por feature usando el estado de mayor prioridad
-- **8.5b**: añadir o actualizar `## Resumen de estado` con tabla de estado actual
-- **8.5c**: añadir fila al `## Historial de cambios` si la sección existe
+No edites `_features.md` a mano (esta workflow no modifica artefactos — solo lee y sintetiza; el veredicto vive en TU report). `_features.md` es un índice **generado**: el regenerador `sdd-features-index.py` lee tu `## Matriz de readiness` y la usa como **veredicto autoritativo** del estado por feature (anula la derivación marcador-based). Basta con regenerar el índice desde la raíz del proyecto (el directorio que contiene `.sdd/`):
+
+```
+python3 .sdd/scripts/sdd-features-index.py <raíz_spec>
+```
+
+`<raíz_spec>` es el directorio que contiene `features/` y `_features.md` (el directorio padre del de features, localizado en el Paso 2). El estado y los bloqueantes de cada feature se propagan desde tu report. Si el script no existe:
+> "⚠ Falta `.sdd/scripts/sdd-features-index.py`. Re-ejecuta la instalación del ecosistema (`install.sh`) para reponer los scripts de enforcement. `_features.md` no refleja el veredicto de readiness hasta regenerarlo."
 
 ---
 

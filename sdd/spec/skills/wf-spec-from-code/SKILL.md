@@ -84,9 +84,16 @@ CONTEXTO: <actor, superficie, modelos del discovery>
 
 Layout estándar (mismas reglas que `wf-spec-fast-track`):
 
-1. **Spec**: `<raíz_spec>/features/<nombre>/spec/<nombre>_spec.md` (feature plana legacy existente: en su raíz). Si ya existe → pregunta antes de regenerar.
+1. **Spec**: `<raíz_spec>/features/<nombre>/spec/<nombre>_spec.md` (feature plana legacy existente: en su raíz). Si ya existe → pregunta antes de regenerar. El header declara `> Feature ID: F-C-00X` y `> Origen de alcance: characterization` — el índice los deriva de ahí.
 2. **README** de la feature en su raíz, con `Origen de alcance: characterization (código, commit <SHA>)`.
-3. **`_features.md`**: crea o actualiza la entrada de la feature marcando origen characterization. Si el índice no existe, créalo mínimo (index + estado por feature).
+3. **`_features.md`**: NO lo escribas a mano (es un índice generado). Tras escribir el spec, regenéralo desde la raíz del proyecto (el directorio que contiene `.sdd/`):
+
+   ```
+   python3 .sdd/scripts/sdd-features-index.py <raíz_spec>
+   ```
+
+   Sin discovery (caso brownfield típico), el script construye el índice solo desde los specs presentes — la feature de characterization aparece con su `F-C-00X` y estado derivado de sus marcadores (un `[INFERIDO]` → BLOQUEADA). Si falta el script:
+   > "⚠ Falta `.sdd/scripts/sdd-features-index.py`. Re-ejecuta la instalación del ecosistema (`install.sh`). El índice `_features.md` no se ha regenerado."
 
 ## Paso 7: Informar
 
