@@ -2,6 +2,15 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.11.0 — 2026-06-08
+
+Informe PM read-only del estado del proyecto (ROADMAP 2.6):
+
+- Nuevo `wf-project-status` (fase tasks) + script determinista `sdd-project-status.py`: por cada feature determina la **fase alcanzada** (PENDIENTE/Spec/Plan/Tasks/QA/Cerrada por presencia de artefactos), el **estado** de esa fase (spec vía `_features.md` o marcadores; plan `BORRADOR`/`VALIDADO` + enmienda pendiente; tasks `X/total HECHA` + bloqueadas; qa `APTO`/`APTO_CON_RESERVAS`/`NO_APTO`), el **bloqueo** y la **siguiente acción concreta** (`/wf-*`). Tabla por feature + resumen + "Siguiente foco".
+- **Read-only y mecánico, sin agente** (como `wf-sdd-status`): agrega el estado ya sellado en los artefactos por `sdd-seal.py` / `sdd-task-state.py` / `wf-qa-verify` / `sdd-features-index.py` — no razona ni edita. Aprovecha que `_features.md` es ya un índice generado fiable (0.9.0). Soporta layout plano legacy e incluye las features `PENDIENTE_GENERACIÓN` del índice sin carpeta.
+- `install.sh` distribuye el script a `.sdd/scripts/` (ejecutable en CI); rootmaps de `CLAUDE.md` raíz y `tasks/CLAUDE.md` actualizados; registry regenerado (118 skills).
+- Cierra el hueco de visibilidad para PM ("¿en qué punto está cada feature y qué falta?"). Sin ⚠: es capacidad nueva, no altera artefactos ni comportamiento existente. Proyectos ya inicializados lo reciben con `/wf-sdd-update`.
+
 ## 0.10.0 — 2026-06-08
 
 Red anti-fabricación en el origen (PRD) (ROADMAP 1.6):

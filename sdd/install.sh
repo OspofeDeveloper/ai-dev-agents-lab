@@ -278,7 +278,7 @@ SDD_COMMIT="$(git -C "$SCRIPT_DIR" rev-parse --short HEAD 2>/dev/null || echo un
 echo ""
 echo "Instalando scripts de enforcement..."
 mkdir -p "$ENFORCE_ROOT/.sdd/scripts"
-for script in sdd-seal.py sdd-gate-check.py sdd-task-state.py sdd-sync-check.py sdd-skill-allow.py sdd-amend.py sdd-features-index.py; do
+for script in sdd-seal.py sdd-gate-check.py sdd-task-state.py sdd-sync-check.py sdd-skill-allow.py sdd-amend.py sdd-features-index.py sdd-project-status.py; do
   cp "$SCRIPT_DIR/scripts/$script" "$ENFORCE_ROOT/.sdd/scripts/$script"
   # Sello de versión en el propio script: viaja commiteado al repo del proyecto
   # y a CI, donde no hay ~/.sdd-home al lado para preguntarle.
