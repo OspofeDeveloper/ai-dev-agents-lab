@@ -1,6 +1,6 @@
 ---
 name: kb-plan-expert
-description: Base de conocimiento del Plan técnico SDD para proyectos KMM. Define qué debe contener un Plan, qué no debe tener, cuándo Design es obligatorio, taxonomía de gaps y cómo validar que un Plan está listo para Tasks.
+description: Base de conocimiento del Plan técnico SDD para proyectos KMM. Define qué debe contener un Plan, qué no debe tener, cuándo Design es obligatorio, taxonomía de gaps, deuda técnica asumida (TD-00X) y cómo validar que un Plan está listo para Tasks.
 effort: low
 user-invocable: false
 allowed-tools: [Read]
@@ -131,6 +131,22 @@ Los únicos tipos normativos de gaps en la fase `plan` son:
 - `PLAN_GAP`: sección obligatoria, ownership o contrato técnico incompleto dentro del propio Plan
 
 Los workflows y el agente deben reutilizar estos tipos y no inventar variantes nuevas.
+
+## Deuda técnica asumida (frontera con los gaps)
+
+Un Plan puede registrar **deuda técnica** en vez de bloquearse, pero solo en un caso preciso:
+
+| | Gap | Deuda (`TD-00X`) |
+|---|---|---|
+| Naturaleza | "**No puedo decidir** — falta información" | "**Sí puedo decidir** — elijo un camino viable asumiendo un riesgo acotado" |
+| Incertidumbre sobre | el **QUÉ** (funcional: el Spec no determina el comportamiento) o un insumo obligatorio ausente | el **CÓMO** (técnico: módulo legacy sin tests, API de plataforma opaca, librería sin documentación) |
+| Efecto en el sellado | **Bloquea** (footer ≠ `ninguno` → no sellable) | **No bloquea** una vez aprobada por el humano |
+
+**Test de admisión** (las tres a la vez, o es gap): (1) existe un camino técnico viable prescriptible hoy; (2) no contradice el Spec — ningún CA queda sin cubrir; (3) el riesgo es acotado y enunciable. La deuda nunca es una vía para esquivar un gap.
+
+**Formato canónico**: sección `## Deuda técnica asumida` (omitida si no hay deuda), entradas `### TD-00X` con campos `Decisión` / `A pesar de` / `Riesgo asumido` / `Queda pendiente` / `Componentes afectados` / `Aprobada por` (PENDIENTE al proponer).
+
+**Gobernanza**: `plan-architect` propone con `Aprobada por: PENDIENTE`; la aprobación es humana en `wf-plan-validate` y el sellador (`sdd-seal.py`) verifica que ninguna TD quede `PENDIENTE` ni incompleta. `wf-prepare-tasks` propaga `- **Deuda asumida:** TD-00X` a las tasks de los componentes afectados; el owner respeta la decisión documentada. Saldar la deuda es trabajo futuro (`Queda pendiente`), no tasks de la feature.
 
 ## Precondiciones duras de la fase
 

@@ -125,6 +125,21 @@ Solo cuando un CA requiere una API de plataforma específica sin alternativa por
 
 ---
 
+## Deuda técnica asumida [omitir esta sección si no hay deuda]
+
+Solo decisiones que pasan el test de admisión de `kb-plan-expert` (camino viable + no contradice el Spec + riesgo acotado). La incertidumbre funcional NUNCA va aquí: es gap y bloquea.
+
+### TD-001: [título corto]
+
+- **Decisión:** [qué se decidió hacer]
+- **A pesar de:** [la limitación o incertidumbre técnica real]
+- **Riesgo asumido:** [qué puede salir mal y su alcance]
+- **Queda pendiente:** [qué saldaría la deuda — accionable]
+- **Componentes afectados:** [unidades de la Estructura técnica]
+- **Aprobada por:** PENDIENTE
+
+---
+
 ## Checklist de Trazabilidad [obligatorio]
 
 | CA del Spec | Componente del Plan que lo implementa | Estado |

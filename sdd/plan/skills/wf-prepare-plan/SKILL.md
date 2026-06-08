@@ -136,6 +136,8 @@ Si el agente devuelve otros gaps normativos (`TRACE_GAPs`, `PLAN_GAPs`):
 - siguiente paso sugerido:
   > "Corrige los gaps estructurales del Plan y vuelve a ejecutar `/wf-prepare-plan generate <spec.md>`"
 
+**Deuda técnica (`TD-00X`) — no es un gap:** si el Plan incluye una sección `## Deuda técnica asumida`, **NO bloquea ni impide escribir el archivo** (a diferencia de los gaps). La deuda es una decisión técnica viable con riesgo acotado que el agente tomó en vez de detenerse (frontera CÓMO vs QUÉ de `kb-plan-expert`). El archivo se escribe en estado `BORRADOR` con las entradas `Aprobada por: PENDIENTE`; la aprobación humana ocurre en `wf-plan-validate`. Si el agente mezcla deuda con gaps, los gaps mandan (bloquean); la deuda sola no.
+
 ---
 
 ## Paso 7: Escribir el resultado
@@ -167,5 +169,6 @@ Antes de cerrar, verifica que el header `Spec origen` del plan resuelve como rut
 - Resumen: módulos creados, número de UseCases, número de CAs cubiertos
 - Estado del Plan: `BORRADOR`
 - Si hay observaciones o puntos a revisar: cuáles
+- **Si el Plan declara deuda técnica (`## Deuda técnica asumida`)**: lístala explícitamente (cada `TD-00X` con su decisión y riesgo) y avisa de que requiere **aprobación humana** en la validación — el plan no se sellará mientras haya deuda `PENDIENTE`.
 - Siguiente paso:
-  > "Valida `<path>_plan.md` con `/wf-plan-validate <path>_plan.md` antes de generar tasks."
+  > "Valida `<path>_plan.md` con `/wf-plan-validate <path>_plan.md` antes de generar tasks." (si hay deuda, añade: "Tendrás que aprobar o rechazar cada TD-00X durante la validación.")

@@ -26,6 +26,12 @@ Condiciones verificadas para `plan`:
       el hash actual del PRD coincide (sin deriva PRD→spec; ver sdd-sync-check.py).
   7. Trazabilidad: todo CA-XXX definido en el spec (encabezados `### CA-XXX`)
      aparece referenciado en el plan.
+  8. Deuda tecnica (ROADMAP 3.2): si el plan declara entradas `### TD-XXX`,
+     cada una tiene sus campos obligatorios completos (Decision, A pesar de,
+     Riesgo asumido, Queda pendiente, Componentes afectados, Aprobada por) y
+     ninguna queda `Aprobada por: PENDIENTE` — la deuda APROBADA no bloquea
+     (esa es su razon de ser), la deuda sin aprobar bloquea como un gap.
+     Sin entradas TD → la condicion no aplica.
 
 El sello es una marca operativa confiable (kb-plan-expert, "Estados del Plan"):
 si cualquier condicion falla, el plan queda/vuelve a BORRADOR.
@@ -49,6 +55,10 @@ ESTADO_RE = re.compile(
 )
 SPEC_ORIGEN_RE = re.compile(r"Spec origen(?:\*\*)?\s*:?\**\s*`?(?P<path>[^`\s|]+)`?", re.IGNORECASE)
 CA_DEF_RE = re.compile(r"^#{2,4}\s*(?P<ca>CA-\d{3,4})\b", re.MULTILINE)
+# Entradas de deuda tecnica asumida (kb-plan-expert, "Deuda tecnica asumida")
+TD_HEADER_RE = re.compile(r"^#{2,4}\s*(?P<td>TD-\d{3,4})\b", re.MULTILINE)
+TD_FIELDS = ("Decisión", "A pesar de", "Riesgo asumido", "Queda pendiente",
+             "Componentes afectados", "Aprobada por")
 # Anotacion de enmienda pendiente (unico escritor: sdd-amend.py; absorbida al re-sellar)
 AMEND_LINE_RE = re.compile(
     r"^[ \t]*(?:[-*>][ \t]*)?\**Enmienda pendiente:?\**[ \t]*:?[ \t]*"
@@ -153,6 +163,28 @@ def check_plan(plan_path: Path):
             + (f"; sin cubrir: {', '.join(missing)}" if missing else "") + ")")
     else:
         add(False, "El spec no define ningun CA (`### CA-XXX`) — trazabilidad imposible")
+
+    # 8. Deuda tecnica asumida: TDs completas y ninguna PENDIENTE (la deuda
+    # aprobada NO bloquea — esa es su razon de ser; la no aprobada si).
+    td_headers = list(TD_HEADER_RE.finditer(plan))
+    for i, m in enumerate(td_headers):
+        end = td_headers[i + 1].start() if i + 1 < len(td_headers) else len(plan)
+        # El bloque de la TD termina en el siguiente encabezado de cualquier nivel
+        next_h = re.search(r"^#{1,4}\s", plan[m.end():end], re.MULTILINE)
+        block = plan[m.start():m.end() + next_h.start()] if next_h else plan[m.start():end]
+        td = m.group("td")
+        problems = []
+        for field in TD_FIELDS:
+            fm = re.search(rf"^\s*(?:[-*]\s*)?\**{field}:?\**\s*:?\s*(?P<val>.+?)\s*$",
+                           block, re.MULTILINE)
+            val = (fm.group("val") if fm else "").strip().strip("*").strip()
+            if not val or re.fullmatch(r"\[.*\]|<.*>|\.{3}|…", val):
+                problems.append(f"campo `{field}` ausente o sin rellenar")
+            elif field == "Aprobada por" and val.upper().startswith("PENDIENTE"):
+                problems.append("sin aprobacion humana (`Aprobada por: PENDIENTE`)")
+        add(not problems,
+            f"Deuda {td} completa y aprobada" if not problems
+            else f"Deuda {td}: {'; '.join(problems)} — apruebala en /wf-plan-validate o conviertela en gap")
 
     sellable = all(ok for ok, _ in checks)
     return checks, sellable

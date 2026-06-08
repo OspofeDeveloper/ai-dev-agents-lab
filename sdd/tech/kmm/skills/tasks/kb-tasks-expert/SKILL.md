@@ -45,10 +45,13 @@ Además del bloque de Tasks individuales, el `_tasks.md` debe llevar un header d
 - **Suggested workflow:** [wf-* concreta si existe y aplica | —]
 - **Input:** [qué contrato, modelo, pantalla o configuración recibe o crea]
 - **Dependencies:** [T-XXX, T-YYY | ninguna]
+- **Deuda asumida:** [TD-XXX — título corto | omitir la línea si la task no toca componentes con deuda]
 - **Definition of done:** [qué artefactos deben existir o quedar integrados al finalizar]
 ```
 
 Consulta `${CLAUDE_SKILL_DIR}/references/kmm_task_templates.md` para templates por tipo de componente.
+
+**Deuda asumida** (opcional) aparece solo si el Plan declara `## Deuda técnica asumida` y la task toca un componente listado en los `Componentes afectados` de una `TD-00X`. Es contexto heredado: el owner implementa respetando la decisión del Plan, no improvisa una salida a la limitación. Lo escribe `wf-prepare-tasks`; `sdd-task-state.py` no lo toca.
 
 ---
 

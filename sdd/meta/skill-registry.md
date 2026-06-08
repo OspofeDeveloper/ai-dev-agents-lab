@@ -1,7 +1,7 @@
 # SDD Skill Registry
 <!-- Auto-generado por scripts/generate-skill-registry.py. No editar manualmente. -->
-<!-- Total: 115 skills | 50 wf-* (user-invocable) | 65 kb-* -->
-<!-- Última actualización: 2026-06-07 -->
+<!-- Total: 117 skills | 50 wf-* (user-invocable) | 67 kb-* -->
+<!-- Última actualización: 2026-06-08 -->
 
 ## Meta-Ecosistema (meta/)
 
@@ -91,6 +91,7 @@
 | Skill | Descripción | Invocable | Path |
 |---|---|---|---|
 | kb-plan-expert | Base de conocimiento del Plan técnico SDD | false | plan/skills/kb-plan-expert/SKILL.md |
+| kb-plan-method | Procedimiento operativo compartido de la fase plan SDD — los pasos de generar un Plan (plan-architect) y de auditarlo (plan-auditor), stack-agnósticos | false | plan/skills/kb-plan-method/SKILL.md |
 | wf-plan-validate | Audita un _plan.md existente contra su Spec, el handoff de Design y las reglas de kb-plan-expert | true | plan/skills/wf-plan-validate/SKILL.md |
 | wf-prepare-plan | Transforma Specs validados y el handoff de Design en Planes tecnicos | true | plan/skills/wf-prepare-plan/SKILL.md |
 
@@ -100,6 +101,7 @@
 |---|---|---|---|
 | kb-qa-expert | Metodologia QA del pipeline SDD: derivacion de casos de prueba TC-XXX desde los CAs GIVEN/WHEN/THEN del spec, niveles y tipos de prueba, trazabilidad CA→TC y c… | false | tasks/skills/kb-qa-expert/SKILL.md |
 | kb-tasks-expert | Reglas tech-neutral para descomponer Planes técnicos en Tasks atómicas delegables a un owner claro: formato obligatorio de task, granularidad, orden canónico p… | false | tasks/skills/kb-tasks-expert/SKILL.md |
+| kb-tasks-method | Procedimiento operativo compartido de la fase tasks SDD — los pasos de descomponer un Plan validado en un _tasks.md, stack-agnósticos | false | tasks/skills/kb-tasks-method/SKILL.md |
 | wf-bug | Fast-lane de mantenimiento: triaje de un bug contra los specs de la feature, fix con trazabilidad (B-00X, CA-XXX) y registro en <feature>_bugs.md | true | tasks/skills/wf-bug/SKILL.md |
 | wf-prepare-tasks | Transforma Planes tecnicos validados en Tasks de implementacion | true | tasks/skills/wf-prepare-tasks/SKILL.md |
 | wf-qa-plan | Genera el plan de QA de una feature: deriva casos de prueba TC-XXX trazables desde los CAs GIVEN/WHEN/THEN del feature spec (afinados con plan/tasks y project… | true | tasks/skills/wf-qa-plan/SKILL.md |

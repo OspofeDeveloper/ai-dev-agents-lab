@@ -4,7 +4,7 @@ description: "Audita un _plan.md existente contra su Spec, el handoff de Design 
 when_to_use: "Activa en frases como 'valida el plan', 'revisa el _plan.md', 'audita si el plan está listo para tasks', 'comprueba que el plan cubre todos los CAs'. No activa para generar el plan ni para crear tasks."
 argument-hint: "<plan.md>"
 effort: high
-allowed-tools: [Read, Write, Bash, Agent]
+allowed-tools: [Read, Write, Bash, Agent, AskUserQuestion]
 context: fork
 agent: plan-auditor
 ---
@@ -95,9 +95,19 @@ INSTRUCCIÓN: si no está listo, devuelve un reporte con hallazgos y severidad, 
 Usa `ninguno` cuando una categoría no tenga gaps.
 ```
 
+## Paso 4b: Aprobación humana de la deuda técnica (si la hay)
+
+Si el plan contiene una sección `## Deuda técnica asumida`, cada entrada `### TD-00X` es un **checkpoint humano obligatorio** antes del sellado (el sellador rechaza cualquier TD con `Aprobada por: PENDIENTE`).
+
+1. Revisa primero el veredicto del auditor sobre la deuda (Check 5): si degradó alguna TD a `TECH_GAP` (era un gap funcional disfrazado), trátala como gap — no la presentes para aprobar.
+2. Para cada TD que el auditor consideró deuda legítima y siga en `Aprobada por: PENDIENTE`, preséntala al usuario (Decisión, A pesar de, Riesgo asumido, Queda pendiente) y pide decisión explícita con `AskUserQuestion`:
+   - **Aprobar** → sustituye `PENDIENTE` por `<usuario/rol> (<YYYY-MM-DD>)` en esa entrada (esto sí lo escribe el orquestador: es el registro del checkpoint humano, no el sello del plan).
+   - **Rechazar** → la decisión no se asume: el plan no es válido tal cual. Informa de que debe regenerarse resolviendo esa incertidumbre (responder en el spec si era ambigüedad funcional, o tomar otra decisión técnica) y **detén** sin sellar.
+3. No autoapruebes ninguna TD por el usuario. Si no hay respuesta, la deuda queda `PENDIENTE` y el sellado fallará en el Paso 5 — que es el comportamiento correcto.
+
 ## Paso 5: Sellar el estado operativo (sellador determinista)
 
-El estado del plan **solo** lo escribe el script `.sdd/scripts/sdd-seal.py` (separación autor/sellador: el veredicto del agente es necesario pero no suficiente). Nunca edites la línea `Estado:` a mano.
+El estado del plan **solo** lo escribe el script `.sdd/scripts/sdd-seal.py` (separación autor/sellador: el veredicto del agente es necesario pero no suficiente). Nunca edites la línea `Estado:` a mano. (Las aprobaciones de deuda del Paso 4b sí las escribe el orquestador: son el registro del checkpoint, distinto del sello operativo del plan — el sellador las verifica, no las produce.)
 
 Si el agente devuelve `OK`:
 - actualiza las líneas resumen del footer a:

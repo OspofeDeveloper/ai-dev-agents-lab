@@ -1,6 +1,6 @@
 ---
 name: kb-plan-expert
-description: Base de conocimiento del Plan técnico SDD. Define qué debe contener un Plan, qué no debe tener, cuándo Design es obligatorio, taxonomía de gaps y cómo validar que un Plan está listo para Tasks. Metodología stack-agnóstica.
+description: Base de conocimiento del Plan técnico SDD. Define qué debe contener un Plan, qué no debe tener, cuándo Design es obligatorio, taxonomía de gaps, deuda técnica asumida (TD-00X) y cómo validar que un Plan está listo para Tasks. Metodología stack-agnóstica.
 effort: low
 user-invocable: false
 allowed-tools: [Read]
@@ -122,7 +122,7 @@ El header del Plan usa exactamente estos estados:
 
 `VALIDADO` debe tratarse como una marca operativa confiable. Si la validación falla, el archivo debe quedar o volver a `BORRADOR`.
 
-El sello lo escribe **exclusivamente** el script determinista `.sdd/scripts/sdd-seal.py` (invocado por `wf-plan-validate`), que verifica condiciones mecánicas (gaps del footer en `ninguno`, sin `[INCOMPLETO]`, spec origen legible y sin `[CRÍTICO]`, `status_sync` fiable, cobertura de todos los CA-XXX del spec) además del veredicto del agente auditor. Ningún agente ni orquestador edita la línea `Estado:` a mano — la única excepción es el downgrade a `BORRADOR`, que siempre es seguro.
+El sello lo escribe **exclusivamente** el script determinista `.sdd/scripts/sdd-seal.py` (invocado por `wf-plan-validate`), que verifica condiciones mecánicas (gaps del footer en `ninguno`, sin `[INCOMPLETO]`, spec origen legible y sin `[CRÍTICO]`, `status_sync` fiable, cobertura de todos los CA-XXX del spec, deuda técnica sin entradas `PENDIENTE` ni campos incompletos) además del veredicto del agente auditor. Ningún agente ni orquestador edita la línea `Estado:` a mano — la única excepción es el downgrade a `BORRADOR`, que siempre es seguro.
 
 ## Taxonomía de gaps
 
@@ -134,6 +134,49 @@ Los únicos tipos normativos de gaps en la fase `plan` son:
 - `PLAN_GAP`: sección obligatoria, ownership o contrato técnico incompleto dentro del propio Plan
 
 Los workflows y el agente deben reutilizar estos tipos y no inventar variantes nuevas.
+
+## Deuda técnica asumida (frontera con los gaps)
+
+Un Plan puede registrar **deuda técnica** en vez de bloquearse, pero solo en un caso preciso. La distinción es la SSoT de esta fase:
+
+| | Gap | Deuda (`TD-00X`) |
+|---|---|---|
+| Naturaleza | "**No puedo decidir** — falta información" | "**Sí puedo decidir** — elijo un camino viable asumiendo un riesgo acotado" |
+| Incertidumbre sobre | el **QUÉ** (funcional: el Spec no determina el comportamiento) o un insumo obligatorio ausente | el **CÓMO** (técnico: legacy sin tests, módulo opaco, librería sin documentación, infraestructura limitada) |
+| Efecto en el sellado | **Bloquea** (footer ≠ `ninguno` → no sellable) | **No bloquea** una vez aprobada por el humano |
+| Ejemplo | "el CA-003 no especifica qué contexto porta la notificación" | "integramos contra el módulo de pagos legacy sin tests; lo envolvemos en un adapter y asumimos el riesgo de regresión no detectada" |
+
+### Test de admisión de deuda
+
+Una incertidumbre solo puede registrarse como `TD-00X` si cumple **las tres** condiciones:
+
+1. **Existe un camino técnico viable** que se puede prescribir hoy (la decisión está tomada, no aplazada).
+2. **No contradice el Spec**: ningún CA queda sin cubrir ni se altera comportamiento prometido. Si la duda es funcional → `TECH_GAP`, nunca deuda.
+3. **El riesgo es acotado y enunciable**: se puede escribir qué puede salir mal y hasta dónde. "No sabemos qué pasará" no es riesgo acotado — es gap.
+
+Si falla cualquiera de las tres, es un gap del tipo que corresponda. **La deuda nunca es una vía para esquivar un gap.**
+
+### Formato canónico
+
+Sección `## Deuda técnica asumida` del Plan (omitida si no hay deuda), una entrada por decisión:
+
+```markdown
+### TD-001: <título corto>
+
+- **Decisión:** <qué se decidió hacer>
+- **A pesar de:** <la limitación o incertidumbre técnica real>
+- **Riesgo asumido:** <qué puede salir mal y su alcance>
+- **Queda pendiente:** <qué saldaría la deuda — accionable, no vago>
+- **Componentes afectados:** <unidades de la Estructura técnica sobre las que pesa>
+- **Aprobada por:** PENDIENTE | <quién> (<YYYY-MM-DD>)
+```
+
+### Reglas de gobernanza
+
+- **Proponer ≠ aprobar**: `plan-architect` propone entradas con `Aprobada por: PENDIENTE`. La aprobación es **humana y explícita**, recogida por `wf-plan-validate` antes del sellado. El sellador (`sdd-seal.py`) verifica mecánicamente que ninguna TD quede `PENDIENTE` y que los campos obligatorios estén completos — una TD sin aprobar bloquea el sellado igual que un gap.
+- **Herencia en tasks**: `wf-prepare-tasks` propaga `- **Deuda asumida:** TD-00X` al bloque de las tasks cuyos componentes están en `Componentes afectados`. El owner implementa **respetando la decisión documentada** — no "resuelve" la limitación por su cuenta ni improvisa alternativas.
+- **Saldar la deuda es trabajo futuro**, fuera del alcance de la feature: vive en `Queda pendiente`, no genera tasks propias.
+- Sin `Queda pendiente` accionable no hay deuda válida: una decisión sin vía de saldado es una decisión de arquitectura normal y se documenta donde corresponda, no aquí.
 
 ## Precondiciones duras de la fase
 

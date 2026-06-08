@@ -58,7 +58,9 @@ No bypasses este gate: existe también como verificación determinista en `.sdd/
 !python3 .sdd/scripts/sdd-task-state.py set <tasks.md> T-00X EN_CURSO
 ```
 
-Lee el bloque completo de la task (Spec CA, Plan ref, Componente, Layer, Input, DoD).
+Lee el bloque completo de la task (Spec CA, Plan ref, Componente, Layer, Input, DoD, y `Deuda asumida` si está presente).
+
+Si la task declara `- **Deuda asumida:** TD-00X`, inclúyela en el prompt del owner como **restricción a respetar**: implementa conforme a la decisión documentada en la sección `## Deuda técnica asumida` del plan, asumiendo la limitación descrita. El owner NO debe "resolver" la limitación por su cuenta ni cambiar de enfoque para evitarla — si cree que la deuda ya no aplica o que hay una salida mejor, lo reporta, no lo decide.
 
 **Modo overlay** (owner = agente del stack): invoca el `Agent` tool con `subagent_type` = el `Owner agent` de la task y este prompt:
 

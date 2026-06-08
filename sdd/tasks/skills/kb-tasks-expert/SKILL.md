@@ -46,10 +46,13 @@ Además del bloque de Tasks individuales, el `_tasks.md` debe llevar un header d
 - **Suggested workflow:** [wf-* concreta si existe y aplica | —]
 - **Input:** [qué contrato, modelo, pantalla o configuración recibe o crea]
 - **Dependencies:** [T-XXX, T-YYY | ninguna]
+- **Deuda asumida:** [TD-XXX — título corto | omitir la línea si la task no toca componentes con deuda]
 - **Definition of done:** [qué artefactos deben existir o quedar integrados al finalizar]
 ```
 
 Consulta `${CLAUDE_SKILL_DIR}/references/task_templates.md` para templates por tipo de componente.
+
+**Deuda asumida** (opcional) aparece solo si el Plan declara `## Deuda técnica asumida` y esta task toca un componente listado en los `Componentes afectados` de una `TD-00X`. Es contexto heredado, no editable: el owner implementa **respetando la decisión documentada en el Plan** (no improvisa una solución a la limitación ni la "resuelve" por su cuenta — saldar la deuda es trabajo futuro fuera del alcance de la task). Lo escribe `wf-prepare-tasks` al generar; `sdd-task-state.py` no lo toca.
 
 **Estado** es el campo de ejecución persistente (`PENDIENTE | EN_CURSO | HECHA | BLOQUEADA`). Se genera siempre como `PENDIENTE`. A partir de ahí **solo lo escribe el script determinista** `.sdd/scripts/sdd-task-state.py` (invocado por `wf-task-run`), que valida transiciones y dependencias y regenera la tabla `## Progreso` — nunca se edita a mano. Archivos `_tasks.md` anteriores a este campo se inicializan con `sdd-task-state.py init`.
 

@@ -44,6 +44,7 @@ Principio rector: **el modo genérico es el caso base; el overlay especializa, n
 Reglas para una variante válida:
 
 - **Conserva el contrato externo**: misma metodología, misma taxonomía de gaps (`DESIGN_GAP`/`TECH_GAP`/`TRACE_GAP`/`PLAN_GAP`), mismos estados (`BORRADOR`/`VALIDADO`), mismo formato de artefacto de salida y misma regla canónica de Design. Solo especializa el **cómo** (capas, librerías, owners, templates).
+- **No re-copies el procedimiento metodológico**: el cuerpo de las variantes de `plan-architect`, `plan-auditor` y `task-generator` **carga la KB de método compartida** (`kb-plan-method` para los de plan, `kb-tasks-method` para task-generator) en su frontmatter `skills:` y solo aporta la **capa de especialización** sobre los hooks `‹especialización de stack›` que esas KBs marcan. Las method KB **no se sobreescriben** (no tienen variante de stack): viven en `plan/skills/` y `tasks/skills/`, las instala la base y las cargan por nombre tanto la variante genérica como la del overlay (mismo mecanismo cross-fase que `kb-a11y-expert`). Esto evita que cada cambio metodológico haya que replicarlo en N agentes.
 - Los workflows de fase (`wf-prepare-plan`, `wf-prepare-tasks`, `wf-plan-validate`) **nunca** se sobreescriben: son neutrales y resuelven el stack por los gates.
 - Los owners de tasks en la variante son los agentes del stack; en la genérica, `orquestador`.
 
@@ -77,5 +78,6 @@ Reglas para una variante válida:
 - [ ] `<stack>_project_state.md` generado con secciones mínimas: targets/runtime, arquitectura, dependencias clave, comandos build/test
 - [ ] Agentes implementadores con contrato de cierre verificable (invariante 5): sección de cierre que referencia la regla del protocolo del stack
 - [ ] Variantes de override (si las hay) conservan el contrato externo de la pieza genérica
+- [ ] Variantes de `plan-architect`/`plan-auditor`/`task-generator` cargan la method KB compartida (`kb-plan-method`/`kb-tasks-method`) y solo aportan la especialización de stack — no re-copian el procedimiento
 - [ ] Condición de detección añadida a `wf-project-init` Paso 4
 - [ ] Registrado en `skill-registry.md` via `wf-sdd-status`

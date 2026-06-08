@@ -78,6 +78,7 @@ Contenido del Plan:
 <contenido_completo_del_plan>
 ---
 INSTRUCCIÓN: El Plan ya viene validado. Si declara metadata de trazabilidad (`Spec origen`, `PRD origen`, `PRD version`, `Change ref`, `Status sync`), propágala al header del `_tasks.md`. Si falta, usa `unknown` o `N/A` de forma explícita.
+INSTRUCCIÓN: Si el Plan declara `## Deuda técnica asumida`, propaga la deuda a las tasks afectadas: cada task cuyo componente aparezca en `Componentes afectados` de una `TD-00X` lleva en su bloque la línea `- **Deuda asumida:** TD-00X — <título corto de la deuda>`. El owner implementará respetando esa decisión documentada, sin "resolver" la limitación por su cuenta.
 ```
 
 Espera a que el agente complete su ejecución y recibe su output.
