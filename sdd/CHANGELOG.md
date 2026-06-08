@@ -2,6 +2,15 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.14.0 — 2026-06-08
+
+Detección de deriva en la fase Design (ROADMAP 4.3):
+
+- Nuevo `wf-design-sync <DESIGN.md>` — réplica del patrón `wf-prd-sync-impact` para Design. Hasta ahora, tras cambiar el `DESIGN.md`, el brief o un spec, nada detectaba qué artefactos derivados quedaban stale (el "considera regenerar" de `wf-design-delta` era manual). Ahora se diagnostica explícitamente.
+- Descubre los derivados (DESIGN_BRIEF, `_flows`/`_views`/`_ui_prompt` por feature en subcarpeta o layout plano legacy, exports de tokens, specs fuente) y asigna estado `in_sync`/`needs_review`/`stale`/`unknown` por artefacto siguiendo el **grafo de dependencias** de la fase (brief→DESIGN.md→views/ui_prompt/exports; spec→flows/views/ui_prompt) con criterio conservador (`kb-design-governance`/`kb-design-expert`: si no se puede probar alineación, no es `in_sync`). Produce `<basename>_design_sync_report.md` con matriz y acción recomendada por fila (`wf-design-delta` / `wf-design-feature-prototype` / `wf-design-export`). Delega a `design-architect`; read-only sobre los derivados.
+- Alcance: análisis de impacto, no sellado por hash. El sellado determinista de deriva en Design (hash de DESIGN.md/spec en el header de cada artefacto, à la `sdd-sync-check.py`) queda como endurecimiento futuro anotado en ROADMAP 11.2.
+- Rootmaps (raíz + design) y tabla de precondiciones de design actualizados; registry 119 skills (+1 wf). Sin scripts nuevos. Proyectos ya inicializados lo reciben con `/wf-sdd-update`.
+
 ## 0.13.0 — 2026-06-08
 
 El repo destino manda sobre el dogma del stack (ROADMAP 6.3):

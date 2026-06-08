@@ -52,6 +52,7 @@ Si buscas mejor rendimiento y menos carga de contexto, instala y usa el `CLAUDE.
 | Auditar un DESIGN.md existente sin regenerarlo | `/wf-design-validate` | `<DESIGN.md> [--brief <DESIGN_BRIEF.md>] [--views <views.md>] [--lenient] [--pedagogical]` |
 | Analizar cambios sobre un DESIGN.md existente | `/wf-design-delta` | `analyze <DESIGN.md> --new-reqs <cambios.md> [--brief <DESIGN_BRIEF.md>]` |
 | Aplicar un delta analysis a un DESIGN.md | `/wf-design-delta` | `apply <DESIGN.md> <design_delta_analysis.md>` |
+| Medir qué artefactos de diseño (flows/views/ui_prompt/tokens) quedaron stale tras un cambio | `/wf-design-sync` | `<DESIGN.md>` |
 | Generar flows, views y prompt de ensamblaje para Stitch desde un feature spec | `/wf-design-feature-prototype` | `generate <feature_spec.md> [--design-file DESIGN.md] [--brief <DESIGN_BRIEF.md>] [--no-brief]` |
 | Capturar inspiración visual antes del intake (moodboard) | `/wf-design-moodboard` | `<feature_spec.md> [--prd <prd.md>] [--output <path>] [--mode interactive\|auto]` |
 | Explorar una variante paralela del DESIGN.md sin comprometer main | `/wf-design-branch` | `create <branch-name> \| list \| compare <a> <b> \| merge <branch> --into <target> \| discard <branch>` |
@@ -173,6 +174,7 @@ features/<nombre>/tasks/<nombre>_qa_report.md
 > Para prototipado visual desde Specs listos: primero `/wf-design-intake generate <feature_spec.md>` (gate obligatorio), luego opcionalmente `/wf-design-discover`, después `/wf-design-system generate <feature_spec.md> --brief DESIGN_BRIEF.md` y finalmente `/wf-design-feature-prototype generate <feature_spec.md> --brief DESIGN_BRIEF.md`.
 > Para auditar un `DESIGN.md` editado manualmente: `/wf-design-validate <DESIGN.md>`.
 > Para cambios incrementales en `DESIGN.md`: `/wf-design-delta analyze <DESIGN.md> --new-reqs <cambios.md>`.
+> Tras un cambio de `DESIGN.md`, brief o spec, para saber qué flows/views/ui_prompt/tokens quedaron stale: `/wf-design-sync <DESIGN.md>` (análisis de impacto de la fase Design, réplica de `wf-prd-sync-impact`).
 > En la salida de Design: `flows` = secuencias y transiciones; `views` = SSoT de pantallas y estados visuales; `ui_prompt` = ensamblaje para Stitch.
 > Para pasar de Plan a Tasks: `/wf-prepare-plan generate <feature_spec.md>` → `/wf-plan-validate <feature_plan.md>` → `/wf-prepare-tasks generate <feature_plan.md>`.
 > Para cambios de producto (scope, prioridad, exclusiones): primero `/wf-prd-change`, luego `/wf-prd-sync-impact` y `/wf-spec-sync-from-prd`.

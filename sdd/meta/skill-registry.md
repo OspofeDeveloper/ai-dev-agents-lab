@@ -1,6 +1,6 @@
 # SDD Skill Registry
 <!-- Auto-generado por scripts/generate-skill-registry.py. No editar manualmente. -->
-<!-- Total: 118 skills | 51 wf-* (user-invocable) | 67 kb-* -->
+<!-- Total: 119 skills | 52 wf-* (user-invocable) | 67 kb-* -->
 <!-- Última actualización: 2026-06-08 -->
 
 ## Meta-Ecosistema (meta/)
@@ -82,6 +82,7 @@
 | wf-design-feedback | Captura feedback no estructurado de stakeholders (cliente, PM, dev, QA) y lo triajea en categorias accionables: cambio de brief, delta visual, ajuste de featur… | true | design/skills/wf-design-feedback/SKILL.md |
 | wf-design-intake | Cierra un DESIGN_BRIEF.md antes de generar el sistema visual | true | design/skills/wf-design-intake/SKILL.md |
 | wf-design-moodboard | Captura inspiracion visual no estructurada antes del discovery | true | design/skills/wf-design-moodboard/SKILL.md |
+| wf-design-sync | Analiza el impacto de un cambio en el sistema visual o en los specs sobre los artefactos de diseño ya derivados | true | design/skills/wf-design-sync/SKILL.md |
 | wf-design-system | Crea o actualiza el DESIGN.md de un producto a partir de un feature spec validado y un DESIGN_BRIEF.md cerrado | true | design/skills/wf-design-system/SKILL.md |
 | wf-design-validate | Audita un DESIGN.md ya existente contra el contrato visual (kb-design-expert, kb-design-style-taxonomy, kb-design-brief) y el linter oficial de Google design.md | true | design/skills/wf-design-validate/SKILL.md |
 | wf-design-variant | Permite el A/B testing visual de una feature | true | design/skills/wf-design-variant/SKILL.md |

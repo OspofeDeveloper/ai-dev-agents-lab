@@ -44,6 +44,7 @@ Si no existe `DESIGN_BRIEF.md`, ejecuta primero `/wf-design-intake`. Los workflo
 | Auditar un DESIGN.md existente sin regenerarlo | `/wf-design-validate` | `<DESIGN.md> [--brief <DESIGN_BRIEF.md>] [--views <views.md>] [--lenient] [--pedagogical]` |
 | Analizar cambios sobre un DESIGN.md existente | `/wf-design-delta` | `analyze <DESIGN.md> --new-reqs <cambios.md> [--brief <DESIGN_BRIEF.md>]` |
 | Aplicar un delta analysis a un DESIGN.md | `/wf-design-delta` | `apply <DESIGN.md> <design_delta_analysis.md>` |
+| Medir qué artefactos derivados (flows/views/ui_prompt/tokens) quedaron stale tras un cambio | `/wf-design-sync` | `<DESIGN.md>` |
 | Explorar una variante paralela del DESIGN.md sin comprometer main | `/wf-design-branch` | `create <branch-name> \| list \| compare <a> <b> \| merge <branch> --into <target> \| discard <branch>` |
 | A/B testing visual de una feature concreta | `/wf-design-variant` | `create <feature_spec.md> --variants A,B [--hypothesis 'texto'] \| compare <feature_variants.md>` |
 | Exportar tokens del DESIGN.md a CSS, Style Dictionary, Compose, SwiftUI o Tailwind | `/wf-design-export` | `<DESIGN.md> --platforms <css,style-dictionary,compose,swiftui,tailwind> [--output-dir <path>] [--dry-run]` |
@@ -68,6 +69,7 @@ Si no existe `DESIGN_BRIEF.md`, ejecuta primero `/wf-design-intake`. Los workflo
    | `wf-design-variant` | si | si | si |
    | `wf-design-feature-prototype` | si | si (gate) | si |
    | `wf-design-export` | no | no | si |
+   | `wf-design-sync` | no (los lee) | recomendado | si |
    | `wf-design-a11y-audit` | no | recomendado | si |
    | `wf-design-feedback capture` | no | no | no |
    | `wf-design-feedback triage` | no | recomendado (contexto) | recomendado |
