@@ -9,7 +9,9 @@ user-invocable: false
 
 # Gap Conventions — SSoT de Gaps y Marcadores SDD
 
-Este skill es el **Single Source of Truth** para todas las convenciones de gaps en el pipeline SDD. Consúltalo antes de generar, formatear o verificar cualquier gap en cualquier modo.
+Este skill es el **Single Source of Truth** para todas las convenciones de gaps y marcadores de la fase Spec en adelante (analyze, fast-track, delta, caracterización, plan). Consúltalo antes de generar, formatear o verificar cualquier gap en cualquier modo.
+
+> **Marcador de la fase PRD — fuera de este skill**: la red anti-fabricación del PRD usa `[ASUNCIÓN]` (afirmación de negocio inferida, no trazable a la fuente, pendiente de confirmación humana en `wf-prd-review`). No es un gap del pipeline ni lo gestionan los gates de spec; su SSoT es `kb-prd-expert` (Regla 12).
 
 ---
 

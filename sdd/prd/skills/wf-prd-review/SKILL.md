@@ -4,14 +4,14 @@ description: "Revision rapida de un PRD o documento de requisitos antes de entra
 when_to_use: "Activa en frases como 'revisa mi PRD', '¿este PRD esta bien para empezar?', 'haz preflight del PRD', 'valida el documento de requisitos antes del spec'."
 argument-hint: "<archivo_prd.md>"
 effort: medium
-allowed-tools: [Read, Write, Bash]
+allowed-tools: [Read, Write, Bash, AskUserQuestion]
 context: fork
 agent: prd-expert
 ---
 
 # Workflow: PRD Review
 
-Tu objetivo es revisar si un PRD está preparado para entrar en el pipeline SDD. No generas Spec, no generas features y no corriges el documento por tu cuenta: emites un diagnóstico claro y accionable.
+Tu objetivo es revisar si un PRD está preparado para entrar en el pipeline SDD. No generas Spec, no generas features y no corriges el documento por tu cuenta: emites un diagnóstico claro y accionable. **Única excepción**: la confirmación de asunciones del Paso 5.5, donde sí editas el PRD — pero solo lo que el usuario decide explícitamente sobre cada `[ASUNCIÓN]`, nunca de tu cosecha.
 
 Usa `kb-prd-expert` como fuente autoritativa.
 
@@ -79,6 +79,28 @@ No inventes una frontera propia inline: la SSoT es `kb-prd-expert`.
 
 ---
 
+## Paso 5.5: Confirmar asunciones del PRD (anti-fabricación)
+
+`kb-prd-expert` Regla 12 obliga a que toda afirmación de negocio no trazable a la fuente esté marcada `[ASUNCIÓN]`. Este paso es el **gate de confirmación humana** de esas asunciones — el contrapunto a la generación: el autor marca lo que infirió, el review lo confirma o lo descarta.
+
+**Detección determinista** (no a ojo):
+```
+!grep -n "\[ASUNCIÓN\]" "<path>"; grep -c "\[ASUNCIÓN\]" "<path>"
+```
+
+- **Cuenta `0`** → no hay asunciones pendientes; sigue al veredicto.
+- **Cuenta `> 0`** → localiza la sección `## Asunciones del PRD` y procesa **cada `[ASN-XXX]` una a una con el usuario** (usa `AskUserQuestion` cuando haya varias): para cada una, presenta la afirmación inferida y su hueco, y pide decisión:
+  - **Confirmar** → es correcta: marca la casilla `[x]` y elimina el marcador `[ASUNCIÓN]` inline de esa afirmación (pasa a ser hecho de negocio).
+  - **Rechazar** → no es lo que el negocio quiere: elimina del PRD la afirmación y su marcador (y el contenido que dependía de ella).
+  - **Editar** → el usuario da el dato real: sustituye la afirmación por el texto confirmado y quita el marcador.
+  - Cuando una sección queda sin asunciones pendientes, elimina la entrada de `## Asunciones del PRD`; si no queda ninguna, elimina la sección entera.
+
+A diferencia del resto de `wf-prd-review` (que solo diagnostica), aquí **sí** editas el PRD, pero solo lo que el usuario decide explícitamente sobre cada asunción — no reescrituras de tu cosecha.
+
+**Efecto en el veredicto:** mientras queden marcadores `[ASUNCIÓN]` sin confirmar, el PRD **no puede ser `LISTO`** (es contenido fabricado sin validar). Si el usuario no quiere resolverlas ahora, el veredicto es `NO_LISTO` con las asunciones pendientes listadas.
+
+---
+
 ## Paso 6: Emitir veredicto
 
 Responde con este formato:
@@ -89,11 +111,17 @@ Responde con este formato:
 ### Veredicto general
 LISTO / LISTO_CON_AJUSTES / NO_LISTO
 
+> Con `[ASUNCIÓN]` sin confirmar, el veredicto NO puede ser `LISTO`.
+
 ### Estructura
 - ...
 
 ### Frontera negocio/técnica
 - ...
+
+### Asunciones (anti-fabricación)
+- `[ASN-XXX]` confirmadas: N · rechazadas: M · pendientes: K
+- (si quedan pendientes) listarlas — el PRD no está listo hasta resolverlas
 
 ### Problemas a corregir antes del Spec
 1. ...

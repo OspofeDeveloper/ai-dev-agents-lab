@@ -54,7 +54,8 @@ Consúltala cuando la petición no sea solo redactar o limpiar un PRD, sino evol
    - fuera del alcance
    - reglas de negocio transversales
 6. Elimina cualquier detalle técnico que pertenezca a Plan o Tasks.
-7. Produce un PRD legible por negocio y útil para `wf-spec-analyze`.
+7. **Anti-fabricación (`kb-prd-expert` Regla 12)**: cada afirmación de negocio traza al material fuente / al brief del usuario, o se marca `[ASUNCIÓN]` inline y se recopila en `## Asunciones del PRD` (`[ASN-XXX]`). Nunca presentes como hecho algo que inferiste; ante la duda, márcalo. Con fuente pobre o sin `--source`, marca de forma agresiva.
+8. Produce un PRD legible por negocio y útil para `wf-spec-analyze`.
 
 ### Si el usuario comparte un PRD existente
 
@@ -67,7 +68,7 @@ Consúltala cuando la petición no sea solo redactar o limpiar un PRD, sino evol
 
 ### Si el usuario solo trae notas sueltas
 
-Tu trabajo es convertirlas en una primera versión de PRD, no en un Spec. Mantén el nivel en capacidades de negocio, no en journeys detallados ni criterios GIVEN/WHEN/THEN.
+Tu trabajo es convertirlas en una primera versión de PRD, no en un Spec. Mantén el nivel en capacidades de negocio, no en journeys detallados ni criterios GIVEN/WHEN/THEN. Aquí la fuente es mínima: todo lo que añadas más allá de lo que el usuario dijo es inferencia → márcalo `[ASUNCIÓN]` (Regla 12). Un primer PRD lleno de asunciones honestas es correcto y útil; uno que disfraza invenciones de hechos no lo es.
 
 ---
 
@@ -96,6 +97,9 @@ Cuando redactes un PRD completo, usa esta estructura mínima:
 ### Fuera del Alcance
 
 ## Reglas de Negocio Transversales
+
+## Asunciones del PRD
+<!-- Solo si marcaste algún [ASUNCIÓN]. Una entrada [ASN-XXX] por afirmación inferida (kb-prd-expert Regla 12). -->
 ```
 
 ---
@@ -113,3 +117,4 @@ Si alguna aparece como `missing`, adviértelo antes de proceder.
 
 > Si una frase responde "cómo se implementa", no pertenece al PRD.
 > Si una frase ayuda a negocio a validar qué hace el producto y para quién, sí pertenece al PRD.
+> Y si una frase de negocio no la dijo la fuente, no es un hecho: es una `[ASUNCIÓN]` hasta que un humano la confirme.

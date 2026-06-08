@@ -223,3 +223,51 @@ Las reglas completas para distinguir:
 no viven aquí. Su SSoT es `kb-product-change-governance`.
 
 **Regla operativa mínima de este skill:** si cambia la respuesta a "qué producto estamos construyendo", no lo trates como una simple aclaración del `_analysis.md`; usa `wf-prd-change`.
+
+---
+
+## Regla 12: Anti-fabricación — toda afirmación de negocio traza al origen o se marca `[ASUNCIÓN]`
+
+El PRD es la **raíz** del pipeline: todo lo que afirma se trata aguas abajo como verdad de negocio. `wf-spec-analyze` confía en el PRD, `wf-spec-discover` deriva features de su alcance, y los specs heredan sus actores y reglas. Por eso una afirmación **inventada** en el PRD es el fallo más caro del sistema: no es un gap que el pipeline pueda preguntar (un gap es una pregunta abierta), es un dato falso presentado como hecho — y nadie lo cuestiona porque suena plausible.
+
+El riesgo es máximo cuando la fuente es pobre: sin `--source`, o con un brief de tres líneas, completar un PRD "razonable" significa **inventar** actores, capacidades, exclusiones u objetivos que nadie ha comprometido.
+
+**Regla dura:** toda afirmación de negocio del PRD (actor, capacidad de alcance, exclusión, regla transversal, objetivo o métrica del resumen ejecutivo) debe cumplir **una** de estas dos:
+
+1. **Traza al origen** — el material fuente (`--source`) o el brief que el usuario dio en sesión la afirma o la implica directamente.
+2. **Se marca `[ASUNCIÓN]`** — la generación la añadió para completar el PRD y **requiere confirmación humana** antes de avanzar.
+
+**Prohibido el tercer camino:** añadir contenido de negocio no soportado por la fuente **sin** marcarlo. Ante la duda de si algo traza o se infirió → se marca. No inventar en silencio nunca.
+
+### Formato del marcador
+
+- **Inline**, pegado a la afirmación inferida:
+  - actor: `### Coordinador [ASUNCIÓN]`
+  - capacidad / exclusión / regla: `- Aprueba las solicitudes de los cuidadores [ASUNCIÓN]`
+- **Sección dedicada** (al final del PRD, antes de cualquier anexo), que recopila todas para que el review las procese una a una:
+
+```markdown
+## Asunciones del PRD
+
+> ⚠ Estas afirmaciones NO provienen del material fuente — las infirió la generación para completar el PRD. Cada una requiere **confirmación humana explícita** (en `/wf-prd-review`) antes de pasar a `/wf-spec-analyze`. Confirmada → se integra y pierde el marcador; rechazada → se elimina del PRD junto con el contenido que la asumía.
+
+- [ ] **[ASN-001]** — [afirmación inferida, citada] · *Hueco que rellena: [qué faltaba en la fuente y por qué se asumió esto].*
+- [ ] **[ASN-002]** — ...
+```
+
+IDs `[ASN-XXX]` secuenciales desde `001`, propios del PRD (no se confunden con los `[P-XXX]` de gaps ni con los `[A-XXX]` de asunciones aplicadas del spec).
+
+### Asunción ≠ gap
+
+| | `[ASUNCIÓN]` (PRD) | gap `[P-XXX]` (analyze) |
+|---|---|---|
+| Qué es | contenido que la generación **inventó** para rellenar la fuente | pregunta que el pipeline **no sabe** responder |
+| Quién lo crea | `wf-prd-create` al redactar | `wf-spec-analyze` al analizar el PRD |
+| Cómo se cierra | confirmación humana en `wf-prd-review` (integra o elimina) | respuesta humana en el `_analysis.md` |
+| Si no se cierra | el PRD no está `LISTO`: contenido fabricado sin validar | la HU afectada queda `[INCOMPLETO]` |
+
+### Enforcement
+
+Un PRD con marcadores `[ASUNCIÓN]` sin resolver **no está `LISTO`**: `wf-prd-review` los detecta (check determinista), presenta cada uno al usuario para confirmación explícita y solo entonces se eliminan los marcadores. Las asunciones residuales que sobrevivan hasta `wf-spec-analyze` deben tratarse como gaps a confirmar, nunca como hechos.
+
+> SSoT del marcador `[ASUNCIÓN]`: esta regla. Los marcadores de gaps y de spec (`[P-XXX]`, `[INCOMPLETO]`, `[INFERIDO]`...) viven en `kb-gap-conventions`.

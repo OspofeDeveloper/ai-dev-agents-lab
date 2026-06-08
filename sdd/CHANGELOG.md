@@ -2,6 +2,16 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.10.0 — 2026-06-08
+
+Red anti-fabricación en el origen (PRD) (ROADMAP 1.6):
+
+- Nueva **Regla 12 de `kb-prd-expert`** (SSoT): toda afirmación de negocio del PRD (actor, capacidad, exclusión, regla transversal, objetivo) **traza al material fuente / al brief del usuario, o se marca `[ASUNCIÓN]`**. Prohibida la invención silenciosa: lo que la generación infiere para completar el PRD se marca inline y se recopila en `## Asunciones del PRD` con un `[ASN-XXX]` por entrada (hueco que rellena + casilla de confirmación). IDs propios del PRD, sin colisión con `[P-XXX]` (gaps) ni `[A-XXX]` (asunciones aplicadas del spec). Tabla asunción≠gap incluida.
+- `wf-prd-create` instruye la regla al `prd-expert` (énfasis agresivo cuando no hay `--source`: casi todo lo que exceda el brief es inferencia), incluye `## Asunciones del PRD` en la salida y reporta el nº de asunciones marcadas como señal de cuán débil era la fuente.
+- `wf-prd-review` gana el **Paso 5.5 (gate de confirmación humana)**: detecta `[ASUNCIÓN]` con un check determinista (`grep`), presenta cada `[ASN-XXX]` al usuario (`AskUserQuestion`) para confirmar / rechazar / editar, y edita el PRD solo según esa decisión. Un PRD con asunciones sin confirmar **no puede ser `LISTO`**. Es la primera vez que el review edita el documento — acotado a resolver asunciones, nunca de cosecha propia.
+- `prd-expert` (agente) alinea su flujo de creación y su regla de oro con la Regla 12; `kb-gap-conventions` añade un puntero cruzado al marcador del PRD (acota su propio ámbito a la fase Spec en adelante, sin absorber el marcador de otra fase).
+- ⚠ Proyectos ya inicializados: `/wf-sdd-update` trae el `wf-prd-review` más estricto (bloquea `LISTO` con asunciones sin confirmar) y el `wf-prd-create`/`prd-expert` que marcan `[ASUNCIÓN]`. Un PRD existente sin marcadores se comporta igual que antes; el endurecimiento aplica a PRDs nuevos o a los que se vuelvan a revisar. Sin scripts nuevos (la verificación es un `grep` dentro del review).
+
 ## 0.9.0 — 2026-06-08
 
 Concurrencia de artefactos hub — `_features.md` generado y `stack_workflows_run` como log append-only (ROADMAP 5.4):
