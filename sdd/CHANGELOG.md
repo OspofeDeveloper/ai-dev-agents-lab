@@ -2,6 +2,16 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.13.0 — 2026-06-08
+
+El repo destino manda sobre el dogma del stack (ROADMAP 6.3):
+
+- La variante de stack de los agentes (la KMM de `plan-architect` y los implementadores) imponía el canon del stack (Koin, `AppResult`, `compose-resources`, Clean Architecture por capas) como dogma; un repo KMM real con otras convenciones recibía imposiciones. Fix sistémico (no parche KMM), en tres capas que ya comparten genérico y overlay tras 6.2:
+- **`kb-plan-method` / `kb-tasks-method`** (hook "Overlay de stack"): reformulado — la arquitectura prescriptiva del stack es el **default para greenfield o donde el repo no se ha pronunciado**, pero **el repo destino manda cuando diverge** (convenciones reales capturadas en `<stack>_project_state.md`). El canon rellena huecos, no sobrescribe lo que el repo ya hace. Imponerlo es el mismo fallo que inventar en modo genérico.
+- **`kb-kmm-project-state-protocol`** Regla 7 nueva: el `kmm_project_state.md` (= repo real) manda sobre el canon KMM cuando divergen (Hilt vs Koin, `Result` vs `AppResult`, módulos distintos, `R.*` en target único...). Aplica a TODOS los agentes KMM, incluidos los implementadores (que cargan esta KB, no el method). El `plan-architect` KMM lleva además un puntero corto de precedencia junto a su declaración de canon.
+- **`kb-sdd-stack-overlay-contract`** invariante 6 nuevo + ítem de checklist: "el repo destino manda sobre el dogma" como contrato para todo overlay futuro (conecta con el invariante 1 "no romper el modo genérico"). Los overlays creados con `wf-stack-create` lo heredan (sdd-author carga esta KB).
+- Refactor de criterio, sin cambios en gates/sellador. Registry 118 skills (una description actualizada). ⚠ Proyectos ya inicializados: `/wf-sdd-update` para recibir las method KB y el protocolo KMM actualizados (sin actualizar, los agentes siguen prescribiendo el canon como antes).
+
 ## 0.12.0 — 2026-06-08
 
 KB Load Status verificable (ROADMAP 1.5 — cierra la Fase 1 de enforcement):

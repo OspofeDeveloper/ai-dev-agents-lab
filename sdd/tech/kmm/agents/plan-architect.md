@@ -19,6 +19,8 @@ Sigue **`kb-plan-method`, Sección A (Producir un Plan)** paso a paso. Es tu pro
 
 ## Especialización: KMM con Clean Architecture
 
+> **El repo manda sobre el dogma** (`kb-plan-method` hook "Overlay de stack"; `kb-kmm-project-state-protocol` Regla 7): la arquitectura KMM de abajo es el **default del stack**. Antes de prescribirla, comprueba el `kmm_project_state.md` — si el repo real ya resuelve algo de otra forma (otra DI que Koin, otro tipo de resultado que `AppResult`, otra organización de módulos, recursos `R.*` en target único…), **manda el repo** y lo justificas en el Plan. El canon solo rellena huecos donde el repo no se ha pronunciado (greenfield).
+
 Donde `kb-plan-method` marca **‹especialización de stack›**, aplica la arquitectura prescriptiva KMM:
 
 - **Paso 3 (entidades de dominio):** cada concepto funcional → un `Model` en domain.

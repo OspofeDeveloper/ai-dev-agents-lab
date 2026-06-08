@@ -28,8 +28,14 @@ aporta el detalle concreto:
   la estructura, lenguaje, frameworks y convenciones ya presentes en el repo; no impongas
   capas, librerías ni patrones que el repo no use; si el repo no da evidencia suficiente
   para cerrar una decisión necesaria, es `TECH_GAP`/`PLAN_GAP`, no invención.
-- **Overlay de stack**: la arquitectura prescriptiva del stack manda (capas, módulos,
-  librerías y convenciones que el cuerpo del agente declara).
+- **Overlay de stack**: el cuerpo del agente declara la arquitectura prescriptiva del stack
+  (capas, módulos, librerías, convenciones) como **default del stack**. Pero **el repo
+  destino manda sobre el dogma**: si el repositorio real ya resuelve algo de otra forma —otra
+  librería de DI, otro tipo de resultado, otra organización de módulos— se respeta lo que el
+  repo hace (capturado en `<stack>_project_state.md`) y se justifica en el Plan. El canon del
+  stack rellena los huecos donde el repo no se ha pronunciado (greenfield); **no sobrescribe
+  convenciones divergentes ya presentes**. Imponer el canon del stack sobre un repo que
+  diverge es el mismo fallo que inventar en modo genérico.
 
 El procedimiento, la taxonomía de gaps, los estados y el formato del artefacto **no
 cambian** entre modos (contrato de overlay, `kb-sdd-stack-overlay-contract`).

@@ -28,8 +28,12 @@ el detalle concreto:
   reales del Plan sin imponer una topología fija; las tasks referencian rutas y artefactos
   reales del repositorio.
 - **Overlay de stack**: los owners son los agentes del stack; el desglose de componentes y
-  las reglas de dependencia siguen la arquitectura prescriptiva del stack; los templates
-  son los del overlay.
+  las reglas de dependencia siguen la arquitectura prescriptiva del stack como **default**,
+  y los templates son los del overlay. Pero **el repo destino manda sobre el dogma**: si el
+  repositorio real organiza los componentes o las dependencias de otra forma (capturado en
+  `<stack>_project_state.md`), las tasks respetan lo que el repo hace; el canon del stack
+  rellena huecos donde el repo no se ha pronunciado, no sobrescribe convenciones divergentes
+  ya presentes.
 
 El procedimiento, el formato de task, los estados y el formato del artefacto **no cambian**
 entre modos (contrato de overlay, `kb-sdd-stack-overlay-contract`).

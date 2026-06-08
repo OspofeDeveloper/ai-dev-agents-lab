@@ -1,6 +1,6 @@
 ---
 name: kb-kmm-project-state-protocol
-description: "Protocolo de precondicion de contexto tecnico para agentes KMM. Define la obligacion de leer kmm_project_state.md al inicio de la operacion si existe, el bloqueo con mensaje de error estandar si no existe, la excepcion unica para kmm-explorer invocado por wf-kmm-init en modo detect, y el contrato de cierre verificable de los agentes implementadores (build y tests con los comandos del project state, reporte honesto). SSoT del protocolo compartido por kmm-explorer, kmm-planner, kmm-feature-implementer, kmm-platform-integrator, kmm-network-auth-implementer y kmm-tester."
+description: "Protocolo de precondicion de contexto tecnico para agentes KMM. Define la obligacion de leer kmm_project_state.md al inicio de la operacion si existe, el bloqueo con mensaje de error estandar si no existe, la excepcion unica para kmm-explorer invocado por wf-kmm-init en modo detect, el contrato de cierre verificable de los agentes implementadores (build y tests con los comandos del project state, reporte honesto), y la precedencia del repo real (project_state) sobre el canon KMM por defecto. SSoT del protocolo compartido por kmm-explorer, kmm-planner, kmm-feature-implementer, kmm-platform-integrator, kmm-network-auth-implementer y kmm-tester."
 effort: low
 allowed-tools: [Read]
 user-invocable: false
@@ -80,3 +80,18 @@ Aplica a los agentes que modifican codigo: `kmm-feature-implementer`, `kmm-platf
 4. **Ausencia de verificacion = declaracion explicita.** Si no hay forma razonable de ejecutar nada (entorno sin toolchain, sandbox sin gradle), el cierre debe decir literalmente "verificacion ejecutable: no disponible — <motivo>". Nunca presentar como verificado lo que no se ejecuto.
 
 Este contrato es la contraparte dentro del agente de lo que `wf-task-run` (Paso 6) y `wf-bug` (Paso 4) exigen desde fuera: ambos lados deben coincidir. El criterio generico para cualquier stack vive en `kb-sdd-stack-overlay-contract` (invariante de cierre verificable); esta regla es su concrecion KMM.
+
+## Regla 7: El repo real (project_state) manda sobre el canon KMM
+
+`kmm_project_state.md` captura las convenciones REALES de ESTE repo: que libreria de DI usa, que tipo de resultado, como organiza los modulos, que stack HTTP, como maneja recursos y navegacion. El canon KMM por defecto (Koin, `AppResult<T, AppError>`, `compose-resources`, Clean Architecture por capas `app/features/core`, navegacion por contrato...) es el **default del stack para greenfield o donde el project_state no se pronuncia** — no una imposicion.
+
+Cuando el `kmm_project_state.md` declara una convencion distinta del canon, **manda el project_state** (= el repo real). Ejemplos:
+
+- el repo usa Hilt o inyeccion manual en vez de Koin → se respeta lo del repo; no se impone Koin
+- el repo usa `Result`/`Either`/excepciones en vez de `AppResult` → se respeta lo del repo
+- el repo organiza los modulos de otra forma (monolitico, por capas distintas) → el plan/tasks siguen esa organizacion real
+- el repo usa recursos Android `R.*` en un target unico → no se fuerza `compose-resources`
+
+Aplica a TODOS los agentes KMM, incluidos los implementadores: antes de prescribir o escribir codigo con el canon, comprueba que el `kmm_project_state.md` no declare otra cosa. Imponer el dogma KMM sobre un repo que ya resuelve algo de otra forma es un defecto — el mismo principio anti-imposicion que rige el modo generico ("el repo manda"). El canon solo rellena los huecos donde el repo no tiene opinion. Si el project_state no captura una dimension necesaria y el repo tampoco da evidencia, es `TECH_GAP`, no licencia para imponer el canon.
+
+Criterio generico (cualquier overlay) en `kb-sdd-stack-overlay-contract`; metodo de plan/tasks en `kb-plan-method` / `kb-tasks-method` (hook "Overlay de stack").
