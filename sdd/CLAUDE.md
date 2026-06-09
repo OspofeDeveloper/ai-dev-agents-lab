@@ -31,6 +31,7 @@ Si buscas mejor rendimiento y menos carga de contexto, instala y usa el `CLAUDE.
 | Revisar si un PRD está limpio y bien planteado | `/wf-prd-review` | `<archivo_prd.md>` |
 | Formalizar un cambio de producto sobre un PRD existente | `/wf-prd-change` | `<archivo_prd.md> --new-reqs <cambio.md>` |
 | Medir impacto de un cambio de PRD sobre artefactos derivados | `/wf-prd-sync-impact` | `<archivo_prd.md>` |
+| Propagar un cambio de PRD por todo el pipeline en un solo comando (cascade) | `/wf-prd-change-cascade` | `<archivo_prd.md> [--new-reqs <cambio.md>] [--features F-001,...] [--review-before-apply] [--skip-design] [--dry-run]` |
 | Resincronizar specs tras un cambio de PRD | `/wf-spec-sync-from-prd` | `analyze <prd.md> \| apply <prd.md> --features F-001,F-002,...` |
 | Analizar un PRD/documento para detectar gaps | `/wf-spec-analyze` | `<archivo.md>` |
 | Generar specs desde código existente (brownfield, sin PRD) | `/wf-spec-from-code` | `discover <path_codigo> [--scope <subdir>] \| generate <path_codigo> --feature <F-C-00X>` |
@@ -177,7 +178,7 @@ features/<nombre>/tasks/<nombre>_qa_report.md
 > Tras un cambio de `DESIGN.md`, brief o spec, para saber qué flows/views/ui_prompt/tokens quedaron stale: `/wf-design-sync <DESIGN.md>` (análisis de impacto de la fase Design, réplica de `wf-prd-sync-impact`).
 > En la salida de Design: `flows` = secuencias y transiciones; `views` = SSoT de pantallas y estados visuales; `ui_prompt` = ensamblaje para Stitch.
 > Para pasar de Plan a Tasks: `/wf-prepare-plan generate <feature_spec.md>` → `/wf-plan-validate <feature_plan.md>` → `/wf-prepare-tasks generate <feature_plan.md>`.
-> Para cambios de producto (scope, prioridad, exclusiones): primero `/wf-prd-change`, luego `/wf-prd-sync-impact` y `/wf-spec-sync-from-prd`.
+> Para cambios de producto (scope, prioridad, exclusiones): primero `/wf-prd-change`, luego `/wf-prd-sync-impact` y `/wf-spec-sync-from-prd`. Para encadenar toda esa cascada en un solo comando, parando solo en los checkpoints humanos reales (aprobación del cambio, features con cambio no trivial, decisiones de diseño, revalidación de plan): `/wf-prd-change-cascade <prd.md> --new-reqs <cambio.md>`. Auto-aplica los deltas de spec inequívocos (`minor`); `--review-before-apply` restaura la parada conservadora antes de cualquier escritura; `--dry-run` solo diagnostica.
 > Tras `/wf-prepare-tasks`, la ejecución es `/wf-task-run <tasks.md>`: delega cada task a su `Owner agent` (agentes del overlay de stack, u orquestador en modo genérico), con estado persistente gestionado por `sdd-task-state.py` y un commit por task.
 > Para bugs sobre features ya entregadas: `/wf-bug <descripción>` — triaje contra el CA del spec; solo escala a `/wf-spec-delta` si el comportamiento esperado cambia.
 > Para un CA ambiguo descubierto DURANTE la implementación (back-edge tasks→spec): `/wf-spec-amend <spec.md> --ca CA-XXX --from-task T-00X` — aclaración quirúrgica sin re-descender el waterfall. El plan se marca con `Enmienda pendiente` (solo lo escribe `sdd-amend.py`) y solo quedan retenidas las tasks que referencian ese CA; si el comportamiento esperado cambia, no es enmienda: es `/wf-spec-delta`.

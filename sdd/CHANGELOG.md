@@ -2,6 +2,16 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.15.0 — 2026-06-09
+
+Cascade de cambio de producto en un solo comando (ROADMAP 4.4):
+
+- Nuevo `wf-prd-change-cascade <prd.md> --new-reqs <cambio.md>` — compacta en un solo comando la cadena de ~9 workflows que hoy se encadenan a mano tras un cambio de PRD: `wf-prd-change` → `wf-prd-sync-impact` → `wf-spec-sync-from-prd analyze` → `apply` → `wf-spec-conflict` + `wf-spec-readiness` → `wf-design-sync` → reporte de planes/tasks stale. Produce `<basename>_cascade_report.md`.
+- **Orquestador puro** (mismo patrón que `wf-spec-features-first`: sin campo `agent:`, no analiza ni escribe contenido — invoca los workflows existentes en orden y cada uno delega a su agente). `allowed-tools: [Read, Write, Bash, Skill]`.
+- **Autonomía: mecánico auto + parar en gates reales.** Corre sin fricción todo el pegamento mecánico/read-only **y auto-aplica los deltas de spec inequívocos** (`severidad: minor` + `acción: delta`). Para solo en los 4 checkpoints humanos reales: (1) aprobación del cambio de producto, (2) features con cambio no trivial (`major`/`manual_review`/`rediscover`, que se listan sin aplicar y sin abortar el cascade), (3) decisiones visuales de Design (`wf-design-sync` solo diagnostica), (4) revalidación de plan + aprobación de deuda. `--review-before-apply` restaura la parada conservadora antes de cualquier escritura; `--dry-run` solo diagnostica; `--features` acota el subset; `--skip-design` omite Design.
+- **Profundidad adaptativa**: solo entra en Design si existe `DESIGN.md` y la fase está instalada; solo reporta planes/tasks si existen artefactos; resuelve `phases`/`artifacts` de `.sdd/project-init.json`. **Degradación con gracia**: un sub-workflow no instalado se reporta como `no disponible` sin abortar el cascade.
+- Vive en la fase `prd` (es donde nace el disparador: el cambio de PRD); `install.sh prd` lo recoge por glob. Rootmaps (raíz + prd) y nota de pipeline de cambios de producto actualizados; registry 120 skills (+1 wf). Sin scripts nuevos. Proyectos ya inicializados lo reciben con `/wf-sdd-update`.
+
 ## 0.14.0 — 2026-06-08
 
 Detección de deriva en la fase Design (ROADMAP 4.3):

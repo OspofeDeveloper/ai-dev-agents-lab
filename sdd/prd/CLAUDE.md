@@ -19,6 +19,7 @@ Las `kb-*` viven en los subagentes y se cargan automáticamente en su contexto. 
 | Crear un PRD desde notas, brief o idea inicial | `/wf-prd-create` | `<directorio_proyecto> [--source <notas.md>] [--output <prd.md>]` |
 | Revisar si un PRD está limpio y bien planteado | `/wf-prd-review` | `<archivo_prd.md>` |
 | Gestionar un cambio de producto sobre un PRD ya existente | `/wf-prd-change` | `<archivo_prd.md> --new-reqs <cambio.md>` |
+| Propagar un cambio de PRD por todo el pipeline en un solo comando (cascade) | `/wf-prd-change-cascade` | `<archivo_prd.md> [--new-reqs <cambio.md>] [--features F-001,...] [--review-before-apply] [--skip-design] [--dry-run]` |
 
 ## Cómo actuar ante una petición
 
