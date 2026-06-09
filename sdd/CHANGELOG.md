@@ -2,6 +2,15 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.20.0 — 2026-06-09
+
+Guía para stacks sin tooling moderno (ROADMAP 3.3):
+
+- El contrato de overlay exigía `<stack>_project_state.md` con comandos build/test y el invariante 5 (cierre verificable) exigía build + tests; un proyecto legacy sin tests ni módulos (PHP 5, monolito) no encajaba y quedaba "roto de fábrica". Ahora la **degradación con gracia está documentada como camino legítimo** (cambio puramente documental; no toca scripts, gates ni sellador — la verificación ya manejaba la ausencia declarándola).
+- **`kb-sdd-stack-overlay-contract`** (SSoT): `tests: none` y `build: manual|none` declarados como **estado HONESTO válido** del project_state (no instalación rota ni hueco a rellenar inventando comandos inexistentes). El invariante 5 se degrada explícitamente: con `tests: none`, el cierre se satisface con la declaración ya prevista (`verificación ejecutable: no disponible — tests: none declarado…`), sin exigir suite verde inexistente; la honestidad sigue innegociable (prohibido declarar "tests pasan" sin tests). Nueva sección "Estado de tooling degradado" + estrategia **characterization-first** (referenciando `kb-spec-characterization` / `wf-spec-from-code` de 3.1: `tests: none` es punto de partida a remontar, no estado final). Checklist de conformidad actualizado.
+- **`kb-plan-expert`**: criterios de plan para **monolitos sin sistema de módulos** — descomposición por capas/fronteras lógicas (directorios, namespaces, responsabilidades) en vez de fronteras de módulo; dependencias por acoplamiento lógico; "el repo manda" con más fuerza; cortes de PR por las mismas costuras (referencia `kb-delivery-discipline`).
+- **`kb-kmm-project-state-protocol`** (Regla 6): puntero de una línea a la degradación genérica, sin reescribir. Sin kb nueva, sin scripts, registry intacto. ⚠ Proyectos ya inicializados (fase plan / overlay KMM): `/wf-sdd-update` para recibir la guía (sin actualizar, el comportamiento previo sigue válido).
+
 ## 0.19.0 — 2026-06-09
 
 Work Unit Commits + Chained PRs (ROADMAP 2.5):

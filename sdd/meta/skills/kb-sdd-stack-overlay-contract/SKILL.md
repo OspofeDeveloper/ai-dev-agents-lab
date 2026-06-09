@@ -20,7 +20,7 @@ Principio rector: **el modo genérico es el caso base; el overlay especializa, n
 |---|---|---|
 | Installer del overlay | `tech/<stack>/install.sh` | Copia agentes y skills del overlay al `.claude` del proyecto destino. Se ejecuta SIEMPRE después del install base de fases |
 | Init especialista | `tech/<stack>/skills/wf-<stack>-init/` | Genera `<stack>_project_state.md` con el estado técnico real del proyecto. Modos `detect` (exploración de proyecto existente) y `configure` (preguntas para proyecto nuevo). Registra su ejecución (append-only, una línea JSON por run) en `.sdd/stack-runs.jsonl` — nunca en un array dentro de `project-init.json` (config compartida = conflicto de merge) |
-| Project state | `<stack>_project_state.md` (raíz del proyecto destino) | SSoT del estado técnico: targets, arquitectura, librerías, comandos de build/test. Lo leen todos los agentes del stack antes de operar |
+| Project state | `<stack>_project_state.md` (raíz del proyecto destino) | SSoT del estado técnico: targets, arquitectura, librerías, comandos de build/test. Lo leen todos los agentes del stack antes de operar. Puede declarar legítimamente comandos degradados o ausentes (`tests: none`, `build: manual\|none`) — ver "Estado de tooling degradado" |
 | CLAUDE.md del overlay | `tech/<stack>/CLAUDE.md` | Orquestador del stack: rootmap de sus `wf-*`, tabla de sus agentes y principios de delegación |
 
 ## Piezas opcionales
@@ -69,8 +69,39 @@ Reglas para una variante válida:
 2. **Idempotencia**: reinstalar el overlay produce el mismo resultado; `wf-<stack>-init` detecta estado previo y pregunta antes de rehacer.
 3. **Project state como precondición, no como cache**: si el proyecto cambia de forma relevante, se regenera con `wf-<stack>-init --force`; los agentes no lo editan a mano.
 4. **El overlay no toca `prd/`, `spec/` ni `design/`** del proyecto destino.
-5. **Cierre verificable de los agentes implementadores**: todo agente del overlay que modifique código debe cerrar con verificación ejecutable — build de los módulos afectados y tests relevantes usando los comandos declarados en `<stack>_project_state.md`, reporte honesto del comando y su salida real (un fallo se reporta tal cual, nunca como éxito), y declaración explícita "verificación ejecutable: no disponible — <motivo>" cuando no se pueda ejecutar nada. Es la contraparte dentro del agente de lo que `wf-task-run` (Paso 6) y `wf-bug` (Paso 4) exigen desde fuera. La concreción del contrato vive en la KB de protocolo del stack (referencia canónica: `kb-kmm-project-state-protocol`, Regla 6) y los agentes la referencian con una sección corta de cierre, sin reescribirla inline.
+5. **Cierre verificable de los agentes implementadores**: todo agente del overlay que modifique código debe cerrar con verificación ejecutable — build de los módulos afectados y tests relevantes usando los comandos declarados en `<stack>_project_state.md`, reporte honesto del comando y su salida real (un fallo se reporta tal cual, nunca como éxito), y declaración explícita "verificación ejecutable: no disponible — <motivo>" cuando no se pueda ejecutar nada. Es la contraparte dentro del agente de lo que `wf-task-run` (Paso 6) y `wf-bug` (Paso 4) exigen desde fuera. La concreción del contrato vive en la KB de protocolo del stack (referencia canónica: `kb-kmm-project-state-protocol`, Regla 6) y los agentes la referencian con una sección corta de cierre, sin reescribirla inline. **Degradación con `tests: none`**: cuando el `<stack>_project_state.md` declara `tests: none` (sin runner) o un `build:` degradado, el invariante se satisface con la declaración explícita ya prevista por el contrato ("verificación ejecutable: no disponible — `tests: none` declarado en `<stack>_project_state.md`"), no exigiendo una suite verde inexistente — ver "Estado de tooling degradado". La honestidad queda intacta: prohibido declarar "tests pasan" sin tests o maquillar la ausencia como verificación.
 6. **El repo destino manda sobre el dogma del stack**: la arquitectura prescriptiva de un overlay (capas, DI, tipo de resultado, organización de módulos, recursos...) es el **default del stack para greenfield o donde el repo no se ha pronunciado**, no una imposición. Cuando el repositorio destino ya resuelve algo de otra forma —reflejado en `<stack>_project_state.md`— **sus convenciones reales tienen precedencia** y el plan/tasks/implementación las respetan, justificándolo. El canon del stack solo rellena los huecos donde el repo no tiene opinión; nunca sobrescribe convenciones divergentes ya presentes. Imponer el dogma del stack sobre un repo que diverge rompe el invariante 1 (no romper el modo genérico) y es el mismo fallo que inventar en agnóstico. La concreción por stack vive en su KB de protocolo (referencia canónica: `kb-kmm-project-state-protocol`, Regla 7); el método de plan/tasks lo aplica vía el hook "Overlay de stack" de `kb-plan-method` / `kb-tasks-method`.
+
+---
+
+## Estado de tooling degradado (stacks legacy sin tests ni módulos)
+
+El contrato asume un stack con tooling moderno (runner de tests, build reproducible, sistema de módulos). Un stack o repo **legacy** (PHP 5 plano, scripts sin runner, monolito de paquete único) puede no tenerlo. Eso **no lo deja fuera del ecosistema**: el contrato degrada con gracia declarando el estado honestamente, sin inventar comandos inexistentes ni fingir verificación.
+
+### `tests: none` / `build: manual|none` como estado declarado válido
+
+El `<stack>_project_state.md` puede declarar legítimamente, en su sección de comandos build/test:
+
+- `tests: none` — el proyecto no tiene runner de tests instalado.
+- `build: manual` / `build: none` — no hay paso de build reproducible (deploy por copia, intérprete directo).
+
+Esto es un **estado HONESTO declarado**, no una instalación rota ni un hueco a rellenar inventando un comando que no existe. El init especialista (`wf-<stack>-init`) lo escribe cuando la detección no encuentra tooling; los agentes lo leen y operan en consecuencia. Declarar `tests: none` es correcto; inventar un `npm test` que nadie puede ejecutar, no.
+
+### Degradación del invariante 5
+
+Con `tests: none` declarado, el cierre verificable (invariante 5) se satisface con la **declaración explícita** ya prevista por el propio invariante:
+
+> `verificación ejecutable: no disponible — tests: none declarado en <stack>_project_state.md`
+
+No se exige una suite verde que no existe. Lo que el invariante sigue prohibiendo sin excepción: declarar "tests pasan" sin tests, o maquillar la ausencia de tooling como si fuera verificación. La honestidad del reporte es innegociable; lo que se relaja es la *exigencia de suite verde*, no la *exigencia de honestidad*. Análogamente, un `build: manual` cierra reportando el paso manual real ejecutado (o su no disponibilidad), no un build verde ficticio.
+
+### Characterization-first: `tests: none` es punto de partida, no estado final
+
+`tests: none` es un punto de **partida a remontar**, no un estado final cómodo. La guía para un repo legacy que entra al pipeline es establecer **characterization tests primero** —tests que fijan el comportamiento observable actual antes de tocar nada— para construir la red de seguridad de la que el legacy carece. Esa es la SSoT de `kb-spec-characterization` (specs de caracterización brownfield, degradación sin tests) y el onramp es `wf-spec-from-code`. Aquí solo se apunta: el overlay no redefine cómo se caracteriza, lo referencia.
+
+### Monolitos sin módulos en plan/tasks
+
+Cuando el repo es un monolito sin sistema de módulos, la descomposición del plan y los cortes de PR no pueden apoyarse en fronteras de módulo. El criterio de descomposición por **capas/fronteras lógicas** vive en `kb-plan-expert` (genérico); el de empaquetado de PRs a lo largo de esas costuras, en `kb-delivery-discipline`. El overlay no los reescribe: hereda el caso base genérico, que ya contempla el monolito.
 
 ---
 
@@ -105,7 +136,7 @@ Hoy esa resolución vive en **prosa de los workflows/gates** (la tabla de "Punto
 
 - [ ] `tech/<stack>/install.sh` ejecutable y con el mismo mecanismo de copia por basename
 - [ ] `wf-<stack>-init` con modos detect/configure, manejo de estado previo y registro del run (append-only) en `.sdd/stack-runs.jsonl`
-- [ ] `<stack>_project_state.md` generado con secciones mínimas: targets/runtime, arquitectura, dependencias clave, comandos build/test
+- [ ] `<stack>_project_state.md` generado con secciones mínimas: targets/runtime, arquitectura, dependencias clave, y comandos build/test **o** su ausencia declarada explícitamente (`tests: none`, `build: manual\|none`) con la estrategia de caracterización — ver "Estado de tooling degradado"
 - [ ] Agentes implementadores con contrato de cierre verificable (invariante 5): sección de cierre que referencia la regla del protocolo del stack
 - [ ] El repo destino manda sobre el dogma (invariante 6): el canon del stack es default para greenfield/silencio del repo; la KB de protocolo del stack declara que las convenciones reales del `<stack>_project_state.md` tienen precedencia cuando divergen
 - [ ] Variantes de override (si las hay) conservan el contrato externo de la pieza genérica

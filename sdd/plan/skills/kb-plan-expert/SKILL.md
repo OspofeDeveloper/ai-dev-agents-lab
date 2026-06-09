@@ -35,6 +35,12 @@ Si una feature tiene surface UI, navegación o requisitos de accesibilidad visib
 
 En modo genérico (sin overlay de stack), toda decisión técnica del Plan debe fundamentarse en la **realidad del repositorio**: estructura de módulos y carpetas, lenguaje, frameworks y dependencias ya presentes y convenciones existentes. El Plan no inventa arquitecturas de frameworks que el repo no usa; prescribe una **estructura técnica coherente con el repositorio y justificada en el propio Plan**. Cada decisión es trazable a evidencia del repo o a un CA del Spec.
 
+#### Monolitos sin sistema de módulos
+
+Cuando el repo es un **monolito sin sistema de módulos** (paquete único, PHP 5 plano, scripts sueltos), la descomposición en componentes del Plan **no puede apoyarse en fronteras de módulo** porque no existen. Usa **capas o fronteras lógicas** como costuras: directorios, namespaces, responsabilidades y archivos del propio repo. Las dependencias entre componentes se derivan del **acoplamiento lógico** observable (quién llama a quién, qué incluye qué), no de un grafo de módulos.
+
+Aquí "el repo manda" con más fuerza, no menos: las carpetas y convenciones reales del monolito —por informales que sean— mandan sobre cualquier topología prescriptiva. El Plan no impone una arquitectura por capas idealizada sobre un monolito que no la tiene; describe las costuras lógicas que el monolito ya insinúa y prescribe el corte mínimo coherente con ellas, justificándolo. Coherencia aguas abajo: los cortes de PR de un monolito siguen esas mismas costuras lógicas — el criterio de empaquetado vive en `kb-delivery-discipline` (no se redefine aquí).
+
 ## Regla canónica: cuándo Design es obligatorio
 
 `Design` es obligatorio cuando el Plan vaya a cerrar cualquiera de estas piezas:
