@@ -14,6 +14,7 @@ set -u
 
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$PWD}"
 cd "$PROJECT_DIR" 2>/dev/null || exit 0
+PROJECT_DIR_PHYS="$(pwd -P)"   # ruta fisica (sin symlinks); git resuelve symlinks
 
 # Modo CI/headless: en runners no interactivos el protocolo de sesion se
 # suprime por completo — no hay humano para el wizard, el init ni decisiones
@@ -40,11 +41,43 @@ if [ -n "$SDD_HOME" ]; then
   # git devuelve el toplevel resuelto (sin symlinks).
   SDD_REPO="$(git -C "$SDD_HOME" rev-parse --show-toplevel 2>/dev/null || true)"
   if [ -n "$SDD_REPO" ]; then
-    PROJECT_DIR_PHYS="$(pwd -P)"
     case "$PROJECT_DIR_PHYS/" in
       "$SDD_REPO/"*) exit 0 ;;
     esac
   fi
+fi
+
+# Opt-out por ruta (ROADMAP 5.6): el dev puede silenciar el hook en proyectos
+# concretos SIN tocar cada repo. Dos listas opcionales de PREFIJOS de ruta en
+# ~/.claude/ (un prefijo por linea; '#' comenta, lineas vacias se ignoran,
+# '~' se expande a $HOME):
+#   sdd-denylist  → si el proyecto cuelga de algun prefijo listado, silencio total.
+#   sdd-allowlist → si existe y tiene algun prefijo, el hook SOLO actua dentro de
+#                   esos prefijos (modo opt-in); fuera de ellos, silencio.
+# El opt-out por repo y commiteable sigue siendo .claude/sdd-mode.json.
+_sdd_path_listed() {  # $1=archivo de lista → 0 si PROJECT_DIR cuelga de algun prefijo
+  local list="$1" raw prefix
+  [ -f "$list" ] || return 1
+  while IFS= read -r raw || [ -n "$raw" ]; do
+    raw="${raw%%#*}"                        # quita comentario
+    raw="${raw%$'\r'}"                      # CR de Windows
+    raw="${raw#"${raw%%[![:space:]]*}"}"    # ltrim
+    raw="${raw%"${raw##*[![:space:]]}"}"    # rtrim
+    [ -z "$raw" ] && continue
+    case "$raw" in "~"|"~/"*) prefix="$HOME${raw#\~}" ;; *) prefix="$raw" ;; esac
+    prefix="${prefix%/}"
+    [ -z "$prefix" ] && continue
+    case "$PROJECT_DIR/"      in "$prefix/"*) return 0 ;; esac
+    case "$PROJECT_DIR_PHYS/" in "$prefix/"*) return 0 ;; esac
+  done < "$list"
+  return 1
+}
+
+_sdd_path_listed "$HOME/.claude/sdd-denylist" && exit 0
+
+if [ -f "$HOME/.claude/sdd-allowlist" ] && \
+   grep -qE '^[[:space:]]*[^#[:space:]]' "$HOME/.claude/sdd-allowlist" 2>/dev/null; then
+  _sdd_path_listed "$HOME/.claude/sdd-allowlist" || exit 0
 fi
 
 # 1. Proyecto SDD inicializado → verificar que el init esta completo

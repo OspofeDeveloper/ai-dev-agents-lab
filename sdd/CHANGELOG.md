@@ -2,6 +2,14 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.17.0 — 2026-06-09
+
+Opt-out por ruta y desinstalación del bootstrap global (ROADMAP 5.6):
+
+- **`bash setup.sh --uninstall`** — antes no había forma limpia de retirar el bootstrap global: el hook seguía disparando el wizard en todos los proyectos del dev. Ahora revierte exactamente lo que instala `setup.sh` (skills globales `wf-project-init`/`wf-sdd-update`, `~/.sdd-home`, hook, registro en `~/.claude/settings.json`, bloque `SDD-BOOTSTRAP` de `~/.claude/CLAUDE.md`) y los symlinks de `--dev`. **Preserva todo lo ajeno**: otros hooks del equipo, `PreToolUse`, permisos, skills propias y las notas personales del `CLAUDE.md`. Best-effort e idempotente; NO toca los proyectos consumidores (`.sdd/`, `.claude/sdd-mode.json` son de cada repo).
+- **Allowlist/denylist de rutas en el hook** — el dev puede silenciar el hook en proyectos concretos sin marcar cada repo, con dos listas opcionales de prefijos de ruta en `~/.claude/` (`#` comenta, `~` se expande a `$HOME`, un prefijo por línea): `sdd-denylist` (calla bajo esos prefijos) y `sdd-allowlist` (si tiene prefijos, el hook **solo** actúa dentro — modo opt-in). La denylist gana sobre la allowlist. El opt-out por repo y commiteable sigue siendo `.claude/sdd-mode.json`.
+- Documentado en el bloque `SDD-BOOTSTRAP` (`claude-global-block.md`) y en el resumen de `setup.sh`. Cambio de la **capa bootstrap global** (no del install por proyecto): se sincroniza con `bash setup.sh --update`, no con `/wf-sdd-update`. Sin scripts de enforcement nuevos. Verificado: 6 casos del hook (deny, allow opt-in, allow vacía, deny>allow, `~`) + uninstall en HOME falso (preserva hook de equipo/permisos/notas, idempotente).
+
 ## 0.16.0 — 2026-06-09
 
 Roles y aprobaciones diferenciadas en los gates (ROADMAP 5.5):

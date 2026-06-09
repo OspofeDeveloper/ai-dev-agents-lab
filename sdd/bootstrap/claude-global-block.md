@@ -50,6 +50,15 @@ No hagas ninguna comprobación SDD adicional: o el proyecto ya está inicializad
 
 En runners no interactivos el hook se silencia solo: con `SDD_NON_INTERACTIVE=1` (opt-out explícito) o `CI=true` (estándar de los runners) no emite ninguna directiva — sin wizard, sin init, sin aviso de versión. No apliques tampoco el fallback manual de abajo si detectas esas variables. El opt-out commiteable por repo es `.claude/sdd-mode.json` (modo `free`, o modo `sdd` ya inicializado): viaja en git y vale para cualquier runner o dev sin variables de entorno.
 
+## Opt-out por ruta y desinstalación
+
+El hook admite dos listas opcionales de prefijos de ruta en `~/.claude/` para silenciarlo **sin marcar cada proyecto** (`#` comenta, `~` se expande a tu home, un prefijo por línea):
+
+- `~/.claude/sdd-denylist` — el hook calla en cualquier proyecto que cuelgue de esos prefijos.
+- `~/.claude/sdd-allowlist` — si contiene algún prefijo, el hook **solo** actúa dentro de esos prefijos (modo opt-in); fuera, calla.
+
+El opt-out por repo y commiteable sigue siendo `.claude/sdd-mode.json`. Para retirar el bootstrap global por completo: `bash setup.sh --uninstall` (revierte skills globales, hook, `~/.sdd-home` y este bloque; no toca los proyectos).
+
 ## Fallback si el hook no está activo
 
 Si no recibes directiva pero tampoco hay evidencia de que el hook se haya ejecutado (p. ej. tras una reinstalación), aplica manualmente esta máquina de estados al inicio de la sesión en un proyecto:

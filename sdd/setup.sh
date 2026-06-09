@@ -7,18 +7,21 @@
 #   5. Bloque gestionado SDD-BOOTSTRAP en ~/.claude/CLAUDE.md (protocolo de inicio de sesion)
 #
 # Uso:
-#   bash setup.sh           — instala (o reinstala) el bootstrap global
-#   bash setup.sh --update  — alias de lo anterior, util tras git pull
-#   bash setup.sh --dev     — ademas, materializa el meta-orquestador (sdd/meta/)
-#                             como symlinks en sdd/.claude/ para desarrollar el ecosistema
+#   bash setup.sh             — instala (o reinstala) el bootstrap global
+#   bash setup.sh --update    — alias de lo anterior, util tras git pull
+#   bash setup.sh --dev       — ademas, materializa el meta-orquestador (sdd/meta/)
+#                               como symlinks en sdd/.claude/ para desarrollar el ecosistema
+#   bash setup.sh --uninstall — retira el bootstrap global (revierte los pasos 1-5)
 set -e
 
 DEV_MODE=0
+UNINSTALL=0
 case "${1:-}" in
   ""|-u|--update) ;;
   --dev) DEV_MODE=1 ;;
-  -h|--help) echo "Uso: bash setup.sh [--update|--dev]"; exit 0 ;;
-  *) echo "Argumento desconocido: '$1'"; echo "Uso: bash setup.sh [--update|--dev]"; exit 1 ;;
+  --uninstall|--remove) UNINSTALL=1 ;;
+  -h|--help) echo "Uso: bash setup.sh [--update|--dev|--uninstall]"; exit 0 ;;
+  *) echo "Argumento desconocido: '$1'"; echo "Uso: bash setup.sh [--update|--dev|--uninstall]"; exit 1 ;;
 esac
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -26,6 +29,82 @@ CLAUDE_DIR="$HOME/.claude"
 GLOBAL_SKILLS_DIR="$CLAUDE_DIR/skills"
 TARGET="$GLOBAL_SKILLS_DIR/wf-project-init"
 SOURCE="$SCRIPT_DIR/bootstrap/skills/wf-project-init"
+
+# ── Desinstalacion del bootstrap global (ROADMAP 5.6) ───────────────────────
+# Revierte exactamente lo que instala setup.sh (skills globales, ~/.sdd-home,
+# hook, registro en settings.json, bloque SDD-BOOTSTRAP) y los symlinks de
+# --dev. NO toca proyectos consumidores (.sdd/, .claude/sdd-mode.json son de
+# cada repo). Best-effort e idempotente: lo ya ausente no es un error.
+if [ "$UNINSTALL" = "1" ]; then
+  echo "Desinstalando el bootstrap global SDD..."
+  rm -rf "$GLOBAL_SKILLS_DIR/wf-project-init" "$GLOBAL_SKILLS_DIR/wf-sdd-update"
+  rm -f "$HOME/.sdd-home"
+  rm -f "$CLAUDE_DIR/hooks/sdd-session-check.sh"
+
+  # Desregistrar el hook de settings.json preservando el resto de la config.
+  if command -v python3 >/dev/null 2>&1 && [ -f "$CLAUDE_DIR/settings.json" ]; then
+    SETTINGS="$CLAUDE_DIR/settings.json" python3 - <<'PYEOF'
+import json, os
+path = os.environ["SETTINGS"]
+try:
+    with open(path) as f:
+        data = json.load(f)
+except Exception:
+    raise SystemExit(0)  # JSON ilegible: no tocar
+hooks = data.get("hooks", {})
+new_ss = []
+for matcher in hooks.get("SessionStart", []):
+    kept = [h for h in matcher.get("hooks", [])
+            if not h.get("command", "").endswith("sdd-session-check.sh")]
+    if kept:  # el matcher conserva otros hooks → se mantiene con los suyos
+        m = dict(matcher); m["hooks"] = kept; new_ss.append(m)
+    # si el matcher quedaba solo con el hook SDD, se descarta entero
+if new_ss:
+    hooks["SessionStart"] = new_ss
+else:
+    hooks.pop("SessionStart", None)
+if hooks:
+    data["hooks"] = hooks
+else:
+    data.pop("hooks", None)
+with open(path, "w") as f:
+    json.dump(data, f, indent=2); f.write("\n")
+print("Hook SessionStart desregistrado de " + path)
+PYEOF
+  else
+    echo "  ⚠ No se pudo editar settings.json automaticamente (sin python3 o sin archivo)."
+    echo "    Elimina a mano la entrada SessionStart que apunta a sdd-session-check.sh en"
+    echo "    $CLAUDE_DIR/settings.json"
+  fi
+
+  # Eliminar el bloque gestionado de ~/.claude/CLAUDE.md, preservando el resto.
+  GLOBAL_MD="$CLAUDE_DIR/CLAUDE.md"
+  if [ -f "$GLOBAL_MD" ]; then
+    awk -v s="<!-- >>> SDD-BOOTSTRAP >>>" -v e="<!-- <<< SDD-BOOTSTRAP <<<" '
+      index($0, s) == 1 { skip = 1 }
+      !skip { print }
+      index($0, e) == 1 { skip = 0 }
+    ' "$GLOBAL_MD" > "$GLOBAL_MD.tmp" && mv "$GLOBAL_MD.tmp" "$GLOBAL_MD"
+    [ -s "$GLOBAL_MD" ] || rm -f "$GLOBAL_MD"   # si queda vacio, eliminarlo
+  fi
+
+  # Symlinks de --dev en el repo (solo si son symlinks; nunca borra fuentes).
+  REPO_CLAUDE="$SCRIPT_DIR/.claude"
+  if [ -d "$REPO_CLAUDE" ]; then
+    [ -L "$REPO_CLAUDE/CLAUDE.md" ] && rm -f "$REPO_CLAUDE/CLAUDE.md"
+    for l in "$REPO_CLAUDE/agents"/* "$REPO_CLAUDE/skills"/*; do
+      [ -L "$l" ] && rm -f "$l"
+    done
+  fi
+
+  echo ""
+  echo "Bootstrap global SDD desinstalado:"
+  echo "  - skills globales, hook, ~/.sdd-home y bloque SDD-BOOTSTRAP eliminados."
+  echo "  - Proyectos con .sdd/ o .claude/sdd-mode.json NO se han tocado (son de cada repo)."
+  echo "  - Listas ~/.claude/sdd-{deny,allow}list se conservan si las creaste; ya no tienen efecto."
+  echo "  - Reinstala cuando quieras con: bash setup.sh"
+  exit 0
+fi
 
 if [ ! -d "$SOURCE" ]; then
   echo "Error: no se encuentra $SOURCE"
@@ -145,4 +224,9 @@ echo "  - sin estado SDD     → wizard de modo (SDD / libre)"
 echo "  - modo sdd sin init  → se lanza /wf-project-init automaticamente"
 echo "  - modo libre o init completado → sesion normal, sin preguntas"
 echo ""
+echo "Silenciar el hook en proyectos concretos sin tocar cada repo:"
+echo "  - ~/.claude/sdd-denylist   (prefijos de ruta donde el hook calla)"
+echo "  - ~/.claude/sdd-allowlist  (si tiene prefijos, el hook SOLO actua ahi)"
+echo ""
 echo "Para actualizar tras un git pull: bash setup.sh --update"
+echo "Para retirar el bootstrap global: bash setup.sh --uninstall"
