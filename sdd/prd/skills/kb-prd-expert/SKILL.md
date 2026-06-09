@@ -271,3 +271,11 @@ IDs `[ASN-XXX]` secuenciales desde `001`, propios del PRD (no se confunden con l
 Un PRD con marcadores `[ASUNCIÓN]` sin resolver **no está `LISTO`**: `wf-prd-review` los detecta (check determinista), presenta cada uno al usuario para confirmación explícita y solo entonces se eliminan los marcadores. Las asunciones residuales que sobrevivan hasta `wf-spec-analyze` deben tratarse como gaps a confirmar, nunca como hechos.
 
 > SSoT del marcador `[ASUNCIÓN]`: esta regla. Los marcadores de gaps y de spec (`[P-XXX]`, `[INCOMPLETO]`, `[INFERIDO]`...) viven en `kb-gap-conventions`.
+
+---
+
+## Regla 13: Sello de aprobación del review (`Aprobado por`)
+
+Cuando `wf-prd-review` cierra con veredicto `LISTO` (y por tanto sin `[ASUNCIÓN]` pendientes), el header/metadata del PRD recibe una línea `Aprobado por: <rol> (<YYYY-MM-DD>)` (default de fase: `PM` / `Product Owner`) que registra **quién aprobó** que el PRD está listo para entrar en el pipeline. La escribe el orquestador (`wf-prd-review`); es un dato humano, no mecánicamente verificable, y ningún script lo valida. Con veredicto `LISTO_CON_AJUSTES` o `NO_LISTO` no se escribe.
+
+El convenio completo del campo (formato, captura del rol, cuándo se escribe en cada gate) es SSoT de `kb-traceability-rules` Regla 10; aquí solo se aterriza en el header del PRD.

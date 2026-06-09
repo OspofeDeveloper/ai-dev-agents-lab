@@ -11,7 +11,7 @@ agent: prd-expert
 
 # Workflow: PRD Review
 
-Tu objetivo es revisar si un PRD está preparado para entrar en el pipeline SDD. No generas Spec, no generas features y no corriges el documento por tu cuenta: emites un diagnóstico claro y accionable. **Única excepción**: la confirmación de asunciones del Paso 5.5, donde sí editas el PRD — pero solo lo que el usuario decide explícitamente sobre cada `[ASUNCIÓN]`, nunca de tu cosecha.
+Tu objetivo es revisar si un PRD está preparado para entrar en el pipeline SDD. No generas Spec, no generas features y no corriges el documento por tu cuenta: emites un diagnóstico claro y accionable. **Dos excepciones acotadas** en las que sí editas el PRD: (1) la confirmación de asunciones del Paso 5.5 — solo lo que el usuario decide explícitamente sobre cada `[ASUNCIÓN]`, nunca de tu cosecha; (2) el sello de aprobación del review cuando el veredicto es `LISTO` (Paso 6) — solo la línea `Aprobado por:` en el header. Ninguna otra reescritura.
 
 Usa `kb-prd-expert` como fuente autoritativa.
 
@@ -102,6 +102,13 @@ A diferencia del resto de `wf-prd-review` (que solo diagnostica), aquí **sí** 
 ---
 
 ## Paso 6: Emitir veredicto
+
+Si el veredicto es `LISTO` (y por tanto no quedan `[ASUNCIÓN]` pendientes tras el Paso 5.5), registra la **atribución de aprobación humana** del gate antes de emitir el veredicto, según `kb-traceability-rules` Regla 10:
+
+1. Captura el rol aprobador con `AskUserQuestion` (default `PM` / `Product Owner`), permitiendo confirmar el rol o dar nombre.
+2. Si el usuario responde, escribe en el header/metadata del PRD (junto a versión/fecha del documento) la línea `Aprobado por: <rol> (<fecha real de tu contexto>)`. En re-revisión, sobrescribe la línea previa. **No autoapruebes**: si no hay respuesta, no escribas la línea.
+
+Si el veredicto es `LISTO_CON_AJUSTES` o `NO_LISTO`, **no** escribas la atribución.
 
 Responde con este formato:
 

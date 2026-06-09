@@ -124,6 +124,15 @@ El header del Plan usa exactamente estos estados:
 
 El sello lo escribe **exclusivamente** el script determinista `.sdd/scripts/sdd-seal.py` (invocado por `wf-plan-validate`), que verifica condiciones mecánicas (gaps del footer en `ninguno`, sin `[INCOMPLETO]`, spec origen legible y sin `[CRÍTICO]`, `status_sync` fiable, cobertura de todos los CA-XXX del spec, deuda técnica sin entradas `PENDIENTE` ni campos incompletos) además del veredicto del agente auditor. Ningún agente ni orquestador edita la línea `Estado:` a mano — la única excepción es el downgrade a `BORRADOR`, que siempre es seguro.
 
+### `Aprobado por` en el header (atribución del gate)
+
+Cuando el plan queda `VALIDADO`, el header lleva además una línea `Aprobado por: <rol> (<YYYY-MM-DD>)` que registra **quién aprobó el gate** de validación (default de fase: `Tech Lead`). Distíngela de dos cosas:
+
+- del `Estado:` operativo: el `Estado:` lo escribe `sdd-seal.py`; `Aprobado por` lo escribe el **orquestador** (`wf-plan-validate` tras seal exit 0). `sdd-seal.py` **no la escribe ni la verifica** — es un dato humano, no mecánicamente verificable.
+- de la `Aprobada por:` **per-TD** de la deuda técnica (sección `## Deuda técnica asumida`): esa atribuye cada decisión de deuda; la del header atribuye el gate completo. El sellador sí verifica que ninguna TD quede `PENDIENTE`, pero **no** verifica la del header.
+
+El convenio completo del campo (formato, captura del rol, cuándo se escribe) es SSoT de `kb-traceability-rules` Regla 10; esta sección solo lo aterriza en el header del plan.
+
 ## Taxonomía de gaps
 
 Los únicos tipos normativos de gaps en la fase `plan` son:

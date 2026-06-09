@@ -121,6 +121,8 @@ El header del Plan usa exactamente estos estados:
 
 `VALIDADO` debe tratarse como una marca operativa confiable. Si la validación falla, el archivo debe quedar o volver a `BORRADOR`.
 
+Con el plan `VALIDADO`, el header lleva además `Aprobado por: <rol> (<YYYY-MM-DD>)` (default de fase `Tech Lead`): atribución del gate que escribe el **orquestador** (`wf-plan-validate`), distinta del `Estado:` (que escribe `sdd-seal.py`) y de la `Aprobada por:` per-TD de la deuda. `sdd-seal.py` no la escribe ni la verifica. Convenio completo: `kb-traceability-rules` Regla 10.
+
 ## Taxonomía de gaps
 
 Los únicos tipos normativos de gaps en la fase `plan` son:

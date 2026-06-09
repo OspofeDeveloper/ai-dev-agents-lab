@@ -14,6 +14,7 @@ Usa esta estructura para producir un Plan válido. Todos los campos marcados `[o
 > **Status sync:** [in_sync | needs_review | stale | unknown]
 > **Fecha:** [YYYY-MM-DD]
 > **Estado:** [BORRADOR | VALIDADO]
+> **Aprobado por:** [pendiente de validación — lo escribe wf-plan-validate al sellar VALIDADO; ver kb-traceability-rules Regla 10]
 
 ---
 

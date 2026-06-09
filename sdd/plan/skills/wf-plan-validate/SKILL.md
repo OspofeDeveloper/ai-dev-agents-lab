@@ -119,7 +119,7 @@ Si el agente devuelve `OK`:
   ```bash
   python3 .sdd/scripts/sdd-seal.py plan <path_plan> --seal
   ```
-- **exit 0** → el plan queda `VALIDADO`. Informa que está listo para Tasks:
+- **exit 0** → el plan queda `VALIDADO`. Registra la **atribución de aprobación humana** del gate (`kb-traceability-rules` Regla 10): captura el rol con `AskUserQuestion` (default `Tech Lead`, permitiendo confirmar o dar nombre) y escribe en el header del plan, cerca de `Estado:`/`Spec origen`, la línea `Aprobado por: <rol> (<fecha real de tu contexto>)`. Esto lo escribe el **orquestador**, igual que las aprobaciones de deuda del Paso 4b: es el registro del checkpoint humano, **no** el sello operativo (el `Estado:` lo escribe `sdd-seal.py`, que no toca ni verifica esta línea). En re-validación, sobrescribe la línea previa. **No autoapruebes**: si no hay respuesta, no escribas la línea. Luego informa que está listo para Tasks:
   > "Ejecuta `/wf-prepare-tasks generate <plan.md>`"
 - **exit 2** → el veredicto del agente no superó la verificación mecánica (el script muestra qué condición falló: CA sin cubrir, gap abierto, spec con `[CRÍTICO]`, `status_sync` no fiable...). El plan queda en `BORRADOR`. Muestra los checks `✗` al usuario y trata cada uno como hallazgo a resolver. No sugieras pasar a Tasks.
 - **script no encontrado** → NO selles manualmente. Informa:

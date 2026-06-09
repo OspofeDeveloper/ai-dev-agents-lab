@@ -79,6 +79,7 @@ Estado por CA = el peor de sus TCs (`DIVERGENTE` > `SIN_COBERTURA` > `PARCIAL` >
 > Spec origen: <ruta relativa al _spec.md>
 > Fecha: YYYY-MM-DD | Commit verificado: <sha corto | working tree>
 > Veredicto: APTO | APTO_CON_RESERVAS | NO_APTO
+> Aprobado por: <rol> (<YYYY-MM-DD>)   ← solo si el veredicto es APTO o APTO_CON_RESERVAS; ausente en NO_APTO
 
 ## Resumen por CA
 | CA | TCs | Estado CA | Evidencia |
@@ -100,3 +101,5 @@ Estado por CA = el peor de sus TCs (`DIVERGENTE` > `SIN_COBERTURA` > `PARCIAL` >
 - `NO_APTO`: algún CA `SIN_COBERTURA` o `DIVERGENTE`.
 
 El veredicto describe cobertura verificada; no sustituye al sellado del plan ni al estado de las tasks — los complementa al final del ciclo.
+
+La línea `Aprobado por: <rol> (<YYYY-MM-DD>)` del header (default de fase `QA`) registra la atribución humana del gate cuando el veredicto es `APTO` o `APTO_CON_RESERVAS`; en `NO_APTO` no se escribe. La escribe el orquestador (`wf-qa-verify`), es un dato humano no verificable y ningún script la valida. Convenio completo: `kb-traceability-rules` Regla 10.

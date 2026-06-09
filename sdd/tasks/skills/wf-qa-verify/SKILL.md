@@ -4,7 +4,7 @@ description: "Verifica la cobertura real de CAs de una feature tras implementar:
 when_to_use: "Activa con frases como 'verifica la cobertura de la feature', 'qa verify', 'están cubiertos los CAs', 'audita los tests contra el spec', 'pasa QA la feature'. No activa para derivar casos de prueba (usa wf-qa-plan), ni para arreglar un test que falla contra un CA (usa wf-bug)."
 argument-hint: "<feature_qa_plan.md>"
 effort: high
-allowed-tools: [Read, Write, Bash, Agent]
+allowed-tools: [Read, Write, Bash, Agent, AskUserQuestion]
 context: fork
 agent: qa-engineer
 user-invocable: true
@@ -66,6 +66,8 @@ No marques nunca un TC manual como CUBIERTO sin confirmación explícita del hum
    - `APTO_CON_RESERVAS` — hay PARCIAL/MANUAL_PENDIENTE, sin SIN_COBERTURA ni DIVERGENTE
    - `NO_APTO` — algún CA SIN_COBERTURA o DIVERGENTE
    Si la verificación fue parcial (Paso 2) o sin ejecución disponible (Paso 3), el header lo declara.
+
+3. **Si el veredicto es `APTO` o `APTO_CON_RESERVAS`**, registra la **atribución de aprobación humana** del gate (`kb-traceability-rules` Regla 10): captura el rol con `AskUserQuestion` (default `QA`, permitiendo confirmar o dar nombre) y escribe en el header del `_qa_report.md` la línea `Aprobado por: <rol> (<fecha real de tu contexto>)`. **No autoapruebes**: si no hay respuesta, no escribas la línea. Si el veredicto es `NO_APTO`, **no** la escribas.
 
 Si el report ya existe de una verificación anterior, sobreescríbelo (el qa_plan conserva el estado vigente; el report es la foto de esta verificación).
 

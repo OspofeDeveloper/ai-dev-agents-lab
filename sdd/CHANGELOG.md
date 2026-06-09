@@ -2,6 +2,15 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.16.0 — 2026-06-09
+
+Roles y aprobaciones diferenciadas en los gates (ROADMAP 5.5):
+
+- Hasta ahora todos los checkpoints eran "el humano valida" (singular, anónimo). En un equipo multi-desarrollador no quedaba traza de **qué rol** aprobó cada gate. Nuevo campo `Aprobado por: <rol> (<YYYY-MM-DD>)` que cada gate escribe en el header de su artefacto al pasar: **PM/Product Owner** en el PRD (`wf-prd-review` con veredicto `LISTO`), **Tech Lead** en el plan (`wf-plan-validate` tras sello `VALIDADO`), **QA** en el report (`wf-qa-verify` con `APTO`/`APTO_CON_RESERVAS`). El rol se captura con `AskUserQuestion` (default por fase, el usuario confirma o da nombre); solo se escribe si el gate pasa, nunca se autoaprueba.
+- **Es un registro de checkpoint humano, no un sello determinista**: `Aprobado por` es un dato humano **no verificable mecánicamente**, así que lo escribe el orquestador/workflow en el gate — NO un script. `sdd-seal.py` y los gates **no lo verifican** (no podrían). Mismo patrón que las dos atribuciones humanas que ya existían (`Aprobada por` per-TD de deuda técnica en `wf-plan-validate`, `confirmado por` de TCs manuales en `wf-qa-verify`). **Sin cambios en ningún script.**
+- **SSoT única**: convenio (nombre, formato, semántica autor≠sellador, tabla de los 3 gates) definido una sola vez en `kb-traceability-rules` **Regla 10** (misma KB cross-fase que ya posee el eje "anotación de header del orquestador vs. sello de script": `derived_from_prd_hash` Regla 1, `Enmienda pendiente` Regla 9). Las KBs de fase (`kb-plan-expert` "Estados del Plan", `kb-qa-expert`, `kb-prd-expert` Regla 13 nueva) la **referencian**, no la redefinen. Plantillas de header (plan, qa_report, PRD) nacen con la línea como placeholder hasta la aprobación; el override KMM de `kb-plan-expert` conserva el contrato del header.
+- 11 archivos (solo `SKILL.md`/`references`), sin scripts ni gates nuevos, registry sin cambios de inventario. ⚠ Proyectos ya inicializados: `/wf-sdd-update` para que sus gates empiecen a registrar el aprobador (sin actualizar, el comportamiento previo sigue válido — el campo simplemente no se escribe).
+
 ## 0.15.0 — 2026-06-09
 
 Cascade de cambio de producto en un solo comando (ROADMAP 4.4):

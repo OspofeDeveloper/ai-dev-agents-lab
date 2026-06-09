@@ -18,6 +18,7 @@ status: draft | in-review | approved
 ---
 
 # PRD: [Nombre del Producto]
+> **Aprobado por:** [pendiente de review — lo escribe wf-prd-review cuando el veredicto es LISTO; ver kb-traceability-rules Regla 10]
 
 ## Resumen Ejecutivo
 
