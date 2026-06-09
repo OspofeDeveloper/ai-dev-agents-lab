@@ -111,6 +111,8 @@ Salvo `--no-commit`:
 - `CA-XXX` sale del campo `Spec CA` de la task; si es `—`, omite el sufijo.
 - Nunca `git add -A` indiscriminado: solo lo que la task tocó. Si hay cambios ajenos en el working tree, déjalos fuera y avisa.
 
+> SSoT del criterio de empaquetado: `kb-delivery-discipline` (por qué el commit-unidad es atómico y verde, tests junto al código, y cómo dividir una feature grande en una cadena de PRs apilados por fronteras de dependencia). El commit-por-task no cambia.
+
 ## Paso 9: Informar
 
 - Task(s) ejecutada(s), estado final y commit(s).

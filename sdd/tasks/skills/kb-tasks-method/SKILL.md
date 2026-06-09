@@ -100,6 +100,10 @@ El owner de las tasks de test y qué componentes se consideran testables lo defi
 ‹especialización de stack›. Si el Plan no incluye testing explícitamente, coloca las tasks
 de test al final, acompañando al bloque de implementación que validan.
 
+> Empaquetado: los tests viajan en la misma unidad de trabajo / PR que el código que cubren
+> (la pareja RED/GREEN son commits adyacentes en la misma rama). SSoT del criterio:
+> `kb-delivery-discipline`.
+
 **6. Verifica cobertura**
 
 ¿Todos los componentes del Plan tienen su Task?

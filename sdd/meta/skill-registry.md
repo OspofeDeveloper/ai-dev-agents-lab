@@ -1,6 +1,6 @@
 # SDD Skill Registry
 <!-- Auto-generado por scripts/generate-skill-registry.py. No editar manualmente. -->
-<!-- Total: 120 skills | 53 wf-* (user-invocable) | 67 kb-* -->
+<!-- Total: 121 skills | 53 wf-* (user-invocable) | 68 kb-* -->
 <!-- Última actualización: 2026-06-09 -->
 
 ## Meta-Ecosistema (meta/)
@@ -101,6 +101,7 @@
 
 | Skill | Descripción | Invocable | Path |
 |---|---|---|---|
+| kb-delivery-discipline | Criterios stack-agnósticos de empaquetado del trabajo implementado en commits y PRs: la Task como unidad de trabajo (un commit atómico y verde por task), los t… | false | tasks/skills/kb-delivery-discipline/SKILL.md |
 | kb-qa-expert | Metodologia QA del pipeline SDD: derivacion de casos de prueba TC-XXX desde los CAs GIVEN/WHEN/THEN del spec, niveles y tipos de prueba, trazabilidad CA→TC y c… | false | tasks/skills/kb-qa-expert/SKILL.md |
 | kb-tasks-expert | Reglas tech-neutral para descomponer Planes técnicos en Tasks atómicas delegables a un owner claro: formato obligatorio de task, granularidad, orden canónico p… | false | tasks/skills/kb-tasks-expert/SKILL.md |
 | kb-tasks-method | Procedimiento operativo compartido de la fase tasks SDD — los pasos de descomponer un Plan validado en un _tasks.md, stack-agnósticos | false | tasks/skills/kb-tasks-method/SKILL.md |

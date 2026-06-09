@@ -2,6 +2,14 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.19.0 — 2026-06-09
+
+Work Unit Commits + Chained PRs (ROADMAP 2.5):
+
+- Nueva KB stack-agnóstica **`kb-delivery-discipline`** (fase tasks) — criterios normativos de empaquetado del trabajo YA implementado en commits y PRs, que hasta ahora no existían (solo "un commit por task" en `wf-task-run`, sin el porqué ni guía para features grandes). Tres criterios: (1) **la Task es la unidad** — un commit atómico y verde por task, qué entra/qué no, nunca `git add -A`, mensaje `T-00X: <título> [CA-XXX]`; (2) **tests junto al código** — los tests viajan en la misma unidad/PR que el código que cubren, nunca diferidos; reconciliado con el orden TDD RED/GREEN de `kb-tasks-method` (commits adyacentes, mismo PR); (3) **chained/stacked PRs** — dividir una feature demasiado grande en una cadena de PRs apilados por las fronteras de dependencia (contratos → implementaciones → integración → UI), cada eslabón verde e independiente; ADVISORY, no enforcement.
+- **Generalizado más allá de KMM** (IMPROVEMENTS #4 era KMM-específico): la KB es stack-agnóstica; deja como posibilidad que un overlay añada puntos de corte por módulo/target sin contradecir el criterio base. SSoT respetada: referencia la descomposición/orden de `kb-tasks-method`/`kb-tasks-expert` y el commit-por-task de `wf-task-run`, no los reescribe.
+- Wiring: `wf-task-run` (Paso 8) y `wf-bug` (commit) la referencian como SSoT del empaquetado; cross-pointer desde `kb-tasks-method` paso 5. `install.sh tasks` la recoge por glob. Registry 121 skills (+1 kb). ⚠ Proyectos ya inicializados con la fase tasks: `/wf-sdd-update` para recibir la KB y los punteros (sin actualizar, el commit-por-task sigue funcionando igual).
+
 ## 0.18.0 — 2026-06-09
 
 Soporte de monorepo en el hook y el init (ROADMAP 5.7):

@@ -98,6 +98,8 @@ Solo para `CODE_BUG` con fix aplicado:
 
 Un commit por bug, incluyendo el `_bugs.md`. Sin CA (`UNSPEC` con override) → `[CA:none]`.
 
+> SSoT del criterio de empaquetado: `kb-delivery-discipline`. Mismo principio que el commit-por-task: el fix y su test de regresión van en la misma unidad de trabajo / PR (tests junto al código), nunca diferidos a un commit posterior.
+
 ## Paso 7: Informar
 
 - Triaje final y CA implicado (citado).
