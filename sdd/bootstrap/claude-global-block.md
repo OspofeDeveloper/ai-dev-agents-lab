@@ -61,9 +61,9 @@ El opt-out por repo y commiteable sigue siendo `.claude/sdd-mode.json`. Para ret
 
 ## Fallback si el hook no está activo
 
-Si no recibes directiva pero tampoco hay evidencia de que el hook se haya ejecutado (p. ej. tras una reinstalación), aplica manualmente esta máquina de estados al inicio de la sesión en un proyecto:
+Si no recibes directiva pero tampoco hay evidencia de que el hook se haya ejecutado (p. ej. tras una reinstalación), aplica manualmente esta máquina de estados al inicio de la sesión en un proyecto. En un monorepo los marcadores (`.sdd/`, `.claude/sdd-mode.json`) viven en la raíz del proyecto: si la sesión se abrió en un subpaquete, búscalos **hacia arriba hasta la raíz git** (gana el ancestro más cercano).
 
-1. ¿Existe `.sdd/project-init.json`? → proyecto SDD inicializado, opera según su `.claude/CLAUDE.md`.
+1. ¿Existe `.sdd/project-init.json` (aquí o en un ancestro hasta la raíz git)? → proyecto SDD inicializado, opera según su `.claude/CLAUDE.md`.
 2. ¿Existe `.claude/sdd-mode.json` con `"mode": "free"`? → sesión normal, no preguntar nunca.
 3. ¿Existe `.claude/sdd-mode.json` con `"mode": "sdd"` pero sin `.sdd/project-init.json`? → invoca `wf-project-init`.
 4. ¿Nada de lo anterior y el directorio es un proyecto real (no `~`, no el repo del ecosistema SDD)? → wizard de modo de arriba.

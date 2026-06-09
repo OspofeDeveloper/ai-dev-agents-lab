@@ -80,25 +80,49 @@ if [ -f "$HOME/.claude/sdd-allowlist" ] && \
   _sdd_path_listed "$HOME/.claude/sdd-allowlist" || exit 0
 fi
 
+# Raiz SDD en monorepos (ROADMAP 5.7): los marcadores SDD (.sdd/project-init.json,
+# .claude/sdd-mode.json) viven en la raiz del proyecto, pero la sesion puede
+# abrirse en un subpaquete. Se buscan hacia arriba hasta el toplevel git (techo);
+# fuera de git, solo el propio directorio (comportamiento previo intacto). Gana
+# el ancestro mas cercano: un .sdd/ propio del subpaquete prevalece sobre el raiz.
+SDD_CEILING="$(git -C "$PROJECT_DIR" rev-parse --show-toplevel 2>/dev/null || true)"
+[ -n "$SDD_CEILING" ] && SDD_CEILING="$(cd "$SDD_CEILING" 2>/dev/null && pwd -P || echo "$SDD_CEILING")"
+[ -z "$SDD_CEILING" ] && SDD_CEILING="$PROJECT_DIR_PHYS"
+
+_sdd_find_up() {  # $1=ruta relativa del marcador → echo del dir ancestro que lo tiene
+  local marker="$1" dir="$PROJECT_DIR_PHYS"
+  while :; do
+    [ -e "$dir/$marker" ] && { printf '%s' "$dir"; return 0; }
+    [ "$dir" = "$SDD_CEILING" ] && break
+    [ "$dir" = "/" ] && break
+    dir="$(dirname "$dir")"
+  done
+  return 1
+}
+
+INIT_ROOT="$(_sdd_find_up ".sdd/project-init.json" || true)"
+MODE_ROOT="$(_sdd_find_up ".claude/sdd-mode.json" || true)"
+
 # 1. Proyecto SDD inicializado → verificar que el init esta completo
-if [ -f .sdd/project-init.json ]; then
+if [ -n "$INIT_ROOT" ]; then
+  INIT_JSON="$INIT_ROOT/.sdd/project-init.json"
   # Extraer las fases declaradas. Parser primario: python3 (JSON real).
   # Fallback sin python3: extraccion textual del array. Ante JSON malformado,
   # PHASES_LIST queda vacia y no se inyecta nada (conservador: mejor no
   # disparar init-incomplete espurio en cada sesion).
   if command -v python3 >/dev/null 2>&1; then
     PHASES_LIST="$(python3 -c '
-import json
+import json, sys
 try:
-    with open(".sdd/project-init.json") as f:
+    with open(sys.argv[1]) as f:
         phases = json.load(f).get("phases", [])
     if isinstance(phases, list):
         print(" ".join(p for p in phases if isinstance(p, str)))
 except Exception:
     pass
-' 2>/dev/null || true)"
+' "$INIT_JSON" 2>/dev/null || true)"
   else
-    PHASES_LIST="$(tr -d '\n' < .sdd/project-init.json \
+    PHASES_LIST="$(tr -d '\n' < "$INIT_JSON" \
       | grep -o '"phases"[[:space:]]*:[[:space:]]*\[[^]]*\]' \
       | grep -o '"[a-z]*"' | tr -d '"' | grep -vx 'phases' | tr '\n' ' ' || true)"
   fi
@@ -108,7 +132,7 @@ except Exception:
       *" $f "*)
         # Layout actual: regla de fase en .claude/rules/sdd-<fase>.md
         # Layouts legacy: .claude/phases/<fase>.md y <fase>/.claude/CLAUDE.md
-        [ -f ".claude/rules/sdd-$f.md" ] || [ -f ".claude/phases/$f.md" ] || [ -f "$f/.claude/CLAUDE.md" ] || MISSING="$MISSING $f"
+        [ -f "$INIT_ROOT/.claude/rules/sdd-$f.md" ] || [ -f "$INIT_ROOT/.claude/phases/$f.md" ] || [ -f "$INIT_ROOT/$f/.claude/CLAUDE.md" ] || MISSING="$MISSING $f"
         ;;
     esac
   done
@@ -120,11 +144,11 @@ except Exception:
   # Deteccion de deriva de version (informativa, nunca bloquea): compara el
   # sello de la instalacion (.sdd/sdd-version.json) con el VERSION del
   # ecosistema. Solo avisa si ambos lados son legibles y difieren.
-  if [ -n "$SDD_HOME" ] && [ -f "$SDD_HOME/VERSION" ] && [ -f .sdd/sdd-version.json ]; then
+  if [ -n "$SDD_HOME" ] && [ -f "$SDD_HOME/VERSION" ] && [ -f "$INIT_ROOT/.sdd/sdd-version.json" ]; then
     ECO_VERSION="$(tr -d '[:space:]' < "$SDD_HOME/VERSION" 2>/dev/null || true)"
     ECO_COMMIT="$(git -C "$SDD_HOME" rev-parse --short HEAD 2>/dev/null || true)"
-    PROJ_VERSION="$(grep -o '"version"[[:space:]]*:[[:space:]]*"[^"]*"' .sdd/sdd-version.json | head -1 | sed 's/.*"\([^"]*\)"$/\1/' || true)"
-    PROJ_COMMIT="$(grep -o '"commit"[[:space:]]*:[[:space:]]*"[^"]*"' .sdd/sdd-version.json | head -1 | sed 's/.*"\([^"]*\)"$/\1/' || true)"
+    PROJ_VERSION="$(grep -o '"version"[[:space:]]*:[[:space:]]*"[^"]*"' "$INIT_ROOT/.sdd/sdd-version.json" | head -1 | sed 's/.*"\([^"]*\)"$/\1/' || true)"
+    PROJ_COMMIT="$(grep -o '"commit"[[:space:]]*:[[:space:]]*"[^"]*"' "$INIT_ROOT/.sdd/sdd-version.json" | head -1 | sed 's/.*"\([^"]*\)"$/\1/' || true)"
     if [ -n "$ECO_VERSION" ] && [ -n "$PROJ_VERSION" ]; then
       if [ "$ECO_VERSION" != "$PROJ_VERSION" ] || { [ -n "$ECO_COMMIT" ] && [ -n "$PROJ_COMMIT" ] && [ "$ECO_COMMIT" != "$PROJ_COMMIT" ]; }; then
         echo "[SDD-PROTOCOL] version-drift — La instalacion SDD de este proyecto es de la version $PROJ_VERSION+${PROJ_COMMIT:-?} y el ecosistema esta en $ECO_VERSION+${ECO_COMMIT:-?}. Es solo un aviso: menciona brevemente al usuario que puede actualizar con /wf-sdd-update cuando le convenga, y continua con su peticion con normalidad. No actualices sin que lo pida."
@@ -135,11 +159,12 @@ except Exception:
 fi
 
 # 2. Modo ya decidido
-if [ -f .claude/sdd-mode.json ]; then
-  if grep -q '"mode"[[:space:]]*:[[:space:]]*"free"' .claude/sdd-mode.json; then
+if [ -n "$MODE_ROOT" ]; then
+  MODE_JSON="$MODE_ROOT/.claude/sdd-mode.json"
+  if grep -q '"mode"[[:space:]]*:[[:space:]]*"free"' "$MODE_JSON"; then
     exit 0
   fi
-  if grep -q '"mode"[[:space:]]*:[[:space:]]*"sdd"' .claude/sdd-mode.json; then
+  if grep -q '"mode"[[:space:]]*:[[:space:]]*"sdd"' "$MODE_JSON"; then
     echo "[SDD-PROTOCOL] init-pending — Este proyecto esta marcado en modo SDD pero no tiene .sdd/project-init.json. Antes de atender la peticion del usuario, invoca el skill wf-project-init para completar la inicializacion. No repitas el wizard de modo."
     exit 0
   fi

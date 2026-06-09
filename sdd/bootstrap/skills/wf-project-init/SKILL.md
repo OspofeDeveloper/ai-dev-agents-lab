@@ -45,6 +45,24 @@ Verificar que existe `$SDD_HOME/install.sh`. Si no, abortar explicándolo.
 
 ## Paso 3: Detectar estado previo
 
+**3.0 — Raíz del proyecto en monorepos (ROADMAP 5.7).** Los marcadores SDD (`.sdd/project-init.json`, `.claude/sdd-mode.json`) viven en la raíz del proyecto, pero la sesión puede haberse abierto en un subpaquete. Antes de nada, busca un init/modo previo **hacia arriba hasta el toplevel git** (misma lógica de techo que el hook de sesión: fuera de git no se busca, solo el cwd):
+
+```bash
+TOP="$(git -C "$PWD" rev-parse --show-toplevel 2>/dev/null || true)"
+if [ -n "$TOP" ]; then CEIL="$(cd "$TOP" && pwd -P)"; else CEIL="$(pwd -P)"; fi
+d="$(pwd -P)"; SDD_ROOT_FOUND=""
+while :; do
+  if [ -f "$d/.sdd/project-init.json" ] || [ -f "$d/.claude/sdd-mode.json" ]; then SDD_ROOT_FOUND="$d"; break; fi
+  [ "$d" = "$CEIL" ] && break; [ "$d" = "/" ] && break; d="$(dirname "$d")"
+done
+echo "cwd:$(pwd -P)"; echo "sdd-root:${SDD_ROOT_FOUND:-ninguno}"
+```
+
+- Si `sdd-root` es un **ancestro distinto del cwd**: el monorepo ya tiene SDD inicializado en su raíz. **NO inicialices anidado.** Pregunta con `AskUserQuestion`:
+  - **"Operar desde la raíz `<sdd-root>`"** (recomendado) → detente e indica al usuario: `cd <sdd-root>` y relanza `/wf-project-init` desde ahí. El init, las sesiones y los artefactos operan desde la raíz del proyecto, no desde el subpaquete.
+  - **"Inicializar aquí (subproyecto independiente)"** → continúa el flujo normal en el cwd (caso raro pero legítimo: un subproyecto SDD anidado a propósito).
+- Si `sdd-root` es el **propio cwd** o `ninguno` → continúa normalmente con la detección de abajo (todo el resto del init opera relativo al cwd, que es la raíz correcta).
+
 ```bash
 test -f .sdd/project-init.json && echo "init-found"
 test -f .claude/sdd-mode.json && echo "mode-found"

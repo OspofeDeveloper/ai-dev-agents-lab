@@ -2,6 +2,14 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.18.0 — 2026-06-09
+
+Soporte de monorepo en el hook y el init (ROADMAP 5.7):
+
+- Abrir sesión en la raíz de un monorepo vs. en un subpaquete daba estados SDD distintos: el hook solo miraba el cwd, así que en un subpaquete (cuyo `.sdd/` vive en la raíz) volvía a disparar el wizard de modo. Ahora el **hook busca los marcadores SDD (`.sdd/project-init.json`, `.claude/sdd-mode.json`) hacia arriba hasta el toplevel git** (techo); fuera de git, solo el cwd (comportamiento previo intacto). Gana el ancestro más cercano: un `.sdd/` propio del subpaquete prevalece sobre el de la raíz. Los checks de init-incomplete y version-drift se anclan en la raíz encontrada.
+- **`wf-project-init` (Paso 3.0)** aplica la misma lógica de techo git: si se ejecuta desde un subpaquete de un monorepo ya inicializado, detecta el init/modo en un ancestro y **no crea un `.sdd/` anidado** — pregunta si operar desde la raíz (recomendado: `cd <raíz>` y relanzar) o inicializar aquí como subproyecto independiente (caso raro pero legítimo). Cuando el marcador está en el cwd o no hay, el flujo es idéntico al actual.
+- Capa bootstrap (hook + skill global de init): se sincroniza con `bash setup.sh --update`, no con `/wf-sdd-update`. El fallback manual del bloque `SDD-BOOTSTRAP` también se documentó como monorepo-aware. Sin scripts de enforcement nuevos. NO incluye multi-stack por ruta ni topología multi-root (eso es 6.1/A3). Verificado: `bash -n` + 6 casos del hook (raíz, subpaquete, init-incomplete desde subpaquete, modo free en raíz, `.sdd/` propio del subpaquete que gana, no-git intacto) + 4 casos de la detección del init.
+
 ## 0.17.0 — 2026-06-09
 
 Opt-out por ruta y desinstalación del bootstrap global (ROADMAP 5.6):
