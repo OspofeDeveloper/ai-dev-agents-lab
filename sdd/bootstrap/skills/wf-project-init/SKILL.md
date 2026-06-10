@@ -75,7 +75,7 @@ done
 
 **3a. Modo libre.** Si `sdd-mode.json` tiene `"mode": "free"`, confirmar con AskUserQuestion ("Sí, convertir a SDD" / "No, mantener modo libre"). "No" → cerrar sin tocar nada.
 
-**3b. Init previo.** Si existe `project-init.json`, leerlo, poblar `KNOWN_STATE` (profile, type, stack, phases) y mostrar resumen compacto. Luego AskUserQuestion:
+**3b. Init previo.** Si existe `project-init.json`, leerlo, poblar `KNOWN_STATE` (profiles, type, stack, phases) y mostrar resumen compacto. Para `profiles`: lee el array `profiles`; si el JSON es legacy y solo trae `profile` (string), trátalo como `["<profile>"]` (se migrará al reescribir, ver Paso 8). El resumen muestra los perfiles acumulados. Luego AskUserQuestion:
 
 ```
 question: "Este proyecto ya está inicializado. ¿Qué quieres hacer?"
@@ -466,7 +466,7 @@ En `MODE=extend`, regenerar con la unión de fases. En el flujo de init, este ar
 ```json
 {
   "name": "<nombre-proyecto>",
-  "profile": "<dev|product|design|custom>",
+  "profiles": ["<perfiles acumulados — p. ej. \"product\", \"dev\">"],
   "type": "<app|web|backend|other>",
   "stack": "<stack|agnostico|null>",
   "targets": ["..."] ,
@@ -495,6 +495,12 @@ En `MODE=extend`, regenerar con la unión de fases. En el flujo de init, este ar
 
 (`targets` solo si multiplataforma; en otro caso omitir esa clave. `specialist_workflow` solo si el stack es concreto Y existe `wf-<stack>-init`. `artifacts` sale de `ARTIFACTS_MAP` (5.7): una clave por fase instalada de entre `prd`/`spec`/`design`, valor relativo a la raíz — canónico es el nombre de la fase, p. ej. `"spec": "spec"`. plan/tasks no tienen clave: sus artefactos viven dentro de la carpeta de cada feature — subcarpetas `plan/` y `tasks/`, hermanas de `spec/`.)
 
+> **`profiles` es acumulativo (no se sobrescribe).** Un proyecto pasa por varios perfiles a lo largo de su vida: un PM lo inicializa como `product`, y más tarde un dev lo amplía como `dev`. El campo registra **todos los perfiles bajo los que se ha configurado**, no solo el último.
+> - **Init fresco** (`MODE=init` / `--force`): `profiles` = `[<perfil de esta sesión>]` (el que se eligió en 5.0 o vino por `--profile`).
+> - **Ampliación** (`MODE=extend`): **unión** del perfil de esta sesión con los ya presentes, preservando el orden de aparición y sin duplicar. Ej.: stored `["product"]` + sesión `dev` → `["product", "dev"]`; re-correr el mismo perfil deja la lista igual (unión idempotente).
+> - **Back-compat (migración):** un `project-init.json` previo a 0.23.0 trae `profile` (string singular). Al leerlo (Paso 3b) trátalo como `["<profile>"]`; al reescribir el JSON en esta sesión, **migra** a `profiles` y elimina la clave `profile` antigua. No quedan ambas claves.
+> - `--profile` y la pregunta 5.0 siguen siendo singulares: son el perfil de ESTA sesión. La pluralidad vive solo en el estado persistido.
+
 3. Escribir `.claude/sdd-mode.json`:
 
 ```json
@@ -517,6 +523,7 @@ test -f .claude/CLAUDE.md && echo "OK claude-md" || echo "FALLO claude-md"
 test -f .sdd/project-init.json && echo "OK init-json" || echo "FALLO init-json"
 grep -q '"dispatcher": "wf-project-init"' .sdd/project-init.json && echo "OK schema" || echo "FALLO schema — reescribir con los campos exactos del Paso 8"
 grep -q '"artifacts"' .sdd/project-init.json && echo "OK artifacts-map" || echo "FALLO artifacts-map — añadir el mapa artifacts del Paso 8"
+grep -q '"profiles"' .sdd/project-init.json && ! grep -q '"profile"[^s]' .sdd/project-init.json && echo "OK profiles" || echo "FALLO profiles — usar el array \"profiles\" (acumulado) y eliminar la clave legacy \"profile\" (Paso 8)"
 test -f .sdd/scripts/sdd-gate-check.py && test -f .sdd/scripts/sdd-seal.py && test -f .sdd/scripts/sdd-task-state.py && test -f .sdd/scripts/sdd-sync-check.py && test -f .sdd/scripts/sdd-skill-allow.py && echo "OK enforcement-scripts" || echo "FALLO enforcement-scripts — copiar desde $SDD_HOME/scripts/ (Paso 6)"
 test -f .sdd/sdd-version.json && echo "OK sdd-version" || echo "FALLO sdd-version — re-ejecutar install.sh (Paso 6) para sellar la versión"
 grep -qx '\.claude/settings\.local\.json' .gitignore 2>/dev/null && echo "OK gitignore" || echo "FALLO gitignore — añadir la línea .claude/settings.local.json (Paso 7)"

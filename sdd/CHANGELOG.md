@@ -2,6 +2,15 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.23.0 — 2026-06-10
+
+Multi-perfil acumulado en `project-init.json` (ROADMAP 5.8):
+
+- Un proyecto pasa por varios perfiles a lo largo de su vida (un PM lo inicializa como `product`, un dev lo amplía como `dev`), pero `project-init.json` guardaba un único `profile` (string) que la ampliación **sobrescribía** — se perdía la traza de bajo qué perfiles se había configurado. Ahora el campo es **`profiles` (array acumulativo)**.
+- **`wf-project-init`** (capa bootstrap): init fresco → `profiles: [<perfil de la sesión>]`; ampliación (`MODE=extend`) → **unión** del perfil de la sesión con los existentes (orden de aparición, sin duplicar, idempotente). `--profile` y la pregunta 5.0 siguen siendo singulares (perfil de ESTA sesión); la pluralidad vive solo en el estado persistido.
+- **Back-compat / migración**: un `project-init.json` previo a 0.23.0 trae `profile` (singular); al leerlo se trata como `["<profile>"]` y al reescribir en la siguiente sesión se **migra** a `profiles` eliminando la clave antigua (no quedan ambas). Nuevo check en el Paso 9 de verificación: `profiles` presente y sin `profile` legacy.
+- Cambio **contenido en `wf-project-init`**: el hook (parsea `phases`), `wf-sdd-update` y `wf-sdd-status` no leen el campo, así que no se tocan. Capa bootstrap → se sincroniza con `bash setup.sh --update` (no `/wf-sdd-update`); sin ⚠. Sin scripts nuevos, sin cambio de inventario del registry. VERSION 0.23.0.
+
 ## 0.22.0 — 2026-06-10
 
 Noción mínima de release — `wf-release` (ROADMAP 2.7):
