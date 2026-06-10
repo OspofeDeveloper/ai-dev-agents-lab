@@ -18,7 +18,7 @@ Esta fase esta disenada para un encaje concreto. Declararlo evita falsas expecta
 
 - **Para quien ES**: equipos **sin disenador dedicado** que necesitan un contrato visual consistente; productos **greenfield** (el sistema visual nace aqui); prototipado **mobile** con Stitch y **web/desktop** con prompt de ensamblaje tool-agnostic (`target_tool: web-generic`, reutilizable por v0/Lovable/bolt o codigo a mano). Soporta a11y **WCAG completa por plataforma**: nucleo platform-neutral (`kb-a11y-expert`) mas los deltas web/desktop de puntero fino y teclado primario (`kb-a11y-web-expert`), auditables con `/wf-design-a11y-audit`. Stitch sigue siendo el destino mobile, pero ya no es el unico.
 - **Onramp brownfield**: si la UI **ya existe en produccion** y no se va a rediseñar, el `DESIGN.md` se deriva por ingenieria inversa con `/wf-design-extract` (CSS/tokens/componentes/capturas → `DESIGN.md` con `origin: extracted` y evidencia por token). Es la entrada ALTERNATIVA a la fase (no exige spec ni brief), espejo de `/wf-spec-from-code` en Spec. El `DESIGN.md` extraido fluye como cualquier otro: auditable (`wf-design-validate`), evolucionable (`wf-design-delta`), exportable (`wf-design-export`).
-- **Lo que NO cubre hoy**: integracion con Figma (ni import de variables ni export de Figma Tokens — evaluacion diferida a ROADMAP 7.6); el flujo de un equipo con disenador que ya produce sus propios specs visuales — en ese caso el `DESIGN.md` puede escribirse a mano respetando el contrato (`kb-design-system-contract`) y auditarse con `/wf-design-validate`, pero los workflows generativos sobran.
+- **Lo que NO cubre**: integracion con Figma (ni import de variables ni export de Figma Tokens) queda **fuera de alcance** (decision ROADMAP 7.6, 2026-06-10): la fase apunta a equipos sin disenador y sus destinos son Stitch (mobile) y `web-generic` (web/desktop). Se reconsideraria solo si el fit se expandiera a equipos con disenador propio — decision de producto, no tecnica. Para ese flujo de un equipo con disenador que ya produce sus propios specs visuales, hoy el `DESIGN.md` puede escribirse a mano respetando el contrato (`kb-design-system-contract`) y auditarse con `/wf-design-validate`, pero los workflows generativos sobran.
 - **Es saltable**: por proyecto (la fase es opcional en el init) y **por feature** — una feature sin superficie de UI visible pasa de Spec a Plan directamente. La regla canonica de cuando Design es obligatorio vive en `kb-plan-expert` y la aplica `wf-prepare-plan`; esta fase no fuerza su propio uso.
 
 Si el proyecto encaja en un "NO cubre", dilo al usuario en cuanto se detecte — antes de generar artefactos que no va a usar.
@@ -105,6 +105,8 @@ spec validado
   -> Stitch -> wf-prepare-plan
   -> wf-plan-validate
 ```
+
+**Camino minimo (equipos pequenos / modo ligero):** de los tres workflows pre-`DESIGN.md`, solo `wf-design-intake` es gate obligatorio. `wf-design-moodboard` y `wf-design-discover` son aceleradores opt-in (moodboard especialmente util para juniors o direccion no clara); pueden omitirse sin penalizacion. Aguas abajo, `wf-design-system` → `wf-design-feature-prototype` no cambia. La pareja `wf-design-branch` (sistema completo) / `wf-design-variant` (feature concreta) cubre propositos distintos y no se solapa; su desambiguacion canonica vive en `kb-design-governance` Regla 4 (branch/delta/intake/variant).
 
 Loops de mantenimiento:
 - Cambios en `DESIGN.md`: `wf-design-delta analyze` → revisar → `apply`.
