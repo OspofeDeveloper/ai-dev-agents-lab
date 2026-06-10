@@ -20,6 +20,7 @@ Las `kb-*` viven en los subagentes y se cargan automáticamente en su contexto. 
 | Inicializar o ampliar un proyecto SDD eligiendo perfil, fases y stack | `/wf-project-init` | `[--profile <dev\|product\|design\|custom>] [--type <app\|web\|backend>] [--stack <nombre>] [--force]` |
 | Configurar entornos, brands, flavors o variantes de build en un proyecto KMM | `/wf-kmm-environments` | `[brands y entornos, ej: 'pre pro' o 'cuideo felizvita con pre y pro']` |
 | Configurar Preferences DataStore en un proyecto KMM | `/wf-kmm-datastore-setup` | `[ámbito del storage, módulo destino, DI activa y consumers previstos]` |
+| Configurar Room (persistencia relacional) en un proyecto KMM | `/wf-kmm-database-setup` | `[entidades a persistir, módulo destino (core vs feature), DI activa y consumers previstos]` |
 | Configurar infraestructura de networking en un proyecto KMM | `/wf-kmm-network-setup` | `[stack HTTP, URLs base, convenciones JSON y estrategia de auth si aplica]` |
 | Configurar auth con Keycloak en un proyecto KMM | `/wf-kmm-auth-setup-keycloak` | `[IDS_BASE_URL, realm, client_id, grant types, estrategia de refresh y mecanismo HTTP]` |
 | Configurar el stack Koin + Ktor + Keycloak de forma compuesta | `/wf-kmm-stack-setup-ktor-keycloak-koin` | `[APP_BASE_URL, IDS_BASE_URL, realm, client_id, grant types y entornos]` |

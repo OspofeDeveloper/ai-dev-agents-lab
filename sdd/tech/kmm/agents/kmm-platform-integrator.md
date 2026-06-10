@@ -1,7 +1,7 @@
 ---
 name: kmm-platform-integrator
 description: Agente especializado en composición de app KMM, navegación, wiring de DI y configuración de brands/environments en Android e iOS.
-skills: [kb-kmm-project-state-protocol, kb-kmm-clean-architecture, kb-kmm-core-layer, kb-kmm-feature-clean-architecture, kb-kmm-app-layer, kb-tasks-koin, kb-tasks-kmm-datastore-preferences, kb-kmm-navigation-contracts, kb-kmm-navigation-compose, kb-tasks-kmm-navigation-viewmodel-events, kb-kmm-navigation-platform-behaviors, kb-kmm-brands, kb-kmm-environments, kb-kmm-android-environments, kb-kmm-ios-environments, kb-tasks-kmm-integration-testing]
+skills: [kb-kmm-project-state-protocol, kb-kmm-clean-architecture, kb-kmm-core-layer, kb-kmm-feature-clean-architecture, kb-kmm-app-layer, kb-tasks-koin, kb-tasks-kmm-datastore-preferences, kb-tasks-kmm-room, kb-kmm-navigation-contracts, kb-kmm-navigation-compose, kb-tasks-kmm-navigation-viewmodel-events, kb-kmm-navigation-platform-behaviors, kb-kmm-brands, kb-kmm-environments, kb-kmm-android-environments, kb-kmm-ios-environments, kb-tasks-kmm-integration-testing]
 memory: project
 permissionMode: acceptEdits
 model: claude-sonnet-4-6
@@ -49,6 +49,7 @@ No sustituyes la exploración inicial del proyecto ni la planificación cuando u
 | `kb-kmm-app-layer` | Siempre que el cambio afecte a `app`, composition root, wiring global, pantallas agregadas o ownership de navegación. |
 | `kb-tasks-koin` | Cuando haya que registrar o resolver dependencias, crear módulos o inicializar DI. |
 | `kb-tasks-kmm-datastore-preferences` | Cuando haya que integrar Preferences DataStore, providers por plataforma o adapters de storage local en el wiring del proyecto. |
+| `kb-tasks-kmm-room` | Cuando haya que configurar Room: entidades/DAOs en commonMain, builder expect/actual por plataforma, KSP por target, driver bundled y registro de la DB en DI. |
 | `kb-kmm-navigation-contracts` | Para respetar ownership, separación entre features y contrato general de navegación. |
 | `kb-kmm-navigation-compose` | Para implementar el grafo Compose, rutas type-safe, back stack y shell adaptativo. |
 | `kb-tasks-kmm-navigation-viewmodel-events` | Cuando la integración necesite efectos de navegación entre ViewModel y Composable. |
@@ -75,6 +76,7 @@ Al inicio de cada sesión, confirma que tus KBs están disponibles:
 - `kb-kmm-app-layer`: verifica que puedes referenciar reglas de app, composition root y wiring global
 - `kb-tasks-koin`: verifica que puedes referenciar Koin DI — DSL, nativeModule expect/actual, initKoin completo
 - `kb-tasks-kmm-datastore-preferences`: verifica que puedes referenciar Preferences DataStore — factory y path por plataforma
+- `kb-tasks-kmm-room`: verifica que puedes referenciar Room — @Database con constructor, builder por plataforma, KSP por target y registro DI
 - `kb-kmm-navigation-contracts`: verifica que puedes referenciar el contrato arquitectónico de navegación
 - `kb-kmm-navigation-compose`: verifica que puedes referenciar la implementación del grafo Compose Navigation
 - `kb-tasks-kmm-navigation-viewmodel-events`: verifica que puedes referenciar Intent/Events — Channel y LaunchedEffect

@@ -1,6 +1,6 @@
 # SDD Skill Registry
 <!-- Auto-generado por scripts/generate-skill-registry.py. No editar manualmente. -->
-<!-- Total: 124 skills | 55 wf-* (user-invocable) | 69 kb-* -->
+<!-- Total: 130 skills | 56 wf-* (user-invocable) | 74 kb-* -->
 <!-- Última actualización: 2026-06-10 -->
 
 ## Meta-Ecosistema (meta/)
@@ -121,6 +121,7 @@
 |---|---|---|---|
 | kb-kmm-project-state-protocol | Protocolo de precondicion de contexto tecnico para agentes KMM | false | tech/kmm/skills/kb-kmm-project-state-protocol/SKILL.md |
 | wf-kmm-auth-setup-keycloak | Configura autenticación OAuth con Keycloak en un proyecto KMM separando contratos de sesión, proveedor OAuth y mecanismo técnico de integración con el cliente… | true | tech/kmm/skills/wf-kmm-auth-setup-keycloak/SKILL.md |
+| wf-kmm-database-setup | Configura Room en un proyecto KMM componiendo ownership del módulo de DB, entidades/DAOs en commonMain, builder por plataforma, KSP y driver, wiring de DI y se… | true | tech/kmm/skills/wf-kmm-database-setup/SKILL.md |
 | wf-kmm-datastore-setup | Configura Preferences DataStore en un proyecto KMM componiendo arquitectura por capas, wiring de DI y providers por plataforma sin mezclar storage local con au… | true | tech/kmm/skills/wf-kmm-datastore-setup/SKILL.md |
 | wf-kmm-environments | Configura un sistema multi-brand/multi-environment en un proyecto KMM componiendo semántica estable de variantes y sus implementaciones Android e iOS | true | tech/kmm/skills/wf-kmm-environments/SKILL.md |
 | wf-kmm-init | Init especialista del stack KMM | true | tech/kmm/skills/wf-kmm-init/SKILL.md |
@@ -141,14 +142,18 @@
 | kb-kmm-core-layer | Base de conocimiento de la capa core en proyectos KMM: dominio compartido, infraestructura transversal, criterios para subir responsabilidades desde features y… | false | tech/kmm/skills/plan/kb-kmm-core-layer/SKILL.md |
 | kb-kmm-environments | Base de conocimiento de entornos y variantes en proyectos KMM: semántica estable de env, composición de la matriz brand×env, valores derivados vs declarativos,… | false | tech/kmm/skills/plan/kb-kmm-environments/SKILL.md |
 | kb-kmm-feature-clean-architecture | Base de conocimiento de la arquitectura interna de una feature KMM: capas presentation/domain/data, ubicación de contratos e implementaciones, dependencias per… | false | tech/kmm/skills/plan/kb-kmm-feature-clean-architecture/SKILL.md |
+| kb-kmm-gradle-modules | Estructura de módulos Gradle en KMM como decisión de plan: cómo materializar las capas lógicas (app/core/feature) en módulos físicos (:composeApp, :core:*, :fe… | false | tech/kmm/skills/plan/kb-kmm-gradle-modules/SKILL.md |
 | kb-kmm-navigation-contracts | Base de conocimiento de contratos de navegación en proyectos KMM: ownership entre app y features, rutas como contrato central, encapsulación del NavController… | false | tech/kmm/skills/plan/kb-kmm-navigation-contracts/SKILL.md |
 | kb-kmm-navigation-platform-behaviors | Reglas para integración de navegación con comportamientos de plataforma en KMM, como BackHandler, predictive back y bridges de deep links | false | tech/kmm/skills/plan/kb-kmm-navigation-platform-behaviors/SKILL.md |
 | kb-kmm-network-contracts | Base de conocimiento de contratos de networking en proyectos KMM: errores de red, resultados tipados, límites entre servicios remotos y repositorios, y reglas… | false | tech/kmm/skills/plan/kb-kmm-network-contracts/SKILL.md |
+| kb-kmm-offline-strategy | Estrategia de caché y offline-first en KMM como decisión de plan: cuándo cachear, la base de datos (Room) como Single Source of Truth, patrón stale-while-reval… | false | tech/kmm/skills/plan/kb-kmm-offline-strategy/SKILL.md |
+| kb-kmm-secrets-cicd | Mecánica de transporte de secretos en CI/CD para KMM: cómo llevar API keys, client secrets y signing keys desde local y CI hasta Android (BuildConfig) e iOS (x… | false | tech/kmm/skills/plan/kb-kmm-secrets-cicd/SKILL.md |
 | kb-kmm-testing-strategy | Estrategia de testing para proyectos KMM: pirámide de tests, propiedad por capa, ciclo TDD RED-GREEN-REFACTOR, asignación a source sets y política de test doub… | false | tech/kmm/skills/plan/kb-kmm-testing-strategy/SKILL.md |
 | kb-plan-cmp-ui | Base de conocimiento de la capa presentation en proyectos Compose Multiplatform (CMP): estructura del módulo UI compartida en commonMain, cuándo usar expect/ac… | false | tech/kmm/skills/plan/kb-plan-cmp-ui/SKILL.md |
 | kb-plan-expert | Base de conocimiento del Plan técnico SDD para proyectos KMM | false | tech/kmm/skills/plan/kb-plan-expert/SKILL.md |
 | kb-plan-kmm-datastore-preferences | Preferences DataStore en KMM como decisión arquitectónica: cuándo usarlo, qué módulos se ven afectados, ownership core vs feature, separación storage/networkin… | false | tech/kmm/skills/plan/kb-plan-kmm-datastore-preferences/SKILL.md |
 | kb-plan-kmm-navigation-viewmodel-events | Base de conocimiento de eventos y efectos de navegación desde ViewModel en proyectos KMM: patrón Intent/Events, Channel vs StateFlow, reglas de LaunchedEffect… | false | tech/kmm/skills/plan/kb-plan-kmm-navigation-viewmodel-events/SKILL.md |
+| kb-plan-kmm-room | Persistencia relacional con Room en KMM como decisión arquitectónica de plan: cuándo Room vs Preferences DataStore, la base de datos como Single Source of Trut… | false | tech/kmm/skills/plan/kb-plan-kmm-room/SKILL.md |
 | kb-plan-kmm-ui-text | Patrón UIText en Compose Multiplatform como decisión arquitectónica: cuándo usarlo, qué problema resuelve, separación ViewModel-UI para texto traducible y diná… | false | tech/kmm/skills/plan/kb-plan-kmm-ui-text/SKILL.md |
 | kb-plan-koin | Base de conocimiento de Koin DI en proyectos KMM: organización de módulos por feature, tipos de registro, patrón qualifier con enums, nativeModule expect/actua… | false | tech/kmm/skills/plan/kb-plan-koin/SKILL.md |
 
@@ -168,6 +173,7 @@
 | kb-tasks-kmm-datastore-preferences | Base de conocimiento para usar Preferences DataStore en proyectos KMM: factory compartida, resolución de path por plataforma, ownership de keys y adapters sobr… | false | tech/kmm/skills/tasks/kb-tasks-kmm-datastore-preferences/SKILL.md |
 | kb-tasks-kmm-integration-testing | Patrones de implementación de tests de integración en proyectos KMM con CMP: tests de árbol semántico Compose con composeTestRule, tests de accesibilidad con u… | false | tech/kmm/skills/tasks/kb-tasks-kmm-integration-testing/SKILL.md |
 | kb-tasks-kmm-navigation-viewmodel-events | Implementación concreta del patrón Intent/Events en proyectos KMM: Channel para efectos one-shot, LaunchedEffect(viewModel), naming de sealed interfaces y coor… | false | tech/kmm/skills/tasks/kb-tasks-kmm-navigation-viewmodel-events/SKILL.md |
+| kb-tasks-kmm-room | Base de conocimiento para implementar Room en KMP: entidades y DAOs en commonMain, @Database con RoomDatabaseConstructor, builder expect/actual por plataforma,… | false | tech/kmm/skills/tasks/kb-tasks-kmm-room/SKILL.md |
 | kb-tasks-kmm-ui-text | Base de conocimiento sobre el patrón UiText en Compose Multiplatform: `UIText` desacopla ViewModel y UI para manejar textos traducibles y dinámicos | false | tech/kmm/skills/tasks/kb-tasks-kmm-ui-text/SKILL.md |
 | kb-tasks-kmm-unit-testing | Patrones de implementación de tests unitarios en proyectos KMM: tests de ViewModel con runTest + Turbine, tests de UseCase con fakes, tests de RepositoryImpl c… | false | tech/kmm/skills/tasks/kb-tasks-kmm-unit-testing/SKILL.md |
 | kb-tasks-koin | Implementación concreta de Koin DI en proyectos KMM: DSL de registro (single/factory/viewModelOf), nativeModule expect/actual, initKoin completo con llamadas A… | false | tech/kmm/skills/tasks/kb-tasks-koin/SKILL.md |

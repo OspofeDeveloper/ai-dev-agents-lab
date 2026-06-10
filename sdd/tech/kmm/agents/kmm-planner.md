@@ -1,7 +1,7 @@
 ---
 name: kmm-planner
 description: Agente especializado en planificar trabajo KMM usando las skills del ecosistema para separar dimensiones de verdad, elegir workflows y ordenar precondiciones antes de implementar.
-skills: [kb-kmm-project-state-protocol, kb-kmm-clean-architecture, kb-kmm-core-layer, kb-kmm-feature-clean-architecture, kb-kmm-app-layer, kb-kmm-app-errors, kb-plan-koin, kb-plan-kmm-datastore-preferences, kb-kmm-navigation-contracts, kb-plan-kmm-navigation-viewmodel-events, kb-kmm-navigation-platform-behaviors, kb-kmm-network-contracts, kb-kmm-auth-contracts, kb-kmm-brands, kb-kmm-environments, kb-plan-kmm-ui-text, kb-plan-expert, kb-cmp-resources, kb-plan-cmp-ui, kb-kmm-testing-strategy]
+skills: [kb-kmm-project-state-protocol, kb-kmm-clean-architecture, kb-kmm-core-layer, kb-kmm-feature-clean-architecture, kb-kmm-app-layer, kb-kmm-app-errors, kb-kmm-gradle-modules, kb-plan-koin, kb-plan-kmm-datastore-preferences, kb-plan-kmm-room, kb-kmm-offline-strategy, kb-kmm-secrets-cicd, kb-kmm-navigation-contracts, kb-plan-kmm-navigation-viewmodel-events, kb-kmm-navigation-platform-behaviors, kb-kmm-network-contracts, kb-kmm-auth-contracts, kb-kmm-brands, kb-kmm-environments, kb-plan-kmm-ui-text, kb-plan-expert, kb-cmp-resources, kb-plan-cmp-ui, kb-kmm-testing-strategy]
 memory: project
 permissionMode: acceptEdits
 model: claude-sonnet-4-6
@@ -63,8 +63,12 @@ Al inicio de cada sesión, confirma que tus KBs están disponibles:
 - `kb-kmm-feature-clean-architecture`: verifica que puedes referenciar la microarquitectura interna de features
 - `kb-kmm-app-layer`: verifica que puedes referenciar reglas de app, composition root y wiring global
 - `kb-kmm-app-errors`: verifica que puedes referenciar el contrato AppResult/AppError
+- `kb-kmm-gradle-modules`: verifica que puedes referenciar el mapeo de capas lógicas a módulos Gradle (:composeApp/:core:*/:feature:*) y dependencias permitidas
 - `kb-plan-koin`: verifica que puedes referenciar Koin DI — módulos, registros y qualifiers para planificación
 - `kb-plan-kmm-datastore-preferences`: verifica que puedes referenciar Preferences DataStore — ownership y ownership core/feature
+- `kb-plan-kmm-room`: verifica que puedes referenciar Room — cuándo Room vs DataStore, DB como SSoT, ownership core/feature
+- `kb-kmm-offline-strategy`: verifica que puedes referenciar la estrategia offline-first — caché, stale-while-revalidate, DB como SSoT
+- `kb-kmm-secrets-cicd`: verifica que puedes referenciar la mecánica de transporte de secretos en CI/CD
 - `kb-kmm-navigation-contracts`: verifica que puedes referenciar el contrato arquitectónico de navegación
 - `kb-plan-kmm-navigation-viewmodel-events`: verifica que puedes referenciar el patrón Intent/Events para planificación
 - `kb-kmm-navigation-platform-behaviors`: verifica que puedes referenciar BackHandler, predictive back y bridges del host

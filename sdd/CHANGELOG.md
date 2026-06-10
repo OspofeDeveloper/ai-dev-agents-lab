@@ -2,6 +2,20 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.24.0 — 2026-06-10
+
+Huecos del overlay KMM completados (ROADMAP 6.4):
+
+- El overlay `tech/kmm` tenía huecos declarados en `tech/kmm/BACKLOG.md`: faltaba estructura de módulos Gradle, persistencia relacional (el stack usa **Room**, no SQLDelight), estrategia offline y mecánica de secretos en CI/CD. 6.4 los cierra con **5 KBs + 1 workflow**, todos dentro del overlay; el backlog queda vacío.
+- **Persistencia (Par Room)**: `kb-plan-kmm-room` (decisión: Room vs Preferences DataStore, la DB como Single Source of Truth, ownership `:core:database` vs feature, qué contempla el plan) + `kb-tasks-kmm-room` (implementación KMP: entidades/DAOs en `commonMain`, `@Database` con `@ConstructedBy` + `expect object RoomDatabaseConstructor`, builder `expect/actual` por plataforma —Android `Context`, iOS `NSDocumentDirectory`—, `BundledSQLiteDriver`, KSP por target, migraciones versionadas, registro DI en `nativeModule`; templates en `references/room_kmp_templates.md`).
+- **`kb-kmm-gradle-modules`** (plan): materializa las capas lógicas en módulos físicos (`:composeApp`/`:core:*`/`:feature:*`), convention plugins en `build-logic/`, version catalog y dependencias permitidas (feature→core, nunca core→feature; features no se ven entre sí).
+- **`kb-kmm-offline-strategy`** (plan): caché y offline-first sobre Room — cuándo cachear, DB como SSoT (la UI observa la DB, la red escribe en ella), stale-while-revalidate/NetworkBoundResource, frescura vs disponibilidad, errores de red con caché presente.
+- **`kb-kmm-secrets-cicd`** (plan): mecánica de transporte de API keys/client secrets/signing keys sin commitearlos — local (`$HOME/.gradle` / `local.properties`) y CI (secret store → env → propiedad Gradle → BuildConfig/xcconfig), keystore base64 en CI, `.gitignore` de claves.
+- **`wf-kmm-database-setup`** (workflow, espejo de `wf-kmm-datastore-setup`): configura Room delegando en `kmm-platform-integrator`, referenciando las reglas de `kb-tasks-kmm-room`.
+- **Fronteras SSoT respetadas** (no se reescribió nada existente): el ownership lógico y las reglas de capa siguen siendo SSoT de `kb-kmm-clean-architecture`/`kb-kmm-core-layer`/`kb-kmm-feature-clean-architecture` (gradle-modules solo las materializa en módulos); el patrón de repositorio (Api/local→repo, DTO/entity→dominio) es SSoT de `kb-kmm-feature-clean-architecture` (Room y offline lo referencian, no lo reescriben); el platform-split de path es de `kb-tasks-kmm-datastore-preferences` (Room aplica el mismo patrón al builder); la política de config sensible es SSoT de `kb-kmm-environments` Regla 7 (secrets-cicd aporta solo la mecánica) y la materialización por variante de `kb-kmm-android-environments`/`kb-kmm-ios-environments`.
+- Wiring: `kmm-planner` += las 4 KBs de plan; `kmm-platform-integrator`, `kmm-feature-implementer` y `kmm-explorer` += `kb-tasks-kmm-room`. Rootmap del overlay (`tech/kmm/CLAUDE.md`) y catálogo (`tech/kmm/skills/README.md`) actualizados. `install.sh` del overlay no necesitó cambios (globa `plan/*/`, `tasks/*/`, `wf-*/`). Registry 124 → 130 skills (+5 kb, +1 wf). VERSION 0.24.0.
+- ⚠ Proyectos con stack KMM ya inicializado: `/wf-sdd-update` para recibir las 5 KBs y `wf-kmm-database-setup` (re-aplica el overlay; los agentes KMM cargan las KBs nuevas declaradas en su frontmatter).
+
 ## 0.23.0 — 2026-06-10
 
 Multi-perfil acumulado en `project-init.json` (ROADMAP 5.8):

@@ -108,6 +108,11 @@ Cada skill debe poseer solo **una dimensión de verdad**:
 - `kb-kmm-feature-clean-architecture`
   Define la microarquitectura interna de una feature: `presentation / domain / data`.
 
+### Módulos y build
+
+- `kb-kmm-gradle-modules` (plan)
+  Define cómo materializar las capas lógicas en módulos Gradle físicos: nombrado (`:composeApp`/`:core:*`/`:feature:*`), qué pertenece a cada uno, convention plugins en `build-logic/`, version catalog y dependencias permitidas entre módulos. No redefine el ownership lógico (vive en las skills de capa).
+
 ### DI
 
 - `kb-koin`
@@ -117,6 +122,12 @@ Cada skill debe poseer solo **una dimensión de verdad**:
 
 - `kb-kmm-datastore-preferences`
   Define cómo introducir Preferences DataStore en KMM: factory común, path por plataforma, ownership de keys y adapters sobre storage local.
+
+- `kb-kmm-room` (plan + tasks)
+  Define la persistencia relacional con Room (no SQLDelight): en `plan/`, cuándo Room vs DataStore, DB como Single Source of Truth y ownership core/feature; en `tasks/`, entidades/DAOs en commonMain, `@Database` con constructor, builder expect/actual por plataforma, KSP por target, driver bundled y migraciones.
+
+- `kb-kmm-offline-strategy` (plan)
+  Define la estrategia de caché y offline-first sobre Room: cuándo cachear, base de datos como SSoT, stale-while-revalidate, frescura vs disponibilidad y manejo de errores de red con caché.
 
 ### Recursos y texto
 
@@ -162,6 +173,9 @@ Cada skill debe poseer solo **una dimensión de verdad**:
 - `kb-kmm-ios-environments`
   Define la implementación iOS del sistema de variantes: `XCConfig`, target/build configuration/scheme y Script Build Phase.
 
+- `kb-kmm-secrets-cicd` (plan)
+  Define la mecánica de transporte de secretos en CI/CD (API keys, client secrets, signing keys): local vs CI, env→propiedad Gradle, inyección en Android (BuildConfig) e iOS (xcconfig) y qué nunca va a git. Materializa la política sensible de `kb-kmm-environments` (Regla 7), no la reescribe.
+
 ### Auth
 
 - `kb-kmm-auth-contracts`
@@ -177,6 +191,9 @@ Cada skill debe poseer solo **una dimensión de verdad**:
 
 - `wf-kmm-datastore-setup`
   Orquesta la configuración de Preferences DataStore respetando capas, providers por plataforma y wiring de DI.
+
+- `wf-kmm-database-setup`
+  Orquesta la configuración de Room: ownership del módulo de DB, entidades/DAOs en commonMain, builder por plataforma, KSP/driver, wiring de DI y separación DAO/repositorio. Delega en `kmm-platform-integrator`.
 
 - `wf-kmm-network-setup`
   Orquesta la configuración de networking sin asumir auth concreta.
@@ -199,7 +216,11 @@ skills/plan/  ─ contratos y arquitectura
   kb-kmm-core-layer
   kb-kmm-app-errors
   kb-kmm-feature-clean-architecture
+  kb-kmm-gradle-modules
   kb-koin
+  kb-plan-kmm-room
+  kb-kmm-offline-strategy
+  kb-kmm-secrets-cicd
   kb-kmm-network-contracts
   kb-kmm-navigation-contracts
   kb-kmm-navigation-viewmodel-events
@@ -212,6 +233,7 @@ skills/tasks/  ─ implementación concreta
   kb-kmm-navigation-compose
   kb-kmm-navigation-platform-behaviors
   kb-kmm-datastore-preferences
+  kb-tasks-kmm-room
   kb-kmm-resources
   kb-kmm-ui-text
   kb-kmm-brands
@@ -221,6 +243,7 @@ skills/tasks/  ─ implementación concreta
 
 skills/  ─ workflows KMM (planos, uso interno)
   wf-kmm-datastore-setup
+  wf-kmm-database-setup
   wf-kmm-network-setup
   wf-kmm-auth-setup-keycloak
   wf-kmm-stack-setup-ktor-keycloak-koin

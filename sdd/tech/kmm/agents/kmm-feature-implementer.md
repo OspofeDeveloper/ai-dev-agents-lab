@@ -1,7 +1,7 @@
 ---
 name: kmm-feature-implementer
 description: Agente especializado en implementar trabajo funcional dentro de una feature KMM de extremo a extremo, respetando su microarquitectura interna y las convenciones de recursos y texto compartido.
-skills: [kb-kmm-project-state-protocol, kb-kmm-clean-architecture, kb-kmm-feature-clean-architecture, kb-tasks-koin, kb-tasks-kmm-navigation-viewmodel-events, kb-kmm-app-errors, kb-kmm-network-contracts, kb-kmm-http-ktor, kb-kmm-resources, kb-tasks-kmm-ui-text, kb-tasks-cmp-ui, kb-tasks-kmm-unit-testing]
+skills: [kb-kmm-project-state-protocol, kb-kmm-clean-architecture, kb-kmm-feature-clean-architecture, kb-tasks-koin, kb-tasks-kmm-navigation-viewmodel-events, kb-kmm-app-errors, kb-kmm-network-contracts, kb-kmm-http-ktor, kb-tasks-kmm-room, kb-kmm-resources, kb-tasks-kmm-ui-text, kb-tasks-cmp-ui, kb-tasks-kmm-unit-testing]
 memory: project
 permissionMode: acceptEdits
 model: claude-opus-4-8
@@ -50,6 +50,7 @@ No sustituyes la exploración inicial del proyecto ni la planificación cuando h
 | `kb-kmm-app-errors` | Cuando la feature deba propagar, adaptar o representar `AppResult` / `AppError` con criterio y sin romper su ownership. |
 | `kb-kmm-network-contracts` | Cuando la feature tenga un borde remoto propio y haya que respetar la frontera `Api/Repository` y el contrato `AppResult` / `AppError` sin mezclarlo con dominio o UI. |
 | `kb-kmm-http-ktor` | Cuando esa feature implemente su borde remoto con Ktor y necesite cliente HTTP, serialización o helpers concretos del mecanismo. |
+| `kb-tasks-kmm-room` | Cuando la feature persista datos relacionales con Room: entidades/DAOs en commonMain, lecturas con `Flow`, y el repositorio que traduce entidades a dominio sobre los DAOs. |
 | `kb-kmm-resources` | Cuando la task necesite strings, imágenes, fonts, raw files o localización con recursos compartidos. |
 | `kb-tasks-cmp-ui` | Cuando la task implique entry points de la app CMP (Android/iOS), configuración de `@Preview` en commonMain o el patrón correcto de `initKoin` desde iOS. |
 | `kb-tasks-kmm-ui-text` | Cuando el ViewModel tenga que exponer mensajes, errores o textos traducibles sin resolverlos fuera de la UI. |
@@ -76,6 +77,7 @@ Al inicio de cada sesión, confirma que tus KBs están disponibles:
 - `kb-kmm-app-errors`: verifica que puedes referenciar el contrato AppResult/AppError y propagación en features
 - `kb-kmm-network-contracts`: verifica que puedes referenciar la frontera Api/Repository y contrato AppResult sin mezclar con dominio
 - `kb-kmm-http-ktor`: verifica que puedes referenciar el cliente HTTP, serialización y helpers Ktor para el borde remoto de feature
+- `kb-tasks-kmm-room`: verifica que puedes referenciar Room — entidades/DAOs en commonMain, lecturas con Flow y repositorio sobre los DAOs
 - `kb-kmm-resources`: verifica que puedes referenciar strings, imágenes, fonts y localización con recursos compartidos
 - `kb-tasks-kmm-ui-text`: verifica que puedes referenciar UIText — sealed interface, Regla 10 y mapping AppError→UIText
 - `kb-tasks-cmp-ui`: verifica que puedes referenciar entry points Android/iOS, `@Preview` en commonMain e initKoin desde iOS

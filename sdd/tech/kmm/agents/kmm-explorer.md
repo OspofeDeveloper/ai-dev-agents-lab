@@ -1,7 +1,7 @@
 ---
 name: kmm-explorer
 description: Agente especializado en exploración, diagnóstico y auditoría de proyectos KMM usando el conocimiento arquitectónico y técnico del ecosistema de skills.
-skills: [kb-kmm-project-state-protocol, kb-kmm-clean-architecture, kb-kmm-core-layer, kb-kmm-feature-clean-architecture, kb-kmm-app-layer, kb-kmm-app-errors, kb-plan-koin, kb-tasks-koin, kb-plan-kmm-datastore-preferences, kb-tasks-kmm-datastore-preferences, kb-kmm-navigation-contracts, kb-kmm-navigation-compose, kb-plan-kmm-navigation-viewmodel-events, kb-tasks-kmm-navigation-viewmodel-events, kb-kmm-navigation-platform-behaviors, kb-kmm-network-contracts, kb-kmm-http-ktor, kb-kmm-auth-contracts, kb-kmm-auth-oauth-keycloak, kb-kmm-auth-ktor-plugin, kb-kmm-brands, kb-kmm-environments, kb-kmm-android-environments, kb-kmm-ios-environments, kb-kmm-resources, kb-plan-kmm-ui-text, kb-tasks-kmm-ui-text, kb-kmm-testing-strategy]
+skills: [kb-kmm-project-state-protocol, kb-kmm-clean-architecture, kb-kmm-core-layer, kb-kmm-feature-clean-architecture, kb-kmm-app-layer, kb-kmm-app-errors, kb-plan-koin, kb-tasks-koin, kb-plan-kmm-datastore-preferences, kb-tasks-kmm-datastore-preferences, kb-tasks-kmm-room, kb-kmm-navigation-contracts, kb-kmm-navigation-compose, kb-plan-kmm-navigation-viewmodel-events, kb-tasks-kmm-navigation-viewmodel-events, kb-kmm-navigation-platform-behaviors, kb-kmm-network-contracts, kb-kmm-http-ktor, kb-kmm-auth-contracts, kb-kmm-auth-oauth-keycloak, kb-kmm-auth-ktor-plugin, kb-kmm-brands, kb-kmm-environments, kb-kmm-android-environments, kb-kmm-ios-environments, kb-kmm-resources, kb-plan-kmm-ui-text, kb-tasks-kmm-ui-text, kb-kmm-testing-strategy]
 memory: project
 permissionMode: acceptEdits
 model: claude-sonnet-4-6
@@ -68,6 +68,7 @@ Al inicio de cada sesión, confirma que tus KBs están disponibles:
 - `kb-tasks-koin`: verifica que puedes referenciar Koin DI para implementación
 - `kb-plan-kmm-datastore-preferences`: verifica que puedes referenciar Preferences DataStore para planificación
 - `kb-tasks-kmm-datastore-preferences`: verifica que puedes referenciar Preferences DataStore para implementación
+- `kb-tasks-kmm-room`: verifica que puedes referenciar Room — entidades/DAOs, builder por plataforma, KSP y registro DI para auditar persistencia relacional
 - `kb-kmm-navigation-contracts`: verifica que puedes referenciar el contrato arquitectónico de navegación
 - `kb-kmm-navigation-compose`: verifica que puedes referenciar la implementación del grafo Compose Navigation
 - `kb-plan-kmm-navigation-viewmodel-events`: verifica que puedes referenciar el patrón Intent/Events para planificación
