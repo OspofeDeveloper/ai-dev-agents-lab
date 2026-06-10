@@ -9,12 +9,12 @@ user-invocable: false
 
 # Design Expert
 
-Skill raiz de la fase `design`. Define los principios estructurales que rigen la traduccion de un Spec funcional validado a un contrato visual reusable por agentes y herramientas como Stitch.
+Skill raiz de la fase `design`. Define los principios estructurales que rigen la traduccion de un Spec funcional validado a un contrato visual reusable por agentes y herramientas de ensamblaje de UI (Stitch para mobile, generadores web como v0/Lovable/bolt para web/desktop, o código a mano).
 
 Esta KB es deliberadamente delgada. Cubre solo los principios transversales que organizan la fase. El contrato del `DESIGN.md` y de los artefactos de feature vive en KBs hermanas:
 
 - `kb-design-system-contract` — contrato normativo de `DESIGN.md` como artefacto de producto: formato Google design.md, frontmatter YAML obligatorio (visual_personality, color modes, type scale, components con estados), secciones canonicas y reglas de quoting.
-- `kb-design-feature-artifacts` — contrato de los artefactos por feature: trazabilidad a journeys/CAs, `*_flows.md`, `*_views.md` con todos los estados aplicables, microcopy minimo y `*_ui_prompt.md` como ensamblaje para Stitch.
+- `kb-design-feature-artifacts` — contrato de los artefactos por feature: trazabilidad a journeys/CAs, `*_flows.md`, `*_views.md` con todos los estados aplicables, microcopy minimo y `*_ui_prompt.md` como ensamblaje tool-agnostic (SSoT de `target_tool` stitch|web-generic).
 - `kb-design-governance` — gobernanza temporal del sistema visual: consumibilidad por plan, politica extender vs mutar al acumular features, versionado semver y distincion operativa entre `wf-design-intake`, `wf-design-delta`, `wf-design-branch` y `wf-design-variant`.
 - `kb-design-brief` — contrato del `DESIGN_BRIEF.md`: modos, autonomia, presets y jerarquia de fuentes.
 - `kb-a11y-expert` — criterios normativos de accesibilidad aplicables al sistema visual y a cada vista.
@@ -48,7 +48,7 @@ La fase `design` produce dos niveles de artefactos. Esta separacion es estructur
 
 - `<feature>_flows.md` — secuencia de pasos, precondiciones y transiciones de navegacion.
 - `<feature>_views.md` — contrato canonico de pantallas, componentes, acciones y estados visuales.
-- `<feature>_ui_prompt.md` — prompt final de ensamblaje para Stitch.
+- `<feature>_ui_prompt.md` — prompt final de ensamblaje, tool-agnostic (`target_tool`: `stitch` para mobile, `web-generic` para web/desktop).
 
 Las reglas de cada artefacto de feature (que debe contener, que no debe contener, como traza al spec, que estados declara) viven en `kb-design-feature-artifacts`.
 
@@ -62,7 +62,7 @@ El orden correcto es:
 2. derivar o actualizar `DESIGN.md` a nivel producto
 3. derivar flujos desde el spec
 4. listar vistas y estados
-5. componer el prompt para Stitch
+5. componer el prompt de ensamblaje (según `target_tool`: Stitch para mobile, web-generic para web/desktop — ver `kb-design-feature-artifacts` Regla 7)
 
 Implicaciones:
 - no empieces a derivar pantallas de feature sin haber fijado antes la direccion visual de producto

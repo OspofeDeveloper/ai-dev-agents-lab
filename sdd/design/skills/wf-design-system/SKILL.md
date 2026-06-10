@@ -1,6 +1,6 @@
 ---
 name: wf-design-system
-description: "Crea o actualiza el DESIGN.md de un producto a partir de un feature spec validado y un DESIGN_BRIEF.md cerrado. Define la identidad visual persistente que alimentara Stitch y futuros prototipos de features."
+description: "Crea o actualiza el DESIGN.md de un producto a partir de un feature spec validado y un DESIGN_BRIEF.md cerrado. Define la identidad visual persistente que alimentara el generador de UI (Stitch en mobile, generadores web en web/desktop) y futuros prototipos de features."
 when_to_use: "Activa en frases como 'crea el DESIGN.md', 'genera el sistema visual desde el spec', 'prepara el contrato visual del producto', 'actualiza el DESIGN.md'. No activa para generar planes KMM ni tasks."
 argument-hint: "generate <feature_spec.md> [--prd <prd.md>] [--brief <DESIGN_BRIEF.md>] [--design-file DESIGN.md] [--no-brief]"
 effort: high

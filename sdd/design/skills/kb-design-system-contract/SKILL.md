@@ -72,7 +72,7 @@ Validar el resultado con `npx @google/design.md lint DESIGN.md`: cubre orden de 
 
 ## Regla 3: Visual Personality es obligatorio y estructurado
 
-`DESIGN.md` debe incluir la seccion `## Visual Personality` y su bloque `visual_personality:` en el frontmatter YAML. Sin esta seccion, el agente y Stitch no tienen un norte de caracter visual y el output es generico.
+`DESIGN.md` debe incluir la seccion `## Visual Personality` y su bloque `visual_personality:` en el frontmatter YAML. Sin esta seccion, el agente y el generador de UI (Stitch u otro) no tienen un norte de caracter visual y el output es generico.
 
 La eleccion de estilo se rige por `kb-design-style-taxonomy`. No uses etiquetas vagas como unica decision normativa.
 
@@ -123,7 +123,7 @@ Si no hay PRD disponible, derivar desde el spec: un spec de finanzas personales 
 
 Las referencias se obtienen via web research en el `wf-design-system` antes de delegar al agente. Si no hay research disponible, marcar la seccion con `[DESIGN_GAP: investigar apps de referencia en la categoria <nombre_categoria>]` en lugar de inventar referencias.
 
-Un DESIGN.md sin Reference Apps obliga a Stitch a generar el estilo sin norte → resultado amateur. Una referencia concreta ("tomar de Revolut la densidad de informacion en listas y la tipografia numerica prominente") guia al generador hacia decisiones profesionales.
+Un DESIGN.md sin Reference Apps obliga al generador de UI a generar el estilo sin norte → resultado amateur. Una referencia concreta ("tomar de Revolut la densidad de informacion en listas y la tipografia numerica prominente") guia al generador hacia decisiones profesionales.
 
 ## Regla 5: Familia de estilo antes que tokens
 

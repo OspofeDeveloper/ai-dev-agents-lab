@@ -1,6 +1,6 @@
 ---
 name: kb-design-feature-artifacts
-description: Contrato normativo de los artefactos de feature en la fase design — flows (secuencias, navegacion y transiciones), views (SSoT de pantallas con todos los estados aplicables: default, loading, empty, error, partial, success) y ui_prompt (ensamblaje para Stitch sin redefinir funcionalidad). Define trazabilidad obligatoria a journeys y CAs del spec, microcopy minimo por vista y delegaciones a kb-design-forms y kb-design-voice. SSoT extraida de kb-design-expert (Reglas 4, 7, 8, 9, 19, 20, 21).
+description: Contrato normativo de los artefactos de feature en la fase design — flows (secuencias, navegacion y transiciones), views (SSoT de pantallas con todos los estados aplicables: default, loading, empty, error, partial, success) y ui_prompt (ensamblaje tool-agnostic sin redefinir funcionalidad; SSoT de target_tool stitch|web-generic y target_platforms). Define trazabilidad obligatoria a journeys y CAs del spec, microcopy minimo por vista y delegaciones a kb-design-forms y kb-design-voice. SSoT extraida de kb-design-expert (Reglas 4, 7, 8, 9, 19, 20, 21).
 argument-hint: "(cargada automaticamente por workflows y agentes de design)"
 effort: low
 allowed-tools: [Read]
@@ -112,9 +112,30 @@ La vista declara:
 
 Patrones de campo, errores y validacion se asumen segun `kb-design-forms`. Cualquier desviacion debe justificarse.
 
-## Regla 7: El prompt para Stitch debe ensamblar, no volver a definir
+## Regla 7: El prompt de ensamblaje debe ensamblar, no volver a definir
+
+`*_ui_prompt.md` es un prompt de ensamblaje **tool-agnostic**: ensambla las fuentes de verdad para que un generador de UI produzca las vistas, sin volver a definir lo que ya vive en `DESIGN.md` y `*_views.md`. El generador concreto se declara, no se asume.
+
+### Target del prompt (`target_tool` y `target_platforms`) — SSoT
+
+Esta KB es la única fuente de verdad de la noción de target del `ui_prompt`. El template y `wf-design-feature-prototype` la consumen; no la redefinen.
+
+- **`target_tool`**: declara la herramienta de ensamblaje destino. Valores:
+  - `stitch` — prompt para Google Stitch, destino de prototipado **mobile** (formato histórico, no se degrada).
+  - `web-generic` — prompt de ensamblaje **web reutilizable** por v0, Lovable, bolt, otros generadores web, o código a mano. Describe componentes en términos de HTML semántico/ARIA, breakpoints responsive y estados, sin jerga propietaria.
+- **`target_platforms`**: `mobile | web | both` (alineado con el `target_platforms` del brief).
+
+Selección de `target_tool` según `target_platforms`:
+- `mobile` → `stitch`.
+- `web` o `desktop` → `web-generic`.
+- `both` → elegir con criterio según dónde está el peso del producto y **documentar la decisión** en el propio prompt (ej. "target_tool: web-generic; el destino mobile se cubre por separado con stitch"). No producir un prompt ambiguo que mezcle ambas jergas.
+
+El cuerpo del prompt es común a ambos targets (fuentes de verdad, vistas, restricciones); solo cambia el **vocabulario de componentes y estados** según `target_tool`.
+
+### Estructura común (cualquier `target_tool`)
 
 `*_ui_prompt.md` debe componer:
+- `target_tool` y `target_platforms` declarados explícitamente
 - fuentes de verdad y prioridad entre ellas
 - resumen de la feature
 - contexto del producto
@@ -123,9 +144,9 @@ Patrones de campo, errores y validacion se asumen segun `kb-design-forms`. Cualq
 - restricciones de comportamiento
 - instrucciones de consistencia entre pantallas
 
-Debe pedir a Stitch:
+Debe pedir al generador de UI:
 - vistas completas
-- estados importantes (los declarados en Regla 4)
+- estados importantes (los declarados en Regla 4); en `web-generic`, cubrir explícitamente loading/empty/error/focus/hover/disabled
 - consistencia visual
 - ausencia de funcionalidades no descritas
 
@@ -133,6 +154,11 @@ No debe:
 - volver a enumerar todos los componentes ya definidos en `*_views.md`
 - duplicar microcopy extensa de dialogs o formularios
 - convertirse en una segunda SSoT por pantalla
-- repetir valores de tokens, nombres de componentes ni reglas de formato ya definidas en `DESIGN.md`. Si quieres recordarle a Stitch el uso de un componente o token concreto, citalos por nombre y remite a `DESIGN.md` como fuente; no copies sus valores dentro del prompt.
+- repetir valores de tokens, nombres de componentes ni reglas de formato ya definidas en `DESIGN.md`. Si quieres recordarle al generador el uso de un componente o token concreto, citalos por nombre y remite a `DESIGN.md` como fuente; no copies sus valores dentro del prompt.
+
+### Especialización por `target_tool`
+
+- **`stitch`** (mobile): mantiene el formato y la jerga del prompt Stitch actual. No degradar.
+- **`web-generic`** (web/desktop): componentes en términos de **HTML semántico y ARIA** (no widgets propietarios), **breakpoints responsive**, y estados completos (loading/empty/error/focus/hover/disabled). La accesibilidad web la gobierna `kb-a11y-web-expert`; el prompt remite a ella, no la recopia.
 
 → Template: `/Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/design/skills/kb-design-expert/references/feature_ui_prompt_template.md`

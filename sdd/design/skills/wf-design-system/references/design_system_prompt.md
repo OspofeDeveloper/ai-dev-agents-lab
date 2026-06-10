@@ -27,7 +27,7 @@ DESIGN.md actual:
 Direccion visual no anclada: <true|false>
 (true si --no-brief, o brief en auto con autonomy_policy: ai-default, o research de Reference Apps pobre/ausente — kb-design-governance Regla 5)
 ---
-INSTRUCCION: produce un DESIGN.md de producto reutilizable por Stitch y futuras features. No introduzcas funcionalidades no presentes en el spec. Contrato visual persistente de producto, no de una sola feature.
+INSTRUCCION: produce un DESIGN.md de producto reutilizable por el generador de UI (Stitch u otro) y futuras features. No introduzcas funcionalidades no presentes en el spec. Contrato visual persistente de producto, no de una sola feature.
 
 Aplica las reglas de kb-design-expert, kb-design-brief y kb-design-style-taxonomy que tienes en contexto:
 - Regla 2: DESIGN.md es de producto, no de feature

@@ -1,6 +1,6 @@
 ---
 name: wf-design-a11y-audit
-description: Audita un DESIGN.md y opcionalmente un *_views.md frente a las reglas de kb-a11y-expert. Verifica contraste real de pares foreground/background, touch targets, focus order declarado, screen reader labels, motion handling y forms accesibles. Produce un reporte con severidad. Complementa a wf-design-validate.
+description: Audita un DESIGN.md y opcionalmente un *_views.md frente a las reglas de kb-a11y-expert (núcleo) y kb-a11y-web-expert (deltas web/desktop). Verifica contraste real de pares foreground/background, targets por plataforma (táctil 44/48 o puntero fino 24px), focus order declarado, screen reader labels, motion handling y forms accesibles; en targets web añade operabilidad por teclado, hover/focus content y reflow. Produce un reporte con severidad. Complementa a wf-design-validate.
 when_to_use: "Activa en frases como 'valida la accesibilidad', 'audit a11y del DESIGN.md', 'comprueba contraste WCAG'."
 argument-hint: "<DESIGN.md> [--views <feature_views.md>] [--brief <DESIGN_BRIEF.md>] [--target AA|AAA] [--lenient]"
 effort: medium
@@ -11,7 +11,7 @@ agent: design-architect
 
 # design-a11y-audit — Auditoria ejecutiva de accesibilidad
 
-Tu rol es verificar, no opinar. Las reglas de a11y son SSoT de `kb-a11y-expert`. Aqui se aplican a un DESIGN.md y a views concretos.
+Tu rol es verificar, no opinar. Las reglas de a11y platform-neutral son SSoT de `kb-a11y-expert`; los deltas web/desktop (puntero fino, teclado primario) son SSoT de `kb-a11y-web-expert`. Aqui se aplican a un DESIGN.md y a views concretos, ramificando por las plataformas objetivo del producto.
 
 ## Paso 1: Parsear argumentos
 
@@ -45,7 +45,21 @@ Usa esta prioridad:
 3. `accessibility_target` del `DESIGN_BRIEF.md` si existe
 4. `AA` por defecto
 
+## Paso 2d: Resolver las plataformas objetivo
+
+Determina `target_platforms` (qué punteros sirve el producto) con esta prioridad:
+1. `accessibility.target_platforms` del DESIGN.md
+2. `target_platforms` del `DESIGN_BRIEF.md` si existe
+3. Si ninguno lo declara, asume **táctil** (compatibilidad con el comportamiento histórico mobile-first) y anota un `[MEDIO]` recomendando declarar `target_platforms` explícitamente.
+
+Clasifica:
+- **Táctil** (`mobile`, `touch`, o coarse pointer): activa el criterio de target táctil del Paso 4a.
+- **Web/desktop** (`web`, `desktop`, o fine pointer): activa el criterio de puntero fino del Paso 4b y los checks web del Paso 7b. Carga `kb-a11y-web-expert` en contexto.
+- Un producto puede declarar **ambos**: se ejecutan los dos criterios de target (4a y 4b) y los checks web; ningún target relaja al otro (ver `kb-a11y-web-expert` Regla 1).
+
 ## Paso 3: Verificar contraste de colores
+
+(Platform-neutral: `kb-a11y-expert` Regla 2. Idéntico para táctil y web.)
 
 Para cada modo (`light`, `dark`, `high-contrast` si existe) y para cada par foreground/background:
 
@@ -73,7 +87,11 @@ Si un par no alcanza el ratio, marcar:
 [CRITICO] Par <on-X> / <X> en modo <light|dark>: ratio actual <X.X:1>, requerido <Y.Y:1>.
 ```
 
-## Paso 4: Verificar touch targets
+## Paso 4: Verificar targets de interacción (ramifica por plataforma)
+
+Ejecuta el sub-paso que corresponda según el Paso 2d. Si el producto declara ambos, ejecuta los dos.
+
+### Paso 4a: Targets táctiles (plataforma táctil — `kb-a11y-expert` Regla 3)
 
 Para cada componente declarado:
 - Si tiene `size`, `width`, `height` o `padding`, calcular el touch target efectivo.
@@ -82,7 +100,18 @@ Para cada componente declarado:
 
 Componentes pequenos (chips, icon-only buttons) tienen mayor riesgo. Marcar:
 ```
-[ALTO] Componente <X> tiene touch target <YxZ>, menor que minimo <44pt/48dp>.
+[ALTO] Componente <X> tiene touch target <YxZ>, menor que minimo tactil <44pt/48dp>.
+```
+
+### Paso 4b: Targets de puntero fino (web/desktop — `kb-a11y-web-expert` Regla 2)
+
+Para cada componente declarado servido a web/desktop:
+- Verificar `>= 24x24 CSS px` (WCAG 2.5.8 AA) segun `accessibility.min_target_pointer`. Si el `target` efectivo es `AAA`, el mínimo es 44×44 px (2.5.5).
+- Si un target queda por debajo, comprobar si invoca una excepción válida de 2.5.8 (espaciado equivalente, inline en texto, control nativo del user agent, esencial). Si la excepción está documentada en `*_views.md`, no es hallazgo.
+
+Marcar:
+```
+[ALTO] Componente <X> tiene target <YxZ> px, menor que el minimo de puntero fino <24x24 px> y sin excepcion 2.5.8 documentada.
 ```
 
 ## Paso 5: Verificar motion handling
@@ -120,9 +149,19 @@ Reportar omisiones con severidad:
 - Live region ausente en error inline: `[ALTO]`.
 - Form sin labels asociados: `[CRITICO]`.
 
+## Paso 7b: Checks web/desktop (solo si `target_platforms` incluye web/desktop)
+
+Aplica `kb-a11y-web-expert`. Sobre el DESIGN.md y, si se pasó `--views`, sobre cada vista:
+
+- **Operabilidad por teclado (Regla 5)**: cada vista con controles interactivos declara que son operables por teclado y sin trampas de foco (más allá del focus trap intencional de un modal). Ausencia de declaración en vista con controles complejos → `[ALTO]`.
+- **Hover/focus content (Regla 3)**: cada tooltip/popover/menú revelado por hover o focus declara dismissable + hoverable + persistent. Contenido revelado sin las tres propiedades → `[ALTO]`.
+- **Reflow / resize / text spacing (Regla 4)**: el DESIGN.md declara `accessibility.reflow` y tipografía en unidades relativas; vistas con layout fijo que se rompe a 320px o altura fija que recorta texto → `[ALTO]`.
+- **Focus visible / order / not-obscured (Regla 6)**: indicador de foco visible con contraste 3:1; foco no obstruido por headers sticky; orden de foco lógico al abrir/cerrar modales. Indicador de foco eliminado sin reemplazo → `[CRITICO]`; foco obstruido por header sticky → `[ALTO]`.
+- **Estructura semántica (Regla 7)**: el DESIGN.md o las vistas declaran landmarks, skip-link, page title y `lang`. Ausencia de landmarks/skip-link en un producto web → `[MEDIO]`.
+
 ## Paso 8: Delegar al agente (opcional, para razonamiento avanzado)
 
-Si los pasos 3-7 producen hallazgos que requieren razonamiento contextual (ej. evaluar si un focus order tiene sentido en una vista compleja), delegar al agente `design-architect` cargando `kb-a11y-expert`.
+Si los pasos 3-7b producen hallazgos que requieren razonamiento contextual (ej. evaluar si un focus order tiene sentido en una vista compleja, o si un reflow degrada operabilidad), delegar al agente `design-architect` cargando `kb-a11y-expert` y, cuando el target sea web/desktop, también `kb-a11y-web-expert`.
 
 ## Paso 9: Producir reporte
 

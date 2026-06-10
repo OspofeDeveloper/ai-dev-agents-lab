@@ -1,6 +1,6 @@
 # SDD Skill Registry
 <!-- Auto-generado por scripts/generate-skill-registry.py. No editar manualmente. -->
-<!-- Total: 130 skills | 56 wf-* (user-invocable) | 74 kb-* -->
+<!-- Total: 131 skills | 56 wf-* (user-invocable) | 75 kb-* -->
 <!-- Última actualización: 2026-06-10 -->
 
 ## Meta-Ecosistema (meta/)
@@ -61,6 +61,7 @@
 | Skill | Descripción | Invocable | Path |
 |---|---|---|---|
 | kb-a11y-expert | Base de conocimiento de accesibilidad mobile | false | design/skills/kb-a11y-expert/SKILL.md |
+| kb-a11y-web-expert | Deltas de accesibilidad web/desktop sobre el nucleo platform-neutral de kb-a11y-expert | false | design/skills/kb-a11y-web-expert/SKILL.md |
 | kb-design-brief | Base de conocimiento para capturar decisiones de direccion visual antes de generar un DESIGN.md | false | design/skills/kb-design-brief/SKILL.md |
 | kb-design-characterization | Reglas para extraer un DESIGN.md desde una UI ya en produccion (CSS/tokens/componentes/capturas): evidencia obligatoria por token/decision visual, jerarquia de… | false | design/skills/kb-design-characterization/SKILL.md |
 | kb-design-conflict-expert | Base de conocimiento para detectar conflictos visuales y de UX entre varias features dentro de un mismo producto | false | design/skills/kb-design-conflict-expert/SKILL.md |
@@ -75,7 +76,7 @@
 | kb-design-style-taxonomy | Base de conocimiento para clasificar estilos visuales de producto digital de forma operativa | false | design/skills/kb-design-style-taxonomy/SKILL.md |
 | kb-design-system-contract | Contrato normativo del DESIGN.md como artefacto de producto del pipeline SDD | false | design/skills/kb-design-system-contract/SKILL.md |
 | kb-design-voice | Base de conocimiento para UX writing y voice & tone del producto | false | design/skills/kb-design-voice/SKILL.md |
-| wf-design-a11y-audit | Audita un DESIGN.md y opcionalmente un *_views.md frente a las reglas de kb-a11y-expert | true | design/skills/wf-design-a11y-audit/SKILL.md |
+| wf-design-a11y-audit | Audita un DESIGN.md y opcionalmente un *_views.md frente a las reglas de kb-a11y-expert (núcleo) y kb-a11y-web-expert (deltas web/desktop) | true | design/skills/wf-design-a11y-audit/SKILL.md |
 | wf-design-branch | Permite explorar variantes paralelas del sistema visual sin comprometerse | true | design/skills/wf-design-branch/SKILL.md |
 | wf-design-delta | Evoluciona un DESIGN.md existente de forma incremental | true | design/skills/wf-design-delta/SKILL.md |
 | wf-design-discover | Descubre 3-5 apps reales del mercado como referencias de diseno para una feature, mediante research web y validacion interactiva con el usuario | true | design/skills/wf-design-discover/SKILL.md |

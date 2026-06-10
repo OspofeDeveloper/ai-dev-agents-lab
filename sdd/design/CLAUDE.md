@@ -1,6 +1,6 @@
 # Design Lab — Instrucciones para el Orquestador
 
-Este directorio define un paquete focalizado en la etapa de **Design** dentro del pipeline SDD: cierre del brief visual del producto, sistema visual persistente, derivacion de flows y views por feature, y preparacion del handoff a Stitch antes de entrar en Plan.
+Este directorio define un paquete focalizado en la etapa de **Design** dentro del pipeline SDD: cierre del brief visual del producto, sistema visual persistente, derivacion de flows y views por feature, y preparacion del handoff al generador de UI (Stitch en mobile, generadores web en web/desktop) antes de entrar en Plan.
 
 ## Tu rol: Director estrategico
 
@@ -16,9 +16,9 @@ Las `kb-*` viven en los subagentes y se cargan automaticamente en su contexto. E
 
 Esta fase esta disenada para un encaje concreto. Declararlo evita falsas expectativas:
 
-- **Para quien ES**: equipos **sin disenador dedicado** que necesitan un contrato visual consistente; productos **greenfield** (el sistema visual nace aqui); prototipado **mobile-first con Stitch** como destino de ensamblaje.
+- **Para quien ES**: equipos **sin disenador dedicado** que necesitan un contrato visual consistente; productos **greenfield** (el sistema visual nace aqui); prototipado **mobile** con Stitch y **web/desktop** con prompt de ensamblaje tool-agnostic (`target_tool: web-generic`, reutilizable por v0/Lovable/bolt o codigo a mano). Soporta a11y **WCAG completa por plataforma**: nucleo platform-neutral (`kb-a11y-expert`) mas los deltas web/desktop de puntero fino y teclado primario (`kb-a11y-web-expert`), auditables con `/wf-design-a11y-audit`. Stitch sigue siendo el destino mobile, pero ya no es el unico.
 - **Onramp brownfield**: si la UI **ya existe en produccion** y no se va a rediseñar, el `DESIGN.md` se deriva por ingenieria inversa con `/wf-design-extract` (CSS/tokens/componentes/capturas → `DESIGN.md` con `origin: extracted` y evidencia por token). Es la entrada ALTERNATIVA a la fase (no exige spec ni brief), espejo de `/wf-spec-from-code` en Spec. El `DESIGN.md` extraido fluye como cualquier otro: auditable (`wf-design-validate`), evolucionable (`wf-design-delta`), exportable (`wf-design-export`).
-- **Lo que NO cubre hoy**: integracion con Figma (ni import de variables ni export de Figma Tokens); el flujo de un equipo con disenador que ya produce sus propios specs visuales — en ese caso el `DESIGN.md` puede escribirse a mano respetando el contrato (`kb-design-system-contract`) y auditarse con `/wf-design-validate`, pero los workflows generativos sobran.
+- **Lo que NO cubre hoy**: integracion con Figma (ni import de variables ni export de Figma Tokens — evaluacion diferida a ROADMAP 7.6); el flujo de un equipo con disenador que ya produce sus propios specs visuales — en ese caso el `DESIGN.md` puede escribirse a mano respetando el contrato (`kb-design-system-contract`) y auditarse con `/wf-design-validate`, pero los workflows generativos sobran.
 - **Es saltable**: por proyecto (la fase es opcional en el init) y **por feature** — una feature sin superficie de UI visible pasa de Spec a Plan directamente. La regla canonica de cuando Design es obligatorio vive en `kb-plan-expert` y la aplica `wf-prepare-plan`; esta fase no fuerza su propio uso.
 
 Si el proyecto encaja en un "NO cubre", dilo al usuario en cuanto se detecte — antes de generar artefactos que no va a usar.
@@ -53,7 +53,7 @@ Si no existe `DESIGN_BRIEF.md`, ejecuta primero `/wf-design-intake`. Los workflo
 | Auditoria ejecutiva de accesibilidad (contraste, touch targets, focus order) | `/wf-design-a11y-audit` | `<DESIGN.md> [--views <feature_views.md>] [--brief <DESIGN_BRIEF.md>] [--target AA\|AAA] [--lenient]` |
 | Capturar feedback no estructurado de stakeholders | `/wf-design-feedback` | `capture <feedback.md\|texto> [--source ...] [--feature ...]` |
 | Triajear un feedback capturado en categorias accionables | `/wf-design-feedback` | `triage <feedback_capture.md>` |
-| Generar flows, views y prompt de ensamblaje para Stitch desde una feature | `/wf-design-feature-prototype` | `generate <feature_spec.md> [--design-file DESIGN.md] [--brief <DESIGN_BRIEF.md>] [--no-brief]` |
+| Generar flows, views y prompt de ensamblaje tool-agnostic (Stitch mobile / web-generic) desde una feature | `/wf-design-feature-prototype` | `generate <feature_spec.md> [--design-file DESIGN.md] [--brief <DESIGN_BRIEF.md>] [--no-brief]` |
 
 ## Como actuar ante una peticion
 

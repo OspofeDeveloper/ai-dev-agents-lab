@@ -1,9 +1,17 @@
 # Template de `<feature>_ui_prompt.md`
 
-```md
-# Prompt Stitch — <Nombre de la feature>
+Prompt de ensamblaje **tool-agnostic**. La noción de `target_tool` / `target_platforms` y la regla de selección son SSoT de `kb-design-feature-artifacts` Regla 7 — este template solo las materializa. Elige la variante según `target_platforms` y rellena el encabezado común.
 
-Genera las vistas de la feature `<nombre-feature>` para una app `<mobile | web | both>`.
+## Encabezado común (cualquier `target_tool`)
+
+```md
+# Prompt de ensamblaje de UI — <Nombre de la feature>
+
+target_tool: <stitch | web-generic>
+target_platforms: <mobile | web | both>
+
+Genera las vistas de la feature `<nombre-feature>` para `<target_platforms>` usando `<target_tool>`.
+> Si target_platforms es `both`, documenta aquí qué cubre este prompt y qué se cubre por separado (ver kb-design-feature-artifacts Regla 7).
 
 ## Fuentes de verdad
 
@@ -41,4 +49,22 @@ Usa estrictamente el `DESIGN.md` del producto como fuente de identidad visual y 
 - Reflejar acciones destructivas con tratamiento visual diferenciado.
 - Mantener formularios claros y jerarquia de acciones primaria/secundaria.
 - No convertir este prompt en una segunda especificacion de pantallas: los detalles de cada vista ya viven en `<feature>_views.md`.
+```
+
+## Variante `target_tool: stitch` (mobile — formato histórico, no degradar)
+
+Tras el encabezado común, el prompt para Stitch sigue tal cual: jerga y formato del prompt Stitch, destino de prototipado mobile. Pide vistas completas, estados importantes y consistencia visual en términos del generador Stitch. No introduce vocabulario web.
+
+## Variante `target_tool: web-generic` (web/desktop — reutilizable por v0 / Lovable / bolt / código a mano)
+
+Tras el encabezado común, añade un bloque de ensamblaje web reutilizable, sin jerga propietaria de Stitch:
+
+```md
+## Ensamblaje web
+
+- Describe cada vista en términos de **HTML semántico y roles ARIA** (`<header>`/`banner`, `<nav>`/`navigation`, `<main>`, `<button>`, `<a>`, encabezados jerárquicos), no widgets propietarios.
+- Declara los **breakpoints responsive** relevantes (móvil, tablet, desktop) y cómo reflowea el contenido (ver `kb-a11y-web-expert` Regla 4; no recopiar sus criterios).
+- Cubre **todos los estados por vista**: loading, empty, error, focus, hover, disabled (además de los declarados en `<feature>_views.md`).
+- La accesibilidad web (target 24px de puntero fino, hover/focus content, focus visible/order, landmarks/skip-links) la gobierna `kb-a11y-web-expert`: remite a ella por nombre, no copies sus reglas dentro del prompt.
+- No asumas ninguna herramienta concreta: el prompt debe ser consumible por v0, Lovable, bolt o un desarrollador escribiendo el código a mano.
 ```

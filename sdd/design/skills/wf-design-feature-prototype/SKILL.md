@@ -1,6 +1,6 @@
 ---
 name: wf-design-feature-prototype
-description: "Deriva artefactos de prototipado visual de una feature a partir de su _spec.md, un DESIGN.md y, si existe, un DESIGN_BRIEF.md. Genera flows, views y prompt para Stitch listos para contrastar con cliente antes del plan tecnico."
+description: "Deriva artefactos de prototipado visual de una feature a partir de su _spec.md, un DESIGN.md y, si existe, un DESIGN_BRIEF.md. Genera flows, views y un prompt de ensamblaje tool-agnostic (target_tool stitch para mobile, web-generic para web/desktop) listos para contrastar con cliente antes del plan tecnico."
 when_to_use: "Activa en frases como 'genera las vistas para Stitch', 'crea el prototipo de la feature', 'prepara flows y prompt de diseno', 'deriva las pantallas desde el spec'. No activa para modificar el spec, ni para generar plan o tasks."
 argument-hint: "generate <feature_spec.md> [--design-file DESIGN.md] [--brief DESIGN_BRIEF.md] [--no-brief]"
 effort: high
@@ -63,6 +63,20 @@ El `DESIGN_BRIEF.md` es precondicion salvo override explicito: la feature debe h
    > "No hay `DESIGN_BRIEF.md`. Ejecuta primero `/wf-design-intake generate <feature_spec.md>` para fijar direccion y autonomia. Para saltar el intake (legacy o experimental), reintenta con `--no-brief`."
 5. Si se paso `--no-brief`, continua solo con `DESIGN.md` y deja documentada esta decision en el bundle resultante.
 
+## Paso 3c: Resolver `target_tool` del ui_prompt
+
+La noción de `target_tool` / `target_platforms` y la regla de selección son SSoT de `kb-design-feature-artifacts` Regla 7. Resuelve `target_platforms` con esta prioridad:
+1. `target_platforms` del `DESIGN_BRIEF.md` si existe
+2. `accessibility.target_platforms` del DESIGN.md
+3. Si ninguno lo declara, asume `mobile` (compatibilidad con el destino histórico) y anótalo para el usuario.
+
+Deriva `target_tool`:
+- `mobile` → `stitch`
+- `web` / `desktop` → `web-generic`
+- `both` → el agente decide con criterio y documenta la decisión en el propio `_ui_prompt.md` (ver Regla 7).
+
+Pasa `target_tool` y `target_platforms` al agente en el Paso 5.
+
 ## Paso 4: Determinar outputs y detectar features ya prototipadas
 
 Determina el directorio de salida:
@@ -111,6 +125,10 @@ Contenido del DESIGN_BRIEF.md:
 ---
 <contenido_brief_o_N/A>
 ---
+Target del ui_prompt (resuelto en Paso 3c):
+- target_tool: <stitch | web-generic>
+- target_platforms: <mobile | web | both>
+---
 Features ya prototipadas (views + flows resumidos, opcional):
 ---
 <resumen_features_previas_o_N/A>
@@ -118,7 +136,7 @@ Features ya prototipadas (views + flows resumidos, opcional):
 INSTRUCCION: produce tres artefactos separados y completos:
 1. <feature>_flows.md
 2. <feature>_views.md
-3. <feature>_ui_prompt.md
+3. <feature>_ui_prompt.md — usa el `target_tool`/`target_platforms` indicados y la variante correspondiente del template de ui_prompt (kb-design-feature-artifacts Regla 7 es la SSoT del target; el template tiene una sección por variante). Con `web-generic`, describe componentes en HTML semántico/ARIA, breakpoints y estados completos (loading/empty/error/focus/hover/disabled), y remite a `kb-a11y-web-expert` para a11y web sin recopiarla. Con `stitch`, mantén el formato Stitch mobile.
 
 Si se pasan features previas, ejecuta tambien una revision de conflictos siguiendo `kb-design-conflict-expert` (Reglas 1-5). Si detectas conflictos, listalos al final del bundle con el formato de la Regla 6 y NO escribas artefactos hasta que el usuario decida; si son falsos positivos, declara `[POSIBLE-CONFLICTO-DESIGN-XX]` segun Regla 7.
 
@@ -150,5 +168,7 @@ Parsea la respuesta del agente usando el formato de bundle de `${CLAUDE_SKILL_DI
 
 - paths generados
 - total de vistas derivadas
-- siguiente paso recomendado:
-  > "Usa `<feature>_ui_prompt.md` junto con `DESIGN.md` y `DESIGN_BRIEF.md` si existe en Stitch para generar las vistas y, tras validar con cliente, continúa con `/wf-prepare-plan generate <feature_spec.md>` y después `/wf-plan-validate <feature_plan.md>`."
+- `target_tool` / `target_platforms` resueltos
+- siguiente paso recomendado (según `target_tool`):
+  > Con `stitch`: "Usa `<feature>_ui_prompt.md` junto con `DESIGN.md` y `DESIGN_BRIEF.md` si existe en Stitch para generar las vistas y, tras validar con cliente, continúa con `/wf-prepare-plan generate <feature_spec.md>` y después `/wf-plan-validate <feature_plan.md>`."
+  > Con `web-generic`: "Usa `<feature>_ui_prompt.md` junto con `DESIGN.md` (y `DESIGN_BRIEF.md` si existe) con tu generador de UI web (v0, Lovable, bolt) o como guía de implementación a mano y, tras validar con cliente, continúa con `/wf-prepare-plan generate <feature_spec.md>` y después `/wf-plan-validate <feature_plan.md>`."

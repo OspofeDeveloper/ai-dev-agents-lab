@@ -26,7 +26,7 @@ Por eso `design` debe dejar explicitado:
 - decisiones visuales que impactan arquitectura UI
 - decisiones a11y per-vista (focus order, labels de screen reader, anuncios live, hints), gobernadas por `kb-a11y-expert` y documentadas en `### Notas de accesibilidad` de cada vista
 
-Si un detalle visual afecta a navegacion, validacion o estructura de estado, debe quedar escrito en `*_views.md`, no solo en Stitch.
+Si un detalle visual afecta a navegacion, validacion o estructura de estado, debe quedar escrito en `*_views.md`, no solo en el prompt de ensamblaje (Stitch u otro generador de UI).
 
 `plan-architect` carga esta KB cross-fase para conocer que campos del `DESIGN.md` y de los `*_views.md` puede tratar como contrato estable al derivar el plan tecnico.
 
