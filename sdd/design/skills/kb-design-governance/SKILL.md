@@ -1,6 +1,6 @@
 ---
 name: kb-design-governance
-description: Gobernanza del sistema visual del producto a lo largo del tiempo. Define como `DESIGN.md` debe ser consumible por `plan-architect` (contrato de handoff a fase plan), la politica de evolucion extender vs mutar al acumular features, el versionado semver MAJOR.MINOR.PATCH del sistema visual y la distincion operativa entre `wf-design-intake`, `wf-design-delta`, `wf-design-branch` y `wf-design-variant`. SSoT extraida de `kb-design-expert` Reglas 10, 15, 22 y 23. No define el contrato visual ni el formato del DESIGN.md (ver kb-design-expert), ni los criterios de a11y (ver kb-a11y-expert), ni la taxonomia de estilos (ver kb-design-style-taxonomy).
+description: Gobernanza del sistema visual del producto a lo largo del tiempo. Define como `DESIGN.md` debe ser consumible por `plan-architect` (contrato de handoff a fase plan), la politica de evolucion extender vs mutar al acumular features, el versionado semver MAJOR.MINOR.PATCH del sistema visual, la distincion operativa entre `wf-design-intake`, `wf-design-delta`, `wf-design-branch` y `wf-design-variant`, y el ciclo de vida de la confianza de direccion (provisional → confirmed) cuando el DESIGN.md nace sin direccion anclada. SSoT extraida de `kb-design-expert` Reglas 10, 15, 22 y 23. No define el contrato visual ni el formato del DESIGN.md (ver kb-design-expert), ni los criterios de a11y (ver kb-a11y-expert), ni la taxonomia de estilos (ver kb-design-style-taxonomy).
 argument-hint: "(cargada automaticamente por workflows y agentes de design y por plan-architect cross-fase)"
 effort: low
 allowed-tools: [Read]
@@ -99,3 +99,31 @@ Anti-patrones:
 - Usar `branch` para evitar `intake` cuando el brief debe cambiar (acabas con branches que en realidad son productos distintos).
 - Usar `delta` para introducir cambios que rompen `style_family` (eso es brief, no delta; resultado: trazabilidad rota).
 - Usar `variant` para experimentar funcionalidad (eso es spec, no design).
+
+## Regla 5: Ciclo de vida de la confianza de direccion (provisional → confirmed)
+
+Un `DESIGN.md` puede nacer con una direccion visual **no anclada**: `style_family`, paleta primaria/accent y `motion_level` inferidos sin fuente humana fiable. Es invencion plausible con formato de autoridad, y el ecosistema la marca como tal hasta que un humano la confirme.
+
+Los **valores validos** del frontmatter (`origin: generated-provisional`, `direction_confidence: provisional|confirmed`) y su semantica son SSoT de `kb-design-system-contract` Regla 10. Esta regla gobierna su **transicion temporal**: que la dispara, quien la escribe y quien la limpia.
+
+**Cuando nace provisional (en el origen — `wf-design-system`):** la direccion esta no anclada cuando se cumple cualquiera de estas condiciones:
+- se invoco con `--no-brief` (`brief_override: true`), o
+- el brief resuelto se cerro en modo `auto` con `autonomy_policy: ai-default` (`kb-design-brief` Reglas 3 y 4) sin confirmacion humana, y/o
+- el research de Reference Apps fue pobre o ausente (mismo criterio que marca `DESIGN_GAP` en Reference Apps, `kb-design-system-contract` Regla 4).
+
+Con la direccion no anclada, `wf-design-system` **pide confirmacion humana explicita** antes de escribir (presenta `style_family`, paleta primaria/accent y `motion_level` inferidos):
+- **confirmada** → nace `origin: generated`, `direction_confidence: confirmed`. Sin sello provisional.
+- **no confirmada, o sin interaccion** (headless/CI) → nace `origin: generated-provisional`, `direction_confidence: provisional`; los campos de direccion inferidos sin evidencia se marcan `[INFERIDO]`; la entrada de `## Changelog` refleja el estado provisional. **Sin interaccion el camino por defecto es escribir provisional, no abortar**: el sello es informativo y no rompe el pipeline aguas abajo.
+
+**Quien promueve provisional → confirmed (al validar — `wf-design-validate`):** la promocion **no es mecanica** (la fase Design no tiene script ni sellador). Es **juicio humano confirmado**. Cuando `wf-design-validate` detecta `direction_confidence: provisional` y la auditoria de direccion pasa, pide confirmacion explicita al usuario; **solo si confirma**:
+1. promueve `origin: generated-provisional → generated` y `direction_confidence: provisional → confirmed`,
+2. limpia los marcadores `[INFERIDO]` de los campos de direccion ya confirmados,
+3. añade una entrada a `## Changelog` registrando la confirmacion.
+
+Esta es la **unica edicion** que `wf-design-validate` hace del documento — acotada y gated por confirmacion (mismo patron que la confirmacion de `[ASUNCIÓN]` en `wf-prd-review`). Si el usuario **no confirma**, el `DESIGN.md` permanece provisional y validate **no toca el archivo** (sigue siendo read-only en ese camino).
+
+**Quien NO promueve:** ni el agente por su cuenta, ni una regeneracion silenciosa, ni `wf-design-delta`. La promocion exige confirmacion humana explicita; autoaprobarla es el mismo fallo que inventar la direccion.
+
+**Traza en `## Changelog`:** tanto el nacimiento provisional como la promocion dejan entrada (`[direccion: provisional]` / `[direccion: confirmada]`), coherente con la Regla 2 (toda mutacion deja traza). La promocion de `provisional → confirmed` que no toca tokens es un cambio **PATCH** de version (Regla 3): no rompe trazabilidad ni cambia valores visuales, solo eleva la confianza declarada.
+
+Anti-patron: tratar `generated-provisional` como un estado final comodo. Es un punto de partida a remontar — la direccion sigue sin validar y el equipo de codigo no debe confiar en ella hasta `confirmed`.

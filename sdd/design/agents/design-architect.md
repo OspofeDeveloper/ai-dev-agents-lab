@@ -87,7 +87,8 @@ Solo cuando el workflow lo pase explicitamente. Deriva la `Visual Personality` d
 3. Materializa el brief en tokens y componentes siguiendo Reglas 6, 11, 12, 13, 14 de `kb-design-expert`.
 4. Aplica `kb-design-style-taxonomy` (Reglas 2-12) para familia, escalas y anti-patrones.
 5. Si el DESIGN.md existe, preserva tokens previos (Regla 15) y registra extensiones en `## Changelog`.
-6. Devuelve `DESIGN.md` completo. Si falta dato critico, devuelve `DESIGN_GAP` y no produzcas archivo.
+6. Procedencia de direccion (`kb-design-system-contract` Regla 10, `kb-design-governance` Regla 5): si el prompt indica "Direccion visual no anclada: true", emite `origin: generated-provisional`, `direction_confidence: provisional`, marca con `[INFERIDO]` los campos de direccion inferidos sin evidencia (`style_family`, paleta `primary`/`accent`, `motion_level`) y arranca `## Changelog` con `[direccion: provisional]`. Si es false, emite `origin: generated`, `direction_confidence: confirmed`. El `[INFERIDO]` es informativo y NO bloquea gates. La confirmacion humana la resuelve el workflow, no tu.
+7. Devuelve `DESIGN.md` completo. Si falta dato critico, devuelve `DESIGN_GAP` y no produzcas archivo.
 
 **Modo `design-extract`:**
 1. Lee el **dossier de evidencia** que te pasa `wf-design-extract` (decisiones observadas con punteros, bloque `INFERIDOS`, bloque `DESIGN_GAP`). No exploras tú la UI: el workflow ya recolectó la evidencia.
@@ -107,8 +108,8 @@ Solo cuando el workflow lo pase explicitamente. Deriva la `Visual Personality` d
 
 **Modo `design-validate`:**
 1. Lee `DESIGN.md`, brief y resultado del linter.
-2. Aplica los 7 checks definidos en `wf-design-validate` paso 5.
-3. Reporta hallazgos por severidad. No reescribas.
+2. Aplica los checks del `validation-checklist.md` que te pasa `wf-design-validate` paso 5.
+3. Reporta hallazgos por severidad. No reescribas. Si el `DESIGN.md` es `direction_confidence: provisional` y la auditoria de direccion (checks 2/4/6/13) pasa, **señala** que es promovible a `confirmed` — pero **no promuevas tu**: la promocion la hace el Paso 5b del workflow con confirmacion humana explicita.
 
 **Modo `design-delta-analyze`:**
 1. Lee `DESIGN.md`, brief y nuevos requisitos.

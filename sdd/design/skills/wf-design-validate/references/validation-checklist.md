@@ -1,6 +1,6 @@
 # Checklist de validación de DESIGN.md
 
-17 checks normativos que el agente `design-architect` debe ejecutar en modo `design-validate`. Cada check indica la regla de referencia, la severidad si falla y lo que se debe verificar.
+18 checks normativos que el agente `design-architect` debe ejecutar en modo `design-validate`. Cada check indica la regla de referencia, la severidad si falla y lo que se debe verificar.
 
 Estado declarado sin decisiones visuales concretas = estado vacío (no cuenta). Campo obligatorio ausente sin justificación = severidad indicada.
 
@@ -166,6 +166,15 @@ Si el producto declara componentes de form (`input-text`, `input-textarea`, `sel
 - Versión coherente con el último entry de `## Changelog`
 - Si hay cambios que rompen trazabilidad (cambio de style_family, primary, tipografía principal), el bump debe ser MAJOR
 - Version bump inconsistente con la naturaleza del último cambio → `[CRITICO]`
+
+---
+
+## 18. Procedencia y confianza de dirección (kb-design-system-contract Regla 10)
+
+- Frontmatter `origin` ∈ {generated, generated-provisional, extracted} (ausencia = generated). Valor fuera de ese conjunto → `[ALTO]`
+- Si `origin: generated-provisional`: debe llevar `direction_confidence: provisional` y los campos de dirección inferidos sin evidencia (`style_family`, `primary`/`accent`, `motion_level`) marcados `[INFERIDO]`. Coherencia rota (provisional sin marcadores, o confirmed con marcadores de dirección) → `[MEDIO]`
+- El `[INFERIDO]` aquí es **informativo y NO bloquea** ningún gate (la fase Design no tiene sellador mecánico): se **reporta**, no se computa como `[CRITICO]`/`[ALTO]` por sí mismo
+- Si `direction_confidence: provisional` y la auditoría de dirección (checks 2/4/6/13) pasa sin hallazgos `[CRITICO]`/`[ALTO]`: el `DESIGN.md` es **promovible**. La promoción `provisional → confirmed` la decide el Paso 5b de `wf-design-validate` con confirmación humana explícita — el agente solo lo **señala** en el reporte, no promueve
 
 ---
 

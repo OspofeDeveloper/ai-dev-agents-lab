@@ -5,6 +5,8 @@
 version: 0.1.0
 name: <Nombre del producto>
 description: <Resumen breve del tono visual y contexto del producto>
+origin: generated                  # generated | generated-provisional | extracted (kb-design-system-contract Regla 10)
+direction_confidence: confirmed    # confirmed | provisional (solo en origin generated-*; provisional → marcar campos de direccion con [INFERIDO])
 visual_personality:
   style_family: productive-minimal
   secondary_family: none

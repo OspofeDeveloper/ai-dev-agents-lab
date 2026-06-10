@@ -4,7 +4,7 @@ description: "Crea o actualiza el DESIGN.md de un producto a partir de un featur
 when_to_use: "Activa en frases como 'crea el DESIGN.md', 'genera el sistema visual desde el spec', 'prepara el contrato visual del producto', 'actualiza el DESIGN.md'. No activa para generar planes KMM ni tasks."
 argument-hint: "generate <feature_spec.md> [--prd <prd.md>] [--brief <DESIGN_BRIEF.md>] [--design-file DESIGN.md] [--no-brief]"
 effort: high
-allowed-tools: [Read, Write, Bash, Agent, WebSearch, WebFetch]
+allowed-tools: [Read, Write, Bash, Agent, AskUserQuestion, WebSearch, WebFetch]
 context: fork
 agent: design-architect
 ---
@@ -111,6 +111,31 @@ Si el agente devuelve `DESIGN_GAP` o `DESIGN_GAPs`:
 - informa la lista al usuario
 - no escribas el archivo
 - sugiere completar el spec o aportar contexto visual de producto
+
+## Paso 5b: Anclar la direccion visual (confirmacion humana)
+
+Determina si la **direccion visual quedo no anclada** — es decir, sin fuente humana fiable de `style_family`/paleta/`motion_level`. Aplica el criterio de `kb-design-governance` Regla 5: la direccion esta NO anclada si se cumple **cualquiera** de:
+
+- se invoco con `--no-brief` (Paso 2b dejo `brief_override: true`), o
+- el brief resuelto se cerro en modo `auto` con `autonomy_policy: ai-default` sin confirmacion humana (lee `autonomy_policy` del `DESIGN_BRIEF.md` del Paso 2b), y/o
+- el research de Reference Apps fue pobre o ausente (mismo criterio que el Paso 2d/2e marca como `DESIGN_GAP` en Reference Apps).
+
+**Si la direccion esta anclada** (brief cerrado con `autonomy_policy` distinto de `ai-default`, o research suficiente, sin `--no-brief`): salta este paso. El `DESIGN.md` nacera con `origin: generated`, `direction_confidence: confirmed`.
+
+**Si la direccion esta NO anclada:** antes de escribir, presenta al usuario las decisiones de direccion que el agente infirio y pide confirmacion explicita con `AskUserQuestion`:
+- `style_family` (y `secondary_family` si aplica)
+- paleta: `primary` y `accent`/secundario
+- `motion_level`
+
+Pregunta si confirma esa direccion visual inferida. Segun la respuesta:
+
+- **Confirma** → el `DESIGN.md` nace con `origin: generated`, `direction_confidence: confirmed`. No se aplican marcadores `[INFERIDO]` de direccion ni sello provisional.
+- **No confirma, o no hay interaccion** (modo headless/CI: `SDD_NON_INTERACTIVE=1` o `CI=true`, o el usuario no responde) → el `DESIGN.md` nace **provisional**:
+  - frontmatter con `origin: generated-provisional` y `direction_confidence: provisional`,
+  - los campos de direccion inferidos sin evidencia (`style_family`, paleta, `motion_level`) se marcan `[INFERIDO]` (marcador informativo de la fase, SSoT en `kb-design-characterization`; **NO bloquea ningun gate**),
+  - la entrada de `## Changelog` refleja el estado: `[direccion: provisional]`.
+
+**No bloquees indefinidamente.** Sin interaccion, el camino por defecto es **escribir provisional, no abortar**. El sello es informativo; la promocion a `confirmed` ocurre despues en `wf-design-validate` con confirmacion humana explicita (ver `kb-design-governance` Regla 5).
 
 ## Paso 6: Escribir y validar el resultado
 

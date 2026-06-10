@@ -1,6 +1,6 @@
 ---
 name: kb-design-system-contract
-description: Contrato normativo del DESIGN.md como artefacto de producto del pipeline SDD. Define el formato (Google design.md), el frontmatter YAML obligatorio (visual_personality, color modes light/dark, type scale completa, iconography, motion, voice, reference apps), las secciones canonicas en orden estable, el quoting obligatorio en components y la exigencia de declarar todos los estados aplicables por componente. SSoT del sistema visual de producto. Extraida de kb-design-expert (Reglas 2, 6, 11, 12, 13, 14, 16, 17, 18).
+description: Contrato normativo del DESIGN.md como artefacto de producto del pipeline SDD. Define el formato (Google design.md), el frontmatter YAML obligatorio (visual_personality, color modes light/dark, type scale completa, iconography, motion, voice, reference apps), las secciones canonicas en orden estable, el quoting obligatorio en components y la exigencia de declarar todos los estados aplicables por componente, y los campos de procedencia del frontmatter (origin generated/generated-provisional/extracted, direction_confidence). SSoT del sistema visual de producto. Extraida de kb-design-expert (Reglas 2, 6, 11, 12, 13, 14, 16, 17, 18).
 effort: low
 allowed-tools: [Read]
 user-invocable: false
@@ -235,6 +235,36 @@ Reglas:
 4. La politica de seleccion de modo (automatica via system, manual via toggle, fija) se documenta en `## Color Modes` del markdown.
 
 Anti-patron: declarar solo `light` y dejar dark mode como "lo hara el dev". Resultado: dark mode roto en produccion.
+
+## Regla 10: Procedencia y confianza de direccion en el frontmatter
+
+El frontmatter del `DESIGN.md` declara **de donde viene** y **cuanto se puede confiar en su direccion visual**. Dos campos de procedencia, ambos opcionales en lectura pero con semantica fija:
+
+```yaml
+origin: generated            # generated | generated-provisional | extracted
+direction_confidence: confirmed   # confirmed | provisional   (solo relevante cuando origin es generated-*)
+```
+
+**`origin` — tres valores cerrados:**
+
+| Valor | Significado | Quien lo escribe |
+|---|---|---|
+| `generated` | Direccion visual derivada de fuente humana fiable (brief cerrado con confirmacion, o direccion confirmada explicitamente). Es el valor por defecto de un `DESIGN.md` sano generado desde el pipeline | `wf-design-system` cuando la direccion esta anclada o el usuario la confirma |
+| `generated-provisional` | Direccion visual inferida **sin** fuente humana fiable (`--no-brief`, brief en modo `auto`/`ai-default`, o research de Reference Apps pobre/ausente) y aun **no confirmada** por un humano | `wf-design-system` cuando la direccion queda no anclada y no se confirma |
+| `extracted` | `DESIGN.md` derivado por ingenieria inversa de una UI en produccion. Sus campos de procedencia adicionales (`evidence_base`, `evidence_coverage`) y su metodologia viven en `kb-design-characterization` | `wf-design-extract` / modo `design-extract` |
+
+La **ausencia** del campo `origin` se interpreta como `generated` (compatibilidad con `DESIGN.md` previos al campo). Los tres valores son mutuamente excluyentes: un mismo `DESIGN.md` no puede ser a la vez `generated-provisional` y `extracted`.
+
+**`direction_confidence` — dos valores cerrados:**
+
+- `provisional`: la direccion visual (`style_family`, paleta primaria/accent, `motion_level`) se infirio sin evidencia humana fiable. Acompaña a `origin: generated-provisional`.
+- `confirmed`: la direccion fue confirmada por un humano (en el origen, vía `wf-design-system`, o al validar, vía `wf-design-validate`). Acompaña a `origin: generated`.
+
+Cuando `direction_confidence: provisional`, los campos de direccion inferidos sin evidencia se marcan con el marcador **`[INFERIDO]`** ya definido para la fase (SSoT en `kb-design-characterization`) — **NO se inventa un marcador nuevo**. Igual que en caracterizacion, **`[INFERIDO]` aqui NO bloquea ningun gate del pipeline**: la fase Design no tiene gate ni sellador mecanico (`sdd-gate-check.py` / `sdd-seal.py` operan solo sobre specs y planes). El sello es informativo; el enforcement real es la **confirmacion humana** descrita en el ciclo de vida.
+
+**El ciclo de vida `provisional → confirmed`** (que lo dispara, quien lo pone, quien lo limpia, su traza en `## Changelog`) **no vive aqui**: es la dimension temporal/operativa del artefacto y su SSoT es `kb-design-governance` Regla 5. Esta KB solo fija los **valores validos** del frontmatter; la gobernanza fija su transicion.
+
+> Coherencia con `kb-design-characterization`: esa KB documenta el header `origin: extracted` (+ `evidence_base`, `evidence_coverage`) del camino brownfield. Los tres valores de `origin` conviven limpio: `extracted` es ortogonal a la dimension de confianza de direccion (`direction_confidence` no aplica a un `extracted`, cuya confianza se expresa con `evidence_coverage`).
 
 ## KB Load Status
 

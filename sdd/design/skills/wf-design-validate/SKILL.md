@@ -4,14 +4,14 @@ description: "Audita un DESIGN.md ya existente contra el contrato visual (kb-des
 when_to_use: "Activa en frases como 'valida el DESIGN.md', 'revisa que el sistema visual esta bien', 'audita el design despues de editarlo', 'comprueba que el DESIGN.md cumple el brief'. No activa para generar o modificar el archivo."
 argument-hint: "<DESIGN.md> [--brief <DESIGN_BRIEF.md>] [--views <feature_views.md>] [--lenient] [--pedagogical]"
 effort: medium
-allowed-tools: [Read, Bash]
+allowed-tools: [Read, Bash, Write, AskUserQuestion]
 context: fork
 agent: design-architect
 ---
 
 # design-validate — Orquestador del Flujo SDD (Etapa Design)
 
-Tu rol es de **auditor puro**: leer un `DESIGN.md` existente, contrastar contra brief y kbs, ejecutar el linter de Google y devolver una lista de hallazgos. No escribes el archivo.
+Tu rol es de **auditor**: leer un `DESIGN.md` existente, contrastar contra brief y kbs, ejecutar el linter de Google y devolver una lista de hallazgos. **No reescribes el archivo** — con **una unica excepcion acotada**: la promocion de la confianza de direccion `provisional → confirmed` del Paso 5b, gated por confirmacion humana explicita. Fuera de esa promocion, validate es read-only.
 
 ## Paso 1: Parsear argumentos
 
@@ -89,15 +89,38 @@ INSTRUCCION: audita el DESIGN.md sin reescribirlo. Usa el checklist anterior com
 No reescribas el archivo. No propongas patches. Solo reporta.
 ```
 
+## Paso 5b: Promocion acotada de la confianza de direccion (provisional → confirmed)
+
+Esta es la **unica edicion** que `wf-design-validate` puede hacer del documento — acotada y gated por confirmacion humana (mismo patron que la confirmacion de `[ASUNCIÓN]` de `wf-prd-review`). La promocion **no es mecanica**: la fase Design no tiene script ni sellador. Es juicio humano confirmado.
+
+**Detección determinista** (no a ojo) sobre el frontmatter del DESIGN.md leido en el Paso 2:
+```bash
+!grep -n "direction_confidence: provisional" "<path_design>"
+```
+
+- **No aparece** (es `confirmed`, `origin: extracted`, o ausente → tratado como `generated`/`confirmed`) → no hay nada que promover. Salta este paso.
+- **Aparece** `direction_confidence: provisional` → procede solo si la **auditoria de direccion paso** (el agente no reporto hallazgos `[CRITICO]`/`[ALTO]` sobre `Visual Personality`, `Colors` o `Motion`, checks 2/4/6/13 del checklist). Si la direccion tiene hallazgos abiertos, **no promuevas**: primero hay que resolverlos; informa y deja provisional.
+
+Si procede, presenta al usuario la direccion provisional inferida (`style_family`, paleta primaria/accent, `motion_level`, los campos marcados `[INFERIDO]`) y pide confirmacion explicita con `AskUserQuestion`:
+
+- **Confirma** → realiza la **unica edicion acotada** sobre el DESIGN.md (`Write`):
+  1. promueve `origin: generated-provisional → generated` y `direction_confidence: provisional → confirmed` en el frontmatter,
+  2. elimina los marcadores `[INFERIDO]` de los campos de direccion ahora confirmados (solo de direccion; no toques otros `[INFERIDO]`),
+  3. añade una entrada a `## Changelog`: `[direccion: confirmada]` con la fecha real de tu contexto. Es un bump **PATCH** de version (no toca tokens ni rompe trazabilidad — `kb-design-governance` Reglas 3 y 5).
+- **No confirma, o no hay interaccion** (headless/CI) → **no toques el archivo**. Permanece provisional. Validate sigue siendo read-only en este camino.
+
+No promueves tu por tu cuenta ni autoapruebas: sin confirmacion humana explicita el sello provisional se mantiene (ver `kb-design-governance` Regla 5).
+
 ## Paso 6: Informar al usuario
 
 Muestra el reporte tal como lo devuelva el agente. Anade:
 
 - path del DESIGN.md auditado
 - path del brief usado (o `N/A`)
+- si se promovio la direccion en el Paso 5b: indicalo (`origin: generated`, `direction_confidence: confirmed`, version PATCH bumpeada)
 - siguiente paso recomendado:
   - si `PASS` → continuar con `/wf-design-feature-prototype`
   - si `PASS_WITH_GAPS` → considerar `/wf-design-delta analyze` para resolverlos
   - si `FAIL` → corregir manualmente o regenerar con `/wf-design-system`
 
-No escribas ningun archivo en este workflow.
+Salvo la promocion acotada del Paso 5b (gated por confirmacion humana), no escribas ningun archivo en este workflow.

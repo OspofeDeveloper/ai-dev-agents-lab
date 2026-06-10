@@ -67,6 +67,8 @@ evidence_coverage: <descripcion del nivel de acceso>   # ej. "design tokens + CS
 
 `evidence_base` ancla el `DESIGN.md` en el tiempo: los valores eran verdad en ese commit. Si la UI avanza, el `DESIGN.md` puede estar desactualizado — eso es deriva, no error.
 
+> `origin: extracted` es uno de los **tres valores cerrados** de `origin` del contrato (`generated` | `generated-provisional` | `extracted`, SSoT en `kb-design-system-contract` Regla 10). `extracted` es ortogonal a la confianza de direccion del camino generado: un `DESIGN.md` extraido no lleva `direction_confidence` (su confianza se expresa con `evidence_coverage`), y un `generated-provisional` no lleva `evidence_base`. No se mezclan.
+
 La seccion `## Changelog` del `DESIGN.md` **arranca** con la entrada de extraccion:
 
 ```markdown

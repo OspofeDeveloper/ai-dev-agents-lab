@@ -24,6 +24,9 @@ DESIGN.md actual:
 ---
 <contenido_actual_o_N/A>
 ---
+Direccion visual no anclada: <true|false>
+(true si --no-brief, o brief en auto con autonomy_policy: ai-default, o research de Reference Apps pobre/ausente — kb-design-governance Regla 5)
+---
 INSTRUCCION: produce un DESIGN.md de producto reutilizable por Stitch y futuras features. No introduzcas funcionalidades no presentes en el spec. Contrato visual persistente de producto, no de una sola feature.
 
 Aplica las reglas de kb-design-expert, kb-design-brief y kb-design-style-taxonomy que tienes en contexto:
@@ -37,6 +40,12 @@ Aplica las reglas de kb-design-expert, kb-design-brief y kb-design-style-taxonom
 - kb-design-brief: respetar `autonomy_policy`, `clarity_vs_brand`, `reference_apps_policy` y el resto de variables cerradas
 - kb-design-style-taxonomy: usar solo familias validas; si ninguna encaja, aplicar Regla 12 (`custom`) con sus 5 condiciones
 - Si faltan datos criticos para jerarquia, tono o patrones base, devuelve DESIGN_GAPs y no produzcas archivo final
+
+Procedencia y confianza de direccion (kb-design-system-contract Regla 10, kb-design-governance Regla 5):
+- El frontmatter incluye `origin` (`generated` | `generated-provisional` | `extracted`) y, en los generados, `direction_confidence` (`confirmed` | `provisional`).
+- Si "Direccion visual no anclada" es **false**: emite `origin: generated`, `direction_confidence: confirmed`. Sin marcadores de direccion provisional.
+- Si "Direccion visual no anclada" es **true**: emite `origin: generated-provisional`, `direction_confidence: provisional`. Marca con `[INFERIDO]` los campos de direccion que infieres sin evidencia humana (`style_family`, `primary`/`accent` de la paleta, `motion_level`), usando el marcador informativo de la fase (kb-design-characterization) — `[INFERIDO]` NO bloquea ningun gate. La entrada de `## Changelog` arranca/registra `[direccion: provisional]`.
+- En ambos casos `wf-design-system` resuelve la confirmacion humana antes de escribir; tu produces el DESIGN.md ya marcado segun el flag, no preguntas tu.
 
 Formato de output: ver ${CLAUDE_SKILL_DIR}/references/output_notes.md
 ```

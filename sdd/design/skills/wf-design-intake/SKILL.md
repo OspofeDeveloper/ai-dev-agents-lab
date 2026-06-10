@@ -118,3 +118,5 @@ Reporta:
 - policy de autonomia
 - siguiente paso recomendado:
   > "Ahora ejecuta `/wf-design-system generate <feature_spec.md> [--prd <prd.md>] [--brief <DESIGN_BRIEF.md>]`"
+
+> Nota: un brief cerrado en modo `auto` con `autonomy_policy: ai-default` deja la direccion visual **no anclada** aguas abajo. `wf-design-system` lo detecta y pedira confirmacion humana de la direccion antes de escribir el `DESIGN.md`; sin confirmacion, el `DESIGN.md` nace `origin: generated-provisional` (ciclo de vida en `kb-design-governance` Regla 5). Si quieres anclar la direccion ya en el brief, usa `--mode guided` o `hybrid`.
