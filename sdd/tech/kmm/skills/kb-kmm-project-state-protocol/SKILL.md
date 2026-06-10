@@ -1,6 +1,6 @@
 ---
 name: kb-kmm-project-state-protocol
-description: "Protocolo de precondicion de contexto tecnico para agentes KMM. Define la obligacion de leer kmm_project_state.md al inicio de la operacion si existe, el bloqueo con mensaje de error estandar si no existe, la excepcion unica para kmm-explorer invocado por wf-kmm-init en modo detect, el contrato de cierre verificable de los agentes implementadores (build y tests con los comandos del project state, reporte honesto), y la precedencia del repo real (project_state) sobre el canon KMM por defecto. SSoT del protocolo compartido por kmm-explorer, kmm-planner, kmm-feature-implementer, kmm-platform-integrator, kmm-network-auth-implementer y kmm-tester."
+description: "Protocolo de precondicion de contexto tecnico para agentes KMM. Define la obligacion de leer kmm_project_state.md al inicio de la operacion si existe, el bloqueo con mensaje de error estandar si no existe, la excepcion unica para kmm-explorer invocado por wf-kmm-init en modo detect, el contrato de cierre verificable de los agentes implementadores (build y tests con los comandos del project state, reporte honesto), y la precedencia del repo real (project_state) sobre el canon KMM por defecto. SSoT del protocolo compartido por kmm-explorer, kmm-planner, kmm-feature-logic-implementer, kmm-feature-ui-implementer, kmm-platform-integrator, kmm-network-auth-implementer y kmm-tester."
 effort: low
 allowed-tools: [Read]
 user-invocable: false
@@ -54,7 +54,8 @@ El protocolo aplica a todos los agentes del stack KMM que operan sobre el proyec
 
 - `kmm-explorer` (con la excepcion de la Regla 3)
 - `kmm-planner`
-- `kmm-feature-implementer`
+- `kmm-feature-logic-implementer`
+- `kmm-feature-ui-implementer`
 - `kmm-platform-integrator`
 - `kmm-network-auth-implementer`
 - `kmm-tester`
@@ -72,7 +73,7 @@ Cambios futuros en el mensaje, la lista de agentes afectados o las condiciones d
 
 ## Regla 6: Contrato de cierre verificable (agentes implementadores)
 
-Aplica a los agentes que modifican codigo: `kmm-feature-implementer`, `kmm-platform-integrator`, `kmm-network-auth-implementer` (y a `kmm-tester` cuando escribe tests). Una implementacion NO esta terminada hasta cumplir este contrato:
+Aplica a los agentes que modifican codigo: `kmm-feature-logic-implementer`, `kmm-feature-ui-implementer`, `kmm-platform-integrator`, `kmm-network-auth-implementer` (y a `kmm-tester` cuando escribe tests). Una implementacion NO esta terminada hasta cumplir este contrato:
 
 1. **Build y tests ejecutados de verdad.** Antes de declarar el trabajo hecho, compila los modulos afectados y ejecuta la suite relevante usando los comandos de build/test declarados en `kmm_project_state.md`. Si la seccion de comandos no existe o esta incompleta, usa `./gradlew` con los targets estandar del modulo afectado y sennala la laguna del project state.
 2. **El resultado esperado depende del orden TDD.** En una task `Layer: test` con DoD RED, el cierre correcto es: el test compila y FALLA con mensaje claro (verde prematuro = fallo de DoD). En el resto de casos, el cierre correcto es build verde y suite pasando.

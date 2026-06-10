@@ -44,7 +44,8 @@ La unidad primaria de implementación en KMM es el **agente especializado**, no 
 
 | Agente | Dominio |
 |---|---|
-| `kmm-feature-implementer` | Implementación dentro de features: dominio de feature, data específica, presentation, recursos, texto UI y borde remoto propio de feature cuando no es infraestructura transversal |
+| `kmm-feature-logic-implementer` | Lógica de feature: capa `domain` (models, repository interfaces, use cases) y capa `data` (DTOs+mappers, datasources locales, borde remoto propio de feature, repository impls). Tasks `Layer: domain`/`data` |
+| `kmm-feature-ui-implementer` | Presentación de feature: ViewModel + UiState + UiEvent, Screens Composables, recursos y texto UI. Tasks `Layer: presentation` |
 | `kmm-platform-integrator` | `app`, navegación, DI, brands/environments y bridges Android/iOS |
 | `kmm-network-auth-implementer` | Networking, Ktor, contratos remotos, auth y piezas transversales de `core` asociadas |
 | `kmm-explorer` | Exploración, auditoría, diagnóstico y análisis previo a la implementación usando las `kb-*` para decidir ownership, detectar contradicciones y mapear el estado actual |

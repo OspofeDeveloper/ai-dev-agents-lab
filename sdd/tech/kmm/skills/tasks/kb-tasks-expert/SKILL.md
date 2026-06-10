@@ -41,7 +41,7 @@ Además del bloque de Tasks individuales, el `_tasks.md` debe llevar un header d
 - **Módulo:** [:feature:nombre | :core:nombre | :app]
 - **Layer:** domain | data | presentation | app | core | platform | test
 - **Execution domain:** feature | platform | network-auth
-- **Owner agent:** kmm-feature-implementer | kmm-platform-integrator | kmm-network-auth-implementer
+- **Owner agent:** kmm-feature-logic-implementer | kmm-feature-ui-implementer | kmm-platform-integrator | kmm-network-auth-implementer | kmm-tester
 - **Suggested workflow:** [wf-* concreta si existe y aplica | —]
 - **Input:** [qué contrato, modelo, pantalla o configuración recibe o crea]
 - **Dependencies:** [T-XXX, T-YYY | ninguna]
@@ -68,33 +68,61 @@ Consulta `${CLAUDE_SKILL_DIR}/references/kmm_task_templates.md` para templates p
 
 ---
 
-## Regla central: el owner agent se decide por dominio de trabajo, no por capa aislada
+## Regla central: el owner agent se decide por el `Layer` de la Task (routing por capa)
 
-Nunca asumas que `domain`, `data` o `presentation` implican por sí solos un agente distinto. El owner se decide por la **naturaleza del cambio**:
+El owner de una Task se decide por su campo **`Layer`** combinado con la **naturaleza del cambio**. No asumas un owner por intuición: aplica este routing.
 
-- **`kmm-feature-implementer`**
-  cuando la Task pertenece al interior de una feature y su intención principal es implementar comportamiento funcional de esa feature.
-- **`kmm-platform-integrator`**
-  cuando la Task vive en `app`, en navegación, DI, brands/environments o integración con Android/iOS.
-- **`kmm-network-auth-implementer`**
-  cuando la Task define infraestructura remota, contratos de red/auth o piezas transversales de `core` ligadas a networking/auth.
+| `Layer` de la Task | Owner agent | Por qué |
+|---|---|---|
+| `domain` o `data` | **`kmm-feature-logic-implementer`** | lógica de la feature: models, repository interfaces, use cases, DTOs+mappers, datasources locales, borde remoto propio de feature, repository impls |
+| `presentation` | **`kmm-feature-ui-implementer`** | capa de presentación: ViewModel + UiState + UiEvent, Screens Composables, recursos y texto UI |
+| `platform` o `app` | **`kmm-platform-integrator`** | scaffold estructural, expect/actual, navgraph, DI de app, brands/environments, bridges Android/iOS |
+| pieza remota/auth **transversal o de `core`** (compartida por varias features) | **`kmm-network-auth-implementer`** | infraestructura remota/auth que no es propia de una sola feature |
+| `test` | **el implementador de la capa del componente probado**, o `kmm-tester` para suites dedicadas | ver "Tasks de test" abajo |
+
+### Frontera remota (H2) — SSoT
+
+El criterio que decide quién implementa una pieza remota vive aquí:
+
+- borde remoto **propio de una sola feature** (su `RemoteDataSource`, su `Api` local, sus DTOs) → **`kmm-feature-logic-implementer`** (`Layer: data`).
+- remoto **transversal / compartido / de `core`** (clientes Ktor compartidos, contratos de red estables, plugins de auth, datasources que sirven a varias features) → **`kmm-network-auth-implementer`**.
+
+Esta es la SSoT de la frontera remota; los cuerpos de `kmm-feature-logic-implementer` y `kmm-network-auth-implementer` la referencian, no la redefinen.
+
+### Tasks de test
+
+El owner de una Task `Layer: test` es **el implementador de la capa del componente bajo test**:
+
+- test de un componente `domain`/`data` (UseCase, RepositoryImpl) → `kmm-feature-logic-implementer`
+- test de un componente `presentation` (ViewModel) → `kmm-feature-ui-implementer`
+
+`kmm-tester` es el owner cuando el scope de la Task es **exclusivamente de testing** (suite dedicada, screenshot regression, auditoría de cobertura, integration/UI tests en `androidTest`). La SSoT de la propiedad de tests es `kb-kmm-testing-strategy` Regla 1.
 
 ---
 
 ## Reglas de asignación por tipo de componente
 
-### 1. Dominio funcional de feature
-Asignar a `kmm-feature-implementer`:
+### 1. Lógica de feature (domain + data)
+Asignar a `kmm-feature-logic-implementer` (`Layer: domain` o `data`):
 
 - Models propios de la feature
 - Repository interfaces propias de la feature
 - UseCases
 - DTOs + Mappers cuando son parte del borde remoto de esa feature y no infraestructura transversal
+- DataSources locales y borde remoto **propio** de la feature
 - RepositoryImpl de feature
-- ViewModels, UiState, UiEvent, Screens
 - Tests unitarios de UseCases y RepositoryImpl ligados a la feature
 
-### 2. Infraestructura transversal remota o auth
+### 2. Presentación de feature
+Asignar a `kmm-feature-ui-implementer` (`Layer: presentation`):
+
+- ViewModels, UiState, UiEvent
+- Screens Composables
+- conexión a recursos compartidos y exposición de texto UI
+- efectos de navegación emitidos por el ViewModel
+- Tests unitarios de ViewModel
+
+### 3. Infraestructura transversal remota o auth
 Asignar a `kmm-network-auth-implementer`:
 
 - contratos remotos compartidos
@@ -104,8 +132,8 @@ Asignar a `kmm-network-auth-implementer`:
 - contratos de sesión y piezas Keycloak
 - RemoteDataSources o adapters que vivan en `core` o sean compartidos por varias features
 
-### 3. Composición en app y host
-Asignar a `kmm-platform-integrator`:
+### 4. Composición en app y host
+Asignar a `kmm-platform-integrator` (`Layer: platform` o `app`):
 
 - scaffold estructural de módulos o wiring base
 - composición de `app`

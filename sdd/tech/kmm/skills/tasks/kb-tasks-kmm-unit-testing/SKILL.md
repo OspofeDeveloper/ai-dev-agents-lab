@@ -1,6 +1,6 @@
 ---
 name: kb-tasks-kmm-unit-testing
-description: "Patrones de implementación de tests unitarios en proyectos KMM: tests de ViewModel con runTest + Turbine, tests de UseCase con fakes, tests de RepositoryImpl con fakes de DataSource. Aserciones en kotlin.test, estructura Arrange/Act/Assert. Cargada por kmm-feature-implementer, kmm-network-auth-implementer y kmm-tester."
+description: "Patrones de implementación de tests unitarios en proyectos KMM: tests de ViewModel con runTest + Turbine, tests de UseCase con fakes, tests de RepositoryImpl con fakes de DataSource. Aserciones en kotlin.test, estructura Arrange/Act/Assert. Cargada por kmm-feature-logic-implementer, kmm-feature-ui-implementer, kmm-network-auth-implementer y kmm-tester."
 argument-hint: ""
 effort: low
 allowed-tools: [Read]

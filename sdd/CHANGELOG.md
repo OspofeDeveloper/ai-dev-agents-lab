@@ -2,6 +2,22 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.25.0 — 2026-06-10
+
+Consolidación del overlay KMM antes de clonarlo a otro stack:
+
+- **Split de `kmm-feature-implementer` en dos agentes por `Layer`.** El antiguo agente era owner de ~9-10 de ~13 tasks de una feature y cargaba **13 KBs** que se agrupaban por capa; como `wf-task-run` delega **una task por invocación** y el owner carga **eager** todas sus KBs, cada task atómica arrastraba 4-6 KBs irrelevantes. Se sustituye por:
+  - **`kmm-feature-logic-implementer`** (Layers `domain` + `data`): models, repository interfaces, use cases, DTOs+mappers, datasources locales, borde remoto propio de feature, repository impls. Carga 10 KBs (incl. `kb-kmm-core-layer` → decide subir a `core`, H5). `opus`, `effort: high`.
+  - **`kmm-feature-ui-implementer`** (Layer `presentation`): ViewModel+UiState+UiEvent, Screens Composables, recursos y texto UI. Carga 9 KBs. `opus`, `effort: high`.
+  - El antiguo `kmm-feature-implementer` queda **borrado**.
+- **Routing por `Layer` en `kb-tasks-expert` (SSoT del owner model):** `domain`/`data` → logic; `presentation` → ui; `platform`/`app` → platform-integrator; remoto transversal/`core` → network-auth; `test` → implementador de la capa del componente probado, o `kmm-tester` en suites dedicadas. **Frontera remota (H2)** explícita y SSoT aquí: borde remoto de una sola feature → logic; transversal/compartido/core → network-auth. Propagado a `references/task_sizing.md` (columna Owner por defecto + `Layer`) y `references/kmm_task_templates.md` (campo `Owner agent:` de cada template).
+- **H3 resuelto** (contradicción de las dos `kb-plan-expert`): la variante KMM es un **override de stack legítimo** (override por basename del contrato de overlay), no una KB "mal ubicada". Se eliminó la "Nota de ubicación" stale ("muévanme a plan/") y se sustituyó por una nota correcta: la variante conserva el contrato externo (taxonomía de gaps, estados, deuda, regla de Design, formato) y solo aporta la especialización KMM; la metodología stack-agnóstica vive en `kb-plan-method` (que los agentes KMM cargan en paralelo) y no se duplica. No hubo método procedimental que adelgazar: el cuerpo de la variante ya era contrato normativo, no procedimiento de agente.
+- **H5 resuelto:** `kmm-feature-logic-implementer` carga `kb-kmm-core-layer` y es quien decide "subir a `core`".
+- **H6 resuelto:** `kmm-platform-integrator` pasa a `model: claude-opus-4-8` (es implementador real de config agéntica; consistencia con los demás implementadores). Ya tenía `effort: high`.
+- **H4 documentado (no se renombra):** nota en `tech/kmm/skills/README.md` que explica que las KBs `kb-kmm-<dominio>` (sin prefijo de fase) son heredadas y se mantienen por estabilidad de referencias; las nuevas siguen `kb-plan-kmm-*`/`kb-tasks-kmm-*`. Deuda de naming reconocida.
+- **Reconexión:** `task-generator` (Paso 8 + owner de tests por capa), `tech/kmm/CLAUDE.md` (tabla de agentes), `kb-kmm-project-state-protocol` (Reglas 4 y 6 + descripción), `kb-kmm-testing-strategy` (Regla 1, propiedad de tests por capa), `kb-tasks-kmm-unit-testing` (descripción). Cero referencias residuales a `kmm-feature-implementer` en el overlay. `install.sh` del overlay no necesitó cambios (globa `agents/*.md`, recoge los dos nuevos y deja de copiar el viejo). VERSION 0.25.0.
+- ⚠ Proyectos con stack KMM ya inicializado: `/wf-sdd-update` re-aplica el overlay (instala los dos agentes nuevos y elimina el viejo con `--prune`). **Los `_tasks.md` existentes que referencien `kmm-feature-implementer` como `Owner agent:` deben re-mapearse manualmente a `kmm-feature-logic-implementer` (tasks `Layer: domain`/`data`) o `kmm-feature-ui-implementer` (tasks `Layer: presentation`)** — es un cambio que rompe la nomenclatura de owner: `wf-task-run` no encontrará el agente antiguo.
+
 ## 0.24.0 — 2026-06-10
 
 Huecos del overlay KMM completados (ROADMAP 6.4):

@@ -33,7 +33,7 @@ Usa estos templates para formatear cada Task en el `_tasks.md`. Sustituye los va
 - **Módulo:** [:feature:nombre]
 - **Layer:** domain
 - **Execution domain:** feature
-- **Owner agent:** kmm-feature-implementer
+- **Owner agent:** kmm-feature-logic-implementer
 - **Suggested workflow:** —
 - **Input:** Data class con campos: `campo1: Tipo, campo2: Tipo?`
 - **Dependencies:** [T-000]
@@ -52,7 +52,7 @@ Usa estos templates para formatear cada Task en el `_tasks.md`. Sustituye los va
 - **Módulo:** [:feature:nombre]
 - **Layer:** domain
 - **Execution domain:** feature
-- **Owner agent:** kmm-feature-implementer
+- **Owner agent:** kmm-feature-logic-implementer
 - **Suggested workflow:** —
 - **Input:** Interfaz con métodos: `[firma(s) en términos de domain]`
 - **Dependencies:** [T-00X (Model)]
@@ -71,7 +71,7 @@ Usa estos templates para formatear cada Task en el `_tasks.md`. Sustituye los va
 - **Módulo:** [:feature:nombre]
 - **Layer:** domain
 - **Execution domain:** feature
-- **Owner agent:** kmm-feature-implementer
+- **Owner agent:** kmm-feature-logic-implementer
 - **Suggested workflow:** —
 - **Input:** Parámetros: `[param: Tipo]`. Retorno: `[tipo funcional]`
 - **Dependencies:** [T-00X (Repository interface)]
@@ -90,7 +90,7 @@ Usa estos templates para formatear cada Task en el `_tasks.md`. Sustituye los va
 - **Módulo:** [:feature:nombre]
 - **Layer:** data
 - **Execution domain:** feature
-- **Owner agent:** kmm-feature-implementer
+- **Owner agent:** kmm-feature-logic-implementer
 - **Suggested workflow:** —
 - **Input:** DTO con campos remotos: `[campos]`. Mapea hacia: `[NombreModel]`
 - **Dependencies:** [T-00X (Model)]
@@ -109,7 +109,7 @@ Usa estos templates para formatear cada Task en el `_tasks.md`. Sustituye los va
 - **Módulo:** [:feature:nombre]
 - **Layer:** data
 - **Execution domain:** feature
-- **Owner agent:** kmm-feature-implementer
+- **Owner agent:** kmm-feature-logic-implementer
 - **Suggested workflow:** —
 - **Input:** Endpoint o contrato remoto: `[método/endpoint]`. Retorna: `[DTO/resultado]`
 - **Dependencies:** [T-00X (DTO + Mapper)]
@@ -147,7 +147,7 @@ Usa estos templates para formatear cada Task en el `_tasks.md`. Sustituye los va
 - **Módulo:** [:feature:nombre]
 - **Layer:** data
 - **Execution domain:** feature
-- **Owner agent:** kmm-feature-implementer
+- **Owner agent:** kmm-feature-logic-implementer
 - **Suggested workflow:** —
 - **Input:** Implementa `[NombreRepository]`. Estrategia: `[Remote-first | Cache-first | Local-only]`
 - **Dependencies:** [T-00X (Repository interface), T-00X (DataSources)]
@@ -185,7 +185,7 @@ Usa estos templates para formatear cada Task en el `_tasks.md`. Sustituye los va
 - **Módulo:** [:feature:nombre]
 - **Layer:** presentation
 - **Execution domain:** feature
-- **Owner agent:** kmm-feature-implementer
+- **Owner agent:** kmm-feature-ui-implementer
 - **Suggested workflow:** —
 - **Input:** UiState: `[campos]`. UiEvent: `[variantes]`
 - **Dependencies:** [T-00X (UseCase)]
@@ -204,7 +204,7 @@ Usa estos templates para formatear cada Task en el `_tasks.md`. Sustituye los va
 - **Módulo:** [:feature:nombre]
 - **Layer:** presentation
 - **Execution domain:** feature
-- **Owner agent:** kmm-feature-implementer
+- **Owner agent:** kmm-feature-ui-implementer
 - **Suggested workflow:** —
 - **Input:** Renderiza `[UiState]`, emite `[UiEvent]`, journeys cubiertos: `[lista]`
 - **Dependencies:** [T-00X (ViewModel + State + Events)]
@@ -242,7 +242,7 @@ Usa estos templates para formatear cada Task en el `_tasks.md`. Sustituye los va
 - **Módulo:** [:feature:nombre]
 - **Layer:** test
 - **Execution domain:** feature
-- **Owner agent:** kmm-feature-implementer
+- **Owner agent:** [kmm-feature-logic-implementer (UseCase/RepositoryImpl) | kmm-feature-ui-implementer (ViewModel) | kmm-tester (suite dedicada)]
 - **Suggested workflow:** —
 - **Input:** Componente a validar: `[UseCase | RepositoryImpl | ViewModel]`. Casos: `[lista]`
 - **Dependencies:** [T-00X (componente implementado)]
@@ -263,7 +263,7 @@ Usar este template cuando el Plan incluye testing en scope. La task de test prec
 - **Módulo:** [:feature:nombre]
 - **Layer:** test
 - **Execution domain:** feature
-- **Owner agent:** [kmm-feature-implementer | kmm-tester]
+- **Owner agent:** [kmm-feature-logic-implementer (UseCase/RepositoryImpl) | kmm-feature-ui-implementer (ViewModel) | kmm-tester (suite dedicada)]
 - **Suggested workflow:** —
 - **Input:** Componente a validar: `[UseCase | RepositoryImpl | ViewModel]`. Casos mínimos: `[happy path, error path]`
 - **Dependencies:** [T-00X (Repository interface o contratos que el test necesita para compilar)]

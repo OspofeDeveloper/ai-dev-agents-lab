@@ -16,7 +16,8 @@ informales  ──►   monolítico  ──►   feature    ──►   validado
                                                            │
                                                      validación formal
                                                            │
-                                                           kmm-feature-implementer
+                                                           kmm-feature-logic-implementer
+                                                           kmm-feature-ui-implementer
                                                            kmm-platform-integrator
                                                            kmm-network-auth-implementer
 ```
@@ -111,7 +112,7 @@ Ejemplo de task:
 - Plan ref: §3.2 Domain Module
 - Layer: domain | Module: :feature:auth
 - Execution domain: feature
-- Owner agent: kmm-feature-implementer
+- Owner agent: kmm-feature-logic-implementer
 - Dependencies: ninguna
 - Definition of done: UseCase + Repository interface + Model creados
 ```
@@ -410,7 +411,7 @@ project-root/
 # ── Implementación con agentes KMM ───────────────────────────────────────────
 # Por cada feature, delegar las tasks en orden al owner agent indicado:
 # T-000  -> kmm-platform-integrator
-# T-001… -> kmm-feature-implementer
+# T-001… -> kmm-feature-logic-implementer (Layer domain/data) | kmm-feature-ui-implementer (Layer presentation)
 # T-00X  -> kmm-network-auth-implementer (si hay infraestructura transversal)
 ```
 
@@ -450,7 +451,8 @@ SDD ECOSYSTEM                              KMM ECOSYSTEM
 /wf-spec-analyze + /wf-spec-features-first → features/<x>_spec.md
 /wf-prepare-plan   → features/<x>_plan.md
 /wf-plan-validate  → gate formal del plan
-/wf-prepare-tasks  → features/<x>_tasks.md ──► kmm-feature-implementer
+/wf-prepare-tasks  → features/<x>_tasks.md ──► kmm-feature-logic-implementer
+                                             kmm-feature-ui-implementer
                                              kmm-platform-integrator
                                              kmm-network-auth-implementer
 ```

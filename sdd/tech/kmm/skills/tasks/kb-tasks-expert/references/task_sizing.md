@@ -10,23 +10,26 @@
 
 ## Tamaño correcto por tipo de componente
 
+El owner por defecto se decide por el `Layer` del componente (ver routing en `kb-tasks-expert`): Model/Repo-int/UseCase → `domain`; DTO+Mapper/DataSource/RepositoryImpl → `data`; ambos → `kmm-feature-logic-implementer`. ViewModel/Screen → `presentation` → `kmm-feature-ui-implementer`. Scaffold/expect-actual/navgraph → `platform`/`app` → `kmm-platform-integrator`. Remoto transversal/`core` → `kmm-network-auth-implementer`. Tests → implementador de la capa del componente, o `kmm-tester` en suites dedicadas.
+
 | Componente | Tamaño recomendado | Owner agent por defecto | Notas |
 |---|---|---|---|
 | Scaffold de módulo o wiring base | 1 Task por feature o bloque estructural | `kmm-platform-integrator` | Siempre T-000 |
-| Un Model de feature | 1 Task (puede agrupar modelos relacionados simples) | `kmm-feature-implementer` | Si son entidades independientes → Tasks separadas |
-| Un Repository interface de feature | 1 Task | `kmm-feature-implementer` | Puede agruparse con el Model si es inseparable |
-| Un UseCase | 1 Task | `kmm-feature-implementer` | Un UseCase por acción principal |
-| DTOs + Mapper de una entidad de feature | 1 Task | `kmm-feature-implementer` | DTO y mapper van juntos |
+| Un Model de feature | 1 Task (puede agrupar modelos relacionados simples) | `kmm-feature-logic-implementer` | `Layer: domain`. Si son entidades independientes → Tasks separadas |
+| Un Repository interface de feature | 1 Task | `kmm-feature-logic-implementer` | `Layer: domain`. Puede agruparse con el Model si es inseparable |
+| Un UseCase | 1 Task | `kmm-feature-logic-implementer` | `Layer: domain`. Un UseCase por acción principal |
+| DTOs + Mapper de una entidad de feature | 1 Task | `kmm-feature-logic-implementer` | `Layer: data`. DTO y mapper van juntos |
 | Un DataSource remote compartido o transversal | 1 Task | `kmm-network-auth-implementer` | Si vive en `core` o sirve a varias features |
-| Un DataSource remote específico de feature | 1 Task | `kmm-feature-implementer` | Si es borde local de una sola feature |
-| Un DataSource local | 1 Task | `kmm-feature-implementer` | Interfaz + implementación juntas |
-| Un RepositoryImpl | 1 Task | `kmm-feature-implementer` | Puede necesitar dividirse si hay múltiples DataSources |
-| Expect/actual o bridge de plataforma | 1 Task | `kmm-platform-integrator` | commonMain + androidMain + iosMain |
-| ViewModel + UiState + UiEvent | 1 Task | `kmm-feature-implementer` | Los tres van siempre juntos |
-| Screen Composable | 1 Task | `kmm-feature-implementer` | Separada del ViewModel |
-| NavGraph / rutas / wiring de app | 1 Task | `kmm-platform-integrator` | No pertenece al feature por sí solo |
-| Tests de un UseCase | 1 Task | `kmm-feature-implementer` | Happy path + error + edge cases |
-| Tests de un RepositoryImpl | 1 Task | `kmm-feature-implementer` | Fakes de DataSources, no red real |
+| Un DataSource remote específico de feature | 1 Task | `kmm-feature-logic-implementer` | `Layer: data`. Si es borde remoto de una sola feature (frontera remota H2) |
+| Un DataSource local | 1 Task | `kmm-feature-logic-implementer` | `Layer: data`. Interfaz + implementación juntas |
+| Un RepositoryImpl | 1 Task | `kmm-feature-logic-implementer` | `Layer: data`. Puede necesitar dividirse si hay múltiples DataSources |
+| Expect/actual o bridge de plataforma | 1 Task | `kmm-platform-integrator` | `Layer: platform`. commonMain + androidMain + iosMain |
+| ViewModel + UiState + UiEvent | 1 Task | `kmm-feature-ui-implementer` | `Layer: presentation`. Los tres van siempre juntos |
+| Screen Composable | 1 Task | `kmm-feature-ui-implementer` | `Layer: presentation`. Separada del ViewModel |
+| NavGraph / rutas / wiring de app | 1 Task | `kmm-platform-integrator` | `Layer: app`. No pertenece al feature por sí solo |
+| Tests de un UseCase | 1 Task | `kmm-feature-logic-implementer` | `Layer: test`. Happy path + error + edge cases (o `kmm-tester` si es suite dedicada) |
+| Tests de un RepositoryImpl | 1 Task | `kmm-feature-logic-implementer` | `Layer: test`. Fakes de DataSources, no red real |
+| Tests de un ViewModel | 1 Task | `kmm-feature-ui-implementer` | `Layer: test`. runTest + Turbine (o `kmm-tester` si es suite dedicada) |
 
 ---
 

@@ -13,7 +13,8 @@ user-invocable: false
 
 Cada agente KMM es responsable de los tests de los componentes que implementa:
 
-- `kmm-feature-implementer` — tests de UseCases, RepositoryImpl y ViewModels propios de la feature
+- `kmm-feature-logic-implementer` — tests de UseCases y RepositoryImpl propios de la feature (capas `domain`/`data`)
+- `kmm-feature-ui-implementer` — tests de ViewModels propios de la feature (capa `presentation`)
 - `kmm-platform-integrator` — tests de grafo de navegación, wiring de app y screenshots
 - `kmm-network-auth-implementer` — tests de contratos de red, autenticación e integración cross-layer de infraestructura
 - `kmm-tester` — agente especializado en diseñar, escribir y auditar tests de cualquier tipo cuando el scope es exclusivamente de testing

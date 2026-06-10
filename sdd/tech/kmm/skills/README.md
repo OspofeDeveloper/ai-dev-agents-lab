@@ -17,11 +17,20 @@ Son las skills que carga `plan-architect` al trabajar dentro del pipeline SDD.
 
 **`tasks/`** contiene las skills necesarias para implementar lo que un Plan define:
 librerías concretas, providers de plataforma, configuración de build y detalles técnicos.
-Son las skills que cargan los agentes KMM implementadores (`kmm-feature-implementer`,
-`kmm-network-auth-implementer`, `kmm-platform-integrator`, etc.).
+Son las skills que cargan los agentes KMM implementadores (`kmm-feature-logic-implementer`,
+`kmm-feature-ui-implementer`, `kmm-network-auth-implementer`, `kmm-platform-integrator`, etc.).
 
 **`wf-*/`** (planos, sin subdir) son workflows de composición KMM usados únicamente
 por el ecosistema KMM directo, no por las fases SDD.
+
+### Convención de nombres de las KBs (deuda de naming reconocida)
+
+Las KBs del overlay conviven con dos esquemas de nombre:
+
+- `kb-kmm-<dominio>` (sin prefijo de fase: `kb-kmm-http-ktor`, `kb-kmm-resources`, `kb-kmm-clean-architecture`...) son las que existían **antes** de adoptar la convención `kb-<fase>-<dominio>`. Se **mantienen con su nombre actual** por estabilidad de referencias: renombrarlas obligaría a tocar el `skills: [...]` de todos los agentes, las cross-referencias entre KBs y los planes/tasks ya generados, churn que no compensa hoy.
+- `kb-plan-kmm-*` / `kb-tasks-kmm-*` (`kb-tasks-kmm-room`, `kb-plan-kmm-ui-text`...) son las **nuevas**, que sí siguen la convención `kb-<fase>-<stack>-<dominio>`.
+
+Es **deuda de naming reconocida**, no un error a corregir ahora: las KBs nuevas siguen la convención; las heredadas no se renombran salvo que un refactor mayor del overlay lo justifique. El directorio (`plan/` vs `tasks/`) sigue siendo el discriminador de fase real, no el prefijo del nombre.
 
 ### Instalación selectiva por fase SDD
 

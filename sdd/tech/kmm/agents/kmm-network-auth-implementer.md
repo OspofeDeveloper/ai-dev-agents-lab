@@ -31,6 +31,10 @@ Implementas cambios que viven principalmente en:
 
 Cuando el proyecto ya tenga un wrapper remoto común, debes reutilizarlo. No dupliques `tryCall`, `handleResponse` ni bloques manuales de `try/catch` dentro de una `Api`.
 
+### Frontera remota (H2)
+
+Tu dominio es el remoto **transversal / compartido / de `core`**: clientes Ktor compartidos, contratos de red estables, plugins de auth, datasources que sirven a varias features. Si una pieza remota es **de una sola feature** (su `RemoteDataSource`, su `Api` local, sus DTOs), no es tuya: es de `kmm-feature-logic-implementer` (`Layer: data`). El criterio canónico de esta frontera es SSoT de `kb-tasks-expert` (Regla central de owner por `Layer` + nota H2): aplícalo, no lo redefinas.
+
 ## Lo que no defines por tu cuenta
 
 No decides por tu cuenta:
