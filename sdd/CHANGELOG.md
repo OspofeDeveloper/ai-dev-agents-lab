@@ -2,6 +2,16 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.22.0 — 2026-06-10
+
+Noción mínima de release — `wf-release` (ROADMAP 2.7):
+
+- El pipeline cerraba el ciclo de una feature en el `_qa_report.md` con veredicto `APTO` ("Cerrada"), pero la **trazabilidad terminaba ahí**: nada registraba en qué punto de producción (commit SHA / tag) se entregó la feature. Ahora `wf-release` añade el **último eslabón de la cadena `CA → TC → task → commit → release`**.
+- Nuevo script determinista **`sdd-release.py`** (mismo principio autor≠verificador que el sellador): `stamp <feature_dir>` aplica el **gate de cierre** —rechaza (exit 2) si la feature no tiene `_qa_report.md` o su veredicto es `NO_APTO`; permite `APTO` y `APTO_CON_RESERVAS` grabando el veredicto real (releasar con reservas se documenta, no se oculta)— captura el **commit SHA con `git rev-parse`** (verdad mecánica, no lo teclea el agente; sin repo git rechaza salvo `--sha`), y escribe una entrada `R-00X` en `<feature>_release.md`. Es el único escritor de esa coordenada; las **re-releases** (hotfix tras bug) se acumulan `R-001`, `R-002`… `check <feature_dir>` reporta el estado sin escribir.
+- Nuevo workflow **`wf-release`** (fase tasks, **sin agente** — recolección mecánica como `wf-project-status`): resuelve la feature, ejecuta el stamp (propaga el bloqueo del gate al usuario), y **opcionalmente crea el tag git anotado con confirmación explícita** (`--tag`; `--no-tag` lo evita) — crear un tag modifica el repo, el push queda en manos del usuario. El SHA siempre ancla aunque no haya tag.
+- SSoT: **`kb-traceability-rules` Regla 11** (la coordenada de release como cierre de la cadena hacia producción: SHA mecánico + tag declarativo, gate de cierre, único escritor, granularidad por feature). `kb-delivery-discipline` (que había diferido el tagging a 2.7) ahora apunta a la Regla 11 / `wf-release` en vez de "ROADMAP 2.7".
+- Wiring: `sdd-project-status.py` muestra la release en la fila de la feature cerrada (`QA: APTO · release <tag/sha>`) y marca `sin release → /wf-release` cuando falta; `wf-qa-verify` recomienda `/wf-release` al cerrar con `APTO`; rootmaps (raíz + tasks) y pipeline canónico actualizados. `install.sh` distribuye `sdd-release.py` a `.sdd/scripts/` (lista explícita); el workflow lo recoge el glob de la fase tasks. Registry 124 skills (+1 wf, sin kb nueva). Verificado: 6 escenarios del script (gate sin QA / NO_APTO → exit 2; APTO → R-001; check; re-release → R-002 newest-first; APTO_CON_RESERVAS permitido) + integración en project-status + e2e install. ⚠ Proyectos ya inicializados con la fase tasks: `/wf-sdd-update` para recibir `wf-release` y `sdd-release.py`.
+
 ## 0.21.0 — 2026-06-10
 
 Ingeniería inversa de UI existente — `wf-design-extract` (ROADMAP 3.4):

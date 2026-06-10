@@ -43,6 +43,11 @@ PROGRESO_ROW_RE = re.compile(
     r"^\|\s*(T-\d{3,4})\s*\|\s*(PENDIENTE|EN_CURSO|HECHA|BLOQUEADA)\s*\|", re.MULTILINE
 )
 BUG_RE = re.compile(r"^##\s+B-\d+\s*:", re.MULTILINE)
+RELEASE_ENTRY_RE = re.compile(
+    r"^##\s+R-(\d+)\b.*?(?=^##\s+R-|\Z)", re.MULTILINE | re.DOTALL
+)
+RELEASE_SHA_RE = re.compile(r"Commit/SHA:\**\s*`?[0-9a-f]+`?\s*\(`?([0-9a-f]+)`?\)")
+RELEASE_TAG_RE = re.compile(r"Tag:\**\s*`([^`]+)`")
 
 # Orden de fases (índice = "lo lejos que ha llegado")
 PHASE_ORDER = ["PENDIENTE", "Spec", "Plan", "Tasks", "QA", "Cerrada"]
@@ -109,6 +114,24 @@ def qa_verdict(text: str) -> str:
     return "?"
 
 
+def release_coord(fdir: Path) -> str | None:
+    """Coordenada del último release de la feature (tag o SHA corto), o None."""
+    rel = first(fdir, "tasks/*_release.md", "*_release.md")
+    if not rel:
+        return None
+    text = read_text(rel)
+    entries = sorted(RELEASE_ENTRY_RE.finditer(text),
+                     key=lambda m: int(m.group(1)), reverse=True)
+    if not entries:
+        return None
+    block = entries[0].group(0)
+    tag = RELEASE_TAG_RE.search(block)
+    if tag:
+        return tag.group(1)
+    sha = RELEASE_SHA_RE.search(block)
+    return sha.group(1) if sha else "registrado"
+
+
 def analyze_feature(fdir: Path, resumen: dict) -> dict:
     """Determina fase, estado, bloqueo y siguiente acción de una feature en disco."""
     name = fdir.name
@@ -136,8 +159,12 @@ def analyze_feature(fdir: Path, resumen: dict) -> dict:
     if qa:
         verdict = qa_verdict(read_text(qa))
         if verdict == "APTO":
-            return _row(fid, name, "Cerrada", "QA: APTO", "—",
-                        "✓ ciclo cerrado" + (f" · {n_bugs} bug(s)" if n_bugs else ""), n_bugs)
+            rel = release_coord(fdir)
+            if rel:
+                return _row(fid, name, "Cerrada", f"QA: APTO · release {rel}", "—",
+                            "✓ entregado" + (f" · {n_bugs} bug(s)" if n_bugs else ""), n_bugs)
+            return _row(fid, name, "Cerrada", "QA: APTO", "sin release",
+                        "/wf-release" + (f" · {n_bugs} bug(s)" if n_bugs else ""), n_bugs)
         if verdict == "APTO_CON_RESERVAS":
             return _row(fid, name, "QA", "APTO_CON_RESERVAS", "reservas (PARCIAL/MANUAL)",
                         "resolver reservas o aceptar", n_bugs)

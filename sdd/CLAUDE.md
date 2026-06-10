@@ -69,6 +69,7 @@ Si buscas mejor rendimiento y menos carga de contexto, instala y usa el `CLAUDE.
 | Ejecutar tasks con estado y commits trazables | `/wf-task-run` | `<feature_tasks.md> [--task T-00X \| --next \| --all] [--no-commit]` |
 | Derivar los casos de prueba de una feature desde sus CAs | `/wf-qa-plan` | `generate <feature_spec.md>` |
 | Verificar la cobertura real de CAs tras implementar | `/wf-qa-verify` | `<feature_qa_plan.md>` |
+| Vincular el cierre de una feature (QA APTO) a un commit SHA / tag de release | `/wf-release` | `<feature_dir\|tasks_path> [--tag <tag>] [--no-tag] [--note <texto>]` |
 | Reportar o arreglar un bug de una feature entregada | `/wf-bug` | `<descripcion.md\|texto> [--feature <nombre>]` |
 | Ver el estado de delivery del proyecto (qué fase y qué falta por feature) | `/wf-project-status` | `[<raíz_artefactos_spec>] [--output <path>]` |
 
@@ -158,6 +159,7 @@ features/<nombre>/tasks/<nombre>_qa_plan.md
     ↓ [/wf-task-run — ejecuta cada task con su owner, estado persistente y commit trazable T-00X [CA-XXX]]
     ↓ [/wf-qa-verify — cobertura real de CAs con evidencia ejecutada → veredicto APTO/APTO_CON_RESERVAS/NO_APTO]
 features/<nombre>/tasks/<nombre>_qa_report.md
+    ↓ [/wf-release — QA APTO → vincula el cierre a commit SHA / tag → features/<nombre>/tasks/<nombre>_release.md]
     ↓ [mantenimiento posterior: /wf-bug — triaje contra CA, registro B-00X en features/<nombre>/tasks/<nombre>_bugs.md]
 ```
 
@@ -185,6 +187,7 @@ features/<nombre>/tasks/<nombre>_qa_report.md
 > Para bugs sobre features ya entregadas: `/wf-bug <descripción>` — triaje contra el CA del spec; solo escala a `/wf-spec-delta` si el comportamiento esperado cambia.
 > Para un CA ambiguo descubierto DURANTE la implementación (back-edge tasks→spec): `/wf-spec-amend <spec.md> --ca CA-XXX --from-task T-00X` — aclaración quirúrgica sin re-descender el waterfall. El plan se marca con `Enmienda pendiente` (solo lo escribe `sdd-amend.py`) y solo quedan retenidas las tasks que referencian ese CA; si el comportamiento esperado cambia, no es enmienda: es `/wf-spec-delta`.
 > Para cerrar el ciclo QA: `/wf-qa-plan generate <spec.md>` (matriz TC-XXX desde los CAs, gate de spec fiable) y, tras implementar, `/wf-qa-verify <qa_plan.md>` (cobertura con evidencia ejecutada; un test que falla contra un CA es DIVERGENTE → `/wf-bug`, nunca se ajusta el TC).
+> Para llevar la trazabilidad a producción: `/wf-release <feature_dir> [--tag <tag>]` — solo acepta features con QA `APTO`/`APTO_CON_RESERVAS` (gate determinista), captura el commit SHA con git (no se teclea) y registra la coordenada en `<feature>_release.md`. Es el último eslabón de la cadena CA→TC→task→commit→release (SSoT en `kb-traceability-rules` Regla 11). `wf-project-status` muestra la release en la fila de la feature cerrada.
 
 ## Principio de precondiciones
 

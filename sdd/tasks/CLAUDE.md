@@ -30,6 +30,7 @@ Si el plan está en `BORRADOR` o tiene gaps, redirige a `/wf-plan-validate` ante
 | Derivar los casos de prueba de una feature desde sus CAs | `/wf-qa-plan` | `generate <feature_spec.md>` |
 | Verificar la cobertura real de CAs tras implementar | `/wf-qa-verify` | `<feature_qa_plan.md>` |
 | Reportar o arreglar un bug de una feature entregada | `/wf-bug` | `<descripcion.md\|texto> [--feature <nombre>]` |
+| Vincular el cierre de una feature (QA APTO) a un commit SHA / tag de release | `/wf-release` | `<feature_dir\|tasks_path> [--tag <tag>] [--no-tag] [--note <texto>]` |
 | Ver el estado de delivery del proyecto (qué fase y qué falta por feature) | `/wf-project-status` | `[<raíz_artefactos_spec>] [--output <path>]` |
 
 ## Cómo actuar ante una petición
@@ -54,8 +55,11 @@ plan validado (_plan.md con Estado: VALIDADO)
        commit por task: "T-00X: <título> [CA-XXX]"
   -> ... repetir hasta COMPLETO
   -> wf-qa-verify <qa_plan.md>         (cobertura real de CAs con evidencia → _qa_report.md)
+  -> wf-release <feature_dir> [--tag]  (QA APTO → registra SHA/tag en <feature>_release.md)
   -> mantenimiento posterior: wf-bug (registro B-00X en <feature>_bugs.md)
 ```
+
+El `wf-release` es el último eslabón hacia producción: solo lo acepta una feature con QA `APTO`/`APTO_CON_RESERVAS` (gate en `sdd-release.py`), captura el commit SHA con git (no se teclea) y, opcionalmente, registra/crea un tag. La coordenada queda en `<feature>_release.md` y `wf-project-status` la muestra en la fila de la feature cerrada. Re-releases (hotfix tras bug) se acumulan `R-001`, `R-002`…
 
 El QA plan (`wf-qa-plan generate <spec.md>`) puede generarse en cualquier momento desde que el spec está fiable — antes o en paralelo a la implementación; lo natural es derivarlo pronto para que las tasks de test sepan qué cubrir. `wf-qa-verify` cierra el ciclo cuando la feature está implementada: cada `DIVERGENTE` que encuentre se canaliza por `/wf-bug` (nunca se ajusta el TC para que pase).
 

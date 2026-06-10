@@ -1,6 +1,6 @@
 ---
 name: kb-delivery-discipline
-description: "Criterios stack-agnósticos de empaquetado del trabajo implementado en commits y PRs: la Task como unidad de trabajo (un commit atómico y verde por task), los tests viajando en la misma unidad/PR que el código que cubren, y la división de features grandes en cadenas de PRs apilados a lo largo de las fronteras de dependencia. Carga cuando se decide cómo agrupar cambios para commit o revisión. NO cubre la descomposición de tasks ni el orden por dependencias (kb-tasks-method, kb-tasks-expert), ni el tagging/versionado de release (ROADMAP 2.7)."
+description: "Criterios stack-agnósticos de empaquetado del trabajo implementado en commits y PRs: la Task como unidad de trabajo (un commit atómico y verde por task), los tests viajando en la misma unidad/PR que el código que cubren, y la división de features grandes en cadenas de PRs apilados a lo largo de las fronteras de dependencia. Carga cuando se decide cómo agrupar cambios para commit o revisión. NO cubre la descomposición de tasks ni el orden por dependencias (kb-tasks-method, kb-tasks-expert), ni el tagging/coordenada de release (kb-traceability-rules Regla 11, wf-release)."
 effort: low
 allowed-tools: [Read]
 user-invocable: false
@@ -19,7 +19,10 @@ posible.
 > dependencias y el formato de task vive en `kb-tasks-method` / `kb-tasks-expert`; aquí se
 > referencia, no se reescribe.
 >
-> Fuera de alcance: tagging y versionado de release — eso es ROADMAP 2.7.
+> Fuera de alcance: el tagging y la coordenada de release (vincular el cierre de una feature
+> a un commit SHA / tag) — su SSoT es `kb-traceability-rules` Regla 11, materializada por
+> `wf-release` / `sdd-release.py`. Esta KB cubre cómo se empaquetan los commits y PRs; no el
+> punto de entrega a producción.
 
 ---
 

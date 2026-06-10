@@ -125,3 +125,21 @@ Aprobado por: <rol> (<YYYY-MM-DD>)
 | QA | `wf-qa-verify` | `QA` | veredicto `APTO` o `APTO_CON_RESERVAS` | `NO_APTO` |
 
 En re-aprobación (p. ej. re-validación de un plan), se **sobrescribe** con el nuevo rol/fecha. En las plantillas de header el campo nace ausente o como placeholder; no se inventa valor hasta la aprobación.
+
+## Regla 11: Coordenada de release (último eslabón hacia producción)
+
+La trazabilidad funcional encadena `CA → TC → task → commit (T-00X) → veredicto QA`. El **release** cierra la cadena hacia producción: registra **en qué punto verificable se entregó la feature** — el commit SHA y, opcionalmente, un tag. Sin esto, "Cerrada" (QA APTO) es un estado interno que no llega a producción.
+
+```
+## R-001 — <YYYY-MM-DD>
+- Commit/SHA: <sha completo> (<corto>)
+- Tag: <tag o —>
+- Veredicto QA: APTO | APTO_CON_RESERVAS
+```
+
+- **Dato mecánico (el SHA) + dato declarativo (el tag)**: el SHA lo da `git rev-parse`, no el agente — no puede mentir ni derivar (mismo principio que `derived_from_prd_hash`). El tag lo elige el humano y es opcional; el SHA siempre ancla.
+- **Gate de cierre**: una feature no se releasa si su QA no pasó. El stamp se **rechaza** si no hay `_qa_report.md` o el veredicto es `NO_APTO`; `APTO` y `APTO_CON_RESERVAS` se permiten y el veredicto real queda grabado (releasar con reservas se documenta, no se oculta).
+- **Único escritor**: `sdd-release.py` (`stamp`), invocado por `wf-release`. El coordinador de release vive en `<feature>_release.md`, junto al `_qa_report.md`. Re-releases (hotfix tras bug) se acumulan como `R-001`, `R-002`… — la feature puede entregarse más de una vez.
+- **Consumidor**: `sdd-project-status.py` lee el release y lo muestra en la fila de la feature cerrada; una feature `APTO` sin release aparece como cierre pendiente de release (`/wf-release`).
+- **Granularidad por feature**: cada feature se releasa por su cuenta (continuous delivery). El agregado "qué se entregó" lo da `wf-project-status`, no un ledger separado.
+- El **tagging/versionado de release** es competencia exclusiva de esta regla y `wf-release`; `kb-delivery-discipline` (empaquetado de commits/PRs) lo excluye y apunta aquí.

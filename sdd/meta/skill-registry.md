@@ -1,6 +1,6 @@
 # SDD Skill Registry
 <!-- Auto-generado por scripts/generate-skill-registry.py. No editar manualmente. -->
-<!-- Total: 123 skills | 54 wf-* (user-invocable) | 69 kb-* -->
+<!-- Total: 124 skills | 55 wf-* (user-invocable) | 69 kb-* -->
 <!-- Última actualización: 2026-06-10 -->
 
 ## Meta-Ecosistema (meta/)
@@ -112,6 +112,7 @@
 | wf-project-status | Informe PM read-only del estado del proyecto SDD: por cada feature, en qué fase del pipeline está (Spec/Plan/Tasks/QA/Cerrada), su estado, el bloqueo y la sigu… | true | tasks/skills/wf-project-status/SKILL.md |
 | wf-qa-plan | Genera el plan de QA de una feature: deriva casos de prueba TC-XXX trazables desde los CAs GIVEN/WHEN/THEN del feature spec (afinados con plan/tasks y project… | true | tasks/skills/wf-qa-plan/SKILL.md |
 | wf-qa-verify | Verifica la cobertura real de CAs de una feature tras implementar: localiza y ejecuta los tests que ejercitan cada TC del qa_plan, registra evidencia, escribe… | true | tasks/skills/wf-qa-verify/SKILL.md |
+| wf-release | Vincula el cierre de una feature (QA APTO) a un punto verificable de producción: registra el commit SHA y, opcionalmente, un tag de release | true | tasks/skills/wf-release/SKILL.md |
 | wf-task-run | Ejecuta las tasks de un _tasks.md con estado persistente, validación de DoD y commits trazables (T-00X, CA-XXX) | true | tasks/skills/wf-task-run/SKILL.md |
 
 ## Tech: KMM — Global

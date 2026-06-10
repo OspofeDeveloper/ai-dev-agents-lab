@@ -77,4 +77,4 @@ Si el report ya existe de una verificación anterior, sobreescríbelo (el qa_pla
 
 - Veredicto y resumen por CA (X/N cubiertos).
 - Hallazgos accionables: cada `DIVERGENTE` con su comando de `/wf-bug` sugerido; cada `SIN_COBERTURA`/`PARCIAL` con su owner de test recomendado; `MANUAL_PENDIENTE` listados.
-- Si el veredicto es `APTO`: la feature cierra su ciclo QA — el siguiente paso natural es `/wf-spec-readiness` para el estado global del producto.
+- Si el veredicto es `APTO`: la feature cierra su ciclo QA. Para llevar la trazabilidad a producción, vincula el cierre a un punto verificable con `/wf-release <feature_dir> [--tag <tag>]` (registra el commit SHA y, opcional, el tag). Para el estado global del producto: `/wf-spec-readiness`.
