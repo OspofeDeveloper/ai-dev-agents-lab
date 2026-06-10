@@ -1,7 +1,7 @@
 # SDD Skill Registry
 <!-- Auto-generado por scripts/generate-skill-registry.py. No editar manualmente. -->
-<!-- Total: 121 skills | 53 wf-* (user-invocable) | 68 kb-* -->
-<!-- Última actualización: 2026-06-09 -->
+<!-- Total: 123 skills | 54 wf-* (user-invocable) | 69 kb-* -->
+<!-- Última actualización: 2026-06-10 -->
 
 ## Meta-Ecosistema (meta/)
 
@@ -62,6 +62,7 @@
 |---|---|---|---|
 | kb-a11y-expert | Base de conocimiento de accesibilidad mobile | false | design/skills/kb-a11y-expert/SKILL.md |
 | kb-design-brief | Base de conocimiento para capturar decisiones de direccion visual antes de generar un DESIGN.md | false | design/skills/kb-design-brief/SKILL.md |
+| kb-design-characterization | Reglas para extraer un DESIGN.md desde una UI ya en produccion (CSS/tokens/componentes/capturas): evidencia obligatoria por token/decision visual, jerarquia de… | false | design/skills/kb-design-characterization/SKILL.md |
 | kb-design-conflict-expert | Base de conocimiento para detectar conflictos visuales y de UX entre varias features dentro de un mismo producto | false | design/skills/kb-design-conflict-expert/SKILL.md |
 | kb-design-expert | Skill raiz de la fase design del pipeline SDD | false | design/skills/kb-design-expert/SKILL.md |
 | kb-design-feature-artifacts | Contrato normativo de los artefactos de feature en la fase design — flows (secuencias, navegacion y transiciones), views (SSoT de pantallas con todos los estad… | false | design/skills/kb-design-feature-artifacts/SKILL.md |
@@ -79,6 +80,7 @@
 | wf-design-delta | Evoluciona un DESIGN.md existente de forma incremental | true | design/skills/wf-design-delta/SKILL.md |
 | wf-design-discover | Descubre 3-5 apps reales del mercado como referencias de diseno para una feature, mediante research web y validacion interactiva con el usuario | true | design/skills/wf-design-discover/SKILL.md |
 | wf-design-export | Exporta los tokens del DESIGN.md a formatos consumibles por equipos de desarrollo: CSS variables, Style Dictionary universal, Compose para Android, SwiftUI par… | true | design/skills/wf-design-export/SKILL.md |
+| wf-design-extract | Ingenieria inversa de un DESIGN.md desde una UI ya en produccion (CSS/tokens/componentes/capturas): descubre tokens, paleta, tipografia y componentes con evide… | true | design/skills/wf-design-extract/SKILL.md |
 | wf-design-feature-prototype | Deriva artefactos de prototipado visual de una feature a partir de su _spec.md, un DESIGN.md y, si existe, un DESIGN_BRIEF.md | true | design/skills/wf-design-feature-prototype/SKILL.md |
 | wf-design-feedback | Captura feedback no estructurado de stakeholders (cliente, PM, dev, QA) y lo triajea en categorias accionables: cambio de brief, delta visual, ajuste de featur… | true | design/skills/wf-design-feedback/SKILL.md |
 | wf-design-intake | Cierra un DESIGN_BRIEF.md antes de generar el sistema visual | true | design/skills/wf-design-intake/SKILL.md |

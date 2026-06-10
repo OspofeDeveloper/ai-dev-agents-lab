@@ -7,7 +7,8 @@ Este directorio introduce la fase `design` del pipeline SDD. Su responsabilidad 
 | | |
 |---|---|
 | **Para quién es** | Equipos sin diseñador dedicado; productos greenfield (el sistema visual nace aquí); prototipado mobile-first con Stitch como destino |
-| **Qué no cubre** | Integración Figma (import/export de tokens); ingeniería inversa de UI ya en producción; equipos con diseñador que ya produce specs visuales (pueden escribir `DESIGN.md` a mano respetando el contrato y auditarlo con `wf-design-validate`) |
+| **Onramp brownfield** | UI ya en producción que no se va a rediseñar: `wf-design-extract` deriva el `DESIGN.md` por ingeniería inversa (CSS/tokens/componentes/capturas → `origin: extracted`, evidencia por token). Entrada alternativa a la fase, espejo de `wf-spec-from-code` en Spec |
+| **Qué no cubre** | Integración Figma (import/export de tokens); equipos con diseñador que ya produce specs visuales (pueden escribir `DESIGN.md` a mano respetando el contrato y auditarlo con `wf-design-validate`) |
 | **Cuándo saltarla** | Por proyecto: la fase es opcional en el init. Por feature: sin superficie de UI visible, Spec pasa a Plan directamente — la regla canónica de cuándo Design es obligatorio vive en `kb-plan-expert` y la aplica `wf-prepare-plan` |
 
 Diagramas detallados de esta fase: [DIAGRAMS.md](/Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/design/DIAGRAMS.md).
@@ -30,7 +31,8 @@ Diagramas detallados de esta fase: [DIAGRAMS.md](/Users/oscar/Documents/GitHub/a
 ### Producto
 
 - `DESIGN_BRIEF.md` — SSoT previa de direccion visual y autonomia de decision. Incluye `voice_tone` y `Success Metrics`.
-- `DESIGN.md` (versionado semver) — SSoT visual de producto: tokens (light + dark), type scale completa, componentes con todos sus estados, iconografia, motion catalog, voice & microcopy, accessibility.
+- `DESIGN.md` (versionado semver) — SSoT visual de producto: tokens (light + dark), type scale completa, componentes con todos sus estados, iconografia, motion catalog, voice & microcopy, accessibility. Puede tener `origin: extracted` (+ `evidence_base`, `evidence_coverage`) cuando se derivo por ingenieria inversa de una UI existente con `wf-design-extract`.
+- `<producto>_design_extraction.md` — inventario crudo de la extraccion brownfield (paleta, tipografia, componentes y spacing observados con su evidencia y confianza). Gate humano de `wf-design-extract discover` antes de generar el `DESIGN.md`.
 - `DESIGN.<branch>.md` — exploraciones paralelas del sistema visual sin tocar main.
 - `_delta_analysis.md` — propuestas de cambio al sistema visual antes de aplicarlas.
 - `tokens/` — tokens exportados a CSS, Style Dictionary, Compose, SwiftUI o Tailwind para handoff a codigo.
@@ -83,6 +85,15 @@ Research validado de apps de referencia. Si no se ejecuta, `wf-design-system` ha
 ```
 
 `wf-design-system` arranca desde un starter kit del preset (al 70%) cuando aplica, no desde archivo en blanco. `wf-design-feature-prototype` deriva flows + views + ui_prompt aplicando `kb-design-conflict-expert` si hay otras features ya prototipadas.
+
+Para una UI **ya en producción** (brownfield), en vez de generar desde el spec/brief:
+
+```text
+/wf-design-extract discover ./src/ui
+/wf-design-extract generate ./src/ui
+```
+
+`wf-design-extract` deriva el `DESIGN.md` por ingeniería inversa con evidencia obligatoria por token (jerarquía: design tokens > CSS leído con `archivo:línea` > valor en componente > medición de captura > `[INFERIDO]`). Documenta las inconsistencias reales de la UI sin promediarlas (`[INCONSISTENTE]`); marca `origin: extracted` y `evidence_base: commit <SHA>`. `discover` se detiene en un gate humano para confirmar el inventario antes de generar. No exige spec validado ni `DESIGN_BRIEF.md`: es entrada alternativa a la fase. El `[INFERIDO]` no bloquea gates (la fase Design no sella mecánicamente): es informativo.
 
 ### Evolucion y validacion
 
@@ -184,6 +195,7 @@ Loops de mantenimiento:
 - `kb-design-forms` — patrones de formulario: layout, validacion, estados de campo, multistep, autosave.
 - `kb-design-layout` — sistema de layout y responsive: grid, breakpoints, adaptive vs responsive, safe areas.
 - `kb-design-style-decision-tree` — arbol de decision navegable para junior: que familia, que clarity vs brand, etc.
+- `kb-design-characterization` — metodologia de ingenieria inversa: extraer un `DESIGN.md` desde la UI existente con evidencia obligatoria por token, `[INFERIDO]`, inconsistencias documentadas sin promediar, header `origin: extracted`.
 - `kb-a11y-expert` — criterios de accesibilidad mobile aplicados a design y plan.
 
 **Workflows (wf-*)**:
@@ -192,6 +204,7 @@ Loops de mantenimiento:
 - `wf-design-intake` — cierra el `DESIGN_BRIEF.md` en modo `guided`, `hybrid` o `auto`. Acepta `--learn` para modo enseñanza con explicaciones extendidas.
 - `wf-design-discover` — research interactivo de apps de referencia.
 - `wf-design-system` — genera o actualiza `DESIGN.md` a nivel producto.
+- `wf-design-extract` — deriva el `DESIGN.md` por ingenieria inversa de una UI ya en produccion (brownfield); modos `discover` (inventario con gate humano) y `generate`.
 - `wf-design-validate` — audita `DESIGN.md` sin regenerar.
 - `wf-design-delta` — evolucion incremental (`analyze` / `apply`) sobre `DESIGN.md`.
 - `wf-design-branch` — explora variantes paralelas del sistema visual (`create | list | compare | merge | discard`).

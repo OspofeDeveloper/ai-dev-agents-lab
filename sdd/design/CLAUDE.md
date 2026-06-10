@@ -17,7 +17,8 @@ Las `kb-*` viven en los subagentes y se cargan automaticamente en su contexto. E
 Esta fase esta disenada para un encaje concreto. Declararlo evita falsas expectativas:
 
 - **Para quien ES**: equipos **sin disenador dedicado** que necesitan un contrato visual consistente; productos **greenfield** (el sistema visual nace aqui); prototipado **mobile-first con Stitch** como destino de ensamblaje.
-- **Lo que NO cubre hoy**: integracion con Figma (ni import de variables ni export de Figma Tokens); ingenieria inversa de una UI ya en produccion (derivar `DESIGN.md` de CSS/capturas/componentes existentes); el flujo de un equipo con disenador que ya produce sus propios specs visuales — en ese caso el `DESIGN.md` puede escribirse a mano respetando el contrato (`kb-design-system-contract`) y auditarse con `/wf-design-validate`, pero los workflows generativos sobran.
+- **Onramp brownfield**: si la UI **ya existe en produccion** y no se va a rediseñar, el `DESIGN.md` se deriva por ingenieria inversa con `/wf-design-extract` (CSS/tokens/componentes/capturas → `DESIGN.md` con `origin: extracted` y evidencia por token). Es la entrada ALTERNATIVA a la fase (no exige spec ni brief), espejo de `/wf-spec-from-code` en Spec. El `DESIGN.md` extraido fluye como cualquier otro: auditable (`wf-design-validate`), evolucionable (`wf-design-delta`), exportable (`wf-design-export`).
+- **Lo que NO cubre hoy**: integracion con Figma (ni import de variables ni export de Figma Tokens); el flujo de un equipo con disenador que ya produce sus propios specs visuales — en ese caso el `DESIGN.md` puede escribirse a mano respetando el contrato (`kb-design-system-contract`) y auditarse con `/wf-design-validate`, pero los workflows generativos sobran.
 - **Es saltable**: por proyecto (la fase es opcional en el init) y **por feature** — una feature sin superficie de UI visible pasa de Spec a Plan directamente. La regla canonica de cuando Design es obligatorio vive en `kb-plan-expert` y la aplica `wf-prepare-plan`; esta fase no fuerza su propio uso.
 
 Si el proyecto encaja en un "NO cubre", dilo al usuario en cuanto se detecte — antes de generar artefactos que no va a usar.
@@ -41,6 +42,7 @@ Si no existe `DESIGN_BRIEF.md`, ejecuta primero `/wf-design-intake`. Los workflo
 | Cerrar o actualizar el brief visual y la policy de autonomia del producto | `/wf-design-intake` | `generate <feature_spec.md> [--prd <prd.md>] [--output DESIGN_BRIEF.md] [--mode guided\|hybrid\|auto] [--preset <name>] [--learn]` |
 | Descubrir apps de referencia con research validado por el usuario | `/wf-design-discover` | `<feature_spec.md> [--prd <prd.md>] [--brief <DESIGN_BRIEF.md>] [--output <path>] [--mode interactive\|auto]` |
 | Crear o actualizar el sistema visual persistente del producto | `/wf-design-system` | `generate <feature_spec.md> [--prd <prd.md>] [--brief <DESIGN_BRIEF.md>] [--design-file DESIGN.md] [--no-brief]` |
+| Derivar el DESIGN.md por ingenieria inversa de una UI ya en produccion (brownfield) | `/wf-design-extract` | `discover <path_ui> [--scope <subdir>] \| generate <path_ui> [--from <extraction.md>] [--scope <subdir>] [--design-file DESIGN.md]` |
 | Auditar un DESIGN.md existente sin regenerarlo | `/wf-design-validate` | `<DESIGN.md> [--brief <DESIGN_BRIEF.md>] [--views <views.md>] [--lenient] [--pedagogical]` |
 | Analizar cambios sobre un DESIGN.md existente | `/wf-design-delta` | `analyze <DESIGN.md> --new-reqs <cambios.md> [--brief <DESIGN_BRIEF.md>]` |
 | Aplicar un delta analysis a un DESIGN.md | `/wf-design-delta` | `apply <DESIGN.md> <design_delta_analysis.md>` |
@@ -63,6 +65,7 @@ Si no existe `DESIGN_BRIEF.md`, ejecuta primero `/wf-design-intake`. Los workflo
    | `wf-design-intake` | si | no (lo genera) | no |
    | `wf-design-discover` | si | recomendado | no |
    | `wf-design-system` | si | si (gate) | opcional (lo crea o actualiza) |
+   | `wf-design-extract` | no (entrada alternativa) | no | no (lo crea) |
    | `wf-design-validate` | no | recomendado | si |
    | `wf-design-delta` | no | si (gate) | si |
    | `wf-design-branch` | no | no | si |
@@ -164,7 +167,7 @@ El ecosistema Design opera en siete capas con responsabilidad unica:
 - **Capa inspiracion (`wf-design-moodboard`)**: capa anterior al intake, opcional, captura inspiracion no estructurada (vibe, atmosfera, paleta intuitiva). Util para juniors o cuando la direccion no esta clara.
 - **Capa intake (`wf-design-intake`)**: cierra el brief, la policy de autonomia y los tradeoffs visuales base. Soporta deteccion automatica de preset y modo `--learn`.
 - **Capa discovery (`wf-design-discover`)**: research validado por el usuario de apps de referencia.
-- **Capa generacion (`wf-design-system`, `wf-design-feature-prototype`)**: materializa el contrato visual y los artefactos por feature. Parte de starter kits del preset cuando aplica.
+- **Capa generacion (`wf-design-system`, `wf-design-feature-prototype`, `wf-design-extract`)**: materializa el contrato visual y los artefactos por feature. Parte de starter kits del preset cuando aplica. `wf-design-extract` es la variante brownfield: no genera desde el spec/brief sino por ingenieria inversa de la UI existente (entrada alternativa a la fase).
 - **Capa evolucion (`wf-design-validate`, `wf-design-delta`)**: audita (estricto por defecto, con `--pedagogical` para juniors) y aplica cambios incrementales preservando lo previo con versionado semver.
 - **Capa exploracion (`wf-design-branch`, `wf-design-variant`)**: ramas paralelas del sistema visual y A/B testing por feature, sin tocar production.
 - **Capa handoff (`wf-design-export`, `wf-design-a11y-audit`, `wf-design-feedback`)**: puente con el equipo de codigo (tokens en CSS/Compose/SwiftUI/Style Dictionary/Tailwind), auditoria especifica de accesibilidad y captura/triage de feedback de stakeholders.

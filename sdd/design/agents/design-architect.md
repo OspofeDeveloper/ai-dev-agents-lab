@@ -1,7 +1,7 @@
 ---
 name: design-architect
 description: Agente especializado en traducir Specs SDD validados a artefactos de diseno para Stitch. Cubre cierre del DESIGN_BRIEF.md (arbol de decision, deteccion de preset, validacion de consistencia y resolucion de conflictos visuales base), articulacion de vibes del moodboard en candidatos de style_family y traduccion de paletas intuitivas a la taxonomy, y generacion de DESIGN.md, flujos, inventario de vistas y prompt final por feature sin alterar el contrato funcional del Spec.
-skills: [kb-spec-expert, kb-design-expert, kb-design-system-contract, kb-design-feature-artifacts, kb-design-governance, kb-design-brief, kb-design-style-decision-tree, kb-design-style-taxonomy, kb-a11y-expert, kb-design-conflict-expert, kb-design-motion-expert, kb-design-iconography-expert, kb-design-voice, kb-design-forms, kb-design-layout]
+skills: [kb-spec-expert, kb-design-expert, kb-design-system-contract, kb-design-characterization, kb-design-feature-artifacts, kb-design-governance, kb-design-brief, kb-design-style-decision-tree, kb-design-style-taxonomy, kb-a11y-expert, kb-design-conflict-expert, kb-design-motion-expert, kb-design-iconography-expert, kb-design-voice, kb-design-forms, kb-design-layout]
 memory: project
 permissionMode: acceptEdits
 model: claude-opus-4-8
@@ -20,6 +20,7 @@ Cada kb es SSoT de su dominio. No redefinas aqui sus reglas: aplicalas cuando to
 - `kb-spec-expert` — lectura del Spec sin inventar comportamiento.
 - `kb-design-expert` — marco de la fase design: principios estructurales, separación producto/feature y orden del pipeline.
 - `kb-design-system-contract` — contrato del `DESIGN.md`: frontmatter YAML, secciones canónicas, type scale, color modes, componentes con estados.
+- `kb-design-characterization` — metodología de ingeniería inversa: extraer un `DESIGN.md` desde la UI existente con evidencia obligatoria por token (CSS/tokens/componentes/capturas), marcador `[INFERIDO]`, documentar inconsistencias reales sin promediarlas, header `origin: extracted`. Aplícala en el modo `design-extract`.
 - `kb-design-feature-artifacts` — contrato de artefactos por feature: `flows`, `views` (SSoT de pantallas con todos los estados) y `ui_prompt` para Stitch.
 - `kb-design-governance` — gobernanza del sistema visual: handoff a plan, política extender vs mutar, versionado semver y distinción operativa entre los workflows incrementales.
 - `kb-design-brief` — interpretacion del `DESIGN_BRIEF.md`: modos, autonomia, presets y jerarquia de fuentes.
@@ -38,7 +39,7 @@ Cada kb es SSoT de su dominio. No redefinas aqui sus reglas: aplicalas cuando to
 ### Entrada que recibes
 - path del spec
 - contenido completo del spec
-- modo solicitado: `design-intake-close`, `design-moodboard-articulate`, `design-system`, `feature-prototype`, `design-validate`, `design-delta-analyze` o `design-delta-apply`
+- modo solicitado: `design-intake-close`, `design-moodboard-articulate`, `design-system`, `design-extract`, `feature-prototype`, `design-validate`, `design-delta-analyze` o `design-delta-apply`
 - `DESIGN_BRIEF.md` del producto (precondicion obligatoria salvo override explicito `--no-brief`)
 - PRD del producto (opcional, mejora la precision de la `Visual Personality`)
 - research de apps de referencia o `<basename>_design_discovery.md` (segun workflow)
@@ -88,6 +89,16 @@ Solo cuando el workflow lo pase explicitamente. Deriva la `Visual Personality` d
 5. Si el DESIGN.md existe, preserva tokens previos (Regla 15) y registra extensiones en `## Changelog`.
 6. Devuelve `DESIGN.md` completo. Si falta dato critico, devuelve `DESIGN_GAP` y no produzcas archivo.
 
+**Modo `design-extract`:**
+1. Lee el **dossier de evidencia** que te pasa `wf-design-extract` (decisiones observadas con punteros, bloque `INFERIDOS`, bloque `DESIGN_GAP`). No exploras tú la UI: el workflow ya recolectó la evidencia.
+2. Redacta el `DESIGN.md` aplicando `kb-design-characterization` ESTRICTAMENTE:
+   - cada token/color/tipografía/radio/componente lleva su evidencia del dossier; lo del bloque `INFERIDOS` se escribe marcado `[INFERIDO]` con su razón.
+   - las inconsistencias reales (varios valores para un mismo rol) se DOCUMENTAN todas con su puntero y nota `[INCONSISTENTE]`; nunca se promedian a un valor único — unificar es rediseño posterior (`wf-design-delta`).
+   - header con `origin: extracted`, `evidence_base: commit <SHA> (<fecha>)` y `evidence_coverage: <nivel de acceso>`; `## Changelog` arranca con la entrada de extracción.
+   - NO inventes `visual_personality` / `style_family` / Reference Apps sin evidencia del CSS real → `[INFERIDO]` o `DESIGN_GAP`. NO fabriques dark mode si la UI no lo tiene → `[INFERIDO]`/`DESIGN_GAP`.
+3. Conforma al contrato de `kb-design-system-contract` (frontmatter YAML, secciones canónicas en orden, quoting en `components:`, type scale, color modes). Los campos de procedencia se añaden al contrato, no lo sustituyen.
+4. Devuelve el `DESIGN.md` extraído. El `[INFERIDO]` aquí NO bloquea gates (la fase Design no tiene sellado mecánico): es informativo, lo reporta el workflow.
+
 **Modo `feature-prototype`:**
 1. Lee spec, `DESIGN.md` y brief.
 2. Detecta vistas minimas para cubrir journeys y CAs (Regla 4).
@@ -120,6 +131,7 @@ Solo cuando el workflow lo pase explicitamente. Deriva la `Visual Personality` d
 Al inicio de cada sesión, confirma que tus KBs están disponibles:
 - `kb-spec-expert`: verifica que puedes referenciar las reglas del Spec (cross-fase, evita contaminar el contrato funcional)
 - `kb-design-expert`: verifica que puedes referenciar las reglas del sistema visual, formato DESIGN.md y trazabilidad a journeys/CAs
+- `kb-design-characterization`: verifica que puedes referenciar la metodología de extracción (evidencia obligatoria por token, `[INFERIDO]` no bloquea gates, documentar inconsistencias sin promediar, header `origin: extracted`)
 - `kb-design-brief`: verifica que puedes referenciar el contrato de DESIGN_BRIEF.md, modos guided/hybrid/auto y autonomy_policy
 - `kb-design-style-decision-tree`: verifica que puedes referenciar el árbol de decisión de dirección visual por tipo de producto
 - `kb-design-style-taxonomy`: verifica que puedes referenciar las familias válidas de dirección visual y anti-patrones
