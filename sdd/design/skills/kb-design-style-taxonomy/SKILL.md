@@ -70,6 +70,8 @@ Heuristica principal de seleccion:
 
 Si el producto tiene una alta carga numerica o formularios frecuentes, prioriza claridad y legibilidad sobre expresividad. Si la diferenciacion de marca es una necesidad comercial explicita, permite mas expresividad sin sacrificar trazabilidad funcional.
 
+> Esta heuristica (y las escalas de Reglas 8-10) es la SSoT de los **criterios**. `kb-design-style-decision-tree` es su **front-end navegable**: ordena estas mismas reglas en una secuencia de preguntas para diseñadores junior y añade deteccion de conflictos, pero no redefine el valor que corresponde a cada contexto — lo referencia.
+
 ## Regla 5: "Realista" no es una familia por defecto en producto digital
 
 No uses `realista` como categoria base de app UI salvo que el producto exija simular materiales o objetos del mundo fisico por razones claras de dominio.
@@ -162,6 +164,13 @@ Valores validos de `color_energy`:
 - la marca realmente necesita protagonismo visual
 - la app no depende de lectura densa constante
 - el contraste sigue siendo robusto en estados y accesibilidad
+
+Mapeo de `color_energy` por contexto:
+- producto regulado o `clarity-first` -> `low`
+- producto `balanced` / consumer estandar -> `medium`
+- `brand-forward` o entertainment / gaming-adjacent -> `high`
+
+Excepcion de dominio: salud, bienestar y mindfulness prefieren `low` aunque no sean `clarity-first`, por la naturaleza del dominio (la calma del producto pesa mas que la energia de marca).
 
 ## Regla 11: Una familia no sustituye la investigacion de referencias
 

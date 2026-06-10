@@ -72,7 +72,7 @@
 | kb-design-iconography-expert | Base de conocimiento para el sistema de iconografia del producto | false | design/skills/kb-design-iconography-expert/SKILL.md |
 | kb-design-layout | Base de conocimiento para sistemas de layout y responsive | false | design/skills/kb-design-layout/SKILL.md |
 | kb-design-motion-expert | Base de conocimiento operativa para motion y micro-interacciones en mobile | false | design/skills/kb-design-motion-expert/SKILL.md |
-| kb-design-style-decision-tree | Arbol de decision navegable para elegir style_family y variables visuales clave segun el contexto del producto | false | design/skills/kb-design-style-decision-tree/SKILL.md |
+| kb-design-style-decision-tree | SSoT de la UX de navegacion para cerrar style_family y las variables visuales del brief — la secuencia ordenada de preguntas, las ramas de deteccion de conflic… | false | design/skills/kb-design-style-decision-tree/SKILL.md |
 | kb-design-style-taxonomy | Base de conocimiento para clasificar estilos visuales de producto digital de forma operativa | false | design/skills/kb-design-style-taxonomy/SKILL.md |
 | kb-design-system-contract | Contrato normativo del DESIGN.md como artefacto de producto del pipeline SDD | false | design/skills/kb-design-system-contract/SKILL.md |
 | kb-design-voice | Base de conocimiento para UX writing y voice & tone del producto | false | design/skills/kb-design-voice/SKILL.md |
