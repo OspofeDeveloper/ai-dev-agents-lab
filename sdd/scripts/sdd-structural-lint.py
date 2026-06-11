@@ -26,11 +26,15 @@ Checks (cada finding: severidad, tipo, archivo:linea, mensaje):
 Uso:
     python3 sdd/scripts/sdd-structural-lint.py [--check] [--json]
                                                [--severity blocking|warning|all]
+                                               [--root <path>]
 
 Salida por defecto: reporte legible agrupado por severidad y tipo, con conteos.
   --check     exit 2 si hay >=1 blocking, 1 si solo warnings, 0 si limpio (CI).
   --json      lista estructurada de findings para consumo programatico.
   --severity  filtra los findings mostrados (default all).
+  --root      raiz del arbol a escanear (default: el arbol del ecosistema en el
+              que vive este script). Pensado para tests sobre fixtures aislados;
+              el comportamiento por defecto es identico al de siempre.
 """
 from __future__ import annotations
 
@@ -622,6 +626,7 @@ def render_report(findings, total_findings):
 
 
 def main() -> int:
+    global SDD_ROOT
     args = sys.argv[1:]
     as_json = "--json" in args
     check_mode = "--check" in args
@@ -633,6 +638,16 @@ def main() -> int:
         else:
             print("ERROR: --severity requiere blocking|warning|all", file=sys.stderr)
             return 1
+    if "--root" in args:
+        i = args.index("--root")
+        if i + 1 >= len(args):
+            print("ERROR: --root requiere una ruta", file=sys.stderr)
+            return 1
+        root = Path(args[i + 1]).resolve()
+        if not root.is_dir():
+            print(f"ERROR: --root no es un directorio: {root}", file=sys.stderr)
+            return 1
+        SDD_ROOT = root
 
     findings = run_all()
     shown = filter_severity(findings, severity)
