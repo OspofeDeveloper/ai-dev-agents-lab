@@ -6,6 +6,7 @@ argument-hint: "[--phase <prd|spec|design|plan|tasks|tech/<stack>|global>] [--ou
 effort: low
 allowed-tools: [Read, Write, Bash]
 context: fork
+user-invocable: true
 ---
 
 # wf-sdd-status — Inventario del Ecosistema SDD

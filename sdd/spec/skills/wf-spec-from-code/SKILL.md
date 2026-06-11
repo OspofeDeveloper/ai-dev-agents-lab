@@ -7,6 +7,7 @@ effort: high
 allowed-tools: [Read, Write, Bash, Grep, Glob, Agent]
 context: fork
 agent: sdd-spec-writer
+user-invocable: true
 ---
 
 # spec-from-code — Specs de caracterización desde código

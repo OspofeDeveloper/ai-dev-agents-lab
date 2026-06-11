@@ -7,6 +7,7 @@ effort: high
 allowed-tools: [Read, Write, Bash]
 context: fork
 agent: prd-expert
+user-invocable: true
 ---
 
 # Workflow: PRD-CHANGE

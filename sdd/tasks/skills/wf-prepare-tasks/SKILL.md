@@ -7,6 +7,7 @@ effort: high
 allowed-tools: [Read, Write, Bash, Agent]
 context: fork
 agent: task-generator
+user-invocable: true
 ---
 
 # prepare-tasks — Orquestador del Flujo SDD (Etapa Tasks)

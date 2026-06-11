@@ -7,6 +7,7 @@ effort: medium
 allowed-tools: [Read, Write, Bash, Agent]
 context: fork
 agent: sdd-author
+user-invocable: true
 ---
 
 # wf-skill-create — Orquestador de Creacion de Skills

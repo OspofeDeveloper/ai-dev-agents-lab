@@ -7,6 +7,7 @@ effort: medium
 allowed-tools: [Read, Write, Bash, Agent, AskUserQuestion]
 context: fork
 agent: sdd-author
+user-invocable: true
 ---
 
 # wf-stack-create — Scaffolding de overlays de stack

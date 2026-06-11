@@ -6,6 +6,7 @@ argument-hint: "<feature_dir|tasks_path> [--tag <tag>] [--no-tag] [--note <texto
 effort: low
 allowed-tools: [Read, Bash, AskUserQuestion]
 context: fork
+user-invocable: true
 ---
 
 # wf-release — Noción mínima de release

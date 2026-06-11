@@ -7,6 +7,7 @@ effort: medium
 allowed-tools: [Read, Write, Agent]
 context: fork
 agent: design-architect
+user-invocable: true
 ---
 
 # design-feedback — Captura y triage de feedback

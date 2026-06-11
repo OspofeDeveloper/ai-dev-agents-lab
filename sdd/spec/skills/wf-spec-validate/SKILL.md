@@ -7,6 +7,7 @@ effort: high
 allowed-tools: [Read, Bash]
 context: fork
 agent: sdd-spec-auditor
+user-invocable: true
 ---
 
 # Workflow: VALIDATE

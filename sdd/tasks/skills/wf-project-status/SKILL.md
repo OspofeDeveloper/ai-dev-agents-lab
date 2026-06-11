@@ -6,6 +6,7 @@ argument-hint: "[<raíz_artefactos_spec>] [--output <path>]"
 effort: low
 allowed-tools: [Read, Bash]
 context: fork
+user-invocable: true
 ---
 
 # wf-project-status — Informe PM read-only del proyecto

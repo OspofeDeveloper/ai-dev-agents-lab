@@ -6,6 +6,7 @@ argument-hint: "<feature_spec.md> [--prd <prd.md>] [--brief <DESIGN_BRIEF.md>] [
 effort: high
 allowed-tools: [Read, Write, Bash, WebSearch, WebFetch]
 context: fork
+user-invocable: true
 ---
 
 # design-discover — Research de referencias visuales

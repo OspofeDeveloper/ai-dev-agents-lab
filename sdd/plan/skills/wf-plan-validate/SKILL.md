@@ -7,6 +7,7 @@ effort: high
 allowed-tools: [Read, Write, Bash, Agent, AskUserQuestion]
 context: fork
 agent: plan-auditor
+user-invocable: true
 ---
 
 # plan-validate — Orquestador del Flujo SDD (Etapa Plan)

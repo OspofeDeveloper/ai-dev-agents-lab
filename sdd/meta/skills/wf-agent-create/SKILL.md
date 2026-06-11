@@ -7,6 +7,7 @@ effort: medium
 allowed-tools: [Read, Write, Bash, Agent]
 context: fork
 agent: sdd-author
+user-invocable: true
 ---
 
 # wf-agent-create — Orquestador de Creacion de Agentes

@@ -1,6 +1,9 @@
 ---
 name: kb-spec-characterization
 description: "Reglas para specs de caracterización brownfield: evidencia obligatoria por CA, marcador [INFERIDO], qué no especular y degradación sin tests."
+effort: low
+allowed-tools: [Read]
+user-invocable: false
 ---
 
 # Specs de caracterización (brownfield)

@@ -7,6 +7,7 @@ effort: medium
 allowed-tools: [Read, Write, Bash]
 context: fork
 agent: kmm-platform-integrator
+user-invocable: true
 ---
 
 # wf-kmm-database-setup

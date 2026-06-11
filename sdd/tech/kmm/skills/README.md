@@ -124,15 +124,15 @@ Cada skill debe poseer solo **una dimensión de verdad**:
 
 ### DI
 
-- `kb-koin`
+- `kb-plan-koin` (plan) / `kb-tasks-koin` (tasks)
   Define el wiring con Koin: módulos, `initKoin`, qualifiers, `nativeModule`, tipos de registro y orden de módulos.
 
 ### Storage local
 
-- `kb-kmm-datastore-preferences`
+- `kb-plan-kmm-datastore-preferences` (plan) / `kb-tasks-kmm-datastore-preferences` (tasks)
   Define cómo introducir Preferences DataStore en KMM: factory común, path por plataforma, ownership de keys y adapters sobre storage local.
 
-- `kb-kmm-room` (plan + tasks)
+- `kb-plan-kmm-room` (plan) / `kb-tasks-kmm-room` (tasks)
   Define la persistencia relacional con Room (no SQLDelight): en `plan/`, cuándo Room vs DataStore, DB como Single Source of Truth y ownership core/feature; en `tasks/`, entidades/DAOs en commonMain, `@Database` con constructor, builder expect/actual por plataforma, KSP por target, driver bundled y migraciones.
 
 - `kb-kmm-offline-strategy` (plan)
@@ -143,7 +143,7 @@ Cada skill debe poseer solo **una dimensión de verdad**:
 - `kb-kmm-resources`
   Define el sistema de recursos compartidos con `compose.resources`: strings, imágenes, fonts, raw files y localización.
 
-- `kb-kmm-ui-text`
+- `kb-plan-kmm-ui-text` (plan) / `kb-tasks-kmm-ui-text` (tasks)
   Define el patrón `UiText` para exponer textos desde ViewModel sin resolverlos fuera de la UI.
 
 ### Networking
@@ -165,7 +165,7 @@ Cada skill debe poseer solo **una dimensión de verdad**:
 - `kb-kmm-navigation-platform-behaviors`
   Define la integración de navegación con el host y la plataforma: `BackHandler`, predictive back y bridges de deep links.
 
-- `kb-kmm-navigation-viewmodel-events`
+- `kb-plan-kmm-navigation-viewmodel-events` (plan) / `kb-tasks-kmm-navigation-viewmodel-events` (tasks)
   Define el patrón de efectos de navegación desde ViewModel: `Channel` vs `StateFlow`, reglas de `LaunchedEffect` y separación entre hecho y destino.
 
 ### Variantes y entornos
@@ -226,13 +226,15 @@ skills/plan/  ─ contratos y arquitectura
   kb-kmm-app-errors
   kb-kmm-feature-clean-architecture
   kb-kmm-gradle-modules
-  kb-koin
+  kb-plan-koin
+  kb-plan-kmm-datastore-preferences
   kb-plan-kmm-room
   kb-kmm-offline-strategy
   kb-kmm-secrets-cicd
   kb-kmm-network-contracts
   kb-kmm-navigation-contracts
-  kb-kmm-navigation-viewmodel-events
+  kb-plan-kmm-navigation-viewmodel-events
+  kb-plan-kmm-ui-text
   kb-kmm-auth-contracts
 
 skills/tasks/  ─ implementación concreta
@@ -241,10 +243,12 @@ skills/tasks/  ─ implementación concreta
   kb-kmm-auth-oauth-keycloak
   kb-kmm-navigation-compose
   kb-kmm-navigation-platform-behaviors
-  kb-kmm-datastore-preferences
+  kb-tasks-koin
+  kb-tasks-kmm-datastore-preferences
+  kb-tasks-kmm-navigation-viewmodel-events
   kb-tasks-kmm-room
   kb-kmm-resources
-  kb-kmm-ui-text
+  kb-tasks-kmm-ui-text
   kb-kmm-brands
   kb-kmm-environments
   kb-kmm-android-environments
@@ -285,9 +289,9 @@ Reglas:
 Antes de escribir una regla, aplicar este filtro:
 
 - Si cambiar Ktor por otra librería HTTP no invalida la regla, no va en `kb-kmm-http-ktor`.
-- Si cambiar Koin por otra librería de DI no invalida la regla, no va en `kb-koin`.
+- Si cambiar Koin por otra librería de DI no invalida la regla, no va en `kb-plan-koin` / `kb-tasks-koin`.
 - Si cambiar `compose.resources` por otro sistema de recursos invalida la regla, pertenece a `kb-kmm-resources`.
-- Si la regla define cómo el ViewModel expone textos a la UI sin resolverlos, pertenece a `kb-kmm-ui-text`.
+- Si la regla define cómo el ViewModel expone textos a la UI sin resolverlos, pertenece a `kb-plan-kmm-ui-text` / `kb-tasks-kmm-ui-text`.
 - Si cambiar Keycloak por otro proveedor no invalida la regla, no va en `kb-kmm-auth-oauth-keycloak`.
 - Si cambiar el mecanismo técnico de refresh no invalida la regla, no va en `kb-kmm-auth-ktor-plugin`.
 - Si cambiar la organización de capas no invalida la regla, no va en `kb-kmm-clean-architecture`, `kb-kmm-app-layer`, `kb-kmm-core-layer` o `kb-kmm-feature-clean-architecture`.

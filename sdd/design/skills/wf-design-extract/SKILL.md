@@ -7,6 +7,7 @@ effort: high
 allowed-tools: [Read, Write, Bash, Grep, Glob, Agent]
 context: fork
 agent: design-architect
+user-invocable: true
 ---
 
 # design-extract — DESIGN.md por ingenieria inversa de la UI existente

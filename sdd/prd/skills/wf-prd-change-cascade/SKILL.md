@@ -6,6 +6,7 @@ argument-hint: "<prd.md> [--new-reqs <cambio.md>] [--features F-001,F-002,...] [
 effort: high
 allowed-tools: [Read, Write, Bash, Skill]
 context: fork
+user-invocable: true
 ---
 
 # Workflow: PRD-CHANGE-CASCADE (Orquestador)

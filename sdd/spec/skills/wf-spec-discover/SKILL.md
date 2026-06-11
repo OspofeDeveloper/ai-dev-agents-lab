@@ -7,6 +7,7 @@ effort: high
 allowed-tools: [Read, Write, Bash]
 context: fork
 agent: sdd-spec-explorer
+user-invocable: true
 ---
 
 # Workflow: DISCOVER

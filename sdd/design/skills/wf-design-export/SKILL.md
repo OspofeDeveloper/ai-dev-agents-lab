@@ -6,6 +6,7 @@ argument-hint: "<DESIGN.md> --platforms <css,style-dictionary,compose,swiftui,ta
 effort: medium
 allowed-tools: [Read, Write, Bash]
 context: fork
+user-invocable: true
 ---
 
 # design-export — Exportacion de tokens

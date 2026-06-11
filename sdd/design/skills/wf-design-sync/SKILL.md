@@ -7,6 +7,7 @@ effort: high
 allowed-tools: [Read, Write, Bash]
 context: fork
 agent: design-architect
+user-invocable: true
 ---
 
 # Workflow: DESIGN-SYNC-IMPACT

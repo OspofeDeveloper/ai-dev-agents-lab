@@ -6,6 +6,7 @@ argument-hint: "<descripcion.md|texto> [--feature <nombre>]"
 effort: medium
 allowed-tools: [Read, Write, Edit, Bash, Agent, Grep, Glob]
 context: fork
+user-invocable: true
 ---
 
 # bug — Fast-lane de mantenimiento con triaje contra spec

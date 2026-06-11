@@ -7,6 +7,7 @@ effort: medium
 allowed-tools: [Read, Write, Bash, Agent]
 context: fork
 agent: design-architect
+user-invocable: true
 ---
 
 # design-a11y-audit — Auditoria ejecutiva de accesibilidad

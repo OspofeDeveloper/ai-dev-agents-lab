@@ -7,6 +7,7 @@ effort: high
 allowed-tools: [Read, Write, Bash, Agent]
 context: fork
 agent: plan-architect
+user-invocable: true
 ---
 
 # prepare-plan — Orquestador del Flujo SDD (Etapa Plan)

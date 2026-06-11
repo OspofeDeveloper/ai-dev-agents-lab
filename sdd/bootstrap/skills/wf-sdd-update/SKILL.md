@@ -6,6 +6,7 @@ argument-hint: "[--force]"
 effort: low
 allowed-tools: [Read, Write, Edit, Bash]
 context: fork
+user-invocable: true
 ---
 
 # wf-sdd-update — Update no destructivo de la instalación SDD

@@ -7,6 +7,7 @@ effort: high
 allowed-tools: [Read, Write, Bash, Agent]
 context: fork
 agent: design-architect
+user-invocable: true
 ---
 
 # design-delta — Evolucion controlada del sistema visual

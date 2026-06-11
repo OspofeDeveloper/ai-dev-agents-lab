@@ -7,6 +7,7 @@ effort: high
 allowed-tools: [Read, Write, Bash, Agent]
 context: fork
 agent: sdd-auditor
+user-invocable: true
 ---
 
 # wf-sdd-audit — Orquestador de Auditoria del Ecosistema SDD

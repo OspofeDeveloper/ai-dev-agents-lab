@@ -6,6 +6,7 @@ argument-hint: "[--profile <dev|product|design|custom>] [--type <app|web|backend
 effort: low
 allowed-tools: [Read, Write, Bash, AskUserQuestion]
 context: fork
+user-invocable: true
 ---
 
 # wf-project-init — Onboarding de proyecto SDD

@@ -7,6 +7,7 @@ effort: high
 allowed-tools: [Read, Write, Bash]
 context: fork
 agent: sdd-spec-writer
+user-invocable: true
 ---
 
 # Workflow: SPEC-GAP-RESOLVE

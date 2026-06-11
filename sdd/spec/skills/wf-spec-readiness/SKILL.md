@@ -7,6 +7,7 @@ effort: medium
 allowed-tools: [Read, Write, Bash]
 context: fork
 agent: sdd-spec-auditor
+user-invocable: true
 ---
 
 # Workflow: READINESS

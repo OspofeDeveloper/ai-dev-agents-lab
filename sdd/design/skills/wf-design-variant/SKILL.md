@@ -7,6 +7,7 @@ effort: medium
 allowed-tools: [Read, Write, Agent]
 context: fork
 agent: design-architect
+user-invocable: true
 ---
 
 # design-variant — A/B testing visual

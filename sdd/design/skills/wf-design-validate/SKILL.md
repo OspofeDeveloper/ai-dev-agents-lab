@@ -7,6 +7,7 @@ effort: medium
 allowed-tools: [Read, Bash, Write, AskUserQuestion, Agent]
 context: fork
 agent: design-architect
+user-invocable: true
 ---
 
 # design-validate — Orquestador del Flujo SDD (Etapa Design)

@@ -7,6 +7,7 @@ effort: high
 allowed-tools: [Read, Write, Bash, Agent, AskUserQuestion, WebSearch, WebFetch]
 context: fork
 agent: design-architect
+user-invocable: true
 ---
 
 # design-system — Orquestador del Flujo SDD (Etapa Design)

@@ -7,6 +7,7 @@ effort: high
 allowed-tools: [Read, Write, Bash, Agent, WebSearch]
 context: fork
 agent: design-architect
+user-invocable: true
 ---
 
 # design-moodboard — Captura de inspiracion visual

@@ -6,6 +6,7 @@ argument-hint: "<prd_archivo.md> [--features F-001,F-002,...] [--light|--standar
 effort: high
 allowed-tools: [Read, Write, Bash, Agent]
 context: fork
+user-invocable: true
 ---
 
 # Workflow: FEATURES-FIRST (Orquestador)

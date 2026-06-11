@@ -7,6 +7,7 @@ effort: high
 allowed-tools: [Read, Write, Bash]
 context: fork
 agent: kmm-network-auth-implementer
+user-invocable: true
 ---
 
 # wf-kmm-stack-setup-ktor-keycloak-koin

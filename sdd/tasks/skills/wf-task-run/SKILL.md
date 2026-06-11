@@ -6,6 +6,7 @@ argument-hint: "<feature_tasks.md> [--task T-00X | --next | --all] [--no-commit]
 effort: high
 allowed-tools: [Read, Write, Edit, Bash, Agent]
 context: fork
+user-invocable: true
 ---
 
 # task-run — Ejecución de Tasks con estado persistente

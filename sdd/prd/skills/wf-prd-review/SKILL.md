@@ -7,6 +7,7 @@ effort: medium
 allowed-tools: [Read, Write, Bash, AskUserQuestion]
 context: fork
 agent: prd-expert
+user-invocable: true
 ---
 
 # Workflow: PRD Review
