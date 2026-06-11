@@ -1,5 +1,9 @@
 .DS_Store
 
+# Artefactos de compilacion de Python (los scripts deterministas de sdd/scripts/)
+__pycache__/
+*.pyc
+
 # Workspace local de Claude en el repo: el meta-orquestador versionado vive en
 # sdd/meta/ y se materializa aqui via `bash sdd/setup.sh --dev` (symlinks)
 sdd/.claude/

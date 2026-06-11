@@ -16,6 +16,8 @@ Checks (cada finding: severidad, tipo, archivo:linea, mensaje):
   CITED-SKILL-MISSING    [blocking]  Cita una kb-X que no existe como skill.
   CITED-RULE-ON-WORKFLOW [blocking]  Cita `Regla N de wf-X` (los wf tienen Pasos, no Reglas).
   ABSOLUTE-PATH          [blocking]  /Users/ o /home/ embebido en un .md del ecosistema.
+  NAME-MISMATCH          [blocking]  name: del frontmatter != nombre de directorio (SKILL.md) / archivo (agente).
+  REFERENCE-PATH-MISSING [blocking]  ruta a references/<f> citada en un SKILL.md que no resuelve en disco.
   SKILL-REF-MISSING      [warning]   Token `kb-X`/`wf-X` en docs que no es una skill real.
   ALLOWED-TOOLS-MISMATCH [blocking/warning] frontmatter allowed-tools no cubre el body.
   DESCRIPTION-TOO-LONG   [warning]   description del frontmatter > 220 chars.
@@ -65,6 +67,27 @@ ABSOLUTE_PATH = re.compile(r"(/Users/|/home/)[^\s`)\]\"']*")
 # --- Tokens de skill en docs ------------------------------------------------
 SKILL_TOKEN = re.compile(r"`(kb-[\w-]+|wf-[\w-]+)`")
 EXAMPLE_HINTS = ("ejemplo", "example", "p. ej.", "p.ej.", "<nombre>", "kb-<", "wf-<")
+
+# --- Rutas a ficheros de references citadas en el cuerpo de un SKILL.md -----
+# Solo marcamos formas que apuntan INEQUIVOCAMENTE a un fichero de references de
+# una skill concreta, y resolvemos cada una contra la skill correcta:
+#
+#   ${CLAUDE_SKILL_DIR}/references/<f>   -> own references (forma canonica)
+#   ./references/<f>                     -> own references (relativa explicita a si misma)
+#   ../<otra-skill>/references/<f>       -> references de la skill hermana nombrada
+#   <kb-X|wf-X>/references/<f>           -> references de la skill nombrada (cross-skill)
+#
+# NO marcamos `references/<f>` a secas (sin prefijo): es ambiguo en prosa
+# (suele atribuirse a OTRA skill por el texto que lo rodea) y la forma canonica
+# de auto-referencia es ${CLAUDE_SKILL_DIR} segun kb-sdd-creation-guide. Esto
+# evita los falsos positivos de citas cruzadas y de ejemplos anti-patron.
+REFERENCE_PATH_RE = re.compile(
+    r"(?P<prefix>\$\{CLAUDE_SKILL_DIR\}/"          # own (canonica)
+    r"|\.\./[\w.-]+/"                              # ../<otra-skill>/
+    r"|\./"                                        # ./ (own explicita)
+    r"|(?:kb-|wf-)[\w-]+/)"                        # <kb-X|wf-X>/ (cross-skill)
+    r"references/(?P<rel>[\w./-]+\.\w+)"
+)
 
 # --- Frontmatter ------------------------------------------------------------
 ALLOWED_TOOLS_RE = re.compile(r"^allowed-tools:\s*\[([^\]]*)\]", re.MULTILINE)
@@ -439,6 +462,103 @@ def check_frontmatter_fields(findings):
                     "kb-* debe declarar `user-invocable: false` (no se enruta; se inyecta en agentes)."))
 
 
+def check_name_mismatch(findings):
+    """NAME-MISMATCH — el name: del frontmatter debe coincidir con:
+       - el nombre del directorio padre, para */SKILL.md
+       - el basename sin extension, para */agents/<x>.md
+    """
+    # SKILL.md: name == nombre del directorio que lo contiene.
+    for skill_md in sorted(SDD_ROOT.rglob("SKILL.md")):
+        if is_excluded(skill_md):
+            continue
+        try:
+            text = skill_md.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        fm, _, _ = split_frontmatter(text)
+        name = frontmatter_value(fm, "name")
+        if name is None:
+            continue
+        name = name.strip().strip('"').strip("'")
+        dirname = skill_md.parent.name
+        if name != dirname:
+            findings.append(Finding(
+                "blocking", "NAME-MISMATCH", relpath(skill_md), 1,
+                f"`name: {name}` no coincide con el directorio padre `{dirname}`. "
+                f"El name de un SKILL.md debe ser el nombre de su directorio."))
+
+    # Agentes: name == basename sin extension del archivo .md en */agents/.
+    for agent_md in sorted(SDD_ROOT.rglob("*.md")):
+        if is_excluded(agent_md):
+            continue
+        if "agents" not in agent_md.relative_to(SDD_ROOT).parts:
+            continue
+        try:
+            text = agent_md.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        fm, _, _ = split_frontmatter(text)
+        name = frontmatter_value(fm, "name")
+        if name is None:
+            continue
+        name = name.strip().strip('"').strip("'")
+        stem = agent_md.stem
+        if name != stem:
+            findings.append(Finding(
+                "blocking", "NAME-MISMATCH", relpath(agent_md), 1,
+                f"`name: {name}` no coincide con el nombre de archivo `{stem}`. "
+                f"El name de un agente debe ser el basename del .md sin extension."))
+
+
+def check_reference_paths(findings):
+    """REFERENCE-PATH-MISSING — toda ruta a references/<f> citada en un SKILL.md
+       que no resuelve en disco. Resuelve relativo al directorio del SKILL.md.
+
+       Ignora bloques de codigo de ejemplo para no marcar plantillas/placeholders,
+       y descarta paths con placeholders (`<...>`, `${...}` que no sea
+       CLAUDE_SKILL_DIR) que no apuntan a un fichero concreto."""
+    for skill_md in sorted(SDD_ROOT.rglob("SKILL.md")):
+        if is_excluded(skill_md):
+            continue
+        try:
+            text = skill_md.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        rp = relpath(skill_md)
+        skill_dir = skill_md.parent
+        skills_root = skill_dir.parent  # el directorio `skills/` que contiene las skills hermanas
+        for lineno, line in line_iter_skip_codefences(text, skip_fences=True):
+            for m in REFERENCE_PATH_RE.finditer(line):
+                prefix = m.group("prefix")
+                rel = m.group("rel")
+                # Descarta placeholders no resolubles (no son una ruta concreta).
+                if "<" in rel or ">" in rel or "<" in prefix or ">" in prefix:
+                    continue
+                if prefix.startswith("${CLAUDE_SKILL_DIR}") or prefix == "./":
+                    target = (skill_dir / "references" / rel).resolve()
+                elif prefix.startswith("../"):
+                    # ../<otra-skill>/  -> hermana en el mismo directorio skills/
+                    sibling = prefix[len("../"):].rstrip("/")
+                    target = (skills_root / sibling / "references" / rel).resolve()
+                else:
+                    # <kb-X|wf-X>/  -> skill nombrada. Puede ser hermana directa o
+                    # vivir en otro nivel (plan/, tasks/); buscamos su directorio real.
+                    named = prefix.rstrip("/")
+                    sib = skills_root / named
+                    if not sib.is_dir():
+                        matches = [d.parent for d in SDD_ROOT.rglob(f"{named}/SKILL.md")
+                                   if not is_excluded(d)]
+                        if matches:
+                            sib = matches[0]
+                    target = (sib / "references" / rel).resolve()
+                if not target.exists():
+                    citation = f"{prefix}references/{rel}"
+                    findings.append(Finding(
+                        "blocking", "REFERENCE-PATH-MISSING", rp, lineno,
+                        f"Referencia a `{citation}` que no resuelve en disco "
+                        f"(esperado: {relpath(target) if str(target).startswith(str(SDD_ROOT)) else target})."))
+
+
 # ---------------------------------------------------------------------------
 # Reporte
 # ---------------------------------------------------------------------------
@@ -451,6 +571,8 @@ def run_all():
     check_skill_refs_in_docs(skills, findings)
     check_allowed_tools(findings)
     check_frontmatter_fields(findings)
+    check_name_mismatch(findings)
+    check_reference_paths(findings)
     # Orden estable: severidad (blocking primero), tipo, path, linea.
     sev_order = {"blocking": 0, "warning": 1}
     findings.sort(key=lambda f: (sev_order.get(f.severity, 9), f.ftype, f.path, f.line))

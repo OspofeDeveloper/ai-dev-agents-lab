@@ -16,6 +16,8 @@ Los chequeos estructurales **mecanizables** los ejecuta el script determinista `
 
 - **CITED-RULE-MISSING / CITED-SKILL-MISSING / CITED-RULE-ON-WORKFLOW** — citas `Regla N de kb-X` cuyo N no existe en esa KB, o que apuntan a una KB inexistente, o a un `wf-*` (que tiene Pasos, no Reglas).
 - **ABSOLUTE-PATH** — rutas absolutas de home de usuario (prefijos tipo `/Users` o `/home`) embebidas en `.md` operativos del ecosistema; rompen en otra maquina y en CI.
+- **NAME-MISMATCH** — `name:` del frontmatter que no coincide con el nombre del directorio (para `*/SKILL.md`) ni con el basename del archivo sin extension (para agentes `*/agents/<x>.md`).
+- **REFERENCE-PATH-MISSING** — ruta a un fichero de `references/<f>` citada en un `SKILL.md` que no resuelve en disco; resuelve `${CLAUDE_SKILL_DIR}/references/<f>`, `./references/<f>`, `../<otra-skill>/references/<f>` y `<kb-X|wf-X>/references/<f>` contra la skill correcta.
 - **SKILL-REF-MISSING** — tokens `kb-*`/`wf-*` en `README.md`/`DIAGRAMS.md`/`CLAUDE.md` que no corresponden a una skill instalada.
 - **ALLOWED-TOOLS-MISMATCH** — `allowed-tools` del frontmatter de una `wf-*` que no cubre las señales de su body (Bash/Write/AskUserQuestion/Agent), respetando el patron `context: fork` + `agent:`.
 - **DESCRIPTION-TOO-LONG** — `description` > 220 chars.
@@ -70,10 +72,10 @@ Severidad: **advertencia**. El workflow existe pero no es descubrible para el or
 
 ### [NOMBRE-DESINCRONIZADO] Nombre de frontmatter distinto al nombre de directorio o archivo
 
-- Una `wf-*` cuyo `name:` en frontmatter no coincide con el nombre del directorio padre del `SKILL.md`.
+- Una skill (`kb-*`/`wf-*`) cuyo `name:` en frontmatter no coincide con el nombre del directorio padre del `SKILL.md`.
 - Un agente cuyo `name:` no coincide con el nombre del archivo `.md`.
 
-Severidad: **advertencia**. El sistema puede no resolverlo correctamente.
+Este criterio está **mecanizado** como `NAME-MISMATCH` en `sdd-structural-lint.py` (severidad **bloqueante**: el harness puede no resolver una pieza con el nombre desincronizado). El agente lo recibe como finding del script; no lo re-deriva por prosa.
 
 ## Alcance del escaneo estructural
 

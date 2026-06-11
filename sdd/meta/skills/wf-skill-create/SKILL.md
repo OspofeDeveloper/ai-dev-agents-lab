@@ -123,12 +123,36 @@ Escribe el contenido generado por el agente en `<directorio_destino>/SKILL.md`.
 
 ---
 
-## Paso 8: Actualizar el registry e informar al usuario
+## Paso 8: Regenerar el registry
 
 Regenera el skill registry con el generador determinista (no bloqueante: si python3 no está disponible o el script falla, avisa con `⚠ skill-registry.md no actualizado`):
 ```bash
 python3 sdd/scripts/generate-skill-registry.py
 ```
+
+---
+
+## Paso 9: Gate estructural obligatorio (cierre)
+
+Este paso es **determinista y obligatorio**: ninguna skill se da por creada con defectos estructurales mecanizables. La SSoT de qué se valida es el script `sdd/scripts/sdd-structural-lint.py` (no se re-describen los checks aquí; el script es la autoridad).
+
+Ejecuta el linter sobre el árbol fuente:
+```bash
+python3 sdd/scripts/sdd-structural-lint.py --check
+```
+
+Interpreta el exit code:
+
+- **Exit 2 (hay BLOCKING)**: NO declares la creación con éxito. El baseline del repo es `blocking=0`, así que cualquier blocking nuevo es atribuible a la pieza recién creada. Ejecuta `python3 sdd/scripts/sdd-structural-lint.py --severity blocking` para ver el detalle, reporta los findings al usuario y exige corregirlos antes de cerrar.
+  - Si — y solo si — algún blocking es sobre **piezas ajenas preexistentes** (no la recién creada), dílo explícitamente, sepáralo de lo atribuible a esta skill, y deja que el usuario decida si lo aborda ahora o aparte.
+- **Exit 1 (solo WARNING)**: NO bloquea el cierre. Reporta un resumen de **una línea** con el conteo por tipo (p. ej. `Hygiene: 78 DESCRIPTION-TOO-LONG, 53 USER-INVOCABLE-MISSING, 7 SKILL-REF-MISSING — no bloqueante`).
+- **Exit 0 (limpio)**: cierra sin observaciones de lint.
+
+Si python3 o el script no están disponibles, avisa con `⚠ gate estructural no ejecutado` y no bloquees por ello.
+
+---
+
+## Paso 10: Informar al usuario
 
 Reporta:
 - Path del archivo creado

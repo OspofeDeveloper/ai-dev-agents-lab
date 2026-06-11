@@ -106,12 +106,36 @@ Si el agente indica que la refactorizacion requiere crear nuevas piezas (extracc
 
 ---
 
-## Paso 6: Actualizar el registry e informar al usuario
+## Paso 6: Regenerar el registry
 
 Si la refactorizacion cambio el `name:`, la `description:` o la ubicacion del artefacto, regenera el skill registry (no bloqueante; si falla, avisa con `⚠`):
 ```bash
 python3 sdd/scripts/generate-skill-registry.py
 ```
+
+---
+
+## Paso 7: Gate estructural obligatorio (cierre)
+
+Este paso es **determinista y obligatorio**, y corre **siempre** (una refactorización puede romper citas de regla, renombrar piezas o invalidar rutas de references aunque no cambie el `name:`). La SSoT de qué se valida es el script `sdd/scripts/sdd-structural-lint.py` (no se re-describen los checks aquí; el script es la autoridad).
+
+Ejecuta el linter sobre el árbol fuente:
+```bash
+python3 sdd/scripts/sdd-structural-lint.py --check
+```
+
+Interpreta el exit code:
+
+- **Exit 2 (hay BLOCKING)**: NO declares la refactorización cerrada con éxito. El baseline del repo es `blocking=0`, así que cualquier blocking nuevo es atribuible a la pieza recién refactorizada (o a piezas que la referencian y quedaron con cita rota). Ejecuta `python3 sdd/scripts/sdd-structural-lint.py --severity blocking` para ver el detalle, reporta los findings al usuario y exige corregirlos antes de cerrar.
+  - Si — y solo si — algún blocking es sobre **piezas ajenas preexistentes** no tocadas por esta refactorización, dílo explícitamente, sepáralo de lo atribuible al cambio, y deja que el usuario decida.
+- **Exit 1 (solo WARNING)**: NO bloquea el cierre. Reporta un resumen de **una línea** con el conteo por tipo.
+- **Exit 0 (limpio)**: cierra sin observaciones de lint.
+
+Si python3 o el script no están disponibles, avisa con `⚠ gate estructural no ejecutado` y no bloquees por ello.
+
+---
+
+## Paso 8: Informar al usuario
 
 Reporta:
 - Que cambio se aplico y por que

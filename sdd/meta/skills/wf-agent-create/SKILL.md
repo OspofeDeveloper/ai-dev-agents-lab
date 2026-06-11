@@ -129,7 +129,29 @@ Escribe el contenido generado por el agente en `<directorio_destino>/<nombre>.md
 
 ---
 
-## Paso 8: Informar al usuario
+## Paso 8: Gate estructural obligatorio (cierre)
+
+Este paso es **determinista y obligatorio**: ningún agente se da por creado con defectos estructurales mecanizables. La SSoT de qué se valida es el script `sdd/scripts/sdd-structural-lint.py` (no se re-describen los checks aquí; el script es la autoridad). Un agente recién creado puede introducir, p. ej., un `NAME-MISMATCH` (el `name:` del frontmatter no coincide con el basename del archivo).
+
+> Nota: este workflow **no** regenera `skill-registry.md` — el registry solo indexa skills, no agentes. Solo corre el gate estructural.
+
+Ejecuta el linter sobre el árbol fuente:
+```bash
+python3 sdd/scripts/sdd-structural-lint.py --check
+```
+
+Interpreta el exit code:
+
+- **Exit 2 (hay BLOCKING)**: NO declares la creación con éxito. El baseline del repo es `blocking=0`, así que cualquier blocking nuevo es atribuible al agente recién creado. Ejecuta `python3 sdd/scripts/sdd-structural-lint.py --severity blocking` para ver el detalle, reporta los findings al usuario y exige corregirlos antes de cerrar.
+  - Si — y solo si — algún blocking es sobre **piezas ajenas preexistentes** (no el recién creado), dílo explícitamente, sepáralo de lo atribuible a este agente, y deja que el usuario decida.
+- **Exit 1 (solo WARNING)**: NO bloquea el cierre. Reporta un resumen de **una línea** con el conteo por tipo.
+- **Exit 0 (limpio)**: cierra sin observaciones de lint.
+
+Si python3 o el script no están disponibles, avisa con `⚠ gate estructural no ejecutado` y no bloquees por ello.
+
+---
+
+## Paso 9: Informar al usuario
 
 Reporta:
 - Path del archivo creado

@@ -80,6 +80,26 @@ Tras el OK de `sdd-author`:
 
 ---
 
+## Paso 5.5: Gate estructural obligatorio (cierre)
+
+Este paso es **determinista y obligatorio**: el overlay no se da por creado con defectos estructurales mecanizables en sus skills y agentes. La SSoT de qué se valida es el script `sdd/scripts/sdd-structural-lint.py` (no se re-describen los checks aquí; el script es la autoridad). Un overlay genera varias piezas a la vez (init especialista, CLAUDE.md, variantes de agentes y KBs), cualquiera de las cuales puede introducir un `NAME-MISMATCH`, una cita rota o un `REFERENCE-PATH-MISSING`.
+
+Ejecuta el linter sobre el árbol fuente:
+```bash
+python3 sdd/scripts/sdd-structural-lint.py --check
+```
+
+Interpreta el exit code:
+
+- **Exit 2 (hay BLOCKING)**: NO declares el overlay creado con éxito. El baseline del repo es `blocking=0`, así que cualquier blocking nuevo es atribuible a las piezas recién generadas. Ejecuta `python3 sdd/scripts/sdd-structural-lint.py --severity blocking` para ver el detalle, reporta los findings al usuario y exige corregirlos antes de cerrar.
+  - Si — y solo si — algún blocking es sobre **piezas ajenas preexistentes** (no las del overlay recién creado), dílo explícitamente, sepáralo de lo atribuible al overlay, y deja que el usuario decida.
+- **Exit 1 (solo WARNING)**: NO bloquea el cierre. Reporta un resumen de **una línea** con el conteo por tipo.
+- **Exit 0 (limpio)**: cierra sin observaciones de lint.
+
+Si python3 o el script no están disponibles, avisa con `⚠ gate estructural no ejecutado` y no bloquees por ello.
+
+---
+
 ## Paso 6: Informe final
 
 - Estructura creada bajo `tech/<stack>/`
