@@ -1,7 +1,6 @@
 ---
 name: kb-kmm-navigation-compose
 description: "Base de conocimiento de implementación de navegación con Compose Navigation + Kotlin Serialization en KMM: rutas @Serializable, NavHost, nested graphs, back stack, deep links de grafo, shell adaptativo, testing del grafo y constraints de commonMain."
-argument-hint: "topic de navegación a consultar (opcional)"
 effort: low
 allowed-tools: [Read]
 user-invocable: false

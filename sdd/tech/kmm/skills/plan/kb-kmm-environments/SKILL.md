@@ -1,7 +1,6 @@
 ---
 name: kb-kmm-environments
-description: "Base de conocimiento de entornos y variantes en proyectos KMM: semántica estable de env, composición de la matriz brand×env, valores derivados vs declarativos, fuentes de verdad por plataforma y criterios para configuración sensible."
-argument-hint: ""
+description: "Base de conocimiento de entornos y variantes en proyectos KMM: semántica estable de env, composición de la matriz brand×env, valores derivados vs declarativos, fuentes de verdad por plataforma y configuración sensible."
 effort: low
 allowed-tools: [Read]
 user-invocable: false

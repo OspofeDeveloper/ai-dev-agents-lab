@@ -1,7 +1,6 @@
 ---
 name: kb-conflict-expert
-description: Experto en detección de conflictos entre Specs SDD de features. Contiene las reglas para identificar HUs duplicadas, CAs contradictorios, scope overlaps y shared models inconsistentes. Úsalo cuando necesites verificar que un spec nuevo o modificado no entra en conflicto con specs existentes en el mismo proyecto.
-argument-hint: "[feature_spec.md | conjunto_de_specs]"
+description: Experto en detección de conflictos entre Specs SDD de features. Reglas para identificar HUs duplicadas, CAs contradictorios, scope overlaps y shared models inconsistentes entre specs del mismo proyecto.
 effort: low
 allowed-tools: [Read]
 user-invocable: false

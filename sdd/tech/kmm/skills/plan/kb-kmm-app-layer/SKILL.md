@@ -1,7 +1,6 @@
 ---
 name: kb-kmm-app-layer
-description: "Base de conocimiento de la capa app en proyectos KMM: composition root, navegación, composición entre features, coordinación de estado efímero de pantalla y decisiones dependientes de brand o contexto."
-argument-hint: ""
+description: "Capa app en proyectos KMM: composition root, navegación, composición entre features, coordinación de estado efímero de pantalla y decisiones dependientes de brand o contexto."
 effort: low
 allowed-tools: [Read]
 user-invocable: false

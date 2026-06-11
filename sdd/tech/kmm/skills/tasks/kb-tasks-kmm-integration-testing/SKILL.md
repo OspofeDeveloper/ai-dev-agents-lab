@@ -1,7 +1,6 @@
 ---
 name: kb-tasks-kmm-integration-testing
-description: "Patrones de implementación de tests de integración en proyectos KMM con CMP: tests de árbol semántico Compose con composeTestRule, tests de accesibilidad con useUnmergedTree, screenshot regression con Roborazzi y tests de capa de datos con DB in-memory. Cargada por kmm-platform-integrator, kmm-network-auth-implementer y kmm-tester."
-argument-hint: ""
+description: "Patrones de implementación de tests de integración KMM/CMP: árbol semántico Compose con composeTestRule, accesibilidad con useUnmergedTree, screenshot regression con Roborazzi y capa de datos con DB in-memory."
 effort: low
 allowed-tools: [Read]
 user-invocable: false

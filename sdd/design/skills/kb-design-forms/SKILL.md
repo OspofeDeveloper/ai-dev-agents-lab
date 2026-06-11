@@ -1,7 +1,6 @@
 ---
 name: kb-design-forms
-description: Base de conocimiento para patrones de formulario en mobile y web. Define layout (label, field, helper, error placement), validacion (cliente vs servidor, momento de disparo), estados de campo, patrones complejos (multistep, autosave, conditional fields, file upload, search in input). 50-70% de productos B2B son formularios; sin esta kb se quedan enterrados en views genericas.
-argument-hint: "(cargada automaticamente por agentes y workflows de design)"
+description: Patrones de formulario en mobile y web: layout (label, field, helper, error placement), validacion (cliente vs servidor, momento de disparo), estados de campo y patrones complejos (multistep, autosave, conditional fields, file upload, search in input).
 effort: low
 allowed-tools: [Read]
 user-invocable: false
@@ -50,7 +49,7 @@ Decisiones canonicas:
 
 ## Regla 3: Estados de campo obligatorios
 
-Cada campo de form declara estos estados (Regla 16 de `kb-design-expert` aplicada a forms):
+Cada campo de form declara estos estados (Regla 7 de `kb-design-system-contract` aplicada a forms):
 
 - `default`: estado inicial.
 - `focus`: visualmente distinto (borde acentuado, focus ring respetando contraste 3:1).

@@ -1,6 +1,6 @@
 # Preset starter components
 
-Componentes base ya escritos para los presets. `wf-design-system` los incluye automaticamente cuando el preset corresponde, con sus estados completos (Regla 16 de `kb-design-expert`).
+Componentes base ya escritos para los presets. `wf-design-system` los incluye automaticamente cuando el preset corresponde, con sus estados completos (Regla 7 de `kb-design-system-contract`).
 
 Todos los componentes asumen referencias a tokens del frontmatter del starter kit del mismo preset (ver `preset_starter_kits.md`).
 

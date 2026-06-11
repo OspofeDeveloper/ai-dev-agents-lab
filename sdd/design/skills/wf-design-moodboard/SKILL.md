@@ -1,6 +1,6 @@
 ---
 name: wf-design-moodboard
-description: "Captura inspiracion visual no estructurada antes del discovery. El usuario describe vibes (paletas, fotografia, atmosfera, ilustracion, texturas) y produce un <basename>_design_moodboard.md que alimenta wf-design-intake con material concreto para cerrar style_family y adjectives con precision. Especialmente util para disenadores junior."
+description: "Captura inspiracion visual no estructurada antes del discovery: el usuario describe vibes (paletas, fotografia, atmosfera, ilustracion, texturas) y produce un _design_moodboard.md que alimenta wf-design-intake para cerrar style_family y adjectives. Util para juniors."
 when_to_use: "Activa con frases como 'quiero capturar inspiración visual', 'crea un moodboard', 'tengo referencias de estilo', 'quiero definir vibes antes del brief', 'captura referencias de diseño'. No activa para cerrar el brief formal (usa wf-design-intake) ni para generar el sistema visual (usa wf-design-system)."
 argument-hint: "<feature_spec.md> [--prd <prd.md>] [--output <path>] [--mode interactive|auto]"
 effort: high

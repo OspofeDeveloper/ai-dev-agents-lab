@@ -1,6 +1,6 @@
 ---
 name: kb-tasks-method
-description: Procedimiento operativo compartido de la fase tasks SDD — los pasos de descomponer un Plan validado en un _tasks.md, stack-agnósticos. Es el núcleo metodológico que cargan las variantes genérica y de overlay de task-generator; cada una solo aporta su capa de especialización de stack sobre los hooks marcados aquí.
+description: Procedimiento operativo compartido de la fase tasks SDD — los pasos stack-agnósticos para descomponer un Plan validado en un _tasks.md. Núcleo metodológico que cargan las variantes genérica y de overlay de task-generator; cada una aporta solo su especialización de stack sobre los hooks marcados.
 effort: low
 user-invocable: false
 allowed-tools: [Read]

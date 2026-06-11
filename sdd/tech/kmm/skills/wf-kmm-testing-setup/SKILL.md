@@ -1,6 +1,6 @@
 ---
 name: wf-kmm-testing-setup
-description: "Configura la infraestructura de testing en un proyecto KMM: dependencias Gradle por tipo de test (unit, integration, screenshot), source sets commonTest/androidTest/iosTest, y directorio commonTest/fakes/. Delega a kmm-platform-integrator."
+description: "Configura la infraestructura de testing en un proyecto KMM: dependencias Gradle por tipo de test (unit, integration, screenshot), source sets commonTest/androidTest/iosTest y directorio commonTest/fakes/."
 when_to_use: "Activar con frases como 'configura testing en el proyecto', 'añade soporte de tests', 'setup de infraestructura de testing KMM'."
 argument-hint: "[unit|integration|screenshot|all] [--modules <lista_módulos>]"
 effort: medium

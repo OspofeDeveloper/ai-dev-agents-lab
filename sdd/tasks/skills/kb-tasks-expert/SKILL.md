@@ -1,6 +1,6 @@
 ---
 name: kb-tasks-expert
-description: Reglas tech-neutral para descomponer Planes técnicos en Tasks atómicas delegables a un owner claro: formato obligatorio de task, granularidad, orden canónico por dependencias, criterios de asignación de owner por dominio de ejecución (agentes del stack si hay overlay, u orquestador en modo agnóstico) y definición de done por task. El overlay de stack especializa la regla de owners mediante una variante con el mismo nombre. No cubre la generación del Plan (kb-plan-expert) ni la validación de Specs (kb-spec-expert).
+description: Reglas tech-neutral para descomponer Planes técnicos en Tasks atómicas con owner claro: formato obligatorio, granularidad, orden canónico por dependencias, asignación de owner por dominio (agentes del stack u orquestador agnóstico) y definición de done. No cubre la generación del Plan (kb-plan-expert) ni la validación de Specs (kb-spec-expert).
 effort: low
 allowed-tools: [Read]
 user-invocable: false

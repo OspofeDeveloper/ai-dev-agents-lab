@@ -1,7 +1,6 @@
 ---
 name: kb-kmm-auth-oauth-keycloak
 description: "Base de conocimiento de OAuth con Keycloak en proyectos KMM: endpoints de token, parámetros requeridos, grant types, payloads form-urlencoded y configuración por entorno."
-argument-hint: ""
 effort: low
 allowed-tools: [Read]
 user-invocable: false

@@ -1,6 +1,6 @@
 ---
 name: wf-spec-features-first
-description: "Orquestador completo del flujo features-first. Ejecuta discover para identificar features del PRD y luego lanza fast-track en paralelo por feature (o solo para un subset con --features). Introduce guardrails: no continua con gaps criticos abiertos, no deriva alcance expansivo del analysis, y en PRDs grandes exige confirmacion antes de full-run. Ejecuta conflict check y readiness al final."
+description: "Orquestador del flujo features-first: ejecuta discover sobre el PRD y lanza fast-track en paralelo por feature (todas o un subset con --features), con guardrails de gaps criticos y alcance, y cierra con conflict check y readiness."
 when_to_use: "Activa en frases como 'genera specs por feature del PRD', 'flujo features-first completo', 'specs en paralelo del PRD', 'genera todas las features del PRD', 'genera specs de la fase 1', 'genera specs de estas features', 'features-first completo'."
 argument-hint: "<prd_archivo.md> [--features F-001,F-002,...] [--light|--standard] [--allow-open-critical-gaps] [--allow-derived-scope-from-analysis] [--all-features] [--skip-conflict] [--skip-readiness]"
 effort: high

@@ -6,7 +6,7 @@ Estado declarado sin decisiones visuales concretas = estado vacío (no cuenta). 
 
 ---
 
-## 1. Estructura canónica (kb-design-expert Regla 6)
+## 1. Estructura canónica (kb-design-system-contract Regla 2)
 
 - Orden de secciones correcto (Overview → Visual Personality → Colors → Typography → Layout → Elevation → Shapes → Components → Do's and Don'ts; secciones custom en posiciones recomendadas)
 - Token types válidos (sin `fontVariantNumeric`; `fontFeature: "tnum"` aceptado)
@@ -14,7 +14,7 @@ Estado declarado sin decisiones visuales concretas = estado vacío (no cuenta). 
 
 ---
 
-## 2. Visual Personality completo (kb-design-expert Regla 11)
+## 2. Visual Personality completo (kb-design-system-contract Regla 3)
 
 - Frontmatter `visual_personality` con todos los campos: `style_family`, `density`, `depth`, `typography_mode`, `color_energy`, `motion_level`, `adjectives`, `anti_patterns`
 - Sección markdown con 5-7 adjetivos de marca con implicación concreta en UI
@@ -23,7 +23,7 @@ Estado declarado sin decisiones visuales concretas = estado vacío (no cuenta). 
 
 ---
 
-## 3. Reference Apps (kb-design-expert Regla 12)
+## 3. Reference Apps (kb-design-system-contract Regla 4)
 
 - 3-5 apps reales del mercado con aspecto concreto a tomar (no solo nombre) y justificación de relevancia para este producto
 - O bien sección marcada `[DESIGN_GAP: investigar apps de referencia en la categoría <X>]`
@@ -75,7 +75,7 @@ Verificar que ninguno de estos anti-patrones de kb-design-style-taxonomy Regla 7
 
 ---
 
-## 8. Estados completos de componente (kb-design-expert Regla 16)
+## 8. Estados completos de componente (kb-design-system-contract Regla 7)
 
 Para cada componente interactivo del frontmatter `components:`:
 - Interactivos (button, link, tab, toggle, checkbox, radio, switch): `default`, `focus-visible`, `active`, `disabled`, `loading` si async, `selected` si aplica. `hover` solo si target_platforms incluye Web/desktop.
@@ -84,11 +84,11 @@ Para cada componente interactivo del frontmatter `components:`:
 
 Estados omitidos sin `# N/A: <razón>` → `[ALTO]`. Cada estado debe tener decisiones visuales concretas.
 
-→ Checklist detallado por componente: `${CLAUDE_SKILL_DIR}/../kb-design-expert/references/component_anatomy_checklist.md`
+→ Checklist detallado por componente: `${CLAUDE_SKILL_DIR}/../kb-design-system-contract/references/component_anatomy_checklist.md`
 
 ---
 
-## 9. Type scale completa (kb-design-expert Regla 17)
+## 9. Type scale completa (kb-design-system-contract Regla 8)
 
 - `typography` declara al menos: `display`, `h1`, `h2`, `h3`, `body`, `body-sm`, `label`, `caption`. `code` si aplica.
 - Cada rol tiene `fontFamily`, `fontSize`, `fontWeight`, `lineHeight`. `letterSpacing` recomendado en displays y labels.
@@ -96,7 +96,7 @@ Estados omitidos sin `# N/A: <razón>` → `[ALTO]`. Cada estado debe tener deci
 
 ---
 
-## 10. Color modes (kb-design-expert Regla 18)
+## 10. Color modes (kb-design-system-contract Regla 9)
 
 - `colors` declara `light` y `dark` como mínimo. `high-contrast` opcional según `accessibility_target`
 - Cada token en `light` tiene equivalente en `dark`. Si falta alguno → `[CRITICO]`
@@ -105,7 +105,7 @@ Estados omitidos sin `# N/A: <razón>` → `[ALTO]`. Cada estado debe tener deci
 
 ---
 
-## 11. Estados de vista en `*_views.md` (kb-design-expert Regla 19)
+## 11. Estados de vista en `*_views.md` (kb-design-feature-artifacts Regla 4)
 
 Solo aplica si se pasa `--views <path>`.
 - Cada vista declara: `default`, `loading`, `empty`, `error`. `partial` y `success` si aplican.
@@ -133,7 +133,7 @@ Solo aplica si se pasa `--views <path>`.
 
 ---
 
-## 14. Voice & microcopy (kb-design-voice + kb-design-expert Regla 20)
+## 14. Voice & microcopy (kb-design-voice + kb-design-feature-artifacts Regla 5)
 
 - Sección `## Voice & Microcopy` con los 4 ejes: `formality`, `expertise`, `warmth`, `playfulness`
 - Glosario de 5-15 términos clave del dominio del producto
@@ -142,7 +142,7 @@ Solo aplica si se pasa `--views <path>`.
 
 ---
 
-## 15. Formularios (kb-design-forms + kb-design-expert Regla 21)
+## 15. Formularios (kb-design-forms + kb-design-feature-artifacts Regla 6)
 
 Si el producto declara componentes de form (`input-text`, `input-textarea`, `select`, `date-picker`, `file-upload`, `form-actions`):
 - Cada uno tiene los estados aplicables del check 8
@@ -160,7 +160,7 @@ Si el producto declara componentes de form (`input-text`, `input-textarea`, `sel
 
 ---
 
-## 17. Versionado semver (kb-design-expert Regla 22)
+## 17. Versionado semver (kb-design-governance Regla 3)
 
 - Frontmatter `version: MAJOR.MINOR.PATCH` presente
 - Versión coherente con el último entry de `## Changelog`
@@ -209,7 +209,7 @@ Modo `--lenient`:
 
 ```
 [ALTO] El componente `button-primary` no declara estado `loading`.
-  Regla: kb-design-expert Regla 16 (estados de componente).
+  Regla: kb-design-system-contract Regla 7 (estados de componente).
   Checklist: component_anatomy_checklist.md > "button-primary".
   Por qué importa: un botón async sin loading permite doble click.
   Cómo arreglarlo: añade components.button-primary.loading con cambio visual.

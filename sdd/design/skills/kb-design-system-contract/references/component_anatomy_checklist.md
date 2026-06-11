@@ -12,6 +12,10 @@ Checklist operativo para validar que cada componente declarado en `DESIGN.md` o 
 2. **Omisión intencional** debe documentarse con `# N/A: <razón>` en el token del componente.
 3. **`hover`** solo aplica si `target_platforms` incluye `web` o `desktop`. En mobile-only, omitirlo es correcto (no requiere `# N/A`).
 4. Cada estado debe definir al mínimo: `backgroundColor` o `textColor` o `border` según qué cambia visualmente.
+5. Componente interactivo sin `focus-visible` (o `focus`) declarado = `[CRITICO]` por a11y.
+6. Componente con acción async sin `loading` declarado = `[ALTO]`.
+7. Input sin `invalid` declarado = `[ALTO]`.
+8. Modal/dialog/sheet/drawer sin `dismissable` declarado (cómo se cierra: gesto, X, tap-outside, `esc`) = `[CRITICO]` por a11y.
 
 ---
 
@@ -30,9 +34,11 @@ Aplica a: `button`, `link`, `tab`, `toggle`, `checkbox`, `radio`, `switch`, `ico
 | `selected` | Si admite multi-estado o estado persistente | `backgroundColor` o `border` diferenciado + `textColor` si cambia |
 
 **Notas:**
-- `toggle` y `switch` requieren además `checked` / `unchecked` como subestados de `default`.
+- `toggle` y `switch` requieren además `checked` / `unchecked` (o `on` / `off`) como subestados de `default`, y `loading` si el cambio es async.
 - `checkbox` y `radio` requieren `checked`, `unchecked`, e `indeterminate` (si aplica multi-select).
 - `tab` activo usa `selected`; tab inactivo es `default`.
+- `link` añade `visited` (opcional, solo si el producto usa la convención visited).
+- Parte obligatoria de los `button`: label (texto del CTA), icono opcional (left o right, no centrado en el texto) y estado de espera visible (spinner o label cambiada) cuando hay `loading`.
 
 ---
 
@@ -52,8 +58,10 @@ Aplica a: `text-input`, `textarea`, `select`, `date-picker`, `time-picker`, `fil
 | `loading` | Si valida async | Spinner inline o borde animado mientras valida |
 
 **Notas:**
-- `select` y `date-picker` requieren también el estado `open` (dropdown/popover visible).
-- `file-picker` requiere `uploading` (progreso visible) y `uploaded` (nombre de archivo + opción de eliminar).
+- `select` y `date-picker` requieren también el estado `open`/`expanded` (dropdown/popover/calendario visible).
+- `text-input`/`search-bar`: partes obligatorias según el tipo — label encima, field, helper text opcional, error message (sustituye al helper en `invalid`), icono prefix/suffix opcional, character counter (si aplica), visibility toggle (solo password), clear button (solo search con valor).
+- `textarea` hereda los estados de `text-input` y declara `auto-grow` si aplica.
+- `file-picker`/`file-upload`: estados `default` (drop zone vacía), `hover` (Web, durante drag-over), `uploading` (progreso por archivo, no global), `success` (archivo subido) y `error` (por archivo, no global). Partes obligatorias: drop zone con copy claro, lista de archivos con preview/icono + nombre + tamaño + acción quitar, y progress bar por archivo.
 
 ---
 
@@ -100,7 +108,9 @@ Aplica a: `modal`, `sheet` (bottom/side), `drawer`, `page`, `dialog`.
 | `default` | Siempre | `backgroundColor`, `rounded` (si aplica), `shadow` o overlay |
 | `exiting` | Siempre | Animación de salida (opuesto a entering o diferente) |
 
-**Nota:** Los estados de datos de la pantalla (`loading`, `empty`, `error`, `success`) pertenecen a `*_views.md`, no aquí.
+**Notas:**
+- Los estados de datos de la pantalla (`loading`, `empty`, `error`, `success`) pertenecen a `*_views.md`, no aquí.
+- `modal`/`dialog`/`sheet`/`drawer` deben declarar `dismissable`: cómo se cierra (gesto, X, tap-outside, `esc`). Omitirlo es `[CRITICO]` por a11y (regla transversal 8). Partes habituales: header (título + close opcional), body, footer (acciones primaria/secundaria) y backdrop/scrim.
 
 ---
 
@@ -113,6 +123,28 @@ Aplica a: `bottom-nav`, `top-app-bar`, `tab-bar`, `side-nav`, `breadcrumb`.
 | `default` | Siempre | `backgroundColor`, `textColor`, altura, iconografía |
 | `active-item` | Siempre | Color de acento en el ítem activo; diferenciado del resto |
 | `scrolled` (si aplica) | Solo si cambia al hacer scroll | `shadow` o `backgroundColor` diferenciado |
+
+**Notas:**
+- `bottom-nav` (mobile): 3-5 destinos con icono + label (o solo icono si la app es muy minimal); badge opcional por destino.
+- `top-app-bar`: variantes con back / con title / con actions; partes leading action (back, menu), title, trailing actions, subtitle opcional.
+- `side-nav` (web/tablet): por ítem `default`, `hover`, `active`, `focus-visible`; soporta `collapsed` vs `expanded` si aplica.
+- `breadcrumb`: por segmento `default`, `hover`, `active` (último) y `truncated` (si la ruta es larga).
+
+---
+
+## Feedback y status
+
+Aplica a: `toast`, `snackbar`, `progress-bar`, `spinner`, `empty-state`, `skeleton`, `badge` (de estado).
+
+| Componente | Estados / variantes obligatorias | Partes mínimas |
+|---|---|---|
+| `toast` / `snackbar` | `entering`, `visible`, `exiting`; variantes por severidad (info, success, warning, error); `interactive` (con acción) vs `informational` | icono semántico, mensaje, acción opcional, close opcional, duración declarada |
+| `progress-bar` / `spinner` | `determinate` (con porcentaje) vs `indeterminate`; `default` vs `success` vs `error` si refleja resultado | label opcional |
+| `empty-state` | variante con acción (CTA) y variante sin acción (informativa) | icono o ilustración (hero size), título, cuerpo opcional, CTA opcional |
+| `skeleton` | shimmer cycle declarado (ver Regla 7 de `kb-design-motion-expert`) | formas que aproximan el contenido real, no rectángulos genéricos |
+| `badge` / `pill` (estado) | `default` + variantes por semántica (neutral, info, success, warning, error); size variants si aplica | — |
+
+**Nota:** los estados de datos a nivel de pantalla (`loading`/`empty`/`error`/`success` de una vista) viven en `*_views.md`; aquí se trata el componente reutilizable de feedback, no la vista.
 
 ---
 

@@ -1,7 +1,6 @@
 ---
 name: kb-sdd-skill-architecture
-description: "Reglas transversales para decidir cuando crear una kb, workflow o agente dentro de sdd, y como repartir responsabilidades entre CLAUDE.md, README y skills sin romper SSoT ni SRP. Incluye la arquitectura de tech targets (kmm, android, flutter) y su relacion con las fases del pipeline."
-argument-hint: "[pregunta o tarea sobre diseño de skills/agentes]"
+description: "Reglas transversales para decidir cuando crear una kb, workflow o agente en sdd y repartir responsabilidades entre CLAUDE.md, README y skills sin romper SSoT ni SRP. Incluye arquitectura de tech targets (kmm, android, flutter) y su relacion con las fases del pipeline."
 effort: low
 allowed-tools: [Read]
 user-invocable: false

@@ -1,7 +1,6 @@
 ---
 name: kb-gap-conventions
-description: Convenciones SSoT para el sistema de gaps y marcadores del pipeline SDD. Define formatos de ID, severidades, marcador de pendiente y reglas de bloqueo. Consultar en todos los modos del agente que generen, formateen o verifiquen gaps.
-argument-hint: "[gap | severidad | convención]"
+description: "Convenciones SSoT del sistema de gaps y marcadores del pipeline SDD: formatos de ID, severidades, marcador de pendiente y reglas de bloqueo."
 effort: low
 allowed-tools: [Read]
 user-invocable: false

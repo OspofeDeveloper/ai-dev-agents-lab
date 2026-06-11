@@ -1,7 +1,6 @@
 ---
 name: kb-kmm-clean-architecture
-description: "Base de conocimiento de la arquitectura por capas en proyectos KMM: roles de app/core/features, dependencias permitidas, composición, navegación, agregación entre features y reglas para compartir datos sin acoplamiento."
-argument-hint: ""
+description: "Base de conocimiento de la arquitectura por capas en proyectos KMM: roles de app/core/features, dependencias permitidas, composición, navegación, agregación entre features y compartir datos sin acoplamiento."
 effort: low
 allowed-tools: [Read]
 user-invocable: false

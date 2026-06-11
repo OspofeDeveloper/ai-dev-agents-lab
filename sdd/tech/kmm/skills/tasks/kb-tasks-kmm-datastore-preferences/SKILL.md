@@ -1,7 +1,6 @@
 ---
 name: kb-tasks-kmm-datastore-preferences
 description: "Base de conocimiento para usar Preferences DataStore en proyectos KMM: factory compartida, resolución de path por plataforma, ownership de keys y adapters sobre storage local."
-argument-hint: "[sin argumentos]"
 effort: low
 allowed-tools: [Read]
 user-invocable: false

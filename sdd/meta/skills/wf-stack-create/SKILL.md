@@ -1,6 +1,6 @@
 ---
 name: wf-stack-create
-description: "Orquestador SDD para crear el esqueleto de un nuevo overlay de stack (tech/<stack>) conforme a kb-sdd-stack-overlay-contract: estructura de directorios, install.sh, wf-<stack>-init con modos detect/configure, CLAUDE.md del overlay y, opcionalmente, variantes de agentes y KBs de plan/tasks. Delega la redaccion de contenido al agente sdd-author."
+description: "Crea el esqueleto de un nuevo overlay de stack (tech/<stack>) conforme a kb-sdd-stack-overlay-contract: directorios, install.sh, wf-<stack>-init (detect/configure), CLAUDE.md y opcionalmente variantes de agentes y KBs de plan/tasks. Delega la redaccion a sdd-author."
 when_to_use: "Activa con frases como 'crea el overlay de android', 'añade soporte para next', 'nuevo stack flutter', 'scaffolding del tech target fastapi', 'quiero que SDD soporte el stack X'. No activa para crear skills sueltas (usa wf-skill-create), ni agentes sueltos (usa wf-agent-create), ni para inicializar un proyecto con un stack ya soportado (usa wf-project-init)."
 argument-hint: "<stack> [--type <app|web|backend>] [--detect '<archivos/patrones que delatan el stack>'] [--with-agents] [--description <desc>]"
 effort: medium

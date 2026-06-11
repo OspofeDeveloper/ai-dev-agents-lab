@@ -1,7 +1,6 @@
 ---
 name: kb-design-style-decision-tree
 description: SSoT de la UX de navegacion para cerrar style_family y las variables visuales del brief — la secuencia ordenada de preguntas, las ramas de deteccion de conflicto y los fallbacks de guia junior. NO define los valores contexto→variable (esos los dictamina kb-design-style-taxonomy); este arbol solo ordena las preguntas que llevan a ellos. Pensado para diseñadores junior. Cargada por `wf-design-intake` en modo guided.
-argument-hint: "(cargada automaticamente por wf-design-intake)"
 effort: low
 allowed-tools: [Read]
 user-invocable: false
@@ -152,7 +151,7 @@ En modo `hybrid`:
 
 En modo `auto`:
 1. Aplica el arbol sin preguntar.
-2. Marca cada variable con `source: inferred` (segun trazabilidad de Regla 6 de `wf-design-intake`).
+2. Marca cada variable con `source: inferred` (las variables operativas que el brief cierra son SSoT de `kb-design-brief` Regla 5).
 3. Si encuentra conflicto P1a/P2a/P3a/Q4, prefiere la opcion conservadora y documenta razon.
 
 ## Regla 11: Anti-patrones del arbol

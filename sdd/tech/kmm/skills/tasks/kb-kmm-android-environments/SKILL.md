@@ -1,7 +1,6 @@
 ---
 name: kb-kmm-android-environments
 description: "Base de conocimiento de implementación Android del sistema multi-brand/multi-environment en KMM: product flavors, plugin BuildConfig (gmazzo), resolución brand/env, ficheros .properties y generación del contrato compartido."
-argument-hint: ""
 effort: low
 allowed-tools: [Read]
 user-invocable: false

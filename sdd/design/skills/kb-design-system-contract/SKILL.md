@@ -1,6 +1,6 @@
 ---
 name: kb-design-system-contract
-description: Contrato normativo del DESIGN.md como artefacto de producto del pipeline SDD. Define el formato (Google design.md), el frontmatter YAML obligatorio (visual_personality, color modes light/dark, type scale completa, iconography, motion, voice, reference apps), las secciones canonicas en orden estable, el quoting obligatorio en components y la exigencia de declarar todos los estados aplicables por componente, y los campos de procedencia del frontmatter (origin generated/generated-provisional/extracted, direction_confidence). SSoT del sistema visual de producto. Extraida de kb-design-expert (Reglas 2, 6, 11, 12, 13, 14, 16, 17, 18).
+description: Contrato normativo y SSoT del DESIGN.md como artefacto de producto SDD: formato Google design.md, frontmatter YAML obligatorio (visual_personality, color light/dark, type scale, iconography, motion, voice, reference apps, procedencia origin/direction_confidence), secciones canonicas en orden estable, quoting en components y estados aplicables por componente.
 effort: low
 allowed-tools: [Read]
 user-invocable: false
@@ -10,7 +10,7 @@ user-invocable: false
 
 Esta KB es la SSoT del contrato de `DESIGN.md`: que es como artefacto, que formato sigue, que campos del frontmatter son obligatorios, en que orden van las secciones y que estados debe declarar cada componente.
 
-Las reglas de proceso (trazabilidad a journeys/CAs, descomposicion en `*_flows.md` / `*_views.md` / `*_ui_prompt.md`, consumibilidad por plan, evolucion via delta vs regeneracion) viven en `kb-design-expert`. Las reglas de a11y aplicadas al producto viven en `kb-a11y-expert`. Esta KB se limita al contrato del artefacto.
+Las reglas de proceso de los artefactos de feature (trazabilidad a journeys/CAs, descomposicion en `*_flows.md` / `*_views.md` / `*_ui_prompt.md`) viven en `kb-design-feature-artifacts`. La consumibilidad por plan y la evolucion (delta vs regeneracion) viven en `kb-design-governance`. Las reglas de a11y aplicadas al producto viven en `kb-a11y-expert`. Esta KB se limita al contrato del artefacto.
 
 ## Regla 1: DESIGN.md es un artefacto de producto, no de feature
 
@@ -29,6 +29,8 @@ No incluyas:
 - copy especifico de una HU concreta
 
 Las excepciones deben ser explicitas: una feature puede anadir notas locales, pero no puede crear una segunda fuente normativa del sistema visual.
+
+`DESIGN_GAP` es el marcador canonico de esta KB para todo hueco del contrato que falta cerrar (campo obligatorio sin definir, equivalente de color ausente, Reference App no inferible). Su SSoT vive aqui; las reglas R4, R6 y R9 lo usan y el resto de la fase lo hereda.
 
 ## Regla 2: Formato Google design.md con orden estable de secciones
 
@@ -157,7 +159,7 @@ Estados base por tipo:
 - **Inputs (text-input, textarea, select, date-picker, file-picker)**: `default`, `focus`, `filled`, `valid`, `invalid`, `disabled`, `read-only`. Adicionales: `loading` si valida async.
 - **Contenedores con estado (card, list-item, accordion)**: `default`, `hover` (si interactivo), `selected`, `disabled`, `loading`, `expanded`/`collapsed` (si aplica).
 - **Indicadores (badge, tag, chip)**: `default`, `selected`, `removable` (si aplica), `disabled`.
-- **Vistas grandes (page, sheet, modal, drawer)**: `entering`, `default`, `exiting`. Para pantallas con datos, los estados de vista (loading/empty/error/success) viven en `*_views.md` y se rigen por `kb-design-expert` Regla 19.
+- **Vistas grandes (page, sheet, modal, drawer)**: `entering`, `default`, `exiting`. Para pantallas con datos, los estados de vista (loading/empty/error/success) viven en `*_views.md` y se rigen por `kb-design-feature-artifacts` Regla 4.
 
 Reglas comunes:
 
@@ -165,7 +167,7 @@ Reglas comunes:
 2. Cada estado declarado debe tener decisiones visuales concretas (color, opacity, border, motion). Estado sin decision es decoracion vacia.
 3. La omision intencional de un estado (`disabled` no aplica porque el boton siempre esta activo en esa vista) debe documentarse con `# N/A: <razon>`.
 
-→ Checklist detallado por componente: `${CLAUDE_SKILL_DIR}/references/component_anatomy_checklist.md` (cargado por `kb-design-expert`).
+→ Checklist detallado por componente: `${CLAUDE_SKILL_DIR}/references/component_anatomy_checklist.md` (SSoT unica del checklist; lo cargan esta KB y `wf-design-validate`).
 
 Anti-patron: declarar solo `default` y dejar que dev "improvise" los demas. El producto saldra inconsistente.
 

@@ -1,7 +1,6 @@
 ---
 name: kb-traceability-rules
-description: Reglas de trazabilidad entre PRD, discovery, specs, plan y tasks en el ecosistema SDD. Define metadata mínima, estados de sincronización y criterios para detectar deriva entre artefactos. Úsalo cuando haya que decidir si un spec o plan está alineado con la versión actual del PRD o cuando se diseñen workflows de sync y change management.
-argument-hint: "[artefacto | tema_a_consultar]"
+description: Reglas de trazabilidad entre PRD, discovery, specs, plan y tasks en el ecosistema SDD. Define metadata mínima, estados de sincronización y criterios para detectar deriva entre artefactos derivados y la versión actual del PRD.
 effort: low
 allowed-tools: [Read]
 user-invocable: false
@@ -143,3 +142,18 @@ La trazabilidad funcional encadena `CA → TC → task → commit (T-00X) → ve
 - **Consumidor**: `sdd-project-status.py` lee el release y lo muestra en la fila de la feature cerrada; una feature `APTO` sin release aparece como cierre pendiente de release (`/wf-release`).
 - **Granularidad por feature**: cada feature se releasa por su cuenta (continuous delivery). El agregado "qué se entregó" lo da `wf-project-status`, no un ledger separado.
 - El **tagging/versionado de release** es competencia exclusiva de esta regla y `wf-release`; `kb-delivery-discipline` (empaquetado de commits/PRs) lo excluye y apunta aquí.
+
+## Regla 12: Los IDs de CA y HU son inmutables — tombstone, nunca renumeración
+
+Esta regla es la **SSoT** de la estabilidad de identificadores en la cadena de trazabilidad. Los IDs de CA (`CA-XXX`) y de HU **nunca se reutilizan ni se renumeran**. Son la coordenada estable a la que apuntan las tasks (`Spec CA`, Reglas 6 y 9), los casos de prueba (`TC → CA`), los gates de sellado y los commits (`T-00X [CA-XXX]`, Regla 11). Renumerar para "cerrar huecos" desplaza esos IDs y corrompe silenciosamente toda referencia downstream: una task o un TC pasan a apuntar a un CA distinto del que verificaban.
+
+- **Eliminación = tombstone, no borrado con compactación**: un CA o HU eliminado se marca conservando su número y dejando el hueco en la secuencia:
+
+  ```
+  CA-003 [ELIMINADO en v1.4: <razón>]
+  ```
+
+  El siguiente CA nuevo toma el **siguiente número libre nunca usado**, no el hueco del tombstone. La secuencia puede tener huecos; eso es correcto y esperado.
+- **Consistente con CR-XXX y E-00X**: los cambios de producto (`CR-XXX`, gobernanza de PRD) y las enmiendas (`E-00X`, Regla 9) ya se tratan así — numeración monótona, sin reutilización. Los CA y HU siguen el mismo principio: el identificador es permanente una vez asignado.
+- **Renumeración de cara a una nueva feature (decompose)**: cuando una feature spec **nace** renumerando sus CAs desde `CA-001` a partir de un spec monolítico (decomposición inicial, antes de que existan tasks/TCs que apunten a ella), eso **no** viola esta regla: no hay referencias downstream que romper porque la feature aún no las tiene. La inmutabilidad rige desde que el spec entra en el pipeline (existen derivados que lo referencian), no durante su construcción inicial.
+- **Único momento en que un CA cambia de texto sin cambiar de ID**: la aclaración quirúrgica de `wf-spec-amend` (Regla 9) sustituye el texto del CA preservando su número. Eso es lo correcto; renumerar sería lo prohibido.

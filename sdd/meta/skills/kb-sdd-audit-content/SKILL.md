@@ -1,7 +1,6 @@
 ---
 name: kb-sdd-audit-content
-description: "Criterios normativos para detectar problemas de calidad de contenido en skills y agentes del ecosistema SDD: violaciones de SSoT (regla duplicada en dos sitios), violaciones de SRP (pieza demasiado ancha), contradicciones entre skills y inconsistencias de criterios entre fases. Define como detectar cada tipo de hallazgo y los niveles de severidad. No incluye chequeos estructurales (ver kb-sdd-audit-structural) ni las reglas de arquitectura en si mismas (ver kb-sdd-skill-architecture)."
-argument-hint: "[pregunta sobre calidad de contenido de skills o agentes]"
+description: "Criterios para detectar problemas de calidad de contenido en skills y agentes SDD: violaciones de SSoT, SRP, contradicciones entre skills e inconsistencias de criterios entre fases, con sus niveles de severidad. No cubre chequeos estructurales (kb-sdd-audit-structural) ni las reglas de arquitectura (kb-sdd-skill-architecture)."
 effort: low
 allowed-tools: [Read]
 user-invocable: false

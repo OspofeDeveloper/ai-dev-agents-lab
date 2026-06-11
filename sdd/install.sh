@@ -182,10 +182,11 @@ if has_phase "design"; then
 fi
 
 if has_phase "plan"; then
-  # plan necesita kb-spec-expert y las KBs a11y (núcleo + deltas web) como dependencias cross-fase
+  # plan necesita kb-spec-expert, las KBs a11y (núcleo + deltas web) y kb-design-governance (handoff Design→Plan) como dependencias cross-fase
   install_skill "$SCRIPT_DIR/spec/skills/kb-spec-expert"
   install_skill "$SCRIPT_DIR/design/skills/kb-a11y-expert"
   install_skill "$SCRIPT_DIR/design/skills/kb-a11y-web-expert"
+  install_skill "$SCRIPT_DIR/design/skills/kb-design-governance"
 
   for skill_dir in "$SCRIPT_DIR/plan/skills"/*/; do
     install_skill "$skill_dir"

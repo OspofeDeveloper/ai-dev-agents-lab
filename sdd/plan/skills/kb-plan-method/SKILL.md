@@ -1,6 +1,6 @@
 ---
 name: kb-plan-method
-description: Procedimiento operativo compartido de la fase plan SDD — los pasos de generar un Plan (plan-architect) y de auditarlo (plan-auditor), stack-agnósticos. Es el núcleo metodológico que cargan las variantes genérica y de overlay de los agentes; cada una solo aporta su capa de especialización de stack sobre los hooks marcados aquí.
+description: Procedimiento operativo compartido de la fase plan SDD — los pasos stack-agnósticos de generar un Plan (plan-architect) y de auditarlo (plan-auditor). Núcleo metodológico que cargan las variantes genérica y de overlay de los agentes; cada una añade su especialización de stack sobre los hooks marcados.
 effort: low
 user-invocable: false
 allowed-tools: [Read]

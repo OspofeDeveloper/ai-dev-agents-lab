@@ -280,7 +280,7 @@ Explica como usar la paleta, donde reservar el color acento y que colores evitar
 
 ## Color Modes
 
-Politica de modos de color (Regla 18 de `kb-design-expert`):
+Politica de modos de color (Regla 9 de `kb-design-system-contract`):
 
 - **Modos soportados**: light + dark obligatorios; high-contrast opcional segun `accessibility_target`.
 - **Seleccion del modo**: <system | manual | fija>. Si admite toggle, donde vive el control.
@@ -314,7 +314,7 @@ Explica el caracter de bordes, radios y geometria general de la identidad. Defin
 
 ## Components
 
-Cada componente declara todos los estados aplicables (Regla 16 de `kb-design-expert`). En el frontmatter, cada estado tiene sus decisiones visuales. En esta seccion, explica como se sienten los componentes clave: button, input, card, list-item, modal, toast, navigation. Incluye el tratamiento de estados recurrentes:
+Cada componente declara todos los estados aplicables (Regla 7 de `kb-design-system-contract`). En el frontmatter, cada estado tiene sus decisiones visuales. En esta seccion, explica como se sienten los componentes clave: button, input, card, list-item, modal, toast, navigation. Incluye el tratamiento de estados recurrentes:
 
 - **Interactivos**: default, hover (web/desktop), focus-visible, active, disabled, loading, selected.
 - **Inputs**: default, focus, filled, valid, invalid, disabled, read-only.
@@ -410,7 +410,7 @@ Sistema de voz del producto segun `kb-design-voice`. Debe alinear tono de interf
 
 ## Changelog
 
-Registro de cambios al sistema visual (Regla 15 de `kb-design-expert`):
+Registro de cambios al sistema visual (Regla 2 de `kb-design-governance`):
 
 - `[2026-MM-DD]` `[feature: F-001]` <descripcion del cambio>
 ```

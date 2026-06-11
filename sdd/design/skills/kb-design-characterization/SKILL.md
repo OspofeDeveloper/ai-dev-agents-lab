@@ -1,6 +1,6 @@
 ---
 name: kb-design-characterization
-description: "Reglas para extraer un DESIGN.md desde una UI ya en produccion (CSS/tokens/componentes/capturas): evidencia obligatoria por token/decision visual, jerarquia de evidencia, marcador [INFERIDO], documentar inconsistencias reales sin promediarlas, header origin: extracted. No es el contrato del DESIGN.md (ver kb-design-system-contract) ni el marco de la fase design (ver kb-design-expert)."
+description: "Metodologia para extraer un DESIGN.md desde una UI ya en produccion (CSS/tokens/componentes/capturas): evidencia obligatoria por token, jerarquia de evidencia, marcador [INFERIDO], inconsistencias reales sin promediar, origin: extracted. No es el contrato (kb-design-system-contract) ni el marco de fase (kb-design-expert)."
 effort: medium
 allowed-tools: [Read]
 user-invocable: false
@@ -12,8 +12,8 @@ Un `DESIGN.md` **extraido** describe **como se ve hoy la UI en produccion, verif
 
 Esta KB es el espejo en la fase `design` de `kb-spec-characterization` (specs de caracterizacion brownfield). Cubre **solo la metodologia de extraccion**. No redefine:
 
-- el **contrato** del `DESIGN.md` (frontmatter YAML, secciones canonicas, type scale, color modes, quoting, estados de componente) → `kb-design-system-contract`. El DESIGN.md extraido conforma a ese contrato; esta KB solo añade los campos de procedencia.
-- el **marco** de la fase (separacion producto/feature, orden del pipeline) → `kb-design-expert`. De ahi se hereda el marcador `DESIGN_GAP`.
+- el **contrato** del `DESIGN.md` (frontmatter YAML, secciones canonicas, type scale, color modes, quoting, estados de componente) → `kb-design-system-contract`. El DESIGN.md extraido conforma a ese contrato; esta KB solo añade los campos de procedencia. De ahi se hereda tambien el marcador `DESIGN_GAP`.
+- el **marco** de la fase (separacion producto/feature, orden del pipeline) → `kb-design-expert`.
 - la **gobernanza** (versionado semver, extender vs mutar) → `kb-design-governance`.
 
 ## Regla de oro
@@ -53,7 +53,7 @@ o, en una decision de seccion completa:
 
 No sobre-afirmes un enforcement mecanico que no existe. La señal es informativa: el `[INFERIDO]` es una invitacion a aportar contexto humano, no un bloqueo.
 
-Para huecos donde falta evidencia y se necesita aporte humano que la herramienta no puede deducir, usa **`DESIGN_GAP`** (marcador ya existente de la fase, SSoT en `kb-design-expert`): p. ej. Reference Apps no inferibles de la UI, o un `visual_personality` que el CSS no permite caracterizar.
+Para huecos donde falta evidencia y se necesita aporte humano que la herramienta no puede deducir, usa **`DESIGN_GAP`** (marcador ya existente de la fase, SSoT en `kb-design-system-contract`): p. ej. Reference Apps no inferibles de la UI, o un `visual_personality` que el CSS no permite caracterizar.
 
 ## Header obligatorio del DESIGN.md extraido
 

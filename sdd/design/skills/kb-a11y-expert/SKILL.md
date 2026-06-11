@@ -1,7 +1,6 @@
 ---
 name: kb-a11y-expert
-description: Base de conocimiento de accesibilidad mobile. Mapea WCAG 2.2 a contexto mobile y define las reglas a11y aplicables a las fases design y plan del SDD. La cargan `design-architect` y `plan-architect` en su contexto via frontmatter `skills:`; no se invoca directamente.
-argument-hint: "(cargada automaticamente por agentes de design y plan)"
+description: Accesibilidad mobile en SDD. Mapea WCAG 2.2 a contexto mobile y define las reglas a11y aplicables a las fases design y plan. La cargan design-architect y plan-architect via frontmatter skills.
 effort: low
 allowed-tools: [Read]
 user-invocable: false

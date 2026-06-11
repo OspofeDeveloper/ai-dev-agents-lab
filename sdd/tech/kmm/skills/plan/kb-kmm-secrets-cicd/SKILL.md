@@ -1,6 +1,6 @@
 ---
 name: kb-kmm-secrets-cicd
-description: Mecánica de transporte de secretos en CI/CD para KMM: cómo llevar API keys, client secrets y signing keys desde local y CI hasta Android (BuildConfig) e iOS (xcconfig) sin commitearlos. Materializa la política de config sensible de kb-kmm-environments (Regla 7). Úsalo cuando el plan deba decidir cómo inyectar valores sensibles en el build.
+description: "Mecánica de transporte de secretos en CI/CD para KMM: llevar API keys, client secrets y signing keys desde local y CI hasta Android (BuildConfig) e iOS (xcconfig) sin commitearlos. Materializa la política de config sensible de kb-kmm-environments (Regla 7)."
 allowed-tools: [Read]
 effort: low
 user-invocable: false

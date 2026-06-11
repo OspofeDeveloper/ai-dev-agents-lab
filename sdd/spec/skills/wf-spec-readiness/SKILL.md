@@ -1,6 +1,6 @@
 ---
 name: wf-spec-readiness
-description: "Analiza los artefactos post-spec-generation (specs de feature, READMEs, _features.md, _conflict_report.md) y genera un informe de readiness que indica que features estan listas para plan, cuales estan bloqueadas y por que, y el orden de implementacion recomendado."
+description: "Genera un informe de readiness desde los artefactos post-spec (specs, READMEs, _features.md, _conflict_report.md): que features estan listas para plan, cuales bloqueadas y por que, y el orden de implementacion recomendado."
 when_to_use: "Activa en frases como 'que features estan listas', 'readiness de las features', 'cuales puedo planificar', 'orden de implementacion', 'verifica readiness', 'que falta para planificar'."
 argument-hint: "<path/features/>"
 effort: medium

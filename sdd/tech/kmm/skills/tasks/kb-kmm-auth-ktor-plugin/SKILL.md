@@ -1,7 +1,6 @@
 ---
 name: kb-kmm-auth-ktor-plugin
 description: "Base de conocimiento de autenticación automática implementada con plugins de Ktor en proyectos KMM: dos clientes HTTP, plugin de auth, bypass para endpoints públicos y refresh transparente de tokens."
-argument-hint: ""
 effort: low
 allowed-tools: [Read]
 user-invocable: false

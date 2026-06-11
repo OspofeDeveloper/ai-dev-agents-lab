@@ -1,6 +1,6 @@
 ---
 name: wf-project-init
-description: "Onboarding para inicializar un proyecto SDD. Instala siempre el backbone del pipeline (spec, plan, tasks) y añade prd/design segun la entrevista. El perfil de quien inicializa (desarrollo, producto, diseño, personalizado) decide que preguntas tecnicas se hacen ahora y cuales quedan pendientes. Genera un CLAUDE.md raiz adaptado, registra el estado en .sdd/project-init.json y despacha al workflow init especialista del stack cuando el perfil es desarrollo. Soporta ampliacion incremental sobre un init previo."
+description: "Inicializa o amplia un proyecto SDD: instala siempre el backbone (spec, plan, tasks) y añade prd/design segun el perfil de quien inicializa (desarrollo, producto, diseño, personalizado), que decide que preguntas tecnicas se hacen ahora. Genera el CLAUDE.md raiz, registra el estado en .sdd/project-init.json y despacha al init especialista del stack en perfil desarrollo."
 when_to_use: "Activa con frases como 'inicializa el proyecto', 'arranca el setup tecnico', 'init del proyecto', 'prepara este proyecto para SDD', 'quiero trabajar specs aqui', 'configura este repo para diseño', 'completa la entrevista tecnica del proyecto'. No activa para crear skills o agentes del ecosistema SDD (usa wf-skill-create, wf-agent-create) ni para ejecutar el init concreto de un stack ya conocido (invoca directamente wf-<stack>-init)."
 argument-hint: "[--profile <dev|product|design|custom>] [--type <app|web|backend|other>] [--stack <nombre>] [--name <nombre>] [--sdd-path <path>] [--force]"
 effort: low

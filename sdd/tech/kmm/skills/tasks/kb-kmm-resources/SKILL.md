@@ -1,7 +1,6 @@
 ---
 name: kb-kmm-resources
 description: "Base de conocimiento sobre recursos compartidos en Compose Multiplatform: strings, imágenes, fonts, raw files y localización con compose.resources."
-argument-hint: "tema a consultar (opcional): strings, images, fonts, raw, localization"
 effort: low
 allowed-tools: [Read]
 user-invocable: false

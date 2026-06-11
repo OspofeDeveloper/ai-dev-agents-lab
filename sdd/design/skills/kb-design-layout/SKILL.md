@@ -1,7 +1,6 @@
 ---
 name: kb-design-layout
-description: Base de conocimiento para sistemas de layout y responsive. Define grid base por plataforma, breakpoints, adaptive vs responsive, safe areas, notches, foldables y tablets. Solo se activa cuando `target_platforms` del brief incluye Web o tablet; en mobile single-platform aplica una version reducida.
-argument-hint: "(cargada automaticamente por agentes y workflows de design)"
+description: Sistemas de layout y responsive: grid base por plataforma, breakpoints, adaptive vs responsive, safe areas, notches, foldables y tablets. Intensidad segun target_platforms del brief (version reducida en mobile single-platform).
 effort: low
 allowed-tools: [Read]
 user-invocable: false

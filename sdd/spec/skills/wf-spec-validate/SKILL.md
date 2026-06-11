@@ -4,7 +4,7 @@ description: "Audita un _spec.md ya generado para detectar regresiones de pureza
 when_to_use: "Activa en frases como 'valida el spec', 'comprueba si el spec sigue siendo valido', 'verifica el spec', 'audita el spec'."
 argument-hint: "<archivo_spec.md>"
 effort: high
-allowed-tools: [Read]
+allowed-tools: [Read, Bash]
 context: fork
 agent: sdd-spec-auditor
 ---

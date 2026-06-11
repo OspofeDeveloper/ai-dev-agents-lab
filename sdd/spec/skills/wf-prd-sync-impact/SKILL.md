@@ -1,6 +1,6 @@
 ---
 name: wf-prd-sync-impact
-description: "Analiza el impacto de un PRD actualizado sobre los artefactos SDD ya generados. Compara la version vigente del PRD con analysis, discovery, features, specs, plan y tasks, y produce un informe de sincronizacion con estado por artefacto y siguientes pasos recomendados."
+description: "Analiza el impacto de un PRD actualizado sobre los artefactos SDD ya generados (analysis, discovery, features, specs, plan, tasks) y produce un informe de sincronizacion con estado por artefacto y siguientes pasos."
 when_to_use: "Activa en frases como 'que impacto tiene este cambio de PRD', 'que specs han quedado stale', 'analiza sync PRD → specs', 'que artefactos hay que revisar tras cambiar el PRD'."
 argument-hint: "<prd.md>"
 effort: high

@@ -1,6 +1,6 @@
 ---
 name: wf-design-discover
-description: "Descubre 3-5 apps reales del mercado como referencias de diseno para una feature, mediante research web y validacion interactiva con el usuario. Genera <basename>_design_discovery.md reutilizable por wf-design-system y wf-design-feature-prototype."
+description: "Descubre 3-5 apps reales del mercado como referencias de diseno para una feature, mediante research web y validacion interactiva con el usuario. Genera <basename>_design_discovery.md reutilizable aguas abajo en la fase design."
 when_to_use: "Activa en frases como 'busca apps de referencia', 'explora referentes visuales para esta feature', 'haz research de apps para el sistema visual', 'que apps deberiamos mirar para el design'. No activa para crear DESIGN.md ni flows/views."
 argument-hint: "<feature_spec.md> [--prd <prd.md>] [--brief <DESIGN_BRIEF.md>] [--output <path>] [--mode interactive|auto]"
 effort: high

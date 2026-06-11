@@ -1,7 +1,6 @@
 ---
 name: kb-design-motion-expert
 description: Base de conocimiento operativa para motion y micro-interacciones en mobile. Define escalas de duracion, curvas de easing, motion roles, que se anima y que no, y catalogo de micro-interacciones por componente. Convierte `motion_level` del brief en decisiones concretas sin que el output sea generico.
-argument-hint: "(cargada automaticamente por agentes y workflows de design)"
 effort: low
 allowed-tools: [Read]
 user-invocable: false

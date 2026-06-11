@@ -1,6 +1,6 @@
 ---
 name: wf-design-sync
-description: "Analiza el impacto de un cambio en el sistema visual o en los specs sobre los artefactos de diseño ya derivados. Toma el DESIGN.md vigente y evalúa qué flows, views, ui_prompt y exports de tokens han quedado stale, con estado por artefacto y siguientes pasos. Réplica del patrón wf-prd-sync-impact para la fase Design."
+description: "Analiza el impacto de un cambio en el DESIGN.md, brief o spec sobre los artefactos de diseño derivados (flows, views, ui_prompt, exports de tokens): marca cuáles quedaron stale, con estado por artefacto y siguientes pasos. Réplica de wf-prd-sync-impact en Design."
 when_to_use: "Activa en frases como 'qué artefactos de diseño quedaron desactualizados', 'qué views hay que regenerar tras cambiar el DESIGN.md', 'analiza el impacto del cambio visual', 'qué prototipos están stale', 'sincroniza el diseño tras el cambio de spec'. No activa para evolucionar el DESIGN.md (usa wf-design-delta) ni para auditarlo sin derivados (usa wf-design-validate)."
 argument-hint: "<DESIGN.md>"
 effort: high
@@ -13,7 +13,7 @@ agent: design-architect
 
 Tu objetivo es determinar qué artefactos de diseño derivados deben revisarse tras un cambio en el sistema visual (`DESIGN.md`), en el brief (`DESIGN_BRIEF.md`) o en un `_spec.md` del que cuelgan prototipos. Hoy esa deriva es silenciosa: `wf-design-delta` solo dice "considera regenerar" y nadie comprueba qué quedó stale.
 
-Usa `kb-design-governance` (política de evolución, Regla 15) y `kb-design-expert` con criterio **conservador**: si no puedes demostrar que un artefacto sigue alineado con sus fuentes, no lo marques `in_sync`.
+Usa `kb-design-governance` (política de evolución, Regla 2) y `kb-design-expert` con criterio **conservador**: si no puedes demostrar que un artefacto sigue alineado con sus fuentes, no lo marques `in_sync`.
 
 > Alcance: este workflow hace **análisis de impacto** (lectura + razonamiento conservador), no detección por hash. El sellado determinista de la deriva diseño (hash de `DESIGN.md`/spec en el header de cada artefacto, à la `sdd-sync-check.py` de la fase spec) es endurecimiento futuro — anotado como candidato en ROADMAP 11.2. Hasta entonces, el criterio conservador es la red.
 

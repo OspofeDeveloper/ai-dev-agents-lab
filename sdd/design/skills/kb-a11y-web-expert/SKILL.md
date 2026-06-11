@@ -1,6 +1,6 @@
 ---
 name: kb-a11y-web-expert
-description: Deltas de accesibilidad web/desktop sobre el nucleo platform-neutral de kb-a11y-expert. Cubre WCAG 2.2 completo para puntero fino y teclado primario. La cargan design-architect y plan-architect junto a kb-a11y-expert; no se invoca directamente.
+description: Deltas de accesibilidad web/desktop sobre el nucleo platform-neutral de kb-a11y-expert. Cubre WCAG 2.2 completo para puntero fino y teclado primario. La cargan design-architect y plan-architect junto a kb-a11y-expert.
 effort: low
 allowed-tools: [Read]
 user-invocable: false

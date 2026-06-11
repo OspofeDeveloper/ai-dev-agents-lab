@@ -1,7 +1,7 @@
 ---
 name: wf-design-a11y-audit
-description: Audita un DESIGN.md y opcionalmente un *_views.md frente a las reglas de kb-a11y-expert (núcleo) y kb-a11y-web-expert (deltas web/desktop). Verifica contraste real de pares foreground/background, targets por plataforma (táctil 44/48 o puntero fino 24px), focus order declarado, screen reader labels, motion handling y forms accesibles; en targets web añade operabilidad por teclado, hover/focus content y reflow. Produce un reporte con severidad. Complementa a wf-design-validate.
-when_to_use: "Activa en frases como 'valida la accesibilidad', 'audit a11y del DESIGN.md', 'comprueba contraste WCAG'."
+description: Audita la accesibilidad de un DESIGN.md (y opcionalmente un *_views.md) frente a kb-a11y-expert y los deltas web de kb-a11y-web-expert. Verifica contraste, targets por plataforma, focus order, screen reader labels, motion y forms; en web añade teclado, hover/focus content y reflow. Produce reporte con severidad.
+when_to_use: "Activa en frases como 'valida la accesibilidad', 'audit a11y del DESIGN.md', 'comprueba contraste WCAG'. Complementa a wf-design-validate (auditoría general); no activa para regenerar el DESIGN.md (usa wf-design-delta)."
 argument-hint: "<DESIGN.md> [--views <feature_views.md>] [--brief <DESIGN_BRIEF.md>] [--target AA|AAA] [--lenient]"
 effort: medium
 allowed-tools: [Read, Write, Bash, Agent]

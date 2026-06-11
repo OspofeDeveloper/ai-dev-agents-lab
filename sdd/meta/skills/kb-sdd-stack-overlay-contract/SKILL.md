@@ -1,6 +1,6 @@
 ---
 name: kb-sdd-stack-overlay-contract
-description: "Contrato normativo que debe cumplir un overlay de stack (tech/<stack>) para integrarse en el ecosistema SDD: piezas obligatorias y opcionales, mecanismo de override por nombre sobre las piezas genericas de plan/tasks, init especialista con project state, registro en project-init.json y puntos de integracion con wf-project-init y los gates de plan/tasks. No cubre la estructura de directorios de tech targets (ver kb-sdd-skill-architecture, Regla 16) ni las convenciones de creacion de piezas (ver kb-sdd-creation-guide)."
+description: "Contrato que debe cumplir un overlay de stack (tech/<stack>): piezas obligatorias y opcionales, override por nombre sobre las genericas de plan/tasks, init especialista con project state, registro en project-init.json e integracion con wf-project-init y los gates. No cubre la estructura de directorios (kb-sdd-skill-architecture R16) ni las convenciones de creacion (kb-sdd-creation-guide)."
 effort: low
 allowed-tools: [Read]
 user-invocable: false

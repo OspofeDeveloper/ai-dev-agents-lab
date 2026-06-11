@@ -1,6 +1,6 @@
 ---
 name: wf-design-system
-description: "Crea o actualiza el DESIGN.md de un producto a partir de un feature spec validado y un DESIGN_BRIEF.md cerrado. Define la identidad visual persistente que alimentara el generador de UI (Stitch en mobile, generadores web en web/desktop) y futuros prototipos de features."
+description: "Crea o actualiza el DESIGN.md de un producto desde un feature spec validado y un DESIGN_BRIEF.md cerrado: identidad visual persistente que alimenta el generador de UI (Stitch en mobile, generadores web/desktop) y futuros prototipos de feature."
 when_to_use: "Activa en frases como 'crea el DESIGN.md', 'genera el sistema visual desde el spec', 'prepara el contrato visual del producto', 'actualiza el DESIGN.md'. No activa para generar planes KMM ni tasks."
 argument-hint: "generate <feature_spec.md> [--prd <prd.md>] [--brief <DESIGN_BRIEF.md>] [--design-file DESIGN.md] [--no-brief]"
 effort: high
@@ -101,7 +101,7 @@ Si el archivo **NO existe** y el brief declara `product_preset` distinto de `non
 
 ## Paso 4: Delegar al agente design-architect
 
-Invoca al agente siguiendo las **Reglas 2, 3, 6, 11, 12, 13, 14 y 15** de `kb-design-expert`, la jerarquía de `kb-design-brief` y la taxonomía de `kb-design-style-taxonomy`.
+Invoca al agente siguiendo las **Reglas 2, 3, 4 y 6** de `kb-design-system-contract` (formato y secciones, Visual Personality, Reference Apps, materializar el brief sin reabrirlo), la **Regla 3** de `kb-design-expert` (orden de derivación: dirección de producto primero) y la **Regla 2** de `kb-design-governance` (política de evolución extender vs mutar), mas la jerarquía de `kb-design-brief` y la taxonomía de `kb-design-style-taxonomy`.
 
 Construye el prompt usando la plantilla de `${CLAUDE_SKILL_DIR}/references/design_system_prompt.md`, pasando el contenido de: spec, PRD (si existe), brief (si existe), research de apps (si existe), y DESIGN.md actual (si existe).
 

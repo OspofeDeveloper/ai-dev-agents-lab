@@ -1,6 +1,6 @@
 ---
 name: wf-qa-verify
-description: "Verifica la cobertura real de CAs de una feature tras implementar: localiza y ejecuta los tests que ejercitan cada TC del qa_plan, registra evidencia, escribe los estados por TC (CUBIERTO/PARCIAL/SIN_COBERTURA/MANUAL_PENDIENTE/DIVERGENTE) y produce <feature>_qa_report.md con veredicto APTO/APTO_CON_RESERVAS/NO_APTO. Delega a qa-engineer."
+description: "Verifica la cobertura real de CAs de una feature tras implementar: ejecuta los tests de cada TC del qa_plan, registra evidencia, escribe los estados por TC y produce <feature>_qa_report.md con veredicto APTO/APTO_CON_RESERVAS/NO_APTO. Delega a qa-engineer."
 when_to_use: "Activa con frases como 'verifica la cobertura de la feature', 'qa verify', 'están cubiertos los CAs', 'audita los tests contra el spec', 'pasa QA la feature'. No activa para derivar casos de prueba (usa wf-qa-plan), ni para arreglar un test que falla contra un CA (usa wf-bug)."
 argument-hint: "<feature_qa_plan.md>"
 effort: high

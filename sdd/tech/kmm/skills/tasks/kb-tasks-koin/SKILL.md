@@ -1,6 +1,6 @@
 ---
 name: kb-tasks-koin
-description: Implementación concreta de Koin DI en proyectos KMM: DSL de registro (single/factory/viewModelOf), nativeModule expect/actual, initKoin completo con llamadas Android e iOS, y módulo de feature tipo. Úsalo cuando haya que implementar módulos Koin, registrar dependencias o configurar la inicialización de DI.
+description: Implementación concreta de Koin DI en proyectos KMM: DSL de registro (single/factory/viewModelOf), nativeModule expect/actual, initKoin completo con llamadas Android e iOS, y módulo de feature tipo.
 allowed-tools: [Read]
 effort: low
 user-invocable: false

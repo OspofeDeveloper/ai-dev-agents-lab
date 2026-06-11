@@ -127,7 +127,6 @@ flowchart TB
         K1["kb-plan-expert"]
         K2["kb-spec-expert"]
         K3["kb-a11y-expert"]
-        K4["compose-mp-navigation"]
     end
 
     W1 --> A1

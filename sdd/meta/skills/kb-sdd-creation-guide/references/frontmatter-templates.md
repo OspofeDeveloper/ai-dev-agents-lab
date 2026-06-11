@@ -9,7 +9,7 @@ Plantillas de referencia para los tres tipos de piezas del ecosistema SDD. Copia
 ```yaml
 ---
 name: kb-<nombre>
-description: "<Que conocimiento normativo contiene. Cuando debe cargarse. Que NO cubre.>"
+description: "<El QUÉ, caso de uso clave primero. Sin triggers. Objetivo <= ~220 caracteres. Puede cerrar con qué NO cubre.>"
 effort: low
 allowed-tools: [Read]
 user-invocable: false
@@ -17,7 +17,7 @@ user-invocable: false
 ```
 
 Campos obligatorios: `name`, `description`, `effort`, `allowed-tools`, `user-invocable`.
-Nunca añadir `context: fork`, `agent:` ni `argument-hint` a una `kb-*`.
+Nunca añadir `context: fork`, `agent:`, `when_to_use` ni `argument-hint` a una `kb-*`: no se enrutan, se inyectan en agentes vía su frontmatter `skills:`. Una `kb-*` lleva **solo `description` lean** (los triggers invitarían a auto-invocación no deseada y cuestan contexto eager). La regla canónica de `description`/`when_to_use` vive en el `SKILL.md` de `kb-sdd-creation-guide` (sección "Separación description / when_to_use").
 
 ---
 
@@ -26,8 +26,8 @@ Nunca añadir `context: fork`, `agent:` ni `argument-hint` a una `kb-*`.
 ```yaml
 ---
 name: wf-<nombre>
-description: "<Qué pipeline orquesta y qué produce. Solo la funcionalidad — sin triggers ni exclusiones.>"
-when_to_use: "<Frases de activación naturales. Exclusiones explícitas con alternativa (usa wf-X).>"
+description: "<El QUÉ: pipeline que orquesta, qué produce, modos/agente que soporta. Caso clave primero. Sin triggers. Objetivo <= ~220 caracteres.>"
+when_to_use: "<El CUÁNDO: frases de activación naturales + exclusiones explícitas con alternativa (No activa para X, usa wf-Y).>"
 argument-hint: "<modo|accion> <input_principal> [flags...]"
 effort: low|medium|high
 allowed-tools: [Read] | [Read, Write] | [Read, Write, Bash] | [Read, Write, Bash, Agent]
@@ -39,9 +39,10 @@ user-invocable: true
 
 `context: fork` es obligatorio en todas las `wf-*` que generan artefactos o delegan a un agente.
 
-Separación `description` / `when_to_use`:
-- `description`: el QUÉ — funcionalidad, modos soportados, agente al que delega. Conciso, sin triggers.
-- `when_to_use`: el CUÁNDO — frases de activación y exclusiones con alternativa. Omitir si no hay triggers relevantes.
+Separación `description` / `when_to_use` (regla canónica en el `SKILL.md` de `kb-sdd-creation-guide`):
+- `description`: el QUÉ — funcionalidad, modos soportados, agente al que delega. Caso clave primero, conciso, **sin triggers**. Objetivo ≤ ~220 caracteres.
+- `when_to_use` (**solo `wf-*`**): el CUÁNDO — frases de activación naturales **+ exclusiones explícitas** con la alternativa ("No activa para X, usa `wf-Y`"). Si una `description` arrastra triggers, muévelos aquí.
+- **TOPE DURO:** `description` + `when_to_use` combinados ≤ **1.536 caracteres** (límite oficial del listado de skills de Claude Code, que trunca para reducir contexto). Si se supera, recortar.
 
 ---
 

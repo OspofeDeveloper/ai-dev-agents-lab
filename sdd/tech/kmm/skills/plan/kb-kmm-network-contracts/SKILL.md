@@ -1,7 +1,6 @@
 ---
 name: kb-kmm-network-contracts
-description: "Base de conocimiento de contratos de networking en proyectos KMM: errores de red, resultados tipados, límites entre servicios remotos y repositorios, y reglas estables independientes de la librería HTTP."
-argument-hint: ""
+description: "Contratos de networking en proyectos KMM: errores de red, resultados tipados, límites entre servicios remotos y repositorios, y reglas estables independientes de la librería HTTP."
 effort: low
 allowed-tools: [Read]
 user-invocable: false

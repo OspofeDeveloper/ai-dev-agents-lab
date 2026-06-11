@@ -1,6 +1,6 @@
 ---
 name: wf-release
-description: "Vincula el cierre de una feature (QA APTO) a un punto verificable de producción: registra el commit SHA y, opcionalmente, un tag de release. Cierra la trazabilidad CA → TC → task → commit → release. Recolección mecánica determinista (no agente): el SHA lo da git, el gate de cierre lo aplica sdd-release.py."
+description: "Vincula el cierre de una feature (QA APTO) a un punto verificable de producción: registra el commit SHA y, opcionalmente, un tag de release, cerrando la trazabilidad CA → TC → task → commit → release. Recolección mecánica determinista (no agente): el SHA lo da git, el gate lo aplica sdd-release.py."
 when_to_use: "Activa con frases como 'releasa esta feature', 'marca la release', 'esta feature ya está en producción', 'taggea el cierre de la feature', 'registra el SHA de entrega', 'vincula la feature al tag'. No activa para ejecutar tasks (usa wf-task-run), verificar QA (usa wf-qa-verify) ni para el estado global del proyecto (usa wf-project-status)."
 argument-hint: "<feature_dir|tasks_path> [--tag <tag>] [--no-tag] [--note <texto>]"
 effort: low

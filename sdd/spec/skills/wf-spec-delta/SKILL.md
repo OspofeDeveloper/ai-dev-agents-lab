@@ -1,7 +1,7 @@
 ---
 name: wf-spec-delta
-description: "Evoluciona un Spec de feature existente de forma incremental. Modo 'analyze' genera un informe delta con HUs y CAs anadidos, modificados y eliminados; modo 'apply' integra los cambios validados en el spec. La resolucion de HUs [INCOMPLETO] desde un _analysis.md pertenece a wf-spec-gap-resolve."
-when_to_use: "Activa en frases como 'quiero anadir funcionalidad al spec', 'actualiza el spec con estos requisitos nuevos', 'evoluciona el spec con este cambio', 'genera el delta del spec'."
+description: "Evoluciona un Spec de feature de forma incremental. Modo 'analyze' genera un informe delta con HUs y CAs anadidos, modificados y eliminados; modo 'apply' integra los cambios validados en el spec."
+when_to_use: "Activa en frases como 'quiero anadir funcionalidad al spec', 'actualiza el spec con estos requisitos nuevos', 'evoluciona el spec con este cambio', 'genera el delta del spec'. No activa para completar HUs [INCOMPLETO] desde un _analysis.md (usa wf-spec-gap-resolve)."
 argument-hint: "analyze <spec.md> --new-reqs <desc.md> | apply <spec.md> <delta.md>"
 effort: high
 allowed-tools: [Read, Write, Bash]

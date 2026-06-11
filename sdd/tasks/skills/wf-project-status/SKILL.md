@@ -1,6 +1,6 @@
 ---
 name: wf-project-status
-description: "Informe PM read-only del estado del proyecto SDD: por cada feature, en qué fase del pipeline está (Spec/Plan/Tasks/QA/Cerrada), su estado, el bloqueo y la siguiente acción concreta. Recolección mecánica determinista (no agente): agrega el estado ya sellado en los artefactos, no razona ni edita nada."
+description: "Informe PM read-only del estado del proyecto SDD: por cada feature, su fase del pipeline (Spec/Plan/Tasks/QA/Cerrada), estado, bloqueo y siguiente acción. Recolección mecánica determinista (no agente): agrega el estado ya sellado en los artefactos, no razona ni edita."
 when_to_use: "Activa con frases como 'estado del proyecto', 'cómo va el proyecto', 'qué features faltan', 'qué está bloqueado', 'informe de estado', 'dónde está cada feature', 'siguiente paso de cada feature', 'resumen para PM', 'qué puedo planificar/implementar ahora'. No activa para inventariar el ecosistema SDD (usa wf-sdd-status) ni para readiness funcional de specs (usa wf-spec-readiness)."
 argument-hint: "[<raíz_artefactos_spec>] [--output <path>]"
 effort: low

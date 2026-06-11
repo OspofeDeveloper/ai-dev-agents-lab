@@ -1,7 +1,6 @@
 ---
 name: kb-design-governance
-description: Gobernanza del sistema visual del producto a lo largo del tiempo. Define como `DESIGN.md` debe ser consumible por `plan-architect` (contrato de handoff a fase plan), la politica de evolucion extender vs mutar al acumular features, el versionado semver MAJOR.MINOR.PATCH del sistema visual, la distincion operativa entre `wf-design-intake`, `wf-design-delta`, `wf-design-branch` y `wf-design-variant`, y el ciclo de vida de la confianza de direccion (provisional → confirmed) cuando el DESIGN.md nace sin direccion anclada. SSoT extraida de `kb-design-expert` Reglas 10, 15, 22 y 23. No define el contrato visual ni el formato del DESIGN.md (ver kb-design-expert), ni los criterios de a11y (ver kb-a11y-expert), ni la taxonomia de estilos (ver kb-design-style-taxonomy).
-argument-hint: "(cargada automaticamente por workflows y agentes de design y por plan-architect cross-fase)"
+description: Gobernanza temporal del sistema visual del producto. Define el contrato de handoff de DESIGN.md a plan-architect, la politica extender vs mutar al acumular features, el versionado semver del sistema visual, la distincion operativa entre wf-design-intake/delta/branch/variant y el ciclo de confianza de direccion (provisional → confirmed). SSoT de kb-design-expert Reglas 10, 15, 22 y 23.
 effort: low
 allowed-tools: [Read]
 user-invocable: false
@@ -11,7 +10,7 @@ user-invocable: false
 
 Eres la fuente de verdad para la gobernanza del sistema visual a lo largo del tiempo: como se entrega a la fase plan, como se hace evolucionar sin romper consumidores, como se versiona y que workflow usar segun la naturaleza del cambio.
 
-Esta KB no redefine el contrato visual ni el formato del `DESIGN.md` (eso vive en `kb-design-expert`). Cubre exclusivamente la dimension temporal y operativa del sistema visual.
+Esta KB no redefine el contrato visual ni el formato del `DESIGN.md` (eso vive en `kb-design-system-contract`). Cubre exclusivamente la dimension temporal y operativa del sistema visual.
 
 ## Regla 1: La salida de design debe ser consumible por plan
 

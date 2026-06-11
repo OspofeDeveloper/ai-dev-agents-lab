@@ -1,7 +1,6 @@
 ---
 name: kb-tasks-kmm-room
-description: "Base de conocimiento para implementar Room en KMP: entidades y DAOs en commonMain, @Database con RoomDatabaseConstructor, builder por plataforma (factory en cada source set), BundledSQLiteDriver, KSP por target, migraciones y registro DI. El stack usa Room, no SQLDelight."
-argument-hint: "[sin argumentos]"
+description: "Implementación de Room en KMP: entidades y DAOs en commonMain, @Database con RoomDatabaseConstructor, builder por plataforma, BundledSQLiteDriver, KSP por target, migraciones y registro DI. El stack usa Room, no SQLDelight."
 effort: low
 allowed-tools: [Read]
 user-invocable: false

@@ -1,7 +1,6 @@
 ---
 name: kb-kmm-brands
-description: "Base de conocimiento de brands en proyectos KMM: identidad de producto por marca, catálogo de brands, valores base por marca, assets/naming/bundle id base y separación entre diferencias de marca y diferencias de entorno."
-argument-hint: ""
+description: "Brands en proyectos KMM: identidad de producto por marca, catálogo de brands, valores base por marca, assets/naming/bundle id base y separación entre diferencias de marca y diferencias de entorno."
 effort: low
 allowed-tools: [Read]
 user-invocable: false

@@ -57,7 +57,7 @@ Tratalo como fuente prioritaria segun la jerarquia de `kb-design-brief` Regla 10
 Extrae nombre del producto, vision, audiencia objetivo y diferenciadores. Usa esa informacion para precisar adjetivos y rationale de la `Visual Personality` con precision de marca, sin reabrir las variables cerradas por el brief.
 
 **Research / Discovery:**
-Pueblan `## Reference Apps` segun la Regla 12 de `kb-design-expert`: nombre, aspecto concreto a tomar y razon para este producto. No copies nombres sin razonamiento.
+Pueblan `## Reference Apps` segun la Regla 4 de `kb-design-system-contract`: nombre, aspecto concreto a tomar y razon para este producto. No copies nombres sin razonamiento.
 
 **DESIGN.md actual:**
 Aplica la Regla 15: preserva tokens y componentes existentes. Toda mutacion debe registrarse en `## Changelog` o derivarse a `wf-design-delta`.
@@ -85,9 +85,9 @@ Solo cuando el workflow lo pase explicitamente. Deriva la `Visual Personality` d
 **Modo `design-system`:**
 1. Lee spec, brief, PRD, research y `DESIGN.md` actual si existe.
 2. Verifica trazabilidad funcional: actor, journeys, CAs.
-3. Materializa el brief en tokens y componentes siguiendo Reglas 6, 11, 12, 13, 14 de `kb-design-expert`.
+3. Materializa el brief en tokens y componentes siguiendo Reglas 2, 3, 4 y 6 de `kb-design-system-contract` (formato y secciones, Visual Personality, Reference Apps, materializar el brief sin reabrirlo).
 4. Aplica `kb-design-style-taxonomy` (Reglas 2-12) para familia, escalas y anti-patrones.
-5. Si el DESIGN.md existe, preserva tokens previos (Regla 15) y registra extensiones en `## Changelog`.
+5. Si el DESIGN.md existe, preserva tokens previos (`kb-design-governance` Regla 2) y registra extensiones en `## Changelog`.
 6. Procedencia de direccion (`kb-design-system-contract` Regla 10, `kb-design-governance` Regla 5): si el prompt indica "Direccion visual no anclada: true", emite `origin: generated-provisional`, `direction_confidence: provisional`, marca con `[INFERIDO]` los campos de direccion inferidos sin evidencia (`style_family`, paleta `primary`/`accent`, `motion_level`) y arranca `## Changelog` con `[direccion: provisional]`. Si es false, emite `origin: generated`, `direction_confidence: confirmed`. El `[INFERIDO]` es informativo y NO bloquea gates. La confirmacion humana la resuelve el workflow, no tu.
 7. Devuelve `DESIGN.md` completo. Si falta dato critico, devuelve `DESIGN_GAP` y no produzcas archivo.
 

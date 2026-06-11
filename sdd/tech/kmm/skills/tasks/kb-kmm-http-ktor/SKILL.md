@@ -1,7 +1,6 @@
 ---
 name: kb-kmm-http-ktor
 description: "Base de conocimiento de implementación HTTP con Ktor en proyectos KMM: configuración de HttpClient, plugins, serialización JSON, logging, timeouts, rutas relativas y utilidades específicas de Ktor."
-argument-hint: ""
 effort: low
 allowed-tools: [Read]
 user-invocable: false

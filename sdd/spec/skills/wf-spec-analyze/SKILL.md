@@ -1,6 +1,6 @@
 ---
 name: wf-spec-analyze
-description: "Recopila las decisiones de negocio que necesitaran los Specs a partir de un PRD vigente. Mapea que elementos del Spec se generaran desde el PRD, detecta contaminacion tecnica y formula preguntas concretas para el cliente. Genera un _analysis.md cuyas respuestas alimentan los Specs."
+description: "Recopila las decisiones de negocio que necesitan los Specs desde un PRD vigente: mapea que elementos del Spec saldran del PRD, detecta contaminacion tecnica y formula preguntas concretas. Genera un _analysis.md."
 when_to_use: "Activa en frases como 'prepara los inputs para los specs', 'que decisiones de negocio faltan para los specs', 'analiza este PRD para empezar los specs', 'genera el analisis previo al spec'."
 argument-hint: "<archivo.md>"
 effort: high

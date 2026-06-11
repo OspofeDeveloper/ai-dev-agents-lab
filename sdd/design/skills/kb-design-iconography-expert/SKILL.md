@@ -1,7 +1,6 @@
 ---
 name: kb-design-iconography-expert
 description: Base de conocimiento para el sistema de iconografia del producto. Define la libreria base, el stroke/fill rule, el grid de icono, los tamanos por rol y la semantica. Evita iconos inconsistentes que hacen que el producto se vea amateur.
-argument-hint: "(cargada automaticamente por agentes y workflows de design)"
 effort: low
 allowed-tools: [Read]
 user-invocable: false

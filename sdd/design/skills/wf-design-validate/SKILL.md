@@ -4,7 +4,7 @@ description: "Audita un DESIGN.md ya existente contra el contrato visual (kb-des
 when_to_use: "Activa en frases como 'valida el DESIGN.md', 'revisa que el sistema visual esta bien', 'audita el design despues de editarlo', 'comprueba que el DESIGN.md cumple el brief'. No activa para generar o modificar el archivo."
 argument-hint: "<DESIGN.md> [--brief <DESIGN_BRIEF.md>] [--views <feature_views.md>] [--lenient] [--pedagogical]"
 effort: medium
-allowed-tools: [Read, Bash, Write, AskUserQuestion]
+allowed-tools: [Read, Bash, Write, AskUserQuestion, Agent]
 context: fork
 agent: design-architect
 ---

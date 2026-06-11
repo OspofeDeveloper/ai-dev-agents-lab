@@ -1,7 +1,6 @@
 ---
 name: kb-plan-koin
 description: "Base de conocimiento de Koin DI en proyectos KMM: organización de módulos por feature, tipos de registro, patrón qualifier con enums, nativeModule expect/actual, initKoin y orden de módulos."
-argument-hint: ""
 effort: low
 allowed-tools: [Read]
 user-invocable: false

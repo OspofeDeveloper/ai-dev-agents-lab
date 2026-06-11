@@ -1,6 +1,6 @@
 ---
 name: wf-design-intake
-description: "Cierra un DESIGN_BRIEF.md antes de generar el sistema visual. Delega al agente design-architect el cierre de modo de decision, preset, familia visual, densidad, profundidad, motion, policy de referencias y autonomia. Soporta modos guided, hybrid y auto."
+description: "Cierra el DESIGN_BRIEF.md antes de generar el sistema visual: fija modo de decision, preset, familia visual, densidad, profundidad, motion y policy de referencias y autonomia. Delega a design-architect. Modos guided, hybrid y auto."
 when_to_use: "Activa con frases como 'cierra el brief de diseño', 'necesito el design brief', 'quiero definir el brief visual', 'preparar el brief antes de diseñar', 'genera el DESIGN_BRIEF.md'. No activa si ya existe un DESIGN_BRIEF.md y solo se quiere actualizar (usa wf-design-delta) ni para generar directamente el DESIGN.md sin brief (el brief es gate obligatorio)."
 argument-hint: "generate <feature_spec.md> [--prd <prd.md>] [--output DESIGN_BRIEF.md] [--mode guided|hybrid|auto] [--preset <name>] [--learn]"
 effort: high

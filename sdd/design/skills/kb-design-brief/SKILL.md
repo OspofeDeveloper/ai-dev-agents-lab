@@ -1,7 +1,6 @@
 ---
 name: kb-design-brief
-description: Base de conocimiento para capturar decisiones de direccion visual antes de generar un DESIGN.md. Define el contrato de DESIGN_BRIEF.md, los modos de autonomia del usuario frente a la IA, los presets de producto y las validaciones de consistencia para reducir decisiones implicitas durante la fase design.
-argument-hint: "(cargada automaticamente por workflows y agentes de design)"
+description: Base de conocimiento para capturar decisiones de direccion visual antes del DESIGN.md: contrato de DESIGN_BRIEF.md, modos de autonomia del usuario frente a la IA, presets de producto y validaciones de consistencia que reducen decisiones implicitas en la fase design.
 effort: low
 allowed-tools: [Read]
 user-invocable: false

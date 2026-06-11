@@ -1,7 +1,6 @@
 ---
 name: kb-design-conflict-expert
-description: Base de conocimiento para detectar conflictos visuales y de UX entre varias features dentro de un mismo producto. Define que cuenta como conflicto (componente con doble comportamiento, navegacion incoherente, tokens contradichos, jerarquia visual rota, accesibilidad inconsistente) y como reportarlo sin redefinir el contrato visual.
-argument-hint: "(cargada automaticamente por el agente design-architect y por futuros workflows de conflicto)"
+description: Deteccion de conflictos visuales y de UX entre features de un mismo producto: componente con doble comportamiento, navegacion incoherente, tokens contradichos, jerarquia visual rota, a11y inconsistente. Define que cuenta como conflicto y como reportarlo sin redefinir el contrato visual.
 effort: low
 allowed-tools: [Read]
 user-invocable: false

@@ -1,7 +1,6 @@
 ---
 name: kb-sdd-creation-guide
-description: "Guia operativa para crear y registrar skills (kb-* y wf-*), agentes y actualizar el ecosistema SDD. Complementa kb-sdd-skill-architecture (que define cuando crear cada pieza) con el como: convenciones de nombrado, ubicacion por tipo y fase, plantillas de frontmatter, estructura de contenido y checklist de registro. Usar cuando se necesita saber como materializar una decision de diseno del ecosistema."
-argument-hint: "[tipo: kb|wf|agent] [nombre] [fase]"
+description: "El COMO de crear y registrar piezas del ecosistema SDD: convenciones de nombrado, ubicacion por tipo y fase, plantillas de frontmatter, estructura de contenido y checklist de registro de skills (kb-*, wf-*) y agentes. Complementa kb-sdd-skill-architecture, que define el cuando."
 effort: low
 allowed-tools: [Read]
 user-invocable: false
@@ -113,9 +112,16 @@ El frontmatter no cuenta. El contador parte desde la primera línea del body (`#
 
 `context: fork` es obligatorio en todas las `wf-*` que generan artefactos o delegan a un agente.
 
-**Separación `description` / `when_to_use`:**
-- `description`: el QUÉ — funcionalidad, modos soportados, agente al que delega. Conciso, sin triggers.
-- `when_to_use`: el CUÁNDO — frases de activación naturales y exclusiones explícitas con la alternativa correcta. Si no hay triggers ni exclusiones relevantes, omitir el campo.
+**Separación `description` / `when_to_use` (convención oficial de metadata de skills — SSoT):**
+
+Esta es la regla canónica para los campos `description` y `when_to_use` del frontmatter de cualquier `SKILL.md` del ecosistema. Aplica el mismo contrato que Claude Code usa para enrutar skills.
+
+- `description` (**TODAS** las skills, `kb-*` y `wf-*`): el QUÉ hace la skill, con el **caso de uso clave primero**. Conciso, **sin frases-trigger** ("activa cuando...", "úsalo si...", "en frases como..."). **Objetivo ≤ ~220 caracteres.** Es la señal con la que Claude decide aplicar la skill y alimenta el `skill-registry.md`. Recortar **preservando el significado**: no amputar; debe seguir describiendo con precisión qué hace y qué modos/agente soporta.
+- `when_to_use` (**SOLO `wf-*`**): el CUÁNDO — frases de activación naturales **+ exclusiones explícitas** con la alternativa correcta ("No activa para X, usa `wf-Y`"). Lo necesario, sin relleno. Si una `description` de `wf-*` arrastra triggers dentro, **muévelos a `when_to_use`** y deja la `description` como el QUÉ.
+- `kb-*` (`user-invocable: false`, se inyectan en agentes vía su frontmatter `skills:`, **no se enrutan** por el orquestador): **solo `description` lean**. NADA de `when_to_use` ni `argument-hint` — los triggers invitarían a auto-invocación no deseada y cuestan contexto eager. Si una `kb-*` aún tuviera `when_to_use` o `argument-hint`, **elimínalos**.
+- **TOPE DURO:** el texto combinado `description` + `when_to_use` se trunca a **1.536 caracteres** en el listado de skills de Claude Code (límite oficial, para reducir uso de contexto). Nunca superarlo; si se supera, recortar.
+
+No tocar `name`, `allowed-tools`, `effort`, `context`, `agent`, `user-invocable` ni el cuerpo de la skill al ajustar estos campos. Solo `description` y `when_to_use`.
 
 **Criterio para `effort`:**
 - `low`: <= 3 pasos simples, sin delegacion de agente

@@ -1,6 +1,6 @@
 ---
 name: kb-kmm-gradle-modules
-description: Estructura de módulos Gradle en KMM como decisión de plan: cómo materializar las capas lógicas (app/core/feature) en módulos físicos (:composeApp, :core:*, :feature:*), convenciones de nombrado, convention plugins en build-logic/, version catalog y dependencias permitidas entre módulos. Úsalo cuando el plan deba traducir capas lógicas a módulos Gradle concretos.
+description: "Estructura de módulos Gradle en KMM como decisión de plan: materializar capas lógicas (app/core/feature) en módulos físicos (:composeApp, :core:*, :feature:*), nombrado, convention plugins en build-logic/, version catalog y dependencias permitidas entre módulos."
 allowed-tools: [Read]
 effort: low
 user-invocable: false

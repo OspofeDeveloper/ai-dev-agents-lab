@@ -7,6 +7,8 @@ Checklists completos para verificar que cada pieza del ecosistema queda correcta
 ## Tras crear una `kb-*`
 
 - [ ] `SKILL.md` con frontmatter correcto en el directorio correcto
+- [ ] `description` = el QUÉ, caso de uso clave primero, sin frases-trigger; objetivo ≤ ~220 caracteres, recortada preservando el significado
+- [ ] **Solo `description`**: la `kb-*` NO lleva `when_to_use` ni `argument-hint` (no se enruta, se inyecta en agentes vía `skills:`)
 - [ ] Agente(s) que la consumen actualizados: añadir a su `skills: [...]`
 - [ ] Si es cross-fase: documentar dependencia en el `CLAUDE.md` de la fase consumidora
 - [ ] Si formaliza una regla que estaba inline en otros archivos: eliminar los duplicados
@@ -18,7 +20,9 @@ Checklists completos para verificar que cada pieza del ecosistema queda correcta
 ## Tras crear una `wf-*`
 
 - [ ] `SKILL.md` en el directorio correcto con `context: fork`
-- [ ] `description` contiene solo la funcionalidad; triggers y exclusiones en `when_to_use`
+- [ ] `description` = el QUÉ (funcionalidad, modos, agente), caso de uso clave primero, sin frases-trigger; objetivo ≤ ~220 caracteres
+- [ ] `when_to_use` lleva las frases de activación naturales **y** las exclusiones explícitas con alternativa ("No activa para X, usa `wf-Y`"); ningún trigger quedó en `description`
+- [ ] **TOPE DURO:** `description` + `when_to_use` combinados ≤ 1.536 caracteres (límite oficial del listado de skills de Claude Code); recortar si se supera
 - [ ] Entrada en el rootmap del `CLAUDE.md` de fase (o del orquestador global si es transversal)
 - [ ] Si tiene `agent:`: verificar que el agente existe y acepta el modo operativo
 - [ ] Precondiciones documentadas en el body del `SKILL.md`

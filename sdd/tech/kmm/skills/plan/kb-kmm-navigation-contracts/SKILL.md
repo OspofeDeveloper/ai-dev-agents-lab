@@ -1,7 +1,6 @@
 ---
 name: kb-kmm-navigation-contracts
 description: "Base de conocimiento de contratos de navegación en proyectos KMM: ownership entre app y features, rutas como contrato central, encapsulación del NavController y separación entre navegación, features y composición."
-argument-hint: ""
 effort: low
 allowed-tools: [Read]
 user-invocable: false

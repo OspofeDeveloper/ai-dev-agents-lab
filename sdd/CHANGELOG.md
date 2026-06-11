@@ -2,6 +2,32 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.29.0 — 2026-06-10
+
+Convención oficial de metadata de skills, codificada en el canon y aplicada a las 131 skills (ROADMAP 9.4 ampliado + 9.9 absorbido). Verificado contra la doc oficial de Claude Code: `description` y `when_to_use` comparten el límite eager de 1.536 caracteres del listado de skills (siempre cargado), así que el coste de contexto del inventario depende del texto combinado por skill.
+
+- Canon (`kb-sdd-creation-guide` SKILL.md + `references/frontmatter-templates.md` + `references/checklists.md`): `description` (todas las skills) = el QUÉ, caso de uso clave primero, sin frases-trigger, objetivo ≤~220 chars; `when_to_use` SOLO en `wf-*` (frases de activación + exclusiones con alternativa); `kb-*` = solo `description` lean (sin `when_to_use` ni `argument-hint`, porque no se enrutan: se inyectan en agentes vía `skills:`); TOPE DURO combinado ≤1.536 chars, citado como límite oficial del listado.
+- Barrido vía workflow multi-agente (scout → canon → 19 lotes de sdd-author sobre archivos disjuntos en paralelo): 131 skills revisadas, 92 con `description` recortada preservando significado (los recortes mayores condensan, no amputan: wf-prd-change-cascade 689→337, kb-kmm-project-state-protocol 684→313, kb-tasks-expert 528→349 chars).
+- Verificación: 0 cambios fuera de `description`/`when_to_use`/`argument-hint` (cuerpos markdown intactos), 98 frontmatter YAML válidos, 0 skills sobre el tope de 1.536, 0 kb-* con `when_to_use`/`argument-hint`, `sdd-kb-check.py --all` verde, `skill-registry.md` regenerado (131 skills: 56 wf, 75 kb).
+- Sin `⚠`: solo cambia metadata de frontmatter (el cuerpo y el comportamiento de cada skill son idénticos); re-instalar recoge las descriptions nuevas. Las wf-* conservan sus `when_to_use` de routing intactos.
+
+## 0.28.3 — 2026-06-10
+
+Higiene de frontmatter (ROADMAP 9.4): eliminado `when_to_use` de las 2 `kb-*` que aún lo llevaban (`kb-spec-expert`, `kb-prd-expert`) — stragglers de una limpieza ya hecha en las otras 35.
+
+- Decisión = consistencia, validada contra la doc oficial de Claude Code. `when_to_use` SÍ es un campo oficial y NO es inerte: la doc dice que "se añade a `description` en el listado de skills y cuenta hacia el límite de 1.536 caracteres" y aporta frases-trigger de auto-invocación. La eliminación es correcta por: (1) coste de contexto (= objetivo de 9.9) — las kb aparecen en el listado siempre-cargado y su `when_to_use` consume contexto fijo sin beneficio, ya que la arquitectura SDD enruta vía `wf-*`/agentes y no activando kb crudas; (2) anti-competición de routing — las trigger-phrases de `kb-spec-expert` solapan con las de `wf-spec-validate`; (3) consistencia con las otras 35 kb y las hermanas plan/tasks/design. La inyección de la kb en los agentes vía `skills:` carga por nombre, no por el listado → intacta. (`argument-hint` de 9.1 sí era inerte en kb no invocable: no hay autocompletado `/` que mostrar y la doc no lo cuenta hacia el límite de 1.536.)
+- Hallazgo adyacente (lo destapó la revisión de 9.1): `kb-spec-expert` tenía una sección `## Procesamiento de argumentos` que leía `$ARGUMENTS` + ejemplos `/kb-spec-expert ...`, escrita como invocable y en contradicción con su `user-invocable: false`. Eliminada y sustituida por una nota de una línea (conocimiento de fase, no se invoca directamente). `kb-prd-expert` no tenía esa deuda.
+- Nota técnica: `argument-hint` (hint de display) y `$ARGUMENTS` (valor en runtime) son cosas distintas; el borrado de `argument-hint` en 9.1 no tocó ninguna lógica — la única que leía `$ARGUMENTS` era esta sección de `kb-spec-expert`, ahora retirada por ser incoherente con la naturaleza no invocable de la kb.
+- Registry sin cambios (no indexa `when_to_use`; `description` intacta). `sdd-kb-check.py --all` verde. Sin `⚠`.
+
+## 0.28.2 — 2026-06-10
+
+Higiene de frontmatter (ROADMAP 9.1): eliminado `argument-hint` de las `kb-*` que lo llevaban. Enforcement de una regla que el canon ya tenía (`kb-sdd-creation-guide`: "Nunca añadir `argument-hint` a una `kb-*`") y que el propio meta-ecosistema violaba.
+
+- 24 de 36 kb-* (en fuente, sin contar `.claude/`) declaraban `argument-hint`, **todas `user-invocable: false`** → metadata muerta: `argument-hint` solo alimenta el hint de argumentos del slash-command en skills invocables; las kb se cargan en el contexto del agente vía `skills:` y nunca se invocan con argumentos. Borrado de la línea en las 24 (incluida `kb-sdd-creation-guide`, que definía la regla y la incumplía).
+- Las 56 wf-* conservan su `argument-hint` intacto (ahí sí es load-bearing: el orquestador lo usa para construir la invocación). Sin cambios en `description` → `meta/skill-registry.md` sin cambios (no indexa `argument-hint`). `sdd-kb-check.py --all` verde.
+- Impacto cero en comportamiento; sin `⚠` (re-instalar las kb recoge el cambio, no rompe nada en proyectos ya inicializados).
+
 ## 0.28.1 — 2026-06-10
 
 Cierre de los dos ítems de evaluación que quedaban en la FASE 7 (Design): ambos eran "evaluar y decidir", no construir. El resultado es **documentación de decisiones**, sin capacidad nueva ni cambio de comportamiento — de ahí PATCH y no MINOR. No afecta a proyectos ya inicializados (sin `⚠`): solo toca la SSoT documental de la fase Design (`design/CLAUDE.md`, `design/README.md`).

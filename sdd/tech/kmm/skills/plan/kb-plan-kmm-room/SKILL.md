@@ -1,6 +1,6 @@
 ---
 name: kb-plan-kmm-room
-description: Persistencia relacional con Room en KMM como decisión arquitectónica de plan: cuándo Room vs Preferences DataStore, la base de datos como Single Source of Truth, entidades y DAOs como contrato local, ownership del módulo de DB (core vs feature) y qué debe contemplar el plan. Úsalo cuando haya que planificar almacenamiento relacional/consultable en un proyecto KMM.
+description: Persistencia relacional con Room en KMM como decisión arquitectónica de plan: cuándo Room vs Preferences DataStore, la base de datos como Single Source of Truth, entidades y DAOs como contrato local, ownership del módulo de DB (core vs feature) y qué debe contemplar el plan.
 allowed-tools: [Read]
 effort: low
 user-invocable: false

@@ -25,11 +25,11 @@ Reglas de contenido:
 
 ### Componentes obligatorios
 
-- Componente 1 — referencia a `DESIGN.md > Components > <nombre>`, con estados aplicables explicitos (default, focus, disabled, loading, etc. — ver Regla 16 de `kb-design-expert`).
+- Componente 1 — referencia a `DESIGN.md > Components > <nombre>`, con estados aplicables explicitos (default, focus, disabled, loading, etc. — ver Regla 7 de `kb-design-system-contract`).
 - Componente 2
 - Componente 3
 
-### Estados de vista (Regla 19 de kb-design-expert)
+### Estados de vista (Regla 4 de kb-design-feature-artifacts)
 
 Por cada estado declarado, especificar: que se muestra, microcopy esperada y accion principal si aplica. Si un estado no aplica, marcar `# N/A: <razon>`.
 
@@ -40,7 +40,7 @@ Por cada estado declarado, especificar: que se muestra, microcopy esperada y acc
 - **Partial** (si aplica): <datos parciales o stale, como se senala al usuario>
 - **Success** (si aplica): <confirmacion visual + duracion + transicion al estado siguiente>
 
-### Microcopy minimo (Regla 20 de kb-design-expert)
+### Microcopy minimo (Regla 5 de kb-design-feature-artifacts)
 
 Documentar la microcopy clave de la vista: label de accion primaria, copy de empty state, copy de error tipico, label de loading si tiene texto. Las reglas de tono viven en `kb-design-voice`.
 

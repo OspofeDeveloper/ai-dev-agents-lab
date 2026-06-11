@@ -1,6 +1,6 @@
 ---
 name: kb-tasks-cmp-ui
-description: Implementación concreta de la capa presentation en proyectos Compose Multiplatform (CMP): entry points Android e iOS, setup de initKoin en iOS, ciclo de vida en commonMain y configuración de @Preview. Úsalo cuando haya que implementar pantallas, entry points o componentes UI en CMP.
+description: Implementación de la capa presentation en proyectos Compose Multiplatform (CMP): entry points Android e iOS, setup de initKoin en iOS, ciclo de vida en commonMain y configuración de @Preview.
 allowed-tools: [Read]
 effort: low
 user-invocable: false

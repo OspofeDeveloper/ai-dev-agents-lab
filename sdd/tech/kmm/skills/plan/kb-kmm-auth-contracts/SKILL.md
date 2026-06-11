@@ -1,7 +1,6 @@
 ---
 name: kb-kmm-auth-contracts
 description: "Base de conocimiento de contratos de autenticación en proyectos KMM: tokens, refresh, expiración de sesión, endpoints públicos y separación entre política de auth y mecanismo de transporte."
-argument-hint: ""
 effort: low
 allowed-tools: [Read]
 user-invocable: false

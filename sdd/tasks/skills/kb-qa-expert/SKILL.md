@@ -1,6 +1,6 @@
 ---
 name: kb-qa-expert
-description: "Metodologia QA del pipeline SDD: derivacion de casos de prueba TC-XXX desde los CAs GIVEN/WHEN/THEN del spec, niveles y tipos de prueba, trazabilidad CA→TC y criterios de cobertura con evidencia para el informe de verificacion. No cubre la estrategia de testing del stack (kb del overlay) ni la escritura de tests (implementador/tester)."
+description: "Metodologia QA del pipeline SDD: derivacion de casos de prueba TC-XXX desde los CAs GIVEN/WHEN/THEN del spec, niveles y tipos, trazabilidad CA→TC y criterios de cobertura con evidencia. No cubre la estrategia de testing del stack ni la escritura de tests."
 effort: low
 allowed-tools: [Read]
 user-invocable: false

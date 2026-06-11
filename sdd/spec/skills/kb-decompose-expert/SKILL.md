@@ -1,7 +1,6 @@
 ---
 name: kb-decompose-expert
-description: Experto en partición de Specs SDD monolíticos en Specs por feature. Contiene las reglas para identificar features válidas, declarar shared models y generar el índice de features. Úsalo cuando necesites saber cómo dividir un Spec grande en specs independientes, qué criterios definen una feature válida, o cómo gestionar modelos compartidos entre features. No activa para análisis de pureza (usa kb-spec-expert) ni para planificación técnica (usa kb-plan-expert).
-argument-hint: "[concepto_a_consultar]"
+description: "Partición de Specs SDD monolíticos en Specs por feature: criterios de feature válida, declaración de shared models y generación del índice de features."
 effort: low
 allowed-tools: [Read]
 user-invocable: false
@@ -188,7 +187,7 @@ Cada spec de feature es un **Spec SDD completo y autocontenido**. Contiene exact
 6. **Checklist de Validación** — los 9 checkpoints estándar
 7. **Fuera de Alcance** — exclusiones funcionales relevantes a esta feature
 
-**Renumeración de CAs**: cada feature spec renumera sus CAs desde CA-001. No se heredan los números del spec monolítico. Esto garantiza que la trazabilidad es local a la feature.
+**Renumeración de CAs**: cada feature spec renumera sus CAs desde CA-001. No se heredan los números del spec monolítico. Esto garantiza que la trazabilidad es local a la feature. Esta renumeración es legítima porque ocurre en el **nacimiento** de la feature, antes de que existan tasks/TCs que apunten a sus CAs — es el único momento permitido por `kb-traceability-rules` Regla 12 (los IDs de CA/HU son inmutables una vez el spec entra en el pipeline; un CA eliminado después se marca como tombstone, nunca se renumera).
 
 **Header del spec de feature**:
 ```markdown

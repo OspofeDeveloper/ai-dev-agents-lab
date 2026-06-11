@@ -1,6 +1,6 @@
 ---
 name: wf-design-feedback
-description: "Captura feedback no estructurado de stakeholders (cliente, PM, dev, QA) y lo triajea en categorias accionables: cambio de brief, delta visual, ajuste de feature o fuera de scope. Preserva la trazabilidad del sistema ante el ida-y-vuelta con stakeholders."
+description: "Captura feedback no estructurado de stakeholders (cliente, PM, dev, QA) y lo triajea en categorias accionables: cambio de brief, delta visual, ajuste de feature o fuera de scope. Preserva la trazabilidad ante el ida-y-vuelta con stakeholders."
 when_to_use: "Activa en frases como 'incorpora este feedback del cliente', 'tengo comentarios del PM sobre el design', 'el cliente dice que no le gusta el color de los botones', 'procesa este feedback de stitch'."
 argument-hint: "capture <feedback.md|input> [--source <cliente|pm|dev|qa|stitch|otro>] [--feature <feature_spec.md>] | triage <feedback_capture.md>"
 effort: medium

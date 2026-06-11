@@ -255,8 +255,8 @@ Catalogos cerrados (familias, presets, anti-patrones, voice axes, components) so
 
 ### Anadir un componente al starter kit de un preset
 
-- Editar `skills/kb-design-expert/references/preset_components.md` con el componente y todos sus estados aplicables (Regla 16 de `kb-design-expert`).
-- Actualizar `references/component_anatomy_checklist.md` si introduce una tipologia nueva.
+- Editar `skills/kb-design-expert/references/preset_components.md` con el componente y todos sus estados aplicables (Regla 7 de `kb-design-system-contract`).
+- Actualizar `skills/kb-design-system-contract/references/component_anatomy_checklist.md` si introduce una tipologia nueva.
 
 ### Anadir un workflow nuevo
 
@@ -291,7 +291,7 @@ Las reglas operativas de esta fase viven en las kbs y son SSoT. Este README no r
 
 `DESIGN.md` sigue el formato abierto de Google: front matter YAML para tokens normativos y markdown para rationale. El linter `npx @google/design.md lint DESIGN.md` se ejecuta automaticamente al final de `wf-design-system` y `wf-design-delta apply`.
 
-Estructura del frontmatter (Reglas 6, 11, 16-19, 22 de `kb-design-expert`):
+Estructura del frontmatter (Reglas 2, 3, 7, 8, 9 de `kb-design-system-contract` y Regla 3 de `kb-design-governance` para el versionado):
 
 - `version: MAJOR.MINOR.PATCH` — semver del sistema visual.
 - `visual_personality` — perfil estructurado (familia, escalas, adjectives, anti_patterns).
@@ -300,7 +300,7 @@ Estructura del frontmatter (Reglas 6, 11, 16-19, 22 de `kb-design-expert`):
 - `iconography` — libreria base unica, stroke/fill, grid, tamanos por rol.
 - `motion` — level, reduced-motion policy, durations y easing por rol.
 - `voice` — formality, expertise, warmth, playfulness, emoji_policy.
-- `components` — cada componente con todos los estados aplicables (ver `references/component_anatomy_checklist.md`).
+- `components` — cada componente con todos los estados aplicables (ver `skills/kb-design-system-contract/references/component_anatomy_checklist.md`).
 
 Secciones markdown: `## Overview`, `## Visual Personality`, `## Colors`, `## Color Modes`, `## Typography`, `## Layout`, `## Elevation & Depth`, `## Shapes`, `## Components`, `## Iconography`, `## Accessibility`, `## Motion & Micro-interactions`, `## Reference Apps`, `## Voice & Microcopy`, `## Do's and Don'ts`, `## Changelog`.
 

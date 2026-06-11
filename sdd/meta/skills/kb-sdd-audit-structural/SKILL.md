@@ -1,7 +1,6 @@
 ---
 name: kb-sdd-audit-structural
-description: "Criterios normativos para detectar problemas estructurales en el ecosistema SDD: referencias rotas, skills huerfanas, entradas de rootmap invalidas y agentes con KBs inexistentes. Define que constituye un estado estructural valido y los niveles de severidad de cada hallazgo. No incluye criterios de calidad de contenido (ver kb-sdd-audit-content) ni reglas de arquitectura (ver kb-sdd-skill-architecture)."
-argument-hint: "[pregunta sobre validez estructural del ecosistema]"
+description: "Criterios para detectar problemas estructurales del ecosistema SDD: referencias rotas, skills huerfanas, rootmap invalido y agentes con KBs inexistentes, con su severidad. No cubre calidad de contenido (kb-sdd-audit-content) ni reglas de arquitectura (kb-sdd-skill-architecture)."
 effort: low
 allowed-tools: [Read]
 user-invocable: false

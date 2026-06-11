@@ -1,7 +1,6 @@
 ---
 name: kb-kmm-testing-strategy
-description: "Estrategia de testing para proyectos KMM: pirámide de tests, propiedad por capa, ciclo TDD RED-GREEN-REFACTOR, asignación a source sets y política de test doubles. Referencia arquitectónica que define cuándo y qué probar, sin prescribir implementación concreta. Cargada por kmm-explorer, kmm-planner y task-generator para diagnosticar gaps, planificar trabajo de testing y generar tasks de testing con ciclo TDD."
-argument-hint: ""
+description: "Estrategia de testing para proyectos KMM: pirámide de tests, propiedad por capa, ciclo TDD RED-GREEN-REFACTOR, asignación a source sets y política de test doubles. Define cuándo y qué probar, sin prescribir implementación concreta."
 effort: low
 allowed-tools: [Read]
 user-invocable: false

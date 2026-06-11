@@ -1,7 +1,6 @@
 ---
 name: kb-design-expert
-description: Skill raiz de la fase design del pipeline SDD. Define los principios estructurales que rigen toda la fase — separacion entre design y spec, niveles de artefactos producto vs feature, y orden de derivacion — y enruta a las KBs hermanas que contienen los contratos especificos. Activa en frases como "como esta organizada la fase design", "que produce design", "por donde empiezo el diseno", "que diferencia hay entre DESIGN.md y los artefactos de feature". No activa para reglas del contrato de DESIGN.md (kb-design-system-contract), artefactos de feature (kb-design-feature-artifacts) ni gobernanza/evolucion (kb-design-governance).
-argument-hint: "(cargada automaticamente por workflows y agentes de design)"
+description: Skill raiz de la fase design del pipeline SDD. Define los principios estructurales que rigen toda la fase — separacion entre design y spec, niveles de artefactos producto vs feature, y orden de derivacion — y enruta a las KBs hermanas que contienen los contratos especificos (contrato DESIGN.md, artefactos de feature, gobernanza, brief, a11y).
 effort: low
 allowed-tools: [Read]
 user-invocable: false

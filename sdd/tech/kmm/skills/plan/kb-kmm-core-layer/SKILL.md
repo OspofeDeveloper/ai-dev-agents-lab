@@ -1,7 +1,6 @@
 ---
 name: kb-kmm-core-layer
-description: "Base de conocimiento de la capa core en proyectos KMM: dominio compartido, infraestructura transversal, criterios para subir responsabilidades desde features y reglas para evitar que core se convierta en un cajón desastre."
-argument-hint: ""
+description: "Capa core en proyectos KMM: dominio compartido, infraestructura transversal, criterios para subir responsabilidades desde features y reglas para evitar que core se convierta en un cajón desastre."
 effort: low
 allowed-tools: [Read]
 user-invocable: false

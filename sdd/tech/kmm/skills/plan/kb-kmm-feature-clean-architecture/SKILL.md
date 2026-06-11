@@ -1,7 +1,6 @@
 ---
 name: kb-kmm-feature-clean-architecture
-description: "Base de conocimiento de la arquitectura interna de una feature KMM: capas presentation/domain/data, ubicación de contratos e implementaciones, dependencias permitidas y criterios para subir responsabilidades a core."
-argument-hint: ""
+description: "Arquitectura interna de una feature KMM: capas presentation/domain/data, ubicación de contratos e implementaciones, dependencias permitidas y criterios para subir responsabilidades a core."
 effort: low
 allowed-tools: [Read]
 user-invocable: false

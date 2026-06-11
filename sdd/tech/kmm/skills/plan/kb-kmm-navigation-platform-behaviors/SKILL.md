@@ -1,7 +1,6 @@
 ---
 name: kb-kmm-navigation-platform-behaviors
 description: "Reglas para integración de navegación con comportamientos de plataforma en KMM, como BackHandler, predictive back y bridges de deep links."
-argument-hint: "[back behavior | predictive back | platform deep links]"
 effort: low
 allowed-tools: [Read]
 user-invocable: false

@@ -4,7 +4,7 @@ description: "Transforma Planes tecnicos validados en Tasks de implementacion. U
 when_to_use: "Activa en frases como 'genera las tasks del plan', 'trocea el plan en tasks', 'crea el listado de implementacion', 'prepara las tasks para', '¿que tasks tengo que hacer?'. No activa para generar Specs (usa wf-spec-analyze), ni para generar Planes (usa wf-prepare-plan), ni para validar Planes (usa wf-plan-validate)."
 argument-hint: "generate <plan.md>"
 effort: high
-allowed-tools: [Read, Write, Agent]
+allowed-tools: [Read, Write, Bash, Agent]
 context: fork
 agent: task-generator
 ---

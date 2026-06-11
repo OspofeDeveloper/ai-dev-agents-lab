@@ -1,7 +1,6 @@
 ---
 name: kb-kmm-app-errors
 description: "Base de conocimiento del contrato transversal de errores y resultados en proyectos KMM: AppResult, AppError, ownership de taxonomías de error y reglas de adaptación entre capas."
-argument-hint: "[sin argumentos]"
 effort: low
 allowed-tools: [Read]
 user-invocable: false

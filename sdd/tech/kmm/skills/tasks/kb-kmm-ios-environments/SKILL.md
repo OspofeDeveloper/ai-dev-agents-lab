@@ -1,7 +1,6 @@
 ---
 name: kb-kmm-ios-environments
 description: "Base de conocimiento de implementación iOS del sistema multi-brand/multi-environment en KMM: XCConfig, target/build configuration/scheme, flujo XCConfig → Script Build Phase → Gradle y estructura de ficheros en Xcode."
-argument-hint: ""
 effort: low
 allowed-tools: [Read]
 user-invocable: false

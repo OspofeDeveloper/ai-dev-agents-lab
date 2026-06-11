@@ -1,6 +1,6 @@
 ---
 name: kb-kmm-offline-strategy
-description: Estrategia de caché y offline-first en KMM como decisión de plan: cuándo cachear, la base de datos (Room) como Single Source of Truth, patrón stale-while-revalidate, flujo de datos sin conectividad, frescura vs disponibilidad y manejo de errores de red con caché. Úsalo cuando el plan deba decidir la política de caché de una feature KMM.
+description: "Estrategia de caché y offline-first en KMM como decisión de plan: cuándo cachear, Room como Single Source of Truth, patrón stale-while-revalidate, flujo sin conectividad, frescura vs disponibilidad y errores de red con caché."
 allowed-tools: [Read]
 effort: low
 user-invocable: false

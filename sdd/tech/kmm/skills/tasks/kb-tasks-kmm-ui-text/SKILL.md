@@ -1,7 +1,6 @@
 ---
 name: kb-tasks-kmm-ui-text
 description: "Base de conocimiento sobre el patrón UiText en Compose Multiplatform: `UIText` desacopla ViewModel y UI para manejar textos traducibles y dinámicos."
-argument-hint: "implementación, uso en state, uso en viewmodel, testing"
 effort: low
 allowed-tools: [Read]
 user-invocable: false

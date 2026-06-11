@@ -1,6 +1,6 @@
 ---
 name: wf-spec-gap-resolve
-description: "Completa HUs y CAs marcadas como [INCOMPLETO] a partir de respuestas ya escritas en un _analysis.md, y confirma CAs [INFERIDO] de specs de caracterización con el usuario. Es la via recomendada para resolver gaps sin tratar el cambio como delta funcional amplio."
+description: "Completa HUs y CAs [INCOMPLETO] desde respuestas ya escritas en un _analysis.md y confirma CAs [INFERIDO] de specs de caracterizacion. Via recomendada para resolver gaps sin tratarlos como delta funcional amplio."
 when_to_use: "Activa en frases como 'resuelve estos gaps del spec', 'completa incompletos desde el analysis', 'aplica respuestas del analysis al spec', 'cerrar HUs incompletas', 'confirma los inferidos del spec'."
 argument-hint: "<feature_spec.md> [--analysis <analysis.md>]"
 effort: high

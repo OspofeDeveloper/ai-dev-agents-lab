@@ -1,6 +1,6 @@
 ---
 name: wf-design-feature-prototype
-description: "Deriva artefactos de prototipado visual de una feature a partir de su _spec.md, un DESIGN.md y, si existe, un DESIGN_BRIEF.md. Genera flows, views y un prompt de ensamblaje tool-agnostic (target_tool stitch para mobile, web-generic para web/desktop) listos para contrastar con cliente antes del plan tecnico."
+description: "Deriva flows, views y un prompt de ensamblaje tool-agnostic (target_tool stitch en mobile, web-generic en web/desktop) de una feature desde su _spec.md, el DESIGN.md y el DESIGN_BRIEF.md, listos para contrastar con cliente antes del plan tecnico."
 when_to_use: "Activa en frases como 'genera las vistas para Stitch', 'crea el prototipo de la feature', 'prepara flows y prompt de diseno', 'deriva las pantallas desde el spec'. No activa para modificar el spec, ni para generar plan o tasks."
 argument-hint: "generate <feature_spec.md> [--design-file DESIGN.md] [--brief DESIGN_BRIEF.md] [--no-brief]"
 effort: high
@@ -106,7 +106,7 @@ Antes de delegar, busca otras features ya prototipadas en el directorio hermano:
 
 ## Paso 5: Delegar al agente design-architect
 
-Invoca al agente siguiendo la **Regla 3**, la **Regla 4**, la **Regla 7**, la **Regla 8**, la **Regla 9** y la **Regla 14** de `kb-design-expert`, mas la jerarquia de fuentes definida en `kb-design-brief` Regla 10: `flows` describen secuencia y navegacion, `views` son la SSoT de la pantalla, `ui_prompt` debe ensamblar sin volver a definir, y el brief gobierna las decisiones cerradas.
+Invoca al agente siguiendo la **Regla 3** de `kb-design-expert` (orden de derivación), las **Reglas 1, 2, 3 y 7** de `kb-design-feature-artifacts` (trazabilidad de cada vista, flows como secuencia, views como SSoT de pantalla, ui_prompt que ensambla sin redefinir) y la **Regla 6** de `kb-design-system-contract` (los artefactos materializan el brief sin reabrirlo), mas la jerarquia de fuentes definida en `kb-design-brief` Regla 10: `flows` describen secuencia y navegacion, `views` son la SSoT de la pantalla, `ui_prompt` debe ensamblar sin volver a definir, y el brief gobierna las decisiones cerradas.
 
 Usa este prompt:
 
@@ -140,12 +140,12 @@ INSTRUCCION: produce tres artefactos separados y completos:
 
 Si se pasan features previas, ejecuta tambien una revision de conflictos siguiendo `kb-design-conflict-expert` (Reglas 1-5). Si detectas conflictos, listalos al final del bundle con el formato de la Regla 6 y NO escribas artefactos hasta que el usuario decida; si son falsos positivos, declara `[POSIBLE-CONFLICTO-DESIGN-XX]` segun Regla 7.
 
-Aplica las reglas de kb-design-expert y kb-design-brief que tienes en contexto:
-- Regla 4: cada vista debe trazar a HU/Journey/CA del spec — condiciones de UI no trazables son comportamiento inventado
-- Regla 7: flows capturan secuencia, precondiciones y transiciones — no estados visuales ni componentes
-- Regla 8: views son la SSoT de pantalla — solo decisiones, condiciones trazables al spec, dependencias cross-feature marcadas con [Dependencia: F-XXX]
-- Regla 9: ui_prompt ensambla sin redefinir — no copies tokens ni componentes de DESIGN.md
-- Regla 14: DESIGN.md y los artefactos de feature materializan el brief, no lo reabren (la jerarquia de fuentes vive en kb-design-brief Regla 10)
+Aplica las reglas de kb-design-feature-artifacts, kb-design-system-contract y kb-design-brief que tienes en contexto:
+- kb-design-feature-artifacts Regla 1: cada vista debe trazar a HU/Journey/CA del spec — condiciones de UI no trazables son comportamiento inventado
+- kb-design-feature-artifacts Regla 2: flows capturan secuencia, precondiciones y transiciones — no estados visuales ni componentes
+- kb-design-feature-artifacts Regla 3: views son la SSoT de pantalla — solo decisiones, condiciones trazables al spec, dependencias cross-feature marcadas con [Dependencia: F-XXX]
+- kb-design-feature-artifacts Regla 7: ui_prompt ensambla sin redefinir — no copies tokens ni componentes de DESIGN.md
+- kb-design-system-contract Regla 6: DESIGN.md y los artefactos de feature materializan el brief, no lo reabren (la jerarquia de fuentes vive en kb-design-brief Regla 10)
 - kb-design-brief: respetar `clarity_vs_brand`, `target_platforms`, `accessibility_target`, `autonomy_policy` y guardrails relevantes ya cerrados
 
 No inventes funcionalidad fuera del spec.

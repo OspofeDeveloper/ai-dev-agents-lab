@@ -1,6 +1,6 @@
 ---
 name: kb-kmm-project-state-protocol
-description: "Protocolo de precondicion de contexto tecnico para agentes KMM. Define la obligacion de leer kmm_project_state.md al inicio de la operacion si existe, el bloqueo con mensaje de error estandar si no existe, la excepcion unica para kmm-explorer invocado por wf-kmm-init en modo detect, el contrato de cierre verificable de los agentes implementadores (build y tests con los comandos del project state, reporte honesto), y la precedencia del repo real (project_state) sobre el canon KMM por defecto. SSoT del protocolo compartido por kmm-explorer, kmm-planner, kmm-feature-logic-implementer, kmm-feature-ui-implementer, kmm-platform-integrator, kmm-network-auth-implementer y kmm-tester."
+description: "SSoT del protocolo de precondicion de contexto tecnico de los agentes KMM: leer kmm_project_state.md si existe, bloquear si no, excepcion unica para kmm-explorer en modo detect, contrato de cierre verificable de los implementadores (build/tests con reporte honesto) y precedencia del repo real sobre el canon KMM."
 effort: low
 allowed-tools: [Read]
 user-invocable: false

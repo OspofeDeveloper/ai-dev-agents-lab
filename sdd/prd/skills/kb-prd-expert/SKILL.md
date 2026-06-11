@@ -1,8 +1,6 @@
 ---
 name: kb-prd-expert
 description: "Experto en Product Requirements Documents (PRD) para el pipeline SDD. Define qué debe y qué NO debe contener un PRD para que sea procesable por el pipeline, cómo organizar los requisitos antes del Spec y la diferencia entre PRD, Spec y Plan."
-when_to_use: "Activa cuando el usuario quiera escribir un PRD desde cero, revisar si su PRD está limpio, entender cómo organizar los requisitos antes del spec, o pregunte sobre la diferencia entre PRD / Spec / Plan. Frases típicas: 'quiero crear un PRD', '¿cómo escribo un PRD?', '¿mi PRD está bien?', '¿qué debe tener un PRD?', 'revisa mi PRD', '¿esto va en el PRD o en el spec?', '¿cómo estructuro los requisitos?', 'ayúdame a escribir los requisitos del producto'."
-argument-hint: "[archivo_prd.md | tema_a_consultar]"
 effort: low
 allowed-tools: [Read]
 user-invocable: false

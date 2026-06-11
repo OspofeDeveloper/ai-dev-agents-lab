@@ -107,7 +107,7 @@ Reglas:
 - Cada cambio aplicado debe anadir una entrada en la seccion `## Changelog` con formato `[<fecha>] [feature: <id o N/A>] <descripcion>`. Si la seccion no existe, creala al final.
 - No introduzcas decisiones nuevas no listadas en el analysis.
 - Si encuentras ambiguedad, marca `DESIGN_GAP` y no apliques ese item concreto.
-- El archivo resultante debe seguir cumpliendo Reglas 6, 11, 12, 13, 14 de kb-design-expert.
+- El archivo resultante debe seguir cumpliendo las Reglas 2, 3, 4 y 6 de kb-design-system-contract (formato y secciones, Visual Personality, Reference Apps, materializar el brief sin reabrirlo).
 
 Devuelve el `DESIGN.md` completo, no solo el diff.
 ```

@@ -1,7 +1,6 @@
 ---
 name: kb-design-voice
-description: Base de conocimiento para UX writing y voice & tone del producto. Define el tono de voz, patrones de microcopy por contexto (empty, error, success, loading), estructura de mensajes de error, consistencia lexica y politicas de uso de mayusculas, puntuacion y abreviaturas. Sin esta capa, todos los productos suenan iguales y aburridos.
-argument-hint: "(cargada automaticamente por agentes y workflows de design)"
+description: Base de conocimiento de UX writing y voice & tone del producto: tono de voz, patrones de microcopy por contexto (empty, error, success, loading), estructura de mensajes de error, consistencia lexica y politicas de mayusculas, puntuacion y abreviaturas.
 effort: low
 allowed-tools: [Read]
 user-invocable: false
@@ -65,7 +64,7 @@ Que **nunca** debe contener un error:
 
 ## Regla 5: Patrones de microcopy por contexto
 
-Cada estado de vista (Regla 19 de `kb-design-expert`) tiene patrones especificos:
+Cada estado de vista (Regla 4 de `kb-design-feature-artifacts`) tiene patrones especificos:
 
 ### Empty states
 

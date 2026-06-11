@@ -1,10 +1,10 @@
 ---
 name: wf-prepare-plan
-description: "Transforma Specs validados y el handoff de Design en Planes tecnicos. Usalo cuando tengas un _spec.md sin items pendientes y una feature lista a nivel visual para generar el plan tecnico de implementacion. El plan se especializa segun el stack del proyecto (overlay tech, p. ej. KMM) o en modo generico para stacks agnosticos."
-when_to_use: "Activa en frases como 'genera el plan desde el spec', 'crea el plan tecnico', 'transforma el spec en plan', 'planifica la implementacion de', 'prepara el plan para'. No activa para analizar o generar Specs (usa wf-spec-analyze), ni para validar Planes (usa wf-plan-validate), ni para crear Tasks (usa wf-prepare-tasks)."
+description: "Transforma un Spec validado y el handoff de Design en un Plan tecnico de implementacion, especializado segun el stack del proyecto (overlay tech, p. ej. KMM) o generico para stacks agnosticos."
+when_to_use: "Activa con un _spec.md sin items pendientes y la feature lista a nivel visual; frases como 'genera el plan desde el spec', 'crea el plan tecnico', 'transforma el spec en plan', 'planifica la implementacion de', 'prepara el plan para'. No activa para analizar o generar Specs (usa wf-spec-analyze), ni para validar Planes (usa wf-plan-validate), ni para crear Tasks (usa wf-prepare-tasks)."
 argument-hint: "generate <spec.md>"
 effort: high
-allowed-tools: [Read, Write, Agent]
+allowed-tools: [Read, Write, Bash, Agent]
 context: fork
 agent: plan-architect
 ---

@@ -1,7 +1,6 @@
 ---
 name: kb-design-feature-artifacts
 description: Contrato normativo de los artefactos de feature en la fase design — flows (secuencias, navegacion y transiciones), views (SSoT de pantallas con todos los estados aplicables: default, loading, empty, error, partial, success) y ui_prompt (ensamblaje tool-agnostic sin redefinir funcionalidad; SSoT de target_tool stitch|web-generic y target_platforms). Define trazabilidad obligatoria a journeys y CAs del spec, microcopy minimo por vista y delegaciones a kb-design-forms y kb-design-voice. SSoT extraida de kb-design-expert (Reglas 4, 7, 8, 9, 19, 20, 21).
-argument-hint: "(cargada automaticamente por workflows y agentes de design)"
 effort: low
 allowed-tools: [Read]
 user-invocable: false
@@ -11,7 +10,7 @@ user-invocable: false
 
 Fuente de verdad del contrato de los artefactos de feature dentro de la fase `design`: `*_flows.md`, `*_views.md` y `*_ui_prompt.md`.
 
-Esta KB no cubre el sistema visual de producto (`DESIGN.md`, `DESIGN_BRIEF.md`) — esa SSoT vive en `kb-design-expert` y `kb-design-brief`. Aqui se define como derivar pantallas, estados y prompts de ensamblaje a partir de un spec validado, sin reabrir decisiones funcionales ni redefinir el sistema visual.
+Esta KB no cubre el sistema visual de producto (`DESIGN.md`, `DESIGN_BRIEF.md`) — esa SSoT vive en `kb-design-system-contract` (contrato del `DESIGN.md`) y `kb-design-brief` (brief). Aqui se define como derivar pantallas, estados y prompts de ensamblaje a partir de un spec validado, sin reabrir decisiones funcionales ni redefinir el sistema visual.
 
 ## Regla 1: Cada vista debe trazar a journeys y CAs
 
@@ -44,7 +43,7 @@ Los estados visuales viven en `*_views.md` (Regla 4).
 
 Si el archivo incluye un mapa de navegacion consolidado al final, debe marcarse como derivado con la nota `> Derivado de las tablas de transiciones por flujo. La fuente normativa son dichas tablas.` Si hay conflicto entre el mapa y una tabla individual, manda la tabla del flujo individual.
 
-→ Template: `/Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/design/skills/kb-design-expert/references/feature_flows_template.md`
+→ Template: `${CLAUDE_SKILL_DIR}/references/feature_flows_template.md`
 
 ## Regla 3: Las views son la SSoT de la pantalla
 
@@ -65,7 +64,7 @@ Reglas adicionales para mantener `*_views.md` limpio:
 - **Solo decisiones, no razonamientos**: cada campo normativo contiene la decision tomada. El razonamiento que llevo a elegir una variante de componente sobre otra no va inline; si es valioso preservarlo, usa un bloque `> Nota:` al final de la vista, separado de la definicion.
 - **Dependencias cross-feature**: si una vista incluye elementos que pertenecen a otra feature (entidades, campos o estructuras definidas en otro spec), marcalos con `[Dependencia: F-XXX]`. La vista describe que existe el elemento, no define su estructura interna.
 
-→ Template: `/Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/design/skills/kb-design-expert/references/feature_views_template.md`
+→ Template: `${CLAUDE_SKILL_DIR}/references/feature_views_template.md`
 
 ## Regla 4: Estados de vista declarados en `*_views.md`
 
@@ -161,4 +160,4 @@ No debe:
 - **`stitch`** (mobile): mantiene el formato y la jerga del prompt Stitch actual. No degradar.
 - **`web-generic`** (web/desktop): componentes en términos de **HTML semántico y ARIA** (no widgets propietarios), **breakpoints responsive**, y estados completos (loading/empty/error/focus/hover/disabled). La accesibilidad web la gobierna `kb-a11y-web-expert`; el prompt remite a ella, no la recopia.
 
-→ Template: `/Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/design/skills/kb-design-expert/references/feature_ui_prompt_template.md`
+→ Template: `${CLAUDE_SKILL_DIR}/references/feature_ui_prompt_template.md`

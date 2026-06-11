@@ -1,6 +1,6 @@
 ---
 name: kb-delivery-discipline
-description: "Criterios stack-agnósticos de empaquetado del trabajo implementado en commits y PRs: la Task como unidad de trabajo (un commit atómico y verde por task), los tests viajando en la misma unidad/PR que el código que cubren, y la división de features grandes en cadenas de PRs apilados a lo largo de las fronteras de dependencia. Carga cuando se decide cómo agrupar cambios para commit o revisión. NO cubre la descomposición de tasks ni el orden por dependencias (kb-tasks-method, kb-tasks-expert), ni el tagging/coordenada de release (kb-traceability-rules Regla 11, wf-release)."
+description: "Criterios stack-agnósticos de empaquetado del trabajo implementado en commits y PRs: la Task como unidad (un commit atómico y verde por task), los tests viajando en la misma unidad/PR que el código que cubren, y la división de features grandes en cadenas de PRs apilados sobre las fronteras de dependencia. No cubre descomposición de tasks ni orden por dependencias (kb-tasks-method, kb-tasks-expert), ni tagging/coordenada de release (kb-traceability-rules Regla 11)."
 effort: low
 allowed-tools: [Read]
 user-invocable: false
