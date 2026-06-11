@@ -4,7 +4,7 @@ description: "Inicializa o amplia un proyecto SDD: instala siempre el backbone (
 when_to_use: "Activa con frases como 'inicializa el proyecto', 'arranca el setup tecnico', 'init del proyecto', 'prepara este proyecto para SDD', 'quiero trabajar specs aqui', 'configura este repo para diseño', 'completa la entrevista tecnica del proyecto'. No activa para crear skills o agentes del ecosistema SDD (usa wf-skill-create, wf-agent-create) ni para ejecutar el init concreto de un stack ya conocido (invoca directamente wf-<stack>-init)."
 argument-hint: "[--profile <dev|product|design|custom>] [--type <app|web|backend|other>] [--stack <nombre>] [--name <nombre>] [--sdd-path <path>] [--force]"
 effort: low
-allowed-tools: [Read, Write, Bash]
+allowed-tools: [Read, Write, Bash, AskUserQuestion]
 context: fork
 ---
 

@@ -2,7 +2,7 @@
 
 Este directorio contiene todos los agentes y skills que transforman un documento de requisitos en Specs SDD válidos y autocontenidos por feature. Cubre las dos primeras etapas del pipeline Spec Driven Development: **Specify** (del PRD al Spec monolítico) y **Decompose** (del Spec monolítico a Specs por feature).
 
-Diagramas detallados de esta fase: [DIAGRAMS.md](/Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/spec/DIAGRAMS.md).
+Diagramas detallados de esta fase: [DIAGRAMS.md](DIAGRAMS.md).
 
 ## Precondición de esta fase
 
@@ -240,7 +240,7 @@ La fase `spec` se apoya en tres tipos de piezas:
 - agentes: workers especializados por tipo de razonamiento (`explorer`, `planner`, `writer`, `auditor`).
 - `kb-*`: conocimiento de fondo cargado por los agentes como contexto reusable.
 
-La lógica exacta de routing y la política de skills viven en [CLAUDE.md](/Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/spec/CLAUDE.md). Este README mantiene solo el mapa funcional de la fase.
+La lógica exacta de routing y la política de skills viven en [CLAUDE.md](CLAUDE.md). Este README mantiene solo el mapa funcional de la fase.
 
 ### Workflows
 

@@ -2,7 +2,7 @@
 
 Este documento contiene los diagramas detallados de la fase `prd`: entrada de requisitos, preflight y gobernanza de cambios de producto.
 
-Para la vista global del sistema, usa [sdd/DIAGRAMS.md](/Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/DIAGRAMS.md).
+Para la vista global del sistema, usa [sdd/DIAGRAMS.md](../DIAGRAMS.md).
 
 ---
 

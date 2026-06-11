@@ -4,7 +4,7 @@ description: "Crea el esqueleto de un nuevo overlay de stack (tech/<stack>) conf
 when_to_use: "Activa con frases como 'crea el overlay de android', 'añade soporte para next', 'nuevo stack flutter', 'scaffolding del tech target fastapi', 'quiero que SDD soporte el stack X'. No activa para crear skills sueltas (usa wf-skill-create), ni agentes sueltos (usa wf-agent-create), ni para inicializar un proyecto con un stack ya soportado (usa wf-project-init)."
 argument-hint: "<stack> [--type <app|web|backend>] [--detect '<archivos/patrones que delatan el stack>'] [--with-agents] [--description <desc>]"
 effort: medium
-allowed-tools: [Read, Write, Bash, Agent]
+allowed-tools: [Read, Write, Bash, Agent, AskUserQuestion]
 context: fork
 agent: sdd-author
 ---

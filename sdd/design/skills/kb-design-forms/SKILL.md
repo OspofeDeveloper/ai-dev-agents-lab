@@ -8,7 +8,7 @@ user-invocable: false
 
 # Design Forms
 
-Eres la fuente de verdad para patrones de formulario. No redefines reglas de voice (`kb-design-voice`), de a11y (`kb-a11y-expert`) ni de estados de componente (`kb-design-expert` Regla 16): consolidas las decisiones especificas de form.
+Eres la fuente de verdad para patrones de formulario. No redefines reglas de voice (`kb-design-voice`), de a11y (`kb-a11y-expert`) ni de estados de componente (`kb-design-system-contract` Regla 7): consolidas las decisiones especificas de form.
 
 ## Regla 1: Layout y anatomia base del field
 

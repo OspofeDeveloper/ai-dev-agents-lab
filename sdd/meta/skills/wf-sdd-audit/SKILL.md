@@ -66,6 +66,22 @@ Para los modos `content` y `full`: leer el cuerpo completo de cada skill y agent
 
 ---
 
+## Paso 3.5: Lint estructural determinista (modos `structural` y `full`)
+
+Antes de delegar al agente, ejecuta el validador estructural determinista. Caza los problemas **mecanizables** que la auditoria por prosa no detecta de forma fiable (citas a reglas inexistentes, paths absolutos, frontmatter↔body de `allowed-tools`, `description` larga, `user-invocable` ausente, refs a skills inexistentes en docs):
+
+```bash
+python3 sdd/scripts/sdd-structural-lint.py --json
+```
+
+(Si el repo se invoca desde otra raiz, ajusta a `scripts/sdd-structural-lint.py`. En un proyecto consumidor el script vive en `.sdd/scripts/sdd-structural-lint.py`.)
+
+Estos findings son **SSoT determinista** (no los re-deriva el agente por prosa): se incorporan tal cual al reporte como hallazgos verificados. El agente `sdd-auditor` los recibe como entrada y añade encima solo el juicio estructural **no mecanizable** (huerfanas con matiz, drift semantico de rootmap, referencias rotas que el lint no cubre). Cita `kb-sdd-audit-structural` para el reparto exacto entre lo mecanizado y lo experto.
+
+En modo `content` puro, omite este paso (el lint es estructural).
+
+---
+
 ## Paso 4: Delegar al agente sdd-auditor
 
 Construye el prompt para el agente con:
@@ -74,6 +90,12 @@ Construye el prompt para el agente con:
 Modo: <structural|content|full>
 Alcance: <fase o global>
 Numero de archivos: X skills, Y agentes, Z CLAUDE.md
+
+=== FINDINGS DETERMINISTAS (sdd-structural-lint.py) ===
+[En structural/full: pega aqui la salida JSON del Paso 3.5.
+Son hallazgos verificados mecanicamente — inclúyelos en el reporte tal cual.
+Tu trabajo es añadir SOLO el juicio estructural no mecanizable encima,
+no re-derivar estos por prosa.]
 
 Archivos a auditar:
 

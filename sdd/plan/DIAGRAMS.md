@@ -2,7 +2,7 @@
 
 Este documento contiene los diagramas detallados de la fase `plan`: generación del `_plan.md`, resolución del handoff de Design, auditoría formal y promoción a `VALIDADO`.
 
-Para la vista global del sistema, usa [sdd/DIAGRAMS.md](/Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/DIAGRAMS.md).
+Para la vista global del sistema, usa [sdd/DIAGRAMS.md](../DIAGRAMS.md).
 
 ---
 

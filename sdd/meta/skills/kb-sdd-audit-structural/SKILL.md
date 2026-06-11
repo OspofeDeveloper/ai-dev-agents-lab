@@ -10,6 +10,19 @@ user-invocable: false
 
 Criterios para determinar si el ecosistema SDD es estructuralmente consistente. Un ecosistema estructuralmente valido es aquel donde todas las referencias entre piezas son resolvibles y no hay piezas sin consumidor.
 
+## Reparto mecanizado vs experto (SSoT)
+
+Los chequeos estructurales **mecanizables** los ejecuta el script determinista `sdd/scripts/sdd-structural-lint.py` (ROADMAP 11.4a), no el agente por prosa. Son su SSoT: el agente los **consume** (los recibe como findings JSON desde `wf-sdd-audit` Paso 3.5) y NO los re-deriva. Cubre, con `archivo:linea`, severidad y tipo:
+
+- **CITED-RULE-MISSING / CITED-SKILL-MISSING / CITED-RULE-ON-WORKFLOW** — citas `Regla N de kb-X` cuyo N no existe en esa KB, o que apuntan a una KB inexistente, o a un `wf-*` (que tiene Pasos, no Reglas).
+- **ABSOLUTE-PATH** — rutas absolutas de home de usuario (prefijos tipo `/Users` o `/home`) embebidas en `.md` operativos del ecosistema; rompen en otra maquina y en CI.
+- **SKILL-REF-MISSING** — tokens `kb-*`/`wf-*` en `README.md`/`DIAGRAMS.md`/`CLAUDE.md` que no corresponden a una skill instalada.
+- **ALLOWED-TOOLS-MISMATCH** — `allowed-tools` del frontmatter de una `wf-*` que no cubre las señales de su body (Bash/Write/AskUserQuestion/Agent), respetando el patron `context: fork` + `agent:`.
+- **DESCRIPTION-TOO-LONG** — `description` > 220 chars.
+- **USER-INVOCABLE-MISSING** — `wf-*` sin `user-invocable:`; `kb-*` sin `user-invocable: false`.
+
+El agente `sdd-auditor` se centra en lo **no mecanizable**: huerfanas con matiz de intencion (KB nueva pendiente de cablear vs obsoleta), drift semantico de rootmap, coherencia de handoffs entre piezas y cualquier referencia rota que el lint no contemple. La definicion de cada criterio sigue viviendo aqui (abajo); el script es quien los **verifica de forma reproducible**.
+
 ## Que constituye una referencia valida
 
 ### En un agente (`.md` en `agents/`)

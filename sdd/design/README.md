@@ -11,7 +11,7 @@ Este directorio introduce la fase `design` del pipeline SDD. Su responsabilidad 
 | **Qué no cubre** | Integración Figma (import de variables / export de Figma Tokens) **fuera de alcance** por decisión ROADMAP 7.6 (2026-06-10): la fase apunta a equipos sin diseñador; destinos Stitch (mobile) y `web-generic`. Se reconsideraría solo si el fit se expandiera a equipos con diseñador propio (decisión de producto). Equipos con diseñador que ya produce specs visuales: pueden escribir `DESIGN.md` a mano respetando el contrato y auditarlo con `wf-design-validate` |
 | **Cuándo saltarla** | Por proyecto: la fase es opcional en el init. Por feature: sin superficie de UI visible, Spec pasa a Plan directamente — la regla canónica de cuándo Design es obligatorio vive en `kb-plan-expert` y la aplica `wf-prepare-plan` |
 
-Diagramas detallados de esta fase: [DIAGRAMS.md](/Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/design/DIAGRAMS.md).
+Diagramas detallados de esta fase: [DIAGRAMS.md](DIAGRAMS.md).
 
 ## Objetivo de la fase
 
@@ -51,7 +51,7 @@ Diagramas detallados de esta fase: [DIAGRAMS.md](/Users/oscar/Documents/GitHub/a
 
 ## Workflows disponibles
 
-Los workflows se organizan en siete capas operativas. Detalle completo de pipelines y diagramas en [DIAGRAMS.md](/Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/design/DIAGRAMS.md).
+Los workflows se organizan en siete capas operativas. Detalle completo de pipelines y diagramas en [DIAGRAMS.md](DIAGRAMS.md).
 
 ### Inspiracion (opcional, anterior al intake)
 

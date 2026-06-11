@@ -2,7 +2,7 @@
 
 Este documento contiene los diagramas detallados de la fase `design`: intake de direccion visual, sistema visual, derivacion de vistas por feature y handoff a Stitch y a `plan`.
 
-Para la vista global del sistema, usa [sdd/DIAGRAMS.md](/Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/DIAGRAMS.md).
+Para la vista global del sistema, usa [sdd/DIAGRAMS.md](../DIAGRAMS.md).
 
 ---
 

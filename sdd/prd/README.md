@@ -2,7 +2,7 @@
 
 Este directorio contiene la capa de conocimiento y preflight para la entrada del pipeline SDD: el PRD o documento de requisitos inicial.
 
-Diagramas detallados de esta fase: [DIAGRAMS.md](/Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/prd/DIAGRAMS.md).
+Diagramas detallados de esta fase: [DIAGRAMS.md](DIAGRAMS.md).
 
 El objetivo de esta etapa no es generar Specs ni tomar decisiones técnicas. Su trabajo es comprobar que el documento de entrada:
 - describe negocio y no implementación

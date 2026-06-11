@@ -2,7 +2,7 @@
 
 Este documento contiene los diagramas detallados de la fase `spec`: análisis, discovery, generación por feature, evolución y validación.
 
-Para la vista global del sistema, usa [sdd/DIAGRAMS.md](/Users/oscar/Documents/GitHub/ai-dev-agents-lab/sdd/DIAGRAMS.md).
+Para la vista global del sistema, usa [sdd/DIAGRAMS.md](../DIAGRAMS.md).
 
 ---
 
