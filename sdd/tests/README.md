@@ -68,6 +68,16 @@ Tests de integracion que instalan el ecosistema en proyectos sinteticos
 | `tech/kmm/install.sh` | `test_kmm_install_sh.py` | regla `sdd-kmm.md` con `paths:`; NO pisa el CLAUDE.md raiz (lo crea ni lo sobreescribe); instala `kb-kmm-project-state-protocol` (bug 0.1) y agentes KMM; override por basename de `plan-architect`/`kb-plan-expert`; install.sh re-aplica el overlay leyendo `stack` de project-init.json (bug 6.6); stack desconocido -> aviso sin fallo |
 | `setup.sh` | `test_setup_sh.py` | install fresco (hook, `~/.sdd-home`, registro en settings, bloque SDD-BOOTSTRAP, skills globales); idempotencia (no duplica hook ni bloque); preserva settings/CLAUDE.md ajenos; `--uninstall` revierte preservando lo ajeno; arg desconocido -> exit 1. Aislado con `HOME` falso; NO ejercita `--dev` (mutaria el repo real) |
 
+## Cobertura — tooling meta del ciclo de creacion (11.4c/d)
+
+Scripts del meta-repo que blindan la creacion de piezas (no se distribuyen a
+proyectos consumidores; viven solo en `sdd/scripts/`).
+
+| Script | Fichero de test | Que cubre |
+|---|---|---|
+| `sdd-scaffold.py` | `test_sdd_scaffold.py` | esqueleto canonico de kb/wf/agente (layout por fase, prefijo no duplicado, global→meta, tech/<stack>, color por fase, `--read-only`→disallowedTools, agente exige `--skills`); duplicado→exit 2 / `--force`; fase mala→exit 2; `--dry-run` no escribe; **invariante: lo generado pasa `sdd-structural-lint --check` con 0 blocking** |
+| `sdd-meta-lint-hook.py` | `test_sdd_meta_lint_hook.py` | PostToolUse advisory: skill/agente limpio→silencio, con BLOCKING→`additionalContext` con el finding; solo findings del archivo editado; no-pieza/no-edicion/fuera-de-raiz/stdin-ilegible/sin-file_path→silencio. Aislado con `SDD_META_LINT_ROOT` |
+
 ## Cobertura — hook de sesion (11.3c)
 
 `test_session_hook.py` (24): matriz de estados de `bootstrap/sdd-session-check.sh`,

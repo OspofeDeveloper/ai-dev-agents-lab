@@ -95,6 +95,33 @@ PYEOF
     for l in "$REPO_CLAUDE/agents"/* "$REPO_CLAUDE/skills"/*; do
       [ -L "$l" ] && rm -f "$l"
     done
+    # Desregistrar el hook PostToolUse de lint del meta-repo (--dev), preservando
+    # el resto del settings dev. Best-effort.
+    if command -v python3 >/dev/null 2>&1 && [ -f "$REPO_CLAUDE/settings.json" ]; then
+      REPO_SETTINGS="$REPO_CLAUDE/settings.json" python3 - <<'PYEOF'
+import json, os
+path = os.environ["REPO_SETTINGS"]
+try:
+    with open(path) as f:
+        data = json.load(f)
+except Exception:
+    raise SystemExit(0)
+hooks = data.get("hooks", {})
+post = [m for m in hooks.get("PostToolUse", [])
+        if not any("sdd-meta-lint-hook.py" in h.get("command", "")
+                   for h in m.get("hooks", []))]
+if post:
+    hooks["PostToolUse"] = post
+else:
+    hooks.pop("PostToolUse", None)
+if hooks:
+    data["hooks"] = hooks
+else:
+    data.pop("hooks", None)
+with open(path, "w") as f:
+    json.dump(data, f, indent=2); f.write("\n")
+PYEOF
+    fi
   fi
 
   echo ""
@@ -207,6 +234,42 @@ if [ "$DEV_MODE" = "1" ]; then
   # skills de bootstrap tambien activas en el repo para probarlas sin instalar global
   ln -sfn "$SCRIPT_DIR/bootstrap/skills/wf-project-init" "$REPO_CLAUDE/skills/wf-project-init"
   ln -sfn "$SCRIPT_DIR/bootstrap/skills/wf-sdd-update" "$REPO_CLAUDE/skills/wf-sdd-update"
+
+  # Hook PostToolUse de lint estructural del meta-repo (ROADMAP 11.4c): al editar
+  # a mano un */SKILL.md o */agents/*.md del ecosistema, da feedback inmediato del
+  # validador sin esperar al gate de cierre de los workflows. Se cablea aqui (en
+  # sdd/.claude/settings.json, gitignored y per-maquina) con merge idempotente; el
+  # script vive committeado en sdd/scripts/. Wrapper defensivo: sin python3 o sin
+  # script, no estorba.
+  REPO_SETTINGS="$REPO_CLAUDE/settings.json"
+  SCRIPT_DIR="$SCRIPT_DIR" REPO_SETTINGS="$REPO_SETTINGS" python3 - <<'PYEOF'
+import json, os
+path = os.environ["REPO_SETTINGS"]
+script = os.path.join(os.environ["SCRIPT_DIR"], "scripts", "sdd-meta-lint-hook.py")
+cmd = ('if command -v python3 >/dev/null 2>&1 && [ -f "%s" ]; then '
+       'python3 "%s"; fi') % (script, script)
+data = {}
+if os.path.exists(path):
+    try:
+        with open(path) as f:
+            data = json.load(f)
+    except Exception:
+        data = {}
+post = data.setdefault("hooks", {}).setdefault("PostToolUse", [])
+already = any(
+    "sdd-meta-lint-hook.py" in h.get("command", "")
+    for matcher in post for h in matcher.get("hooks", [])
+)
+if not already:
+    post.append({"matcher": "Write|Edit|MultiEdit",
+                 "hooks": [{"type": "command", "command": cmd}]})
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w") as f:
+        json.dump(data, f, indent=2); f.write("\n")
+    print("Hook PostToolUse de lint del meta-repo registrado en " + path)
+else:
+    print("Hook PostToolUse de lint del meta-repo ya registrado en " + path)
+PYEOF
   echo "Modo dev: meta-orquestador symlinkeado en $REPO_CLAUDE"
 fi
 

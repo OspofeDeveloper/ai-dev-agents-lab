@@ -18,14 +18,19 @@ SDD_ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS = SDD_ROOT / "scripts"
 
 
-def run_script(script_name, *args, stdin=None, cwd=None):
+def run_script(script_name, *args, stdin=None, cwd=None, env=None):
     """Ejecuta scripts/<script_name> como subproceso. Devuelve CompletedProcess.
 
     - script_name: nombre del fichero en sdd/scripts/ (p. ej. 'sdd-seal.py').
     - args: argumentos posicionales (se convierten a str).
     - stdin: texto a pasar por stdin (o None).
     - cwd: directorio de trabajo (por defecto, la raiz del repo).
+    - env: dict de entorno EXTRA (se fusiona sobre os.environ), o None.
     """
+    full_env = None
+    if env is not None:
+        full_env = dict(os.environ)
+        full_env.update({k: str(v) for k, v in env.items()})
     script = SCRIPTS / script_name
     cmd = [sys.executable, str(script)] + [str(a) for a in args]
     return subprocess.run(
@@ -34,6 +39,7 @@ def run_script(script_name, *args, stdin=None, cwd=None):
         capture_output=True,
         text=True,
         cwd=str(cwd) if cwd else str(SDD_ROOT),
+        env=full_env,
     )
 
 

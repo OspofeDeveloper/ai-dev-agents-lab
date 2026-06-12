@@ -95,32 +95,48 @@ Si se especifico `--agent`:
 
 ---
 
-## Paso 6: Delegar al agente sdd-author
+## Paso 6: Generar el esqueleto canonico (scaffold determinista)
+
+El frontmatter y la ubicacion NO se redactan por prosa: los produce el script
+`sdd/scripts/sdd-scaffold.py`, que escribe el `SKILL.md` con el frontmatter
+canonico por construccion (segun `kb-sdd-creation-guide`) y un cuerpo-esqueleto
+con `TODO`. Asi la pieza pasa el gate del Paso 9 sin retoques de frontmatter.
+
+```bash
+# kb
+python3 sdd/scripts/sdd-scaffold.py kb <nombre> --phase <fase> \
+  [--description "<desc>"] [--effort <low|medium|high>]
+# wf
+python3 sdd/scripts/sdd-scaffold.py wf <nombre> --phase <fase> \
+  [--description "<desc>"] [--agent <agente>] [--effort <low|medium|high>]
+```
+
+El script resuelve el directorio destino (Paso 3) y el nombre canonico; rechaza
+con exit 2 si el destino ya existe (consistente con el chequeo de duplicados del
+Paso 4). Si python3 o el script no estan disponibles, cae al modo manual: crea
+el directorio y escribe el frontmatter siguiendo `kb-sdd-creation-guide`.
+
+---
+
+## Paso 7: Delegar a sdd-author el relleno del cuerpo
 
 Construye el prompt para el agente con:
 
 ```text
-Modo: create-<kb|wf>
+Modo: fill-body-<kb|wf>
+Archivo scaffoldeado: <path del SKILL.md creado en Paso 6>
 Nombre canonico: <kb-nombre> o <wf-nombre>
 Fase: <fase>
-Directorio destino: <path calculado en paso 3>
 Descripcion del dominio: <--description o "no proporcionada">
 Agente destino (solo wf): <--agent o "ninguno">
-Effort (solo wf): <--effort o "medium">
 ```
 
-Invoca el agente `sdd-author` con ese prompt.
-
----
-
-## Paso 7: Escribir la skill
-
-Crea el directorio destino si no existe:
-```bash
-mkdir -p <directorio_destino>
-```
-
-Escribe el contenido generado por el agente en `<directorio_destino>/SKILL.md`.
+Invoca el agente `sdd-author`. Su trabajo es **editar** el archivo ya
+scaffoldeado: reemplazar el cuerpo-esqueleto `TODO` por el contenido real y
+afinar la `description` del frontmatter si procede. NO debe alterar los campos
+estructurales del frontmatter (`name`, `user-invocable`, `effort`,
+`allowed-tools`, `context`, `agent`) salvo necesidad justificada — los puso el
+scaffold y el gate del Paso 9 los verifica.
 
 ---
 

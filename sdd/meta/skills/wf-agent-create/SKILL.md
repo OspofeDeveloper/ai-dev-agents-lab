@@ -93,40 +93,50 @@ Reporta la lista completa de KBs verificadas y las que faltan.
 
 ---
 
-## Paso 6: Delegar al agente sdd-author
+## Paso 6: Generar el esqueleto canonico (scaffold determinista)
+
+Primero **deriva los flags de frontmatter** segun los criterios de
+`kb-sdd-creation-guide` (no son del scaffold, son decision de diseño):
+- `model`: opus para escritores/implementadores, sonnet para auditores/exploradores/planificadores (override con `--model`).
+- `effort: high` si el agente genera artefactos complejos; omitir si audita, explora o planifica approach (override con `--effort high`).
+- `--read-only` (`disallowedTools: Write, Edit`) si el rol no modifica archivos ni produce artefactos diagnosticos intermedios.
+
+El `color` lo deriva el scaffold de la fase (tabla de `kb-sdd-creation-guide`).
+El frontmatter y la ubicacion NO se redactan por prosa: los produce
+`sdd/scripts/sdd-scaffold.py`, que escribe `<nombre>.md` con el frontmatter
+canonico por construccion (asi pasa el gate del Paso 8 sin retoques):
+
+```bash
+python3 sdd/scripts/sdd-scaffold.py agent <nombre> --phase <fase> \
+  --skills <kb1,kb2,...> [--description "<desc>"] [--model <modelo>] [--read-only]
+```
+
+El script rechaza con exit 2 si el destino ya existe (consistente con el Paso 4).
+Si python3 o el script no estan disponibles, cae al modo manual: crea el
+directorio y escribe el frontmatter siguiendo `kb-sdd-creation-guide`.
+
+---
+
+## Paso 7: Delegar a sdd-author el relleno del cuerpo
 
 Construye el prompt para el agente con:
 
 ```text
-Modo: create-agent
+Modo: fill-body-agent
+Archivo scaffoldeado: <path del <nombre>.md creado en Paso 6>
 Nombre: <nombre>
 Fase: <fase>
-Directorio destino: <path calculado en paso 3>
-Skills a cargar: <lista de KBs o "ninguna especificada">
+Skills cargadas: <lista de KBs o "ninguna especificada">
 Descripcion del dominio cognitivo: <--description o "no proporcionada">
-Modelo: <--model, o derivar de criterio kb-sdd-creation-guide según rol>
-Override effort: <"high" si --effort high presente, o "derivar de criterio kb-sdd-creation-guide">
-Override read-only: <"sí" si --read-only presente, o "derivar de criterio kb-sdd-creation-guide">
 ```
 
-Aplica los criterios de `kb-sdd-creation-guide` para los campos de frontmatter derivables:
-- `model`: opus para escritores/implementadores, sonnet para auditores/exploradores/planificadores
-- `effort: high` si el agente genera artefactos complejos; omitir si audita, explora o planifica approach
-- `disallowedTools: Write, Edit` si el system prompt declara que no modifica archivos y no produce artefactos diagnósticos intermedios
-- `color`: según tabla de fase en `kb-sdd-creation-guide` (purple/blue/green/pink/orange/cyan/red)
-
-Invoca el agente `sdd-author` con ese prompt.
-
----
-
-## Paso 7: Escribir el agente
-
-Crea el directorio destino si no existe:
-```bash
-mkdir -p <directorio_destino>
-```
-
-Escribe el contenido generado por el agente en `<directorio_destino>/<nombre>.md`.
+Invoca el agente `sdd-author`. Su trabajo es **editar** el archivo ya
+scaffoldeado: reemplazar el cuerpo-esqueleto `TODO` por el system prompt real
+del agente y afinar la `description` del frontmatter si procede. NO debe alterar
+los campos estructurales del frontmatter (`name`, `skills`, `model`, `color`,
+`memory`, `permissionMode`, `effort`/`disallowedTools`) salvo necesidad
+justificada — los puso el scaffold segun los criterios derivados y el gate del
+Paso 8 verifica `name`.
 
 ---
 
