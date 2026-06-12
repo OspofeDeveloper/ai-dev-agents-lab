@@ -5,6 +5,7 @@ tmpdirs por una suite reproducible. Dos bloques:
 
 - **Scripts deterministas** (ROADMAP 11.3a): los 13 scripts de `sdd/scripts/`.
 - **Installers** (ROADMAP 11.3b): `install.sh`, `tech/kmm/install.sh`, `setup.sh`.
+- **Hook de sesion** (ROADMAP 11.3c): `bootstrap/sdd-session-check.sh`.
 
 ## Como correrla
 
@@ -66,6 +67,21 @@ Tests de integracion que instalan el ecosistema en proyectos sinteticos
 | `install.sh` | `test_install_sh.py` | install all (agentes/skills/rules/scripts sellados/settings/CLAUDE.md); install por fase (spec, plan) con dependencias cross-fase; fase desconocida -> exit 1; `--prune` poda huerfanos / sin `--prune` avisa; idempotencia del merge de settings; `SDD_PROJECT_ROOT` redirige `.sdd/` a la raiz |
 | `tech/kmm/install.sh` | `test_kmm_install_sh.py` | regla `sdd-kmm.md` con `paths:`; NO pisa el CLAUDE.md raiz (lo crea ni lo sobreescribe); instala `kb-kmm-project-state-protocol` (bug 0.1) y agentes KMM; override por basename de `plan-architect`/`kb-plan-expert`; install.sh re-aplica el overlay leyendo `stack` de project-init.json (bug 6.6); stack desconocido -> aviso sin fallo |
 | `setup.sh` | `test_setup_sh.py` | install fresco (hook, `~/.sdd-home`, registro en settings, bloque SDD-BOOTSTRAP, skills globales); idempotencia (no duplica hook ni bloque); preserva settings/CLAUDE.md ajenos; `--uninstall` revierte preservando lo ajeno; arg desconocido -> exit 1. Aislado con `HOME` falso; NO ejercita `--dev` (mutaria el repo real) |
+
+## Cobertura — hook de sesion (11.3c)
+
+`test_session_hook.py` (24): matriz de estados de `bootstrap/sdd-session-check.sh`,
+aislado con `CLAUDE_PROJECT_DIR` + `HOME` falso + `CI=""`/`SDD_NON_INTERACTIVE=""`
+(neutralizan la herencia del runner). El hook siempre sale 0; la senal es su stdout.
+
+| Grupo | Que cubre |
+|---|---|
+| estados de directiva | virgen -> `mode-undecided`; `sdd-mode.json` free -> silencio; sdd sin init -> `init-pending`; init completo -> silencio; init con fase sin regla -> `init-incomplete`; init gana sobre modo |
+| version-drift | sellos distintos -> `version-drift`; iguales -> silencio; sin sello de proyecto -> silencio |
+| opt-out | `CI=true` y `SDD_NON_INTERACTIVE=1` -> silencio; `CI=false` actua; `HOME==proyecto` -> silencio |
+| exclusion repo SDD | proyecto bajo `~/.sdd-home` -> silencio; fuera -> actua |
+| deny/allowlist (5.6) | denylist hit -> silencio / miss y comentada -> actua; allowlist opt-in fuera -> silencio / cubriendo -> actua |
+| techo git monorepo (5.7) | encuentra marcador en ancestro hasta el git root; gana el ancestro mas cercano; no cruza el git root; sin git no sube. `@skipIf` si no hay git |
 
 > **Tiempo de ejecucion:** los tests de `install.sh`/`tech/kmm/install.sh` son
 > lentos (~1-2 min cada fichero) porque cada install copia ~130 skills fichero a
