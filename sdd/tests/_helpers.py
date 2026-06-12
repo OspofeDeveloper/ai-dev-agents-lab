@@ -8,6 +8,7 @@ importar modulos con guion en el nombre.
 """
 from __future__ import annotations
 
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -45,6 +46,29 @@ def run_script_at(script_path, *args, stdin=None, cwd=None):
         capture_output=True,
         text=True,
         cwd=str(cwd) if cwd else None,
+    )
+
+
+def run_bash(script_path, *args, cwd=None, env=None):
+    """Ejecuta un script bash (p. ej. install.sh, setup.sh) como subproceso.
+
+    - script_path: ruta absoluta al .sh.
+    - args: argumentos posicionales.
+    - cwd: directorio de trabajo (los installers resuelven .claude/ desde pwd).
+    - env: dict de entorno EXTRA (se fusiona sobre os.environ); util para HOME
+      falso (setup.sh) o SDD_PROJECT_ROOT (install.sh).
+    """
+    full_env = None
+    if env is not None:
+        full_env = dict(os.environ)
+        full_env.update({k: str(v) for k, v in env.items()})
+    cmd = ["bash", str(script_path)] + [str(a) for a in args]
+    return subprocess.run(
+        cmd,
+        capture_output=True,
+        text=True,
+        cwd=str(cwd) if cwd else None,
+        env=full_env,
     )
 
 
