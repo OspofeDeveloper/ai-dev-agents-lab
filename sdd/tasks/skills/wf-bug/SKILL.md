@@ -87,7 +87,11 @@ El registro vive junto al `_tasks.md` de la feature: `features/<nombre>/tasks/<n
 - **Aviso de gobernanza:** ninguno | <fix sin respaldo de spec...>
 ```
 
-`B-00X` es secuencial dentro del archivo (B-001 si es nuevo).
+El ID `B-00X` es secuencial dentro del archivo. **No lo cuentes a mano** (una colisión corrompe el registro): obtén el siguiente con el script determinista
+```bash
+!python3 .sdd/scripts/sdd-next-id.py B <ruta_al_bugs.md>
+```
+(emite `B-001` si el archivo no existe o aún no tiene bugs). Si python3 o el script no están disponibles, cae a contar el máximo `B-NNN` del archivo + 1.
 
 ## Paso 6: Commit trazable
 

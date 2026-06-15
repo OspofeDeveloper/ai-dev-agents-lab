@@ -32,7 +32,7 @@ sobre el árbol fuente.
 | C1 | **Resolución de ruta / layout** (dónde escribir y leer artefactos) | Alto — artefacto en directorio equivocado; gates/índice fallan o se dispersa el estado | Sí (función pura de path+kind+root) | **MIGRAR** → `sdd-resolve-path.py` |
 | C2 | **Headers de trazabilidad** (escribir `Spec origen`/`Plan origen` relativo correcto) | Alto — header irresoluble → no se puede sellar | Parcial: la **verificación** ya existe (`sdd-seal.py`); falta el **cómputo en escritura** | **MIGRAR (write-side)** — se pliega en C1 |
 | C3c | **Numeración B-00X** (bugs) | Alto — colisión de IDs en `_bugs.md` | Sí (scan + max+1) | **MIGRAR** → `sdd-next-id.py` |
-| C3d | **Numeración TC-XXX** (casos QA) | Alto — colisión en `_qa_plan.md` | Sí | **MIGRAR** → `sdd-next-id.py` |
+| C3d | **Numeración TC-XXX** (casos QA) | Bajo — la matriz se enumera `TC-001..N` en UNA pasada de derivación (no append incremental); al regenerar reinicia | N/A para `next-id` (devuelve *un* siguiente ID, no encaja con generación batch) | **PROSA** — reclasificado al implementar 11.2b (ver nota) |
 | C3a | **Feature ID F-001 directo** (fast-track sin discovery) | Medio — colisión en `_features.md` (el modo `--feature` lo toma del discovery, sin riesgo) | Sí | **MIGRAR** → `sdd-next-id.py` (mismo script) |
 | C4 | **Detección de artefacto preexistente en ambos layouts** | Alto — no lo encuentra → lo regenera/pisa | Sí (mismo grafo de rutas que C1) | **MIGRAR** — modo `--find` de `sdd-resolve-path.py` |
 | C3b | **Numeración E-00X** (enmiendas) | Alto | — | **YA HECHO** — `sdd-amend.py` único escritor; la prosa ya prohíbe asignar a mano |
@@ -81,22 +81,29 @@ de regresión gestionable con la suite 11.3 (añadir `test_sdd_resolve_path.py` 
 verificar que el sellador sigue resolviendo `Spec origen`). Recomendado como
 milestone propio.
 
-### 11.2b — `sdd-next-id.py` 🟡
+### 11.2b — `sdd-next-id.py` ✅ HECHO (2026-06-15, v0.30.0)
 
-**Problema.** Tres numeraciones secuenciales se asignan hoy por prosa
-("escanea el archivo, asigna el siguiente"): `B-00X` en `_bugs.md`
-(`wf-bug/SKILL.md:90`), `TC-XXX` en `_qa_plan.md` (`kb-qa-expert/SKILL.md:17`),
-`F-001` directo en fast-track (`wf-spec-fast-track/SKILL.md:139`). Colisión =
-corrupción del registro / del índice de features.
+**Problema.** Numeraciones secuenciales asignadas por prosa ("escanea el
+archivo, asigna el siguiente"). Colisión = corrupción del registro / del índice.
 
-**Diseño propuesto.** `sdd-next-id.py <prefijo> <archivo>` → escanea los IDs
-existentes del prefijo en el archivo (regex `B-(\d+)`, `TC-(\d+)`, `F-(\d+)`),
-devuelve el siguiente con el padding canónico. Escritura atómica si además
-inserta (o solo emite el ID y el workflow lo escribe — decidir). Precedente
-exacto: `sdd-amend.py next-ref` ya hace esto para `E-00X`.
+**Diseño implementado.** `sdd-next-id.py <prefijo> <archivo...> [--width N]` →
+escanea los IDs del prefijo (regex `(?<![A-Za-z0-9])<prefijo>-(\d+)`), devuelve
+el siguiente con padding (default 3). **Solo emite** el ID (no escribe — el
+workflow escribe la entrada), pseudo-función pura como `sdd-amend.py next-ref`.
+Lookbehind desambigua prefijos: `F` no matchea `RF-001` ni `F-C-003`, `R` no
+matchea `CR-001`; `F` y `F-C` son secuencias independientes.
 
-**Coste/riesgo.** BAJO — script pequeño, 3 call-sites, autocontenido. Buen primer
-paso por sí solo.
+**Decisión refinada al implementar — solo 2 de los 3 call-sites migran.**
+- ✅ `B-00X` (`wf-bug`) y `F-NNN` (`wf-spec-fast-track`): **append incremental**
+  a `_bugs.md`/`_features.md` en el tiempo → riesgo real de miscount. Migrados,
+  con fallback a contar a mano si no hay python3/script.
+- ❌ `TC-XXX` (`kb-qa-expert`): la matriz se **enumera `TC-001..N` en una sola
+  pasada de derivación** (no append). `next-id` devuelve *un* siguiente ID y no
+  encaja con generación batch; el riesgo de colisión es bajo. **Se queda en
+  prosa**, con la KB aclarada (enumeración batch, reinicia al regenerar).
+
+**Estado.** Distribuido por `install.sh` a `.sdd/scripts/`; `test_sdd_next_id.py`
+(10 tests) en la suite 11.3; CHANGELOG 0.30.0 (sin ⚠, aditivo).
 
 ### NO migrar (se quedan en prosa, justificado)
 
@@ -115,10 +122,14 @@ headers y deriva PRD (`sdd-seal.py` / `sdd-sync-check.py`), consolidación de
 
 ## Resumen ejecutivo
 
-De los 14 puntos inventariados: **3 ya estaban cubiertos** por scripts, **6 se
-quedan en prosa** justificadamente (juicio/humano/bajo valor), y **5 merecen
-migración**, que se consolidan en **2 scripts nuevos** — `sdd-resolve-path.py`
-(absorbe C1+C2-write+C4, el grueso del riesgo de dispersión de estado) y
-`sdd-next-id.py` (C3a/c/d, colisiones de ID). El flagship es `sdd-resolve-path.py`
-por blast radius (~20 skills recitando la misma frase). Ambos son milestones
-independientes; `sdd-next-id.py` es el de menor coste/riesgo para empezar.
+De los 14 puntos inventariados: **3 ya estaban cubiertos** por scripts, **7 se
+quedan en prosa** justificadamente (juicio/humano/bajo valor; TC-XXX se sumó a
+este grupo al implementar 11.2b — es enumeración batch, no append), y **2 grupos
+merecen migración** en 2 scripts:
+
+- **`sdd-next-id.py` (11.2b) — ✅ HECHO** (v0.30.0): C3a (F-NNN) + C3c (B-00X),
+  los call-sites de append incremental. Bajo coste, 2 call-sites cableados.
+- **`sdd-resolve-path.py` (11.2a) — PENDIENTE**: absorbe C1 (dónde escribir) +
+  C2-write (emitir `Spec origen` relativo) + C4 (find en ambos layouts). El
+  flagship por blast radius (~20 skills recitando la misma frase); milestone
+  propio por el rewire.

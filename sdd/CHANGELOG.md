@@ -2,6 +2,16 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.30.0 — 2026-06-15
+
+Asignación determinista de IDs secuenciales (ROADMAP 11.2b, primera migración del inventario 11.2). Nuevo script `sdd-next-id.py` distribuido a `.sdd/scripts/`.
+
+- `sdd-next-id.py <prefijo> <archivo...> [--width N]`: escanea los IDs ya usados del prefijo y emite el siguiente libre (pseudo-función pura, mismo patrón que `sdd-amend.py next-ref`; no escribe, solo emite). Desambigua prefijos con lookbehind: `F` no matchea `RF-001` ni `F-C-003`, `R` no matchea `CR-001`; `F` y `F-C` son secuencias independientes.
+- Cableado en los call-sites de append incremental (donde una colisión corrompe el registro): `wf-bug` (B-00X en `_bugs.md`) y `wf-spec-fast-track` (F-NNN en `_features.md`). Ambos con fallback a contar a mano si no hay python3/script.
+- TC-XXX (`kb-qa-expert`) NO usa el script: es enumeración batch `TC-001..TC-NNN` en una sola pasada de derivación de la matriz (no append incremental), riesgo de colisión bajo; aclarado en la KB.
+- Tests: `test_sdd_next_id.py` (10) en la suite 11.3. Auditoría completa del inventario prosa→script en `docs/audit_prose_to_script.md`.
+- Sin `⚠`: aditivo (nuevo script + prosa que lo invoca con fallback); proyectos ya inicializados lo reciben al reinstalar/actualizar, y sin él la prosa sigue funcionando.
+
 ## 0.29.0 — 2026-06-10
 
 Convención oficial de metadata de skills, codificada en el canon y aplicada a las 131 skills (ROADMAP 9.4 ampliado + 9.9 absorbido). Verificado contra la doc oficial de Claude Code: `description` y `when_to_use` comparten el límite eager de 1.536 caracteres del listado de skills (siempre cargado), así que el coste de contexto del inventario depende del texto combinado por skill.

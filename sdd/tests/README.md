@@ -56,6 +56,7 @@ python3 -m unittest discover -s sdd/tests -p 'test_sdd_seal.py' -v
 | `sdd-project-status.py` | `test_sdd_project_status.py` | fase por presencia de artefactos; read-only (digest invariante); PENDIENTE_GENERACIÓN; layout plano |
 | `sdd-kb-check.py` | `test_sdd_kb_check.py` | KB presente/ausente; `--agent`/`--all`; frontmatter inline y multilinea |
 | `sdd-skill-allow.py` | `test_sdd_skill_allow.py` | auto-allow de `wf-*`; kb/skills ajenas pasan al flujo normal; forma `plugin:skill` |
+| `sdd-next-id.py` | `test_sdd_next_id.py` | siguiente ID secuencial (max+1, padding, archivo inexistente→001, multi-archivo); **desambiguación de prefijos** (`F`≠`RF`/`F-C`, `R`≠`CR`, `F-C` independiente); errores de uso |
 
 ## Cobertura — installers (11.3b)
 

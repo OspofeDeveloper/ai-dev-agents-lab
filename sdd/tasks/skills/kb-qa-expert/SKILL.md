@@ -14,7 +14,7 @@ Esta KB es la SSoT de la metodología QA del pipeline: cómo se derivan casos de
 
 Un TC es la unidad verificable de QA: la concreción ejecutable de **exactamente un CA**. Deriva del comportamiento observable que el CA promete, nunca de la estructura interna del código.
 
-- ID `TC-XXX`, secuencial dentro del `_qa_plan.md` de la feature (TC-001 si es nuevo).
+- ID `TC-XXX`, enumerado `TC-001..TC-NNN` en la pasada de derivación de la matriz (generación completa de una vez, no append incremental — por eso no usa `sdd-next-id.py`, a diferencia de B-00X/F-NNN; al regenerar, la numeración reinicia).
 - Todo TC referencia un único `CA-XXX` del spec origen. Si un caso parece cubrir varios CAs, se descompone.
 
 ## Formato obligatorio del TC
