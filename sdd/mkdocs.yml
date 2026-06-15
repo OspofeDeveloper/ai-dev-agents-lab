@@ -1,0 +1,100 @@
+site_name: SDD Lab — Spec Driven Development
+site_description: >-
+  Ecosistema de skills, agentes y conocimiento para automatizar el pipeline
+  Spec-Driven Development (PRD → Spec → Design → Plan → Tasks) sobre Claude Code.
+site_url: https://ospofedeveloper.github.io/ai-dev-agents-lab/
+repo_url: https://github.com/OspofeDeveloper/ai-dev-agents-lab
+repo_name: ai-dev-agents-lab
+edit_uri: edit/main/sdd/docs/
+
+theme:
+  name: material
+  language: es
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-night
+        name: Cambiar a modo oscuro
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/weather-sunny
+        name: Cambiar a modo claro
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.indexes
+    - toc.follow
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.action.edit
+
+nav:
+  - Inicio: index.md
+  - Empezar:
+      - Tu primera feature: empezar/primera-feature.md
+  - Guías por perfil:
+      - Desarrollador: guias/desarrollador.md
+      - Producto / PM: guias/producto.md
+      - Diseñador: guias/disenador.md
+      - Contribuidor: guias/contribuidor.md
+  - Entender el sistema:
+      - Visión funcional: entender/funcional.md
+      - Diseño técnico (IA): entender/tecnico.md
+  - Comportamiento esperado:
+      - Qué es y cómo usarlo: comportamiento/index.md
+      - Arranque y sesión: comportamiento/arranque.md
+      - Generación de specs: comportamiento/spec.md
+      - Fase Design: comportamiento/diseno.md
+      - Gates de fase (en negativo): comportamiento/gates.md
+      - Plan, tasks y entrega: comportamiento/entrega.md
+      - Mantenimiento y cambios: comportamiento/mantenimiento.md
+      - Robustez e instalación: comportamiento/robustez.md
+      - Enrutado por lenguaje natural: comportamiento/enrutado.md
+  - Referencia:
+      - Catálogo de skills: referencia/skills.md
+      - Scripts deterministas: referencia/scripts.md
+      - Glosario: referencia/glosario.md
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - footnotes
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+
+plugins:
+  - search:
+      lang: es
+
+# Documentos internos de trabajo: viven en docs/ pero NO se publican en el sitio.
+exclude_docs: |
+  ROADMAP.md
+  audit_*.md
+  FABLE_REPORT.md

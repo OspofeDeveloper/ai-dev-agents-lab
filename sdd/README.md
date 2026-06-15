@@ -2,6 +2,8 @@
 
 Repositorio de skills, agentes y conocimiento para automatizar el flujo **Spec-Driven Development (SDD)** sobre proyectos **Kotlin Multiplatform Mobile (KMM)** con Clean Architecture.
 
+> 📖 **Documentación completa:** el sitio MkDocs en `sdd/docs/` (visión funcional y técnica, guías por perfil, tutorial y referencia). Servir local: `cd sdd && NO_MKDOCS_2_WARNING=1 mkdocs serve`. Publicado en GitHub Pages vía CI.
+
 ---
 
 ## Qué es esto
