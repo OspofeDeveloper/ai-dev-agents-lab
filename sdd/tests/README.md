@@ -57,6 +57,7 @@ python3 -m unittest discover -s sdd/tests -p 'test_sdd_seal.py' -v
 | `sdd-kb-check.py` | `test_sdd_kb_check.py` | KB presente/ausente; `--agent`/`--all`; frontmatter inline y multilinea |
 | `sdd-skill-allow.py` | `test_sdd_skill_allow.py` | auto-allow de `wf-*`; kb/skills ajenas pasan al flujo normal; forma `plugin:skill` |
 | `sdd-next-id.py` | `test_sdd_next_id.py` | siguiente ID secuencial (max+1, padding, archivo inexistente→001, multi-archivo); **desambiguación de prefijos** (`F`≠`RF`/`F-C`, `R`≠`CR`, `F-C` independiente); errores de uso |
+| `sdd-resolve-path.py` | `test_sdd_resolve_path.py` | resolución de layout (11.2a): `write` (subcarpeta vs plano legacy, fuera-de-feature, `--local-root` consumidor, sufijo largo `_qa_plan.md`≠`_plan.md`, rechazo de kind de producto), `rel-from` (`Spec origen` relativo en ambos layouts + consumidor profundo), `find` (ambos layouts, preferencia subcarpeta, exit 3 si falta, kinds de producto fixed/glob); errores de uso |
 
 ## Cobertura — installers (11.3b)
 

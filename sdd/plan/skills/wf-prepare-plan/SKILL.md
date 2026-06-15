@@ -64,7 +64,11 @@ Antes de verificar el Spec, determina el contexto técnico del proyecto. Busca `
 
 Lee el `_spec.md` en su totalidad.
 
-Busca si existe un `_features.md` en el proyecto:
+Busca si existe un `_features.md` en el proyecto con el resolutor (busca en la raíz que contiene `features/`):
+```bash
+!python3 .sdd/scripts/sdd-resolve-path.py find features-index "<spec_path>"
+```
+Emite el path si existe (vacío + exit 3 si no). **Fallback** a mano:
 - si el spec está dentro de `features/<nombre>/` (directamente — layout plano legacy — o en su subcarpeta `spec/`), busca `*_features.md` en el directorio que contiene `features/`
 - si el spec está en el directorio raíz, busca `*_features.md` en ese mismo directorio
 
@@ -85,11 +89,14 @@ Determina si la feature requiere handoff de Design exactamente según esa regla 
 
 Si **sí requiere** handoff de Design:
 
-1. Resuelve `DESIGN.md`:
-   - si `.sdd/project-init.json` (en el directorio actual o un ancestro) declara `artifacts.design`, búscalo en ese directorio
-   - si el spec está dentro de `features/<nombre>/` (directamente o en su subcarpeta `spec/`), búscalo en el directorio que contiene `features/`
-   - en el mismo directorio en otros casos
-2. Resuelve `<feature>_flows.md` y `<feature>_views.md`: en la subcarpeta `design/` de la feature (`features/<nombre>/design/`); si no existe, en el mismo directorio del spec (layout plano legacy).
+1. Resuelve `DESIGN.md` y los artefactos de feature con el resolutor:
+   ```bash
+   !python3 .sdd/scripts/sdd-resolve-path.py find design-doc "<spec_path>"   # DESIGN.md (raíz de producto)
+   !python3 .sdd/scripts/sdd-resolve-path.py find flows "<spec_path>"        # <feature>_flows.md (ambos layouts)
+   !python3 .sdd/scripts/sdd-resolve-path.py find views "<spec_path>"        # <feature>_views.md (ambos layouts)
+   ```
+   **Fallback** a mano para `DESIGN.md`: si `.sdd/project-init.json` (dir actual o un ancestro) declara `artifacts.design`, búscalo ahí; si el spec está dentro de `features/<nombre>/`, en el directorio que contiene `features/`; en el mismo directorio en otros casos.
+2. **Fallback** a mano para `<feature>_flows.md`/`<feature>_views.md`: en la subcarpeta `design/` de la feature (`features/<nombre>/design/`); si no existe, en el mismo directorio del spec (layout plano legacy).
 3. Lee los tres archivos completos.
 4. Si falta alguno, **detén la ejecución**:
    > "❌ La feature requiere handoff de Design pero falta uno o más artefactos (`DESIGN.md`, `<feature>_flows.md`, `<feature>_views.md`). Ejecuta `/wf-design-system` y `/wf-design-feature-prototype` antes de generar el Plan."
@@ -143,9 +150,17 @@ Si el agente devuelve otros gaps normativos (`TRACE_GAPs`, `PLAN_GAPs`):
 
 ## Paso 7: Escribir el resultado
 
-Determina el path de salida:
-- **repo consumidor** (si `.sdd/project-init.json` del directorio actual o un ancestro declara `artifacts_source`): el plan vive en ESTE repo, no junto al spec del SSoT → `<raíz_consumidor>/features/<nombre>/plan/<nombre>_plan.md` (crea los directorios; `<nombre>` = el de la carpeta de feature del spec en el SSoT)
-- si el spec está en la subcarpeta `spec/` de una feature → subcarpeta hermana `plan/`: `features/<nombre>/plan/<nombre>_plan.md` (crea el directorio si no existe)
+Determina el path de salida con el resolutor determinista de layout (SSoT única, reemplaza recitar la regla a mano):
+```bash
+# proyecto normal (el plan vive junto al spec, respetando su layout):
+!python3 .sdd/scripts/sdd-resolve-path.py write plan "<spec_path>"
+# repo consumidor (.sdd/project-init.json del dir actual o un ancestro declara
+# artifacts_source): el plan vive en ESTE repo, no junto al spec del SSoT:
+!python3 .sdd/scripts/sdd-resolve-path.py write plan "<spec_path>" --local-root "<raíz_consumidor>"
+```
+Crea los directorios intermedios del path resultante antes de escribir. **Fallback** si no hay python3/script — resuelve a mano:
+- **repo consumidor**: `<raíz_consumidor>/features/<nombre>/plan/<nombre>_plan.md` (`<nombre>` = el de la carpeta de feature del spec en el SSoT)
+- si el spec está en la subcarpeta `spec/` de una feature → subcarpeta hermana `plan/`: `features/<nombre>/plan/<nombre>_plan.md`
 - si el spec está directamente en `features/<nombre>/` (layout plano legacy) o fuera de una feature → mismo directorio + nombre base + `_plan.md`
 - ejemplos: `features/login/spec/login_spec.md` → `features/login/plan/login_plan.md`; `docs/login_spec.md` → `docs/login_plan.md`; consumidor con spec en `../product-ssot/spec/features/login/spec/login_spec.md` → `features/login/plan/login_plan.md` (local)
 
@@ -160,7 +175,11 @@ Si ya existe → pregunta al usuario:
 
 Escribe el output del agente en ese archivo.
 
-Antes de cerrar, verifica que el header `Spec origen` del plan resuelve como ruta relativa **desde la ubicación final del `_plan.md`** (con subcarpetas: `../spec/<nombre>_spec.md`; layout plano: `<nombre>_spec.md`; repo consumidor: la ruta relativa hasta el checkout del SSoT, p. ej. `../../../product-ssot/spec/features/login/spec/login_spec.md`). Si no resuelve, corrígelo — el sellador de `/wf-plan-validate` lo comprueba.
+Antes de cerrar, escribe/verifica el header `Spec origen` del plan como ruta relativa **desde la ubicación final del `_plan.md`** con el resolutor (evita computar el `../` a mano):
+```bash
+!python3 .sdd/scripts/sdd-resolve-path.py rel-from "<path_final_plan>" "<spec_path>"
+```
+El valor emitido es exactamente el `Spec origen` correcto. **Fallback** a mano: con subcarpetas `../spec/<nombre>_spec.md`; layout plano `<nombre>_spec.md`; repo consumidor la ruta relativa hasta el checkout del SSoT (p. ej. `../../../product-ssot/spec/features/login/spec/login_spec.md`). Si no resuelve, corrígelo — el sellador de `/wf-plan-validate` lo comprueba.
 
 ---
 

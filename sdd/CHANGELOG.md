@@ -2,6 +2,17 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.31.0 — 2026-06-15
+
+Resolución determinista de rutas de artefactos (ROADMAP 11.2a, segunda y última migración del inventario 11.2 — el flagship por blast radius). Nuevo script `sdd-resolve-path.py` distribuido a `.sdd/scripts/`: convierte en SSoT única la "frase canónica de layout" que se recitaba en ~20 SKILL.md.
+
+- `sdd-resolve-path.py` con tres modos, todos pseudo-función pura (no escriben, solo emiten rutas): `write <kind> <input>` (ruta canónica donde escribir un artefacto, respetando el layout —subcarpeta de fase vs plano legacy— del input; `--local-root` para repos consumidores); `find <kind> <input>` (localiza un artefacto existente en AMBOS layouts, o en la raíz de producto; vacío + exit 3 si no existe); `rel-from <anchor> <target>` (la ruta relativa a escribir DENTRO de anchor para apuntar a target — el `Spec origen` de un plan, computado sin `../` a mano). Absorbe C1 (dónde escribir), C2 write-side (header de trazabilidad relativo) y C4 (find en ambos layouts) del inventario 11.2.
+- Cableado como resolutor primario (con la prosa anterior degradada a fallback explícito si no hay python3/script) en los call-sites de escritura/búsqueda que corrompen estado o trazabilidad: `wf-prepare-plan` (path del `_plan.md` + `Spec origen` vía `rel-from` + `find` de `_features.md`/`DESIGN.md`/`flows`/`views`), `wf-prepare-tasks` (path del `_tasks.md`), `wf-spec-fast-track` (existencia del spec en ambos layouts), `wf-design-feature-prototype` (los tres paths flows/views/ui_prompt).
+- Límite de alcance deliberado: el script es una función pura de layout; NO lee `artifacts.*`/`artifacts_source` de `project-init.json` (esos casos quedan en la prosa-fallback de cada skill). Las menciones puramente descriptivas del layout (READMEs, explicaciones) siguen en prosa: no computan rutas, no corrompen.
+- Tests: `test_sdd_resolve_path.py` (23) en la suite 11.3 — los tres modos contra los ejemplos canónicos de la prosa que reemplazan, ambos layouts, fuera-de-feature, repo consumidor y errores de uso. Un bug real cazado por los tests durante el desarrollo: `product_root` resolvía un nivel de más (`features/<n>`.parent en vez de su abuelo).
+- Con esto el inventario 11.2 queda cerrado (auditoría + las 2 migraciones, `sdd-next-id.py` y `sdd-resolve-path.py`).
+- Sin `⚠`: aditivo (nuevo script + prosa que lo invoca con fallback); proyectos ya inicializados lo reciben al reinstalar/actualizar, y sin él la prosa-fallback sigue resolviendo.
+
 ## 0.30.0 — 2026-06-15
 
 Asignación determinista de IDs secuenciales (ROADMAP 11.2b, primera migración del inventario 11.2). Nuevo script `sdd-next-id.py` distribuido a `.sdd/scripts/`.

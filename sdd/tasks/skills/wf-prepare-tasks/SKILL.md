@@ -88,8 +88,12 @@ Espera a que el agente complete su ejecución y recibe su output.
 
 ## Paso 5: Escribir el resultado
 
-Determina el path de salida:
-- si el plan está en la subcarpeta `plan/` de una feature → subcarpeta hermana `tasks/`: `features/<nombre>/tasks/<nombre>_tasks.md` (crea el directorio si no existe)
+Determina el path de salida con el resolutor determinista de layout (respeta el layout del plan de entrada):
+```bash
+!python3 .sdd/scripts/sdd-resolve-path.py write tasks "<plan_path>"
+```
+Crea los directorios intermedios del path resultante antes de escribir. **Fallback** si no hay python3/script — resuelve a mano:
+- si el plan está en la subcarpeta `plan/` de una feature → subcarpeta hermana `tasks/`: `features/<nombre>/tasks/<nombre>_tasks.md`
 - si el plan está directamente en `features/<nombre>/` (layout plano legacy) o fuera de una feature → mismo directorio + nombre base + `_tasks.md`
 - ejemplos: `features/login/plan/login_plan.md` → `features/login/tasks/login_tasks.md`; `docs/login_plan.md` → `docs/login_tasks.md`
 

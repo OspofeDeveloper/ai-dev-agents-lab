@@ -31,6 +31,7 @@ ENFORCEMENT_SCRIPTS = [
     "sdd-seal.py", "sdd-gate-check.py", "sdd-task-state.py", "sdd-sync-check.py",
     "sdd-skill-allow.py", "sdd-amend.py", "sdd-features-index.py",
     "sdd-project-status.py", "sdd-kb-check.py", "sdd-release.py", "sdd-next-id.py",
+    "sdd-resolve-path.py",
 ]
 
 

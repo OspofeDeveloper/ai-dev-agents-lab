@@ -153,7 +153,11 @@ Determina el directorio raíz de los artefactos spec (regla de layout): si `.sdd
 
 **Layout de feature**: cada feature organiza sus artefactos en subcarpetas por fase (`features/<nombre>/spec/`, `design/`, `plan/`, `tasks/`; el `README.md` vive en la raíz de la feature). Si la feature ya existe con layout plano legacy (artefactos directamente en `features/<nombre>/`), consérvalo — no mezcles layouts dentro de una misma feature.
 
-Verifica si el spec ya existe — en `<raíz_spec>/features/<capability>/spec/<capability>_spec.md` (subcarpetas) o `<raíz_spec>/features/<capability>/<capability>_spec.md` (plano legacy); si existe → pregunta al usuario si desea regenerarlo (no → informa del path y detén; sí → reescribe en su ubicación actual). Escribe los 2 artefactos que tú compones (crea directorios si no existen), relativos a esa raíz:
+Verifica si el spec ya existe en cualquiera de los dos layouts con el resolutor (cubre subcarpetas y plano legacy en una sola llamada):
+```bash
+!python3 .sdd/scripts/sdd-resolve-path.py find spec "<raíz_spec>/features/<capability>/spec/<capability>_spec.md"
+```
+Emite el path existente (vacío + exit 3 si no existe en ningún layout). **Fallback** a mano: busca en `<raíz_spec>/features/<capability>/spec/<capability>_spec.md` (subcarpetas) o `<raíz_spec>/features/<capability>/<capability>_spec.md` (plano legacy). Si existe → pregunta al usuario si desea regenerarlo (no → informa del path y detén; sí → reescribe en su ubicación actual). Escribe los 2 artefactos que tú compones (crea directorios si no existen), relativos a esa raíz:
 1. **Spec**: `<raíz_spec>/features/<capability>/spec/<capability>_spec.md`
 2. **README**: `<raíz_spec>/features/<capability>/README.md` (siempre en la raíz de la feature)
 

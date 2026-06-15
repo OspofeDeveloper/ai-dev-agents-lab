@@ -80,16 +80,17 @@ Pasa `target_tool` y `target_platforms` al agente en el Paso 5.
 
 ## Paso 4: Determinar outputs y detectar features ya prototipadas
 
-Determina el directorio de salida:
-- si el spec esta en la subcarpeta `spec/` de una feature → subcarpeta hermana `design/`: `features/<nombre>/design/` (crea el directorio si no existe)
+Determina los tres paths de salida con el resolutor determinista de layout (respeta el layout del spec de entrada):
+```bash
+!python3 .sdd/scripts/sdd-resolve-path.py write flows "<spec_path>"
+!python3 .sdd/scripts/sdd-resolve-path.py write views "<spec_path>"
+!python3 .sdd/scripts/sdd-resolve-path.py write ui-prompt "<spec_path>"
+```
+Crea los directorios intermedios antes de escribir. **Fallback** a mano:
+- si el spec esta en la subcarpeta `spec/` de una feature → subcarpeta hermana `design/`: `features/<nombre>/design/`
 - si el spec esta directamente en `features/<nombre>/` (layout plano legacy) o fuera de una feature → el mismo directorio del spec
 
-Alli crea:
-- `<feature>_flows.md`
-- `<feature>_views.md`
-- `<feature>_ui_prompt.md`
-
-Donde `<feature>` es el nombre base del spec sin `_spec.md`.
+Alli se crean `<feature>_flows.md`, `<feature>_views.md` y `<feature>_ui_prompt.md`, donde `<feature>` es el nombre base del spec sin `_spec.md`.
 
 Antes de continuar, verifica si el artefacto principal ya existe:
 ```bash

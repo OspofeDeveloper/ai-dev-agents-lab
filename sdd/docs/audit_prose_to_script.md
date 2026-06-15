@@ -29,12 +29,12 @@ sobre el árbol fuente.
 
 | # | Punto prosa-dependiente | Riesgo si falla | Mecanizable | Veredicto |
 |---|---|---|---|---|
-| C1 | **Resolución de ruta / layout** (dónde escribir y leer artefactos) | Alto — artefacto en directorio equivocado; gates/índice fallan o se dispersa el estado | Sí (función pura de path+kind+root) | **MIGRAR** → `sdd-resolve-path.py` |
-| C2 | **Headers de trazabilidad** (escribir `Spec origen`/`Plan origen` relativo correcto) | Alto — header irresoluble → no se puede sellar | Parcial: la **verificación** ya existe (`sdd-seal.py`); falta el **cómputo en escritura** | **MIGRAR (write-side)** — se pliega en C1 |
+| C1 | **Resolución de ruta / layout** (dónde escribir y leer artefactos) | Alto — artefacto en directorio equivocado; gates/índice fallan o se dispersa el estado | Sí (función pura de path+kind+root) | **✅ HECHO** → `sdd-resolve-path.py` (modo `write`) |
+| C2 | **Headers de trazabilidad** (escribir `Spec origen`/`Plan origen` relativo correcto) | Alto — header irresoluble → no se puede sellar | Parcial: la **verificación** ya existe (`sdd-seal.py`); falta el **cómputo en escritura** | **✅ HECHO (write-side)** → `sdd-resolve-path.py` (modo `rel-from`) |
 | C3c | **Numeración B-00X** (bugs) | Alto — colisión de IDs en `_bugs.md` | Sí (scan + max+1) | **MIGRAR** → `sdd-next-id.py` |
 | C3d | **Numeración TC-XXX** (casos QA) | Bajo — la matriz se enumera `TC-001..N` en UNA pasada de derivación (no append incremental); al regenerar reinicia | N/A para `next-id` (devuelve *un* siguiente ID, no encaja con generación batch) | **PROSA** — reclasificado al implementar 11.2b (ver nota) |
 | C3a | **Feature ID F-001 directo** (fast-track sin discovery) | Medio — colisión en `_features.md` (el modo `--feature` lo toma del discovery, sin riesgo) | Sí | **MIGRAR** → `sdd-next-id.py` (mismo script) |
-| C4 | **Detección de artefacto preexistente en ambos layouts** | Alto — no lo encuentra → lo regenera/pisa | Sí (mismo grafo de rutas que C1) | **MIGRAR** — modo `--find` de `sdd-resolve-path.py` |
+| C4 | **Detección de artefacto preexistente en ambos layouts** | Alto — no lo encuentra → lo regenera/pisa | Sí (mismo grafo de rutas que C1) | **✅ HECHO** → `sdd-resolve-path.py` (modo `find`) |
 | C3b | **Numeración E-00X** (enmiendas) | Alto | — | **YA HECHO** — `sdd-amend.py` único escritor; la prosa ya prohíbe asignar a mano |
 | C6 | **Citas `Regla N de kb-X`** desactualizadas | Medio — lógica obsoleta | — | **YA HECHO** — `sdd-structural-lint.py` (CITED-RULE-MISSING, 11.4) |
 | C2v | **Verificación** de headers ya escritos | Alto | — | **YA HECHO** — `sdd-seal.py` (header legible + CAs) y `sdd-sync-check.py` (hash PRD) |
@@ -49,37 +49,47 @@ sobre el árbol fuente.
 
 ## Migraciones recomendadas (sub-ítems de 11.2)
 
-### 11.2a — `sdd-resolve-path.py` (FLAGSHIP) 🟠
+### 11.2a — `sdd-resolve-path.py` (FLAGSHIP) ✅ HECHO (2026-06-15, v0.31.0)
 
-**Problema.** La regla de resolución de ubicación de artefactos es **una frase
+**Problema.** La regla de resolución de ubicación de artefactos era **una frase
 canónica repetida en ~20 SKILL.md**: 14 archivos con la variante "el directorio
 que contiene `features/`" y ~22 con "layout plano / subcarpeta de fase". Cada
 copia es una oportunidad de divergencia y un punto donde el modelo puede escribir
 en el sitio equivocado. Subsume C2 (write-side: emitir el `Spec origen` relativo
 correcto) y C4 (encontrar un artefacto existente en ambos layouts).
 
-**Diseño propuesto.** Script puro que, dado el artefacto de entrada (p. ej. el
-spec), el tipo de salida (`spec|design|plan|tasks|brief|features-index|...`) y la
-raíz del proyecto (con `artifacts.*` de `project-init.json` si existe), devuelve:
-- `--write`: el directorio/ruta canónica donde escribir (subcarpeta de fase para
-  features nuevas; plano para features legacy; raíz del producto para artefactos
-  de producto; checkout del SSoT para repos consumidores).
-- `--find <basename>`: la ruta del artefacto existente buscando en ambos layouts,
-  o vacío si no existe (cierra C4).
-- `--rel-from <A> <B>`: la ruta relativa correcta de B desde A (cierra C2
-  write-side: el `Spec origen` que hoy el modelo computa a mano).
+**Diseño implementado.** Script puro (no escribe, solo emite rutas) con tres modos:
+- `write <kind> <input> [--local-root <dir>]`: la ruta canónica donde escribir,
+  respetando el layout del input (subcarpeta de fase vs plano legacy); con
+  `--local-root` redirige los artefactos locales (plan/tasks) al repo consumidor.
+- `find <kind> <input>`: la ruta del artefacto existente buscando en AMBOS
+  layouts (o en la raíz de producto para kinds de producto), o vacío + exit 3
+  (cierra C4).
+- `rel-from <anchor> <target>`: la ruta relativa a escribir DENTRO de anchor para
+  apuntar a target (cierra C2 write-side: el `Spec origen` sin `../` a mano).
 
-**Evidencia (representativa).** `plan/skills/wf-prepare-plan/SKILL.md` (resolución
-de `_plan.md`, `Spec origen`, `_features.md`, `DESIGN.md`),
-`tasks/skills/wf-prepare-tasks/SKILL.md`, `design/skills/wf-design-system|intake|
-feature-prototype|sync|extract`, `spec/skills/wf-spec-fast-track|delta|readiness|
-from-code|features-first`.
+Kinds de feature: spec/plan/tasks/qa-plan/qa-report/release/bugs/flows/views/
+ui-prompt/design-discovery. Kinds de producto: discovery/features-index/readiness/
+analysis/design-doc/design-brief.
 
-**Coste/riesgo.** ALTO en superficie (rewire de ~20 skills a invocar el script en
-vez de recitar la frase) pero el script en sí es pequeño y muy testeable. Riesgo
-de regresión gestionable con la suite 11.3 (añadir `test_sdd_resolve_path.py` +
-verificar que el sellador sigue resolviendo `Spec origen`). Recomendado como
-milestone propio.
+**Límite de alcance deliberado.** El script es una función pura de **layout**: NO
+lee `artifacts.*` ni `artifacts_source` de `project-init.json`. Esos casos (raíz
+de artefactos declarada por el init, DESIGN.md bajo `artifacts.design`) quedan en
+la **prosa-fallback** de cada skill, que se conserva íntegra como degradación.
+
+**Call-sites cableados** (resolutor primario + prosa degradada a fallback): los de
+escritura/búsqueda que corrompen estado o trazabilidad —
+`plan/skills/wf-prepare-plan` (path del `_plan.md`, `Spec origen` vía `rel-from`,
+`find` de `_features.md`/`DESIGN.md`/`flows`/`views`),
+`tasks/skills/wf-prepare-tasks` (path del `_tasks.md`),
+`spec/skills/wf-spec-fast-track` (existencia del spec en ambos layouts),
+`design/skills/wf-design-feature-prototype` (los 3 paths flows/views/ui_prompt).
+Las menciones puramente descriptivas del layout en otras skills (explicación, no
+cómputo de ruta) se dejan en prosa: no corrompen.
+
+**Estado.** Distribuido por `install.sh` a `.sdd/scripts/`; `test_sdd_resolve_path.py`
+(23 tests) en la suite 11.3 (un bug real cazado: `product_root` resolvía un nivel
+de más). Baseline del linter intacto (0 blocking). CHANGELOG 0.31.0 sin ⚠.
 
 ### 11.2b — `sdd-next-id.py` ✅ HECHO (2026-06-15, v0.30.0)
 
@@ -129,7 +139,11 @@ merecen migración** en 2 scripts:
 
 - **`sdd-next-id.py` (11.2b) — ✅ HECHO** (v0.30.0): C3a (F-NNN) + C3c (B-00X),
   los call-sites de append incremental. Bajo coste, 2 call-sites cableados.
-- **`sdd-resolve-path.py` (11.2a) — PENDIENTE**: absorbe C1 (dónde escribir) +
-  C2-write (emitir `Spec origen` relativo) + C4 (find en ambos layouts). El
-  flagship por blast radius (~20 skills recitando la misma frase); milestone
-  propio por el rewire.
+- **`sdd-resolve-path.py` (11.2a) — ✅ HECHO** (v0.31.0): absorbe C1 (dónde
+  escribir) + C2-write (emitir `Spec origen` relativo) + C4 (find en ambos
+  layouts). El flagship por blast radius; cableado en los 4 call-sites de
+  escritura/búsqueda que corrompen estado (plan/tasks/fast-track/feature-prototype)
+  con la prosa anterior conservada como fallback. Función pura de layout (no lee
+  `project-init.json`: esos casos siguen en la prosa-fallback).
+
+**Inventario 11.2 cerrado**: auditoría + las 2 migraciones completadas.
