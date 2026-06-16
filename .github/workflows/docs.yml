@@ -1,0 +1,37 @@
+name: Documentación (MkDocs → GitHub Pages)
+
+# Publica el sitio MkDocs en GitHub Pages al hacer push a main
+# cuando cambia la documentación o su configuración.
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - "sdd/docs/**"
+      - "sdd/mkdocs.yml"
+      - ".github/workflows/docs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    # Silencia el banner informativo de Material for MkDocs sobre "MkDocs 2.0".
+    env:
+      NO_MKDOCS_2_WARNING: "1"
+    defaults:
+      run:
+        working-directory: sdd
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+      - name: Instalar dependencias
+        run: pip install -r docs/requirements.txt
+      - name: Build + deploy a gh-pages
+        run: mkdocs gh-deploy --force --strict
