@@ -42,10 +42,13 @@ Consulta `kb-sdd-skill-architecture` directamente solo si necesitas responder un
 | Auditar el ecosistema (referencias rotas, SSoT, SRP, contradicciones, inconsistencias) | `/wf-sdd-audit` | `<structural\|content\|full> [--phase <fase\|global>]` |
 | Refactorizar una skill o agente existente | `/wf-sdd-refactor` | `<path-skill-o-agente> [--reason <motivo>]` |
 | Ver inventario del ecosistema (skills, agentes, KBs huérfanas) | `/wf-sdd-status` | `[--phase <fase\|global>] [--output <path>]` |
+| Escribir los escenarios de conformance que falten a una skill/fase (4 ejes + ROADMAP) | `/wf-conformance-author` | `<skill-name\|phase> [--cu <cu-NN>]` |
+| Ver la cobertura de la batería de conformance (estado por eje y progreso X/N) | `/wf-conformance-status` | `[--phase <fase>] [--output <path>]` |
 
 `wf-skill-create`, `wf-agent-create`, `wf-stack-create` y `wf-sdd-refactor` delegan al agente `sdd-author` (creacion y refactorizacion de piezas).
 `wf-sdd-audit` delega al agente `sdd-auditor` (auditoria estructural y de contenido).
-`wf-sdd-status` no delega a agente: es recoleccion mecanica sin razonamiento experto.
+`wf-conformance-author` delega al agente `sdd-conformance` (audita cobertura de conformance y escribe escenarios CU-N.x).
+`wf-sdd-status` y `wf-conformance-status` no delegan a agente: son recoleccion mecanica sin razonamiento experto.
 
 ## Regla de reparto
 

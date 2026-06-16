@@ -61,7 +61,7 @@ def _skills_base(root: Path, phase: str) -> Path:
         return root / "meta" / "skills"
     if phase.startswith("tech/"):
         return root / "tech" / phase.split("/", 1)[1] / "skills"
-    return root / phase / "skills"
+    return root / "pipeline" / phase / "skills"
 
 
 def _agents_base(root: Path, phase: str) -> Path:
@@ -69,7 +69,7 @@ def _agents_base(root: Path, phase: str) -> Path:
         return root / "meta" / "agents"
     if phase.startswith("tech/"):
         return root / "tech" / phase.split("/", 1)[1] / "agents"
-    return root / phase / "agents"
+    return root / "pipeline" / phase / "agents"
 
 
 def _canonical(name: str, prefix: str) -> str:

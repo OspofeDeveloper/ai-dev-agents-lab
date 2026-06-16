@@ -8,7 +8,7 @@ allowed-tools: [Read]
 
 # Plan Expert — Arquitecto Técnico SDD
 
-> **Variante KMM de `kb-plan-expert`** (override por basename del contrato de overlay, `kb-sdd-stack-overlay-contract`). En un proyecto con el overlay KMM instalado, este archivo **sustituye** a la `kb-plan-expert` genérica de `sdd/plan/skills/`. Conserva el contrato externo idéntico a la genérica —taxonomía de gaps (`DESIGN_GAP`/`TECH_GAP`/`TRACE_GAP`/`PLAN_GAP`), estados `BORRADOR`/`VALIDADO`, deuda técnica `TD-00X`, regla canónica de Design y formato de output— y solo aporta la **especialización KMM**: capas Clean Architecture (`app`/`features`/`core`, `domain`/`data`/`presentation`), módulos Gradle, librerías y convenciones del stack.
+> **Variante KMM de `kb-plan-expert`** (override por basename del contrato de overlay, `kb-sdd-stack-overlay-contract`). En un proyecto con el overlay KMM instalado, este archivo **sustituye** a la `kb-plan-expert` genérica de `sdd/pipeline/plan/skills/`. Conserva el contrato externo idéntico a la genérica —taxonomía de gaps (`DESIGN_GAP`/`TECH_GAP`/`TRACE_GAP`/`PLAN_GAP`), estados `BORRADOR`/`VALIDADO`, deuda técnica `TD-00X`, regla canónica de Design y formato de output— y solo aporta la **especialización KMM**: capas Clean Architecture (`app`/`features`/`core`, `domain`/`data`/`presentation`), módulos Gradle, librerías y convenciones del stack.
 >
 > La **metodología de agente** (el procedimiento operativo de generar y auditar un Plan) NO vive aquí: es SSoT de `kb-plan-method`, que los agentes KMM `plan-architect` y `plan-auditor` cargan en paralelo a esta KB. No la dupliques en este archivo.
 

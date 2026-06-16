@@ -14,7 +14,8 @@
 set -e
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SHARED_DIR="$SCRIPT_DIR/spec/shared/templates"
+PIPELINE_DIR="$SCRIPT_DIR/pipeline"
+SHARED_DIR="$PIPELINE_DIR/spec/shared/templates"
 CLAUDE_DIR="$(pwd)/.claude"
 KMM_DIR="$SCRIPT_DIR/tech/kmm"
 
@@ -84,8 +85,8 @@ copy_template() {
 
 if has_phase "spec"; then
   echo "Distribuyendo templates compartidos..."
-  copy_template "feature_spec_template.md"   "$SCRIPT_DIR/spec/skills/wf-spec-fast-track/references"
-  copy_template "feature_readme_template.md" "$SCRIPT_DIR/spec/skills/wf-spec-fast-track/references"
+  copy_template "feature_spec_template.md"   "$PIPELINE_DIR/spec/skills/wf-spec-fast-track/references"
+  copy_template "feature_readme_template.md" "$PIPELINE_DIR/spec/skills/wf-spec-fast-track/references"
 fi
 
 # ── 2. Instalar agentes ────────────────────────────────────────────────────
@@ -108,25 +109,25 @@ install_agent() {
 }
 
 if has_phase "prd"; then
-  install_agent "$SCRIPT_DIR/prd/agents/prd-expert.md"
+  install_agent "$PIPELINE_DIR/prd/agents/prd-expert.md"
 fi
 if has_phase "spec"; then
-  install_agent "$SCRIPT_DIR/prd/agents/prd-expert.md" 2>/dev/null || true
-  install_agent "$SCRIPT_DIR/spec/agents/sdd-spec-explorer.md"
-  install_agent "$SCRIPT_DIR/spec/agents/sdd-spec-planner.md"
-  install_agent "$SCRIPT_DIR/spec/agents/sdd-spec-writer.md"
-  install_agent "$SCRIPT_DIR/spec/agents/sdd-spec-auditor.md"
+  install_agent "$PIPELINE_DIR/prd/agents/prd-expert.md" 2>/dev/null || true
+  install_agent "$PIPELINE_DIR/spec/agents/sdd-spec-explorer.md"
+  install_agent "$PIPELINE_DIR/spec/agents/sdd-spec-planner.md"
+  install_agent "$PIPELINE_DIR/spec/agents/sdd-spec-writer.md"
+  install_agent "$PIPELINE_DIR/spec/agents/sdd-spec-auditor.md"
 fi
 if has_phase "design"; then
-  install_agent "$SCRIPT_DIR/design/agents/design-architect.md"
+  install_agent "$PIPELINE_DIR/design/agents/design-architect.md"
 fi
 if has_phase "plan"; then
-  install_agent "$SCRIPT_DIR/plan/agents/plan-architect.md"
-  install_agent "$SCRIPT_DIR/plan/agents/plan-auditor.md"
+  install_agent "$PIPELINE_DIR/plan/agents/plan-architect.md"
+  install_agent "$PIPELINE_DIR/plan/agents/plan-auditor.md"
 fi
 if has_phase "tasks"; then
-  install_agent "$SCRIPT_DIR/tasks/agents/task-generator.md"
-  install_agent "$SCRIPT_DIR/tasks/agents/qa-engineer.md"
+  install_agent "$PIPELINE_DIR/tasks/agents/task-generator.md"
+  install_agent "$PIPELINE_DIR/tasks/agents/qa-engineer.md"
 fi
 
 # ── 3. Instalar skills ─────────────────────────────────────────────────────
@@ -155,50 +156,50 @@ install_skill() {
 }
 
 if has_phase "prd"; then
-  for skill_dir in "$SCRIPT_DIR/prd/skills"/*/; do
+  for skill_dir in "$PIPELINE_DIR/prd/skills"/*/; do
     install_skill "$skill_dir"
   done
 fi
 
 if has_phase "spec"; then
   # spec necesita algunas skills de prd como dependencia
-  install_skill "$SCRIPT_DIR/prd/skills/kb-prd-expert"
-  install_skill "$SCRIPT_DIR/prd/skills/kb-product-change-governance"
-  install_skill "$SCRIPT_DIR/prd/skills/wf-prd-change"
-  install_skill "$SCRIPT_DIR/prd/skills/wf-prd-review"
+  install_skill "$PIPELINE_DIR/prd/skills/kb-prd-expert"
+  install_skill "$PIPELINE_DIR/prd/skills/kb-product-change-governance"
+  install_skill "$PIPELINE_DIR/prd/skills/wf-prd-change"
+  install_skill "$PIPELINE_DIR/prd/skills/wf-prd-review"
 
-  for skill_dir in "$SCRIPT_DIR/spec/skills"/*/; do
+  for skill_dir in "$PIPELINE_DIR/spec/skills"/*/; do
     install_skill "$skill_dir"
   done
 fi
 
 if has_phase "design"; then
   # design necesita kb-spec-expert como dependencia
-  install_skill "$SCRIPT_DIR/spec/skills/kb-spec-expert"
+  install_skill "$PIPELINE_DIR/spec/skills/kb-spec-expert"
 
-  for skill_dir in "$SCRIPT_DIR/design/skills"/*/; do
+  for skill_dir in "$PIPELINE_DIR/design/skills"/*/; do
     install_skill "$skill_dir"
   done
 fi
 
 if has_phase "plan"; then
   # plan necesita kb-spec-expert, las KBs a11y (núcleo + deltas web) y kb-design-governance (handoff Design→Plan) como dependencias cross-fase
-  install_skill "$SCRIPT_DIR/spec/skills/kb-spec-expert"
-  install_skill "$SCRIPT_DIR/design/skills/kb-a11y-expert"
-  install_skill "$SCRIPT_DIR/design/skills/kb-a11y-web-expert"
-  install_skill "$SCRIPT_DIR/design/skills/kb-design-governance"
+  install_skill "$PIPELINE_DIR/spec/skills/kb-spec-expert"
+  install_skill "$PIPELINE_DIR/design/skills/kb-a11y-expert"
+  install_skill "$PIPELINE_DIR/design/skills/kb-a11y-web-expert"
+  install_skill "$PIPELINE_DIR/design/skills/kb-design-governance"
 
-  for skill_dir in "$SCRIPT_DIR/plan/skills"/*/; do
+  for skill_dir in "$PIPELINE_DIR/plan/skills"/*/; do
     install_skill "$skill_dir"
   done
 fi
 
 if has_phase "tasks"; then
   # tasks necesita kb-plan-expert y kb-spec-expert (qa-engineer) como dependencias
-  install_skill "$SCRIPT_DIR/plan/skills/kb-plan-expert"
-  install_skill "$SCRIPT_DIR/spec/skills/kb-spec-expert"
+  install_skill "$PIPELINE_DIR/plan/skills/kb-plan-expert"
+  install_skill "$PIPELINE_DIR/spec/skills/kb-spec-expert"
 
-  for skill_dir in "$SCRIPT_DIR/tasks/skills"/*/; do
+  for skill_dir in "$PIPELINE_DIR/tasks/skills"/*/; do
     install_skill "$skill_dir"
   done
 fi
@@ -238,7 +239,7 @@ install_phase_rule() {
     phase_globs "$p" | while read -r g; do echo "  - \"$g\""; done
     echo "---"
     echo ""
-    cat "$SCRIPT_DIR/$p/CLAUDE.md"
+    cat "$PIPELINE_DIR/$p/CLAUDE.md"
   } > "$CLAUDE_DIR/rules/sdd-$p.md"
   echo "  ✓ rules/sdd-$p.md"
 }
@@ -258,7 +259,7 @@ if has_phase "all" || [ "$PHASE_COUNT" -gt 1 ]; then
 else
   for p in prd spec design plan tasks; do
     if has_phase "$p"; then
-      cp "$SCRIPT_DIR/$p/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
+      cp "$PIPELINE_DIR/$p/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
     fi
   done
 fi
@@ -338,10 +339,10 @@ in_list() {
 MANAGED_SKILLS=""
 MANAGED_AGENTS=""
 for d in prd spec design plan tasks; do
-  for s in "$SCRIPT_DIR/$d/skills"/*/; do
+  for s in "$PIPELINE_DIR/$d/skills"/*/; do
     [ -d "$s" ] && MANAGED_SKILLS="$MANAGED_SKILLS $(basename "$s")"
   done
-  for a in "$SCRIPT_DIR/$d/agents"/*.md; do
+  for a in "$PIPELINE_DIR/$d/agents"/*.md; do
     [ -f "$a" ] && MANAGED_AGENTS="$MANAGED_AGENTS $(basename "$a")"
   done
 done

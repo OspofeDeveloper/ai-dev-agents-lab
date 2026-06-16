@@ -44,9 +44,9 @@ find sdd/ -name "CLAUDE.md" 2>/dev/null
 
 **Si `--phase <fase>`:**
 ```bash
-find sdd/<fase>/ -name "SKILL.md" 2>/dev/null
-find sdd/<fase>/ -name "*.md" -path "*/agents/*" 2>/dev/null
-find sdd/<fase>/CLAUDE.md 2>/dev/null
+find sdd/pipeline/<fase>/ -name "SKILL.md" 2>/dev/null
+find sdd/pipeline/<fase>/ -name "*.md" -path "*/agents/*" 2>/dev/null
+find sdd/pipeline/<fase>/CLAUDE.md 2>/dev/null
 # Incluir siempre el meta-ecosistema
 find sdd/meta/ -name "SKILL.md" 2>/dev/null
 find sdd/meta/ -name "*.md" -path "*/agents/*" 2>/dev/null

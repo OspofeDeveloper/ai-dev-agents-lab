@@ -1,7 +1,7 @@
 # SDD Skill Registry
 <!-- Auto-generado por scripts/generate-skill-registry.py. No editar manualmente. -->
-<!-- Total: 131 skills | 56 wf-* (user-invocable) | 75 kb-* -->
-<!-- Última actualización: 2026-06-11 -->
+<!-- Total: 134 skills | 58 wf-* (user-invocable) | 76 kb-* -->
+<!-- Última actualización: 2026-06-16 -->
 
 ## Meta-Ecosistema (meta/)
 
@@ -9,10 +9,13 @@
 |---|---|---|---|
 | kb-sdd-audit-content | Criterios para detectar problemas de calidad de contenido en skills y agentes SDD: violaciones de SSoT, SRP, contradicciones entre skills e inconsistencias de… | false | meta/skills/kb-sdd-audit-content/SKILL.md |
 | kb-sdd-audit-structural | Criterios para detectar problemas estructurales del ecosistema SDD: referencias rotas, skills huerfanas, rootmap invalido y agentes con KBs inexistentes, con s… | false | meta/skills/kb-sdd-audit-structural/SKILL.md |
+| kb-sdd-conformance | SSoT del metodo de conformidad del ecosistema SDD: como derivar y escribir escenarios de Caso de Uso (CU-N.x) para una skill, el template verbatim del escenari… | false | meta/skills/kb-sdd-conformance/SKILL.md |
 | kb-sdd-creation-guide | El COMO de crear y registrar piezas del ecosistema SDD: convenciones de nombrado, ubicacion por tipo y fase, plantillas de frontmatter, estructura de contenido… | false | meta/skills/kb-sdd-creation-guide/SKILL.md |
 | kb-sdd-skill-architecture | Reglas transversales para decidir cuando crear una kb, workflow o agente en sdd y repartir responsabilidades entre CLAUDE.md, README y skills sin romper SSoT n… | false | meta/skills/kb-sdd-skill-architecture/SKILL.md |
 | kb-sdd-stack-overlay-contract | Contrato que debe cumplir un overlay de stack (tech/<stack>): piezas obligatorias y opcionales, override por nombre sobre las genericas de plan/tasks, init esp… | false | meta/skills/kb-sdd-stack-overlay-contract/SKILL.md |
 | wf-agent-create | Orquestador SDD para crear un nuevo agente dentro del ecosistema | true | meta/skills/wf-agent-create/SKILL.md |
+| wf-conformance-author | Audita la cobertura de conformance de una skill (o de una fase entera) contra el catalogo de Casos de Uso y escribe los escenarios CU-N.x que falten en formato… | true | meta/skills/wf-conformance-author/SKILL.md |
+| wf-conformance-status | Genera un snapshot de cobertura de la bateria de conformance leyendo la matriz del ROADMAP: conteo por Estado, ejes en hueco (happy/edge/harness/args) y progre… | true | meta/skills/wf-conformance-status/SKILL.md |
 | wf-project-init | Inicializa o amplia un proyecto SDD: instala siempre el backbone (spec, plan, tasks) y añade prd/design segun el perfil de quien inicializa (desarrollo, produc… | true | bootstrap/skills/wf-project-init/SKILL.md |
 | wf-sdd-audit | Audita el ecosistema SDD detectando referencias rotas, skills huerfanas, violaciones de SSoT/SRP, contradicciones e inconsistencias | true | meta/skills/wf-sdd-audit/SKILL.md |
 | wf-sdd-refactor | Orquestador SDD para refactorizar una skill (kb-* o wf-*) o agente existente del ecosistema | true | meta/skills/wf-sdd-refactor/SKILL.md |
@@ -25,96 +28,96 @@
 
 | Skill | Descripción | Invocable | Path |
 |---|---|---|---|
-| kb-prd-expert | Experto en Product Requirements Documents (PRD) para el pipeline SDD | false | prd/skills/kb-prd-expert/SKILL.md |
-| kb-product-change-governance | Reglas de gobernanza para cambios de producto en el ecosistema SDD | false | prd/skills/kb-product-change-governance/SKILL.md |
-| wf-prd-change | Gestiona cambios de producto sobre un PRD existente: clasifica el cambio (aclaracion vs change request), actualiza el PRD si corresponde y deja trazabilidad co… | true | prd/skills/wf-prd-change/SKILL.md |
-| wf-prd-change-cascade | Orquesta en un solo comando la propagacion de un cambio de PRD por el pipeline (change → sync-impact → spec-sync → conflict → readiness → design-sync → reporte… | true | prd/skills/wf-prd-change-cascade/SKILL.md |
-| wf-prd-create | Crea un PRD inicial guiado para el pipeline SDD | true | prd/skills/wf-prd-create/SKILL.md |
-| wf-prd-review | Revision rapida de un PRD o documento de requisitos antes de entrar en la fase Spec | true | prd/skills/wf-prd-review/SKILL.md |
+| kb-prd-expert | Experto en Product Requirements Documents (PRD) para el pipeline SDD | false | pipeline/prd/skills/kb-prd-expert/SKILL.md |
+| kb-product-change-governance | Reglas de gobernanza para cambios de producto en el ecosistema SDD | false | pipeline/prd/skills/kb-product-change-governance/SKILL.md |
+| wf-prd-change | Gestiona cambios de producto sobre un PRD existente: clasifica el cambio (aclaracion vs change request), actualiza el PRD si corresponde y deja trazabilidad co… | true | pipeline/prd/skills/wf-prd-change/SKILL.md |
+| wf-prd-change-cascade | Orquesta en un solo comando la propagacion de un cambio de PRD por el pipeline (change → sync-impact → spec-sync → conflict → readiness → design-sync → reporte… | true | pipeline/prd/skills/wf-prd-change-cascade/SKILL.md |
+| wf-prd-create | Crea un PRD inicial guiado para el pipeline SDD | true | pipeline/prd/skills/wf-prd-create/SKILL.md |
+| wf-prd-review | Revision rapida de un PRD o documento de requisitos antes de entrar en la fase Spec | true | pipeline/prd/skills/wf-prd-review/SKILL.md |
 
 ## Fase: Spec
 
 | Skill | Descripción | Invocable | Path |
 |---|---|---|---|
-| kb-conflict-expert | Experto en detección de conflictos entre Specs SDD de features | false | spec/skills/kb-conflict-expert/SKILL.md |
-| kb-decompose-expert | Partición de Specs SDD monolíticos en Specs por feature: criterios de feature válida, declaración de shared models y generación del índice de features | false | spec/skills/kb-decompose-expert/SKILL.md |
-| kb-gap-conventions | Convenciones SSoT del sistema de gaps y marcadores del pipeline SDD: formatos de ID, severidades, marcador de pendiente y reglas de bloqueo | false | spec/skills/kb-gap-conventions/SKILL.md |
-| kb-spec-characterization | Reglas para specs de caracterización brownfield: evidencia obligatoria por CA, marcador [INFERIDO], qué no especular y degradación sin tests | false | spec/skills/kb-spec-characterization/SKILL.md |
-| kb-spec-expert | Experto en Spec Driven Development (SDD): qué debe y qué NO debe contener un Spec | false | spec/skills/kb-spec-expert/SKILL.md |
-| kb-traceability-rules | Reglas de trazabilidad entre PRD, discovery, specs, plan y tasks en el ecosistema SDD | false | spec/skills/kb-traceability-rules/SKILL.md |
-| wf-prd-sync-impact | Analiza el impacto de un PRD actualizado sobre los artefactos SDD ya generados (analysis, discovery, features, specs, plan, tasks) y produce un informe de sinc… | true | spec/skills/wf-prd-sync-impact/SKILL.md |
-| wf-spec-amend | Enmienda quirúrgica de un CA ambiguo descubierto durante la implementación (back-edge tasks→spec) | true | spec/skills/wf-spec-amend/SKILL.md |
-| wf-spec-analyze | Recopila las decisiones de negocio que necesitan los Specs desde un PRD vigente: mapea que elementos del Spec saldran del PRD, detecta contaminacion tecnica y… | true | spec/skills/wf-spec-analyze/SKILL.md |
-| wf-spec-conflict | Detecta conflictos entre Specs SDD de un mismo proyecto: HUs duplicadas, CAs contradictorios, scope overlap, shared models inconsistentes | true | spec/skills/wf-spec-conflict/SKILL.md |
-| wf-spec-delta | Evoluciona un Spec de feature de forma incremental | true | spec/skills/wf-spec-delta/SKILL.md |
-| wf-spec-discover | Analiza un PRD e identifica features candidatas por cohesion funcional | true | spec/skills/wf-spec-discover/SKILL.md |
-| wf-spec-fast-track | Genera el Spec de una feature directamente desde un documento de requisitos acotado a una sola capacidad | true | spec/skills/wf-spec-fast-track/SKILL.md |
-| wf-spec-features-first | Orquestador del flujo features-first: ejecuta discover sobre el PRD y lanza fast-track en paralelo por feature (todas o un subset con --features), con guardrai… | true | spec/skills/wf-spec-features-first/SKILL.md |
-| wf-spec-from-code | Ingeniería inversa de specs desde código existente (brownfield): descubre capacidades con evidencia (archivo:línea, rutas, tests) y genera specs de caracteriza… | true | spec/skills/wf-spec-from-code/SKILL.md |
-| wf-spec-gap-resolve | Completa HUs y CAs [INCOMPLETO] desde respuestas ya escritas en un _analysis.md y confirma CAs [INFERIDO] de specs de caracterizacion | true | spec/skills/wf-spec-gap-resolve/SKILL.md |
-| wf-spec-readiness | Genera un informe de readiness desde los artefactos post-spec (specs, READMEs, _features.md, _conflict_report.md): que features estan listas para plan, cuales… | true | spec/skills/wf-spec-readiness/SKILL.md |
-| wf-spec-sync-from-prd | Resincroniza specs de feature tras un PRD actualizado | true | spec/skills/wf-spec-sync-from-prd/SKILL.md |
-| wf-spec-validate | Audita un _spec.md ya generado para detectar regresiones de pureza, testabilidad o completitud introducidas por ediciones manuales | true | spec/skills/wf-spec-validate/SKILL.md |
+| kb-conflict-expert | Experto en detección de conflictos entre Specs SDD de features | false | pipeline/spec/skills/kb-conflict-expert/SKILL.md |
+| kb-decompose-expert | Partición de Specs SDD monolíticos en Specs por feature: criterios de feature válida, declaración de shared models y generación del índice de features | false | pipeline/spec/skills/kb-decompose-expert/SKILL.md |
+| kb-gap-conventions | Convenciones SSoT del sistema de gaps y marcadores del pipeline SDD: formatos de ID, severidades, marcador de pendiente y reglas de bloqueo | false | pipeline/spec/skills/kb-gap-conventions/SKILL.md |
+| kb-spec-characterization | Reglas para specs de caracterización brownfield: evidencia obligatoria por CA, marcador [INFERIDO], qué no especular y degradación sin tests | false | pipeline/spec/skills/kb-spec-characterization/SKILL.md |
+| kb-spec-expert | Experto en Spec Driven Development (SDD): qué debe y qué NO debe contener un Spec | false | pipeline/spec/skills/kb-spec-expert/SKILL.md |
+| kb-traceability-rules | Reglas de trazabilidad entre PRD, discovery, specs, plan y tasks en el ecosistema SDD | false | pipeline/spec/skills/kb-traceability-rules/SKILL.md |
+| wf-prd-sync-impact | Analiza el impacto de un PRD actualizado sobre los artefactos SDD ya generados (analysis, discovery, features, specs, plan, tasks) y produce un informe de sinc… | true | pipeline/spec/skills/wf-prd-sync-impact/SKILL.md |
+| wf-spec-amend | Enmienda quirúrgica de un CA ambiguo descubierto durante la implementación (back-edge tasks→spec) | true | pipeline/spec/skills/wf-spec-amend/SKILL.md |
+| wf-spec-analyze | Recopila las decisiones de negocio que necesitan los Specs desde un PRD vigente: mapea que elementos del Spec saldran del PRD, detecta contaminacion tecnica y… | true | pipeline/spec/skills/wf-spec-analyze/SKILL.md |
+| wf-spec-conflict | Detecta conflictos entre Specs SDD de un mismo proyecto: HUs duplicadas, CAs contradictorios, scope overlap, shared models inconsistentes | true | pipeline/spec/skills/wf-spec-conflict/SKILL.md |
+| wf-spec-delta | Evoluciona un Spec de feature de forma incremental | true | pipeline/spec/skills/wf-spec-delta/SKILL.md |
+| wf-spec-discover | Analiza un PRD e identifica features candidatas por cohesion funcional | true | pipeline/spec/skills/wf-spec-discover/SKILL.md |
+| wf-spec-fast-track | Genera el Spec de una feature directamente desde un documento de requisitos acotado a una sola capacidad | true | pipeline/spec/skills/wf-spec-fast-track/SKILL.md |
+| wf-spec-features-first | Orquestador del flujo features-first: ejecuta discover sobre el PRD y lanza fast-track en paralelo por feature (todas o un subset con --features), con guardrai… | true | pipeline/spec/skills/wf-spec-features-first/SKILL.md |
+| wf-spec-from-code | Ingeniería inversa de specs desde código existente (brownfield): descubre capacidades con evidencia (archivo:línea, rutas, tests) y genera specs de caracteriza… | true | pipeline/spec/skills/wf-spec-from-code/SKILL.md |
+| wf-spec-gap-resolve | Completa HUs y CAs [INCOMPLETO] desde respuestas ya escritas en un _analysis.md y confirma CAs [INFERIDO] de specs de caracterizacion | true | pipeline/spec/skills/wf-spec-gap-resolve/SKILL.md |
+| wf-spec-readiness | Genera un informe de readiness desde los artefactos post-spec (specs, READMEs, _features.md, _conflict_report.md): que features estan listas para plan, cuales… | true | pipeline/spec/skills/wf-spec-readiness/SKILL.md |
+| wf-spec-sync-from-prd | Resincroniza specs de feature tras un PRD actualizado | true | pipeline/spec/skills/wf-spec-sync-from-prd/SKILL.md |
+| wf-spec-validate | Audita un _spec.md ya generado para detectar regresiones de pureza, testabilidad o completitud introducidas por ediciones manuales | true | pipeline/spec/skills/wf-spec-validate/SKILL.md |
 
 ## Fase: Design
 
 | Skill | Descripción | Invocable | Path |
 |---|---|---|---|
-| kb-a11y-expert | Accesibilidad mobile en SDD | false | design/skills/kb-a11y-expert/SKILL.md |
-| kb-a11y-web-expert | Deltas de accesibilidad web/desktop sobre el nucleo platform-neutral de kb-a11y-expert | false | design/skills/kb-a11y-web-expert/SKILL.md |
-| kb-design-brief | Base de conocimiento para capturar decisiones de direccion visual antes del DESIGN.md: contrato de DESIGN_BRIEF.md, modos de autonomia del usuario frente a la… | false | design/skills/kb-design-brief/SKILL.md |
-| kb-design-characterization | Metodologia para extraer un DESIGN.md desde una UI ya en produccion (CSS/tokens/componentes/capturas): evidencia obligatoria por token, jerarquia de evidencia,… | false | design/skills/kb-design-characterization/SKILL.md |
-| kb-design-conflict-expert | Deteccion de conflictos visuales y de UX entre features de un mismo producto: componente con doble comportamiento, navegacion incoherente, tokens contradichos,… | false | design/skills/kb-design-conflict-expert/SKILL.md |
-| kb-design-expert | Skill raiz de la fase design del pipeline SDD | false | design/skills/kb-design-expert/SKILL.md |
-| kb-design-feature-artifacts | Contrato normativo de los artefactos de feature en la fase design — flows (secuencias, navegacion y transiciones), views (SSoT de pantallas con todos los estad… | false | design/skills/kb-design-feature-artifacts/SKILL.md |
-| kb-design-forms | Patrones de formulario en mobile y web: layout (label, field, helper, error placement), validacion (cliente vs servidor, momento de disparo), estados de campo… | false | design/skills/kb-design-forms/SKILL.md |
-| kb-design-governance | Gobernanza temporal del sistema visual del producto | false | design/skills/kb-design-governance/SKILL.md |
-| kb-design-iconography-expert | Base de conocimiento para el sistema de iconografia del producto | false | design/skills/kb-design-iconography-expert/SKILL.md |
-| kb-design-layout | Sistemas de layout y responsive: grid base por plataforma, breakpoints, adaptive vs responsive, safe areas, notches, foldables y tablets | false | design/skills/kb-design-layout/SKILL.md |
-| kb-design-motion-expert | Base de conocimiento operativa para motion y micro-interacciones en mobile | false | design/skills/kb-design-motion-expert/SKILL.md |
-| kb-design-style-decision-tree | SSoT de la UX de navegacion para cerrar style_family y las variables visuales del brief — la secuencia ordenada de preguntas, las ramas de deteccion de conflic… | false | design/skills/kb-design-style-decision-tree/SKILL.md |
-| kb-design-style-taxonomy | Clasifica estilos visuales de producto digital de forma operativa: familias de estilo, senales visuales, criterios de seleccion por contexto y anti-patrones pa… | false | design/skills/kb-design-style-taxonomy/SKILL.md |
-| kb-design-system-contract | Contrato normativo y SSoT del DESIGN.md como artefacto de producto SDD: formato Google design.md, frontmatter YAML obligatorio (visual_personality, color light… | false | design/skills/kb-design-system-contract/SKILL.md |
-| kb-design-voice | Base de conocimiento de UX writing y voice & tone del producto: tono de voz, patrones de microcopy por contexto (empty, error, success, loading), estructura de… | false | design/skills/kb-design-voice/SKILL.md |
-| wf-design-a11y-audit | Audita la accesibilidad de un DESIGN.md (y opcionalmente un *_views.md) frente a kb-a11y-expert y los deltas web de kb-a11y-web-expert | true | design/skills/wf-design-a11y-audit/SKILL.md |
-| wf-design-branch | Permite explorar variantes paralelas del sistema visual sin comprometerse | true | design/skills/wf-design-branch/SKILL.md |
-| wf-design-delta | Evoluciona un DESIGN.md existente de forma incremental | true | design/skills/wf-design-delta/SKILL.md |
-| wf-design-discover | Descubre 3-5 apps reales del mercado como referencias de diseno para una feature, mediante research web y validacion interactiva con el usuario | true | design/skills/wf-design-discover/SKILL.md |
-| wf-design-export | Exporta los tokens del DESIGN.md a formatos consumibles por equipos de desarrollo: CSS variables, Style Dictionary universal, Compose para Android, SwiftUI par… | true | design/skills/wf-design-export/SKILL.md |
-| wf-design-extract | Ingenieria inversa de un DESIGN.md desde una UI ya en produccion: descubre tokens, paleta, tipografia y componentes con evidencia (archivo:linea, mediciones) y… | true | design/skills/wf-design-extract/SKILL.md |
-| wf-design-feature-prototype | Deriva flows, views y un prompt de ensamblaje tool-agnostic (target_tool stitch en mobile, web-generic en web/desktop) de una feature desde su _spec.md, el DES… | true | design/skills/wf-design-feature-prototype/SKILL.md |
-| wf-design-feedback | Captura feedback no estructurado de stakeholders (cliente, PM, dev, QA) y lo triajea en categorias accionables: cambio de brief, delta visual, ajuste de featur… | true | design/skills/wf-design-feedback/SKILL.md |
-| wf-design-intake | Cierra el DESIGN_BRIEF.md antes de generar el sistema visual: fija modo de decision, preset, familia visual, densidad, profundidad, motion y policy de referenc… | true | design/skills/wf-design-intake/SKILL.md |
-| wf-design-moodboard | Captura inspiracion visual no estructurada antes del discovery: el usuario describe vibes (paletas, fotografia, atmosfera, ilustracion, texturas) y produce un… | true | design/skills/wf-design-moodboard/SKILL.md |
-| wf-design-sync | Analiza el impacto de un cambio en el DESIGN.md, brief o spec sobre los artefactos de diseño derivados (flows, views, ui_prompt, exports de tokens): marca cuál… | true | design/skills/wf-design-sync/SKILL.md |
-| wf-design-system | Crea o actualiza el DESIGN.md de un producto desde un feature spec validado y un DESIGN_BRIEF.md cerrado: identidad visual persistente que alimenta el generado… | true | design/skills/wf-design-system/SKILL.md |
-| wf-design-validate | Audita un DESIGN.md ya existente contra el contrato visual (kb-design-expert, kb-design-style-taxonomy, kb-design-brief) y el linter oficial de Google design.md | true | design/skills/wf-design-validate/SKILL.md |
-| wf-design-variant | Permite el A/B testing visual de una feature | true | design/skills/wf-design-variant/SKILL.md |
+| kb-a11y-expert | Accesibilidad mobile en SDD | false | pipeline/design/skills/kb-a11y-expert/SKILL.md |
+| kb-a11y-web-expert | Deltas de accesibilidad web/desktop sobre el nucleo platform-neutral de kb-a11y-expert | false | pipeline/design/skills/kb-a11y-web-expert/SKILL.md |
+| kb-design-brief | Base de conocimiento para capturar decisiones de direccion visual antes del DESIGN.md: contrato de DESIGN_BRIEF.md, modos de autonomia del usuario frente a la… | false | pipeline/design/skills/kb-design-brief/SKILL.md |
+| kb-design-characterization | Metodologia para extraer un DESIGN.md desde una UI ya en produccion (CSS/tokens/componentes/capturas): evidencia obligatoria por token, jerarquia de evidencia,… | false | pipeline/design/skills/kb-design-characterization/SKILL.md |
+| kb-design-conflict-expert | Deteccion de conflictos visuales y de UX entre features de un mismo producto: componente con doble comportamiento, navegacion incoherente, tokens contradichos,… | false | pipeline/design/skills/kb-design-conflict-expert/SKILL.md |
+| kb-design-expert | Skill raiz de la fase design del pipeline SDD | false | pipeline/design/skills/kb-design-expert/SKILL.md |
+| kb-design-feature-artifacts | Contrato normativo de los artefactos de feature en la fase design — flows (secuencias, navegacion y transiciones), views (SSoT de pantallas con todos los estad… | false | pipeline/design/skills/kb-design-feature-artifacts/SKILL.md |
+| kb-design-forms | Patrones de formulario en mobile y web: layout (label, field, helper, error placement), validacion (cliente vs servidor, momento de disparo), estados de campo… | false | pipeline/design/skills/kb-design-forms/SKILL.md |
+| kb-design-governance | Gobernanza temporal del sistema visual del producto | false | pipeline/design/skills/kb-design-governance/SKILL.md |
+| kb-design-iconography-expert | Base de conocimiento para el sistema de iconografia del producto | false | pipeline/design/skills/kb-design-iconography-expert/SKILL.md |
+| kb-design-layout | Sistemas de layout y responsive: grid base por plataforma, breakpoints, adaptive vs responsive, safe areas, notches, foldables y tablets | false | pipeline/design/skills/kb-design-layout/SKILL.md |
+| kb-design-motion-expert | Base de conocimiento operativa para motion y micro-interacciones en mobile | false | pipeline/design/skills/kb-design-motion-expert/SKILL.md |
+| kb-design-style-decision-tree | SSoT de la UX de navegacion para cerrar style_family y las variables visuales del brief — la secuencia ordenada de preguntas, las ramas de deteccion de conflic… | false | pipeline/design/skills/kb-design-style-decision-tree/SKILL.md |
+| kb-design-style-taxonomy | Clasifica estilos visuales de producto digital de forma operativa: familias de estilo, senales visuales, criterios de seleccion por contexto y anti-patrones pa… | false | pipeline/design/skills/kb-design-style-taxonomy/SKILL.md |
+| kb-design-system-contract | Contrato normativo y SSoT del DESIGN.md como artefacto de producto SDD: formato Google design.md, frontmatter YAML obligatorio (visual_personality, color light… | false | pipeline/design/skills/kb-design-system-contract/SKILL.md |
+| kb-design-voice | Base de conocimiento de UX writing y voice & tone del producto: tono de voz, patrones de microcopy por contexto (empty, error, success, loading), estructura de… | false | pipeline/design/skills/kb-design-voice/SKILL.md |
+| wf-design-a11y-audit | Audita la accesibilidad de un DESIGN.md (y opcionalmente un *_views.md) frente a kb-a11y-expert y los deltas web de kb-a11y-web-expert | true | pipeline/design/skills/wf-design-a11y-audit/SKILL.md |
+| wf-design-branch | Permite explorar variantes paralelas del sistema visual sin comprometerse | true | pipeline/design/skills/wf-design-branch/SKILL.md |
+| wf-design-delta | Evoluciona un DESIGN.md existente de forma incremental | true | pipeline/design/skills/wf-design-delta/SKILL.md |
+| wf-design-discover | Descubre 3-5 apps reales del mercado como referencias de diseno para una feature, mediante research web y validacion interactiva con el usuario | true | pipeline/design/skills/wf-design-discover/SKILL.md |
+| wf-design-export | Exporta los tokens del DESIGN.md a formatos consumibles por equipos de desarrollo: CSS variables, Style Dictionary universal, Compose para Android, SwiftUI par… | true | pipeline/design/skills/wf-design-export/SKILL.md |
+| wf-design-extract | Ingenieria inversa de un DESIGN.md desde una UI ya en produccion: descubre tokens, paleta, tipografia y componentes con evidencia (archivo:linea, mediciones) y… | true | pipeline/design/skills/wf-design-extract/SKILL.md |
+| wf-design-feature-prototype | Deriva flows, views y un prompt de ensamblaje tool-agnostic (target_tool stitch en mobile, web-generic en web/desktop) de una feature desde su _spec.md, el DES… | true | pipeline/design/skills/wf-design-feature-prototype/SKILL.md |
+| wf-design-feedback | Captura feedback no estructurado de stakeholders (cliente, PM, dev, QA) y lo triajea en categorias accionables: cambio de brief, delta visual, ajuste de featur… | true | pipeline/design/skills/wf-design-feedback/SKILL.md |
+| wf-design-intake | Cierra el DESIGN_BRIEF.md antes de generar el sistema visual: fija modo de decision, preset, familia visual, densidad, profundidad, motion y policy de referenc… | true | pipeline/design/skills/wf-design-intake/SKILL.md |
+| wf-design-moodboard | Captura inspiracion visual no estructurada antes del discovery: el usuario describe vibes (paletas, fotografia, atmosfera, ilustracion, texturas) y produce un… | true | pipeline/design/skills/wf-design-moodboard/SKILL.md |
+| wf-design-sync | Analiza el impacto de un cambio en el DESIGN.md, brief o spec sobre los artefactos de diseño derivados (flows, views, ui_prompt, exports de tokens): marca cuál… | true | pipeline/design/skills/wf-design-sync/SKILL.md |
+| wf-design-system | Crea o actualiza el DESIGN.md de un producto desde un feature spec validado y un DESIGN_BRIEF.md cerrado: identidad visual persistente que alimenta el generado… | true | pipeline/design/skills/wf-design-system/SKILL.md |
+| wf-design-validate | Audita un DESIGN.md ya existente contra el contrato visual (kb-design-expert, kb-design-style-taxonomy, kb-design-brief) y el linter oficial de Google design.md | true | pipeline/design/skills/wf-design-validate/SKILL.md |
+| wf-design-variant | Permite el A/B testing visual de una feature | true | pipeline/design/skills/wf-design-variant/SKILL.md |
 
 ## Fase: Plan
 
 | Skill | Descripción | Invocable | Path |
 |---|---|---|---|
-| kb-plan-expert | Base de conocimiento del Plan técnico SDD | false | plan/skills/kb-plan-expert/SKILL.md |
-| kb-plan-method | Procedimiento operativo compartido de la fase plan SDD — los pasos stack-agnósticos de generar un Plan (plan-architect) y de auditarlo (plan-auditor) | false | plan/skills/kb-plan-method/SKILL.md |
-| wf-plan-validate | Audita un _plan.md existente contra su Spec, el handoff de Design y las reglas de kb-plan-expert | true | plan/skills/wf-plan-validate/SKILL.md |
-| wf-prepare-plan | Transforma un Spec validado y el handoff de Design en un Plan tecnico de implementacion, especializado segun el stack del proyecto (overlay tech, p | true | plan/skills/wf-prepare-plan/SKILL.md |
+| kb-plan-expert | Base de conocimiento del Plan técnico SDD | false | pipeline/plan/skills/kb-plan-expert/SKILL.md |
+| kb-plan-method | Procedimiento operativo compartido de la fase plan SDD — los pasos stack-agnósticos de generar un Plan (plan-architect) y de auditarlo (plan-auditor) | false | pipeline/plan/skills/kb-plan-method/SKILL.md |
+| wf-plan-validate | Audita un _plan.md existente contra su Spec, el handoff de Design y las reglas de kb-plan-expert | true | pipeline/plan/skills/wf-plan-validate/SKILL.md |
+| wf-prepare-plan | Transforma un Spec validado y el handoff de Design en un Plan tecnico de implementacion, especializado segun el stack del proyecto (overlay tech, p | true | pipeline/plan/skills/wf-prepare-plan/SKILL.md |
 
 ## Fase: Tasks
 
 | Skill | Descripción | Invocable | Path |
 |---|---|---|---|
-| kb-delivery-discipline | Criterios stack-agnósticos de empaquetado del trabajo implementado en commits y PRs: la Task como unidad (un commit atómico y verde por task), los tests viajan… | false | tasks/skills/kb-delivery-discipline/SKILL.md |
-| kb-qa-expert | Metodologia QA del pipeline SDD: derivacion de casos de prueba TC-XXX desde los CAs GIVEN/WHEN/THEN del spec, niveles y tipos, trazabilidad CA→TC y criterios d… | false | tasks/skills/kb-qa-expert/SKILL.md |
-| kb-tasks-expert | Reglas tech-neutral para descomponer Planes técnicos en Tasks atómicas con owner claro: formato obligatorio, granularidad, orden canónico por dependencias, asi… | false | tasks/skills/kb-tasks-expert/SKILL.md |
-| kb-tasks-method | Procedimiento operativo compartido de la fase tasks SDD — los pasos stack-agnósticos para descomponer un Plan validado en un _tasks.md | false | tasks/skills/kb-tasks-method/SKILL.md |
-| wf-bug | Fast-lane de mantenimiento: triaje de un bug contra los specs de la feature, fix con trazabilidad (B-00X, CA-XXX) y registro en <feature>_bugs.md | true | tasks/skills/wf-bug/SKILL.md |
-| wf-prepare-tasks | Transforma Planes tecnicos validados en Tasks de implementacion | true | tasks/skills/wf-prepare-tasks/SKILL.md |
-| wf-project-status | Informe PM read-only del estado del proyecto SDD: por cada feature, su fase del pipeline (Spec/Plan/Tasks/QA/Cerrada), estado, bloqueo y siguiente acción | true | tasks/skills/wf-project-status/SKILL.md |
-| wf-qa-plan | Genera el plan de QA de una feature: deriva casos de prueba TC-XXX trazables desde los CAs GIVEN/WHEN/THEN del feature spec (afinados con plan/tasks y project… | true | tasks/skills/wf-qa-plan/SKILL.md |
-| wf-qa-verify | Verifica la cobertura real de CAs de una feature tras implementar: ejecuta los tests de cada TC del qa_plan, registra evidencia, escribe los estados por TC y p… | true | tasks/skills/wf-qa-verify/SKILL.md |
-| wf-release | Vincula el cierre de una feature (QA APTO) a un punto verificable de producción: registra el commit SHA y, opcionalmente, un tag de release, cerrando la trazab… | true | tasks/skills/wf-release/SKILL.md |
-| wf-task-run | Ejecuta las tasks de un _tasks.md con estado persistente, validación de DoD y commits trazables (T-00X, CA-XXX) | true | tasks/skills/wf-task-run/SKILL.md |
+| kb-delivery-discipline | Criterios stack-agnósticos de empaquetado del trabajo implementado en commits y PRs: la Task como unidad (un commit atómico y verde por task), los tests viajan… | false | pipeline/tasks/skills/kb-delivery-discipline/SKILL.md |
+| kb-qa-expert | Metodologia QA del pipeline SDD: derivacion de casos de prueba TC-XXX desde los CAs GIVEN/WHEN/THEN del spec, niveles y tipos, trazabilidad CA→TC y criterios d… | false | pipeline/tasks/skills/kb-qa-expert/SKILL.md |
+| kb-tasks-expert | Reglas tech-neutral para descomponer Planes técnicos en Tasks atómicas con owner claro: formato obligatorio, granularidad, orden canónico por dependencias, asi… | false | pipeline/tasks/skills/kb-tasks-expert/SKILL.md |
+| kb-tasks-method | Procedimiento operativo compartido de la fase tasks SDD — los pasos stack-agnósticos para descomponer un Plan validado en un _tasks.md | false | pipeline/tasks/skills/kb-tasks-method/SKILL.md |
+| wf-bug | Fast-lane de mantenimiento: triaje de un bug contra los specs de la feature, fix con trazabilidad (B-00X, CA-XXX) y registro en <feature>_bugs.md | true | pipeline/tasks/skills/wf-bug/SKILL.md |
+| wf-prepare-tasks | Transforma Planes tecnicos validados en Tasks de implementacion | true | pipeline/tasks/skills/wf-prepare-tasks/SKILL.md |
+| wf-project-status | Informe PM read-only del estado del proyecto SDD: por cada feature, su fase del pipeline (Spec/Plan/Tasks/QA/Cerrada), estado, bloqueo y siguiente acción | true | pipeline/tasks/skills/wf-project-status/SKILL.md |
+| wf-qa-plan | Genera el plan de QA de una feature: deriva casos de prueba TC-XXX trazables desde los CAs GIVEN/WHEN/THEN del feature spec (afinados con plan/tasks y project… | true | pipeline/tasks/skills/wf-qa-plan/SKILL.md |
+| wf-qa-verify | Verifica la cobertura real de CAs de una feature tras implementar: ejecuta los tests de cada TC del qa_plan, registra evidencia, escribe los estados por TC y p… | true | pipeline/tasks/skills/wf-qa-verify/SKILL.md |
+| wf-release | Vincula el cierre de una feature (QA APTO) a un punto verificable de producción: registra el commit SHA y, opcionalmente, un tag de release, cerrando la trazab… | true | pipeline/tasks/skills/wf-release/SKILL.md |
+| wf-task-run | Ejecuta las tasks de un _tasks.md con estado persistente, validación de DoD y commits trazables (T-00X, CA-XXX) | true | pipeline/tasks/skills/wf-task-run/SKILL.md |
 
 ## Tech: KMM — Global
 

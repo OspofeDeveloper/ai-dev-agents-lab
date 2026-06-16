@@ -26,8 +26,8 @@ Si `$ARGUMENTS` esta vacio o no hay path, informa:
 > "Uso: `/wf-sdd-refactor <path-skill-o-agente> [--reason <motivo>]`"
 >
 > Ejemplos:
-> - `/wf-sdd-refactor sdd/design/skills/kb-design-expert/SKILL.md --reason "mezcla reglas de trazabilidad y de tokens"`
-> - `/wf-sdd-refactor sdd/spec/agents/sdd-spec-writer.md --reason "cubre escritura y auditoria a la vez"`
+> - `/wf-sdd-refactor sdd/pipeline/design/skills/kb-design-expert/SKILL.md --reason "mezcla reglas de trazabilidad y de tokens"`
+> - `/wf-sdd-refactor sdd/pipeline/spec/agents/sdd-spec-writer.md --reason "cubre escritura y auditoria a la vez"`
 
 ---
 

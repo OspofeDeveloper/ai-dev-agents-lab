@@ -410,4 +410,4 @@ button-text:
 1. Cuando `wf-design-system` corre con un preset declarado, **incluye automaticamente** los componentes comunes + los especificos del preset en el `DESIGN.md` resultante.
 2. El agente puede ampliar componentes (anadir mas o anadir estados) segun necesidades del producto. No puede eliminar estados de los componentes base.
 3. Si un producto no necesita un componente especifico del preset (ej. `bottom-sheet` no aplica a un consumer-lifestyle minimalista), declarar `# N/A: <razon>` en lugar de eliminarlo silenciosamente.
-4. Para anadir un componente nuevo al preset, editar este archivo + documentar en `sdd/design/README.md > Como extender el sistema`.
+4. Para anadir un componente nuevo al preset, editar este archivo + documentar en `sdd/pipeline/design/README.md > Como extender el sistema`.

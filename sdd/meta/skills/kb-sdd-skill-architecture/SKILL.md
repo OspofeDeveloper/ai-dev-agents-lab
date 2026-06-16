@@ -204,7 +204,7 @@ Un **tech target** (KMM, Android nativo, Flutter, etc.) no es una fase del pipel
 
 Cuando `plan-architect` genera un plan técnico para el stack KMM, carga:
 
-1. `sdd/plan/skills/kb-plan-expert` (genérico de fase)
+1. `sdd/pipeline/plan/skills/kb-plan-expert` (genérico de fase)
 2. `sdd/tech/kmm/skills/plan/kb-kmm-*` (específicos del stack)
 
 El agente **no** mezcla KBs de `tasks/` al planificar, ni KBs de `plan/` al generar tasks.

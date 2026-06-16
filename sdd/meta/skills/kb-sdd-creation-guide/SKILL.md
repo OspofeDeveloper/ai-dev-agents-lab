@@ -68,7 +68,7 @@ Correcto:
 
 **Regla de resolucion de agentes:** cuando una `wf-*` declara `agent: <nombre>`, el agente se busca en el directorio `agents/` al mismo nivel que `skills/` dentro de la misma rama del directorio.
 
-- Workflow en `sdd/design/skills/` → agente en `sdd/design/agents/`
+- Workflow en `sdd/pipeline/design/skills/` → agente en `sdd/pipeline/design/agents/`
 - Workflow en `sdd/meta/skills/` → agente en `sdd/meta/agents/`
 - Workflow en `sdd/tech/kmm/skills/` → agente en `sdd/tech/kmm/agents/`
 

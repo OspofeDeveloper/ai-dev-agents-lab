@@ -143,4 +143,4 @@ Incluye:
 2. Si el spec/PRD contradice un valor del preset, manda el producto real (Regla 6 de `kb-design-brief`).
 3. Cuando `wf-design-system` corre con un preset, debe **partir del starter kit**, no generar DESIGN.md en blanco.
 4. El starter kit es un punto de partida al 70%. Las decisiones especificas del producto (Reference Apps, adjetivos de personalidad, valores finales de paleta) las cierra el agente desde spec + brief + research.
-5. Si el usuario quiere anadir un preset nuevo: editar este archivo + `preset_starter_kits.md` + `preset_components.md`. Documentar en `sdd/design/README.md > Como extender el sistema`.
+5. Si el usuario quiere anadir un preset nuevo: editar este archivo + `preset_starter_kits.md` + `preset_components.md`. Documentar en `sdd/pipeline/design/README.md > Como extender el sistema`.

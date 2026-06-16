@@ -98,7 +98,7 @@ Si no existe, ejecutar `/wf-<stack>-init` primero.
 
 ## Template: variantes de agentes (solo `--with-agents`)
 
-Partir de la pieza **genérica** correspondiente (`sdd/plan/agents/plan-architect.md`, `sdd/plan/agents/plan-auditor.md`, `sdd/tasks/agents/task-generator.md`) y especializarla, NUNCA al revés:
+Partir de la pieza **genérica** correspondiente (`sdd/pipeline/plan/agents/plan-architect.md`, `sdd/pipeline/plan/agents/plan-auditor.md`, `sdd/pipeline/tasks/agents/task-generator.md`) y especializarla, NUNCA al revés:
 
 - Mismo `name` (el override es por basename).
 - `skills`: las genéricas de la pieza + las KBs del stack que existan.

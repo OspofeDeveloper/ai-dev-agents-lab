@@ -143,7 +143,7 @@ class InstallByPhaseTest(InstallBase):
         # con una sola fase, CLAUDE.md raiz = el de la fase, no el pipeline completo
         self.install("spec")
         root_md = (self.claude / "CLAUDE.md").read_text(encoding="utf-8")
-        phase_md = (SDD_ROOT / "spec" / "CLAUDE.md").read_text(encoding="utf-8")
+        phase_md = (SDD_ROOT / "pipeline" / "spec" / "CLAUDE.md").read_text(encoding="utf-8")
         self.assertEqual(root_md, phase_md)
 
     def test_unknown_phase_exits_1(self):

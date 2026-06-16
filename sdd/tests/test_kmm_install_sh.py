@@ -28,7 +28,7 @@ INSTALL = SDD_ROOT / "install.sh"
 KMM_INSTALL = SDD_ROOT / "tech" / "kmm" / "install.sh"
 
 KMM_PLAN_ARCHITECT_SRC = SDD_ROOT / "tech" / "kmm" / "agents" / "plan-architect.md"
-GENERIC_PLAN_ARCHITECT_SRC = SDD_ROOT / "plan" / "agents" / "plan-architect.md"
+GENERIC_PLAN_ARCHITECT_SRC = SDD_ROOT / "pipeline" / "plan" / "agents" / "plan-architect.md"
 KMM_KB_PLAN_EXPERT_SRC = SDD_ROOT / "tech" / "kmm" / "skills" / "plan" / "kb-plan-expert" / "SKILL.md"
 
 

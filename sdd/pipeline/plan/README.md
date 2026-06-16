@@ -64,8 +64,8 @@ Los agentes de esta fase cargan skills de otras fases del pipeline SDD:
 
 | Skill | Fase origen | Uso en Plan |
 |---|---|---|
-| `kb-spec-expert` | `sdd/spec/skills/` | Entender qué es un Spec SDD válido y extraer sus CAs |
-| `kb-a11y-expert` | `sdd/design/skills/` | Materializar las decisiones de accesibilidad del DESIGN.md como decisiones técnicas |
+| `kb-spec-expert` | `sdd/pipeline/spec/skills/` | Entender qué es un Spec SDD válido y extraer sus CAs |
+| `kb-a11y-expert` | `sdd/pipeline/design/skills/` | Materializar las decisiones de accesibilidad del DESIGN.md como decisiones técnicas |
 
 Estas dependencias siguen la Regla 9 de `kb-sdd-skill-architecture`: la SSoT vive en la fase que la define; `plan` la consume sin duplicar.
 

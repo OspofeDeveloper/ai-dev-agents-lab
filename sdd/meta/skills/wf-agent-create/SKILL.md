@@ -53,11 +53,11 @@ Segun la fase:
 
 | Fase | Directorio |
 |---|---|
-| `prd` | `sdd/prd/agents/` |
-| `spec` | `sdd/spec/agents/` |
-| `design` | `sdd/design/agents/` |
-| `plan` | `sdd/plan/agents/` |
-| `tasks` | `sdd/tasks/agents/` |
+| `prd` | `sdd/pipeline/prd/agents/` |
+| `spec` | `sdd/pipeline/spec/agents/` |
+| `design` | `sdd/pipeline/design/agents/` |
+| `plan` | `sdd/pipeline/plan/agents/` |
+| `tasks` | `sdd/pipeline/tasks/agents/` |
 | `tech/<stack>` | `sdd/tech/<stack>/agents/` |
 | `global` | `sdd/meta/agents/` |
 

@@ -149,6 +149,18 @@ automática, y desglosa los escenarios. Cada escenario:
 - **Proyectos reales** son el sustrato donde se ejecutan los casos. Cada CU dice en
   **"Proyecto a usar"** qué buscar y cómo llegar al estado de partida.
 
+> [!NOTE]
+> **Autoría y cobertura, asistidas.** El método de derivar escenarios (leer un
+> `SKILL.md` → cruzar con los CU → 4 ejes → escribir los huecos en formato verbatim →
+> actualizar el ROADMAP) está codificado en `kb-sdd-conformance` y se conduce con dos
+> workflows:
+> - **`/wf-conformance-author <skill-name|phase>`** — audita la cobertura de una skill
+>   (o fase) y **escribe** los escenarios que falten, actualizando la matriz del
+>   ROADMAP. Delega en el agente `sdd-conformance`.
+> - **`/wf-conformance-status [--phase <fase>]`** — snapshot **read-only** de cobertura
+>   (estado por eje y progreso `X/N`) leyendo la matriz del ROADMAP; núcleo determinista
+>   `sdd/scripts/sdd-conformance-coverage.py`.
+
 ---
 
 ## Orden de ejecución sugerido

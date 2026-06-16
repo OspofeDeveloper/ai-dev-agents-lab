@@ -42,7 +42,7 @@ Si el usuario todavía no tiene `prd.md` o el documento base no está listo, det
 | Analizar impacto de un cambio de PRD sobre artefactos Spec | `/wf-prd-sync-impact` | `<archivo_prd.md>` |
 | Resincronizar specs tras un cambio de PRD | `/wf-spec-sync-from-prd` | `analyze <prd.md> \| apply <prd.md> --features F-001,F-002,...` |
 
-> ⚠ `/wf-prd-change` vive físicamente en la fase PRD (`sdd/prd/skills/`). El orquestador Spec lo lista porque es el handoff correcto cuando una respuesta a un gap se convierte en cambio de producto, pero la ejecución pertenece a la fase PRD.
+> ⚠ `/wf-prd-change` vive físicamente en la fase PRD (`sdd/pipeline/prd/skills/`). El orquestador Spec lo lista porque es el handoff correcto cuando una respuesta a un gap se convierte en cambio de producto, pero la ejecución pertenece a la fase PRD.
 
 ## Cómo actuar ante una petición
 

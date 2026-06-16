@@ -281,7 +281,7 @@ La lógica exacta de routing y la política de skills viven en [CLAUDE.md](CLAUD
 | `kb-prd-expert` ⚠ | Reglas del PRD (cargada por agentes Spec para leer el PRD de entrada) | `analyze`, `discover`, `fast-track`, exploración |
 | `kb-product-change-governance` ⚠ | Reglas para distinguir gap vs. change request y gestionar impacto de negocio | `analyze`, `gap-resolve`, `sync-from-prd`, `sync-impact`, planning |
 
-> ⚠ `kb-prd-expert` y `kb-product-change-governance` viven físicamente en `sdd/prd/skills/`. Son kb cross-fase. La carga concreta por agente:
+> ⚠ `kb-prd-expert` y `kb-product-change-governance` viven físicamente en `sdd/pipeline/prd/skills/`. Son kb cross-fase. La carga concreta por agente:
 > - `kb-prd-expert`: `sdd-spec-explorer`, `sdd-spec-writer`, `sdd-spec-planner` (el auditor no la necesita porque audita specs ya escritos).
 > - `kb-product-change-governance`: los 4 agentes Spec.
 >
@@ -340,7 +340,7 @@ El pipeline nunca es completamente automático. Estos son los momentos donde el 
 ## Estructura de directorios
 
 ```
-sdd/spec/
+sdd/pipeline/spec/
 ├── CLAUDE.md                                  ← orquestador local de la fase Spec
 ├── README.md                                  ← este archivo
 ├── agents/

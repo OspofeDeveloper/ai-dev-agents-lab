@@ -29,12 +29,12 @@ Extrae de `$ARGUMENTS`:
 
 ```bash
 # Skills por fase
-find sdd/<fase>/skills/ -name "SKILL.md" 2>/dev/null
+find sdd/pipeline/<fase>/skills/ -name "SKILL.md" 2>/dev/null
 find sdd/meta/skills/ -name "SKILL.md" 2>/dev/null
 find sdd/tech/ -name "SKILL.md" 2>/dev/null
 
 # Agentes por fase
-find sdd/<fase>/agents/ -name "*.md" 2>/dev/null
+find sdd/pipeline/<fase>/agents/ -name "*.md" 2>/dev/null
 find sdd/meta/agents/ -name "*.md" 2>/dev/null
 find sdd/tech/ -name "*.md" -path "*/agents/*" 2>/dev/null
 

@@ -34,7 +34,7 @@ class KbScaffoldTest(ScaffoldBase):
     def test_kb_layout_and_frontmatter(self):
         r = self.scaffold("kb", "foo-bar", "--phase", "spec")
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-        fm = self.read("spec/skills/kb-foo-bar/SKILL.md")
+        fm = self.read("pipeline/spec/skills/kb-foo-bar/SKILL.md")
         self.assertIn("name: kb-foo-bar", fm)
         self.assertIn("user-invocable: false", fm)
         self.assertIn("allowed-tools: [Read]", fm)
@@ -46,8 +46,8 @@ class KbScaffoldTest(ScaffoldBase):
     def test_kb_prefix_not_doubled(self):
         # pasar 'kb-foo' no debe producir kb-kb-foo
         self.scaffold("kb", "kb-foo", "--phase", "plan")
-        self.assertTrue((self.root / "plan/skills/kb-foo/SKILL.md").exists())
-        self.assertFalse((self.root / "plan/skills/kb-kb-foo").exists())
+        self.assertTrue((self.root / "pipeline/plan/skills/kb-foo/SKILL.md").exists())
+        self.assertFalse((self.root / "pipeline/plan/skills/kb-kb-foo").exists())
 
     def test_global_phase_goes_to_meta(self):
         self.scaffold("kb", "sdd-thing", "--phase", "global")
@@ -58,7 +58,7 @@ class WfScaffoldTest(ScaffoldBase):
     def test_wf_frontmatter(self):
         r = self.scaffold("wf", "do-stuff", "--phase", "tasks")
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-        fm = self.read("tasks/skills/wf-do-stuff/SKILL.md")
+        fm = self.read("pipeline/tasks/skills/wf-do-stuff/SKILL.md")
         self.assertIn("name: wf-do-stuff", fm)
         self.assertIn("when_to_use:", fm)
         self.assertIn("argument-hint:", fm)
@@ -68,7 +68,7 @@ class WfScaffoldTest(ScaffoldBase):
 
     def test_wf_with_agent_adds_agent_and_tool(self):
         self.scaffold("wf", "gen-plan", "--phase", "plan", "--agent", "plan-architect")
-        fm = self.read("plan/skills/wf-gen-plan/SKILL.md")
+        fm = self.read("pipeline/plan/skills/wf-gen-plan/SKILL.md")
         self.assertIn("agent: plan-architect", fm)
         self.assertIn("Agent", fm)  # allowed-tools incluye Agent
 
@@ -82,7 +82,7 @@ class AgentScaffoldTest(ScaffoldBase):
         r = self.scaffold("agent", "tasks-helper", "--phase", "tasks",
                           "--skills", "kb-a,kb-b")
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-        fm = self.read("tasks/agents/tasks-helper.md")
+        fm = self.read("pipeline/tasks/agents/tasks-helper.md")
         self.assertIn("name: tasks-helper", fm)
         self.assertIn("skills: [kb-a, kb-b]", fm)
         self.assertIn("color: cyan", fm)       # tasks -> cyan
@@ -92,7 +92,7 @@ class AgentScaffoldTest(ScaffoldBase):
     def test_agent_read_only_swaps_effort_for_disallowed(self):
         self.scaffold("agent", "plan-auditor2", "--phase", "plan",
                       "--skills", "kb-a", "--read-only")
-        fm = self.read("plan/agents/plan-auditor2.md")
+        fm = self.read("pipeline/plan/agents/plan-auditor2.md")
         self.assertIn("disallowedTools: Write, Edit", fm)
         self.assertNotIn("effort: high", fm)
         self.assertIn("color: orange", fm)      # plan -> orange
@@ -129,7 +129,7 @@ class GuardsTest(ScaffoldBase):
         r = self.scaffold("kb", "ghost", "--phase", "spec", "--dry-run")
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertIn("name: kb-ghost", r.stdout)
-        self.assertFalse((self.root / "spec/skills/kb-ghost").exists())
+        self.assertFalse((self.root / "pipeline/spec/skills/kb-ghost").exists())
 
 
 class LintCleanInvariantTest(ScaffoldBase):

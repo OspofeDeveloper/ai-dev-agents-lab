@@ -86,9 +86,9 @@ def main() -> int:
     meta.sort(key=lambda e: (0 if e[0].startswith("kb-") else 1, e[0]))
     sections.append(("Meta-Ecosistema (meta/)", meta))
 
-    # Fases del pipeline
+    # Fases del pipeline (bajo sdd/pipeline/<fase>/)
     for phase in PHASES:
-        entries = collect(SDD_ROOT / phase / "skills")
+        entries = collect(SDD_ROOT / "pipeline" / phase / "skills")
         if entries:
             sections.append((f"Fase: {phase.upper() if phase == 'prd' else phase.capitalize()}", entries))
 

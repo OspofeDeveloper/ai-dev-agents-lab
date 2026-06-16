@@ -17,11 +17,11 @@ Las `kb-*` viven en los subagentes y se cargan automáticamente en su contexto. 
 Este `CLAUDE.md` describe el ecosistema SDD completo. Es útil como mapa documental o cuando decides instalar **todas** las fases a la vez.
 
 Si buscas mejor rendimiento y menos carga de contexto, instala y usa el `CLAUDE.md` local de la fase correspondiente:
-- `sdd/prd/CLAUDE.md`
-- `sdd/spec/CLAUDE.md`
-- `sdd/design/CLAUDE.md`
-- `sdd/plan/CLAUDE.md`
-- `sdd/tasks/CLAUDE.md` cuando exista
+- `sdd/pipeline/prd/CLAUDE.md`
+- `sdd/pipeline/spec/CLAUDE.md`
+- `sdd/pipeline/design/CLAUDE.md`
+- `sdd/pipeline/plan/CLAUDE.md`
+- `sdd/pipeline/tasks/CLAUDE.md` cuando exista
 
 ## Rootmap de workflow skills
 

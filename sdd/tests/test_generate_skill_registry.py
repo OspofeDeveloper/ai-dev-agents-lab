@@ -41,7 +41,7 @@ class RegistryTest(unittest.TestCase):
               skill("kb-foo", "Una kb de prueba. Segunda frase."))
         write(self.root / "meta" / "skills" / "wf-bar" / "SKILL.md",
               skill("wf-bar", "Un workflow de prueba que hace cosas."))
-        write(self.root / "spec" / "skills" / "kb-baz" / "SKILL.md",
+        write(self.root / "pipeline" / "spec" / "skills" / "kb-baz" / "SKILL.md",
               skill("kb-baz", "Otra kb de fase spec."))
 
     def tearDown(self):
@@ -75,7 +75,7 @@ class RegistryTest(unittest.TestCase):
 
     def test_new_skill_appears_after_regen(self):
         self._run()
-        write(self.root / "spec" / "skills" / "wf-nuevo" / "SKILL.md",
+        write(self.root / "pipeline" / "spec" / "skills" / "wf-nuevo" / "SKILL.md",
               skill("wf-nuevo", "Workflow recien anadido."))
         r = self._run()
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)

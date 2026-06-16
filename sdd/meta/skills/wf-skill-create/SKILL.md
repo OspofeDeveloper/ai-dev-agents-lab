@@ -50,18 +50,18 @@ Segun el tipo y la fase:
 
 | Tipo | Fase | Directorio |
 |---|---|---|
-| `kb` | `prd` | `sdd/prd/skills/kb-<nombre>/` |
-| `kb` | `spec` | `sdd/spec/skills/kb-<nombre>/` |
-| `kb` | `design` | `sdd/design/skills/kb-<nombre>/` |
-| `kb` | `plan` | `sdd/plan/skills/kb-<nombre>/` |
-| `kb` | `tasks` | `sdd/tasks/skills/kb-<nombre>/` |
+| `kb` | `prd` | `sdd/pipeline/prd/skills/kb-<nombre>/` |
+| `kb` | `spec` | `sdd/pipeline/spec/skills/kb-<nombre>/` |
+| `kb` | `design` | `sdd/pipeline/design/skills/kb-<nombre>/` |
+| `kb` | `plan` | `sdd/pipeline/plan/skills/kb-<nombre>/` |
+| `kb` | `tasks` | `sdd/pipeline/tasks/skills/kb-<nombre>/` |
 | `kb` | `tech/<stack>` | `sdd/tech/<stack>/skills/kb-<nombre>/` |
 | `kb` | `global` | `sdd/meta/skills/kb-<nombre>/` |
-| `wf` | `prd` | `sdd/prd/skills/wf-<nombre>/` |
-| `wf` | `spec` | `sdd/spec/skills/wf-<nombre>/` |
-| `wf` | `design` | `sdd/design/skills/wf-<nombre>/` |
-| `wf` | `plan` | `sdd/plan/skills/wf-<nombre>/` |
-| `wf` | `tasks` | `sdd/tasks/skills/wf-<nombre>/` |
+| `wf` | `prd` | `sdd/pipeline/prd/skills/wf-<nombre>/` |
+| `wf` | `spec` | `sdd/pipeline/spec/skills/wf-<nombre>/` |
+| `wf` | `design` | `sdd/pipeline/design/skills/wf-<nombre>/` |
+| `wf` | `plan` | `sdd/pipeline/plan/skills/wf-<nombre>/` |
+| `wf` | `tasks` | `sdd/pipeline/tasks/skills/wf-<nombre>/` |
 | `wf` | `tech/<stack>` | `sdd/tech/<stack>/skills/wf-<nombre>/` |
 | `wf` | `global` | `sdd/meta/skills/wf-<nombre>/` |
 
