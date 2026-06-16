@@ -5,8 +5,6 @@ when_to_use: "Activa en frases como 'valida el plan', 'revisa el _plan.md', 'aud
 argument-hint: "<plan.md>"
 effort: high
 allowed-tools: [Read, Write, Bash, Agent, AskUserQuestion]
-context: fork
-agent: plan-auditor
 user-invocable: true
 ---
 

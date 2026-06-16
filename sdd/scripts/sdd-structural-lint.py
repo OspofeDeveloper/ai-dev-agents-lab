@@ -20,6 +20,7 @@ Checks (cada finding: severidad, tipo, archivo:linea, mensaje):
   REFERENCE-PATH-MISSING [blocking]  ruta a references/<f> citada en un SKILL.md que no resuelve en disco.
   SKILL-REF-MISSING      [warning]   Token `kb-X`/`wf-X` en docs que no es una skill real.
   ALLOWED-TOOLS-MISMATCH [blocking/warning] frontmatter allowed-tools no cubre el body.
+  FORK-ASKUSER-CONFLICT  [blocking]  wf con context: fork que declara/usa AskUserQuestion (un fork no puede preguntar).
   DESCRIPTION-TOO-LONG   [warning]   description del frontmatter > 220 chars.
   USER-INVOCABLE-MISSING [warning]   wf sin user-invocable; kb sin user-invocable: false.
 
@@ -367,6 +368,22 @@ def check_allowed_tools(findings):
                 "warning", "ALLOWED-TOOLS-MISMATCH", rp, ask_line[0],
                 f"El body menciona usar `AskUserQuestion` pero no esta en allowed-tools "
                 f"{sorted(tools)}."))
+
+        # --- FORK-ASKUSER-CONFLICT (blocking) ---
+        # AskUserQuestion NO esta disponible en subagentes ni forks (doc oficial de
+        # Claude Code: las tools que dependen de la UI/estado del hilo principal se
+        # excluyen "even when listed in the tools field"). Una wf-* con `context: fork`
+        # que declare o use AskUserQuestion no puede presentar la pregunta: el fork
+        # falla y el orquestador acaba improvisando la interaccion (no determinista).
+        # Las skills interactivas corren en el hilo principal (sin fork) y delegan el
+        # trabajo pesado via la tool `Agent`, que aisla su contexto igual de bien.
+        if has_fork and ("AskUserQuestion" in tools or ask_line):
+            findings.append(Finding(
+                "blocking", "FORK-ASKUSER-CONFLICT", rp,
+                ask_line[0] if ask_line else 1,
+                "`context: fork` es incompatible con `AskUserQuestion`: un fork/subagente "
+                "no puede presentar preguntas al usuario. Quita `context: fork` — la skill "
+                "interactiva corre en el hilo principal y delega el trabajo pesado via `Agent`."))
 
         # --- Senal de Agent ---
         # Solo si hay invocacion explicita `Agent(` Y NO es patron fork.

@@ -5,8 +5,6 @@ when_to_use: "Activa en frases como 'valida el DESIGN.md', 'revisa que el sistem
 argument-hint: "<DESIGN.md> [--brief <DESIGN_BRIEF.md>] [--views <feature_views.md>] [--lenient] [--pedagogical]"
 effort: medium
 allowed-tools: [Read, Bash, Write, AskUserQuestion, Agent]
-context: fork
-agent: design-architect
 user-invocable: true
 ---
 

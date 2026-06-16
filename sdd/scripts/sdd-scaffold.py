@@ -116,14 +116,18 @@ def gen_kb(name: str, description: str, effort: str) -> str:
     return "\n".join(fm + body)
 
 
-def gen_wf(name, description, when_to_use, argument_hint, effort, agent, allowed_tools):
+def gen_wf(name, description, when_to_use, argument_hint, effort, agent,
+           allowed_tools, interactive=False):
     desc = description or f"TODO: el QUE de {name} (pipeline que orquesta, que produce)."
     wtu = when_to_use or "TODO: frases de activacion naturales + exclusiones (No activa para X, usa wf-Y)."
     hint = argument_hint or "<modo|accion> <input_principal> [flags...]"
     if allowed_tools:
         tools = allowed_tools
     elif agent:
-        tools = "[Read, Write, Agent]"
+        # Interactiva + delega: necesita AskUserQuestion (hilo principal) y Agent.
+        tools = "[Read, Write, Agent, AskUserQuestion]" if interactive else "[Read, Write, Agent]"
+    elif interactive:
+        tools = "[Read, Write, AskUserQuestion]"
     else:
         tools = "[Read, Write]"
     fm = [
@@ -134,12 +138,22 @@ def gen_wf(name, description, when_to_use, argument_hint, effort, agent, allowed
         f'argument-hint: "{hint}"',
         f"effort: {effort or 'medium'}",
         f"allowed-tools: {tools}",
-        "context: fork",
     ]
-    if agent:
-        fm.append(f"agent: {agent}")
+    # context: fork ⊥ AskUserQuestion: una skill interactiva corre en el hilo
+    # principal (un fork no puede preguntar). El campo `agent:` es el destino del
+    # fork, asi que tampoco se emite sin fork: la delegacion va por la tool Agent.
+    if not interactive:
+        fm.append("context: fork")
+        if agent:
+            fm.append(f"agent: {agent}")
     fm += ["user-invocable: true", "---"]
-    deleg = (f"\nDelega la ejecucion al agente `{agent}`.\n" if agent else "")
+    if interactive and agent:
+        deleg = (f"\nCorre en el hilo principal (pregunta al usuario con `AskUserQuestion`). "
+                 f"Delega el trabajo pesado al agente `{agent}` via la tool `Agent`.\n")
+    elif agent:
+        deleg = f"\nDelega la ejecucion al agente `{agent}`.\n"
+    else:
+        deleg = ""
     body = [
         "",
         f"# {name}",
@@ -210,6 +224,9 @@ def build_parser():
     wf.add_argument("--effort", default="medium")
     wf.add_argument("--agent", default="")
     wf.add_argument("--allowed-tools", default="")
+    wf.add_argument("--interactive", action="store_true",
+                    help="La skill pregunta al usuario (AskUserQuestion): corre en el hilo "
+                         "principal, SIN context: fork. La delegacion a agente sigue por Agent.")
 
     ag = sub.add_parser("agent", parents=[common])
     ag.add_argument("--skills", default="")
@@ -236,7 +253,7 @@ def main() -> int:
         target = _skills_base(root, args.phase) / canon / "SKILL.md"
         content = gen_wf(canon, args.description, args.when_to_use,
                          args.argument_hint, args.effort, args.agent,
-                         args.allowed_tools)
+                         args.allowed_tools, args.interactive)
     else:  # agent
         canon = args.name.strip()
         skills = [s.strip() for s in args.skills.split(",") if s.strip()]

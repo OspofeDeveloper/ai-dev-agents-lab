@@ -5,7 +5,6 @@ when_to_use: "Activa con frases como 'releasa esta feature', 'marca la release',
 argument-hint: "<feature_dir|tasks_path> [--tag <tag>] [--no-tag] [--note <texto>]"
 effort: low
 allowed-tools: [Read, Bash, AskUserQuestion]
-context: fork
 user-invocable: true
 ---
 

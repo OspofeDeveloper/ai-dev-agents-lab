@@ -5,8 +5,6 @@ when_to_use: "Activa con frases como 'crea el overlay de android', 'añade sopor
 argument-hint: "<stack> [--type <app|web|backend>] [--detect '<archivos/patrones que delatan el stack>'] [--with-agents] [--description <desc>]"
 effort: medium
 allowed-tools: [Read, Write, Bash, Agent, AskUserQuestion]
-context: fork
-agent: sdd-author
 user-invocable: true
 ---
 

@@ -21,6 +21,46 @@ wizard antes de nada, invocar el init, no autoaprobar el modo).
 
 ---
 
+## Modelo de cobertura — qué ejes del wizard hay que probar y cuáles no
+
+El wizard de `wf-project-init` tiene varios ejes (perfil, PRD, tipo, framework, rigor,
+topología…). El producto cartesiano de sus valores es grande, pero **no todos los ejes
+cambian lo que se instala**. CU-1 prueba **ramas de decisión**, no combinaciones de
+valores: un eje solo merece un caso por rama si **cambia el set de fases instaladas o el
+flujo de preguntas**. Si solo se persiste en `project-init.json`, basta un único caso
+parametrizado que verifique que el valor elegido aterriza.
+
+**Ejes que cambian comportamiento (behavior-changing) — un caso por rama.** La columna
+"Cobertura" es honesta: `✓` cubierto, `parcial` rama no aseverada explícitamente, `—` sin caso.
+
+| Eje | Pregunta | Qué ramifica | Cobertura |
+|---|---|---|---|
+| Perfil | 5.0 | qué fases opcionales (prd/design) y si hay entrevista técnica | `✓` dev/product/design (CU-1.h); custom (CU-1.o) |
+| PRD sí/no | 5.1 | antepone (o no) la fase `prd` | `✓` (CU-1.h, CU-1.n) |
+| Topología | 5.0b (solo dev) | `consumer` instala solo `plan`+`tasks` y usa `artifacts_source` | `✓` (CU-1.i) |
+| Tipo (en perfil **dev**) | 5.2 | gatea 5.3 (design para app/web; omitido en backend/other) y 5.4 (framework para app) | `✓` (CU-1.o) |
+| Framework | 5.4 (dev+app) | deriva el `stack` y gatea 5.5 (targets) | `✓` (CU-1.o) |
+| Carpetas candidatas | 5.7 | gatea la pregunta de ubicación de artefactos | `✓` (CU-1.m) |
+| Init previo | 3b | extend / rehacer / dejar; acumulación de perfiles | `✓` (CU-1.d, CU-1.e, CU-1.l) |
+| Monorepo (marcadores en ancestro) | 3.0 | operar desde la raíz vs anidar | `✓` (CU-1.g, CU-1.j) |
+| Modo libre previo | 3a | confirmar conversión a SDD | `✓` (CU-1.c) |
+
+**Ejes que solo se registran (recorded-only) — un único caso parametrizado (CU-1.n).** No
+cambian el install; solo escriben un campo en `project-init.json`.
+
+| Eje | Pregunta | Dónde aterriza | Qué NO cambia |
+|---|---|---|---|
+| Rigor | 5.8 | `pipeline_mode` (`standard`\|`light`) | el set de fases instaladas (los gates anti-alucinación son idénticos en ambos modos) |
+| Tipo (en perfil **product**/**design**, sin entrevista técnica) | 5.2 | `type` | nada instalado: design se omite (5.3) y `stack` queda `null` (5.6) sea cual sea el tipo |
+
+> **Implicación práctica:** `producto/prd/app/standard`, `producto/prd/web/ligero`,
+> `producto/prd/backend/standard`… **instalan exactamente lo mismo**. La tupla de valores
+> no multiplica los casos: solo los ejes behavior-changing lo hacen. Para los recorded-only
+> basta CU-1.n. El eje `tipo` es la única sutileza: es behavior-changing **en perfil dev**
+> (gatea design y framework) pero recorded-only **en product/design**.
+
+---
+
 ## CU-1.a — Configuración SDD vs libre en un proyecto virgen
 
 **Precondición:** proyecto virgen, sin `.sdd/project-init.json` ni `.claude/sdd-mode.json`.
@@ -243,3 +283,97 @@ o `docs/specs/`).
 **Resultado:** PASS si registra la ruta elegida y ajusta solo el glob de directorio de la regla · FALLO
 si ignora la candidata, o deja la regla apuntando al directorio canónico que no se usa.
 **Desviación → reportar:** issue citando `CU-1.m`.
+
+## CU-1.n — Ejes solo-registrados: `tipo` y `rigor` se persisten sin cambiar el install set
+
+**Precondición:** proyecto virgen; eliges "Modo SDD" y perfil **producto** con PRD. Es el
+caso parametrizado que cubre los ejes **recorded-only** de la tabla del "Modelo de cobertura"
+(no hace falta un caso por cada combinación tipo×rigor).
+**Mecanismo:** wizard 5.2 (Tipo) + 5.8 (Pipeline) → escritura de `project-init.json` (Paso 8).
+En perfil producto, `tipo` no gatea 5.3 (design) ni 5.4 (framework), y `rigor` solo fija
+`pipeline_mode`.
+
+1. Inicializas el mismo perfil (producto + PRD) **dos veces** variando solo estos dos ejes:
+   una con **App + Standard**, otra con **Web + Ligero**.
+   → **Esperado:** ambos inits instalan **el mismo set de fases** (`prd, spec, plan, tasks`,
+     **sin `design`**) y dejan `stack: null` (entrevista técnica pendiente). La única
+     diferencia entre los dos `project-init.json` son dos campos: `type` (`app` vs `web`) y
+     `pipeline_mode` (`standard` vs `light`).
+2. Inspeccionas el `project-init.json` de cada uno.
+   → **Esperado:** `type` y `pipeline_mode` reflejan **exactamente** lo elegido; `phases` es
+     **idéntico** entre ambos; ningún otro campo cambia por efecto de tipo o rigor.
+3. (negativo) Repites el de **Web + Ligero** pero esta vez vuelves a elegir **App + Standard**.
+   → **Esperado:** salvo `type`/`pipeline_mode`, el resultado es indistinguible del primer
+     init — cambiar estos ejes nunca añade ni quita fases.
+
+**Resultado:** PASS si el valor elegido se persiste verbatim y el set instalado es invariante
+a tipo/rigor en perfil producto · FALLO si cambiar tipo o rigor altera las fases instaladas o
+el `stack`, o si el valor elegido no aterriza en `project-init.json`.
+**Desviación → reportar:** issue citando `CU-1.n`.
+
+## CU-1.o — Tipo y framework SÍ ramifican en perfil dev/custom; perfil `custom`
+
+**Precondición:** proyecto virgen; eliges "Modo SDD". Cierra las ramas que CU-1.h dejaba en
+`parcial`/`—` (ver "Modelo de cobertura"): el gate de **design por tipo** en perfil dev, las
+ramas de **framework** (incluido el gate de targets), y el perfil **`custom`**.
+**Mecanismo:** wizard 5.2 (Tipo) → gatea 5.3 (Diseño) y 5.4 (Framework); 5.4 → deriva `stack`
+y gatea 5.5 (Targets); 5.6 (derivar stack); tabla 5.3 (perfil×tipo) y tabla 5.6 (perfil→stack).
+
+**A — `tipo` gatea la pregunta de diseño en perfil dev.**
+1. Inicializas perfil **dev** + tipo **App**.
+   → **Esperado:** aparece la pregunta de **Diseño** de 3 opciones (5.3) **y** la de
+     **Framework** (5.4). Eliges crear diseño → `design` entra en `phases`.
+2. Inicializas perfil **dev** + tipo **Backend** (u **Otro software**).
+   → **Esperado:** **NO** aparece la pregunta de Diseño (5.3 la omite) **ni** la de Framework
+     (5.4 es solo dev+app); `phases` no incluye `design`; `stack` = detectado o `agnostico`,
+     nunca `null` (en dev sí hay entrevista técnica).
+
+**B — las ramas de framework derivan stack distinto y gatean targets.**
+3. Inicializas perfil **dev** + tipo **App** + framework **Compose Multiplatform** (o **Flutter**).
+   → **Esperado:** aparece **5.5 Targets** (multiSelect Android/iOS/Desktop, mínimo uno);
+     `stack` = `kmm` (o `flutter`); `targets` se persiste en `project-init.json`.
+4. Inicializas perfil **dev** + tipo **App** + framework **Android (Nativa)** (o **iOS Nativa**).
+   → **Esperado:** **NO** aparece 5.5 Targets (no es multiplataforma); `stack` = `android` (o
+     `ios`); la clave `targets` se **omite** del JSON.
+
+**C — perfil `custom` se comporta como dev en design pero deja el stack pendiente.**
+5. Inicializas perfil **custom** + tipo **Web**.
+   → **Esperado:** aparece la pregunta de **Diseño** de 3 opciones (5.3 trata custom como dev),
+     pero **NO** la de Framework (5.4 es solo dev) y **NO** entrevista técnica; `stack` = `null`
+     (5.6: custom → pendiente, lo completará desarrollo con "Completar / ampliar"). Distíngalo de
+     dev+web, donde `stack` sería `agnostico`/detectado, no `null`.
+
+**Resultado:** PASS si el set de preguntas que aparecen y el `stack`/`targets`/`phases`
+resultantes coinciden con las tablas 5.3/5.4/5.6 para cada combinación · FALLO si pregunta
+design/framework donde la tabla los omite (o al revés), deriva un stack que no corresponde al
+framework, o deja `stack: null` en un perfil dev (o `agnostico` en custom).
+**Desviación → reportar:** issue citando `CU-1.o`.
+
+## CU-1.p — Los argumentos honran y saltan preguntas (por usuario o por orquestador)
+
+**Precondición:** proyecto virgen.
+**Mecanismo:** `wf-project-init` Paso 1 (`$ARGUMENTS`) + Paso 5 regla 2 ("no preguntar lo que
+ya se sabe"). Los args llegan **tecleados** (`/wf-project-init <flags>`) o vía el campo `args`
+del Skill tool cuando invoca el **orquestador** (p. ej. desde el hook de sesión o una petición
+en lenguaje natural). Ambas vías son equivalentes.
+
+1. `/wf-project-init --profile product --type web`.
+   → **Esperado:** NO pregunta perfil ni tipo (los da por conocidos, a lo sumo confirma); la
+     entrevista sigue solo con lo que falta (PRD, pipeline). `project-init.json` registra
+     `type: web` y perfil `product`.
+2. `/wf-project-init --profile dev --type app --stack kmm`.
+   → **Esperado:** salta perfil, tipo, framework y targets (stack derivado del flag); va directo
+     a lo que falte.
+3. (entrada por orquestador) Sin teclear el skill, una petición en lenguaje natural que el
+   orquestador mapea a `wf-project-init` pasando `args`.
+   → **Esperado:** mismo efecto que tecleado — los flags saltan sus preguntas.
+4. (negativo) Un flag con valor fuera del enum (p. ej. `--profile xxx`).
+   → **Esperado:** no se traga en silencio — lo ignora y pregunta, o pide un valor válido; nunca
+     inicializa con un perfil inexistente.
+
+**Resultado:** PASS si los flags válidos saltan su pregunta y aterrizan en el estado, y un flag
+inválido no se acepta · FALLO si re-pregunta algo ya dado por flag, o acepta un valor fuera del enum.
+**Nota de testeo:** la entrevista es interactiva (`AskUserQuestion`) → se valida **a mano**. La
+parte determinista (detección/verificación) la cubren los unittest de `sdd-init-detect.py`
+(`test_sdd_init_detect.py`).
+**Desviación → reportar:** issue citando `CU-1.p`.

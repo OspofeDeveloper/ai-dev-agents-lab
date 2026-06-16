@@ -5,8 +5,6 @@ when_to_use: "Activa con frases como 'verifica la cobertura de la feature', 'qa 
 argument-hint: "<feature_qa_plan.md>"
 effort: high
 allowed-tools: [Read, Write, Bash, Agent, AskUserQuestion]
-context: fork
-agent: qa-engineer
 user-invocable: true
 ---
 

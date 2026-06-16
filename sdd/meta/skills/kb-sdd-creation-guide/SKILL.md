@@ -110,7 +110,15 @@ El frontmatter no cuenta. El contador parte desde la primera línea del body (`#
 
 ## Frontmatter para `wf-*`
 
-`context: fork` es obligatorio en todas las `wf-*` que generan artefactos o delegan a un agente.
+`context: fork` se usa en las `wf-*` **no interactivas** que generan artefactos o delegan a un agente: aísla el contexto del trabajo pesado.
+
+**Excepción dura — fork ⊥ `AskUserQuestion`:** una `wf-*` que use `AskUserQuestion` **NO puede llevar `context: fork`**. `AskUserQuestion` (y otras tools que dependen de la UI del hilo principal) **no está disponible en subagentes ni forks** — falla aunque esté en `allowed-tools`. Una skill forkeada que intente preguntar falla en silencio y el orquestador acaba improvisando la interacción (no determinista). Por tanto:
+
+- Skill **interactiva** (usa `AskUserQuestion`) → **sin `context: fork`**: corre en el hilo principal, donde sí puede preguntar.
+- ¿Necesita además trabajo pesado / un agente? La delegación es **ortogonal al fork**: invoca al agente vía la tool `Agent` (declara `Agent` en `allowed-tools` y nómbralo en el cuerpo). El subagente aísla su contexto igual de bien, y la interacción se queda donde debe estar.
+- El campo `agent:` es el destino de inyección del fork; **sin `context: fork` no se usa** (delega por `Agent` en el cuerpo).
+
+El linter aplica esto como blocking: `FORK-ASKUSER-CONFLICT`.
 
 **Separación `description` / `when_to_use` (convención oficial de metadata de skills — SSoT):**
 

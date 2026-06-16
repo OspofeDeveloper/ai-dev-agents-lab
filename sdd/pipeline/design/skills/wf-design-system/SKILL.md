@@ -5,8 +5,6 @@ when_to_use: "Activa en frases como 'crea el DESIGN.md', 'genera el sistema visu
 argument-hint: "generate <feature_spec.md> [--prd <prd.md>] [--brief <DESIGN_BRIEF.md>] [--design-file DESIGN.md] [--no-brief]"
 effort: high
 allowed-tools: [Read, Write, Bash, Agent, AskUserQuestion, WebSearch, WebFetch]
-context: fork
-agent: design-architect
 user-invocable: true
 ---
 

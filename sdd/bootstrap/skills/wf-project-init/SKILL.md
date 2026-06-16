@@ -5,7 +5,6 @@ when_to_use: "Activa con frases como 'inicializa el proyecto', 'arranca el setup
 argument-hint: "[--profile <dev|product|design|custom>] [--type <app|web|backend|other>] [--stack <nombre>] [--name <nombre>] [--sdd-path <path>] [--force]"
 effort: low
 allowed-tools: [Read, Write, Bash, AskUserQuestion]
-context: fork
 user-invocable: true
 ---
 
@@ -20,11 +19,13 @@ Tu rol es de **onboarding y dispatcher**: detectas el contexto, entrevistas lo m
 1. **Toda pregunta usa `AskUserQuestion`** — nunca texto libre. No producir texto antes de la primera pregunta.
 2. **No preguntar lo que ya se sabe** — argumentos, `KNOWN_STATE` o artefactos detectados pre-rellenan. Valor conocido → confirmación ("Sí, correcto" / "No, cambiar"); desconocido → pregunta completa.
 3. **Opciones exactas** — las escritas aquí. No añadir, quitar ni sustituir.
-4. **Backbone fijo**: `spec`, `plan` y `tasks` se instalan SIEMPRE. La entrevista solo decide `prd`, `design` y cuánta información técnica se captura ahora.
+4. **Backbone**: en topología *standalone* (lo normal) `spec`, `plan` y `tasks` se instalan SIEMPRE — SDD es un flujo agnóstico a la tecnología: aun sin skills de stack se hace spec→plan→tasks, nunca implementación directa. Única excepción: topología *consumer* (Paso 5.0b), que instala solo `plan`+`tasks` porque la autoría de specs vive en el repo SSoT. La entrevista decide `prd`, `design` y cuánta información técnica se captura — nunca el backbone.
 
 ---
 
 ## Paso 1: Parsear argumentos
+
+Los argumentos llegan en `$ARGUMENTS` — tanto si el usuario teclea `/wf-project-init <flags>` como si el orquestador invoca el skill pasándolos en el campo `args` del Skill tool. Pre-rellenan `KNOWN_STATE` (regla 2 de la entrevista): un valor pasado por flag no se vuelve a preguntar, solo se confirma.
 
 - `--profile`: `dev`, `product`, `design`, `custom`. Omite la pregunta de perfil.
 - `--type`: `app`, `web`, `backend`, `other`. Omite la pregunta de tipo.
@@ -46,37 +47,23 @@ Verificar que existe `$SDD_HOME/install.sh`. Si no, abortar explicándolo.
 
 ## Paso 3: Detectar estado previo
 
-**3.0 — Raíz del proyecto en monorepos (ROADMAP 5.7).** Los marcadores SDD (`.sdd/project-init.json`, `.claude/sdd-mode.json`) viven en la raíz del proyecto, pero la sesión puede haberse abierto en un subpaquete. Antes de nada, busca un init/modo previo **hacia arriba hasta el toplevel git** (misma lógica de techo que el hook de sesión: fuera de git no se busca, solo el cwd):
+**Detección determinista (un solo comando).** Toda la detección de este paso la produce el detector; ejecútalo desde el cwd:
 
 ```bash
-TOP="$(git -C "$PWD" rev-parse --show-toplevel 2>/dev/null || true)"
-if [ -n "$TOP" ]; then CEIL="$(cd "$TOP" && pwd -P)"; else CEIL="$(pwd -P)"; fi
-d="$(pwd -P)"; SDD_ROOT_FOUND=""
-while :; do
-  if [ -f "$d/.sdd/project-init.json" ] || [ -f "$d/.claude/sdd-mode.json" ]; then SDD_ROOT_FOUND="$d"; break; fi
-  [ "$d" = "$CEIL" ] && break; [ "$d" = "/" ] && break; d="$(dirname "$d")"
-done
-echo "cwd:$(pwd -P)"; echo "sdd-root:${SDD_ROOT_FOUND:-ninguno}"
+python3 "$SDD_HOME/scripts/sdd-init-detect.py" detect --json
 ```
 
-- Si `sdd-root` es un **ancestro distinto del cwd**: el monorepo ya tiene SDD inicializado en su raíz. **NO inicialices anidado.** Pregunta con `AskUserQuestion`:
-  - **"Operar desde la raíz `<sdd-root>`"** (recomendado) → detente e indica al usuario: `cd <sdd-root>` y relanza `/wf-project-init` desde ahí. El init, las sesiones y los artefactos operan desde la raíz del proyecto, no desde el subpaquete.
+Emite el JSON que puebla `KNOWN_STATE`: `sdd_root` y `sdd_root_is_ancestor` (find-up de un init/modo previo hacia arriba, con techo en el git toplevel — misma lógica que el hook de sesión), `init_found`, `mode_found`, `mode`, `installed_phases` (reconoce también el layout legacy `<fase>/.claude/CLAUDE.md`), `artifact_candidates` (claves spec/prd/design con las carpetas detectadas) y `detected_stack`/`detected_type`/`app_framework` (Paso 4). Si no hay `python3`, usa el **Fallback sin python3** del final de este paso.
+
+**3.0 — Raíz del proyecto en monorepos (ROADMAP 5.7).** Si `sdd_root_is_ancestor` es `true`, el monorepo ya tiene SDD inicializado en su raíz (`sdd_root`). **NO inicialices anidado.** Pregunta con `AskUserQuestion`:
+  - **"Operar desde la raíz `<sdd_root>`"** (recomendado) → detente e indica al usuario: `cd <sdd_root>` y relanza `/wf-project-init` desde ahí. El init, las sesiones y los artefactos operan desde la raíz del proyecto, no desde el subpaquete.
   - **"Inicializar aquí (subproyecto independiente)"** → continúa el flujo normal en el cwd (caso raro pero legítimo: un subproyecto SDD anidado a propósito).
-- Si `sdd-root` es el **propio cwd** o `ninguno` → continúa normalmente con la detección de abajo (todo el resto del init opera relativo al cwd, que es la raíz correcta).
 
-```bash
-test -f .sdd/project-init.json && echo "init-found"
-test -f .claude/sdd-mode.json && echo "mode-found"
-for f in prd spec design plan tasks; do
-  test -f ".claude/rules/sdd-$f.md" -o -f "$f/.claude/CLAUDE.md" && echo "phase-installed:$f"
-done
-```
+Si `sdd_root_is_ancestor` es `false` (o `sdd_root` es `null`) → continúa relativo al cwd, que es la raíz correcta.
 
-(El segundo test cubre proyectos con el layout legacy de fases en subdirectorios.)
+**3a. Modo libre.** Si `mode` es `free`, confirmar con AskUserQuestion ("Sí, convertir a SDD" / "No, mantener modo libre"). "No" → cerrar sin tocar nada.
 
-**3a. Modo libre.** Si `sdd-mode.json` tiene `"mode": "free"`, confirmar con AskUserQuestion ("Sí, convertir a SDD" / "No, mantener modo libre"). "No" → cerrar sin tocar nada.
-
-**3b. Init previo.** Si existe `project-init.json`, leerlo, poblar `KNOWN_STATE` (profiles, type, stack, phases) y mostrar resumen compacto. Para `profiles`: lee el array `profiles`; si el JSON es legacy y solo trae `profile` (string), trátalo como `["<profile>"]` (se migrará al reescribir, ver Paso 8). El resumen muestra los perfiles acumulados. Luego AskUserQuestion:
+**3b. Init previo.** Si `init_found`, lee `project-init.json`, puebla `KNOWN_STATE` (profiles, type, stack, phases) y muestra resumen compacto. Para `profiles`: lee el array `profiles`; si el JSON es legacy y solo trae `profile` (string), trátalo como `["<profile>"]` (se migrará al reescribir, ver Paso 8). El resumen muestra los perfiles acumulados. Luego AskUserQuestion:
 
 ```
 question: "Este proyecto ya está inicializado. ¿Qué quieres hacer?"
@@ -94,19 +81,50 @@ opciones:
 
 **3c. Artefactos.** Refinar `KNOWN_STATE`: `prd/PRD.md` → `use_prd=true`; `design/DESIGN.md` o `DESIGN_BRIEF.md` → `design_strategy="existing_design"`; specs existentes (`spec/features/` o specs detectados en otra ruta) → `specs_exist=true` (anotar la ruta real si no es la canónica).
 
-**3d. Carpetas candidatas de artefactos.** Detectar carpetas propias del proyecto que puedan ser el hogar de los artefactos de cada fase:
+**3d. Carpetas candidatas de artefactos.** Las trae `artifact_candidates` del detector (claves `spec`/`prd`/`design` con las carpetas propias del proyecto que podrían alojar los artefactos de cada fase, p. ej. `specs/`, `docs/prd/`, `design-system/`). Si no está vacío, alimentan la pregunta 5.7 (solo se pregunta si hay candidatas).
+
+**Fallback sin python3.** Si no hay `python3`, reproduce la detección de este paso con estos comandos (equivalen a los campos del JSON):
 
 ```bash
+# find-up (sdd_root / sdd_root_is_ancestor)
+TOP="$(git -C "$PWD" rev-parse --show-toplevel 2>/dev/null || true)"
+if [ -n "$TOP" ]; then CEIL="$(cd "$TOP" && pwd -P)"; else CEIL="$(pwd -P)"; fi
+d="$(pwd -P)"; SDD_ROOT_FOUND=""
+while :; do
+  if [ -f "$d/.sdd/project-init.json" ] || [ -f "$d/.claude/sdd-mode.json" ]; then SDD_ROOT_FOUND="$d"; break; fi
+  [ "$d" = "$CEIL" ] && break; [ "$d" = "/" ] && break; d="$(dirname "$d")"
+done
+echo "cwd:$(pwd -P)"; echo "sdd-root:${SDD_ROOT_FOUND:-ninguno}"
+# init_found / mode_found / installed_phases (incluye layout legacy)
+test -f .sdd/project-init.json && echo "init-found"
+test -f .claude/sdd-mode.json && echo "mode-found"
+for f in prd spec design plan tasks; do
+  test -f ".claude/rules/sdd-$f.md" -o -f "$f/.claude/CLAUDE.md" && echo "phase-installed:$f"
+done
+# artifact_candidates
 for d in specs docs/specs documentation/specs; do test -d "$d" && echo "candidate:spec:$d"; done
 for d in docs/prd product docs/product requirements; do test -d "$d" && echo "candidate:prd:$d"; done
 for d in docs/design design-system; do test -d "$d" && echo "candidate:design:$d"; done
 ```
 
-Guardar en `KNOWN_STATE.artifact_candidates`. Estas carpetas alimentan la pregunta 5.7 (solo se pregunta si hay candidatas).
-
 ---
 
 ## Paso 4: Analizar el proyecto en silencio
+
+El detector del Paso 3 ya devolvió `detected_stack`, `detected_type` y `app_framework`. La tabla de mapeo que aplica (referencia; el fallback bash está al final del paso):
+
+| Condición | DETECTED_STACK (y tipo implícito) |
+|---|---|
+| `gradle-found` + (`iosApp-found` o `composeApp-found`) | `kmm` (app) |
+| `flutter-found` | `flutter` (app) |
+| `android-build-found` sin `iosApp-found` | `android` (app) |
+| `next-found` / `vite-react-found` / `astro-found` | `next` / `vite-react` / `astro` (web) |
+| `ktor-found` / `express-found` / `fastapi-found` | `ktor` / `node-express` / `fastapi` (backend) |
+| Ninguna | sin detección |
+
+Con detección: `KNOWN_STATE.project_type` ← `detected_type`; si es stack app, `KNOWN_STATE.app_framework` ← `app_framework` (`kmm`→`compose_multiplatform`, etc.).
+
+**Fallback sin python3:**
 
 ```bash
 test -f gradle/libs.versions.toml && echo "gradle-found"
@@ -122,17 +140,6 @@ test -f package.json && grep -q '"express"' package.json && echo "express-found"
 test -f pyproject.toml && grep -q "fastapi" pyproject.toml && echo "fastapi-found"
 test -f requirements.txt && grep -qi "fastapi" requirements.txt && echo "fastapi-found"
 ```
-
-| Condición | DETECTED_STACK (y tipo implícito) |
-|---|---|
-| `gradle-found` + (`iosApp-found` o `composeApp-found`) | `kmm` (app) |
-| `flutter-found` | `flutter` (app) |
-| `android-build-found` sin `iosApp-found` | `android` (app) |
-| `next-found` / `vite-react-found` / `astro-found` | `next` / `vite-react` / `astro` (web) |
-| `ktor-found` / `express-found` / `fastapi-found` | `ktor` / `node-express` / `fastapi` (backend) |
-| Ninguna | sin detección |
-
-Con detección: pre-rellenar `KNOWN_STATE.project_type` y, si es stack app, `KNOWN_STATE.app_framework` (`kmm`→`compose_multiplatform`, etc.).
 
 ---
 
@@ -166,7 +173,7 @@ opciones:
   - label: "Diseño"
     description: "Sistema visual y prototipado desde PRD/specs. Sin configuración técnica ahora"
   - label: "Personalizado"
-    description: "Decidir fase a fase qué se instala ahora"
+    description: "Decide `prd` y `design` por separado (como dev pero sin entrevista técnica); el backbone `spec`/`plan`/`tasks` se instala igual"
 ```
 
 `PROFILE = dev | product | design | custom`.
@@ -514,7 +521,15 @@ En `MODE=extend`, regenerar con la unión de fases. En el flujo de init, este ar
 
 ## Paso 9: VERIFICACIÓN OBLIGATORIA
 
-Ejecutar y mostrar el resultado. Si algún check falla, corregirlo y re-verificar ANTES de dar el init por terminado o atender cualquier otra petición:
+Ejecuta el verificador con las fases instaladas y muestra el resultado. Si algún check falla, corrígelo (típicamente re-ejecutar `install.sh <fase>`) y re-verifica ANTES de dar el init por terminado o atender cualquier otra petición:
+
+```bash
+python3 "$SDD_HOME/scripts/sdd-init-detect.py" verify --phases <SELECTED_PHASES> --json
+```
+
+Emite un check por entrada (`check`, `ok`, `message`) cubriendo: reglas `.claude/rules/sdd-<fase>.md` de cada fase, `.claude/CLAUDE.md`, `.sdd/project-init.json` + esquema (`dispatcher`), mapa de artefactos (`artifacts` en standalone o `artifacts_source` en consumer), array `profiles` sin la clave legacy `profile`, scripts de enforcement en `.sdd/scripts/`, `.sdd/sdd-version.json` y la línea `.claude/settings.local.json` en `.gitignore`. **Exit 2** = al menos un check en FALLO (no des el init por terminado: corrige y re-verifica); **exit 0** = todo OK.
+
+**Fallback sin python3:**
 
 ```bash
 for f in <SELECTED_PHASES>; do
@@ -523,7 +538,7 @@ done
 test -f .claude/CLAUDE.md && echo "OK claude-md" || echo "FALLO claude-md"
 test -f .sdd/project-init.json && echo "OK init-json" || echo "FALLO init-json"
 grep -q '"dispatcher": "wf-project-init"' .sdd/project-init.json && echo "OK schema" || echo "FALLO schema — reescribir con los campos exactos del Paso 8"
-grep -q '"artifacts"' .sdd/project-init.json && echo "OK artifacts-map" || echo "FALLO artifacts-map — añadir el mapa artifacts del Paso 8"
+grep -q '"artifacts"' .sdd/project-init.json || grep -q '"artifacts_source"' .sdd/project-init.json && echo "OK artifacts-map" || echo "FALLO artifacts-map — añadir el mapa artifacts (o artifacts_source en consumer) del Paso 8"
 grep -q '"profiles"' .sdd/project-init.json && ! grep -q '"profile"[^s]' .sdd/project-init.json && echo "OK profiles" || echo "FALLO profiles — usar el array \"profiles\" (acumulado) y eliminar la clave legacy \"profile\" (Paso 8)"
 test -f .sdd/scripts/sdd-gate-check.py && test -f .sdd/scripts/sdd-seal.py && test -f .sdd/scripts/sdd-task-state.py && test -f .sdd/scripts/sdd-sync-check.py && test -f .sdd/scripts/sdd-skill-allow.py && echo "OK enforcement-scripts" || echo "FALLO enforcement-scripts — copiar desde $SDD_HOME/scripts/ (Paso 6)"
 test -f .sdd/sdd-version.json && echo "OK sdd-version" || echo "FALLO sdd-version — re-ejecutar install.sh (Paso 6) para sellar la versión"
