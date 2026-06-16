@@ -16,6 +16,8 @@ Las `kb-*` viven en los subagentes y se cargan automáticamente en su contexto. 
 
 Este `CLAUDE.md` describe el ecosistema SDD completo. Es útil como mapa documental o cuando decides instalar **todas** las fases a la vez.
 
+> Para la vista física por responsabilidades (qué es cada directorio, qué se instala vs qué vive solo en el ecosistema), ver «Estructura del repositorio» en `README.md` y el `README.md` de cada directorio top-level.
+
 Si buscas mejor rendimiento y menos carga de contexto, instala y usa el `CLAUDE.md` local de la fase correspondiente:
 - `sdd/pipeline/prd/CLAUDE.md`
 - `sdd/pipeline/spec/CLAUDE.md`

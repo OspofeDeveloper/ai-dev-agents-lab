@@ -180,126 +180,33 @@ TASKS      Reglas Tasks          Plan → Tasks         /wf-prepare-tasks
 
 ---
 
-## Estructura de archivos
+## Estructura del repositorio
+
+El árbol fuente se agrupa por **responsabilidad**. Distingue lo que **se instala en un proyecto
+consumidor** de lo que **solo vive en el ecosistema**:
 
 ```
-~/.claude/
-├── agents/
-│   ├── prd-expert.md           ✅ Worker: PRD authoring + review
-│   ├── sdd-spec-explorer.md    ✅ Worker: diagnóstico Spec
-│   ├── sdd-spec-planner.md     ✅ Worker: planning Spec
-│   ├── sdd-spec-writer.md      ✅ Worker: escritura Spec
-│   ├── sdd-spec-auditor.md     ✅ Worker: auditoría Spec
-│   ├── design-architect.md     ✅ Worker: Design / Stitch
-│   ├── plan-architect.md       ✅ Worker: Plan (model: opus)
-│   └── task-generator.md       ✅ Worker: Tasks
-│
-└── skills/
-    ├── kb-prd-expert/           ✅ Knowledge: PRD rules
-    │   ├── SKILL.md
-    │   └── references/
-    │       ├── prd_structure_guide.md
-    │       ├── prd_error_patterns.md
-    │       └── prd_prohibited_items.md
-    │
-    ├── kb-product-change-governance/ ✅ Knowledge: product change governance
-    │   └── SKILL.md
-    │
-    ├── kb-spec-expert/          ✅ Knowledge: Spec rules
-    │   ├── SKILL.md
-    │   └── references/
-    │       ├── prohibited_items.md
-    │       └── error_patterns.md
-    │
-    ├── kb-decompose-expert/     ✅ Knowledge: Feature partition rules
-    │   └── SKILL.md
-    │
-    ├── kb-conflict-expert/      ✅ Knowledge: Conflict detection rules
-    │   └── SKILL.md
-    │
-    ├── kb-gap-conventions/      ✅ Knowledge: Gap format conventions
-    │   └── SKILL.md
-    │
-    ├── kb-traceability-rules/   ✅ Knowledge: sync status and derivation rules
-    │   └── SKILL.md
-    │
-    ├── kb-plan-expert/          ✅ Knowledge: Plan rules
-    │   ├── SKILL.md
-    │   └── references/
-    │       ├── kmm_architecture.md
-    │       └── plan_structure.md
-    │
-    ├── kb-design-expert/        ✅ Knowledge: Design rules
-    │   ├── SKILL.md
-    │   └── references/
-    │       ├── design_md_template.md
-    │       ├── feature_flows_template.md
-    │       ├── feature_views_template.md
-    │       └── feature_ui_prompt_template.md
-    │
-    ├── kb-tasks-expert/         ✅ Knowledge: Tasks rules
-    │   ├── SKILL.md
-    │   └── references/
-    │       ├── task_sizing.md
-    │       └── kmm_task_templates.md
-    │
-    ├── wf-spec-analyze/         ✅ Workflow: Analyze requirements
-    │   ├── SKILL.md
-    │   └── output_template.md
-    │
-    ├── wf-prd-create/           ✅ Workflow: Create PRD
-    │   └── SKILL.md
-    │
-    ├── wf-prd-review/           ✅ Workflow: PRD preflight
-    │   └── SKILL.md
-    │
-    ├── wf-prd-change/           ✅ Workflow: Product change management on PRD
-    │   └── SKILL.md
-    │
-    ├── wf-design-system/        ✅ Workflow: Product design system
-    │   ├── SKILL.md
-    │   └── references/output_notes.md
-    │
-    ├── wf-design-feature-prototype/ ✅ Workflow: Feature prototype for Stitch
-    │   ├── SKILL.md
-    │   └── references/output_bundle_template.md
-    │
-    ├── wf-spec-validate/        ✅ Workflow: Audit existing spec
-    │   ├── SKILL.md
-    │   └── references/output_template.md
-    │
-    ├── wf-spec-fast-track/      ✅ Workflow: Direct feature spec
-    │   ├── SKILL.md
-    │   └── references/
-    │       ├── feature_spec_template.md
-    │       └── feature_readme_template.md
-    │
-    ├── wf-spec-conflict/        ✅ Workflow: Detect conflicts between specs
-    │   ├── SKILL.md
-    │   └── references/conflict_report_template.md
-    │
-    ├── wf-spec-delta/           ✅ Workflow: Evolve spec with new requirements
-    │   ├── SKILL.md
-    │   └── references/delta_analysis_template.md
-    │
-    ├── wf-spec-gap-resolve/     ✅ Workflow: Complete incomplete HUs from analysis
-    │   └── SKILL.md
-    │
-    ├── wf-prd-sync-impact/      ✅ Workflow: Analyze PRD change impact downstream
-    │   └── SKILL.md
-    │
-    ├── wf-spec-sync-from-prd/   ✅ Workflow: Resync feature specs after PRD changes
-    │   └── SKILL.md
-    │
-    ├── wf-prepare-plan/         ✅ Workflow: Spec + Design → Plan
-    │   └── SKILL.md
-    │
-    ├── wf-plan-validate/        ✅ Workflow: Audit Plan before Tasks
-    │   └── SKILL.md
-    │
-    └── wf-prepare-tasks/        ✅ Workflow: Plan → Tasks
-        └── SKILL.md
+sdd/
+├── pipeline/     PRODUCTO · las 5 fases (prd → spec → design → plan → tasks). Se instala.
+├── tech/         PRODUCTO · especialización por stack (overlay ortogonal a las fases; hoy: kmm).
+├── bootstrap/    PRODUCTO · arranque global: setup.sh, hook de sesión y skills globales.
+├── scripts/      HERRAMIENTAS · scripts deterministas (12 viajan al consumidor · resto solo ecosistema).
+├── meta/         ECOSISTEMA · gobernanza: crear/auditar/refactorizar skills y agentes.
+├── conformance/  ECOSISTEMA · contrato de comportamiento observable (Casos de Uso) + cobertura.
+├── tests/        ECOSISTEMA · suite determinista (unittest) de scripts e installers.
+├── docs/         ECOSISTEMA · sitio de documentación MkDocs (audiencia usuaria) + mkdocs.yml.
+└── (raíz)        install.sh · setup.sh · VERSION · CHANGELOG.md · CLAUDE.md · README.md · DIAGRAMS.md · settings.json
 ```
+
+Cada directorio top-level tiene su propio `README.md` con su tarjeta de responsabilidad
+(qué es · qué contiene · qué NO es · a quién sirve). Empieza por ahí para entender una parte concreta.
+
+- **Se instala en el proyecto** (`install.sh`): las fases de `pipeline/`, el overlay de `tech/` y los
+  12 scripts de enforcement de `scripts/`. El arranque global de `bootstrap/` lo instala `setup.sh`.
+- **Solo vive en el ecosistema**: `meta/`, `conformance/`, `tests/`, `docs/` y el resto de `scripts/`.
+
+El **inventario completo de skills** (134, por fase) es la SSoT autogenerada de
+[`meta/skill-registry.md`](meta/skill-registry.md) — no se mantiene a mano en este README.
 
 ---
 
