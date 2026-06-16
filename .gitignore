@@ -7,3 +7,7 @@ __pycache__/
 # Workspace local de Claude en el repo: el meta-orquestador versionado vive en
 # sdd/meta/ y se materializa aqui via `bash sdd/setup.sh --dev` (symlinks)
 sdd/.claude/
+
+# Output compilado de MkDocs: regenerable con `mkdocs build`; el CI lo publica
+# a gh-pages via `mkdocs gh-deploy` (.github/workflows/docs.yml). No versionar.
+sdd/site/

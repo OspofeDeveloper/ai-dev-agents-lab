@@ -2,6 +2,17 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.32.0 — 2026-06-16
+
+Capacidad de autoría de la batería de conformance + reorganización del árbol fuente bajo `pipeline/` + limpieza del repo y mapa de responsabilidades por directorio. Todo es trabajo del ecosistema: no cambia lo que recibe un proyecto ya inicializado.
+
+- **Skills de conformance (autoría de los Casos de Uso).** Nuevo `kb-sdd-conformance` (SSoT del método: template verbatim del escenario `CU-N.x`, los 4 ejes happy/edge/harness/args y cómo derivarlos de un `SKILL.md`, formato de la matriz del ROADMAP y su ciclo `PENDIENTE→REVISADO→CON-HUECOS→COMPLETADO`), agente `sdd-conformance` (híbrido auditor+autor; escribe escenarios, a diferencia del `sdd-auditor` read-only) y dos workflows: `wf-conformance-author` (delega en el agente — cruza un `SKILL.md` contra el catálogo, deriva los ejes, escribe los huecos en el `cu-NN` correcto y actualiza el ROADMAP) y `wf-conformance-status` (mecánico, sin agente). Núcleo determinista nuevo `sdd-conformance-coverage.py`: parsea la matriz del ROADMAP (respetando los pipes escapados `\|` de la columna Args) y agrega cobertura por eje y progreso X/N. Registradas en `meta/CLAUDE.md`; `skill-registry.md` regenerado (134 skills). Codifica el método de conformance que hasta ahora se ejercía a mano.
+- **Reorg: las 5 fases bajo `sdd/pipeline/`.** `git mv` de `prd`/`spec`/`design`/`plan`/`tasks` → `sdd/pipeline/<fase>/`, separando el pipeline puro de la infra, de `tech/` y de `meta/`. Solo se actualizaron las referencias al **árbol fuente**: `install.sh` (nuevo `PIPELINE_DIR`), `generate-skill-registry.py`, `sdd-scaffold.py`, las skills `meta` que citan rutas de fase, `tech/kmm` y los `CLAUDE.md`/`DIAGRAMS.md`/README. Lo product-side NO cambia (`phase_globs()`, los globs de artefacto `spec/**`/`**/*_spec.md`, el naming `.claude/rules/sdd-<fase>.md` y el `--phase <fase>` de usuario son idénticos) → una instalación o `wf-sdd-update` produce exactamente el mismo `.claude/`.
+- **Limpieza del repo.** Retirados de git: el output compilado de MkDocs (`site/`, ahora en `.gitignore`; lo regenera el CI), los reportes de auditoría temporales ya cerrados (`docs/audit_full_global.md`, `docs/audit_structural_global.md`, `docs/audit_prose_to_script.md`, `docs/FABLE_REPORT.md`) y el handoff ya consumido `conformance/PLAN-CASOS-DE-USO.md`.
+- **Mapa de responsabilidades.** `README.md` por cada directorio top-level (`pipeline/`, `tech/`, `meta/`, `bootstrap/`, `scripts/`, `docs/`) con su tarjeta (qué es · qué contiene · qué NO es · a quién sirve), más una sección «Estructura del repositorio» en el README raíz agrupada por responsabilidad que sustituye al árbol de skills desactualizado (el inventario vive en `skill-registry.md`).
+- Verificación: `sdd-structural-lint.py --check` con 0 blocking; suite `unittest` 286 tests OK; `sdd-conformance-coverage.py` reproduce 48/48.
+- Sin `⚠`: las skills de conformance viven en `meta/` (no se instalan en consumidores) y el reorg es interno al árbol fuente; ningún proyecto ya inicializado se ve afectado.
+
 ## 0.31.0 — 2026-06-15
 
 Resolución determinista de rutas de artefactos (ROADMAP 11.2a, segunda y última migración del inventario 11.2 — el flagship por blast radius). Nuevo script `sdd-resolve-path.py` distribuido a `.sdd/scripts/`: convierte en SSoT única la "frase canónica de layout" que se recitaba en ~20 SKILL.md.
