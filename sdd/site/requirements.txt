@@ -1,6 +1,0 @@
-# Toolchain de la documentación SDD (sitio MkDocs).
-# Instalar con:  pip install -r sdd/docs/requirements.txt
-# Servir local:  cd sdd && NO_MKDOCS_2_WARNING=1 mkdocs serve
-#   (NO_MKDOCS_2_WARNING=1 silencia el banner informativo de Material sobre
-#    "MkDocs 2.0"; es solo un aviso del proyecto, no afecta al build.)
-mkdocs-material>=9.5
