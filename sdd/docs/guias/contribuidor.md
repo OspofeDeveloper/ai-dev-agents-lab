@@ -127,6 +127,22 @@ Cubre los 13 scripts de estado/confianza, los installers (`install.sh`,
 **añade o ajusta su test**: un script de enforcement sin test es una garantía sin
 red.
 
+### Conformidad (Casos de Uso)
+
+Lo que la suite no puede automatizar (comportamiento de agente, flujos LLM) se
+verifica a mano contra **`sdd/conformance/`** — el catálogo de **Casos de Uso**
+(`CU-N.x`): para cada objetivo de usuario, qué debe hacer el sistema paso a paso. Es la
+"Spec del SDD" y cumple el rol del playbook 11.6 (su `README.md` da el orden de
+ejecución y el esquema de IDs).
+
+Los casos se ejecutan sobre **proyectos reales** (no hay fixtures sintéticos): cada CU
+abre con un bloque **"Proyecto a usar"** que dice qué tipo de proyecto buscar. El
+`README.md` de conformance incluye el "kit mínimo" de proyectos que cubre el catálogo.
+
+Si el ecosistema no se comporta como describe un escenario, abre una incidencia con la
+plantilla *"Desviación de comportamiento"* citando el `CU-N.x`. Si cambias un
+comportamiento, **actualiza su escenario `CU-N.x`**: un cambio sin su caso es incompleto.
+
 ---
 
 ## Restaurar el entorno de desarrollo

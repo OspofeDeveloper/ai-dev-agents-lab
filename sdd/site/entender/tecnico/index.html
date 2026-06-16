@@ -1,0 +1,1651 @@
+
+<!doctype html>
+<html lang="es" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Ecosistema de skills, agentes y conocimiento para automatizar el pipeline Spec-Driven Development (PRD → Spec → Design → Plan → Tasks) sobre Claude Code.">
+      
+      
+      
+        <link rel="canonical" href="https://ospofedeveloper.github.io/ai-dev-agents-lab/entender/tecnico/">
+      
+      
+        <link rel="prev" href="../funcional/">
+      
+      
+        <link rel="next" href="../../referencia/skills/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Diseño técnico (IA) - SDD Lab — Spec Driven Development</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#diseno-tecnico-ia" class="md-skip">
+          Saltar a contenido
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Cabecera">
+    <a href="../.." title="SDD Lab — Spec Driven Development" class="md-header__button md-logo" aria-label="SDD Lab — Spec Driven Development" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            SDD Lab — Spec Driven Development
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Diseño técnico (IA)
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Cambiar a modo oscuro"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Cambiar a modo oscuro" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Cambiar a modo claro"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Cambiar a modo claro" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Búsqueda" placeholder="Búsqueda" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Buscar">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Limpiar" aria-label="Limpiar" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Inicializando búsqueda
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/OspofeDeveloper/ai-dev-agents-lab" title="Ir al repositorio" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    ai-dev-agents-lab
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Pestañas" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href="../.." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Inicio
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../empezar/primera-feature/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Empezar
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../guias/desarrollador/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Guías por perfil
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+    
+  
+  
+    
+    
+      <li class="md-tabs__item md-tabs__item--active">
+        <a href="../funcional/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Entender el sistema
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../referencia/skills/" class="md-tabs__link">
+          
+  
+  
+    
+  
+  Referencia
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navegación" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="SDD Lab — Spec Driven Development" class="md-nav__button md-logo" aria-label="SDD Lab — Spec Driven Development" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    SDD Lab — Spec Driven Development
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/OspofeDeveloper/ai-dev-agents-lab" title="Ir al repositorio" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    ai-dev-agents-lab
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Inicio
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Empezar
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Empezar
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../empezar/primera-feature/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tu primera feature
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Guías por perfil
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Guías por perfil
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guias/desarrollador/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Desarrollador
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guias/producto/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Producto / PM
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guias/disenador/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Diseñador
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../guias/contribuidor/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contribuidor
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Entender el sistema
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Entender el sistema
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../funcional/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Visión funcional
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Diseño técnico (IA)
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Diseño técnico (IA)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Tabla de contenidos">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Tabla de contenidos
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#el-contrato-de-capas-donde-vive-cada-saber" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        El contrato de capas: dónde vive cada saber
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mecanica-de-carga-eager-vs-lazy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mecánica de carga: eager vs lazy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resolucion-de-paths-y-layout-de-feature" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resolución de paths y layout de feature
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#arquitectura-de-enforcement-prosa-vs-script" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arquitectura de enforcement: prosa vs script
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Arquitectura de enforcement: prosa vs script">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#la-politica-fail-open" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        La política fail-open
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contrato-de-overlay-de-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contrato de overlay de stack
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#versionado-y-distribucion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Versionado y distribución
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trampas-conocidas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trampas conocidas
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Referencia
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Referencia
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../referencia/skills/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Catálogo de skills
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../referencia/scripts/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Scripts deterministas
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../referencia/glosario/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glosario
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Tabla de contenidos">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Tabla de contenidos
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#el-contrato-de-capas-donde-vive-cada-saber" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        El contrato de capas: dónde vive cada saber
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#mecanica-de-carga-eager-vs-lazy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Mecánica de carga: eager vs lazy
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#resolucion-de-paths-y-layout-de-feature" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Resolución de paths y layout de feature
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#arquitectura-de-enforcement-prosa-vs-script" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Arquitectura de enforcement: prosa vs script
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Arquitectura de enforcement: prosa vs script">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#la-politica-fail-open" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        La política fail-open
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#contrato-de-overlay-de-stack" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Contrato de overlay de stack
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#versionado-y-distribucion" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Versionado y distribución
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#trampas-conocidas" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Trampas conocidas
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+    <a href="https://github.com/OspofeDeveloper/ai-dev-agents-lab/edit/main/sdd/docs/entender/tecnico.md" title="Editar esta página" class="md-content__button md-icon" rel="edit">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M10 20H6V4h7v5h5v3.1l2-2V8l-6-6H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h4zm10.2-7c.1 0 .3.1.4.2l1.3 1.3c.2.2.2.6 0 .8l-1 1-2.1-2.1 1-1c.1-.1.2-.2.4-.2m0 3.9L14.1 23H12v-2.1l6.1-6.1z"/></svg>
+    </a>
+  
+  
+
+
+<h1 id="diseno-tecnico-ia">Diseño técnico (IA)<a class="headerlink" href="#diseno-tecnico-ia" title="Permanent link">&para;</a></h1>
+<p>Este documento explica <strong>cómo</strong> está construido el ecosistema a nivel de
+ingeniería de contexto: por qué cada conocimiento vive donde vive, cómo se carga,
+cómo se resuelven rutas y, sobre todo, <strong>cómo el enforcement convierte la prosa en
+garantías mecánicas</strong>. Es la lectura para quien va a modificar el sistema.</p>
+<p>Si vienes de la <a href="../funcional/">visión funcional</a>, aquí está el <em>cómo</em> de sus
+cuatro premisas.</p>
+<hr />
+<h2 id="el-contrato-de-capas-donde-vive-cada-saber">El contrato de capas: dónde vive cada saber<a class="headerlink" href="#el-contrato-de-capas-donde-vive-cada-saber" title="Permanent link">&para;</a></h2>
+<p>El recurso escaso de un agente LLM es el <strong>contexto</strong>. Cada token que ocupas con
+conocimiento que <em>quizá</em> no necesitas es un token que no está disponible para el
+razonamiento. El sistema reparte el conocimiento en cinco soportes según <strong>cuándo</strong>
+se necesita y <strong>cuánto cuesta tenerlo cargado</strong>.</p>
+<table>
+<thead>
+<tr>
+<th>Soporte</th>
+<th>Qué contiene</th>
+<th>Cuándo se carga</th>
+<th>Coste fijo</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong><code>CLAUDE.md</code></strong> (raíz + fase)</td>
+<td>Rootmap intención→workflow, principios del orquestador</td>
+<td><em>Eager</em>: siempre en sesión</td>
+<td>Su cuerpo completo</td>
+</tr>
+<tr>
+<td><strong>Rules</strong> (<code>.claude/rules/sdd-*.md</code>)</td>
+<td>El <code>CLAUDE.md</code> de la fase, activado por archivo</td>
+<td><em>Lazy por <code>paths:</code></em>: al tocar un archivo que matchea</td>
+<td>Solo el frontmatter</td>
+</tr>
+<tr>
+<td><strong>kb-*</strong> (knowledge bases)</td>
+<td>Reglas SSoT y referencias de una fase</td>
+<td><em>Lazy</em>: cuando un agente las declara</td>
+<td>Solo su <code>description</code></td>
+</tr>
+<tr>
+<td><strong>wf-*</strong> (workflows)</td>
+<td>Procedimiento: parsea, valida, delega</td>
+<td><em>Lazy</em>: al invocar la skill</td>
+<td>Solo su <code>description</code></td>
+</tr>
+<tr>
+<td><strong>Agentes</strong></td>
+<td>El worker que ejecuta, con sus kb-* inyectadas</td>
+<td><em>Lazy</em>: al delegar en él</td>
+<td>Su frontmatter</td>
+</tr>
+</tbody>
+</table>
+<p>La regla de reparto es: <strong>conocimiento de enrutado → CLAUDE.md (eager); conocimiento
+de dominio → kb (lazy en el agente que lo usa); procedimiento → wf</strong>. El coste fijo
+que paga el sistema en cada sesión es solo el conjunto de <code>description</code>s — todo lo
+pesado se trae bajo demanda.</p>
+<div class="admonition info">
+<p class="admonition-title">Por qué el orquestador no usa las kb-* directamente</p>
+<p>El <code>CLAUDE.md</code> raíz es deliberadamente fino: solo mapea intención a workflow.
+Las <code>kb-*</code> viven en los subagentes, no en el orquestador, porque cargarlas
+arriba pagaría su coste en <em>toda</em> sesión aunque no se use esa fase. El
+orquestador delega; el agente carga su dominio.</p>
+</div>
+<hr />
+<h2 id="mecanica-de-carga-eager-vs-lazy">Mecánica de carga: eager vs lazy<a class="headerlink" href="#mecanica-de-carga-eager-vs-lazy" title="Permanent link">&para;</a></h2>
+<pre class="mermaid"><code>flowchart TB
+    subgraph EAGER["Eager — siempre en contexto"]
+        C1["CLAUDE.md raíz / de fase"]
+    end
+    subgraph LAZY1["Lazy por paths: — al tocar un archivo"]
+        R1["rules/sdd-plan.md&lt;br/&gt;&lt;small&gt;paths: **/*_plan.md&lt;/small&gt;"]
+    end
+    subgraph LAZY2["Lazy por demanda — al delegar"]
+        A1["agente plan-architect"]
+        K1["skills: [kb-plan-expert, ...]"]
+        A1 --&gt; K1
+    end
+
+    C1 -.enruta.-&gt; A1
+    style EAGER fill:#e3f2fd
+    style LAZY1 fill:#fff3e0
+    style LAZY2 fill:#f3e5f5</code></pre>
+<p><strong>Rules — carga lazy por <code>paths:</code>.</strong> <code>install.sh</code> genera una rule por fase
+envolviendo el <code>CLAUDE.md</code> de esa fase con un frontmatter de globs. El harness solo
+inyecta la rule cuando el usuario toca un archivo que matchea:</p>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="nn">---</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="nt">paths</span><span class="p">:</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;**/*_plan.md&quot;</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="nn">---</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="c1"># (cuerpo = CLAUDE.md de la fase plan)</span>
+</code></pre></div>
+<small><code>.claude/rules/sdd-plan.md</code> — globs por fase definidos en <code>install.sh</code></small></p>
+<p>Los globs por defecto los fija el installer (p. ej. <code>spec</code> → <code>spec/**</code>,
+<code>**/features/*/spec/**</code>, <code>**/*_spec.md</code>, <code>**/*_features.md</code>), y <code>wf-project-init</code>
+los amplía mapeando los <code>artifacts:</code> declarados en <code>.sdd/project-init.json</code>.</p>
+<p><strong>kb-* — carga por declaración del agente.</strong> Una kb nunca se inyecta en el
+contexto global. Se carga solo cuando un agente la lista en su frontmatter
+<code>skills:</code>:</p>
+<p><div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="nn">---</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">sdd-spec-writer</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="nt">skills</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="nv">kb-prd-expert</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">kb-product-change-governance</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">kb-spec-expert</span><span class="p p-Indicator">,</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="w">         </span><span class="nv">kb-decompose-expert</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">kb-gap-conventions</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="nv">kb-traceability-rules</span><span class="p p-Indicator">,</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="w">         </span><span class="nv">kb-spec-characterization</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="nt">memory</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">project</span>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="nt">permissionMode</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">acceptEdits</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="nn">---</span>
+</code></pre></div>
+<small><code>spec/agents/sdd-spec-writer.md</code></small></p>
+<p>Por eso <code>description</code>s precisas son críticas: son el <strong>único coste fijo</strong> del
+catálogo (131 skills hoy) y lo que permite el matching semántico del orquestador
+sin cargar cuerpos. El linter estructural penaliza <code>description</code>s &gt;220 caracteres
+por esta razón.</p>
+<hr />
+<h2 id="resolucion-de-paths-y-layout-de-feature">Resolución de paths y layout de feature<a class="headerlink" href="#resolucion-de-paths-y-layout-de-feature" title="Permanent link">&para;</a></h2>
+<p>Dónde se escribe o se busca un artefacto <strong>no</strong> se decide por prosa repetida en
+~20 skills (eso miente en silencio); lo resuelve <code>sdd-resolve-path.py</code>, una función
+pura de layout con tres modos:</p>
+<table>
+<thead>
+<tr>
+<th>Modo</th>
+<th>Qué hace</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>write &lt;kind&gt; &lt;input&gt;</code></td>
+<td>Ruta canónica donde <em>escribir</em>, respetando el layout</td>
+</tr>
+<tr>
+<td><code>find &lt;kind&gt; &lt;input&gt;</code></td>
+<td>Localiza un artefacto existente en <strong>ambos</strong> layouts (exit 3 si no existe)</td>
+</tr>
+<tr>
+<td><code>rel-from &lt;anchor&gt; &lt;target&gt;</code></td>
+<td>Ruta relativa para el header de trazabilidad (sin <code>../</code> a mano)</td>
+</tr>
+</tbody>
+</table>
+<p>El <strong>layout de feature</strong> tiene dos formas, y los workflows leen ambas sin
+mezclarlas dentro de una misma feature:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>features/&lt;nombre&gt;/
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>├── spec/&lt;nombre&gt;_spec.md          ← layout nuevo (subcarpeta por fase)
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>├── design/  plan/  tasks/
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>└── README.md
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>features/&lt;nombre&gt;/&lt;nombre&gt;_spec.md  ← layout plano legacy (sigue siendo válido)
+</code></pre></div>
+<p>La <strong>raíz de artefactos = el directorio que contiene <code>features/</code></strong>. Los artefactos
+de producto (<code>_discovery.md</code>, <code>_features.md</code>, <code>DESIGN.md</code>) viven ahí; los de feature,
+dentro de su carpeta. Con <code>--local-root</code>, plan/tasks pueden redirigirse al repo
+consumidor (separando la SSoT del spec del repo de código).</p>
+<div class="admonition note">
+<p class="admonition-title">Límite deliberado</p>
+<p><code>sdd-resolve-path.py</code> es función pura de layout: <strong>no</strong> lee <code>artifacts.*</code> de
+<code>project-init.json</code>. Esos casos quedan en la prosa-fallback de cada skill, que
+se conserva íntegra como degradación. El script cubre lo que corrompe estado
+o trazabilidad; el resto sigue en prosa por diseño.</p>
+</div>
+<hr />
+<h2 id="arquitectura-de-enforcement-prosa-vs-script">Arquitectura de enforcement: prosa vs script<a class="headerlink" href="#arquitectura-de-enforcement-prosa-vs-script" title="Permanent link">&para;</a></h2>
+<p>El criterio de corte es explícito:</p>
+<div class="admonition abstract">
+<p class="admonition-title">Criterio prosa ↔ script</p>
+<p>Si el fallo de la instrucción <strong>corrompe estado o trazabilidad</strong> → script
+determinista. Si solo <strong>degrada la calidad del texto</strong> → prosa. Un script que
+"adivina" da falso rigor; lo que exige juicio semántico o confirmación humana
+se queda en prosa aunque su fallo sea grave.</p>
+</div>
+<p>Eso reparte los ~16 scripts en tres roles:</p>
+<pre class="mermaid"><code>flowchart TB
+    subgraph GATE["Gates — DENIEGAN (hook PreToolUse)"]
+        G["sdd-gate-check.py"]
+    end
+    subgraph SEAL["Selladores — escriben ESTADO"]
+        S1["sdd-seal.py → VALIDADO"]
+        S2["sdd-task-state.py → estado de task"]
+        S3["sdd-release.py → R-00X + SHA"]
+        S4["sdd-sync-check.py → hash PRD"]
+        S5["sdd-amend.py → enmienda"]
+    end
+    subgraph PERM["Permisos / meta"]
+        P1["sdd-skill-allow.py (PermissionRequest)"]
+        P2["sdd-meta-lint-hook.py (PostToolUse)"]
+    end
+    style GATE fill:#ffebee,stroke:#c62828
+    style SEAL fill:#e8f5e9,stroke:#388e3c
+    style PERM fill:#e3f2fd,stroke:#1976d2</code></pre>
+<p><strong>Gates (deniegan).</strong> <code>sdd-gate-check.py</code> corre como hook <code>PreToolUse</code> con matcher
+<code>Skill</code>. Verifica precondiciones por <strong>contenido</strong>, no por existencia de archivo:
+<code>wf-prepare-tasks</code> exige <code>Estado: VALIDADO</code> y cero enmiendas abiertas;
+<code>wf-prepare-plan</code>/<code>wf-design-*</code>/<code>wf-qa-plan</code> exigen un spec sin
+<code>[INCOMPLETO]</code>/<code>[CRÍTICO]</code>/<code>[INFERIDO]</code>, con <code>status_sync</code> fiable y el hash del PRD
+sincronizado; <code>wf-task-run</code> exige que el plan origen siga vigente.</p>
+<p><strong>Selladores (escriben estado).</strong> Cada estado de confianza lo escribe <strong>un solo
+script</strong> (autor ≠ verificador):</p>
+<ul>
+<li><code>sdd-seal.py</code> verifica 8 condiciones mecánicas (estructura, 4 líneas de gaps en
+  "ninguno", sin marcadores, spec resoluble y fiable, hash de PRD, <strong>cobertura: todo
+  <code>CA-XXX</code> del spec aparece en el plan</strong>, deuda técnica aprobada) antes de escribir
+  <code>Estado: VALIDADO</code>. Si algo falla, fuerza <code>BORRADOR</code>.</li>
+<li><code>sdd-task-state.py</code> es el único que escribe el estado de una task, con una máquina
+  de transiciones validada (<code>HECHA</code> exige deps <code>HECHA</code>; reapertura solo con
+  <code>--force</code>).</li>
+<li><code>sdd-release.py</code> rechaza (exit 2) sin <code>_qa_report.md</code> APTO y captura el SHA con
+  <code>git rev-parse</code> — no se teclea.</li>
+<li><code>sdd-sync-check.py</code> sella el <code>sha256</code> del PRD en el spec y degrada <code>status_sync</code> a
+  <code>needs_review</code> al detectar deriva.</li>
+</ul>
+<h3 id="la-politica-fail-open">La política fail-open<a class="headerlink" href="#la-politica-fail-open" title="Permanent link">&para;</a></h3>
+<p>Los gates <strong>fallan abiertos</strong>: ante incertidumbre, <em>permiten</em>. Solo deniegan con
+<strong>evidencia positiva</strong> de violación.</p>
+<table>
+<thead>
+<tr>
+<th>Situación</th>
+<th>Comportamiento</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>stdin malformado</td>
+<td>exit 0, sin decidir</td>
+</tr>
+<tr>
+<td>Path no resoluble desde los args</td>
+<td>permite</td>
+</tr>
+<tr>
+<td>Error interno del gate</td>
+<td>exit 0, nunca bloquea por excepción</td>
+</tr>
+<tr>
+<td>Sin <code>python3</code> o sin el script</td>
+<td>el wrapper del hook no ejecuta nada → permite</td>
+</tr>
+</tbody>
+</table>
+<p>El wrapper en <code>settings.json</code> es defensivo por construcción:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="k">if</span><span class="w"> </span><span class="nb">command</span><span class="w"> </span>-v<span class="w"> </span>python3<span class="w"> </span>&gt;/dev/null<span class="w"> </span><span class="m">2</span>&gt;<span class="p">&amp;</span><span class="m">1</span><span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="o">[</span><span class="w"> </span>-f<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$CLAUDE_PROJECT_DIR</span><span class="s2">/.sdd/scripts/sdd-gate-check.py&quot;</span><span class="w"> </span><span class="o">]</span><span class="p">;</span><span class="w"> </span><span class="k">then</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="w">  </span>python3<span class="w"> </span><span class="s2">&quot;</span><span class="nv">$CLAUDE_PROJECT_DIR</span><span class="s2">/.sdd/scripts/sdd-gate-check.py&quot;</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="k">fi</span>
+</code></pre></div>
+<p>La filosofía: un gate que bloquea por accidente entrena al usuario a desactivarlo;
+uno que solo bloquea con prueba conserva su autoridad. El <code>sdd-skill-allow.py</code>
+(hook <code>PermissionRequest</code>) complementa auto-aprobando <strong>solo</strong> <code>wf-*</code>; los gates
+<code>PreToolUse</code> se evalúan antes y su deny prevalece sobre el allow.</p>
+<hr />
+<h2 id="contrato-de-overlay-de-stack">Contrato de overlay de stack<a class="headerlink" href="#contrato-de-overlay-de-stack" title="Permanent link">&para;</a></h2>
+<p>El pipeline es stack-agnóstico; un <em>overlay</em> (p. ej. <code>tech/kmm/</code>) lo especializa.
+El mecanismo es <strong>sustitución por basename</strong>:</p>
+<pre class="mermaid"><code>flowchart LR
+    BASE["install.sh&lt;br/&gt;instala piezas genéricas"] --&gt; OV["tech/kmm/install.sh&lt;br/&gt;(se ejecuta DESPUÉS)"]
+    OV --&gt; R["toda pieza del overlay con el&lt;br/&gt;mismo basename SUSTITUYE a la genérica"]
+    style BASE fill:#e3f2fd
+    style OV fill:#fff3e0</code></pre>
+<p>El orden importa: <strong>base primero, overlay después</strong>. Un <code>plan-architect.md</code> o un
+<code>kb-plan-expert/</code> en el overlay reemplaza al genérico; lo que el overlay no aporta,
+queda en su versión base. Los invariantes del contrato:</p>
+<ol>
+<li><strong>No romper el modo genérico</strong> — quitar el overlay deja el pipeline funcional.</li>
+<li><strong>Idempotencia</strong> — reinstalar produce el mismo resultado.</li>
+<li><strong>Project state como precondición, no caché</strong> — si cambia, se regenera con <code>--force</code>.</li>
+<li><strong>El overlay no toca <code>prd/</code>, <code>spec/</code> ni <code>design/</code></strong> — solo Plan y Tasks.</li>
+<li><strong>Cierre verificable</strong> — todo agente del overlay que toca código cierra con build</li>
+<li>tests reales usando los comandos de <code>&lt;stack&gt;_project_state.md</code>, con reporte
+   honesto; si no hay runner (<code>tests: none</code>), lo <strong>declara</strong> explícitamente en vez
+   de fingir una suite verde.</li>
+<li><strong>El repo destino manda sobre el dogma del stack</strong> — la arquitectura prescriptiva
+   del overlay es el default greenfield, no una imposición sobre convenciones reales.</li>
+</ol>
+<div class="admonition warning">
+<p class="admonition-title">Exclusión mutua transitoria (ROADMAP 6.1)</p>
+<p>Hoy el override por basename hace imposible <strong>dos stacks en un mismo repo</strong>. El
+contrato ya diseña el modelo objetivo —<code>stacks: [{path, stack}]</code> con resolución
+por ubicación de la feature— pero está <strong>diseñado, no implementado</strong> (espera a
+un 2º overlay real). Hasta entonces, la directiva es: <em>ninguna pieza nueva debe
+profundizar la suposición de stack único</em>.</p>
+</div>
+<hr />
+<h2 id="versionado-y-distribucion">Versionado y distribución<a class="headerlink" href="#versionado-y-distribucion" title="Permanent link">&para;</a></h2>
+<p><strong>Distribución por copia, no por symlink.</strong> <code>install.sh</code> copia el árbol de
+<code>sdd/&lt;fase&gt;/</code> a <code>.claude/</code> del proyecto (agentes, skills, rules generadas) y los
+scripts de enforcement a <code>.sdd/scripts/</code>. Las dependencias cross-fase se traen
+explícitamente (p. ej. <code>plan</code> arrastra <code>kb-spec-expert</code> y las <code>kb-a11y-*</code> de design).
+Todo viaja en git → funciona en CI y para cualquier dev sin tooling global.</p>
+<p><strong>Sello de versión.</strong> Hay un único <code>VERSION</code> en la raíz. Al distribuir, cada script
+recibe un comentario sellado en su línea 2:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="ch">#!/usr/bin/env python3</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="c1"># sdd-version: 0.31.0+&lt;commit&gt;</span>
+</code></pre></div>
+<p>Como los scripts van commiteados al proyecto (sin el <code>~/.sdd-home</code> al lado), el
+sello permite a un dev o a CI saber <strong>qué versión generó esta copia</strong> sin
+interrogar el home. El hook de sesión emite la directiva informativa
+<strong><code>version-drift</code></strong> cuando la instalación del proyecto es anterior a la del
+ecosistema — nunca bloquea; sugiere <code>/wf-sdd-update</code>.</p>
+<p><strong>Deriva PRD→spec por hash.</strong> El campo <code>derived_from_prd_hash: sha256:&lt;hex&gt;</code> del
+spec lo escribe solo <code>sdd-sync-check.py seal</code>. En cada gate se recomputa: si el PRD
+cambió fuera de <code>wf-prd-change</code>, el hash no coincide y el spec se marca para
+revisión. Es la diferencia entre un <code>status_sync</code> que se <em>declara</em> (y miente) y uno
+que se <em>verifica</em>.</p>
+<hr />
+<h2 id="trampas-conocidas">Trampas conocidas<a class="headerlink" href="#trampas-conocidas" title="Permanent link">&para;</a></h2>
+<p>Gotchas reales del repo, documentados para que no se reintroduzcan:</p>
+<table>
+<thead>
+<tr>
+<th>Trampa</th>
+<th>Por qué muerde</th>
+<th>Cómo se maneja</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>macOS <code>pwd -P</code></strong></td>
+<td>git resuelve symlinks pero <code>pwd</code> no; comparar rutas lógicas da falsos negativos al excluir el repo del ecosistema</td>
+<td>El hook de sesión compara rutas <strong>físicas</strong> (<code>pwd -P</code>) contra <code>git rev-parse --show-toplevel</code></td>
+</tr>
+<tr>
+<td><strong><code>set -e</code> peta a medias</strong></td>
+<td>un installer con fail-fast que falla tras tocar archivos deja el proyecto inconsistente</td>
+<td>Los prechecks (p. ej. <code>command -v python3</code>) van <strong>antes</strong> de <code>set -e</code> y de tocar nada</td>
+</tr>
+<tr>
+<td><strong>Dependencia de <code>python3</code></strong></td>
+<td>no está garantizado en toda máquina</td>
+<td>Parser primario python3 + <strong>fallback textual</strong> conservador; ante JSON malformado, silencio (no <code>init-incomplete</code> espurio)</td>
+</tr>
+<tr>
+<td><strong>Templates compartidos = SSoT</strong></td>
+<td><code>spec/shared/templates/</code> son la fuente única, pero se <strong>copian</strong> a cada skill que los usa en <code>install.sh</code></td>
+<td>Editar la fuente y reinstalar redistribuye; editar la copia se pierde</td>
+</tr>
+<tr>
+<td><strong><code>local</code> es bash-only</strong></td>
+<td>no es POSIX</td>
+<td>Los scripts shell declaran <code>#!/bin/bash</code> explícito</td>
+</tr>
+</tbody>
+</table>
+<div class="admonition note">
+<p class="admonition-title">Para profundizar</p>
+<ul>
+<li>El <em>qué</em> y el <em>porqué</em> de alto nivel: <a href="../funcional/">visión funcional</a>.</li>
+<li>El detalle por script (interfaz, exit codes): <a href="../../referencia/scripts/">referencia de scripts</a>.</li>
+<li>El histórico de cada decisión con su evidencia: <code>docs/ROADMAP.md</code> (interno).</li>
+</ul>
+</div>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Volver al principio
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.top", "navigation.indexes", "toc.follow", "search.suggest", "search.highlight", "content.code.copy", "content.action.edit"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copiado al portapapeles", "clipboard.copy": "Copiar al portapapeles", "search.result.more.one": "1 m\u00e1s en esta p\u00e1gina", "search.result.more.other": "# m\u00e1s en esta p\u00e1gina", "search.result.none": "No se encontraron documentos", "search.result.one": "1 documento encontrado", "search.result.other": "# documentos encontrados", "search.result.placeholder": "Teclee para comenzar b\u00fasqueda", "search.result.term.missing": "Falta", "select.version": "Seleccionar versi\u00f3n"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>
