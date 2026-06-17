@@ -552,8 +552,10 @@ Reglas de los campos:
 Ejecuta el verificador con las fases instaladas. Si algún check falla, corrígelo (típicamente re-ejecutar `install.sh <fase>`) y re-verifica ANTES de dar el init por terminado:
 
 ```bash
-python3 "$SDD_HOME/scripts/sdd-init-detect.py" verify --phases <SELECTED_PHASES> --json
+python3 "$SDD_HOME/scripts/sdd-init-detect.py" verify --phases <fase1,fase2,...> --json
 ```
+
+> `--phases` espera **un solo argumento separado por comas, sin espacios** (p. ej. `--phases prd,spec,design`). No las pases separadas por espacios (`--phases prd spec design`) — argparse las tomaría como posicionales y abortaría con `unrecognized arguments`.
 
 Emite un check por entrada cubriendo: reglas `.claude/rules/sdd-<fase>.md` de cada fase, `.claude/CLAUDE.md`, `.sdd/project-init.json` + esquema (`dispatcher`, `topology`), mapa de artefactos (`artifacts` en authoring/standalone o `artifacts_source` en consumer), scripts de enforcement en `.sdd/scripts/`, `.sdd/sdd-version.json` y la línea `.claude/settings.local.json` en `.gitignore`. **Exit 2** = al menos un check en FALLO; **exit 0** = todo OK.
 
