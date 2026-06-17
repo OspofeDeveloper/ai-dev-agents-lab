@@ -28,15 +28,18 @@ usage() {
   echo "  --design-role <r> : con la fase design, qué capa instalar: system (autora DESIGN.md),"
   echo "                      feature (autora flows/views/ui_prompt) o full (ambas, por defecto)."
   echo "                      Forma: --design-role=system|feature|full"
+  echo "  --no-claude-md    : no siembra .claude/CLAUDE.md (lo autora wf-project-init en su Paso 7)"
 }
 
 RAW_ARG="all"
 PRUNE=0
 DESIGN_ROLE="full"   # system | feature | full — qué agente+bundle de la fase design instalar
+NO_CLAUDE_MD=0       # 1 = no sembrar CLAUDE.md (wf-project-init lo autora él mismo en su Paso 7)
 for arg in "$@"; do
   case "$arg" in
     --prune) PRUNE=1 ;;
     --design-role=*) DESIGN_ROLE="${arg#*=}" ;;
+    --no-claude-md) NO_CLAUDE_MD=1 ;;
     -h|--help|help) usage; exit 0 ;;
     *) RAW_ARG="$arg" ;;
   esac
@@ -293,20 +296,29 @@ for p in prd spec design plan tasks; do
   fi
 done
 
-# CLAUDE.md raíz: pipeline completo si hay varias fases, el de la fase si es una.
-# En el flujo wf-project-init este archivo se regenera después (Paso 7) con la
-# plantilla del proyecto, que siempre lo sobreescribe.
-PHASE_COUNT="${#PHASES[@]}"
-if has_phase "all" || [ "$PHASE_COUNT" -gt 1 ]; then
-  cp "$SCRIPT_DIR/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
+# CLAUDE.md raíz: SOLO se siembra si no existe ya uno. wf-project-init lo regenera
+# después (Paso 7) con la plantilla específica del proyecto; wf-sdd-update reinstala
+# fases SIN pisar ese CLAUDE.md con el genérico del ecosistema (191 líneas). Por eso,
+# si ya hay un CLAUDE.md, se respeta. Para refrescar uno genérico stand-alone: bórralo antes.
+# Con --no-claude-md (lo pasa wf-project-init) NO se siembra: el skill lo escribe él, y así
+# su Write no choca con un fichero pre-sembrado que el harness exigiría leer antes.
+if [ "$NO_CLAUDE_MD" = "1" ]; then
+  echo "  ✓ CLAUDE.md (omitido — lo autora wf-project-init)"
+elif [ -f "$CLAUDE_DIR/CLAUDE.md" ]; then
+  echo "  ✓ CLAUDE.md (preservado — ya existía)"
 else
-  for p in prd spec design plan tasks; do
-    if has_phase "$p"; then
-      cp "$PIPELINE_DIR/$p/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
-    fi
-  done
+  PHASE_COUNT="${#PHASES[@]}"
+  if has_phase "all" || [ "$PHASE_COUNT" -gt 1 ]; then
+    cp "$SCRIPT_DIR/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
+  else
+    for p in prd spec design plan tasks; do
+      if has_phase "$p"; then
+        cp "$PIPELINE_DIR/$p/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
+      fi
+    done
+  fi
+  echo "  ✓ CLAUDE.md"
 fi
-echo "  ✓ CLAUDE.md"
 
 # ── 4b. Instalar scripts de enforcement en .sdd/scripts/ ───────────────────
 # Van a .sdd/ (no a .claude/) porque son parte del proyecto: committeables y
@@ -491,4 +503,4 @@ if command -v python3 >/dev/null 2>&1 && [ -f "$ENFORCE_ROOT/.sdd/scripts/sdd-kb
 fi
 
 echo ""
-echo "Done. Reinicia Claude Code para activar los agentes y skills."
+echo "Done. Ejecuta /skills y /agents para revisar que Claude ha cargado correctamente el ecosistema. Si quieres empezar con contexto limpio, ejecuta /clear."

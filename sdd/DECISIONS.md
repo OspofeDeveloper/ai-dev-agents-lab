@@ -6,6 +6,39 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-007 — Endurecimiento del bootstrap descubierto al ejecutar el init topología-first E2E
+
+- **Fecha:** 2026-06-17 · **Estado:** Adoptada
+
+**Contexto.** Al correr `/wf-project-init` varias veces sobre un repo greenfield real afloraron asperezas de bootstrap que el test del detector no captura. Primera tanda: (1) `wf-project-init` Paso 2 trataba `~/.sdd-home` como un directorio, cuando `setup.sh` lo escribe como **fichero-puntero** con la ruta dentro → `install.sh: MISSING` en el primer intento y recuperación a mano en **cada** ejecución; (2) `install.sh` copia el `CLAUDE.md` del ecosistema (191 líneas) siempre que hay ≥2 fases, y `wf-sdd-update` reejecuta `install.sh` → en cada update **pisaría** el `CLAUDE.md` lean del proyecto con el genérico (bug latente, solo visible al ejercitar el ciclo init→update); (3) el mensaje final "Reinicia Claude Code" era impreciso — los skills/agents del proyecto ya aparecían vía `/skills` y `/agents` sin reiniciar. Segunda tanda (run posterior): (4) **fricción de escritura recurrente** — `install.sh` sembraba `CLAUDE.md` y el Paso 7 lo sobreescribía con `Write` → choque con la regla del harness "leer antes de sobreescribir" (`Error writing file`); y el Paso 8 creaba `project-init.json` por Bash y luego lo corregía con `Update` (escribía `sdd_version: unknown` y lo parcheaba) → `File must be read first`. Ambos se recuperaban solos, pero ensuciaban cada init. (5) el `CLAUDE.md`/mensaje seguían pidiendo "reiniciar" cuando lo idiomático es `/clear`. (6) la opción Q1 "Producto (specs + diseño)" sobrevende: PRD y diseño son **opcionales** y se preguntan a continuación.
+
+**Decisión.** (1) Paso 2 resuelve `~/.sdd-home` **leyendo su contenido** (es puntero, no directorio), igual que ya hacía `wf-sdd-update`. (2) `install.sh` siembra `CLAUDE.md` **solo si no existe**; contrato: **`install.sh` nunca pisa un `CLAUDE.md` ya presente** — así un `wf-sdd-update` no degrada el específico al genérico. (4) Para eliminar la fricción de escritura: `install.sh` acepta **`--no-claude-md`** y `wf-project-init` lo pasa siempre → en una instalación nueva el `CLAUDE.md` **no existe** y el `Write` del Paso 7 lo crea limpio (en reinit, el Paso 7 hace `Read` antes del `Write`); y el Paso 8 **resuelve `sdd_version` ANTES** y escribe `project-init.json` en **una sola** operación (sin placeholder + `Update`). (3+5) Mensaje final → "Ejecuta `/skills` y `/agents` para revisar que Claude ha cargado correctamente el ecosistema. Si quieres empezar con contexto limpio, ejecuta `/clear`." (6) Q1 → "Producto (specs + PRD/diseño opcionales)" con la opcionalidad explícita en la descripción.
+
+**Consecuencias / aprendizaje.** El clobber de `CLAUDE.md` en update y la fricción de escritura eran invisibles para los tests automáticos: solo se ven **ejecutando el init/update a mano**. La causa raíz de (4) es estructural — el harness exige `Read` antes de sobreescribir/editar; la cura no es "leer y reintentar" sino **no crear el conflicto**: o el fichero no existe cuando el skill lo escribe (`--no-claude-md`), o se computa todo antes de un único write (sin `Update` correctivo). Confirma que las pruebas E2E manuales del init/update son la red que atrapa la regresión de bootstrap, complementaria al `test_sdd_init_detect.py`. (7) Aprendizaje adicional de la tercera pasada: el aviso final de `install.sh` **no llega al usuario** porque su stdout queda colapsado en el output del Paso 6. Se resuelve con un **Paso 11 dedicado** que emite el recordatorio (`/skills`+`/agents`+`/clear`) con un `echo` **determinista** — no prosa del modelo (coherente con [[D-004]]: garantiza texto exacto y presencia siempre, y un `echo` corto en su propia llamada no se colapsa).
+
+**Referencias.** `bootstrap/skills/wf-project-init/SKILL.md` (Paso 2 · Paso 6 `--no-claude-md` · Paso 7 read-if-exists · Paso 8 `sdd_version` inline · Q1 5.0) · `install.sh` (flag `--no-claude-md`, siembra de `CLAUDE.md`, mensaje final) · `bootstrap/skills/wf-sdd-update/SKILL.md` (Paso 4).
+
+---
+
+## D-006 — El rigor del pipeline (standard/ligero) se elige por feature al crear el spec, no en el init
+
+- **Fecha:** 2026-06-17 · **Estado:** Adoptada · **Refina:** [[D-001]] (el eje "rigor" deja de ser un *recorded-only* del init) · **Se apoya en:** [[D-002]] (la oferta interactiva vive en el hilo principal, no en el fork)
+
+**Contexto.** El init preguntaba el "rigor del pipeline" (standard/ligero) y lo persistía como `pipeline_mode`. En pruebas E2E del init topología-first se vio que esa pregunta se hacía en **t=0, sin features delante** (un PM en authoring no puede decidirla informado), e incluso en topología `consumer` —que no instala la fase `spec`, así que su `pipeline_mode` es inerte—. Riesgo de fondo señalado por el usuario: un default `light` a nivel proyecto **normaliza specs finos por inercia**, convirtiendo un modo proporcional legítimo en un atajo a specs incompletas.
+
+**Decisión.** El init **no pregunta** el rigor; `pipeline_mode` arranca en `standard`. La elección standard/ligero se ofrece **por feature al crear el spec**, donde la información existe. Como las workflows de creación (`wf-spec-fast-track`, `wf-spec-features-first`) son `context: fork` y no pueden usar `AskUserQuestion` ([[D-002]]), **el orquestador de la fase Spec ofrece la elección en el hilo principal antes de delegar**: respeta un flag explícito; respeta `pipeline_mode: light` si el equipo lo fijó a mano; si no, pregunta (default `standard`); en `features-first` pregunta **una sola vez por lote**. `pipeline_mode` se conserva como override de proyecto **editable a mano**.
+
+**Alternativas descartadas.**
+- *Mantener la pregunta en el init pero solo si hay `spec` (authoring/standalone)* → descartada: arregla el ruido en consumer pero no el problema de fondo (decisión a ciegas en t=0 y normalización de `light`).
+- *Preguntar dentro de `wf-spec-fast-track`* → imposible: es `context: fork` ([[D-002]]); la interacción vive en el hilo principal.
+- *Eliminar `pipeline_mode` del todo* → descartada: el escape "proyecto ligero-por-defecto" es legítimo; se conserva como campo editable, solo deja de normalizarse vía wizard.
+
+**Consecuencias / aprendizaje.** El modo ligero queda como **opt-in deliberado**, no atajo: su blindaje contra specs incompletas es estructural (invariantes idénticos a standard, secciones omitidas marcadas `N/A — modo ligero` explícito, marcadores `[INCOMPLETO]`/`[CRÍTICO]` que bloquean igual). Cambia el **modelo de cobertura de CU-1** (el eje "rigor" sale del init) y exige que los CU de la fase Spec ejerciten la **oferta de modo al crear el spec**. La oferta vive en `pipeline/spec/CLAUDE.md`, que `install.sh` instala como `rules/sdd-spec.md` (carga perezosa) → llega a los proyectos sin tocar las workflows-fork.
+
+**Referencias.** `bootstrap/skills/wf-project-init/SKILL.md` (Paso 5 / 5.8 / 7 / 8) · `pipeline/spec/CLAUDE.md` ("Elección del rigor del pipeline") · `pipeline/spec/skills/wf-spec-fast-track/SKILL.md` (Paso 1, resolución de modo) · `kb-spec-expert` ("Modo ligero") · `conformance/casos-de-uso/cu-01-inicializar.md` + `cu-03-specs.md`.
+
+---
+
 ## D-005 — El eje primario del init es la TOPOLOGÍA de contenido del repo, no el perfil de quien inicializa
 
 - **Fecha:** 2026-06-17 · **Estado:** Adoptada · **Supersede:** [[D-003]] (backbone-siempre) y el modelo de perfiles (`profiles`)

@@ -77,6 +77,20 @@ Procede así:
 - Si las respuestas del `_analysis.md` introducen expansión de capacidad (entidad persistente nueva, catálogo reutilizable, nueva granularidad funcional, modelo owner nuevo o flujo adicional no comprometido), el workflow **se detiene** y remite a `wf-prd-change`, salvo override explícito con `--allow-derived-scope-from-analysis`.
 - Si el discovery detecta más de 5 features y no se ha indicado `--features`, el workflow **se detiene** y recomienda iterar por subset. Solo continúa full-run con `--all-features`.
 
+### Elección del rigor del pipeline (standard / ligero) al crear specs
+
+El rigor del spec **no se fija en el init**: es una elección deliberada **por feature**, que se toma en el momento de crear el spec —cuando ya tienes la feature delante— y no a ciegas a nivel proyecto. Como `wf-spec-fast-track` y `wf-spec-features-first` corren en `context: fork` (no pueden usar `AskUserQuestion`, ver [[D-002]]), **el orquestador ofrece la elección en el hilo principal ANTES de invocar la workflow**:
+
+1. Si el usuario ya pasó `--light` o `--standard` → respétalo, no preguntes.
+2. Si `pipeline_mode` de `.sdd/project-init.json` es `light` (el equipo lo fijó como default de proyecto a mano) → úsalo sin preguntar.
+3. En otro caso, antes de delegar, ofrece con `AskUserQuestion`:
+   - **Standard (Recomendado)** — spec completo (8 elementos, ≥3 CAs), análisis previo como artefacto.
+   - **Ligero** — spec proporcional (núcleo de 4, ≥1 CA), análisis inline. Para una feature pequeña y bien acotada. Los gates anti-alucinación (CAs testables, trazabilidad, marcadores, pureza, gobernanza) son **idénticos**; lo que se relaja es ceremonia, no rigor.
+   Pasa el flag elegido (`--light`/`--standard`) a la workflow.
+4. En `wf-spec-features-first` (lote) se pregunta **una sola vez** para toda la pasada (es un flag de lote), nunca feature a feature.
+
+El default seguro es `standard`. Ligero se prohíbe solo (lo fuerza standard) si la feature toca shared models, introduce entidades nuevas o expande alcance — esas reglas viven en `kb-spec-expert` y las aplican las propias workflows.
+
 ## Agentes Spec disponibles
 
 | Agente | Dominio |

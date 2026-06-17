@@ -54,14 +54,18 @@ cambian el install; solo escriben un campo en `project-init.json`.
 
 | Eje | Pregunta | Dónde aterriza | Qué NO cambia |
 |---|---|---|---|
-| Rigor | 5.0-pipeline | `pipeline_mode` (`standard`\|`light`) | el set de fases instaladas (los gates anti-alucinación son idénticos en ambos modos) |
 | Superficie concreta (mobile vs desktop vs web) | 5.C1/5.S3 | `surfaces[]` y `target_platforms` del diseño | dentro de "con-UI", la familia exacta no cambia las fases instaladas (sí el `target_tool` del prototipo, fase design, no el init) |
 
+> **El rigor (standard/ligero) YA NO es un eje del init** (D-006). El init no lo pregunta:
+> `pipeline_mode` arranca **siempre** `standard`. La elección standard/ligero se ofrece
+> **por feature al crear el spec** (cubierto en `cu-03-specs.md`, no aquí). CU-1.n verifica
+> justamente que el init **no** pregunta el rigor y persiste `pipeline_mode: standard`.
+
 > **Implicación práctica:** dentro de una misma topología y has_ui, la superficie exacta
-> (mobile/desktop/web) y el rigor **instalan lo mismo**: la tupla de valores no multiplica
-> los casos del init, solo los ejes behavior-changing (topología, PRD, diseño, has_ui,
-> framework) lo hacen. **"Mínimo" no es un eje**: es `standalone` + PRD=no + diseño=no +
-> `surfaces=[other]` → solo backbone `spec`/`plan`/`tasks` agnóstico (CU-1.o lo cubre).
+> (mobile/desktop/web) **instala lo mismo**: la tupla de valores no multiplica los casos del
+> init, solo los ejes behavior-changing (topología, PRD, diseño, has_ui, framework) lo hacen.
+> **"Mínimo" no es un eje**: es `standalone` + PRD=no + diseño=no + `surfaces=[other]` → solo
+> backbone `spec`/`plan`/`tasks` agnóstico (CU-1.o lo cubre).
 
 ---
 
@@ -296,25 +300,29 @@ o `docs/specs/`).
 si ignora la candidata, o deja la regla apuntando al directorio canónico que no se usa.
 **Desviación → reportar:** issue citando `CU-1.m`.
 
-## CU-1.n — Eje solo-registrado: `rigor` se persiste sin cambiar el install set
+## CU-1.n — El init NO pregunta el rigor; `pipeline_mode` arranca `standard` (D-006)
 
-**Precondición:** proyecto virgen; eliges "Modo SDD", topología **Producto (authoring)** con PRD.
-Caso parametrizado del eje **recorded-only** `rigor` de la tabla del "Modelo de cobertura".
-**Mecanismo:** wizard 5.0-pipeline (rigor) → escritura de `project-init.json` (Paso 8). El rigor
-solo fija `pipeline_mode`; no cambia las fases.
+**Precondición:** proyecto virgen; eliges "Modo SDD", topología **Producto (authoring)** con PRD
+y sistema de diseño.
+**Mecanismo:** D-006 — el rigor sale del wizard del init. `wf-project-init` Paso 5 ya **no** tiene
+la pregunta de pipeline; Paso 8 escribe `pipeline_mode: "standard"` fijo. La elección standard/ligero
+se ofrece por feature al crear el spec (`cu-03-specs.md`), no aquí.
 
-1. Inicializas la misma topología (authoring + PRD + sistema de diseño) **dos veces** variando
-   solo el rigor: una **Standard**, otra **Ligero**.
-   → **Esperado:** ambos instalan **el mismo set de fases** (`prd, spec, design`, sin plan/tasks
-     por ser authoring) con el mismo `design_role: system`. La única diferencia entre los dos
-     `project-init.json` es `pipeline_mode` (`standard` vs `light`).
-2. Inspeccionas el `project-init.json` de cada uno.
-   → **Esperado:** `pipeline_mode` refleja **exactamente** lo elegido; `phases` y `design_role`
-     son **idénticos** entre ambos; ningún otro campo cambia por efecto del rigor.
+1. Completas la entrevista de init de principio a fin.
+   → **Esperado:** en **ningún momento** se pregunta el rigor del pipeline (standard/ligero). La
+     entrevista de authoring son Q1 topología + (PRD, sistema de diseño); no aparece una pregunta
+     "¿Qué rigor de pipeline…?".
+2. Inspeccionas `project-init.json`.
+   → **Esperado:** `pipeline_mode` es **`standard`** (valor fijo del init), independientemente de
+     nada que hayas elegido. El resumen previo a instalar muestra `Pipeline: standard (default; el
+     modo se elige por feature al crear el spec)`.
+3. (override de proyecto) Editas a mano `pipeline_mode: "light"` en `project-init.json`.
+   → **Esperado:** es un cambio válido y soportado (el campo sigue existiendo como override de
+     proyecto); el init no lo revierte en un `extend` posterior salvo "Rehacer desde cero".
 
-**Resultado:** PASS si `pipeline_mode` se persiste verbatim y el set instalado es invariante al
-rigor · FALLO si cambiar el rigor altera las fases instaladas, o si el valor no aterriza en
-`project-init.json`.
+**Resultado:** PASS si el init no pregunta el rigor y persiste `pipeline_mode: standard` · FALLO si
+reaparece la pregunta de pipeline en la entrevista, o si `pipeline_mode` arranca con un valor distinto
+de `standard`.
 **Desviación → reportar:** issue citando `CU-1.n`.
 
 ## CU-1.o — Superficie y framework SÍ ramifican; el caso "Mínimo"

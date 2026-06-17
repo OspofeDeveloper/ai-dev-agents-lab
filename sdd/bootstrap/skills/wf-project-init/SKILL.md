@@ -51,10 +51,17 @@ Los argumentos llegan en `$ARGUMENTS` — tanto si el usuario teclea `/wf-projec
 
 ## Paso 2: Detectar SDD_HOME
 
-Precedencia: `--sdd-path` → `$SDD_HOME` → `~/.sdd-home`. Si ninguna resuelve, abortar:
-> "No puedo localizar el framework SDD. Ejecuta `bash setup.sh` desde el repo del ecosistema, o pasa `--sdd-path /ruta/a/sdd`."
+`~/.sdd-home` **es un fichero-puntero** (lo escribe `setup.sh`) que contiene la ruta al repo del ecosistema, **no es un directorio**. Resuélvelo leyendo su contenido — no lo uses como path directo, o `$SDD_HOME/install.sh` no existirá. Precedencia: `--sdd-path` → `$SDD_HOME` si ya apunta a un directorio válido → contenido de `~/.sdd-home`:
 
-Verificar que existe `$SDD_HOME/install.sh`. Si no, abortar explicándolo.
+```bash
+if [ -n "$SDD_PATH" ]; then SDD_HOME="$SDD_PATH"
+elif [ -d "$SDD_HOME" ] && [ -f "$SDD_HOME/install.sh" ]; then :   # $SDD_HOME ya es válido
+elif [ -f "$HOME/.sdd-home" ]; then SDD_HOME="$(cat "$HOME/.sdd-home")"
+fi
+```
+
+Si `$SDD_HOME/install.sh` no existe tras resolver, abortar:
+> "No puedo localizar el framework SDD. Ejecuta `bash setup.sh` desde el repo del ecosistema, o pasa `--sdd-path /ruta/a/sdd`."
 
 ---
 
@@ -163,7 +170,7 @@ test -f requirements.txt && grep -qi "fastapi" requirements.txt && echo "fastapi
 Las preguntas que no se gatean entre sí se agrupan en una misma llamada a `AskUserQuestion` (regla 5). De cada grupo, pregunta solo lo que siga abierto tras `KNOWN_STATE` (regla 2); si un grupo se queda sin preguntas abiertas, se omite entero. Orden de las llamadas:
 
 ```
-Llamada 1 — incondicional: Q1 Contenido (gatea toda la rama) + Pipeline
+Llamada 1 — incondicional: Q1 Contenido (gatea toda la rama)
 Rama según Q1:
   authoring   → ¿PRD? + ¿Sistema visual?
   consumer    → path al SSoT + Superficie (gatea técnica)  → Framework/Targets si móvil
@@ -171,14 +178,16 @@ Rama según Q1:
 Siempre al final: Resumen y confirmación
 ```
 
+> **El init NO pregunta el rigor del pipeline (standard/ligero).** `pipeline_mode` arranca en `standard` por defecto. El modo es una elección **deliberada por feature** que se ofrece al crear el spec (ver `pipeline/spec/CLAUDE.md`), no un default normalizable a nivel proyecto — fijarlo a ciegas en t=0, sin features delante, normalizaría specs finos por inercia. Un equipo que de verdad sea ligero-por-defecto puede editar `pipeline_mode` a mano en `.sdd/project-init.json`.
+
 ### 5.0 — Q1 Contenido del repositorio [siempre, salvo `--topology`]
 
 ```
 question: "¿Qué va a contener este repositorio?"
 header: "Contenido"
 opciones:
-  - label: "Producto (specs + diseño)"
-    description: "PRD, specs y sistema de diseño — la fuente de verdad agnóstica del producto. El código vive en otros repos; no se configura stack aquí"
+  - label: "Producto (specs + PRD/diseño opcionales)"
+    description: "Specs son el núcleo (la fuente de verdad agnóstica del producto). PRD y sistema de diseño son opcionales y se deciden a continuación. El código vive en otros repos; no se configura stack aquí"
   - label: "Desarrollo (consume specs)"
     description: "El código de una superficie (app, web, desktop, backend) que consume los specs de un repo de Producto. Instala plan y tasks (+ stack), y diseño de feature si tiene UI"
   - label: "Autónomo (todo aquí)"
@@ -187,21 +196,7 @@ opciones:
 
 `TOPOLOGY = authoring | consumer | standalone`.
 
-### 5.0-pipeline — Pipeline [siempre, salvo ampliación con valor previo]
-
-En la MISMA llamada que Q1 (independiente):
-
-```
-question: "¿Qué rigor de pipeline quieres por defecto en este proyecto?"
-header: "Pipeline"
-opciones:
-  - label: "Standard (Recomendado)"
-    description: "Specs completos (8 elementos, ≥3 CAs), análisis previo como artefacto. Para productos con specs estables"
-  - label: "Ligero"
-    description: "Specs proporcionales (núcleo de 4 elementos, ≥1 CA), análisis inline. Para scrum cambiante y features pequeñas. Los gates anti-alucinación son idénticos; cada feature puede forzar el otro modo con --light/--standard"
-```
-
-`PIPELINE_MODE = standard | light`.
+`PIPELINE_MODE = standard` (fijo; el init no lo pregunta — ver la nota de arriba). La elección standard/ligero se ofrece por feature al crear el spec.
 
 ---
 
@@ -363,7 +358,7 @@ Fases:      <prd → spec → design → plan → tasks>     (según topología)
 Diseño:     <sistema / feature / completo / sin diseño>
 Stack:      <stack / agnóstico>
 Targets:    <android, ios, desktop>                  [solo multiplataforma]
-Pipeline:   <standard / ligero>
+Pipeline:   standard (default; el modo se elige por feature al crear el spec)
 Modo:       <instalación nueva / ampliación>
 ──────────────────────────────────────────────────
 ```
@@ -394,11 +389,11 @@ TOPOLOGY == standalone:
 
 Orden canónico: `prd → spec → design → plan → tasks` (solo las presentes).
 
-Instalación única **desde la raíz del proyecto**. Cuando `design` está en las fases, pasar `--design-role`:
+Instalación única **desde la raíz del proyecto**. Pasa siempre `--no-claude-md` (este skill autora el `CLAUDE.md` raíz en el Paso 7; sin el flag, `install.sh` lo sembraría y tu `Write` chocaría con un fichero pre-existente no leído). Cuando `design` está en las fases, añade `--design-role`:
 
 ```bash
 DESIGN_ROLE=<system|feature|full>   # según design_role; omitir el flag si no hay design
-bash "$SDD_HOME/install.sh" <fase1,fase2,...> ${DESIGN_ROLE:+--design-role=$DESIGN_ROLE}
+bash "$SDD_HOME/install.sh" <fase1,fase2,...> --no-claude-md ${DESIGN_ROLE:+--design-role=$DESIGN_ROLE}
 ```
 
 En `MODE=extend`, pasar solo las fases que falten. Con `--force`, pasar todas.
@@ -420,7 +415,7 @@ No continuar al Paso 7 sin haber ejecutado el install con TODAS las fases selecc
 
 ## Paso 7: Generar CLAUDE.md raíz
 
-**No copiar `$SDD_HOME/CLAUDE.md`.** Generar `.claude/CLAUDE.md` con esta plantilla (solo filas de fases instaladas). **Siempre se sobreescribe** el que `install.sh` haya copiado en el Paso 6:
+**No copiar `$SDD_HOME/CLAUDE.md`.** En el Paso 6 instalaste con `--no-claude-md`, así que en una instalación nueva **no existe** `.claude/CLAUDE.md` todavía y tu `Write` lo crea limpio. En un reinit (`--force` / "Rehacer desde cero") el fichero ya existe: **léelo primero con Read** antes del `Write` (el harness exige leer un fichero antes de sobreescribirlo). Generar `.claude/CLAUDE.md` con esta plantilla (solo filas de fases instaladas):
 
 ```markdown
 # <nombre-proyecto> — Proyecto SDD
@@ -431,7 +426,7 @@ Proyecto gestionado con Spec Driven Development. Topología: **<authoring|consum
 
 - Toda la infraestructura (skills, agentes, reglas) vive en este `.claude/`. Las instrucciones de cada fase son reglas de carga perezosa (`.claude/rules/sdd-<fase>.md`): el harness las carga al tocar los artefactos de esa fase. No improvises workflows.
 - Respeta el orden del pipeline: una fase consume artefactos de la anterior.
-- Modo de pipeline por defecto: **<standard|ligero>** (`pipeline_mode` de `.sdd/project-init.json`). Cada feature puede forzar el otro modo con `--light`/`--standard`.
+- Modo de pipeline por defecto: **standard** (`pipeline_mode` de `.sdd/project-init.json`). El rigor (standard/ligero) se decide **por feature** al crear el spec — no es un default de proyecto. Para forzarlo en una feature concreta: `--light`/`--standard`. Para cambiar el default del proyecto entero: edita `pipeline_mode` a mano.
 - Estado del proyecto: `.sdd/project-init.json`. Para completar la entrevista técnica o añadir fases: `/wf-project-init` → "Completar / ampliar".
 
 ## Layout de artefactos
@@ -499,7 +494,11 @@ Proyecto gestionado con Spec Driven Development. Topología: **<authoring|consum
 ## Paso 8: Registrar estado y despachar
 
 1. `mkdir -p .sdd`. Timestamp real: `date -u +%Y-%m-%dT%H:%M:%SZ` y usar SU SALIDA.
-2. Escribir `.sdd/project-init.json` con **EXACTAMENTE estos campos**:
+2. **Resuelve `sdd_version` ANTES de escribir** (no escribas un placeholder `unknown` para corregirlo luego con un segundo `Edit`/`Update` — eso choca con la regla de "leer antes de editar" del harness). Léelo de `.sdd/sdd-version.json` (lo dejó `install.sh` en el Paso 6):
+   ```bash
+   SDD_VER=$(python3 -c "import json;d=json.load(open('.sdd/sdd-version.json'));print(f\"{d['version']}+{d['commit']}\")" 2>/dev/null || echo unknown)
+   ```
+3. Escribir `.sdd/project-init.json` **en una sola operación** (vía Bash heredoc o Write sobre fichero nuevo), con el `sdd_version` ya resuelto y **EXACTAMENTE estos campos**:
 
 ```json
 {
@@ -512,7 +511,7 @@ Proyecto gestionado con Spec Driven Development. Topología: **<authoring|consum
   "targets": ["..."],
   "phases": ["<fases en orden canónico>"],
   "artifacts": { "prd": "<dir>", "spec": "<dir>", "design": "<dir>" },
-  "pipeline_mode": "<standard|light>",
+  "pipeline_mode": "standard",
   "sdd_version": "<version+commit del sello>",
   "initialized_at": "<salida de date -u>",
   "dispatcher": "wf-project-init",
@@ -531,19 +530,20 @@ Reglas de los campos:
   ```
   (en consumer `phases` no incluye prd/spec; el `design` de consumer es rol feature y sus artefactos viven dentro de cada feature.)
 - `specialist_workflow`: solo si el stack es concreto Y existe `wf-<stack>-init`.
+- `pipeline_mode`: **siempre `standard`** en el init (no se pregunta). El rigor por feature se decide al crear el spec; el override de proyecto es editar este campo a mano.
 - `sdd_version`: de `.sdd/sdd-version.json` (lo escribe `install.sh`): `<version>+<commit>`. Si no existe, `unknown`.
 
 > El registro de ejecuciones del init de stack vive en `.sdd/stack-runs.jsonl` (append-only), no aquí. `project-init.json` queda como config estable.
 
 > **`topology` no se acumula** (a diferencia del antiguo `profiles`): un repo es lo que es. La evolución legítima es authoring→standalone (se le añade código) vía "Completar / ampliar", que **reescribe** `topology` y recalcula fases. No se mantiene historial de topologías.
 
-3. Escribir `.claude/sdd-mode.json`:
+4. Escribir `.claude/sdd-mode.json`:
 
 ```json
 { "mode": "sdd", "decided_at": "<salida de date -u>", "decided_by": "wf-project-init" }
 ```
 
-4. **Solo si** `specialist_workflow` no es null → invocar `wf-<stack>-init` **via Skill tool** (nunca `tech/<stack>/install.sh` a mano).
+5. **Solo si** `specialist_workflow` no es null → invocar `wf-<stack>-init` **via Skill tool** (nunca `tech/<stack>/install.sh` a mano).
 
 ---
 
@@ -587,3 +587,14 @@ grep -qx '\.claude/settings\.local\.json' .gitignore 2>/dev/null && echo "OK git
   - standalone → primer paso de la fase más temprana instalada.
 - Si en 3c se detectaron artefactos fuera del directorio que declara `artifacts`, avisar y ofrecer mover o actualizar el mapa.
 - Si hubo deuda multi-superficie (5.S4), recordar que las superficies con stack pendiente se completan con "Completar / ampliar".
+
+---
+
+## Paso 11: Recordatorio de activación
+
+**Siempre, como última acción del init** (tras el informe del Paso 10). `install.sh` ya emite este aviso, pero su salida queda **colapsada** en el output del Paso 6 y el usuario no lo ve. Emítelo con un `echo` **determinista** (no lo parafrasees: garantiza el texto exacto y que siempre aparezca):
+
+```bash
+echo "Ejecuta /skills y /agents para revisar que Claude ha cargado correctamente el ecosistema. Si quieres empezar con contexto limpio, ejecuta /clear."
+```
+- **Recordatorio de activación (siempre, como última línea del informe):** indica al usuario que ejecute `/skills` y `/agents` para revisar que Claude ha cargado correctamente el ecosistema, y `/clear` si quiere empezar con contexto limpio. `install.sh` emite este aviso, pero su salida queda **colapsada** en el output del Paso 6, así que el informe del skill **debe** repetirlo explícitamente o el usuario no lo verá.

@@ -95,7 +95,9 @@ si pierde features previas, o genera fuera del subset pedido.
 1. Le pides el spec de una sola capacidad ("hazme el spec de login").
    → **Esperado:** genera el spec de esa feature (`--capability <nombre>` o
      `--scope-from <discovery> --feature F-00X`), respetando `--light`/`--standard`
-     (el modo ligero mantiene los invariantes, solo ajusta proporción).
+     (el modo ligero mantiene los invariantes, solo ajusta proporción). Si **no** pasas
+     flag, la elección del rigor la **ofrece el orquestador** al crear el spec (CU-3.r),
+     no el init.
 
 **Resultado:** PASS si genera un spec válido de la feature · FALLO si relaja
 invariantes en `--light`, o mete tecnología.
@@ -304,3 +306,27 @@ de confirmación es **el usuario**, no un `_analysis.md`.
 **Resultado:** PASS si las tres respuestas se tratan distinto y "No lo sé" mantiene el bloqueo · FALLO
 si confirma un `[INFERIDO]` desde el analysis, o lo da por resuelto sin confirmación humana.
 **Desviación → reportar:** issue citando `CU-3.q`.
+
+## CU-3.r — El rigor (standard/ligero) se elige al crear el spec, no en el init (D-006)
+
+**Precondición:** proyecto SDD ya inicializado con `pipeline_mode: standard` (el default; el init
+ya no pregunta el rigor — ver `cu-01-inicializar.md` CU-1.n). Le pides crear el spec de una feature.
+**Mecanismo:** orquestador de la fase Spec (`pipeline/spec/CLAUDE.md` → instalado como
+`.claude/rules/sdd-spec.md`, sección "Elección del rigor del pipeline"). Como `wf-spec-fast-track` y
+`wf-spec-features-first` son `context: fork` y **no** pueden usar `AskUserQuestion` ([[D-002]]), la
+oferta ocurre en el **hilo principal** antes de delegar.
+
+1. Pides el spec de una feature **sin** especificar el modo.
+   → **Esperado:** antes de invocar la workflow, el orquestador **ofrece** Standard (recomendado) /
+     Ligero con `AskUserQuestion` y pasa el flag elegido. No asume ligero por su cuenta ni genera sin ofrecer.
+2. Pides el spec pasando explícitamente `--light` (o `--standard`).
+   → **Esperado:** **no** pregunta — respeta el flag.
+3. El proyecto tiene `pipeline_mode: light` fijado a mano (override de proyecto) y no pasas flag.
+   → **Esperado:** usa `light` sin preguntar (el equipo ya fijó el default de proyecto).
+4. Pides generar un lote con `wf-spec-features-first` sin flag.
+   → **Esperado:** pregunta el modo **una sola vez** para toda la pasada, nunca feature a feature.
+
+**Resultado:** PASS si ofrece la elección al crear (no en el init), respeta el flag explícito y el
+override de proyecto, y pregunta una sola vez por lote · FALLO si genera ligeros sin ofrecer la elección,
+re-pregunta pese a un flag explícito, o pregunta feature a feature en un lote.
+**Desviación → reportar:** issue citando `CU-3.r`.
