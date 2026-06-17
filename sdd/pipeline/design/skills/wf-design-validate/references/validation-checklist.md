@@ -1,6 +1,6 @@
 # Checklist de validación de DESIGN.md
 
-18 checks normativos que el agente `design-architect` debe ejecutar en modo `design-validate`. Cada check indica la regla de referencia, la severidad si falla y lo que se debe verificar.
+18 checks normativos que el agente `design-system-architect` debe ejecutar en modo `design-validate`. Cada check indica la regla de referencia, la severidad si falla y lo que se debe verificar.
 
 Estado declarado sin decisiones visuales concretas = estado vacío (no cuenta). Campo obligatorio ausente sin justificación = severidad indicada.
 

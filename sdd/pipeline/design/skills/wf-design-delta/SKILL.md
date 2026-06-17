@@ -6,7 +6,7 @@ argument-hint: "analyze <DESIGN.md> --new-reqs <cambios.md> [--brief <DESIGN_BRI
 effort: high
 allowed-tools: [Read, Write, Bash, Agent]
 context: fork
-agent: design-architect
+agent: design-system-architect
 user-invocable: true
 ---
 
@@ -50,7 +50,7 @@ Si no hay argumento o el modo no es valido, informa:
 
 Lee todos los archivos relevantes (DESIGN.md, brief si existe, requisitos o delta analysis).
 
-## Paso 4: Delegar al agente design-architect
+## Paso 4: Delegar al agente design-system-architect
 
 ### Modo `analyze`
 

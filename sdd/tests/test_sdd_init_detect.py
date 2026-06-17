@@ -162,9 +162,21 @@ class VerifyTest(unittest.TestCase):
         write(self.root / ".claude/CLAUDE.md", "x")
         write(self.root / ".sdd/project-init.json", json.dumps({
             "dispatcher": "wf-project-init",
-            "profiles": ["product"],
+            "topology": "standalone",
             "artifacts": {"spec": "spec"},
         }))
+        for s in ("sdd-gate-check.py", "sdd-seal.py", "sdd-task-state.py",
+                  "sdd-sync-check.py", "sdd-skill-allow.py"):
+            write(self.root / ".sdd/scripts" / s, "x")
+        write(self.root / ".sdd/sdd-version.json", "{}")
+        write(self.root / ".gitignore", ".claude/settings.local.json\n")
+
+    def _install_minimal_state(self, extra):
+        """Instala el mínimo para verify y escribe project-init.json con `extra`."""
+        for f in ("spec", "plan", "tasks"):
+            write(self.root / f".claude/rules/sdd-{f}.md", "x")
+        write(self.root / ".claude/CLAUDE.md", "x")
+        write(self.root / ".sdd/project-init.json", json.dumps(extra))
         for s in ("sdd-gate-check.py", "sdd-seal.py", "sdd-task-state.py",
                   "sdd-sync-check.py", "sdd-skill-allow.py"):
             write(self.root / ".sdd/scripts" / s, "x")
@@ -190,7 +202,7 @@ class VerifyTest(unittest.TestCase):
         write(self.root / ".claude/CLAUDE.md", "x")
         write(self.root / ".sdd/project-init.json", json.dumps({
             "dispatcher": "wf-project-init",
-            "profiles": ["dev"],
+            "topology": "consumer",
             "artifacts_source": "../myshop-specs",
         }))
         for s in ("sdd-gate-check.py", "sdd-seal.py", "sdd-task-state.py",
@@ -202,16 +214,45 @@ class VerifyTest(unittest.TestCase):
         self.assertEqual(code, 0, [c for c in checks if not c["ok"]])
         self.assertTrue(next(c for c in checks if c["check"] == "artifacts-map")["ok"])
 
-    def test_legacy_profile_key_fails(self):
-        self._install_standalone()
+    def test_authoring_no_plan_tasks_passes(self):
+        # authoring: prd+spec+design, sin plan/tasks, con "artifacts"
+        for f in ("prd", "spec", "design"):
+            write(self.root / f".claude/rules/sdd-{f}.md", "x")
+        write(self.root / ".claude/CLAUDE.md", "x")
         write(self.root / ".sdd/project-init.json", json.dumps({
             "dispatcher": "wf-project-init",
-            "profile": "product",  # legacy singular
-            "artifacts": {"spec": "spec"},
+            "topology": "authoring",
+            "surfaces": [],
+            "design_role": "system",
+            "artifacts": {"prd": "prd", "spec": "spec", "design": "design"},
         }))
+        for s in ("sdd-gate-check.py", "sdd-seal.py", "sdd-task-state.py",
+                  "sdd-sync-check.py", "sdd-skill-allow.py"):
+            write(self.root / ".sdd/scripts" / s, "x")
+        write(self.root / ".sdd/sdd-version.json", "{}")
+        write(self.root / ".gitignore", ".claude/settings.local.json\n")
+        code, checks = verify(self.root, "prd,spec,design")
+        self.assertEqual(code, 0, [c for c in checks if not c["ok"]])
+        self.assertTrue(next(c for c in checks if c["check"] == "topology")["ok"])
+
+    def test_legacy_schema_fails(self):
+        # esquema viejo (profiles/profile/type) ya no es válido → check topology FALLA
+        for legacy in ({"profiles": ["product"]}, {"profile": "product"}, {"type": "app"}):
+            obj = {"dispatcher": "wf-project-init", "artifacts": {"spec": "spec"}}
+            obj.update(legacy)
+            self._install_minimal_state(obj)
+            code, checks = verify(self.root, "spec,plan,tasks")
+            self.assertEqual(code, 2, f"legacy {legacy} debería fallar")
+            self.assertFalse(next(c for c in checks if c["check"] == "topology")["ok"])
+
+    def test_missing_topology_fails(self):
+        self._install_minimal_state({
+            "dispatcher": "wf-project-init",
+            "artifacts": {"spec": "spec"},
+        })
         code, checks = verify(self.root, "spec,plan,tasks")
         self.assertEqual(code, 2)
-        self.assertFalse(next(c for c in checks if c["check"] == "profiles")["ok"])
+        self.assertFalse(next(c for c in checks if c["check"] == "topology")["ok"])
 
     def test_missing_gitignore_line_fails(self):
         self._install_standalone()

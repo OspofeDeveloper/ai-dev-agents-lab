@@ -6,7 +6,7 @@ argument-hint: "create <branch-name> | list | compare <branch-a> <branch-b> | me
 effort: medium
 allowed-tools: [Read, Write, Bash, Agent]
 context: fork
-agent: design-architect
+agent: design-system-architect
 user-invocable: true
 ---
 

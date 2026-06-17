@@ -72,6 +72,8 @@ Validar el resultado con `npx @google/design.md lint DESIGN.md`: cubre orden de 
 
 > Los criterios normativos de accesibilidad (contraste, touch targets, dynamic type, motion, focus, labels, anuncios live) viven en `kb-a11y-expert`. La seccion `## Accessibility` del `DESIGN.md` materializa esos criterios para el producto; no los redefine aqui.
 
+**`accessibility.target_platforms` (SSoT de superficie a nivel sistema).** El bloque `accessibility` del frontmatter declara `target_platforms`: la lista de superficies que cubre el producto (`mobile`, `desktop`, `web`), copiada del `DESIGN_BRIEF.md`. Es **obligatorio en cuanto el brief declara más de una superficie o incluye web/desktop** (de lo contrario, default `[mobile]`). Razón: el `DESIGN.md` es el contrato compartido entre superficies — un producto multi-superficie (app móvil + desktop + web) tiene UN `DESIGN.md` con `target_platforms: [mobile, desktop, web]`, y los artefactos por feature (`flows`/`views`/`ui_prompt`) derivan de él por superficie (ver `kb-design-feature-artifacts`). Cuando incluye web/desktop, declarar también `min_target_pointer` (puntero fino, `kb-a11y-web-expert` Regla 2). No se forkea el `DESIGN.md` por superficie: lo que diverge son los artefactos de feature, no el sistema.
+
 ## Regla 3: Visual Personality es obligatorio y estructurado
 
 `DESIGN.md` debe incluir la seccion `## Visual Personality` y su bloque `visual_personality:` en el frontmatter YAML. Sin esta seccion, el agente y el generador de UI (Stitch u otro) no tienen un norte de caracter visual y el output es generico.

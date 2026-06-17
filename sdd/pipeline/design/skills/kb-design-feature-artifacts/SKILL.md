@@ -122,14 +122,20 @@ Esta KB es la única fuente de verdad de la noción de target del `ui_prompt`. E
 - **`target_tool`**: declara la herramienta de ensamblaje destino. Valores:
   - `stitch` — prompt para Google Stitch, destino de prototipado **mobile** (formato histórico, no se degrada).
   - `web-generic` — prompt de ensamblaje **web reutilizable** por v0, Lovable, bolt, otros generadores web, o código a mano. Describe componentes en términos de HTML semántico/ARIA, breakpoints responsive y estados, sin jerga propietaria.
-- **`target_platforms`**: `mobile | web | both` (alineado con el `target_platforms` del brief).
+- **`target_platforms`**: en cada archivo de salida es **una superficie** (`mobile` | `desktop` | `web`). El producto puede cubrir varias (lo declara `accessibility.target_platforms` del `DESIGN.md`); en ese caso se genera **un `ui_prompt` por superficie**, no uno mezclado.
 
-Selección de `target_tool` según `target_platforms`:
+Selección de `target_tool` según la superficie:
 - `mobile` → `stitch`.
 - `web` o `desktop` → `web-generic`.
-- `both` → elegir con criterio según dónde está el peso del producto y **documentar la decisión** en el propio prompt (ej. "target_tool: web-generic; el destino mobile se cubre por separado con stitch"). No producir un prompt ambiguo que mezcle ambas jergas.
 
-El cuerpo del prompt es común a ambos targets (fuentes de verdad, vistas, restricciones); solo cambia el **vocabulario de componentes y estados** según `target_tool`.
+**Multi-superficie (producto que cubre varias plataformas).** Cuando `accessibility.target_platforms` del `DESIGN.md` incluye más de una familia (p. ej. `[mobile, web]`), NO se produce un prompt ambiguo ni se "elige una": se genera **un prompt especializado por superficie**, nombrado con sufijo de superficie:
+- `<feature>_ui_prompt.mobile.md` → `target_tool: stitch`, `target_platforms: mobile`
+- `<feature>_ui_prompt.web.md` → `target_tool: web-generic`, `target_platforms: web`
+- (`desktop` se cubre con `web-generic` salvo que el stack imponga otra cosa; documéntalo en el prompt)
+
+Si el producto cubre una sola superficie, se genera un único `<feature>_ui_prompt.md` (sin sufijo). Los `*_flows.md` y `*_views.md` son **una sola copia agnóstica de superficie** con `### Notas responsive` cuando aplica (Regla 8): la navegación y el inventario de pantallas trazan al mismo spec; lo que diverge por superficie es el ensamblaje del `ui_prompt`, no los flows/views.
+
+El cuerpo del prompt es común a cualquier target (fuentes de verdad, vistas, restricciones); solo cambia el **vocabulario de componentes y estados** según `target_tool`.
 
 ### Estructura común (cualquier `target_tool`)
 

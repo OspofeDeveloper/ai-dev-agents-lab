@@ -147,7 +147,7 @@ flowchart TD
     BriefGate -->|Si| Existing{"¿Ya existe DESIGN.md?"}
     Existing -->|Si| ReadCurrent[Leer DESIGN.md actual]
     Existing -->|No| NewSystem[Crear sistema visual base]
-    Brief --> Agent["design-architect<br/>modo design-system"]
+    Brief --> Agent["design-system-architect<br/>modo design-system"]
     ReadCurrent --> Agent
     NewSystem --> Agent
     Agent --> DesignFile[DESIGN.md]
@@ -174,7 +174,7 @@ flowchart TD
     Check -->|No| Stop[Detener]
     Check -->|Si| BriefGate{"¿Existe DESIGN_BRIEF.md?"}
     BriefGate -->|No| StopBrief["Detener: ejecutar wf-design-intake<br/>o reintentar con --no-brief"]
-    BriefGate -->|Si| Agent["design-architect<br/>modo feature-prototype"]
+    BriefGate -->|Si| Agent["design-feature-architect<br/>modo feature-prototype"]
     DesignFile --> Agent
     Brief --> Agent
     Agent --> Flows["<feature>_flows.md"]
@@ -420,7 +420,7 @@ flowchart TD
     Stakeholder["Cliente / PM / Dev / QA / Stitch"]
     Capture["wf-design-feedback capture<br/>(literal, sin reformular)"]
     File["&lt;feature&gt;_design_feedback.md /<br/>design_feedback_&lt;fecha&gt;.md<br/>status: pending_triage"]
-    Triage["wf-design-feedback triage<br/>(design-architect razona)"]
+    Triage["wf-design-feedback triage<br/>(design-feature-architect razona)"]
     Triaged["&lt;feature&gt;_design_feedback.md /<br/>design_feedback_&lt;fecha&gt;.md<br/>status: triaged"]
 
     Cats{"Categoria por item"}

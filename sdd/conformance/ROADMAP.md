@@ -81,20 +81,20 @@ para garantizar que ningún skill se queda sin casos en los cuatro ejes de prueb
 
 | Skill | Args | Mecanismo (agente/script/hook) | CU que lo ejercitan | Happy | Edge | Harness | Args OK | Estado | Huecos detectados |
 |---|---|---|---|---|---|---|---|---|---|
-| wf-design-intake | `generate <feature_spec.md> [--prd] [--output] [--mode guided\|hybrid\|auto] [--preset <name>] [--learn]` | design-architect; kb-design-brief/-style-decision-tree | CU-5.a/m · CU-13.c | ✅ | ✅ | ✅ | 🟡 | COMPLETADO | `--learn`/`--preset` vía CU-11.b |
+| wf-design-intake | `generate <feature_spec.md> [--prd] [--output] [--mode guided\|hybrid\|auto] [--preset <name>] [--learn]` | design-system-architect; kb-design-brief/-style-decision-tree | CU-5.a/m · CU-13.c | ✅ | ✅ | ✅ | 🟡 | COMPLETADO | `--learn`/`--preset` vía CU-11.b |
 | wf-design-discover | `<feature_spec.md> [--prd] [--brief] [--output] [--mode interactive\|auto]` | orquestador (sin agente); WebSearch/WebFetch | CU-5.g · CU-13.c | ✅ | ✅ | ✅ | 🟡 | COMPLETADO | modo `auto` (sin validación) vía variante de arg |
-| wf-design-moodboard | `<feature_spec.md> [--prd] [--output] [--mode interactive\|auto]` | design-architect; kb-design-style-taxonomy/-decision-tree | CU-5.f · CU-13.c/g | ✅ | ✅ | ✅ | 🟡 | COMPLETADO | alimenta intake, no cierra brief |
-| wf-design-system | `generate <feature_spec.md> [--prd] [--brief] [--design-file] [--no-brief]` | design-architect; kb-design-system-contract; linter `@google/design.md` | CU-5.b/k/l · CU-13.c/g | ✅ | ✅ | ✅ | 🟡 | COMPLETADO | — |
-| wf-design-validate | `<DESIGN.md> [--brief] [--views] [--lenient] [--pedagogical]` | design-architect; linter `@google/design.md`; kb-design-governance R5 | CU-5.e/o · CU-13.c/g | ✅ | ✅ | ✅ | 🟡 | COMPLETADO | promoción provisional→confirmed = única escritura (gated) |
-| wf-design-delta | `analyze <DESIGN.md> --new-reqs <cambios.md> [--brief] \| apply <DESIGN.md> <delta.md>` | design-architect; kb-design-expert R15 | CU-5.e/p · CU-13.c/g | ✅ | ✅ | ✅ | ✅ | COMPLETADO | — |
-| wf-design-sync | `<DESIGN.md>` | design-architect; kb-design-governance R2 (read-only) | CU-5.e/r · CU-13.c | ✅ | ✅ | ✅ | — | COMPLETADO | arg único posicional; deriva por razonamiento (hash futuro, ROADMAP 11.2) |
-| wf-design-feature-prototype | `generate <feature_spec.md> [--design-file] [--brief] [--no-brief]` | design-architect; kb-design-feature-artifacts/-conflict-expert; `sdd-resolve-path.py` | CU-5.c/k/n · CU-13.c | ✅ | ✅ | ✅ | 🟡 | COMPLETADO | — |
-| wf-design-extract | `discover <path_ui> [--scope] \| generate <path_ui> [--from <extraction.md>] [--scope] [--design-file]` | design-architect; kb-design-characterization; linter `@google/design.md` | CU-5.d · CU-13.c/g | ✅ | ✅ | ✅ | 🟡 | COMPLETADO | gate discover→generate cubierto vía CU-5.d |
-| wf-design-branch | `create <branch> \| list \| compare <a> <b> \| merge <branch> --into <target> \| discard <branch>` | design-architect; kb-design-governance R22 | CU-5.h/s · CU-13.c/g | ✅ | ✅ | ✅ | ✅ | COMPLETADO | — |
-| wf-design-variant | `create <feature_spec.md> --variants A,B [--hypothesis] \| compare <feature_variants.md>` | design-architect | CU-5.i/t · CU-13.c/g | ✅ | ✅ | ✅ | ✅ | COMPLETADO | — |
+| wf-design-moodboard | `<feature_spec.md> [--prd] [--output] [--mode interactive\|auto]` | design-system-architect; kb-design-style-taxonomy/-decision-tree | CU-5.f · CU-13.c/g | ✅ | ✅ | ✅ | 🟡 | COMPLETADO | alimenta intake, no cierra brief |
+| wf-design-system | `generate <feature_spec.md> [--prd] [--brief] [--design-file] [--no-brief]` | design-system-architect; kb-design-system-contract; linter `@google/design.md` | CU-5.b/k/l · CU-13.c/g | ✅ | ✅ | ✅ | 🟡 | COMPLETADO | — |
+| wf-design-validate | `<DESIGN.md> [--brief] [--views] [--lenient] [--pedagogical]` | design-system-architect; linter `@google/design.md`; kb-design-governance R5 | CU-5.e/o · CU-13.c/g | ✅ | ✅ | ✅ | 🟡 | COMPLETADO | promoción provisional→confirmed = única escritura (gated) |
+| wf-design-delta | `analyze <DESIGN.md> --new-reqs <cambios.md> [--brief] \| apply <DESIGN.md> <delta.md>` | design-system-architect; kb-design-expert R15 | CU-5.e/p · CU-13.c/g | ✅ | ✅ | ✅ | ✅ | COMPLETADO | — |
+| wf-design-sync | `<DESIGN.md>` | design-system-architect; kb-design-governance R2 (read-only) | CU-5.e/r · CU-13.c | ✅ | ✅ | ✅ | — | COMPLETADO | arg único posicional; deriva por razonamiento (hash futuro, ROADMAP 11.2) |
+| wf-design-feature-prototype | `generate <feature_spec.md> [--design-file] [--brief] [--no-brief]` | design-feature-architect; kb-design-feature-artifacts/-conflict-expert; `sdd-resolve-path.py` | CU-5.c/k/n · CU-13.c | ✅ | ✅ | ✅ | 🟡 | COMPLETADO | — |
+| wf-design-extract | `discover <path_ui> [--scope] \| generate <path_ui> [--from <extraction.md>] [--scope] [--design-file]` | design-system-architect; kb-design-characterization; linter `@google/design.md` | CU-5.d · CU-13.c/g | ✅ | ✅ | ✅ | 🟡 | COMPLETADO | gate discover→generate cubierto vía CU-5.d |
+| wf-design-branch | `create <branch> \| list \| compare <a> <b> \| merge <branch> --into <target> \| discard <branch>` | design-system-architect; kb-design-governance R22 | CU-5.h/s · CU-13.c/g | ✅ | ✅ | ✅ | ✅ | COMPLETADO | — |
+| wf-design-variant | `create <feature_spec.md> --variants A,B [--hypothesis] \| compare <feature_variants.md>` | design-feature-architect | CU-5.i/t · CU-13.c/g | ✅ | ✅ | ✅ | ✅ | COMPLETADO | — |
 | wf-design-export | `<DESIGN.md> --platforms <css,style-dictionary,compose,swiftui,tailwind> [--output-dir] [--dry-run]` | sin agente (traduce fielmente); idempotente | CU-5.e/u · CU-13.c · CU-11.h | ✅ | ✅ | ✅ | ✅ | COMPLETADO | — |
-| wf-design-a11y-audit | `<DESIGN.md> [--views] [--brief] [--target AA\|AAA] [--lenient]` | design-architect; kb-a11y-expert/-web-expert | CU-5.e/q · CU-13.c | ✅ | ✅ | ✅ | 🟡 | COMPLETADO | escribe `a11y_audit_<fecha>.md`; ramifica por plataforma |
-| wf-design-feedback | `capture <feedback.md\|texto> [--source] [--feature] \| triage <feedback_capture.md>` | design-architect (7 categorías de triage) | CU-5.j/v · CU-13.c · CU-11.g | ✅ | ✅ | ✅ | ✅ | COMPLETADO | — |
+| wf-design-a11y-audit | `<DESIGN.md> [--views] [--brief] [--target AA\|AAA] [--lenient]` | design-system-architect; kb-a11y-expert/-web-expert | CU-5.e/q · CU-13.c | ✅ | ✅ | ✅ | 🟡 | COMPLETADO | escribe `a11y_audit_<fecha>.md`; ramifica por plataforma |
+| wf-design-feedback | `capture <feedback.md\|texto> [--source] [--feature] \| triage <feedback_capture.md>` | design-feature-architect (7 categorías de triage) | CU-5.j/v · CU-13.c · CU-11.g | ✅ | ✅ | ✅ | ✅ | COMPLETADO | — |
 
 ---
 

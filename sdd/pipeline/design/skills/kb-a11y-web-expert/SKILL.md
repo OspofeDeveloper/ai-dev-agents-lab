@@ -1,6 +1,6 @@
 ---
 name: kb-a11y-web-expert
-description: Deltas de accesibilidad web/desktop sobre el nucleo platform-neutral de kb-a11y-expert. Cubre WCAG 2.2 completo para puntero fino y teclado primario. La cargan design-architect y plan-architect junto a kb-a11y-expert.
+description: Deltas de accesibilidad web/desktop sobre el nucleo platform-neutral de kb-a11y-expert. Cubre WCAG 2.2 completo para puntero fino y teclado primario. La cargan design-system-architect, design-feature-architect y plan-architect junto a kb-a11y-expert.
 effort: low
 allowed-tools: [Read]
 user-invocable: false
@@ -55,7 +55,7 @@ El discriminador es el **tipo de puntero**, no el dispositivo:
 
 Un producto **web responsive** puede tener **ambos** a la vez: la misma vista servida a un movil (coarse) y a un desktop (fine). En ese caso no se elige uno: se cumplen los dos criterios donde cada puntero esta presente. La consulta de medios `@media (pointer: coarse)` / `(pointer: fine)` materializa la distincion en CSS.
 
-- En `DESIGN.md`: el campo `accessibility.target_platforms` (o el `target_platforms` del `DESIGN_BRIEF.md`) declara si el producto sirve web, desktop, mobile o varios. Cuando incluye web/desktop, esta KB entra en juego.
+- En `DESIGN.md`: el campo `accessibility.target_platforms` es la SSoT de superficie a nivel sistema (`kb-design-system-contract`) y es **obligatorio declararlo cuando el producto sirve web/desktop** (no basta con que esté solo en el `DESIGN_BRIEF.md`): el `DESIGN.md` es el contrato que consumen plan y los artefactos de feature. Cuando incluye web/desktop, esta KB entra en juego y debe declararse también `accessibility.min_target_pointer`.
 - En `*_views.md`: una vista que se sirve a ambos punteros declara como satisface los dos criterios de target.
 
 ## Regla 2: Target size para puntero fino (WCAG 2.5.8 AA)

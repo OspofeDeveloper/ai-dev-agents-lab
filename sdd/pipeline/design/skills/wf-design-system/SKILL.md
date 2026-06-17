@@ -10,7 +10,7 @@ user-invocable: true
 
 # design-system — Orquestador del Flujo SDD (Etapa Design)
 
-Tu rol es de **orquestador puro**: parseas argumentos, verificas que el Spec esta listo, delegas la definicion del sistema visual al agente `design-architect`, y escribes el `DESIGN.md` resultante.
+Tu rol es de **orquestador puro**: parseas argumentos, verificas que el Spec esta listo, delegas la definicion del sistema visual al agente `design-system-architect`, y escribes el `DESIGN.md` resultante.
 
 ## Paso 1: Parsear argumentos
 
@@ -98,7 +98,7 @@ Si el archivo **NO existe** y el brief declara `product_preset` distinto de `non
 - arranca con ese starter kit al 70% en lugar de DESIGN.md en blanco
 - pasa este contenido base al agente como `DESIGN.md actual` para que lo precise (no parta de cero)
 
-## Paso 4: Delegar al agente design-architect
+## Paso 4: Delegar al agente design-system-architect
 
 Invoca al agente siguiendo las **Reglas 2, 3, 4 y 6** de `kb-design-system-contract` (formato y secciones, Visual Personality, Reference Apps, materializar el brief sin reabrirlo), la **Regla 3** de `kb-design-expert` (orden de derivación: dirección de producto primero) y la **Regla 2** de `kb-design-governance` (política de evolución extender vs mutar), mas la jerarquía de `kb-design-brief` y la taxonomía de `kb-design-style-taxonomy`.
 

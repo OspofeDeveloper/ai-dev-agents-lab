@@ -43,7 +43,7 @@ flowchart LR
 | **Meta** | `wf-skill-create`, `wf-agent-create`, `wf-stack-create`, `wf-sdd-audit`, `wf-sdd-refactor`, `wf-project-init`, `wf-sdd-update` | — |
 | **PRD** | `wf-prd-create`, `wf-prd-review`, `wf-prd-change`, `wf-prd-change-cascade`, `wf-prd-sync-impact` | `prd-expert` |
 | **Spec** | `wf-spec-analyze`, `wf-spec-features-first`, `wf-spec-fast-track`, `wf-spec-from-code`, `wf-spec-validate`, `wf-spec-conflict`, `wf-spec-readiness`, `wf-spec-delta`, `wf-spec-amend` | `sdd-spec-explorer`, `sdd-spec-planner`, `sdd-spec-writer`, `sdd-spec-auditor` |
-| **Design** | `wf-design-intake`, `wf-design-system`, `wf-design-feature-prototype`, `wf-design-extract`, `wf-design-validate`, `wf-design-a11y-audit`, `wf-design-delta`, `wf-design-sync`, `wf-design-export` | `design-architect` |
+| **Design** | `wf-design-intake`, `wf-design-system`, `wf-design-feature-prototype`, `wf-design-extract`, `wf-design-validate`, `wf-design-a11y-audit`, `wf-design-delta`, `wf-design-sync`, `wf-design-export` | `design-system-architect`, `design-feature-architect` |
 | **Plan** | `wf-prepare-plan`, `wf-plan-validate` | `plan-architect`, `plan-auditor` |
 | **Tasks** | `wf-prepare-tasks`, `wf-task-run`, `wf-qa-plan`, `wf-qa-verify`, `wf-bug`, `wf-release`, `wf-project-status` | `task-generator`, `qa-engineer` |
 

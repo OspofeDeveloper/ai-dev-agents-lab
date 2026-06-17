@@ -8,27 +8,27 @@ sin romper el contrato.
 web) y su spec; para `wf-design-extract`, un **frontend real en producción** (CSS,
 componentes), p. ej. tu propia web o un repo con design system.
 **Cobertura automática:** ninguna directa — todo el contenido visual es juicio del
-agente `design-architect` → **manual**.
+agente `design-system-architect` / `design-feature-architect` → **manual**.
 
 > [!IMPORTANT]
 > **Design es saltable por feature.** Si la feature no tiene superficie de UI visible,
 > Spec pasa a Plan directamente. Cuando sí aplica, **el `DESIGN_BRIEF.md` es gate
 > obligatorio**: no hay `DESIGN.md` sin brief cerrado. Todos los workflows de la fase
-> delegan en **`design-architect`**.
+> delegan en **`design-system-architect`** / **`design-feature-architect`**.
 
 ---
 
 ## CU-5.a — El brief es gate obligatorio (intake)
 
 **Precondición:** un `_spec.md` validado de una feature con UI; sin `DESIGN_BRIEF.md`.
-**Mecanismo:** skill `wf-design-intake generate` → **`design-architect`** (modo
+**Mecanismo:** skill `wf-design-intake generate` → **`design-system-architect`** (modo
 `design-intake`). Output: `DESIGN_BRIEF.md`.
 
 1. Le pides directamente "crea el DESIGN.md" sin brief.
    → **Esperado:** no genera el sistema visual; te lleva primero a cerrar el brief con
      el intake (gate obligatorio).
 2. Le pides cerrar el brief.
-   → **Esperado:** `design-architect` cierra modo de decisión, preset, familia visual,
+   → **Esperado:** `design-system-architect` cierra modo de decisión, preset, familia visual,
      densidad, profundidad, motion y policy de referencias/autonomía, y escribe
      `DESIGN_BRIEF.md` (en `artifacts.design` o la raíz del producto).
 
@@ -40,7 +40,7 @@ agente · FALLO si genera `DESIGN.md` sin brief.
 
 **Precondición:** `DESIGN_BRIEF.md` cerrado.
 **Mecanismo:** skill `wf-design-system generate` (gate de spec fiable + brief) →
-**`design-architect`**. Output: `DESIGN.md`.
+**`design-system-architect`**. Output: `DESIGN.md`.
 
 1. Le pides crear el sistema visual desde el spec.
    → **Esperado:** genera `DESIGN.md` (frontmatter con visual_personality, color
@@ -56,7 +56,7 @@ si ignora el brief, o deja el frontmatter incompleto.
 
 **Precondición:** `DESIGN.md` y, si existe, `DESIGN_BRIEF.md`.
 **Mecanismo:** skill `wf-design-feature-prototype generate` (gate de spec fiable +
-brief + DESIGN.md) → **`design-architect`**. Output:
+brief + DESIGN.md) → **`design-feature-architect`**. Output:
 `features/<n>/design/<n>_flows.md`, `_views.md`, `_ui_prompt.md`.
 
 1. Le pides preparar las pantallas/flows para la feature.
@@ -73,7 +73,7 @@ brief + DESIGN.md) → **`design-architect`**. Output:
 
 **Precondición:** una UI ya existente (CSS/componentes/capturas), sin spec ni brief.
 **Mecanismo:** skill `wf-design-extract` `discover` → **gate humano** → `generate` →
-**`design-architect`** (carga `kb-design-characterization`). Output: `DESIGN.md` con
+**`design-system-architect`** (carga `kb-design-characterization`). Output: `DESIGN.md` con
 `origin: extracted`.
 
 1. Le pides documentar el sistema visual que ya tenéis ("extrae el DESIGN.md de esta UI").
@@ -93,7 +93,7 @@ brief + DESIGN.md) → **`design-architect`**. Output:
 
 **Precondición:** un `DESIGN.md` existente (generado o extraído).
 **Mecanismo:** `wf-design-validate` / `wf-design-a11y-audit` / `wf-design-delta` /
-`wf-design-sync` / `wf-design-export` → **`design-architect`** (export es mecánico).
+`wf-design-sync` / `wf-design-export` → **`design-system-architect`** (export es mecánico).
 
 1. Le pides auditar el `DESIGN.md` (lo editaste a mano).
    → **Esperado:** `wf-design-validate` reporta `OK` o `DESIGN_GAP` **sin regenerar** el
@@ -120,13 +120,13 @@ pisa lo previo.
 
 **Exploración de dirección visual (antes y alrededor del sistema).** Piezas opcionales
 que anclan o exploran la dirección visual sin comprometer el `DESIGN.md` principal.
-Todas delegan en **`design-architect`** salvo `wf-design-discover` (orquestador con
+Todas delegan en **`design-system-architect`** / **`design-feature-architect`** salvo `wf-design-discover` (orquestador con
 research web).
 
 ## CU-5.f — Capturar inspiración antes del brief (moodboard)
 
 **Precondición:** un `_spec.md` de feature; aún sin brief cerrado.
-**Mecanismo:** skill `wf-design-moodboard` → **`design-architect`**. Output:
+**Mecanismo:** skill `wf-design-moodboard` → **`design-system-architect`**. Output:
 `<basename>_design_moodboard.md`.
 
 1. Le describes vibes ("quiero algo cálido, fotográfico, tipo Airbnb").
@@ -156,7 +156,7 @@ inventa apps, o no pide validación en modo interactivo.
 ## CU-5.h — Explorar una rama paralela del `DESIGN.md` (branch)
 
 **Precondición:** un `DESIGN.md` existente.
-**Mecanismo:** skill `wf-design-branch` → **`design-architect`**. Output:
+**Mecanismo:** skill `wf-design-branch` → **`design-system-architect`**. Output:
 `DESIGN.<branch>.md` (no toca `DESIGN.md` salvo en `merge`).
 
 1. Le pides explorar una variante ("prueba una versión más brand-forward").
@@ -171,7 +171,7 @@ FALLO si modifica `DESIGN.md` al crear/comparar una rama.
 ## CU-5.i — A/B testing visual de una feature (variant)
 
 **Precondición:** un `_spec.md` y un `DESIGN.md`.
-**Mecanismo:** skill `wf-design-variant` → **`design-architect`**. Output:
+**Mecanismo:** skill `wf-design-variant` → **`design-feature-architect`**. Output:
 `<feature>_variants.md`.
 
 1. Le pides probar dos versiones de la feature ("haz un A/B del checkout").
@@ -186,7 +186,7 @@ diverge la funcionalidad entre variantes, o no declara hipótesis/métrica.
 ## CU-5.j — Capturar y triajear feedback de stakeholders (feedback)
 
 **Precondición:** feedback no estructurado de cliente/PM/dev/QA.
-**Mecanismo:** skill `wf-design-feedback` → **`design-architect`**. Output:
+**Mecanismo:** skill `wf-design-feedback` → **`design-feature-architect`**. Output:
 `<…>_feedback_capture.md` (capture) → triaje (triage).
 
 1. Le pasas un comentario suelto ("al cliente no le gusta el color de los botones").
@@ -224,7 +224,7 @@ generan diseño sobre un spec con `[INCOMPLETO]`/`[CRÍTICO]`/`stale`.
 
 **Precondición:** un brief cerrado en modo `auto` (`autonomy_policy: ai-default`), o invocado
 con `--no-brief`, o con research de referencias pobre/ausente.
-**Mecanismo:** `wf-design-system` (Paso 5b anclaje; Paso 2e `reference_apps_policy`) → `design-architect`.
+**Mecanismo:** `wf-design-system` (Paso 5b anclaje; Paso 2e `reference_apps_policy`) → `design-system-architect`.
 
 1. Generas el `DESIGN.md` con la dirección **no anclada**.
    → **Esperado:** antes de escribir, pide confirmación de la dirección inferida (`style_family`, paleta, `motion_level`) con `AskUserQuestion`.
@@ -243,7 +243,7 @@ FALLO si escribe `generated` (no provisional) sin confirmación, o ignora la pol
 ## CU-5.m — Intake: `DESIGN_GAP`, modo `auto` y brief existente
 
 **Precondición:** según el sub-escenario.
-**Mecanismo:** `wf-design-intake generate` (Pasos 4, 6, 7) → `design-architect`.
+**Mecanismo:** `wf-design-intake generate` (Pasos 4, 6, 7) → `design-system-architect`.
 
 1. Una decisión crítica del brief no puede tomarse (usuario no responde, contradicción irresoluble).
    → **Esperado:** el agente devuelve `DESIGN_GAP` con la variable concreta y el workflow **NO escribe el brief**; reporta las variables pendientes.
@@ -262,7 +262,7 @@ ante brief existente · FALLO si escribe un brief incompleto, o clobbea el brief
 
 **Precondición:** `DESIGN.md` y brief listos; el brief declara distintas `target_platforms` y hay
 features ya prototipadas en el producto.
-**Mecanismo:** `wf-design-feature-prototype` (Paso 3c target; Pasos 4-5 conflicto) → `design-architect`
+**Mecanismo:** `wf-design-feature-prototype` (Paso 3c target; Pasos 4-5 conflicto) → `design-feature-architect`
 (`kb-design-conflict-expert`).
 
 1. El brief/`DESIGN.md` declara `target_platforms: mobile` (o `web`/`desktop`).
@@ -279,7 +279,7 @@ FALLO si fija un `target_tool` equivocado, o escribe artefactos pisando un confl
 ## CU-5.o — Validate: read-only y promoción acotada de dirección (provisional → confirmed)
 
 **Precondición:** un `DESIGN.md` (a) editado a mano para auditar, o (b) con `direction_confidence: provisional`.
-**Mecanismo:** `wf-design-validate` → `design-architect`. Read-only **salvo** la promoción acotada del Paso 5b (gated por confirmación humana, mismo patrón que el sello de `wf-prd-review`).
+**Mecanismo:** `wf-design-validate` → `design-system-architect`. Read-only **salvo** la promoción acotada del Paso 5b (gated por confirmación humana, mismo patrón que el sello de `wf-prd-review`).
 
 1. Le pides auditar un `DESIGN.md` que editaste a mano.
    → **Esperado:** reporta `OK`/`DESIGN_GAP` con severidad **sin regenerar ni parchear** el archivo (read-only).
@@ -298,7 +298,7 @@ FALLO si reescribe el `DESIGN.md` fuera de la promoción, o autopromueve sin con
 
 **Precondición:** un `DESIGN.md`; según el sub-escenario, nuevos requisitos que tocan
 `style_family`/`clarity_vs_brand`/`autonomy_policy`, o un delta analysis inexistente/mal nombrado o con `[CRÍTICO]` pendiente.
-**Mecanismo:** `wf-design-delta analyze` (Paso 4) / `apply` (Paso 2) → `design-architect`.
+**Mecanismo:** `wf-design-delta analyze` (Paso 4) / `apply` (Paso 2) → `design-system-architect`.
 
 1. Pides un delta que cambia `style_family` (o `clarity_vs_brand`).
    → **Esperado:** el `analyze` lo marca `[BRIEF_CHANGE_REQUIRED]` y **NO** propone el cambio como delta;
@@ -316,7 +316,7 @@ críticos pendientes · FALLO si aplica un cambio de `style_family` como delta, 
 ## CU-5.q — A11y-audit: ramificación por plataforma
 
 **Precondición:** un `DESIGN.md` con `target_platforms` declarado (táctil, web/desktop, o `both`); opcionalmente `--views`.
-**Mecanismo:** `wf-design-a11y-audit` → `design-architect` (`kb-a11y-expert` + `kb-a11y-web-expert`). Escribe `a11y_audit_<fecha>.md`.
+**Mecanismo:** `wf-design-a11y-audit` → `design-system-architect` (`kb-a11y-expert` + `kb-a11y-web-expert`). Escribe `a11y_audit_<fecha>.md`.
 
 1. El producto es **táctil** (mobile).
    → **Esperado:** verifica targets táctiles (≥44pt iOS / ≥48dp Android) y contraste WCAG real por par; **no** aplica el criterio de puntero fino.
@@ -335,7 +335,7 @@ FALLO si aplica el criterio equivocado, relaja un target con el otro, o no detec
 ## CU-5.r — Sync: propagación conservadora de la deriva (read-only)
 
 **Precondición:** un `DESIGN.md` con artefactos de feature derivados; un cambio en el brief, en el `DESIGN.md` o en un `_spec.md`.
-**Mecanismo:** `wf-design-sync` → `design-architect` (criterio conservador). Read-only; solo escribe su `_design_sync_report.md`.
+**Mecanismo:** `wf-design-sync` → `design-system-architect` (criterio conservador). Read-only; solo escribe su `_design_sync_report.md`.
 
 1. Cambió el `DESIGN_BRIEF.md`.
    → **Esperado:** `DESIGN.md` → `needs_review` y, transitivamente, **todos** los artefactos de feature → `needs_review`.
@@ -354,7 +354,7 @@ FALLO si aplica el criterio equivocado, relaja un target con el otro, o no detec
 ## CU-5.s — Branch: confirmación ante merge breaking y discard
 
 **Precondición:** un `DESIGN.md` y una rama `DESIGN.<branch>.md` con cambios.
-**Mecanismo:** `wf-design-branch` `merge` (Paso 5) / `discard` (Paso 6) → `design-architect`.
+**Mecanismo:** `wf-design-branch` `merge` (Paso 5) / `discard` (Paso 6) → `design-system-architect`.
 
 1. Pides mergear una rama cuyo diff es **breaking** (cambia `style_family`, `primary`, tipografía, o elimina componentes).
    → **Esperado:** ejecuta `compare` internamente, detecta el cambio MAJOR (Regla 22) y pide confirmación
@@ -371,7 +371,7 @@ mergea breaking sin confirmar, borra sin confirmación, o toca main al crear/com
 ## CU-5.t — Variant: hipótesis y métrica obligatorias
 
 **Precondición:** un spec y un `DESIGN.md`; un brief con o sin `Success Metrics`.
-**Mecanismo:** `wf-design-variant create` (Paso 2) → `design-architect`.
+**Mecanismo:** `wf-design-variant create` (Paso 2) → `design-feature-architect`.
 
 1. Pides crear variantes sin una hipótesis clara.
    → **Esperado:** **se detiene** ("sin hipótesis el A/B es decoración"); no genera variantes hasta que definas qué esperas que cambie.
@@ -404,7 +404,7 @@ runs, fabrica valores ausentes, o `--dry-run` escribe archivos.
 ## CU-5.v — Feedback: triage completo, `functional_change` a Spec y `out_of_scope`
 
 **Precondición:** feedback no estructurado de un stakeholder.
-**Mecanismo:** `wf-design-feedback` `capture` → `triage` → `design-architect` (7 categorías).
+**Mecanismo:** `wf-design-feedback` `capture` → `triage` → `design-feature-architect` (7 categorías).
 
 1. Capturas un comentario.
    → **Esperado:** lo registra **literal** en `_feedback_capture.md` con `status: pending_triage`; no lo reformula ni clasifica todavía.

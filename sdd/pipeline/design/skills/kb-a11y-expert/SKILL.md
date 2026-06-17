@@ -1,6 +1,6 @@
 ---
 name: kb-a11y-expert
-description: Accesibilidad mobile en SDD. Mapea WCAG 2.2 a contexto mobile y define las reglas a11y aplicables a las fases design y plan. La cargan design-architect y plan-architect via frontmatter skills.
+description: Accesibilidad mobile en SDD. Mapea WCAG 2.2 a contexto mobile y define las reglas a11y aplicables a las fases design y plan. La cargan design-system-architect, design-feature-architect y plan-architect via frontmatter skills.
 effort: low
 allowed-tools: [Read]
 user-invocable: false

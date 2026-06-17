@@ -8,10 +8,10 @@ Prompt de ensamblaje **tool-agnostic**. La noción de `target_tool` / `target_pl
 # Prompt de ensamblaje de UI — <Nombre de la feature>
 
 target_tool: <stitch | web-generic>
-target_platforms: <mobile | web | both>
+target_platforms: <mobile | desktop | web>   # SINGULAR: una superficie por archivo (ver Regla 7, multi-superficie)
 
 Genera las vistas de la feature `<nombre-feature>` para `<target_platforms>` usando `<target_tool>`.
-> Si target_platforms es `both`, documenta aquí qué cubre este prompt y qué se cubre por separado (ver kb-design-feature-artifacts Regla 7).
+> Multi-superficie: si el producto cubre varias plataformas, hay un archivo `ui_prompt` por superficie (`<feature>_ui_prompt.mobile.md`, `<feature>_ui_prompt.web.md`), cada uno con su `target_tool` y su `target_platforms` singular. NO mezcles jergas en un mismo prompt (ver kb-design-feature-artifacts Regla 7).
 
 ## Fuentes de verdad
 

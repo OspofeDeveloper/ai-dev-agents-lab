@@ -1,12 +1,12 @@
 ---
 name: wf-design-extract
-description: "Ingenieria inversa de un DESIGN.md desde una UI ya en produccion: descubre tokens, paleta, tipografia y componentes con evidencia (archivo:linea, mediciones) y genera un DESIGN.md de extraccion (origin: extracted) conforme al contrato. Entrada alternativa a la fase design para producto no rediseñable; delega la redaccion a design-architect."
+description: "Ingenieria inversa de un DESIGN.md desde una UI ya en produccion: descubre tokens, paleta, tipografia y componentes con evidencia (archivo:linea, mediciones) y genera un DESIGN.md de extraccion (origin: extracted) conforme al contrato. Entrada alternativa a la fase design para producto no rediseñable; delega la redaccion a design-system-architect."
 when_to_use: "Activa en frases como 'extrae el DESIGN.md de la UI existente', 'ingenieria inversa del diseño de este proyecto', 'documenta el sistema visual que ya tenemos', 'deriva el DESIGN.md del CSS actual', 'caracteriza la UI en produccion'. No activa si se diseña desde cero (usa wf-design-system) ni para cambiar la UI ya extraida (usa wf-design-delta sobre el DESIGN.md extraido)."
 argument-hint: "discover <path_ui> [--scope <subdir>] | generate <path_ui> [--from <extraction.md>] [--scope <subdir>] [--design-file DESIGN.md]"
 effort: high
 allowed-tools: [Read, Write, Bash, Grep, Glob, Agent]
 context: fork
-agent: design-architect
+agent: design-system-architect
 user-invocable: true
 ---
 
@@ -75,11 +75,11 @@ Estructura del dossier:
 - **INFERIDOS**: cada deduccion con su razon
 - **DESIGN_GAP**: lo no inferible de la UI (Reference Apps, visual_personality si el CSS no lo permite caracterizar)
 
-## Paso 5 (generate): Delegar la redaccion a design-architect
+## Paso 5 (generate): Delegar la redaccion a design-system-architect
 
 Resuelve el path del `DESIGN.md` (igual que `wf-design-system` Paso 3): `--design-file` si se paso; si no, `DESIGN.md` en la raiz de producto. Si ya existe, lee su contenido y pasalo como base; mas abajo se pregunta antes de sobrescribir.
 
-Invoca al agente `design-architect` en modo `design-extract`:
+Invoca al agente `design-system-architect` en modo `design-extract`:
 
 ```
 Redacta un DESIGN.md EXTRAIDO de la UI existente.

@@ -171,8 +171,10 @@ motion:
   style: functional
 accessibility:
   wcag_target: AA
+  target_platforms: [mobile]   # superficies que cubre el producto: mobile | desktop | web (copiado del DESIGN_BRIEF.md). SSoT a nivel sistema.
   contrast_policy: "WCAG AA: 4.5:1 texto normal, 3:1 texto grande / UI components / focus indicators"
   min_touch_target: "44pt iOS / 48dp Android"
+  min_target_pointer: "24px"   # tamano minimo de target para puntero fino (solo si target_platforms incluye web/desktop — kb-a11y-web-expert Regla 2)
   min_touch_spacing: "8dp"
   dynamic_type: true
   reduce_motion: respect_system

@@ -1,8 +1,8 @@
 ---
 name: wf-project-init
-description: "Inicializa o amplia un proyecto SDD: instala siempre el backbone (spec, plan, tasks) y añade prd/design segun el perfil de quien inicializa (desarrollo, producto, diseño, personalizado), que decide que preguntas tecnicas se hacen ahora. Genera el CLAUDE.md raiz, registra el estado en .sdd/project-init.json y despacha al init especialista del stack en perfil desarrollo."
+description: "Inicializa o amplia un proyecto SDD a partir de la TOPOLOGIA de contenido del repo: authoring (PRD/specs/sistema de diseño, sin código), consumer (código que consume specs de un repo SSoT) o standalone (todo junto). El backbone instalado depende de la topología. Genera el CLAUDE.md raiz, registra el estado en .sdd/project-init.json y despacha al init especialista del stack cuando hay código."
 when_to_use: "Activa con frases como 'inicializa el proyecto', 'arranca el setup tecnico', 'init del proyecto', 'prepara este proyecto para SDD', 'quiero trabajar specs aqui', 'configura este repo para diseño', 'completa la entrevista tecnica del proyecto'. No activa para crear skills o agentes del ecosistema SDD (usa wf-skill-create, wf-agent-create) ni para ejecutar el init concreto de un stack ya conocido (invoca directamente wf-<stack>-init)."
-argument-hint: "[--profile <dev|product|design|custom>] [--type <app|web|backend|other>] [--stack <nombre>] [--name <nombre>] [--sdd-path <path>] [--force]"
+argument-hint: "[--topology <authoring|consumer|standalone>] [--surfaces <mobile,desktop,web,backend,other>] [--prd] [--design] [--stack <nombre>] [--name <nombre>] [--sdd-path <path>] [--force]"
 effort: low
 allowed-tools: [Read, Write, Bash, AskUserQuestion]
 user-invocable: true
@@ -10,16 +10,27 @@ user-invocable: true
 
 # wf-project-init — Onboarding de proyecto SDD
 
-Tu rol es de **onboarding y dispatcher**: detectas el contexto, entrevistas lo mínimo según el perfil, instalas las fases y despachas al init especialista del stack cuando aplica.
+Tu rol es de **onboarding y dispatcher**: detectas el contexto, identificas la **topología de contenido** del repo, entrevistas lo mínimo que esa topología exige, instalas las fases que correspondan y despachas al init especialista del stack cuando el repo lleva código.
 
 **ESTE WORKFLOW ES BLOQUEANTE.** Si el usuario tenía una petición pendiente (una consulta, una tarea), NO la atiendas hasta completar el Paso 9 (verificación) con todos los checks en verde. Un init sin fases instaladas es un init FALLIDO aunque existan los JSON de estado.
+
+**El eje primario es la topología, no el rol de quien inicializa:**
+
+- **`authoring`** — el repo es la **fuente de verdad** del producto: PRD, specs y, si aplica, el sistema de diseño (`DESIGN.md`). Agnóstico de tecnología y de superficie. El código vive en otros repos. **No instala `plan`/`tasks` ni stack.**
+- **`consumer`** — el repo es **una superficie** (app móvil, desktop, web o backend) que **consume** los specs de un repo `authoring` (SSoT). Instala `plan`+`tasks` (+ overlay de stack) y, si tiene UI, la capa de diseño de feature. **No autora PRD/spec.**
+- **`standalone`** — el repo lo tiene **todo** (proyecto único o monorepo): PRD/specs/diseño + código. Pipeline completo.
 
 **Reglas de la entrevista:**
 
 1. **Toda pregunta usa `AskUserQuestion`** — nunca texto libre. No producir texto antes de la primera pregunta.
 2. **No preguntar lo que ya se sabe** — argumentos, `KNOWN_STATE` o artefactos detectados pre-rellenan. Valor conocido → confirmación ("Sí, correcto" / "No, cambiar"); desconocido → pregunta completa.
 3. **Opciones exactas** — las escritas aquí. No añadir, quitar ni sustituir.
-4. **Backbone**: en topología *standalone* (lo normal) `spec`, `plan` y `tasks` se instalan SIEMPRE — SDD es un flujo agnóstico a la tecnología: aun sin skills de stack se hace spec→plan→tasks, nunca implementación directa. Única excepción: topología *consumer* (Paso 5.0b), que instala solo `plan`+`tasks` porque la autoría de specs vive en el repo SSoT. La entrevista decide `prd`, `design` y cuánta información técnica se captura — nunca el backbone.
+4. **Backbone variable por topología** — lo que se instala depende del eje primario (SDD es un flujo agnóstico a la tecnología: siempre hay spec→plan→tasks en algún repo, nunca implementación directa, pero esas fases se reparten según la topología):
+   - `authoring` → `spec` (+ `prd` si aplica, + `design` rol *system* si aplica). **Sin `plan`/`tasks`.**
+   - `consumer` → `plan` + `tasks` (+ `design` rol *feature* si la superficie tiene UI). **Sin `prd`/`spec`** (viven en el SSoT).
+   - `standalone` → `spec` + `plan` + `tasks` (+ `prd`/`design` rol *full* según se decida).
+   La entrevista decide `prd`, `design`, las superficies y cuánta información técnica se captura — nunca el reparto de backbone, que lo fija la topología.
+5. **Agrupa preguntas independientes** — las que no se gatean entre sí van en una sola llamada a `AskUserQuestion` (hasta 4 por llamada). Abre una llamada nueva solo cuando una respuesta previa decide si —o qué— se pregunta después. El orden de las llamadas está en el Paso 5.
 
 ---
 
@@ -27,8 +38,10 @@ Tu rol es de **onboarding y dispatcher**: detectas el contexto, entrevistas lo m
 
 Los argumentos llegan en `$ARGUMENTS` — tanto si el usuario teclea `/wf-project-init <flags>` como si el orquestador invoca el skill pasándolos en el campo `args` del Skill tool. Pre-rellenan `KNOWN_STATE` (regla 2 de la entrevista): un valor pasado por flag no se vuelve a preguntar, solo se confirma.
 
-- `--profile`: `dev`, `product`, `design`, `custom`. Omite la pregunta de perfil.
-- `--type`: `app`, `web`, `backend`, `other`. Omite la pregunta de tipo.
+- `--topology`: `authoring`, `consumer`, `standalone`. Omite la pregunta Q1 de contenido.
+- `--surfaces`: lista separada por comas de `mobile`, `desktop`, `web`, `backend`, `other`. Omite la pregunta de superficie.
+- `--prd`: el proyecto usa PRD (omite la pregunta de PRD; ausencia ≠ "no", solo deja la pregunta abierta).
+- `--design`: el proyecto tiene diseño (omite la pregunta de diseño).
 - `--stack`: nombre del stack. Omite framework/targets.
 - `--name`: nombre del proyecto. Default: `basename $PWD`.
 - `--sdd-path`: ruta al framework. Default: auto-detección (Paso 2).
@@ -55,15 +68,15 @@ python3 "$SDD_HOME/scripts/sdd-init-detect.py" detect --json
 
 Emite el JSON que puebla `KNOWN_STATE`: `sdd_root` y `sdd_root_is_ancestor` (find-up de un init/modo previo hacia arriba, con techo en el git toplevel — misma lógica que el hook de sesión), `init_found`, `mode_found`, `mode`, `installed_phases` (reconoce también el layout legacy `<fase>/.claude/CLAUDE.md`), `artifact_candidates` (claves spec/prd/design con las carpetas detectadas) y `detected_stack`/`detected_type`/`app_framework` (Paso 4). Si no hay `python3`, usa el **Fallback sin python3** del final de este paso.
 
-**3.0 — Raíz del proyecto en monorepos (ROADMAP 5.7).** Si `sdd_root_is_ancestor` es `true`, el monorepo ya tiene SDD inicializado en su raíz (`sdd_root`). **NO inicialices anidado.** Pregunta con `AskUserQuestion`:
-  - **"Operar desde la raíz `<sdd_root>`"** (recomendado) → detente e indica al usuario: `cd <sdd_root>` y relanza `/wf-project-init` desde ahí. El init, las sesiones y los artefactos operan desde la raíz del proyecto, no desde el subpaquete.
-  - **"Inicializar aquí (subproyecto independiente)"** → continúa el flujo normal en el cwd (caso raro pero legítimo: un subproyecto SDD anidado a propósito).
+**3.0 — Raíz del proyecto en monorepos.** Si `sdd_root_is_ancestor` es `true`, el monorepo ya tiene SDD inicializado en su raíz (`sdd_root`). **NO inicialices anidado.** Pregunta con `AskUserQuestion`:
+  - **"Operar desde la raíz `<sdd_root>`"** (recomendado) → detente e indica al usuario: `cd <sdd_root>` y relanza `/wf-project-init` desde ahí.
+  - **"Inicializar aquí (subproyecto independiente)"** → continúa el flujo normal en el cwd.
 
-Si `sdd_root_is_ancestor` es `false` (o `sdd_root` es `null`) → continúa relativo al cwd, que es la raíz correcta.
+Si `sdd_root_is_ancestor` es `false` (o `sdd_root` es `null`) → continúa relativo al cwd.
 
 **3a. Modo libre.** Si `mode` es `free`, confirmar con AskUserQuestion ("Sí, convertir a SDD" / "No, mantener modo libre"). "No" → cerrar sin tocar nada.
 
-**3b. Init previo.** Si `init_found`, lee `project-init.json`, puebla `KNOWN_STATE` (profiles, type, stack, phases) y muestra resumen compacto. Para `profiles`: lee el array `profiles`; si el JSON es legacy y solo trae `profile` (string), trátalo como `["<profile>"]` (se migrará al reescribir, ver Paso 8). El resumen muestra los perfiles acumulados. Luego AskUserQuestion:
+**3b. Init previo.** Si `init_found`, lee `project-init.json`, puebla `KNOWN_STATE` (topology, surfaces, design_role, stack, phases) y muestra resumen compacto. Luego AskUserQuestion:
 
 ```
 question: "Este proyecto ya está inicializado. ¿Qué quieres hacer?"
@@ -77,13 +90,15 @@ opciones:
     description: "Cierra sin cambios"
 ```
 
-`MODE=extend` mantiene lo instalado y solo pregunta lo que falte (ej. un PM inicializó y ahora un dev completa la entrevista técnica). Si hay `--force` como argumento, rehacer sin preguntar.
+`MODE=extend` mantiene lo instalado y solo pregunta lo que falte. Si hay `--force` como argumento, rehacer sin preguntar.
 
-**3c. Artefactos.** Refinar `KNOWN_STATE`: `prd/PRD.md` → `use_prd=true`; `design/DESIGN.md` o `DESIGN_BRIEF.md` → `design_strategy="existing_design"`; specs existentes (`spec/features/` o specs detectados en otra ruta) → `specs_exist=true` (anotar la ruta real si no es la canónica).
+> **Esquema nuevo (sin retrocompatibilidad).** Un `project-init.json` con el esquema legacy (`profiles`/`profile`/`type` en vez de `topology`/`surfaces`) **no es válido**: trátalo como init corrupto y ofrece "Rehacer desde cero". No migres campos legacy.
 
-**3d. Carpetas candidatas de artefactos.** Las trae `artifact_candidates` del detector (claves `spec`/`prd`/`design` con las carpetas propias del proyecto que podrían alojar los artefactos de cada fase, p. ej. `specs/`, `docs/prd/`, `design-system/`). Si no está vacío, alimentan la pregunta 5.7 (solo se pregunta si hay candidatas).
+**3c. Artefactos.** Refinar `KNOWN_STATE`: `prd/PRD.md` → `use_prd=true`; `design/DESIGN.md` o `DESIGN_BRIEF.md` → `has_design=true`; specs existentes (`spec/features/` o specs detectados en otra ruta) → `specs_exist=true` (anotar la ruta real si no es la canónica).
 
-**Fallback sin python3.** Si no hay `python3`, reproduce la detección de este paso con estos comandos (equivalen a los campos del JSON):
+**3d. Carpetas candidatas de artefactos.** Las trae `artifact_candidates` del detector (claves `spec`/`prd`/`design`). Si no está vacío, alimentan la pregunta 5.6 (solo se pregunta si hay candidatas).
+
+**Fallback sin python3.** Si no hay `python3`, reproduce la detección con estos comandos:
 
 ```bash
 # find-up (sdd_root / sdd_root_is_ancestor)
@@ -109,20 +124,20 @@ for d in docs/design design-system; do test -d "$d" && echo "candidate:design:$d
 
 ---
 
-## Paso 4: Analizar el proyecto en silencio
+## Paso 4: Analizar el proyecto en silencio (hint de stack/superficie)
 
-El detector del Paso 3 ya devolvió `detected_stack`, `detected_type` y `app_framework`. La tabla de mapeo que aplica (referencia; el fallback bash está al final del paso):
+El detector del Paso 3 ya devolvió `detected_stack`, `detected_type` y `app_framework`. Son **pistas**, no decisiones: la superficie y el stack los confirma/decide la entrevista. Tabla de mapeo (referencia; fallback bash al final):
 
-| Condición | DETECTED_STACK (y tipo implícito) |
+| Condición | DETECTED_STACK (superficie implícita) |
 |---|---|
-| `gradle-found` + (`iosApp-found` o `composeApp-found`) | `kmm` (app) |
-| `flutter-found` | `flutter` (app) |
-| `android-build-found` sin `iosApp-found` | `android` (app) |
+| `gradle-found` + (`iosApp-found` o `composeApp-found`) | `kmm` (mobile) |
+| `flutter-found` | `flutter` (mobile) |
+| `android-build-found` sin `iosApp-found` | `android` (mobile) |
 | `next-found` / `vite-react-found` / `astro-found` | `next` / `vite-react` / `astro` (web) |
 | `ktor-found` / `express-found` / `fastapi-found` | `ktor` / `node-express` / `fastapi` (backend) |
 | Ninguna | sin detección |
 
-Con detección: `KNOWN_STATE.project_type` ← `detected_type`; si es stack app, `KNOWN_STATE.app_framework` ← `app_framework` (`kmm`→`compose_multiplatform`, etc.).
+Con detección: usa `detected_type` como superficie pre-rellenada (mobile/web/backend) y `app_framework` para confirmar el framework móvil (`kmm`→`compose_multiplatform`, etc.).
 
 **Fallback sin python3:**
 
@@ -145,170 +160,36 @@ test -f requirements.txt && grep -qi "fastapi" requirements.txt && echo "fastapi
 
 ## Paso 5: Entrevista
 
-Secuencia única para todos los perfiles — lo que varía es qué pasos aplican:
+Las preguntas que no se gatean entre sí se agrupan en una misma llamada a `AskUserQuestion` (regla 5). De cada grupo, pregunta solo lo que siga abierto tras `KNOWN_STATE` (regla 2); si un grupo se queda sin preguntas abiertas, se omite entero. Orden de las llamadas:
 
 ```
-5.0 Perfil     → siempre (salvo --profile)
-5.1 PRD        → siempre
-5.2 Tipo       → SIEMPRE (identidad del proyecto, no del perfil)
-5.3 Diseño     → según perfil y tipo (tabla abajo)
-5.4 Framework  → SOLO perfil dev y tipo app
-5.5 Targets    → SOLO framework multiplataforma
-5.6 Stack      → derivar sin preguntar
-5.7 Artefactos → SOLO si hay carpetas candidatas detectadas (3d)
-5.8 Pipeline   → siempre (salvo ampliación con valor previo)
-5.9 Resumen    → siempre
+Llamada 1 — incondicional: Q1 Contenido (gatea toda la rama) + Pipeline
+Rama según Q1:
+  authoring   → ¿PRD? + ¿Sistema visual?
+  consumer    → path al SSoT + Superficie (gatea técnica)  → Framework/Targets si móvil
+  standalone  → ¿PRD? + ¿Diseño? + Superficie(s)           → Framework/Targets si móvil
+Siempre al final: Resumen y confirmación
 ```
 
-### 5.0 — Perfil
+### 5.0 — Q1 Contenido del repositorio [siempre, salvo `--topology`]
 
 ```
-question: "¿Cómo se va a trabajar en este proyecto?"
-header: "Perfil"
+question: "¿Qué va a contener este repositorio?"
+header: "Contenido"
 opciones:
-  - label: "Desarrollo"
-    description: "Pipeline completo con entrevista técnica: se configura el stack ahora"
-  - label: "Producto"
-    description: "PRD y specs. La configuración técnica queda pendiente para cuando entre desarrollo"
-  - label: "Diseño"
-    description: "Sistema visual y prototipado desde PRD/specs. Sin configuración técnica ahora"
-  - label: "Personalizado"
-    description: "Decide `prd` y `design` por separado (como dev pero sin entrevista técnica); el backbone `spec`/`plan`/`tasks` se instala igual"
+  - label: "Producto (specs + diseño)"
+    description: "PRD, specs y sistema de diseño — la fuente de verdad agnóstica del producto. El código vive en otros repos; no se configura stack aquí"
+  - label: "Desarrollo (consume specs)"
+    description: "El código de una superficie (app, web, desktop, backend) que consume los specs de un repo de Producto. Instala plan y tasks (+ stack), y diseño de feature si tiene UI"
+  - label: "Autónomo (todo aquí)"
+    description: "Specs y código juntos: proyecto único o monorepo. Pipeline completo de spec a tasks. Para el caso mínimo, di luego que no a PRD y a diseño"
 ```
 
-`PROFILE = dev | product | design | custom`.
+`TOPOLOGY = authoring | consumer | standalone`.
 
-### 5.0b — Topología [SOLO perfil dev]
+### 5.0-pipeline — Pipeline [siempre, salvo ampliación con valor previo]
 
-```
-question: "¿Este repo contiene sus propios specs o los consume de otro repo?"
-header: "Topología"
-opciones:
-  - label: "Specs propios (Recomendado)"
-    description: "Monorepo o producto único: PRD/specs y código viven aquí. Pipeline completo"
-  - label: "Consume specs de otro repo"
-    description: "Repo técnico (server, app, web) de un producto multi-repo: los specs viven en un repo SSoT compartido. Aquí solo se instalan plan y tasks (+ overlay de stack)"
-```
-
-Si **consume** → `TOPOLOGY = consumer` y preguntar (texto libre vía "Other") el **path local al checkout del repo SSoT** (sibling `../<repo>` o submodule). Validar: el path existe y contiene specs (`features/` o `*_features.md`, buscando también bajo `artifacts.spec` de SU `project-init.json` si lo tiene). Si no valida → re-preguntar o detener con instrucciones de clonarlo. Guardar `ARTIFACTS_SOURCE = <path>` y el pin `ARTIFACTS_SOURCE_PIN = git -C <path> rev-parse --short HEAD` (si es repo git; si no, `unknown`).
-
-En modo consumer: **saltar 5.1 (PRD), 5.3 (Diseño) y 5.7 (Artefactos)** — la autoría vive en el repo SSoT. La entrevista técnica (5.2, 5.4-5.6) aplica igual: este repo ES el código.
-
-Si specs propios → `TOPOLOGY = standalone` (comportamiento de siempre, no guardar campos extra).
-
-### 5.1 — PRD [siempre, salvo consumer]
-
-```
-question: "¿Vas a partir de un PRD o vas a crear uno?"
-header: "PRD"
-opciones:
-  - label: "Sí voy a usar PRD"
-    description: "Se instalará prd/ con sus skills"
-  - label: "No voy a usar PRD"
-    description: "El pipeline arranca en spec/ desde tus documentos de requisitos"
-```
-
-### 5.2 — Tipo [SIEMPRE, ningún perfil lo salta]
-
-```
-question: "¿Qué tipo de software es este proyecto?"
-header: "Tipo"
-opciones:
-  - label: "App"
-    description: "App móvil o multiplataforma (Android, iOS, Desktop)"
-  - label: "Web"
-    description: "Aplicación web (Next.js, React, Astro, Vue...)"
-  - label: "Backend"
-    description: "API o microservicio (Ktor, Express, FastAPI...)"
-  - label: "Otro software"
-    description: "Librería, CLI, tooling, scripts, ecosistemas de agentes... El plan y las tasks se fundamentan en el propio repo"
-```
-
-`project_type = app | web | backend | other`.
-
-### 5.3 — Diseño
-
-| Perfil | Tipo | Acción |
-|---|---|---|
-| `design` | cualquiera | `design` SE INSTALA siempre. Preguntar estrategia solo si no hay diseño detectado: "Voy a crear un diseño" / "Ya tengo un diseño" |
-| `dev` o `custom` | `app` o `web` | Pregunta completa de 3 opciones (abajo) |
-| `dev` o `custom` | `backend` u `other` | OMITIR — sin design |
-| `product` | cualquiera | OMITIR — sin design (ampliable después) |
-
-```
-question: "¿Vas a querer implementar diseño o partes de un diseño?"
-header: "Diseño"
-opciones:
-  - label: "Voy a crear un diseño"
-    description: "Se instalará design/ con skills de sistema visual, prototipado y tokens"
-  - label: "Ya tengo un diseño"
-    description: "Se instalará design/ para trabajar con el diseño existente"
-  - label: "No vamos a usar diseño"
-    description: "El pipeline irá de Spec directamente a Plan"
-```
-
-`design_strategy = create_design | existing_design | no_design`.
-
-### 5.4 — Framework [SOLO perfil dev y tipo app]
-
-Exactamente estas cuatro opciones; no añadir tecnologías web/backend:
-
-```
-question: "¿Qué tipo de app vas a hacer?"
-header: "Framework"
-opciones:
-  - label: "Android (Nativa)"
-    description: "Jetpack Compose, Kotlin — solo Android"
-  - label: "iOS (Nativa)"
-    description: "SwiftUI, Swift — solo iOS"
-  - label: "Compose Multiplatform (Multiplataforma)"
-    description: "Kotlin Multiplatform + Compose — Android, iOS, Desktop"
-  - label: "Flutter (Multiplataforma)"
-    description: "Dart + Flutter — Android, iOS, Desktop"
-```
-
-Mapeo: `android` / `ios` / `compose_multiplatform` / `flutter`.
-
-### 5.5 — Targets [SOLO compose_multiplatform o flutter]
-
-```
-question: "¿Qué targets va a soportar?"
-header: "Targets"
-multiSelect: true
-opciones: [Android, iOS, Desktop]
-```
-
-Mínimo uno. Guardar en minúscula.
-
-### 5.6 — Derivar STACK (sin preguntar)
-
-| Caso | STACK |
-|---|---|
-| `--stack` pasado | ese valor (precedencia total) |
-| `project_type == "other"` | `"agnostico"` (decisión explícita: sin stack) |
-| Perfil `dev`, tipo app | por framework: `android`/`ios`/`kmm`/`flutter` |
-| Perfil `dev`, tipo web/backend | `DETECTED_STACK` si hubo detección; si no, `"agnostico"` |
-| Perfil `product`/`design`/`custom` (sin entrevista técnica) | `null` (**pendiente** — la completará desarrollo vía "Completar / ampliar") |
-
-> `null` ≠ `agnostico`: `null` significa "aún no se ha hecho la entrevista técnica" (el gate de plan la exigirá); `agnostico` significa "este software no tiene stack especialista, modo genérico".
-
-### 5.7 — Ubicación de artefactos [SOLO si `KNOWN_STATE.artifact_candidates` no está vacío]
-
-El layout por defecto es el canónico: los artefactos de cada fase viven en su directorio (`prd/`, `spec/`, `design/`). Si el proyecto ya tiene carpetas propias (3d), preguntar **una vez por fase con candidata**:
-
-```
-question: "He detectado la carpeta `<candidata>`. ¿Dónde deben vivir los artefactos de la fase <fase>?"
-header: "Artefactos"
-opciones:
-  - label: "Usar <candidata>"
-    description: "Los artefactos de <fase> (specs, análisis, features/...) se crearán bajo <candidata>/"
-  - label: "Usar la canónica (<fase>/)"
-    description: "Layout estándar del pipeline SDD"
-```
-
-Resultado → `ARTIFACTS_MAP` con un directorio por fase instalada (canónico si no se preguntó). Sin candidatas: `ARTIFACTS_MAP` canónico sin preguntar.
-
-### 5.8 — Modo del pipeline [siempre, salvo ampliación con valor previo]
+En la MISMA llamada que Q1 (independiente):
 
 ```
 question: "¿Qué rigor de pipeline quieres por defecto en este proyecto?"
@@ -320,20 +201,170 @@ opciones:
     description: "Specs proporcionales (núcleo de 4 elementos, ≥1 CA), análisis inline. Para scrum cambiante y features pequeñas. Los gates anti-alucinación son idénticos; cada feature puede forzar el otro modo con --light/--standard"
 ```
 
-Resultado → `PIPELINE_MODE` (`standard` | `light`).
+`PIPELINE_MODE = standard | light`.
 
-### 5.9 — Resumen y confirmación [siempre]
+---
+
+### Rama AUTHORING
+
+Llamada 2 — dos preguntas independientes:
+
+**5.A1 — PRD:**
+```
+question: "¿Este producto va a usar un PRD?"
+header: "PRD"
+opciones:
+  - label: "Sí, con PRD"
+    description: "Se instala prd/ con sus skills"
+  - label: "No, solo specs"
+    description: "El pipeline arranca en spec/ desde tus documentos de requisitos"
+```
+
+**5.A2 — Sistema visual:**
+```
+question: "¿Este producto va a tener sistema de diseño (DESIGN.md)?"
+header: "Diseño"
+opciones:
+  - label: "Sí, sistema visual"
+    description: "Se instala design (rol system): brief, DESIGN.md y tokens. Las superficies derivan sus flows/views en sus repos"
+  - label: "No"
+    description: "Sin diseño aquí; cada superficie que lo necesite lo añade en su repo"
+```
+
+Authoring **no** pregunta superficie, framework ni stack: es agnóstico. `STACK = agnostico`, `surfaces = []`, `has_ui = false`. `design_role = system` si hay sistema visual, si no `null`.
+
+---
+
+### Rama CONSUMER
+
+**5.C0 — Path al repo SSoT** (texto libre vía opción "Other" de AskUserQuestion, o pregúntalo directamente si el usuario ya lo dio): path local al checkout del repo `authoring` (sibling `../<repo>` o submodule). Validar: el path existe y contiene specs (`features/` o `*_features.md`, buscando también bajo `artifacts.spec` de SU `project-init.json` si lo tiene). Si no valida → re-preguntar o detener con instrucciones de clonarlo. Guardar `ARTIFACTS_SOURCE = <path>` y `ARTIFACTS_SOURCE_PIN = git -C <path> rev-parse --short HEAD` (o `unknown`).
+
+**5.C1 — Superficie** (en la misma llamada que el path no, porque el path se valida antes):
+```
+question: "¿Qué superficie implementa este repo?"
+header: "Superficie"
+opciones:
+  - label: "App móvil"
+    description: "Android, iOS o multiplataforma. Tiene UI: se instala la capa de diseño de feature"
+  - label: "App desktop"
+    description: "App de escritorio. Tiene UI: se instala la capa de diseño de feature"
+  - label: "Web"
+    description: "Aplicación web. Tiene UI: se instala la capa de diseño de feature"
+  - label: "Backend (servicio/API)"
+    description: "Sin UI: pasa de Spec directamente a Plan. No se instala diseño"
+```
+
+`surfaces = [<una>]`. `has_ui = surface ∈ {mobile, desktop, web}`. `design_role = feature` si `has_ui`, si no `null`.
+
+**5.C2 — Framework/Targets** [solo si superficie móvil] → ver 5.X abajo. Para web/backend, derivar stack de la detección (Paso 4) o `agnostico`.
+
+---
+
+### Rama STANDALONE
+
+Llamada 2 — preguntas independientes (PRD, Diseño, Superficies):
+
+**5.S1 — PRD:** idéntica a 5.A1.
+
+**5.S2 — Diseño:**
+```
+question: "¿Este proyecto va a tener diseño?"
+header: "Diseño"
+opciones:
+  - label: "Sí, sistema + features"
+    description: "Se instala design completo (rol full): DESIGN.md + flows/views/ui_prompt por feature"
+  - label: "No"
+    description: "El pipeline irá de Spec directamente a Plan"
+```
+`design_role = full` si sí; si no `null`.
+
+**5.S3 — Superficie(s)** [multiSelect]:
+```
+question: "¿Qué superficie(s) cubre este repo?"
+header: "Superficies"
+multiSelect: true
+opciones:
+  - label: "App móvil"   (Android/iOS/multiplataforma)
+  - label: "App desktop"
+  - label: "Web"
+  - label: "Backend (servicio/API)"
+  - label: "Otro (librería, CLI, tooling)"
+```
+`surfaces = [...]`. `has_ui = surfaces ∩ {mobile, desktop, web} ≠ ∅`. **Caso mínimo**: PRD=no + Diseño=no + `surfaces = [other]` → `STACK = agnostico`, solo backbone `spec`/`plan`/`tasks`.
+
+**5.S4 — Framework/Targets** [solo si `surfaces` incluye móvil] → ver 5.X.
+
+> **Deuda multi-superficie (single-repo).** Si `surfaces` tiene más de una superficie con stack distinto (p. ej. móvil + backend), hoy solo se aplica **un** overlay de stack. Elige la superficie primaria para el stack ahora y avisa al usuario: las demás se completan después con "Completar / ampliar" (un overlay por pasada).
+
+---
+
+### 5.X — Framework y Targets [solo si hay superficie móvil y no llegó `--stack`]
+
+```
+question: "¿Qué tipo de app móvil vas a hacer?"
+header: "Framework"
+opciones:
+  - label: "Android (Nativa)"
+    description: "Jetpack Compose, Kotlin — solo Android"
+  - label: "iOS (Nativa)"
+    description: "SwiftUI, Swift — solo iOS"
+  - label: "Compose Multiplatform (Multiplataforma)"
+    description: "Kotlin Multiplatform + Compose — Android, iOS, Desktop"
+  - label: "Flutter (Multiplataforma)"
+    description: "Dart + Flutter — Android, iOS, Desktop"
+```
+Mapeo: `android` / `ios` / `compose_multiplatform` / `flutter`.
+
+**Targets** [solo `compose_multiplatform` o `flutter`]:
+```
+question: "¿Qué targets va a soportar?"
+header: "Targets"
+multiSelect: true
+opciones: [Android, iOS, Desktop]
+```
+Mínimo uno. Guardar en minúscula.
+
+### 5.6 — Ubicación de artefactos [solo si `artifact_candidates` no vacío y hay fase con artefactos]
+
+El layout por defecto es el canónico (`prd/`, `spec/`, `design/`). Si el proyecto ya tiene carpetas propias (3d), preguntar **una vez por fase con candidata**:
+
+```
+question: "He detectado la carpeta `<candidata>`. ¿Dónde deben vivir los artefactos de la fase <fase>?"
+header: "Artefactos"
+opciones:
+  - label: "Usar <candidata>"
+    description: "Los artefactos de <fase> se crearán bajo <candidata>/"
+  - label: "Usar la canónica (<fase>/)"
+    description: "Layout estándar del pipeline SDD"
+```
+
+Resultado → `ARTIFACTS_MAP`. En `consumer` no aplica (no autora prd/spec/design).
+
+### 5.7 — Derivar STACK (sin preguntar)
+
+| Caso | STACK |
+|---|---|
+| `--stack` pasado | ese valor (precedencia total) |
+| `TOPOLOGY == authoring` | `agnostico` (no hay código aquí) |
+| `surfaces` solo `other` | `agnostico` |
+| Superficie móvil (con framework elegido) | `android`/`ios`/`kmm`/`flutter` |
+| Superficie web/backend | `DETECTED_STACK` si hubo detección; si no, `agnostico` |
+| Multi-superficie standalone | el de la superficie primaria (deuda: un overlay) |
+
+### 5.8 — Resumen y confirmación [siempre]
 
 ```
 Configuración del proyecto
 ──────────────────────────────────────────────────
-Perfil:    <Desarrollo / Producto / Diseño / Personalizado>
-Tipo:      <App / Web / Backend / Otro software>
-Fases:     <prd → spec → design → plan → tasks>   (backbone spec/plan/tasks + las elegidas)
-Stack:     <stack / agnóstico / pendiente de entrevista técnica>
-Targets:   <android, ios, desktop>                [solo si multiplataforma]
-Pipeline:  <standard / ligero>
-Modo:      <instalación nueva / ampliación>
+Contenido:  <Producto (authoring) / Desarrollo (consumer) / Autónomo (standalone)>
+Superficie: <mobile, web, ...>                       [no en authoring]
+SSoT:       <path al repo de specs>                  [solo consumer]
+Fases:      <prd → spec → design → plan → tasks>     (según topología)
+Diseño:     <sistema / feature / completo / sin diseño>
+Stack:      <stack / agnóstico>
+Targets:    <android, ios, desktop>                  [solo multiplataforma]
+Pipeline:   <standard / ligero>
+Modo:       <instalación nueva / ampliación>
 ──────────────────────────────────────────────────
 ```
 
@@ -344,38 +375,44 @@ Confirmar con AskUserQuestion ("Instalar" / "Cambiar algo" → vuelve a 5.0).
 ## Paso 6: Derivar fases e instalar
 
 ```
-TOPOLOGY == standalone:
-  SELECTED_PHASES = [spec, plan, tasks]                            ← backbone
-  use_prd == true                  → anteponer prd
-  design según tabla 5.3 == sí     → insertar design tras spec
+TOPOLOGY == authoring:
+  SELECTED_PHASES = [spec]
+  use_prd == true     → anteponer prd
+  has_design == true  → insertar design (rol system) tras spec
+  (sin plan/tasks, sin overlay de stack)
 
 TOPOLOGY == consumer:
-  SELECTED_PHASES = [plan, tasks]                                  ← sin autoría
-  (la autoría de prd/spec/design vive en el repo SSoT; las kb de lectura
-   cross-fase — kb-spec-expert, kb-a11y-expert — las trae install.sh plan
-   como dependencia)
+  SELECTED_PHASES = [plan, tasks]
+  has_ui == true      → anteponer design (rol feature)
+  (sin prd/spec; la autoría vive en el SSoT)
+
+TOPOLOGY == standalone:
+  SELECTED_PHASES = [spec, plan, tasks]
+  use_prd == true     → anteponer prd
+  has_design == true  → insertar design (rol full) tras spec
 ```
 
 Orden canónico: `prd → spec → design → plan → tasks` (solo las presentes).
 
-Instalación única **desde la raíz del proyecto** (toda la infraestructura va al `.claude/` raíz; los CLAUDE.md de fase quedan como reglas de carga perezosa por path en `.claude/rules/sdd-<fase>.md`):
+Instalación única **desde la raíz del proyecto**. Cuando `design` está en las fases, pasar `--design-role`:
 
 ```bash
-bash "$SDD_HOME/install.sh" <fase1,fase2,...>
+DESIGN_ROLE=<system|feature|full>   # según design_role; omitir el flag si no hay design
+bash "$SDD_HOME/install.sh" <fase1,fase2,...> ${DESIGN_ROLE:+--design-role=$DESIGN_ROLE}
 ```
 
 En `MODE=extend`, pasar solo las fases que falten. Con `--force`, pasar todas.
 
-Crear además los directorios de artefactos según `ARTIFACTS_MAP` (5.7):
+Crear los directorios de artefactos según `ARTIFACTS_MAP` (5.6):
 
 ```bash
 mkdir -p <artifacts.prd> <artifacts.design>          # solo las fases instaladas
-mkdir -p <artifacts.spec>/features
+mkdir -p <artifacts.spec>/features                   # solo si se instala spec (authoring/standalone)
 ```
 
-En `TOPOLOGY=consumer` no hay `ARTIFACTS_MAP`: crear solo `mkdir -p features` (ahí vivirán las subcarpetas `plan/` y `tasks/` de cada feature, con `Spec origen` apuntando al checkout del SSoT).
+En `consumer` no hay `ARTIFACTS_MAP`: crear solo `mkdir -p features` (ahí vivirán las subcarpetas `design/` (si UI), `plan/` y `tasks/` de cada feature, con `Spec origen` apuntando al checkout del SSoT).
 
-**Ajustar los globs de las reglas al layout del proyecto**: si algún directorio de `ARTIFACTS_MAP` difiere del canónico, edita el frontmatter `paths:` de la regla correspondiente (`.claude/rules/sdd-prd.md`, `sdd-spec.md`, `sdd-design.md`) sustituyendo el glob del directorio canónico (p. ej. `"spec/**"`) por el real (p. ej. `"specs/**"`). Los globs por nombre de artefacto (`**/*_spec.md`...) no se tocan: son independientes del layout.
+**Ajustar los globs de las reglas al layout del proyecto**: si algún directorio de `ARTIFACTS_MAP` difiere del canónico, edita el frontmatter `paths:` de la regla correspondiente (`.claude/rules/sdd-prd.md`, `sdd-spec.md`, `sdd-design.md`) sustituyendo el glob del directorio canónico por el real. Los globs por nombre de artefacto no se tocan.
 
 No continuar al Paso 7 sin haber ejecutado el install con TODAS las fases seleccionadas.
 
@@ -383,42 +420,23 @@ No continuar al Paso 7 sin haber ejecutado el install con TODAS las fases selecc
 
 ## Paso 7: Generar CLAUDE.md raíz
 
-**No copiar `$SDD_HOME/CLAUDE.md`.** Generar `.claude/CLAUDE.md` con esta plantilla (solo filas de fases instaladas). **Siempre se sobreescribe** el que `install.sh` haya copiado en el Paso 6 — la plantilla del proyecto manda:
+**No copiar `$SDD_HOME/CLAUDE.md`.** Generar `.claude/CLAUDE.md` con esta plantilla (solo filas de fases instaladas). **Siempre se sobreescribe** el que `install.sh` haya copiado en el Paso 6:
 
 ```markdown
 # <nombre-proyecto> — Proyecto SDD
 
-Proyecto gestionado con Spec Driven Development. Fases instaladas: <lista en orden>.
+Proyecto gestionado con Spec Driven Development. Topología: **<authoring|consumer|standalone>**. Fases instaladas: <lista en orden>.
 
 ## Cómo operar
 
-- Toda la infraestructura (skills, agentes, reglas) vive en este `.claude/`. Las instrucciones detalladas de cada fase son reglas de carga perezosa (`.claude/rules/sdd-<fase>.md`): el harness las carga automáticamente al tocar los artefactos de esa fase. Si vas a operar una fase sin haber tocado aún sus artefactos, léelas primero. No improvises workflows.
+- Toda la infraestructura (skills, agentes, reglas) vive en este `.claude/`. Las instrucciones de cada fase son reglas de carga perezosa (`.claude/rules/sdd-<fase>.md`): el harness las carga al tocar los artefactos de esa fase. No improvises workflows.
 - Respeta el orden del pipeline: una fase consume artefactos de la anterior.
-- Modo de pipeline por defecto: **<standard|ligero>** (`pipeline_mode` de `.sdd/project-init.json`). Cada feature puede forzar el otro modo con `--light`/`--standard` al generar su spec; los gates anti-alucinación son idénticos en ambos.
+- Modo de pipeline por defecto: **<standard|ligero>** (`pipeline_mode` de `.sdd/project-init.json`). Cada feature puede forzar el otro modo con `--light`/`--standard`.
 - Estado del proyecto: `.sdd/project-init.json`. Para completar la entrevista técnica o añadir fases: `/wf-project-init` → "Completar / ampliar".
 
 ## Layout de artefactos
 
-Los artefactos de cada fase viven en el directorio declarado en `artifacts` de `.sdd/project-init.json` (rutas relativas a la raíz del proyecto):
-
-| Fase | Directorio de artefactos | Qué contiene |
-|---|---|---|
-| PRD | `<artifacts.prd>/` | `prd.md`, `*_analysis.md`, `*_discovery.md` |
-| Spec | `<artifacts.spec>/` | `_features.md`, `features/<nombre>/` (una carpeta por feature) |
-| Design | `<artifacts.design>/` | `DESIGN_BRIEF.md`, `DESIGN.md`, `tokens/` |
-
-Cada feature organiza sus artefactos en subcarpetas por fase, con el `README.md` en su raíz:
-
-```
-features/<nombre>/
-  README.md
-  spec/    <nombre>_spec.md (+ deltas, sync_requirements, conflict_report)
-  design/  <nombre>_flows.md, _views.md, _ui_prompt.md (+ discovery, moodboard, variantes)
-  plan/    <nombre>_plan.md
-  tasks/   <nombre>_tasks.md (+ <nombre>_bugs.md, mantenimiento)
-```
-
-Los `_plan.md` y `_tasks.md` de cada feature viven SIEMPRE dentro de su carpeta de feature para preservar la trazabilidad por rutas relativas (`Spec origen: ../spec/<nombre>_spec.md`). Las features creadas con el layout plano legacy (artefactos directamente en `features/<nombre>/`) siguen siendo válidas: los workflows leen ambos layouts y no los mezclan dentro de una misma feature. Los workflows resuelven sus rutas de salida desde este mapa — no escribas artefactos fuera de él.
+[Variante según topología — ver abajo]
 
 ## Fases y sus reglas
 
@@ -430,54 +448,68 @@ Los `_plan.md` y `_tasks.md` de cada feature viven SIEMPRE dentro de su carpeta 
 | Plan | `.claude/rules/sdd-plan.md` |
 | Tasks | `.claude/rules/sdd-tasks.md` |
 
-El rootmap de workflows de cada fase vive en su regla, no aquí: este orquestador no conoce detalles de ninguna fase. Para arrancar una fase cuyos artefactos aún no existen, lee su regla primero.
+(Solo filas de fases instaladas. Si hay stack especialista, añadir `| Stack <stack> | .claude/rules/sdd-<stack>.md |`.)
 
 ## Política de git
 
-- Se commitea TODO `.claude/` (skills, agentes, rules, settings.json) y TODO `.sdd/` (estado, scripts de enforcement, sello de versión): el repo funciona para cualquier dev y en CI sin tener el ecosistema SDD instalado.
-- Excepción única: `.claude/settings.local.json` (permisos personales de sesión) — está en `.gitignore` y nunca se commitea.
-- Los artefactos SDD (PRD, `features/`, design) son el producto del pipeline: se commitean siempre.
+- Se commitea TODO `.claude/` y TODO `.sdd/`: el repo funciona para cualquier dev y en CI sin tener el ecosistema SDD instalado.
+- Excepción única: `.claude/settings.local.json` (en `.gitignore`).
+- Los artefactos SDD (PRD, `features/`, design) se commitean siempre.
 
 ### Trabajo en paralelo: una feature por rama
 
-- **Una feature = una rama.** Cada feature vive en su carpeta `features/<nombre>/` (spec, design, plan, tasks): dos devs en features distintas tocan ficheros distintos y no colisionan.
-- **`_features.md` es un índice GENERADO, no se edita a mano.** Lo regenera `python3 .sdd/scripts/sdd-features-index.py <raíz_spec>` desde el discovery + los specs + el readiness report. Un conflicto de merge sobre `_features.md` es ruido: acéptalo o regéneralo tras el merge (`git checkout --theirs`/`--ours` da igual; la verdad se reconstruye del disco).
-- El registro de inits de stack es el log append-only `.sdd/stack-runs.jsonl` (no un array en `project-init.json`): los `>>` de ramas distintas se combinan sin pisarse.
+- **Una feature = una rama.** Cada feature vive en su carpeta `features/<nombre>/`.
+- **`_features.md` es un índice GENERADO** (`python3 .sdd/scripts/sdd-features-index.py <raíz_spec>`), no se edita a mano.
+- El registro de inits de stack es el log append-only `.sdd/stack-runs.jsonl`.
 ```
 
-(Solo filas de fases instaladas. Si hay stack especialista, añadir la fila `| Stack <stack> | .claude/rules/sdd-<stack>.md |`.)
+**Variantes de "Layout de artefactos" según topología:**
 
-**Variante consumer** (`TOPOLOGY=consumer`): sustituir la sección "Layout de artefactos" por:
+- **authoring / standalone** — tabla canónica:
+  ```markdown
+  Los artefactos de cada fase viven en el directorio declarado en `artifacts` de `.sdd/project-init.json`:
 
-```markdown
-## Topología: repo consumidor
+  | Fase | Directorio | Qué contiene |
+  |---|---|---|
+  | PRD | `<artifacts.prd>/` | `prd.md`, `*_analysis.md`, `*_discovery.md` |
+  | Spec | `<artifacts.spec>/` | `_features.md`, `features/<nombre>/` |
+  | Design | `<artifacts.design>/` | `DESIGN_BRIEF.md`, `DESIGN.md`, `tokens/` |
 
-Los PRD/specs/design de este producto viven en el repo SSoT: `<artifacts_source>` (checkout local). Este repo solo PLANIFICA y EJECUTA:
+  Cada feature organiza sus artefactos en subcarpetas por fase (`spec/`, `design/`, `plan/`, `tasks/`), con su `README.md` en la raíz. En authoring solo existen las fases de autoría (sin `plan/`/`tasks/`).
+  ```
+  En **authoring** añadir: "Este repo es la **fuente de verdad** del producto: autora PRD/specs/`DESIGN.md` agnósticos. El código y la planificación viven en los repos de superficie (consumer), que leen estos artefactos."
 
-- Specs (solo lectura): `<artifacts_source>/.../features/<nombre>/spec/<nombre>_spec.md`
-- Planes y tasks (de este repo): `features/<nombre>/plan/` y `features/<nombre>/tasks/` — cada repo consumidor tiene SU propio plan de la misma feature, con `Spec origen` apuntando al checkout del SSoT.
-- Cambios de spec → se piden en el repo SSoT, nunca se editan aquí.
-- Pin de specs: `artifacts_source_pin` en `.sdd/project-init.json` — si el SSoT avanza, los workflows de plan avisan.
-```
+- **consumer** — sustituir "Layout de artefactos" por:
+  ```markdown
+  ## Topología: repo consumidor
 
-En `MODE=extend`, regenerar con la unión de fases. En el flujo de init, este archivo siempre sustituye al que `install.sh` copió en el Paso 6.
+  Los PRD/specs/`DESIGN.md` de este producto viven en el repo SSoT: `<artifacts_source>` (checkout local). Este repo solo PLANIFICA y EJECUTA su superficie (`<surface>`):
 
-**`.gitignore` del proyecto**: asegura que contiene la línea `.claude/settings.local.json` — añádela si falta (crea el archivo si no existe; nunca toques el resto del contenido). Es la única pieza SDD que no se commitea (política de git de la plantilla de arriba).
+  - Specs y `DESIGN.md` (solo lectura): bajo `<artifacts_source>/.../features/<nombre>/`.
+  - Diseño de feature (de este repo, solo si UI): `features/<nombre>/design/` — flows/views/ui_prompt de ESTA superficie, derivados leyendo el `DESIGN.md` compartido del SSoT.
+  - Planes y tasks (de este repo): `features/<nombre>/plan/` y `features/<nombre>/tasks/`, con `Spec origen` apuntando al checkout del SSoT.
+  - Cambios de spec o de sistema visual → se piden en el repo SSoT, nunca se editan aquí.
+  - Pin de specs: `artifacts_source_pin` en `.sdd/project-init.json` — si el SSoT avanza, los workflows de plan avisan.
+  ```
+
+**`.gitignore` del proyecto**: asegura la línea `.claude/settings.local.json` (créalo si no existe; no toques el resto).
 
 ---
 
 ## Paso 8: Registrar estado y despachar
 
-1. `mkdir -p .sdd`. Timestamp real: ejecutar `date -u +%Y-%m-%dT%H:%M:%SZ` y usar SU SALIDA — nunca escribir un timestamp de memoria.
-2. Escribir `.sdd/project-init.json` con **EXACTAMENTE estos campos — ni uno más, ni uno menos**. No añadir objetos por fase ni estado de features (eso vive en `_features.md`):
+1. `mkdir -p .sdd`. Timestamp real: `date -u +%Y-%m-%dT%H:%M:%SZ` y usar SU SALIDA.
+2. Escribir `.sdd/project-init.json` con **EXACTAMENTE estos campos**:
 
 ```json
 {
   "name": "<nombre-proyecto>",
-  "profiles": ["<perfiles acumulados — p. ej. \"product\", \"dev\">"],
-  "type": "<app|web|backend|other>",
-  "stack": "<stack|agnostico|null>",
-  "targets": ["..."] ,
+  "topology": "<authoring|consumer|standalone>",
+  "surfaces": ["<mobile|desktop|web|backend|other>", "..."],
+  "has_ui": <true|false>,
+  "design_role": "<system|feature|full|null>",
+  "stack": "<stack|agnostico>",
+  "targets": ["..."],
   "phases": ["<fases en orden canónico>"],
   "artifacts": { "prd": "<dir>", "spec": "<dir>", "design": "<dir>" },
   "pipeline_mode": "<standard|light>",
@@ -488,26 +520,22 @@ En `MODE=extend`, regenerar con la unión de fases. En el flujo de init, este ar
 }
 ```
 
-> El registro de ejecuciones del init de stack **no** vive en `project-init.json` (sería un array creciente dentro de un fichero de config compartido → conflicto de merge garantizado con varios devs). Vive en un log append-only aparte, `.sdd/stack-runs.jsonl` (una línea JSON por run), que lo escribe `wf-<stack>-init`. `project-init.json` queda como config estable.
-
-(`sdd_version` sale de `.sdd/sdd-version.json` — lo escribe `install.sh` en el Paso 6: concatenar `<version>+<commit>`. Si el sello no existe (instalación anómala), usar `unknown`. Las actualizaciones posteriores las gestiona `/wf-sdd-update`, no este workflow. `pipeline_mode` sale de la pregunta 5.8: es el default del proyecto — cada feature puede forzar el otro modo con `--light`/`--standard`.)
-
-**Variante consumer** (`TOPOLOGY=consumer`, 5.0b): sustituir la clave `artifacts` por estas dos:
-
-```json
+Reglas de los campos:
+- `surfaces`: `[]` en authoring. `has_ui`: derivado (`surfaces ∩ {mobile,desktop,web} ≠ ∅`).
+- `design_role`: `system` (authoring con diseño), `feature` (consumer con UI), `full` (standalone con diseño), `null` (sin diseño).
+- `targets`: solo si multiplataforma; en otro caso omitir la clave.
+- `artifacts`: una clave por fase de autoría instalada (`prd`/`spec`/`design`), relativa a la raíz. **En `consumer` se sustituye `artifacts` por**:
+  ```json
   "artifacts_source": "<path local al checkout del repo SSoT>",
   "artifacts_source_pin": "<commit corto del SSoT al hacer el init | unknown>"
-```
+  ```
+  (en consumer `phases` no incluye prd/spec; el `design` de consumer es rol feature y sus artefactos viven dentro de cada feature.)
+- `specialist_workflow`: solo si el stack es concreto Y existe `wf-<stack>-init`.
+- `sdd_version`: de `.sdd/sdd-version.json` (lo escribe `install.sh`): `<version>+<commit>`. Si no existe, `unknown`.
 
-(`phases` será `["plan", "tasks"]`. El pin registra contra qué versión de los specs se inicializó este repo: los workflows de plan avisan — sin bloquear — si el checkout del SSoT avanzó respecto al pin. Para refrescar el pin tras revisar los cambios: actualizar el valor con `git -C <artifacts_source> rev-parse --short HEAD`.)
+> El registro de ejecuciones del init de stack vive en `.sdd/stack-runs.jsonl` (append-only), no aquí. `project-init.json` queda como config estable.
 
-(`targets` solo si multiplataforma; en otro caso omitir esa clave. `specialist_workflow` solo si el stack es concreto Y existe `wf-<stack>-init`. `artifacts` sale de `ARTIFACTS_MAP` (5.7): una clave por fase instalada de entre `prd`/`spec`/`design`, valor relativo a la raíz — canónico es el nombre de la fase, p. ej. `"spec": "spec"`. plan/tasks no tienen clave: sus artefactos viven dentro de la carpeta de cada feature — subcarpetas `plan/` y `tasks/`, hermanas de `spec/`.)
-
-> **`profiles` es acumulativo (no se sobrescribe).** Un proyecto pasa por varios perfiles a lo largo de su vida: un PM lo inicializa como `product`, y más tarde un dev lo amplía como `dev`. El campo registra **todos los perfiles bajo los que se ha configurado**, no solo el último.
-> - **Init fresco** (`MODE=init` / `--force`): `profiles` = `[<perfil de esta sesión>]` (el que se eligió en 5.0 o vino por `--profile`).
-> - **Ampliación** (`MODE=extend`): **unión** del perfil de esta sesión con los ya presentes, preservando el orden de aparición y sin duplicar. Ej.: stored `["product"]` + sesión `dev` → `["product", "dev"]`; re-correr el mismo perfil deja la lista igual (unión idempotente).
-> - **Back-compat (migración):** un `project-init.json` previo a 0.23.0 trae `profile` (string singular). Al leerlo (Paso 3b) trátalo como `["<profile>"]`; al reescribir el JSON en esta sesión, **migra** a `profiles` y elimina la clave `profile` antigua. No quedan ambas claves.
-> - `--profile` y la pregunta 5.0 siguen siendo singulares: son el perfil de ESTA sesión. La pluralidad vive solo en el estado persistido.
+> **`topology` no se acumula** (a diferencia del antiguo `profiles`): un repo es lo que es. La evolución legítima es authoring→standalone (se le añade código) vía "Completar / ampliar", que **reescribe** `topology` y recalcula fases. No se mantiene historial de topologías.
 
 3. Escribir `.claude/sdd-mode.json`:
 
@@ -521,13 +549,13 @@ En `MODE=extend`, regenerar con la unión de fases. En el flujo de init, este ar
 
 ## Paso 9: VERIFICACIÓN OBLIGATORIA
 
-Ejecuta el verificador con las fases instaladas y muestra el resultado. Si algún check falla, corrígelo (típicamente re-ejecutar `install.sh <fase>`) y re-verifica ANTES de dar el init por terminado o atender cualquier otra petición:
+Ejecuta el verificador con las fases instaladas. Si algún check falla, corrígelo (típicamente re-ejecutar `install.sh <fase>`) y re-verifica ANTES de dar el init por terminado:
 
 ```bash
 python3 "$SDD_HOME/scripts/sdd-init-detect.py" verify --phases <SELECTED_PHASES> --json
 ```
 
-Emite un check por entrada (`check`, `ok`, `message`) cubriendo: reglas `.claude/rules/sdd-<fase>.md` de cada fase, `.claude/CLAUDE.md`, `.sdd/project-init.json` + esquema (`dispatcher`), mapa de artefactos (`artifacts` en standalone o `artifacts_source` en consumer), array `profiles` sin la clave legacy `profile`, scripts de enforcement en `.sdd/scripts/`, `.sdd/sdd-version.json` y la línea `.claude/settings.local.json` en `.gitignore`. **Exit 2** = al menos un check en FALLO (no des el init por terminado: corrige y re-verifica); **exit 0** = todo OK.
+Emite un check por entrada cubriendo: reglas `.claude/rules/sdd-<fase>.md` de cada fase, `.claude/CLAUDE.md`, `.sdd/project-init.json` + esquema (`dispatcher`, `topology`), mapa de artefactos (`artifacts` en authoring/standalone o `artifacts_source` en consumer), scripts de enforcement en `.sdd/scripts/`, `.sdd/sdd-version.json` y la línea `.claude/settings.local.json` en `.gitignore`. **Exit 2** = al menos un check en FALLO; **exit 0** = todo OK.
 
 **Fallback sin python3:**
 
@@ -537,20 +565,25 @@ for f in <SELECTED_PHASES>; do
 done
 test -f .claude/CLAUDE.md && echo "OK claude-md" || echo "FALLO claude-md"
 test -f .sdd/project-init.json && echo "OK init-json" || echo "FALLO init-json"
-grep -q '"dispatcher": "wf-project-init"' .sdd/project-init.json && echo "OK schema" || echo "FALLO schema — reescribir con los campos exactos del Paso 8"
-grep -q '"artifacts"' .sdd/project-init.json || grep -q '"artifacts_source"' .sdd/project-init.json && echo "OK artifacts-map" || echo "FALLO artifacts-map — añadir el mapa artifacts (o artifacts_source en consumer) del Paso 8"
-grep -q '"profiles"' .sdd/project-init.json && ! grep -q '"profile"[^s]' .sdd/project-init.json && echo "OK profiles" || echo "FALLO profiles — usar el array \"profiles\" (acumulado) y eliminar la clave legacy \"profile\" (Paso 8)"
-test -f .sdd/scripts/sdd-gate-check.py && test -f .sdd/scripts/sdd-seal.py && test -f .sdd/scripts/sdd-task-state.py && test -f .sdd/scripts/sdd-sync-check.py && test -f .sdd/scripts/sdd-skill-allow.py && echo "OK enforcement-scripts" || echo "FALLO enforcement-scripts — copiar desde $SDD_HOME/scripts/ (Paso 6)"
-test -f .sdd/sdd-version.json && echo "OK sdd-version" || echo "FALLO sdd-version — re-ejecutar install.sh (Paso 6) para sellar la versión"
-grep -qx '\.claude/settings\.local\.json' .gitignore 2>/dev/null && echo "OK gitignore" || echo "FALLO gitignore — añadir la línea .claude/settings.local.json (Paso 7)"
+grep -q '"dispatcher": "wf-project-init"' .sdd/project-init.json && echo "OK schema" || echo "FALLO schema"
+grep -q '"topology"' .sdd/project-init.json && echo "OK topology" || echo "FALLO topology — añadir el campo topology (Paso 8)"
+grep -q '"artifacts"' .sdd/project-init.json || grep -q '"artifacts_source"' .sdd/project-init.json && echo "OK artifacts-map" || echo "FALLO artifacts-map"
+test -f .sdd/scripts/sdd-gate-check.py && test -f .sdd/scripts/sdd-seal.py && test -f .sdd/scripts/sdd-task-state.py && test -f .sdd/scripts/sdd-sync-check.py && test -f .sdd/scripts/sdd-skill-allow.py && echo "OK enforcement-scripts" || echo "FALLO enforcement-scripts"
+test -f .sdd/sdd-version.json && echo "OK sdd-version" || echo "FALLO sdd-version"
+grep -qx '\.claude/settings\.local\.json' .gitignore 2>/dev/null && echo "OK gitignore" || echo "FALLO gitignore"
 ```
 
 ---
 
 ## Paso 10: Informe final
 
-- **Perfil, tipo y fases instaladas** (backbone + elegidas)
-- **Stack**: configurado y despachado / agnóstico (modo genérico) / **pendiente de entrevista técnica** (indicar que desarrollo deberá ejecutar `/wf-project-init` → "Completar / ampliar")
+- **Topología, superficie(s) y fases instaladas**
+- **Stack**: configurado y despachado / agnóstico (modo genérico) / no aplica (authoring)
+- **Diseño**: rol instalado (system / feature / full / sin diseño)
 - **Verificación**: resultado de los checks del Paso 9
-- **Siguiente paso según perfil**: prd → `/wf-prd-create` o `/wf-prd-review`; product sin prd → `/wf-spec-analyze`; design → `/wf-design-intake generate <feature_spec>`; dev → primer paso de la fase más temprana
-- Si en el Paso 3c se detectaron artefactos fuera del directorio que declara `artifacts` (ej. specs bajo el directorio del PRD), avisar al usuario: el pipeline espera `<artifacts.spec>/features/`; ofrecer moverlos o actualizar el mapa `artifacts` para reflejar la ruta real
+- **Siguiente paso según topología**:
+  - authoring → `/wf-prd-create` o `/wf-prd-review` (si PRD); si no, `/wf-spec-analyze`. Si hay diseño: `/wf-design-intake generate <feature_spec>`.
+  - consumer → leer specs del SSoT y `/wf-prepare-plan generate <feature_spec>` (si UI, antes `/wf-design-feature-prototype`).
+  - standalone → primer paso de la fase más temprana instalada.
+- Si en 3c se detectaron artefactos fuera del directorio que declara `artifacts`, avisar y ofrecer mover o actualizar el mapa.
+- Si hubo deuda multi-superficie (5.S4), recordar que las superficies con stack pendiente se completan con "Completar / ampliar".

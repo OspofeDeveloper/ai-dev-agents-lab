@@ -50,7 +50,7 @@ Captura el resultado:
 - **Con errores** → guardar la lista completa de errores.
 - **npx no disponible** → registrar `linter: SKIPPED` con explicacion.
 
-## Paso 5: Delegar auditoría al agente design-architect
+## Paso 5: Delegar auditoría al agente design-system-architect
 
 Lee el checklist completo de validación:
 `${CLAUDE_SKILL_DIR}/references/validation-checklist.md`

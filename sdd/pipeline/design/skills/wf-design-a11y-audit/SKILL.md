@@ -6,7 +6,7 @@ argument-hint: "<DESIGN.md> [--views <feature_views.md>] [--brief <DESIGN_BRIEF.
 effort: medium
 allowed-tools: [Read, Write, Bash, Agent]
 context: fork
-agent: design-architect
+agent: design-system-architect
 user-invocable: true
 ---
 
@@ -162,7 +162,7 @@ Aplica `kb-a11y-web-expert`. Sobre el DESIGN.md y, si se pasó `--views`, sobre 
 
 ## Paso 8: Delegar al agente (opcional, para razonamiento avanzado)
 
-Si los pasos 3-7b producen hallazgos que requieren razonamiento contextual (ej. evaluar si un focus order tiene sentido en una vista compleja, o si un reflow degrada operabilidad), delegar al agente `design-architect` cargando `kb-a11y-expert` y, cuando el target sea web/desktop, también `kb-a11y-web-expert`.
+Si los pasos 3-7b producen hallazgos que requieren razonamiento contextual (ej. evaluar si un focus order tiene sentido en una vista compleja, o si un reflow degrada operabilidad), delegar al agente `design-system-architect` cargando `kb-a11y-expert` y, cuando el target sea web/desktop, también `kb-a11y-web-expert`.
 
 ## Paso 9: Producir reporte
 

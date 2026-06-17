@@ -110,7 +110,8 @@ La unidad primaria de trabajo en SDD es el **agente especializado** cuando la pe
 | `sdd-spec-planner` | Planificación del approach de trabajo dentro del ecosistema Spec |
 | `sdd-spec-writer` | Escritura y evolución de artefactos Spec |
 | `sdd-spec-auditor` | Validación, conflictos y readiness de artefactos Spec |
-| `design-architect` | Traducción de Spec a contrato visual de producto y artefactos de feature para Stitch |
+| `design-system-architect` | Autoría del sistema visual del producto (`DESIGN.md`, agnóstico de superficie): brief, sistema, validación, evolución, exportación |
+| `design-feature-architect` | Autoría de artefactos por feature (`flows`, `views`, `ui_prompt` — uno por superficie cuando aplica) consumiendo el `DESIGN.md` como contrato de solo-lectura |
 | `plan-architect` | Transformación de Spec a Plan técnico |
 | `task-generator` | Transformación de Plan a Tasks accionables |
 | `qa-engineer` | Derivación de casos de prueba desde CAs y auditoría de cobertura con evidencia ejecutada |

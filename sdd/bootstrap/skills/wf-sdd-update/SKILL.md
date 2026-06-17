@@ -34,7 +34,7 @@ Tu rol: reinstalar mecánicamente lo que el proyecto YA declaró, a la versión 
 
 ## Paso 3: Plan de actualización y avisos de rotura
 
-1. Lee de `project-init.json`: `phases`, `stack`, `artifacts`.
+1. Lee de `project-init.json`: `phases`, `stack`, `artifacts`, `design_role`.
 2. Lee `$SDD_HOME/CHANGELOG.md` y extrae las entradas posteriores a la versión instalada. Las líneas `⚠` son cambios que afectan a proyectos ya inicializados.
 3. Presenta el plan ANTES de ejecutar:
    - versión instalada → versión nueva (con commits)
@@ -48,8 +48,10 @@ Tu rol: reinstalar mecánicamente lo que el proyecto YA declaró, a la versión 
 Desde la raíz del proyecto:
 
 ```bash
-!SDD_HOME=$(cat ~/.sdd-home) && SDD_PROJECT_ROOT="$(pwd)" bash "$SDD_HOME/install.sh" <fase1,fase2,...> --prune
+!SDD_HOME=$(cat ~/.sdd-home) && SDD_PROJECT_ROOT="$(pwd)" bash "$SDD_HOME/install.sh" <fase1,fase2,...> --prune ${DESIGN_ROLE:+--design-role=$DESIGN_ROLE}
 ```
+
+> Si `phases` incluye `design`, pasa `--design-role=<design_role>` (el valor leído de `project-init.json`: `system`, `feature` o `full`) para reinstalar el mismo agente/bundle que tenía el proyecto — sin el flag, `install.sh` instalaría ambos agentes (`full`) por defecto y degradaría un repo authoring/consumer. Si `design` no está en `phases`, omite el flag.
 
 Si `stack` es concreto (ni `agnostico` ni null) y existe `$SDD_HOME/tech/<stack>/install.sh`:
 

@@ -89,6 +89,8 @@ Determina si la feature requiere handoff de Design exactamente según esa regla 
 
 Si **sí requiere** handoff de Design:
 
+> **Topología consumer (superficie con UI):** el `DESIGN.md` es el sistema visual del producto y vive en el repo SSoT (`artifacts_source` de `.sdd/project-init.json`), en **solo lectura** — resuélvelo ahí (bajo su `artifacts.design` o junto a los specs del SSoT), NO en local. Los `<feature>_flows.md`/`<feature>_views.md` de ESTA superficie SÍ son locales de este repo (los autora aquí `design-feature-architect` leyendo el `DESIGN.md` compartido). Combina: `DESIGN.md` remoto (SSoT) + flows/views locales.
+
 1. Resuelve `DESIGN.md` y los artefactos de feature con el resolutor:
    ```bash
    !python3 .sdd/scripts/sdd-resolve-path.py find design-doc "<spec_path>"   # DESIGN.md (raíz de producto)

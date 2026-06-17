@@ -1,9 +1,10 @@
 # CU-1 — Inicializar un proyecto SDD
 
 **Objetivo:** verificar que, al abrir un proyecto, el sistema decide correctamente el
-modo de trabajo (wizard SDD/libre), inicializa el ecosistema según el perfil de quien
-arranca, repara instalaciones a medias, avisa de versiones viejas sin bloquear, y
-encuentra los marcadores hacia arriba en un monorepo.
+modo de trabajo (wizard SDD/libre), inicializa el ecosistema según la **topología de
+contenido del repo** (authoring/consumer/standalone), repara instalaciones a medias,
+avisa de versiones viejas sin bloquear, y encuentra los marcadores hacia arriba en un
+monorepo.
 **Proyecto a usar:** un repo/carpeta real **FUERA del repo del ecosistema** (p. ej.
 `~/sdd-pruebas/mi-proyecto/`): uno **nuevo o virgen** para el wizard de modo, y aparte
 uno ya en SDD que manipules para `init-pending`/`init-incomplete`/`version-drift`.
@@ -23,25 +24,28 @@ wizard antes de nada, invocar el init, no autoaprobar el modo).
 
 ## Modelo de cobertura — qué ejes del wizard hay que probar y cuáles no
 
-El wizard de `wf-project-init` tiene varios ejes (perfil, PRD, tipo, framework, rigor,
-topología…). El producto cartesiano de sus valores es grande, pero **no todos los ejes
-cambian lo que se instala**. CU-1 prueba **ramas de decisión**, no combinaciones de
+El wizard de `wf-project-init` tiene varios ejes (topología, PRD, diseño, superficie,
+framework, rigor…). El producto cartesiano de sus valores es grande, pero **no todos los
+ejes cambian lo que se instala**. CU-1 prueba **ramas de decisión**, no combinaciones de
 valores: un eje solo merece un caso por rama si **cambia el set de fases instaladas o el
 flujo de preguntas**. Si solo se persiste en `project-init.json`, basta un único caso
 parametrizado que verifique que el valor elegido aterriza.
+
+**El eje primario es la TOPOLOGÍA** (Q1, Paso 5.0): determina el reparto de backbone y qué
+ramas siguen. Los demás ejes se gatean dentro de cada topología.
 
 **Ejes que cambian comportamiento (behavior-changing) — un caso por rama.** La columna
 "Cobertura" es honesta: `✓` cubierto, `parcial` rama no aseverada explícitamente, `—` sin caso.
 
 | Eje | Pregunta | Qué ramifica | Cobertura |
 |---|---|---|---|
-| Perfil | 5.0 | qué fases opcionales (prd/design) y si hay entrevista técnica | `✓` dev/product/design (CU-1.h); custom (CU-1.o) |
-| PRD sí/no | 5.1 | antepone (o no) la fase `prd` | `✓` (CU-1.h, CU-1.n) |
-| Topología | 5.0b (solo dev) | `consumer` instala solo `plan`+`tasks` y usa `artifacts_source` | `✓` (CU-1.i) |
-| Tipo (en perfil **dev**) | 5.2 | gatea 5.3 (design para app/web; omitido en backend/other) y 5.4 (framework para app) | `✓` (CU-1.o) |
-| Framework | 5.4 (dev+app) | deriva el `stack` y gatea 5.5 (targets) | `✓` (CU-1.o) |
-| Carpetas candidatas | 5.7 | gatea la pregunta de ubicación de artefactos | `✓` (CU-1.m) |
-| Init previo | 3b | extend / rehacer / dejar; acumulación de perfiles | `✓` (CU-1.d, CU-1.e, CU-1.l) |
+| **Topología** | 5.0 (Q1) | el reparto de backbone: `authoring` (prd?/spec/design? sin plan/tasks) · `consumer` (plan/tasks +design si UI, sin prd/spec) · `standalone` (todo) | `✓` (CU-1.h authoring/standalone; CU-1.i consumer) |
+| PRD sí/no | rama authoring/standalone | antepone (o no) la fase `prd` | `✓` (CU-1.h, CU-1.n) |
+| Diseño sí/no | rama authoring/standalone | inserta `design` (rol `system` en authoring, `full` en standalone) | `✓` (CU-1.h) |
+| Superficie | consumer (single) / standalone (multiSelect) | `con-UI` (mobile/desktop/web) instala diseño de feature; `backend`/`other` headless; deriva el `stack` | `✓` (CU-1.i con-UI/headless; CU-1.o) |
+| Framework | superficie móvil | deriva el `stack` y gatea targets | `✓` (CU-1.o) |
+| Carpetas candidatas | 5.6 | gatea la pregunta de ubicación de artefactos | `✓` (CU-1.m) |
+| Init previo | 3b | extend / rehacer / dejar | `✓` (CU-1.d, CU-1.e, CU-1.l) |
 | Monorepo (marcadores en ancestro) | 3.0 | operar desde la raíz vs anidar | `✓` (CU-1.g, CU-1.j) |
 | Modo libre previo | 3a | confirmar conversión a SDD | `✓` (CU-1.c) |
 
@@ -50,14 +54,14 @@ cambian el install; solo escriben un campo en `project-init.json`.
 
 | Eje | Pregunta | Dónde aterriza | Qué NO cambia |
 |---|---|---|---|
-| Rigor | 5.8 | `pipeline_mode` (`standard`\|`light`) | el set de fases instaladas (los gates anti-alucinación son idénticos en ambos modos) |
-| Tipo (en perfil **product**/**design**, sin entrevista técnica) | 5.2 | `type` | nada instalado: design se omite (5.3) y `stack` queda `null` (5.6) sea cual sea el tipo |
+| Rigor | 5.0-pipeline | `pipeline_mode` (`standard`\|`light`) | el set de fases instaladas (los gates anti-alucinación son idénticos en ambos modos) |
+| Superficie concreta (mobile vs desktop vs web) | 5.C1/5.S3 | `surfaces[]` y `target_platforms` del diseño | dentro de "con-UI", la familia exacta no cambia las fases instaladas (sí el `target_tool` del prototipo, fase design, no el init) |
 
-> **Implicación práctica:** `producto/prd/app/standard`, `producto/prd/web/ligero`,
-> `producto/prd/backend/standard`… **instalan exactamente lo mismo**. La tupla de valores
-> no multiplica los casos: solo los ejes behavior-changing lo hacen. Para los recorded-only
-> basta CU-1.n. El eje `tipo` es la única sutileza: es behavior-changing **en perfil dev**
-> (gatea design y framework) pero recorded-only **en product/design**.
+> **Implicación práctica:** dentro de una misma topología y has_ui, la superficie exacta
+> (mobile/desktop/web) y el rigor **instalan lo mismo**: la tupla de valores no multiplica
+> los casos del init, solo los ejes behavior-changing (topología, PRD, diseño, has_ui,
+> framework) lo hacen. **"Mínimo" no es un eje**: es `standalone` + PRD=no + diseño=no +
+> `surfaces=[other]` → solo backbone `spec`/`plan`/`tasks` agnóstico (CU-1.o lo cubre).
 
 ---
 
@@ -83,17 +87,17 @@ pregunta, o atiende tu petición sin preguntar.
 
 1. Eliges "Modo SDD".
    → **Esperado:** se crea `.claude/sdd-mode.json` con `{"mode":"sdd",…}` y a
-     continuación se invoca `wf-project-init`, que **entrevista por perfil**
-     (desarrollo / producto / diseño / personalizado) antes de instalar nada.
+     continuación se invoca `wf-project-init`, cuya **primera pregunta es la topología**
+     (Producto/authoring · Desarrollo/consumer · Autónomo/standalone) antes de instalar nada.
 2. Completas la entrevista.
-   → **Esperado:** instala siempre el backbone (`spec`, `plan`, `tasks`) y añade
-     `prd`/`design` según perfil y tipo; escribe `.sdd/project-init.json` (con
-     `phases`, `profiles` como array, `artifacts`, `sdd_version`…), genera el
-     `.claude/CLAUDE.md` raíz, y si el perfil es **desarrollo** con stack concreto
-     despacha a `wf-<stack>-init`.
+   → **Esperado:** instala el backbone que la topología determine (authoring: spec
+     +prd?/design?, sin plan/tasks; consumer: plan/tasks +design si UI; standalone: todo);
+     escribe `.sdd/project-init.json` (con `topology`, `surfaces`, `design_role`, `phases`,
+     `artifacts`/`artifacts_source`, `sdd_version`…), genera el `.claude/CLAUDE.md` raíz, y
+     si hay código con stack concreto despacha a `wf-<stack>-init`.
 
-**Resultado:** PASS si escribe el JSON de modo, entrevista por perfil e instala el
-backbone + lo que el perfil decida · FALLO si instala sin preguntar el perfil, o no
+**Resultado:** PASS si escribe el JSON de modo, pregunta la topología primero e instala el
+backbone que la topología decide · FALLO si instala sin preguntar la topología, o no
 escribe `project-init.json`.
 **Desviación → reportar:** issue citando `CU-1.b`.
 
@@ -173,23 +177,26 @@ bloquea la petición, o actualiza sin pedírselo, o repite el aviso.
 preguntar el modo o intenta inicializar el subpaquete por su cuenta.
 **Desviación → reportar:** issue citando `CU-1.g`.
 
-## CU-1.h — El perfil decide qué se instala
+## CU-1.h — La topología decide qué se instala
 
 **Precondición:** proyecto virgen; eliges "Modo SDD" (CU-1.b).
-**Mecanismo:** `wf-project-init` (entrevista por perfil).
+**Mecanismo:** `wf-project-init` (Q1 topología → ramas; backbone variable, Regla 4).
 
-1. Inicializas con perfil **producto**.
-   → **Esperado:** instala backbone + `prd`, **omite `design`** y deja la config
-     técnica (stack) pendiente; `phases` no incluye `design`.
-2. Inicializas con perfil **diseño**.
-   → **Esperado:** instala `design` **siempre**, sin pedir framework de stack.
-3. Inicializas con perfil **desarrollo** sobre un proyecto con stack detectable.
-   → **Esperado:** entrevista técnica, registra el `stack` y despacha a
-     `wf-<stack>-init` al cerrar.
+1. Topología **Producto (authoring)**, con PRD y sistema de diseño.
+   → **Esperado:** instala `prd`+`spec`+`design` (rol `system`), **sin `plan`/`tasks`**;
+     `stack: "agnostico"`, `surfaces: []`, `design_role: "system"`; `artifacts` con prd/spec/design.
+     No despacha a ningún `wf-<stack>-init` (no hay código).
+2. Topología **Autónomo (standalone)** con PRD=no, diseño=no, superficie "Otro" (caso **Mínimo**).
+   → **Esperado:** instala **solo** el backbone `spec`/`plan`/`tasks`, `stack: "agnostico"`,
+     sin `prd`/`design`; `design_role: null`.
+3. Topología **Autónomo (standalone)** con diseño y superficie **móvil** sobre un stack detectable.
+   → **Esperado:** instala `prd?`+`spec`+`design` (rol `full`)+`plan`+`tasks`, entrevista
+     técnica (framework→stack), registra el `stack` y despacha a `wf-<stack>-init` al cerrar.
 
-**Resultado:** PASS si el set de fases instaladas coincide con el perfil elegido ·
-FALLO si instala fases que el perfil omite, o salta la entrevista técnica en
-desarrollo.
+**Resultado:** PASS si el set de fases y el `design_role` coinciden con la topología/diseño
+elegidos (authoring **sin** plan/tasks; standalone completo; mínimo = solo backbone) · FALLO
+si instala plan/tasks en authoring, instala diseño donde se dijo que no, o salta la entrevista
+técnica en standalone con código.
 **Desviación → reportar:** issue citando `CU-1.h`.
 
 ## CU-1.i — Topología consumer: repo que consume specs de un SSoT
@@ -197,16 +204,20 @@ desarrollo.
 **Precondición:** un repo técnico (server/app/web) que **no** aloja sus specs; los specs viven
 en otro repo SSoT del que tienes un checkout local (sibling `../<repo>` o submodule con
 `features/` o `*_features.md`).
-**Mecanismo:** `wf-project-init` perfil **dev** → pregunta de topología (Paso 5.0b). `consumer` →
-salta PRD/Diseño/Artefactos; instala **solo `plan` y `tasks`**; escribe `artifacts_source` +
-`artifacts_source_pin` en `project-init.json` (no la clave `artifacts`).
+**Mecanismo:** `wf-project-init` Q1 → **Desarrollo (consumer)**: pide el path al checkout del SSoT y
+la **superficie** (5.C0/5.C1). `consumer` salta PRD/Diseño-sistema; instala `plan`+`tasks` (+`design`
+rol `feature` **si la superficie tiene UI**); escribe `artifacts_source` + `artifacts_source_pin`
+en `project-init.json` (no la clave `artifacts`).
 
-1. Inicializas con perfil desarrollo y eliges **"Consume specs de otro repo"**; das el path al checkout del SSoT.
-   → **Esperado:** valida que el path existe y contiene specs; instala `phases: ["plan","tasks"]`
-     (sin prd/spec/design), crea `features/` y escribe `artifacts_source` + `artifacts_source_pin`
-     (commit corto del SSoT) en `project-init.json`. El `CLAUDE.md` raíz lleva la sección
-     **"Topología: repo consumidor"** (specs en solo lectura desde el SSoT).
-2. Das un path que **no** contiene specs.
+1. Consumer con superficie **Web** (con-UI); das el path al checkout del SSoT.
+   → **Esperado:** valida que el path existe y contiene specs; instala `phases: ["design","plan","tasks"]`
+     (design rol feature, **sin prd/spec**), `design_role: "feature"`, `has_ui: true`; crea `features/`
+     y escribe `artifacts_source` + `artifacts_source_pin` (commit corto del SSoT). El `CLAUDE.md` raíz
+     lleva la sección **"Topología: repo consumidor"** (specs **y `DESIGN.md`** del SSoT en solo lectura;
+     `flows`/`views` locales de esta superficie).
+2. Consumer con superficie **Backend** (headless).
+   → **Esperado:** instala **solo `plan`+`tasks`**, `design_role: null`, `has_ui: false`; sin diseño.
+3. Das un path que **no** contiene specs.
    → **Esperado:** **no** continúa: re-pregunta el path o detiene con instrucciones de clonar el SSoT;
      no inventa una raíz de specs ni instala como standalone.
 
@@ -247,30 +258,31 @@ de alguna fase declarada **no** dejó su `.claude/rules/sdd-<fase>.md`.
 FALLO si declara el init terminado con checks en FALLO, o atiende la petición dejando fases sin instalar.
 **Desviación → reportar:** issue citando `CU-1.k`.
 
-## CU-1.l — `profiles` es acumulativo entre perfiles (producto → desarrollo)
+## CU-1.l — La topología evoluciona vía "Completar / ampliar" (authoring → standalone)
 
-**Precondición:** un proyecto inicializado antes por un PM con perfil **producto**
-(`project-init.json` con `profiles: ["product"]`); ahora entra desarrollo a completar la entrevista técnica.
-**Mecanismo:** `wf-project-init` `MODE=extend`, Paso 8 — `profiles` es **unión** (orden de aparición,
-sin duplicar), nunca sobrescritura; back-compat migra `profile` (string) → `profiles` (array).
+**Precondición:** un proyecto inicializado antes como **Producto (authoring)** por un PM
+(`project-init.json` con `topology: "authoring"`, sin `plan`/`tasks`); ahora se le añade código en
+el mismo repo (pasa a monorepo).
+**Mecanismo:** `wf-project-init` `MODE=extend`, Paso 8 — `topology` **se reescribe** (no se acumula:
+un repo es lo que es, D-005); el extend recalcula las fases y añade las que falten preservando lo previo.
 
-1. Reinicializas eligiendo **"Completar / ampliar"** con perfil **desarrollo**.
-   → **Esperado:** `profiles` pasa a `["product","dev"]` (unión, sin perder `product`); completa la
-     entrevista técnica pendiente (stack) sin re-preguntar lo ya conocido. Re-correr el mismo perfil
-     deja la lista igual (unión idempotente).
-2. (back-compat) el `project-init.json` previo trae la clave legacy `profile: "product"` (string singular).
-   → **Esperado:** al reescribir el JSON **migra** a `profiles: [...]` y **elimina** la clave `profile`;
-     no quedan ambas a la vez.
+1. Reinicializas eligiendo **"Completar / ampliar"** y cambias el contenido a **Autónomo (standalone)**.
+   → **Esperado:** `topology` pasa de `"authoring"` a `"standalone"`; se **añaden** `plan`+`tasks` (y
+     `design` rol `full` si procede) a las fases ya instaladas; se completa la entrevista técnica (stack)
+     sin re-preguntar lo ya conocido; `prd`/`spec` previos **no se pierden**.
+2. Re-corres el mismo extend sin cambios.
+   → **Esperado:** idempotente — no duplica fases ni reescribe estado innecesariamente.
 
-**Resultado:** PASS si acumula perfiles sin sobrescribir y migra el legacy · FALLO si deja `profiles`
-solo con el último perfil, o conserva `profile` y `profiles` simultáneamente.
+**Resultado:** PASS si reescribe `topology` y añade las fases que faltan preservando la autoría previa ·
+FALLO si deja `topology: authoring` con `plan`/`tasks` instalados (estado incoherente), o pierde los
+artefactos de autoría.
 **Desviación → reportar:** issue citando `CU-1.l`.
 
 ## CU-1.m — Ubicación de artefactos no canónica (carpeta propia del proyecto)
 
 **Precondición:** un proyecto que ya tiene una carpeta propia candidata para una fase (p. ej. `specs/`
 o `docs/specs/`).
-**Mecanismo:** `wf-project-init` Paso 3d (detección de candidatas) + 5.7 (pregunta por fase) + Paso 6
+**Mecanismo:** `wf-project-init` Paso 3d (detección de candidatas) + 5.6 (pregunta por fase) + Paso 6
 (ajuste del frontmatter `paths:` de `.claude/rules/sdd-<fase>.md`).
 
 1. Inicializas; el init detecta la carpeta candidata.
@@ -284,69 +296,55 @@ o `docs/specs/`).
 si ignora la candidata, o deja la regla apuntando al directorio canónico que no se usa.
 **Desviación → reportar:** issue citando `CU-1.m`.
 
-## CU-1.n — Ejes solo-registrados: `tipo` y `rigor` se persisten sin cambiar el install set
+## CU-1.n — Eje solo-registrado: `rigor` se persiste sin cambiar el install set
 
-**Precondición:** proyecto virgen; eliges "Modo SDD" y perfil **producto** con PRD. Es el
-caso parametrizado que cubre los ejes **recorded-only** de la tabla del "Modelo de cobertura"
-(no hace falta un caso por cada combinación tipo×rigor).
-**Mecanismo:** wizard 5.2 (Tipo) + 5.8 (Pipeline) → escritura de `project-init.json` (Paso 8).
-En perfil producto, `tipo` no gatea 5.3 (design) ni 5.4 (framework), y `rigor` solo fija
-`pipeline_mode`.
+**Precondición:** proyecto virgen; eliges "Modo SDD", topología **Producto (authoring)** con PRD.
+Caso parametrizado del eje **recorded-only** `rigor` de la tabla del "Modelo de cobertura".
+**Mecanismo:** wizard 5.0-pipeline (rigor) → escritura de `project-init.json` (Paso 8). El rigor
+solo fija `pipeline_mode`; no cambia las fases.
 
-1. Inicializas el mismo perfil (producto + PRD) **dos veces** variando solo estos dos ejes:
-   una con **App + Standard**, otra con **Web + Ligero**.
-   → **Esperado:** ambos inits instalan **el mismo set de fases** (`prd, spec, plan, tasks`,
-     **sin `design`**) y dejan `stack: null` (entrevista técnica pendiente). La única
-     diferencia entre los dos `project-init.json` son dos campos: `type` (`app` vs `web`) y
-     `pipeline_mode` (`standard` vs `light`).
+1. Inicializas la misma topología (authoring + PRD + sistema de diseño) **dos veces** variando
+   solo el rigor: una **Standard**, otra **Ligero**.
+   → **Esperado:** ambos instalan **el mismo set de fases** (`prd, spec, design`, sin plan/tasks
+     por ser authoring) con el mismo `design_role: system`. La única diferencia entre los dos
+     `project-init.json` es `pipeline_mode` (`standard` vs `light`).
 2. Inspeccionas el `project-init.json` de cada uno.
-   → **Esperado:** `type` y `pipeline_mode` reflejan **exactamente** lo elegido; `phases` es
-     **idéntico** entre ambos; ningún otro campo cambia por efecto de tipo o rigor.
-3. (negativo) Repites el de **Web + Ligero** pero esta vez vuelves a elegir **App + Standard**.
-   → **Esperado:** salvo `type`/`pipeline_mode`, el resultado es indistinguible del primer
-     init — cambiar estos ejes nunca añade ni quita fases.
+   → **Esperado:** `pipeline_mode` refleja **exactamente** lo elegido; `phases` y `design_role`
+     son **idénticos** entre ambos; ningún otro campo cambia por efecto del rigor.
 
-**Resultado:** PASS si el valor elegido se persiste verbatim y el set instalado es invariante
-a tipo/rigor en perfil producto · FALLO si cambiar tipo o rigor altera las fases instaladas o
-el `stack`, o si el valor elegido no aterriza en `project-init.json`.
+**Resultado:** PASS si `pipeline_mode` se persiste verbatim y el set instalado es invariante al
+rigor · FALLO si cambiar el rigor altera las fases instaladas, o si el valor no aterriza en
+`project-init.json`.
 **Desviación → reportar:** issue citando `CU-1.n`.
 
-## CU-1.o — Tipo y framework SÍ ramifican en perfil dev/custom; perfil `custom`
+## CU-1.o — Superficie y framework SÍ ramifican; el caso "Mínimo"
 
-**Precondición:** proyecto virgen; eliges "Modo SDD". Cierra las ramas que CU-1.h dejaba en
-`parcial`/`—` (ver "Modelo de cobertura"): el gate de **design por tipo** en perfil dev, las
-ramas de **framework** (incluido el gate de targets), y el perfil **`custom`**.
-**Mecanismo:** wizard 5.2 (Tipo) → gatea 5.3 (Diseño) y 5.4 (Framework); 5.4 → deriva `stack`
-y gatea 5.5 (Targets); 5.6 (derivar stack); tabla 5.3 (perfil×tipo) y tabla 5.6 (perfil→stack).
+**Precondición:** proyecto virgen; eliges "Modo SDD". Cierra las ramas behavior-changing de
+**superficie** y **framework** (incluido el gate de targets) y el caso **Mínimo** (que sustituye al
+antiguo perfil `custom`).
+**Mecanismo:** Q1 topología → rama; la **superficie** (5.C1 consumer / 5.S3 standalone) gatea el
+diseño de feature (consumer, ver CU-1.i) y el **framework** (solo superficie móvil); el framework
+gatea **Targets**; 5.7 deriva el `stack`.
 
-**A — `tipo` gatea la pregunta de diseño en perfil dev.**
-1. Inicializas perfil **dev** + tipo **App**.
-   → **Esperado:** aparece la pregunta de **Diseño** de 3 opciones (5.3) **y** la de
-     **Framework** (5.4). Eliges crear diseño → `design` entra en `phases`.
-2. Inicializas perfil **dev** + tipo **Backend** (u **Otro software**).
-   → **Esperado:** **NO** aparece la pregunta de Diseño (5.3 la omite) **ni** la de Framework
-     (5.4 es solo dev+app); `phases` no incluye `design`; `stack` = detectado o `agnostico`,
-     nunca `null` (en dev sí hay entrevista técnica).
+**A — la superficie gatea el diseño de feature en consumer.** Cubierto en CU-1.i: superficie con-UI
+(web) instala `design` rol feature; backend (headless) no.
 
-**B — las ramas de framework derivan stack distinto y gatean targets.**
-3. Inicializas perfil **dev** + tipo **App** + framework **Compose Multiplatform** (o **Flutter**).
-   → **Esperado:** aparece **5.5 Targets** (multiSelect Android/iOS/Desktop, mínimo uno);
-     `stack` = `kmm` (o `flutter`); `targets` se persiste en `project-init.json`.
-4. Inicializas perfil **dev** + tipo **App** + framework **Android (Nativa)** (o **iOS Nativa**).
-   → **Esperado:** **NO** aparece 5.5 Targets (no es multiplataforma); `stack` = `android` (o
-     `ios`); la clave `targets` se **omite** del JSON.
+**B — el framework móvil deriva stack distinto y gatea targets.**
+1. Standalone + superficie **App móvil** + framework **Compose Multiplatform** (o **Flutter**).
+   → **Esperado:** aparece **Targets** (multiSelect Android/iOS/Desktop, mínimo uno); `stack` = `kmm`
+     (o `flutter`); `targets` se persiste en `project-init.json`.
+2. Standalone + superficie **App móvil** + framework **Android (Nativa)** (o **iOS Nativa**).
+   → **Esperado:** **NO** aparece Targets (no es multiplataforma); `stack` = `android` (o `ios`); la
+     clave `targets` se **omite** del JSON.
 
-**C — perfil `custom` se comporta como dev en design pero deja el stack pendiente.**
-5. Inicializas perfil **custom** + tipo **Web**.
-   → **Esperado:** aparece la pregunta de **Diseño** de 3 opciones (5.3 trata custom como dev),
-     pero **NO** la de Framework (5.4 es solo dev) y **NO** entrevista técnica; `stack` = `null`
-     (5.6: custom → pendiente, lo completará desarrollo con "Completar / ampliar"). Distíngalo de
-     dev+web, donde `stack` sería `agnostico`/detectado, no `null`.
+**C — caso "Mínimo" (sustituye al antiguo perfil `custom`).**
+3. Standalone + PRD=no + diseño=no + superficie **Otro (librería/CLI/tooling)**.
+   → **Esperado:** **NO** pregunta framework ni targets; `stack` = `agnostico`; `phases` = solo el
+     backbone `spec`/`plan`/`tasks`; `design_role: null`. Es la configuración mínima del pipeline.
 
-**Resultado:** PASS si el set de preguntas que aparecen y el `stack`/`targets`/`phases`
-resultantes coinciden con las tablas 5.3/5.4/5.6 para cada combinación · FALLO si pregunta
-design/framework donde la tabla los omite (o al revés), deriva un stack que no corresponde al
-framework, o deja `stack: null` en un perfil dev (o `agnostico` en custom).
+**Resultado:** PASS si el set de preguntas que aparecen y el `stack`/`targets`/`phases` coinciden con
+la superficie/framework elegidos · FALLO si pregunta framework sin superficie móvil, deriva un stack
+que no corresponde al framework, o instala diseño en el caso mínimo.
 **Desviación → reportar:** issue citando `CU-1.o`.
 
 ## CU-1.p — Los argumentos honran y saltan preguntas (por usuario o por orquestador)
@@ -357,19 +355,19 @@ ya se sabe"). Los args llegan **tecleados** (`/wf-project-init <flags>`) o vía 
 del Skill tool cuando invoca el **orquestador** (p. ej. desde el hook de sesión o una petición
 en lenguaje natural). Ambas vías son equivalentes.
 
-1. `/wf-project-init --profile product --type web`.
-   → **Esperado:** NO pregunta perfil ni tipo (los da por conocidos, a lo sumo confirma); la
-     entrevista sigue solo con lo que falta (PRD, pipeline). `project-init.json` registra
-     `type: web` y perfil `product`.
-2. `/wf-project-init --profile dev --type app --stack kmm`.
-   → **Esperado:** salta perfil, tipo, framework y targets (stack derivado del flag); va directo
-     a lo que falte.
+1. `/wf-project-init --topology authoring --prd`.
+   → **Esperado:** NO pregunta topología ni PRD (los da por conocidos, a lo sumo confirma); la
+     entrevista sigue solo con lo que falta (sistema de diseño, pipeline). `project-init.json`
+     registra `topology: authoring` y la fase `prd`.
+2. `/wf-project-init --topology standalone --surfaces mobile --stack kmm`.
+   → **Esperado:** salta topología, superficie, framework y targets (stack derivado del flag); va
+     directo a lo que falte (PRD, diseño, pipeline).
 3. (entrada por orquestador) Sin teclear el skill, una petición en lenguaje natural que el
    orquestador mapea a `wf-project-init` pasando `args`.
    → **Esperado:** mismo efecto que tecleado — los flags saltan sus preguntas.
-4. (negativo) Un flag con valor fuera del enum (p. ej. `--profile xxx`).
+4. (negativo) Un flag con valor fuera del enum (p. ej. `--topology xxx`).
    → **Esperado:** no se traga en silencio — lo ignora y pregunta, o pide un valor válido; nunca
-     inicializa con un perfil inexistente.
+     inicializa con una topología inexistente.
 
 **Resultado:** PASS si los flags válidos saltan su pregunta y aterrizan en el estado, y un flag
 inválido no se acepta · FALLO si re-pregunta algo ya dado por flag, o acepta un valor fuera del enum.

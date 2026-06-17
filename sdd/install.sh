@@ -25,17 +25,37 @@ usage() {
   echo "  prd,spec          : instala PRD y Spec"
   echo "  prd,spec,design   : instala PRD, Spec y Design"
   echo "  --prune           : elimina del .claude/ las skills/agents SDD de fases no seleccionadas"
+  echo "  --design-role <r> : con la fase design, qué capa instalar: system (autora DESIGN.md),"
+  echo "                      feature (autora flows/views/ui_prompt) o full (ambas, por defecto)."
+  echo "                      Forma: --design-role=system|feature|full"
 }
 
 RAW_ARG="all"
 PRUNE=0
+DESIGN_ROLE="full"   # system | feature | full — qué agente+bundle de la fase design instalar
 for arg in "$@"; do
   case "$arg" in
     --prune) PRUNE=1 ;;
+    --design-role=*) DESIGN_ROLE="${arg#*=}" ;;
     -h|--help|help) usage; exit 0 ;;
     *) RAW_ARG="$arg" ;;
   esac
 done
+case "$DESIGN_ROLE" in
+  system|feature|full) ;;
+  *) echo "ERROR: --design-role invalido: '$DESIGN_ROLE' (usa system|feature|full)"; exit 1 ;;
+esac
+
+# ¿El rol incluye la capa system / la capa feature?
+design_has_system() { [ "$DESIGN_ROLE" = "system" ] || [ "$DESIGN_ROLE" = "full" ]; }
+design_has_feature() { [ "$DESIGN_ROLE" = "feature" ] || [ "$DESIGN_ROLE" = "full" ]; }
+
+# Partición de la fase design por rol (SSoT del split de agentes, A0).
+DESIGN_SHARED_KB="kb-design-expert kb-design-system-contract kb-design-brief kb-design-governance kb-a11y-expert kb-a11y-web-expert kb-design-motion-expert kb-design-iconography-expert kb-design-voice kb-design-layout"
+DESIGN_SYSTEM_WF="wf-design-intake wf-design-moodboard wf-design-system wf-design-extract wf-design-validate wf-design-delta wf-design-export wf-design-branch wf-design-sync wf-design-a11y-audit"
+DESIGN_SYSTEM_KB="kb-design-characterization kb-design-style-decision-tree kb-design-style-taxonomy"
+DESIGN_FEATURE_WF="wf-design-feature-prototype wf-design-variant wf-design-feedback"
+DESIGN_FEATURE_KB="kb-design-feature-artifacts kb-design-conflict-expert kb-design-forms"
 
 # Construir lista de fases a instalar
 PHASES=()
@@ -119,7 +139,12 @@ if has_phase "spec"; then
   install_agent "$PIPELINE_DIR/spec/agents/sdd-spec-auditor.md"
 fi
 if has_phase "design"; then
-  install_agent "$PIPELINE_DIR/design/agents/design-architect.md"
+  if design_has_system; then
+    install_agent "$PIPELINE_DIR/design/agents/design-system-architect.md"
+  fi
+  if design_has_feature; then
+    install_agent "$PIPELINE_DIR/design/agents/design-feature-architect.md"
+  fi
 fi
 if has_phase "plan"; then
   install_agent "$PIPELINE_DIR/plan/agents/plan-architect.md"
@@ -174,12 +199,30 @@ if has_phase "spec"; then
 fi
 
 if has_phase "design"; then
-  # design necesita kb-spec-expert como dependencia
+  # design necesita kb-spec-expert como dependencia cross-fase
   install_skill "$PIPELINE_DIR/spec/skills/kb-spec-expert"
 
-  for skill_dir in "$PIPELINE_DIR/design/skills"/*/; do
-    install_skill "$skill_dir"
+  # KBs compartidas: van en ambos roles (el design-feature-architect carga el
+  # contrato del sistema como referencia de solo-lectura).
+  for s in $DESIGN_SHARED_KB; do
+    install_skill "$PIPELINE_DIR/design/skills/$s"
   done
+
+  # Capa system: autoría del DESIGN.md (intake, moodboard, system, extract,
+  # validate, delta, export, branch, sync, a11y-audit + KBs de dirección visual).
+  if design_has_system; then
+    for s in $DESIGN_SYSTEM_WF $DESIGN_SYSTEM_KB; do
+      install_skill "$PIPELINE_DIR/design/skills/$s"
+    done
+  fi
+
+  # Capa feature: autoría de flows/views/ui_prompt (prototype, variant, feedback
+  # + KBs de artefactos por feature).
+  if design_has_feature; then
+    for s in $DESIGN_FEATURE_WF $DESIGN_FEATURE_KB; do
+      install_skill "$PIPELINE_DIR/design/skills/$s"
+    done
+  fi
 fi
 
 if has_phase "plan"; then
@@ -225,7 +268,7 @@ phase_globs() {
   case "$1" in
     prd)    printf '%s\n' "prd/**" "**/prd*.md" "**/*_analysis.md" "**/*_discovery.md" ;;
     spec)   printf '%s\n' "spec/**" "**/features/*/spec/**" "**/*_spec.md" "**/*_features.md" ;;
-    design) printf '%s\n' "design/**" "**/features/*/design/**" "**/DESIGN*.md" "**/*_flows.md" "**/*_views.md" "**/*_ui_prompt.md" ;;
+    design) printf '%s\n' "design/**" "**/features/*/design/**" "**/DESIGN*.md" "**/*_flows.md" "**/*_views.md" "**/*_ui_prompt*.md" ;;
     plan)   printf '%s\n' "**/*_plan.md" ;;
     tasks)  printf '%s\n' "**/*_tasks.md" "**/*_bugs.md" "**/*_qa_plan.md" "**/*_qa_report.md" ;;
   esac

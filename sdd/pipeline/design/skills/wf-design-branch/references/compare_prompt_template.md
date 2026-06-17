@@ -1,4 +1,4 @@
-# Instrucción de comparación para el agente design-architect
+# Instrucción de comparación para el agente design-system-architect
 
 Incluir en el prompt del agente para modo `compare`:
 

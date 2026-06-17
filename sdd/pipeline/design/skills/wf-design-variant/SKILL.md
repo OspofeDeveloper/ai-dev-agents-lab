@@ -6,7 +6,7 @@ argument-hint: "create <feature_spec.md> --variants <A,B,...> [--hypothesis <tex
 effort: medium
 allowed-tools: [Read, Write, Agent]
 context: fork
-agent: design-architect
+agent: design-feature-architect
 user-invocable: true
 ---
 

@@ -155,9 +155,10 @@ SPECIFY    kb-decompose-         Diagnóstico               wf-spec-discover
            wf-spec-features-first
            Orquesta discover + fast-track en paralelo
 
-ETAPA 3    kb-design-expert ─►   design-architect ─◄── wf-design-system
-DESIGN     Reglas design         Spec -> DESIGN.md     wf-design-feature-prototype
-                                  y prototipo
+ETAPA 3    kb-design-expert ─► design-system-architect ─◄── wf-design-system
+DESIGN     Reglas design       Spec -> DESIGN.md           wf-design-feature-prototype
+                                design-feature-architect    (flows/views/ui_prompt)
+                                -> prototipo por feature
 
 ETAPA 4    kb-plan-expert ──►   plan-architect ──◄── wf-prepare-plan
 PLAN       Reglas Plan           Spec + Design →      /wf-prepare-plan

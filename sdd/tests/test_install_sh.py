@@ -64,7 +64,8 @@ class InstallAllTest(InstallBase):
         r = self.install("all")
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         # agentes de varias fases
-        for a in ("prd-expert.md", "sdd-spec-writer.md", "design-architect.md",
+        for a in ("prd-expert.md", "sdd-spec-writer.md",
+                  "design-system-architect.md", "design-feature-architect.md",
                   "plan-architect.md", "plan-auditor.md", "task-generator.md",
                   "qa-engineer.md"):
             self.assertTrue(self.agent_file(a).exists(), f"falta agents/{a}")

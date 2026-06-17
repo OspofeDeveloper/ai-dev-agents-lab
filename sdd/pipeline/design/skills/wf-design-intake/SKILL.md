@@ -1,18 +1,18 @@
 ---
 name: wf-design-intake
-description: "Cierra el DESIGN_BRIEF.md antes de generar el sistema visual: fija modo de decision, preset, familia visual, densidad, profundidad, motion y policy de referencias y autonomia. Delega a design-architect. Modos guided, hybrid y auto."
+description: "Cierra el DESIGN_BRIEF.md antes de generar el sistema visual: fija modo de decision, preset, familia visual, densidad, profundidad, motion y policy de referencias y autonomia. Delega a design-system-architect. Modos guided, hybrid y auto."
 when_to_use: "Activa con frases como 'cierra el brief de diseño', 'necesito el design brief', 'quiero definir el brief visual', 'preparar el brief antes de diseñar', 'genera el DESIGN_BRIEF.md'. No activa si ya existe un DESIGN_BRIEF.md y solo se quiere actualizar (usa wf-design-delta) ni para generar directamente el DESIGN.md sin brief (el brief es gate obligatorio)."
 argument-hint: "generate <feature_spec.md> [--prd <prd.md>] [--output DESIGN_BRIEF.md] [--mode guided|hybrid|auto] [--preset <name>] [--learn]"
 effort: high
 allowed-tools: [Read, Write, Bash, Agent]
 context: fork
-agent: design-architect
+agent: design-system-architect
 user-invocable: true
 ---
 
 # design-intake — Orquestador del Flujo SDD (Pre-etapa Design)
 
-Tu rol es de **orquestador puro**: parseas argumentos, verificas precondiciones, derivas contexto base, delegas el cierre del brief al agente `design-architect` (modo `design-intake`) y escribes el `DESIGN_BRIEF.md` resultante. No tomas decisiones de direccion visual por tu cuenta.
+Tu rol es de **orquestador puro**: parseas argumentos, verificas precondiciones, derivas contexto base, delegas el cierre del brief al agente `design-system-architect` (modo `design-intake`) y escribes el `DESIGN_BRIEF.md` resultante. No tomas decisiones de direccion visual por tu cuenta.
 
 ## Paso 1: Parsear argumentos
 
@@ -64,7 +64,7 @@ Busca `<basename>_design_moodboard.md`: en la subcarpeta `design/` de la feature
 - Si existe, leelo completo y pasalo al agente como input adicional para `style_family`, `adjectives` y Visual Personality.
 - Si no existe y el modo es `guided` o `hybrid` con `--learn` activo, sugiere al usuario ejecutar primero `/wf-design-moodboard`. Si rechaza o el modo es `auto`, continua sin moodboard.
 
-## Paso 6: Delegar al agente design-architect
+## Paso 6: Delegar al agente design-system-architect
 
 Construye el prompt para el agente con:
 
@@ -102,7 +102,7 @@ INSTRUCCION:
 5. Si una decision critica no puede tomarse (usuario no responde, contradiccion irresoluble), devuelve `DESIGN_GAP` con la variable concreta y NO produzcas el brief.
 ```
 
-Invoca el agente `design-architect` con ese prompt.
+Invoca el agente `design-system-architect` con ese prompt.
 
 ## Paso 7: Escribir el brief
 

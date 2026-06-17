@@ -38,7 +38,7 @@ Si falta `--phase`, informa:
 ## Paso 2: Validar nombre y convencion
 
 1. Verifica que el nombre sigue el patron segun la fase:
-   - Fase unica: `<fase>-<rol>` (ejemplo: `design-architect`, `spec-writer`)
+   - Fase unica: `<fase>-<rol>` (ejemplo: `design-system-architect`, `spec-writer`)
    - Stack: `<stack>-<rol>` (ejemplo: `kmm-planner`)
    - Global/meta: `sdd-<rol>` (ejemplo: `sdd-author`)
 2. Si el nombre no sigue el patron, sugiere la correccion:

@@ -6,13 +6,13 @@ argument-hint: "<feature_spec.md> [--prd <prd.md>] [--output <path>] [--mode int
 effort: high
 allowed-tools: [Read, Write, Bash, Agent, WebSearch]
 context: fork
-agent: design-architect
+agent: design-system-architect
 user-invocable: true
 ---
 
 # design-moodboard — Captura de inspiracion visual
 
-Tu rol como orquestador es facilitar la captura de inspiracion del usuario y delegar al agente `design-architect` la articulacion del material crudo en candidatos visuales concretos (familia, adjetivos, atmosfera, paleta intuitiva traducida al taxonomy). No interpretas las respuestas del usuario tu mismo; tu trabajo es recogerlas con fidelidad y pasarselas al agente, que aplicara `kb-design-style-taxonomy` y `kb-design-style-decision-tree` para producir el mood board.
+Tu rol como orquestador es facilitar la captura de inspiracion del usuario y delegar al agente `design-system-architect` la articulacion del material crudo en candidatos visuales concretos (familia, adjetivos, atmosfera, paleta intuitiva traducida al taxonomy). No interpretas las respuestas del usuario tu mismo; tu trabajo es recogerlas con fidelidad y pasarselas al agente, que aplicara `kb-design-style-taxonomy` y `kb-design-style-decision-tree` para producir el mood board.
 
 ## Paso 1: Parsear argumentos
 
@@ -61,7 +61,7 @@ Permite respuestas vacias ("no se", "no me importa"). No fuerces decisiones. Rec
 
 No preguntes al usuario. Pasa el spec y PRD al agente con la senal de modo `auto` para que derive el mood directamente del material funcional.
 
-## Paso 6: Delegar al agente design-architect
+## Paso 6: Delegar al agente design-system-architect
 
 Construye el prompt para el agente con:
 
@@ -88,7 +88,7 @@ INSTRUCCION:
 - Genera el contenido del moodboard segun la plantilla. No escribas el archivo: devuelvelo para que el orquestador lo escriba.
 ```
 
-Invoca el agente `design-architect`.
+Invoca el agente `design-system-architect`.
 
 ## Paso 7: Escribir el mood board
 

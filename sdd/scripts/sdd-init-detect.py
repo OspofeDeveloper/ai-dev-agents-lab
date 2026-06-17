@@ -216,9 +216,15 @@ def verify(root: Path, phases: list[str]) -> list[dict]:
     checks.append(_check("artifacts-map", artifacts_ok,
                          "OK" if artifacts_ok else 'falta "artifacts" (standalone) o "artifacts_source" (consumer) (Paso 8)'))
 
-    profiles_ok = isinstance(obj, dict) and isinstance(obj.get("profiles"), list) and "profile" not in obj
-    checks.append(_check("profiles", profiles_ok,
-                         "OK" if profiles_ok else 'usar el array "profiles" (acumulado) y eliminar la clave legacy "profile" (Paso 8)'))
+    # Esquema nuevo (topología-first): el eje primario es "topology"; las claves
+    # legacy "profiles"/"profile"/"type" ya no son válidas (break limpio).
+    topo_ok = (
+        isinstance(obj, dict)
+        and obj.get("topology") in {"authoring", "consumer", "standalone"}
+        and "profiles" not in obj and "profile" not in obj and "type" not in obj
+    )
+    checks.append(_check("topology", topo_ok,
+                         "OK" if topo_ok else 'usar "topology" (authoring|consumer|standalone) y eliminar las claves legacy "profiles"/"profile"/"type" (Paso 8)'))
 
     scripts_ok = all((root / ".sdd/scripts" / s).is_file() for s in ENFORCEMENT_SCRIPTS)
     checks.append(_check("enforcement-scripts", scripts_ok,

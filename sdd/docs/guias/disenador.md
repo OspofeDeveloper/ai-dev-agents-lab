@@ -37,7 +37,7 @@ flowchart LR
 
 > *"Cierra el brief de diseño de esta feature."*
 
-**`/wf-design-intake generate <feature_spec.md>`** (agente `design-architect`)
+**`/wf-design-intake generate <feature_spec.md>`** (agente `design-system-architect`)
 cierra el `DESIGN_BRIEF.md`: modo de decisión, preset de producto, familia visual,
 densidad, profundidad, motion y política de autonomía frente a la IA. Es el **gate
 obligatorio**: no se genera el sistema visual sin brief cerrado.

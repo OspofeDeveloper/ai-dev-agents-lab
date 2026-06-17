@@ -45,7 +45,7 @@ Incorrecto:
 Patron: `<fase>-<rol>` para agentes de fase. `<stack>-<rol>` para agentes de stack. `sdd-<rol>` para agentes transversales.
 
 Correcto:
-- `design-architect` — rol architect en fase design
+- `design-system-architect` — rol architect en fase design
 - `sdd-spec-writer` — rol writer en fase spec con prefijo ecosistema
 - `plan-architect` — rol architect en fase plan
 - `kmm-planner` — rol planner en stack kmm

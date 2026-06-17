@@ -6,7 +6,7 @@ argument-hint: "<DESIGN.md>"
 effort: high
 allowed-tools: [Read, Write, Bash]
 context: fork
-agent: design-architect
+agent: design-system-architect
 user-invocable: true
 ---
 

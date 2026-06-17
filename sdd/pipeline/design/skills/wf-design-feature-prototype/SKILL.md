@@ -6,13 +6,13 @@ argument-hint: "generate <feature_spec.md> [--design-file DESIGN.md] [--brief DE
 effort: high
 allowed-tools: [Read, Write, Bash, Agent]
 context: fork
-agent: design-architect
+agent: design-feature-architect
 user-invocable: true
 ---
 
 # design-feature-prototype — Orquestador del Flujo SDD (Etapa Design)
 
-Tu rol es de **orquestador puro**: parseas argumentos, verificas que el Spec y el `DESIGN.md` estan listos, delegas la derivacion de artefactos al agente `design-architect`, y escribes los resultados.
+Tu rol es de **orquestador puro**: parseas argumentos, verificas que el Spec y el `DESIGN.md` estan listos, delegas la derivacion de artefactos al agente `design-feature-architect`, y escribes los resultados.
 
 ## Paso 1: Parsear argumentos
 
@@ -71,12 +71,12 @@ La noción de `target_tool` / `target_platforms` y la regla de selección son SS
 2. `accessibility.target_platforms` del DESIGN.md
 3. Si ninguno lo declara, asume `mobile` (compatibilidad con el destino histórico) y anótalo para el usuario.
 
-Deriva `target_tool`:
-- `mobile` → `stitch`
-- `web` / `desktop` → `web-generic`
-- `both` → el agente decide con criterio y documenta la decisión en el propio `_ui_prompt.md` (ver Regla 7).
+Deriva las superficies a generar y su `target_tool`:
+- una sola superficie `mobile` → un `ui_prompt`, `target_tool: stitch`
+- una sola superficie `web`/`desktop` → un `ui_prompt`, `target_tool: web-generic`
+- **multi-superficie** (p. ej. `[mobile, web]`) → **un `ui_prompt` por superficie** (no uno mezclado): `mobile`→`stitch`, `web`/`desktop`→`web-generic` (ver `kb-design-feature-artifacts` Regla 7, sección multi-superficie).
 
-Pasa `target_tool` y `target_platforms` al agente en el Paso 5.
+Pasa al agente en el Paso 5 la lista de superficies con su `target_tool` (una o varias). `flows`/`views` se generan una sola vez (agnósticos); el `ui_prompt` se genera por superficie.
 
 ## Paso 4: Determinar outputs y detectar features ya prototipadas
 
@@ -90,7 +90,9 @@ Crea los directorios intermedios antes de escribir. **Fallback** a mano:
 - si el spec esta en la subcarpeta `spec/` de una feature → subcarpeta hermana `design/`: `features/<nombre>/design/`
 - si el spec esta directamente en `features/<nombre>/` (layout plano legacy) o fuera de una feature → el mismo directorio del spec
 
-Alli se crean `<feature>_flows.md`, `<feature>_views.md` y `<feature>_ui_prompt.md`, donde `<feature>` es el nombre base del spec sin `_spec.md`.
+Alli se crean `<feature>_flows.md`, `<feature>_views.md` y el/los `ui_prompt`, donde `<feature>` es el nombre base del spec sin `_spec.md`. El `ui_prompt` se nombra según las superficies resueltas en 3c:
+- **una sola superficie** → `<feature>_ui_prompt.md` (sin sufijo, como hasta ahora).
+- **multi-superficie** → uno por superficie: `<feature>_ui_prompt.mobile.md`, `<feature>_ui_prompt.web.md` (el resolutor `write ui-prompt` da el path base; añade el sufijo `.<superficie>` antes de `.md`).
 
 Antes de continuar, verifica si el artefacto principal ya existe:
 ```bash
@@ -106,7 +108,7 @@ Antes de delegar, busca otras features ya prototipadas en el directorio hermano:
 - Si las hay, lee los `_views.md` y `_flows.md` de hasta 3 features previas (las mas recientes) y pasalos al agente para que aplique `kb-design-conflict-expert`.
 - Si es la primera feature del producto, no hace falta este chequeo.
 
-## Paso 5: Delegar al agente design-architect
+## Paso 5: Delegar al agente design-feature-architect
 
 Invoca al agente siguiendo la **Regla 3** de `kb-design-expert` (orden de derivación), las **Reglas 1, 2, 3 y 7** de `kb-design-feature-artifacts` (trazabilidad de cada vista, flows como secuencia, views como SSoT de pantalla, ui_prompt que ensambla sin redefinir) y la **Regla 6** de `kb-design-system-contract` (los artefactos materializan el brief sin reabrirlo), mas la jerarquia de fuentes definida en `kb-design-brief` Regla 10: `flows` describen secuencia y navegacion, `views` son la SSoT de la pantalla, `ui_prompt` debe ensamblar sin volver a definir, y el brief gobierna las decisiones cerradas.
 
@@ -127,18 +129,20 @@ Contenido del DESIGN_BRIEF.md:
 ---
 <contenido_brief_o_N/A>
 ---
-Target del ui_prompt (resuelto en Paso 3c):
-- target_tool: <stitch | web-generic>
-- target_platforms: <mobile | web | both>
+Superficies a generar (resuelto en Paso 3c) — una por línea, con su target_tool:
+- <superficie> → <stitch | web-generic>   (p. ej. "mobile → stitch", "web → web-generic")
 ---
 Features ya prototipadas (views + flows resumidos, opcional):
 ---
 <resumen_features_previas_o_N/A>
 ---
-INSTRUCCION: produce tres artefactos separados y completos:
-1. <feature>_flows.md
-2. <feature>_views.md
-3. <feature>_ui_prompt.md — usa el `target_tool`/`target_platforms` indicados y la variante correspondiente del template de ui_prompt (kb-design-feature-artifacts Regla 7 es la SSoT del target; el template tiene una sección por variante). Con `web-generic`, describe componentes en HTML semántico/ARIA, breakpoints y estados completos (loading/empty/error/focus/hover/disabled), y remite a `kb-a11y-web-expert` para a11y web sin recopiarla. Con `stitch`, mantén el formato Stitch mobile.
+INSTRUCCION: produce los artefactos separados y completos:
+1. <feature>_flows.md — una sola copia agnóstica de superficie (con `### Notas responsive` si hay varias superficies).
+2. <feature>_views.md — una sola copia agnóstica de superficie (idem).
+3. ui_prompt **por superficie** (kb-design-feature-artifacts Regla 7 es la SSoT del target):
+   - una sola superficie → `<feature>_ui_prompt.md`.
+   - varias superficies → uno por superficie: `<feature>_ui_prompt.mobile.md` (target_tool stitch), `<feature>_ui_prompt.web.md` (target_tool web-generic). Cada uno declara su `target_tool` y su `target_platforms` singular.
+   Con `web-generic`, describe componentes en HTML semántico/ARIA, breakpoints y estados completos (loading/empty/error/focus/hover/disabled), y remite a `kb-a11y-web-expert` para a11y web sin recopiarla. Con `stitch`, mantén el formato Stitch mobile.
 
 Si se pasan features previas, ejecuta tambien una revision de conflictos siguiendo `kb-design-conflict-expert` (Reglas 1-5). Si detectas conflictos, listalos al final del bundle con el formato de la Regla 6 y NO escribas artefactos hasta que el usuario decida; si son falsos positivos, declara `[POSIBLE-CONFLICTO-DESIGN-XX]` segun Regla 7.
 

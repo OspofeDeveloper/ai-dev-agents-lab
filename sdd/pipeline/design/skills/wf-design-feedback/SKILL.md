@@ -6,7 +6,7 @@ argument-hint: "capture <feedback.md|input> [--source <cliente|pm|dev|qa|stitch|
 effort: medium
 allowed-tools: [Read, Write, Agent]
 context: fork
-agent: design-architect
+agent: design-feature-architect
 user-invocable: true
 ---
 
@@ -92,7 +92,7 @@ Ejecutar `/wf-design-feedback triage <este_archivo>` para clasificar y proponer 
 
 ### 3.3 Delegar al agente para razonamiento
 
-Invocar al agente `design-architect` con este prompt:
+Invocar al agente `design-feature-architect` con este prompt:
 
 ```text
 Modo: design-feedback-triage

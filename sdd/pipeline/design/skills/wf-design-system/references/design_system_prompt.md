@@ -1,4 +1,4 @@
-# Plantilla de prompt para el agente design-architect (design-system)
+# Plantilla de prompt para el agente design-system-architect (design-system)
 
 ```text
 Modo: design-system
