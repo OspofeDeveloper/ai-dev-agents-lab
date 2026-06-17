@@ -22,6 +22,44 @@ update y leer layouts.
 
 ---
 
+## 🧪 Qué se prueba aquí (por componente)
+
+CU-10 es un **objetivo de usuario** (robustez e instalación), no una sola skill: sus
+escenarios ejercitan **6 componentes**. Marca cada escenario al ejecutarlo. El estado de
+cobertura autoritativo (ejes happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md)
+— esta vista es la **transpuesta** para leer/ejecutar el CU.
+
+### `wf-sdd-update` — actualizar la instalación SDD sin re-entrevistar (4)
+- [ ] CU-10.a — Actualizar un proyecto con overlay de stack
+- [ ] CU-10.i — Update sin novedad: "ya está al día" y override con `--force`
+- [ ] CU-10.j — Update sobre un proyecto sin instalación SDD
+- [ ] CU-10.k — El update no toca artefactos ni re-ejecuta el init de stack
+
+### `install.sh` — instalación e idempotencia (2)
+- [ ] CU-10.b — `--prune` poda piezas huérfanas
+- [ ] CU-10.g — Merge idempotente de `settings.json`
+
+### Lectura de layouts por los workflows — layout legacy plano (1)
+- [ ] CU-10.c — Layout legacy plano se lee sin migrar
+
+### Resolución de marcadores hacia arriba — sesión en monorepo (1)
+- [ ] CU-10.d — Sesión en un subpaquete de monorepo
+
+### Wrappers de hooks y scripts — degradación sin `python3` (1)
+- [ ] CU-10.e — Degradación sin `python3`
+
+### `wf-project-status` — estado de delivery determinista (read-only) (1)
+- [ ] CU-10.f — Estado de delivery determinista (`wf-project-status`)
+
+### `wf-task-run` / `wf-qa-verify` — verificación con `tests: none` (1)
+- [ ] CU-10.h — Degradación con `tests: none`
+
+> **Capa determinista:** los installers están cubiertos por `sdd/tests/test_install_sh.py`,
+> `test_kmm_install_sh.py` y `test_setup_sh.py`, y los scripts de estado por sus propios
+> tests; lo manual es la conducta del agente al orquestar el update y leer layouts.
+
+---
+
 ## CU-10.a — Actualizar un proyecto con overlay de stack
 
 **Precondición:** un proyecto SDD inicializado con stack concreto (p. ej. KMM), en

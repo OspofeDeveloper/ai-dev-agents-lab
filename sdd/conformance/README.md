@@ -51,7 +51,7 @@ conformance/
 
 | CU | Fichero | Objetivo | Proyecto a usar |
 |----|---------|----------|---------|
-| CU-1 | [`casos-de-uso/cu-01-inicializar.md`](casos-de-uso/cu-01-inicializar.md) | Inicializar un proyecto SDD: wizard de modo, init por perfil, init-incompleto, version-drift, modo libre, monorepo | repo nuevo/virgen **externo** al ecosistema |
+| CU-1 | [`casos-de-uso/cu-01-inicializar.md`](casos-de-uso/cu-01-inicializar.md) | Inicializar un proyecto SDD: wizard de modo, init por topología (authoring/consumer/standalone), init-incompleto, version-drift, modo libre, monorepo | repo nuevo/virgen **externo** al ecosistema |
 | CU-2 | [`casos-de-uso/cu-02-prd.md`](casos-de-uso/cu-02-prd.md) | Crear y dejar listo un PRD: create (con/sin notas), review (asunciones + sello) | producto real con notas/brief |
 | CU-3 | [`casos-de-uso/cu-03-specs.md`](casos-de-uso/cu-03-specs.md) | Generar specs de un PRD: analyze→gaps, discover→subset, features-first, fast-track, validate, conflict, readiness, gap-resolve | el de CU-2, con PRD `LISTO` |
 | CU-4 | [`casos-de-uso/cu-04-brownfield.md`](casos-de-uso/cu-04-brownfield.md) | Specs desde código existente: `wf-spec-from-code` discover→gate→generate, `[INFERIDO]` bloquea plan | código heredado real sin specs |

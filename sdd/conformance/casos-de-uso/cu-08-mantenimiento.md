@@ -17,6 +17,25 @@ deterministas; el triaje es juicio del agente → **manual**.
 
 ---
 
+## 🧪 Qué se prueba aquí (por componente)
+
+CU-8 es un **objetivo de usuario** (mantenimiento de features entregadas), no una sola
+skill: sus escenarios ejercitan **2 componentes**. Marca cada escenario al ejecutarlo. El
+estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
+[`ROADMAP.md`](../ROADMAP.md) — esta vista es la **transpuesta** para leer/ejecutar el CU.
+
+### `wf-bug` — triaje de bug contra el spec (`CODE_BUG`/`SPEC_CHANGE`/`UNSPEC`) (4)
+- [ ] CU-8.a — Bug que es defecto de código (`CODE_BUG`)
+- [ ] CU-8.b — Lo reportado es un cambio de comportamiento (`SPEC_CHANGE`)
+- [ ] CU-8.c — Comportamiento no especificado (`UNSPEC`)
+- [ ] CU-8.f — Bug: UNSPEC con override de gobernanza y verificación del fix
+
+### `wf-spec-amend` — aclaración quirúrgica de un CA ambiguo (back-edge) (2)
+- [ ] CU-8.d — Aclarar un CA ambiguo descubierto al implementar (back-edge)
+- [ ] CU-8.e — Enmendar un CA que no existe en el spec
+
+---
+
 ## CU-8.a — Bug que es defecto de código (`CODE_BUG`)
 
 **Precondición:** una feature entregada cuyo código viola un CA que sí define el

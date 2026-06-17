@@ -18,6 +18,53 @@ análisis, el discovery y los specs es juicio de los agentes → **manual**.
 
 ---
 
+## 🧪 Qué se prueba aquí (por componente)
+
+CU-3 es un **objetivo de usuario** (generar las specs de un PRD), no una sola skill: sus
+escenarios ejercitan **ocho componentes** de la fase Spec. Marca cada escenario al ejecutarlo.
+El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
+[`ROADMAP.md`](../ROADMAP.md) — esta vista es la **transpuesta** para leer/ejecutar el CU.
+
+### `wf-spec-analyze` — analyze obligatorio y pureza (`sdd-spec-explorer`) (2)
+- [ ] CU-3.a — El analyze es obligatorio y para en gaps críticos
+- [ ] CU-3.k — Analyze: contaminación técnica detiene y las preguntas de riesgo van neutras
+
+### `wf-spec-discover` — mapa de features y ownership (`sdd-spec-explorer`) (2)
+- [ ] CU-3.c — Discovery: mapa de features y elección de subset
+- [ ] CU-3.i — Discovery: ownership ambiguo de shared model para en checkpoint humano
+
+### `wf-spec-features-first` — orquestador del flujo features-first (2)
+- [ ] CU-3.d — Generación por feature (features-first) en paralelo
+- [ ] CU-3.l — Features-first: `--features` con IDs inexistentes en el discovery
+
+### `wf-spec-fast-track` — spec directo de una feature (`sdd-spec-writer`) (2)
+- [ ] CU-3.e — Spec directo de una feature (fast-track)
+- [ ] CU-3.j — Fast-track: documento multi-feature, pares de flags y feature ID inexistente
+
+### `sdd-spec-auditor` — validate / conflict / readiness (read-only) (4)
+- [ ] CU-3.f — Validar, conflictos y readiness
+- [ ] CU-3.m — Validate en modo ligero: proporcionalidad sin relajar invariantes
+- [ ] CU-3.n — Conflict: precondición de specs insuficientes
+- [ ] CU-3.o — Readiness: sin índice, ciclos de dependencia y scope derivado
+
+### `wf-spec-gap-resolve` — completar incompletos y confirmar inferidos (`sdd-spec-writer`) (2)
+- [ ] CU-3.g — Completar HUs incompletas (gap-resolve)
+- [ ] CU-3.q — Gap-resolve: confirmación de `[INFERIDO]` (tres vías)
+
+### `wf-spec-delta` — evolución incremental del spec (`sdd-spec-writer`) (1)
+- [ ] CU-3.h — Evolucionar un spec con requisitos nuevos (delta)
+
+### orquestador de la fase Spec — guardrail de cambio de producto y oferta de rigor (3)
+- [ ] CU-3.b — Expansión de alcance desde las respuestas del analysis
+- [ ] CU-3.p — Delta / gap-resolve: un cambio de producto encubierto detiene y remite a wf-prd-change
+- [ ] CU-3.r — El rigor (standard/ligero) se elige al crear el spec, no en el init (D-006)
+
+> **Capa determinista** (no son escenarios manuales): los índices y marcadores
+> (`sdd-features-index.py`, `sdd-gap-conventions`) están cubiertos por unittests; la calidad
+> del análisis, el discovery y los specs es juicio de los agentes y queda en esta vista manual.
+
+---
+
 ## CU-3.a — El analyze es obligatorio y para en gaps críticos
 
 **Precondición:** PRD `LISTO`, sin `_analysis.md` todavía.

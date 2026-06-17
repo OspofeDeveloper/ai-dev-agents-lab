@@ -28,6 +28,22 @@ la **guía proactiva** del orquestador es manual.
 
 ---
 
+## 🧪 Qué se prueba aquí (por componente)
+
+CU-14 es un **objetivo de usuario** (pedir una fase fuera de orden y verificar la redirección), no una sola skill: sus escenarios ejercitan **1 componente**. Marca cada escenario al ejecutarlo. El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es la **transpuesta** para leer/ejecutar el CU.
+
+### orquestador — Principio de precondiciones (redirección al paso pendiente) (8)
+- [ ] CU-14.a — Pedir specs sin PRD
+- [ ] CU-14.b — Pedir Design sin spec validado
+- [ ] CU-14.c — Pedir Plan sin spec
+- [ ] CU-14.d — Pedir Tasks sin Plan
+- [ ] CU-14.e — Ejecutar tasks sin `_tasks.md`
+- [ ] CU-14.f — Verificar QA sin plan de QA ni implementación
+- [ ] CU-14.g — Releasar sin QA
+- [ ] CU-14.h — Saltarse varias fases de golpe
+
+---
+
 ## CU-14.a — Pedir specs sin PRD
 
 **Precondición:** proyecto sin PRD ni fuente de notas.

@@ -21,6 +21,47 @@ respetan capas) es juicio de los agentes KMM → **manual**.
 
 ---
 
+## 🧪 Qué se prueba aquí (por componente)
+
+CU-12 es un **objetivo de usuario** (configurar el stack KMM por piezas respetando capas),
+no una sola skill: sus escenarios ejercitan **7 componentes** (skills del overlay KMM).
+Marca cada escenario al ejecutarlo. El estado de cobertura autoritativo (ejes
+happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es la
+**transpuesta** para leer/ejecutar el CU.
+
+### `wf-kmm-init` — init del stack (detect/configure) → `kmm-explorer` (2)
+- [ ] CU-12.a — Init del stack en modo detect (proyecto KMM existente)
+- [ ] CU-12.b — Init en modo configure y guarda de re-ejecución
+
+### `wf-kmm-stack-setup-ktor-keycloak-koin` — stack completo por composición → `kmm-network-auth-implementer` (1)
+- [ ] CU-12.c — Stack completo (Ktor + Keycloak + Koin) por composición
+
+### `wf-kmm-network-setup` — capa de red desacoplada → `kmm-network-auth-implementer` (1)
+- [ ] CU-12.d — Networking sin acoplar a una estrategia de auth
+
+### `wf-kmm-auth-setup-keycloak` — auth OAuth separando contratos → `kmm-network-auth-implementer` (1)
+- [ ] CU-12.e — Auth OAuth con Keycloak separando contratos
+
+### `wf-kmm-database-setup` — persistencia relacional (Room) → `kmm-platform-integrator` (1)
+- [ ] CU-12.f — Persistencia relacional (Room)
+
+### `wf-kmm-datastore-setup` — storage clave-valor (Preferences DataStore) → `kmm-platform-integrator` (1)
+- [ ] CU-12.g — Storage clave-valor (Preferences DataStore)
+
+### `wf-kmm-environments` — multi-brand / multi-environment → `kmm-platform-integrator` (1)
+- [ ] CU-12.h — Multi-brand / multi-environment
+
+### `wf-kmm-testing-setup` — infraestructura de testing → `kmm-platform-integrator` (1)
+- [ ] CU-12.i — Infraestructura de testing
+
+> **Capa determinista** (no es escenario manual): la **instalación** del overlay
+> (override por basename de `plan-architect`/`kb-plan-expert`, agentes/KBs KMM, no pisar el
+> `CLAUDE.md` raíz) la cubre `sdd/tests/test_kmm_install_sh.py`. Aquí se prueba la
+> **conducta de los workflows** (qué scaffolding generan y si respetan capas), que es juicio
+> de los agentes KMM.
+
+---
+
 ## CU-12.a — Init del stack en modo detect (proyecto KMM existente)
 
 **Precondición:** un proyecto KMM ya con código, sin `kmm_project_state.md`.

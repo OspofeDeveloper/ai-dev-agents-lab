@@ -22,6 +22,40 @@ wizard antes de nada, invocar el init, no autoaprobar el modo).
 
 ---
 
+## 🧪 Qué se prueba aquí (por componente)
+
+CU-1 es un **objetivo de usuario** (inicializar), no una sola skill: sus escenarios ejercitan **dos
+componentes**. Marca cada escenario al ejecutarlo. El estado de cobertura autoritativo (ejes
+happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es la **transpuesta**
+para leer/ejecutar el CU.
+
+### `wf-project-init` — la skill de init (10)
+- [x] CU-1.b — Modo SDD arranca el init · ✓ 2026-06-17
+- [ ] CU-1.h — La topología decide qué se instala
+- [ ] CU-1.i — Topología consumer
+- [ ] CU-1.j — Init desde subpaquete (gate de workflow)
+- [ ] CU-1.k — Verificación bloqueante
+- [ ] CU-1.l — Evolución authoring→standalone (extend)
+- [ ] CU-1.m — Ubicación de artefactos no canónica
+- [x] CU-1.n — El init NO pregunta el rigor ([[D-006]]) · ✓ 2026-06-17
+- [ ] CU-1.o — Superficie/framework ramifican; caso Mínimo
+- [ ] CU-1.p — Los argumentos honran y saltan preguntas
+
+### hook de sesión `bootstrap/sdd-session-check.sh` — directivas `SDD-PROTOCOL` (6)
+- [x] CU-1.a — Wizard de modo en proyecto virgen (`mode-undecided`) · ✓ 2026-06-17
+- [ ] CU-1.c — Modo libre silencia SDD (`free`)
+- [ ] CU-1.d — Modo SDD sin init → `init-pending` (invoca wf-project-init)
+- [ ] CU-1.e — Init a medias → `init-incomplete` (invoca wf-project-init "Completar/ampliar")
+- [ ] CU-1.f — Versión anterior → `version-drift` (informativo)
+- [ ] CU-1.g — Sesión en subdirectorio → búsqueda de marcadores hacia arriba
+
+> **Capa determinista** (no son escenarios manuales): `install.sh`, `sdd-init-detect.py` y el propio
+> hook están cubiertos por unittests (`test_install_sh.py`, `test_setup_sh.py`,
+> `test_session_hook.py`, `test_sdd_init_detect.py`). Aquí se prueba la **conducta del agente** ante
+> cada directiva / entrevista.
+
+---
+
 ## Modelo de cobertura — qué ejes del wizard hay que probar y cuáles no
 
 El wizard de `wf-project-init` tiene varios ejes (topología, PRD, diseño, superficie,

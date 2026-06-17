@@ -20,6 +20,32 @@ lint, no crear piezas nuevas en un refactor.
 
 ---
 
+## 🧪 Qué se prueba aquí (por componente)
+
+CU-17 es un **objetivo de usuario** (autoría y mantenimiento del ecosistema), no una sola skill: sus escenarios ejercitan **6 componentes**. Marca cada escenario al ejecutarlo. El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es la **transpuesta** para leer/ejecutar el CU.
+
+### `wf-skill-create` — scaffold determinista + gate estructural (1)
+- [ ] CU-17.a — Crear una skill: scaffold determinista + gate estructural (el corazón)
+
+### `wf-agent-create` — verificación de KBs y flags derivados por rol (1)
+- [ ] CU-17.b — Crear un agente: verificación de KBs y flags derivados por rol
+
+### `wf-stack-create` — crear un overlay de stack (1)
+- [ ] CU-17.c — Crear un overlay de stack
+
+### `wf-sdd-audit` — el lint determinista manda (1)
+- [ ] CU-17.d — Auditar el ecosistema: el lint determinista manda
+
+### `wf-sdd-refactor` — preservar SSoT, no crear piezas (1)
+- [ ] CU-17.e — Refactorizar una pieza: preservar SSoT, no crear piezas
+
+### `wf-sdd-status` — inventario read-only del ecosistema (1)
+- [ ] CU-17.f — Inventario read-only del ecosistema
+
+> **Capa determinista** — `sdd/tests/` cubre `sdd-scaffold.py`, `sdd-structural-lint.py` y `generate-skill-registry.py`; lo manual es la conducta del agente (no declarar éxito con `blocking`, no alterar el frontmatter del scaffold, no re-derivar findings del lint).
+
+---
+
 ## CU-17.a — Crear una skill: scaffold determinista + gate estructural (el corazón)
 
 **Precondición:** el ecosistema `sdd/`; pides crear una `kb`/`wf` nueva.

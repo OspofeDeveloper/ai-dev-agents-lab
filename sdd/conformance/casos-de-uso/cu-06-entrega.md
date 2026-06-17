@@ -19,6 +19,55 @@ autovalidar, no ajustar un TC que falla, no teclear el SHA).
 
 ---
 
+## 🧪 Qué se prueba aquí (por componente)
+
+CU-6 es un **objetivo de usuario** (llevar un spec fiable hasta la entrega), no una sola
+skill: sus escenarios ejercitan **10 componentes** de la cadena de delivery. Marca cada
+escenario al ejecutarlo. El estado de cobertura autoritativo (ejes happy/edge/harness/args)
+vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es la **transpuesta** para leer/ejecutar
+el CU.
+
+### `wf-prepare-plan` — generar el plan técnico desde el spec (3)
+- [ ] CU-6.a — Generar el plan técnico desde el spec
+- [ ] CU-6.h — Design es saltable: feature sin UI pasa a Plan directo
+- [ ] CU-6.k — Prepare-plan: resolución de stack y gate de accesibilidad del handoff
+
+### `wf-plan-validate` — gate formal del plan (2)
+- [ ] CU-6.b — Validar el plan (gate formal + deuda asumida)
+- [ ] CU-6.l — Plan-validate: aprobación de deuda técnica y sellado determinista
+
+### `wf-prepare-tasks` — generar las tasks desde el plan (2)
+- [ ] CU-6.c — Generar las tasks desde el plan
+- [ ] CU-6.n — Deuda técnica de plan a tasks a owner
+
+### `wf-task-run` — ejecutar las tasks con estado y commit (2)
+- [ ] CU-6.d — Ejecutar las tasks con estado y commit
+- [ ] CU-6.m — Task-run: verificación ejecutable del DoD y disciplina de commit
+
+### `wf-qa-plan` — derivar el plan de QA desde los CAs (1)
+- [ ] CU-6.e — Derivar el plan de QA desde los CAs
+
+### `wf-qa-verify` — verificar cobertura con evidencia ejecutada (1)
+- [ ] CU-6.f — Verificar cobertura real con evidencia ejecutada
+
+### `wf-qa-plan` + `wf-qa-verify` — anti-fabricación de cobertura QA (1)
+- [ ] CU-6.o — QA: anti-fabricación de cobertura (qa-plan y qa-verify)
+
+### `wf-release` — vincular el cierre a producción (1)
+- [ ] CU-6.g — Vincular el cierre a producción (release)
+
+### `sdd-seal.py` — el sello determinista del plan (1)
+- [ ] CU-6.i — Sello degradado al editar el plan a mano
+
+### `sdd-task-state.py` — la máquina de estados de tasks (1)
+- [ ] CU-6.j — Máquina de estados de tasks: dependencias y reapertura
+
+> **Capa determinista** (`sdd-seal.py`, `sdd-task-state.py`, `sdd-release.py`): cubierta
+> por tests unitarios en `sdd/tests/`; aquí se verifica solo la **conducta del agente**
+> alrededor de esos scripts (no autovalidar, no marcar estados a mano, no teclear el SHA).
+
+---
+
 ## CU-6.a — Generar el plan técnico desde el spec
 
 **Precondición:** `_spec.md` validado, sin `[INCOMPLETO]`/`[CRÍTICO]`/`[INFERIDO]`.

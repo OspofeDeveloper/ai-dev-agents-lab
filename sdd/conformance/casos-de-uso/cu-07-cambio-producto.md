@@ -18,6 +18,42 @@ la cascada son juicio del agente → **manuales**.
 
 ---
 
+## 🧪 Qué se prueba aquí (por componente)
+
+CU-7 es un **objetivo de usuario** (cambiar el producto y propagar el cambio), no una
+sola skill: sus escenarios ejercitan **4 componentes** del subsistema de cambio de
+producto. Marca cada escenario al ejecutarlo. El estado de cobertura autoritativo (ejes
+happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es la
+**transpuesta** para leer/ejecutar el CU.
+
+### `wf-prd-change` — gestionar un cambio de producto (3)
+- [ ] CU-7.a — Un cambio que es solo aclaración (CLARIFICATION)
+- [ ] CU-7.b — Un cambio de producto real
+- [ ] CU-7.c — Expansión de capacidad disfrazada de aclaración (Regla 4.1)
+
+### `wf-prd-sync-impact` — medir impacto aguas abajo (2)
+- [ ] CU-7.d — Matriz de impacto por artefacto
+- [ ] CU-7.e — Criterio conservador
+
+### `wf-prd-change-cascade` — propagar el cambio por el pipeline (6)
+- [ ] CU-7.f — Cascada normal (auto + paradas reales)
+- [ ] CU-7.g — La cascada con un cambio que es solo aclaración
+- [ ] CU-7.h — Cascada sin un cambio que propagar
+- [ ] CU-7.i — Features no triviales en el conjunto STOP
+- [ ] CU-7.j — `--dry-run` / `--review-before-apply` no escriben
+- [ ] CU-7.k — Profundidad adaptativa y degradación con gracia
+
+### `wf-spec-sync-from-prd` — resincronizar specs tras el cambio (2)
+- [ ] CU-7.l — Analizar y aplicar la resincronización de specs
+- [ ] CU-7.m — Resincronización que rebasa un delta razonable
+
+> **Capa determinista**: el pre-pass de hash de `wf-prd-sync-impact`
+> (`sdd-sync-check.py`) está cubierto por `sdd/tests/test_sdd_sync_check.py`; aquí se
+> verifica solo la **conducta del agente** (clasificación del cambio y conducta de la
+> cascada).
+
+---
+
 ## `wf-prd-change` — gestionar un cambio de producto
 
 > **Mecanismo común:** skill `wf-prd-change` → subagente **`prd-expert`**

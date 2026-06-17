@@ -6,6 +6,51 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-008 — Vista de cobertura "por componente" en cada CU (forward), con checklist de ejecución
+
+- **Fecha:** 2026-06-17 · **Estado:** Adoptada
+
+**Contexto.** La batería de conformance (`conformance/casos-de-uso/cu-*.md`) está organizada por
+**objetivo de usuario** (journey), no por skill. El cruce skill→CU existía solo en dirección inversa
+y en otro fichero (`conformance/ROADMAP.md`, una fila por `wf-*` con columna "CU que lo ejercitan"),
+que además había quedado **stale** (la fila `wf-project-init` decía `--profile`/`--type`/`context: fork`
+y le faltaban `CU-1.n/o/p` y `CU-3.r`). Al ejecutar los CU a mano no había forma, abriendo un CU, de
+ver **qué componente valida cada escenario** ni de marcar el progreso. Además se descubrió que **CU-1
+no prueba solo `wf-project-init`**: es híbrido (10 escenarios de la skill + 6 del hook de sesión).
+
+**Decisión.** Cada `cu-NN.md` lleva una cabecera **`## 🧪 Qué se prueba aquí (por componente)`**
+(tras el bloque intro, antes del primer escenario): la **transpuesta forward** (CU → componentes),
+con los escenarios agrupados por su componente primario (`wf-*` skill / agente / script / hook /
+orquestador, leído de la línea `Mecanismo:` de cada escenario) y un **checklist `- [ ]` por escenario**
+para marcar al ejecutar. El **ROADMAP sigue siendo la SSoT backward** del estado de cobertura (ejes
+happy/edge/harness/args + Estado); la cabecera del CU **apunta a él** y no duplica el veredicto por
+ejes. Convención de marcado (estado de PASS = humano): `- [x] … · ✓ <fecha>` para PASS acordado;
+`- [ ] … · ⚠️ FALLO → #issue` para divergencia. Se refrescó la fila stale de `wf-project-init` y se
+añadió `CU-3.r` a las filas de spec.
+
+**Alternativas descartadas.**
+- *Solo dashboard central en ROADMAP* → descartada: no resuelve el forward al abrir un CU.
+- *Reordenar físicamente los escenarios por skill* → descartada: los IDs `CU-N.x` son citables y
+  estables; el orden "que tiene sentido" se da en la vista agrupada de la cabecera, no moviendo el cuerpo.
+- *Generar la cabecera con script desde el principio* → diferida: las líneas `Mecanismo:` son prosa,
+  parsearlas fiable exige estandarizar antes un mini-formato. Se hizo **a mano** el rollout (piloto en
+  CU-1, luego los 16 restantes vía subagentes en paralelo).
+
+**Consecuencias / aprendizaje.** Tres representaciones del mismo dato (líneas `Mecanismo:`, columna
+del ROADMAP, cabecera del CU) = riesgo de drift — ya mordió con el ROADMAP stale. **Follow-up
+pendiente:** extender `scripts/sdd-conformance-coverage.py` para (a) **generar** la cabecera desde las
+`Mecanismo:` y (b) un modo **`--check`** que falle si las tres divergen; el generador debe
+**preservar** las marcas de PASS (`[x]`/`✓ fecha`/`⚠️ FALLO`) — merge, no clobber, porque el estado
+PASS es humano (ejecución manual), no derivable. Verificado en el rollout: los 17 CU tienen la
+cabecera con el SET de IDs idéntico al del cuerpo (sin faltantes ni duplicados) y el agregador
+determinista sigue parseando el ROADMAP (48/48, exit 0).
+
+**Referencias.** `conformance/casos-de-uso/cu-01-inicializar.md` (piloto) + los 16 restantes ·
+`conformance/ROADMAP.md` (fila `wf-project-init` refrescada; `CU-3.r` añadido) · `conformance/README.md`
+(formato del CU) · `scripts/sdd-conformance-coverage.py` (follow-up de generación/`--check`).
+
+---
+
 ## D-007 — Endurecimiento del bootstrap descubierto al ejecutar el init topología-first E2E
 
 - **Fecha:** 2026-06-17 · **Estado:** Adoptada

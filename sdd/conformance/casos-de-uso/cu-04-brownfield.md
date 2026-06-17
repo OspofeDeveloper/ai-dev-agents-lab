@@ -18,6 +18,20 @@ juicio del agente → **manual**.
 
 ---
 
+## 🧪 Qué se prueba aquí (por componente)
+
+CU-4 es un **objetivo de usuario** (caracterizar código existente en specs), no una sola skill: sus escenarios ejercitan **un componente** (la onramp brownfield de Spec). Marca cada escenario al ejecutarlo. El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es la **transpuesta** para leer/ejecutar el CU.
+
+### `wf-spec-from-code` — la onramp brownfield de Spec (4)
+- [ ] CU-4.a — Descubrir capacidades y DETENERSE en el gate humano
+- [ ] CU-4.b — Caracterizar con `[INFERIDO]` donde falta evidencia
+- [ ] CU-4.c — Los `[INFERIDO]` bloquean el plan
+- [ ] CU-4.d — Comportamiento sospechoso de defecto: `[SOSPECHA_BUG]`, no se corrige
+
+> **Capa determinista** (no son escenarios manuales): los marcadores y el índice (`sdd-features-index.py`, `kb-spec-characterization`) tienen soporte determinista; la caracterización en sí es juicio del agente.
+
+---
+
 ## CU-4.a — Descubrir capacidades y DETENERSE en el gate humano
 
 **Precondición:** un módulo de código real sin specs.

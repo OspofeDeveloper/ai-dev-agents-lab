@@ -24,6 +24,29 @@ de disparadores son los `when_to_use` de cada `SKILL.md` y el rootmap intención
 
 ---
 
+## 🧪 Qué se prueba aquí (por componente)
+
+CU-13 es un **objetivo de usuario** (que cada frase enrute al workflow correcto), no una
+sola skill: sus escenarios ejercitan el **enrutado del orquestador** (la matriz exhaustiva
+frase→skill), separado en el orquestador del pipeline y el meta-orquestador del ecosistema.
+Marca cada escenario al ejecutarlo. El estado de cobertura autoritativo (ejes
+happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es la
+**transpuesta** para leer/ejecutar el CU.
+
+### Orquestador — matriz frase→skill (rootmap de `CLAUDE.md` + `when_to_use`) (7)
+- [ ] CU-13.a — Fase PRD
+- [ ] CU-13.b — Fase Spec
+- [ ] CU-13.c — Fase Design
+- [ ] CU-13.d — Plan, Tasks y entrega
+- [ ] CU-13.e — Arranque e instalación
+- [ ] CU-13.f — Overlay de stack KMM
+- [ ] CU-13.g — Desambiguaciones críticas (las trampas reales)
+
+### Meta-orquestador — autoría y mantenimiento del ecosistema (rootmap de `sdd/meta/CLAUDE.md`) (1)
+- [ ] CU-13.h — Autoría y mantenimiento del ecosistema (meta)
+
+---
+
 ## CU-13.a — Fase PRD
 
 **Mecanismo:** orquestador (rootmap de `CLAUDE.md`) + `when_to_use` de cada `SKILL.md`.

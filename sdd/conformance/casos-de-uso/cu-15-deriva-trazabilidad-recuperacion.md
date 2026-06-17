@@ -19,6 +19,38 @@ deriva/rotura/interrupción.
 
 ---
 
+## 🧪 Qué se prueba aquí (por componente)
+
+CU-15 es un **objetivo de usuario** (que la SSoT no mienta: deriva, trazabilidad y recuperación), no una sola skill: sus escenarios ejercitan **8 componentes**. Marca cada escenario al ejecutarlo. El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es la **transpuesta** para leer/ejecutar el CU.
+
+### `sdd-sync-check.py` — detección de deriva por hash + `wf-prd-sync-impact` (1)
+- [ ] CU-15.a — Editar el PRD a mano tras derivar specs
+
+### enlace spec→plan — sondeo de staleness sin hash declarado 🔎 (1)
+- [ ] CU-15.b — Editar un spec a mano tras sellar el plan 🔎
+
+### `wf-spec-conflict` — shared models inconsistentes a posteriori 🔎 (1)
+- [ ] CU-15.c — Un shared model cambia después de que otra feature lo consume 🔎
+
+### trazabilidad CA→TC→task — refs colgantes al borrar/renumerar un CA 🔎 (1)
+- [ ] CU-15.d — Un delta borra/renumera un CA que una task ya referencia 🔎
+
+### `wf-spec-features-first` + `sdd-features-index.py` — aislamiento de fallo e índice coherente (1)
+- [ ] CU-15.e — `features-first` con una feature que falla en paralelo
+
+### `sdd-task-state.py` — reanudar una task `EN_CURSO` (autor ≠ marcador) (1)
+- [ ] CU-15.f — `task-run` interrumpida con una task en `EN_CURSO`
+
+### generadores pesados — idempotencia / no clobbear en silencio (1)
+- [ ] CU-15.g — Re-ejecutar un generador pesado sobre algo ya generado
+
+### `wf-spec-discover` + `sdd-features-index.py` — regeneración incremental sin pisar ediciones (1)
+- [ ] CU-15.h — Re-correr `discover` tras editar `_features.md` a mano
+
+> **Capa determinista** — `sdd-sync-check.py`, `sdd-seal.py`, `sdd-task-state.py` y `sdd-features-index.py` tienen tests deterministas en `sdd/tests/`; aquí se prueba a mano la **conducta del agente** ante esos estados.
+
+---
+
 ## CU-15.a — Editar el PRD a mano tras derivar specs
 
 **Precondición:** specs con `derived_from_prd_hash`; editas el `prd.md` directamente,

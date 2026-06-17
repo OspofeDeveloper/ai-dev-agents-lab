@@ -31,6 +31,41 @@ Todos los gates comparten dos invariantes:
 
 ---
 
+## 🧪 Qué se prueba aquí (por componente)
+
+CU-9 es un **objetivo de usuario** (que los gates anti-alucinación no cedan), no una sola
+skill: sus escenarios ejercitan los **GATES** anti-alucinación (no la skill que cada uno
+guarda), agrupados por mecanismo de gate. Marca cada escenario al ejecutarlo. El estado de
+cobertura autoritativo (ejes happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md)
+— esta vista es la **transpuesta** para leer/ejecutar el CU.
+
+### `sdd-gate-check.py` (hook `PreToolUse`) — gate de plan validado (4)
+- [ ] CU-9.a — Pedir tasks de un plan que no existe
+- [ ] CU-9.b — Pedir tasks de un documento que no es un plan sellable
+- [ ] CU-9.c — Pedir tasks con el plan en BORRADOR
+- [ ] CU-9.d — Pedir tasks con una enmienda pendiente en el plan
+
+### `sdd-gate-check.py` (`gate_spec_fiable`) — gate de spec fiable (5)
+- [ ] CU-9.e — Avanzar de fase con un spec INCOMPLETO
+- [ ] CU-9.f — Avanzar de fase con gaps CRÍTICOs abiertos
+- [ ] CU-9.g — Construir sobre inferencias brownfield sin confirmar
+- [ ] CU-9.h — Avanzar con un spec marcado desincronizado
+- [ ] CU-9.i — Avanzar con deriva PRD→spec detectada por hash
+
+### `sdd-gate-check.py` — gate de plan vigente (`wf-task-run`) (2)
+- [ ] CU-9.j — Ejecutar tasks contra un plan degradado a BORRADOR
+- [ ] CU-9.k — Ejecutar una task retenida por enmienda
+
+### `sdd-gate-check.py` — fail-open (no bloquear de más) (2)
+- [ ] CU-9.l — Invocación sin path resoluble
+- [ ] CU-9.m — Entorno degradado (sin `python3`, stdin malformado, error interno)
+
+> **Capa determinista:** el motor `sdd-gate-check.py` está muy cubierto por
+> `sdd/tests/test_sdd_gate_check.py` y `test_sdd_sync_check.py`; lo manual aquí es la
+> conducta del agente ante tu insistencia.
+
+---
+
 ## Gate de plan validado — `wf-prepare-tasks`
 
 > **Mecanismo común:** hook `PreToolUse` → `sdd-gate-check.py` evalúa el `_plan.md`

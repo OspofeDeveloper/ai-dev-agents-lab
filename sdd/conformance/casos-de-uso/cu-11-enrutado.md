@@ -21,6 +21,32 @@ mano (ROADMAP 11.1). Es el sustrato del playbook 11.6.
 
 ---
 
+## 🧪 Qué se prueba aquí (por componente)
+
+CU-11 es un **objetivo de usuario** (hablar y que el orquestador acierte y propague bien),
+no una sola skill: sus escenarios ejercitan el **orquestador** desde cuatro mecanismos de
+enrutado. Marca cada escenario al ejecutarlo. El estado de cobertura autoritativo (ejes
+happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es la
+**transpuesta** para leer/ejecutar el CU.
+
+### Orquestador — enrutado por lenguaje natural (matching semántico + delegación a agente) (2)
+- [ ] CU-11.a — Hablar, no teclear comandos
+- [ ] CU-11.e — Delegación a agente cuando no hay workflow exacto
+
+### Orquestador — construcción y paso de argumentos (4)
+- [ ] CU-11.b — Construcción correcta de argumentos
+- [ ] CU-11.f — Los overrides peligrosos NO se inyectan sin petición explícita
+- [ ] CU-11.g — Input oral cuando el skill espera un argumento de fichero
+- [ ] CU-11.h — Argumentos de selección y multivalor
+
+### Orquestador → workflow (`context: fork`) → sub-workflows / subagente — propagación de args (1)
+- [ ] CU-11.c — Los argumentos sobreviven los saltos wf→wf y wf→agente
+
+### Orquestador → hook `PreToolUse` (`sdd-gate-check.py`) — los args llegan al gate (1)
+- [ ] CU-11.d — Los gates reciben los args aunque los construya un agente
+
+---
+
 ## CU-11.a — Hablar, no teclear comandos
 
 **Precondición:** un proyecto SDD inicializado.

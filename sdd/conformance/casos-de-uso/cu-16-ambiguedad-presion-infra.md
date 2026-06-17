@@ -18,6 +18,32 @@ release (`test_sdd_release`) están cubiertos; el resto es conducta del agente �
 
 ---
 
+## 🧪 Qué se prueba aquí (por componente)
+
+CU-16 es un **objetivo de usuario** (conducta bajo ambigüedad, presión sostenida e infra degradada), no una sola skill: sus escenarios ejercitan **5 componentes**. Marca cada escenario al ejecutarlo. El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es la **transpuesta** para leer/ejecutar el CU.
+
+### orquestador — desambiguación (pregunta en vez de adivinar) (3)
+- [ ] CU-16.a — Petición que mapea a varias features
+- [ ] CU-16.b — Un cambio que toca varias features a la vez
+- [ ] CU-16.c — Petición vaga
+
+### orquestador anti-alucinación — presión sostenida y sello a mano (autor ≠ marcador) (2)
+- [ ] CU-16.d — Presión sostenida sobre un gate
+- [ ] CU-16.e — Pedir editar el sello/estado a mano
+
+### degradación de infra — `project-init.json` corrupto (1)
+- [ ] CU-16.f — `project-init.json` corrupto o malformado
+
+### `sdd-release.py` — captura honesta del SHA con git en estado real (1)
+- [ ] CU-16.g — `wf-release` con git en estado real
+
+### escala — `wf-spec-discover`/`wf-spec-features-first`/`wf-prepare-plan`/`wf-prepare-tasks` (1)
+- [ ] CU-16.h — Escala: muchas features / muchos CAs
+
+> **Capa determinista** — el stdin malformado del gate (`CU-9.m`) y la captura de SHA de release (`test_sdd_release`) están cubiertos por `sdd/tests/`; el resto es conducta del agente.
+
+---
+
 ## CU-16.a — Petición que mapea a varias features
 
 **Precondición:** un proyecto con varias features del mismo dominio (p. ej. 3 features

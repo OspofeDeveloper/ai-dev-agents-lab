@@ -18,6 +18,30 @@ de asunciones son juicio del agente `prd-expert`, así que estos escenarios son
 
 ---
 
+## 🧪 Qué se prueba aquí (por componente)
+
+CU-2 es un **objetivo de usuario** (crear y dejar listo un PRD), no una sola skill: sus
+escenarios ejercitan **dos componentes**. Marca cada escenario al ejecutarlo. El estado de
+cobertura autoritativo (ejes happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) —
+esta vista es la **transpuesta** para leer/ejecutar el CU.
+
+### `wf-prd-create` — redactar el PRD (`prd-expert`) (4)
+- [ ] CU-2.a — Crear el PRD desde notas
+- [ ] CU-2.b — Crear el PRD sin notas (brief oral)
+- [ ] CU-2.c — Apuntar a un directorio o fuente inexistente
+- [ ] CU-2.d — Regenerar un PRD que ya existe
+
+### `wf-prd-review` — revisar el PRD y sellar (`prd-expert`) (4)
+- [ ] CU-2.e — Revisar el PRD: gate de asunciones (lo más crítico)
+- [ ] CU-2.f — Veredicto LISTO y sello de aprobación
+- [ ] CU-2.g — Pasar algo que no es un PRD
+- [ ] CU-2.h — La revisión no reescribe a su cosecha
+
+> **Capa determinista** (no es un escenario manual): el conteo de asunciones
+> (`grep "[ASUNCIÓN]"`, Paso 5.5 de `wf-prd-review`) es el único check automático de la fase.
+
+---
+
 ## CU-2.a — Crear el PRD desde notas
 
 **Precondición:** existe un fichero de notas/brief válido (tus notas reales del producto).

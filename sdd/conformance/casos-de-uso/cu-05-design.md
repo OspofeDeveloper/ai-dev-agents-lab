@@ -18,6 +18,64 @@ agente `design-system-architect` / `design-feature-architect` → **manual**.
 
 ---
 
+## 🧪 Qué se prueba aquí (por componente)
+
+CU-5 es un **objetivo de usuario** (diseñar una feature), no una sola skill: sus escenarios ejercitan **15 componentes** de la fase Design. Marca cada escenario al ejecutarlo. El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es la **transpuesta** para leer/ejecutar el CU.
+
+### `wf-design-intake` — cierra el brief (gate obligatorio) (2)
+- [ ] CU-5.a — El brief es gate obligatorio (intake)
+- [ ] CU-5.m — Intake: `DESIGN_GAP`, modo `auto` y brief existente
+
+### `wf-design-system` — crea el sistema visual del producto (2)
+- [ ] CU-5.b — Crear el sistema visual del producto (system)
+- [ ] CU-5.l — System: anclaje de dirección visual (provisional vs confirmed) y policy de referencias
+
+### `wf-design-feature-prototype` — deriva flows/views/ui_prompt de feature (2)
+- [ ] CU-5.c — Derivar flows, views y prompt de feature (feature-prototype)
+- [ ] CU-5.n — Feature-prototype: resolución de `target_tool` y conflicto cross-feature
+
+### `wf-design-extract` — ingeniería inversa del `DESIGN.md` (1)
+- [ ] CU-5.d — Onramp brownfield: derivar `DESIGN.md` de una UI en producción (extract)
+
+### `wf-design-validate` — audita el `DESIGN.md` sin regenerarlo (2)
+- [ ] CU-5.e — Auditar, accesibilidad, evolucionar y medir impacto
+- [ ] CU-5.o — Validate: read-only y promoción acotada de dirección (provisional → confirmed)
+
+### `wf-design-moodboard` — captura inspiración antes del brief (1)
+- [ ] CU-5.f — Capturar inspiración antes del brief (moodboard)
+
+### `wf-design-discover` — research de apps de referencia (orquestador) (1)
+- [ ] CU-5.g — Descubrir apps de referencia con research validado (discover)
+
+### `wf-design-branch` — ramas paralelas del `DESIGN.md` (2)
+- [ ] CU-5.h — Explorar una rama paralela del `DESIGN.md` (branch)
+- [ ] CU-5.s — Branch: confirmación ante merge breaking y discard
+
+### `wf-design-variant` — A/B testing visual de una feature (2)
+- [ ] CU-5.i — A/B testing visual de una feature (variant)
+- [ ] CU-5.t — Variant: hipótesis y métrica obligatorias
+
+### `wf-design-feedback` — captura y triaje de feedback (2)
+- [ ] CU-5.j — Capturar y triajear feedback de stakeholders (feedback)
+- [ ] CU-5.v — Feedback: triage completo, `functional_change` a Spec y `out_of_scope`
+
+### gate de spec fiable (`wf-design-system` / `wf-design-feature-prototype`) (1)
+- [ ] CU-5.k — Gate de spec fiable en Design (system y feature-prototype)
+
+### `wf-design-delta` — evolución incremental del `DESIGN.md` (1)
+- [ ] CU-5.p — Delta: `[BRIEF_CHANGE_REQUIRED]` y precondiciones de apply
+
+### `wf-design-a11y-audit` — auditoría de accesibilidad (1)
+- [ ] CU-5.q — A11y-audit: ramificación por plataforma
+
+### `wf-design-sync` — impacto de la deriva (read-only) (1)
+- [ ] CU-5.r — Sync: propagación conservadora de la deriva (read-only)
+
+### `wf-design-export` — exporta tokens a formatos de código (1)
+- [ ] CU-5.u — Export: idempotencia, `EXPORT_GAP` y `--dry-run`
+
+---
+
 ## CU-5.a — El brief es gate obligatorio (intake)
 
 **Precondición:** un `_spec.md` validado de una feature con UI; sin `DESIGN_BRIEF.md`.
