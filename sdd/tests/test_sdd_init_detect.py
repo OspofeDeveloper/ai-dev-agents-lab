@@ -32,6 +32,12 @@ def verify(root, phases):
     return r.returncode, json.loads(r.stdout)
 
 
+def repair_plan(root):
+    r = run_script(SCRIPT, "repair-plan", "--root", str(root))
+    assert r.returncode == 0, r.stderr
+    return json.loads(r.stdout)
+
+
 class DetectStateTest(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -260,6 +266,108 @@ class VerifyTest(unittest.TestCase):
         code, checks = verify(self.root, "spec,plan,tasks")
         self.assertEqual(code, 2)
         self.assertFalse(next(c for c in checks if c["check"] == "gitignore")["ok"])
+
+
+class RepairPlanTest(unittest.TestCase):
+    """Plan determinista de reparación (extend) — la lógica que el agente
+    improvisaba en prosa al reparar un init a medias. `phases` es el contrato:
+    lo declarado-pero-no-instalado se repara, y el `design_role` se deriva de la
+    topología sin preguntar."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _state(self, *, phases, installed, design_role, topology="authoring", **extra):
+        for f in installed:
+            write(self.root / f".claude/rules/sdd-{f}.md", "x")
+        obj = {
+            "dispatcher": "wf-project-init",
+            "topology": topology,
+            "phases": list(phases),
+            "design_role": design_role,
+        }
+        obj.update(extra)
+        write(self.root / ".sdd/project-init.json", json.dumps(obj))
+
+    def test_authoring_design_declared_missing_derives_system(self):
+        # El caso real de CU-1.e: prd+spec instalados, design declarado con role null.
+        self._state(phases=["prd", "spec", "design"], installed=["prd", "spec"],
+                    design_role=None, topology="authoring")
+        p = repair_plan(self.root)
+        self.assertEqual(p["missing_phases"], ["design"])
+        self.assertEqual(p["expected_design_role"], "system")
+        self.assertFalse(p["design_role_consistent"])  # null ≠ system
+        self.assertTrue(p["needs_repair"])
+
+    def test_consumer_design_derives_feature(self):
+        self._state(phases=["plan", "tasks", "design"], installed=["plan", "tasks"],
+                    design_role=None, topology="consumer")
+        p = repair_plan(self.root)
+        self.assertEqual(p["missing_phases"], ["design"])
+        self.assertEqual(p["expected_design_role"], "feature")
+        self.assertTrue(p["needs_repair"])
+
+    def test_standalone_design_derives_full(self):
+        self._state(phases=["spec", "design", "plan", "tasks"],
+                    installed=["spec", "plan", "tasks"],
+                    design_role=None, topology="standalone")
+        p = repair_plan(self.root)
+        self.assertEqual(p["missing_phases"], ["design"])
+        self.assertEqual(p["expected_design_role"], "full")
+
+    def test_declared_phases_in_canonical_order(self):
+        # El JSON puede declararlas desordenadas; el plan las normaliza.
+        self._state(phases=["design", "spec", "prd"], installed=["spec"],
+                    design_role="system", topology="authoring")
+        p = repair_plan(self.root)
+        self.assertEqual(p["declared_phases"], ["prd", "spec", "design"])
+        self.assertEqual(p["missing_phases"], ["prd", "design"])
+
+    def test_no_design_declared_role_is_null(self):
+        self._state(phases=["spec", "plan", "tasks"],
+                    installed=["spec", "plan", "tasks"],
+                    design_role=None, topology="standalone")
+        p = repair_plan(self.root)
+        self.assertFalse(p["design_declared"])
+        self.assertIsNone(p["expected_design_role"])
+        self.assertTrue(p["design_role_consistent"])  # null == null
+
+    def test_fully_consistent_needs_no_repair(self):
+        self._state(phases=["prd", "spec", "design"],
+                    installed=["prd", "spec", "design"],
+                    design_role="system", topology="authoring")
+        p = repair_plan(self.root)
+        self.assertEqual(p["missing_phases"], [])
+        self.assertTrue(p["design_role_consistent"])
+        self.assertFalse(p["needs_repair"])
+
+    def test_role_mismatch_alone_needs_repair(self):
+        # Todo instalado pero design_role incoherente con la topología → reparar.
+        self._state(phases=["prd", "spec", "design"],
+                    installed=["prd", "spec", "design"],
+                    design_role="feature", topology="authoring")  # debería ser system
+        p = repair_plan(self.root)
+        self.assertEqual(p["missing_phases"], [])
+        self.assertEqual(p["expected_design_role"], "system")
+        self.assertFalse(p["design_role_consistent"])
+        self.assertTrue(p["needs_repair"])
+
+    def test_no_init_json_is_not_repairable(self):
+        p = repair_plan(self.root)
+        self.assertFalse(p["init_found"])
+        self.assertFalse(p["init_readable"])
+        self.assertFalse(p["needs_repair"])
+
+    def test_malformed_init_json_is_not_repairable(self):
+        write(self.root / ".sdd/project-init.json", "{ not json")
+        p = repair_plan(self.root)
+        self.assertTrue(p["init_found"])
+        self.assertFalse(p["init_readable"])
+        self.assertFalse(p["needs_repair"])
 
 
 if __name__ == "__main__":

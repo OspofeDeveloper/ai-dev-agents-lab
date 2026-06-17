@@ -26,8 +26,17 @@ Subcomandos:
         todos pasan. Acepta el esquema standalone (`artifacts`) y consumer
         (`artifacts_source`).
 
+    repair-plan [--root <dir>]
+        Plan determinista de reparación de un `init-incomplete` (extend, Paso 3b/5).
+        Lee `project-init.json` y calcula, sin intervención del agente: qué fases
+        están declaradas pero no instaladas (`missing_phases`) y el `design_role`
+        canónico derivado de la topología (`expected_design_role`). El agente APLICA
+        el plan — no re-decide ni pregunta el rol (la reparación instala lo declarado;
+        quitar una fase es un cambio de alcance explícito, no reparación). Pre-install
+        no aplica: requiere un `project-init.json` previo.
+
 Exit codes:
-    0 = OK (detect siempre; verify si todos los checks pasan)
+    0 = OK (detect/repair-plan siempre; verify si todos los checks pasan)
     1 = error de uso (argumentos inválidos)
     2 = (verify) al menos un check FALLÓ
 """
@@ -53,6 +62,16 @@ ARTIFACT_CANDIDATE_DIRS = {
     "spec": ["specs", "docs/specs", "documentation/specs"],
     "prd": ["docs/prd", "product", "docs/product", "requirements"],
     "design": ["docs/design", "design-system"],
+}
+
+# Rol de design derivado de la topología (SSoT en código del Paso 5 del SKILL:
+# authoring L29/229 → system, consumer L252 → feature, standalone L274 → full).
+# El rol NO depende de has_ui: en consumer, has_ui decide si design ESTÁ presente,
+# no su rol. Si design no está declarado, no hay rol (null).
+DESIGN_ROLE_BY_TOPOLOGY = {
+    "authoring": "system",
+    "consumer": "feature",
+    "standalone": "full",
 }
 
 
@@ -245,6 +264,81 @@ def verify(root: Path, phases: list[str]) -> list[dict]:
     return checks
 
 
+def derive_design_role(topology: str | None, design_declared: bool) -> str | None:
+    """`design_role` canónico dada la topología. None si design no está declarado.
+
+    Es la función pura que el agente improvisaba en prosa al reparar un init a
+    medias: dado que `phases` (el contrato) declara design, el rol queda
+    determinado por la topología sin ambigüedad — no hay nada que preguntar.
+    """
+    if not design_declared:
+        return None
+    return DESIGN_ROLE_BY_TOPOLOGY.get(topology)
+
+
+def repair_plan(root: Path) -> dict:
+    """Plan determinista de reparación de un `init-incomplete` (extend, Paso 3b/5).
+
+    Lee `project-init.json` y calcula qué fases declaradas faltan por instalar y el
+    `design_role` canónico, para que el agente APLIQUE el plan en vez de re-decidir
+    (en concreto, no preguntar el rol). `phases` es el contrato: lo declarado se
+    instala; quitar una fase es un cambio de alcance, no una reparación.
+    """
+    init_json = root / ".sdd/project-init.json"
+    obj = None
+    if init_json.is_file():
+        try:
+            obj = json.loads(init_json.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            obj = None
+
+    installed = [
+        f for f in PHASES
+        if (root / f".claude/rules/sdd-{f}.md").is_file()
+        or (root / f / ".claude/CLAUDE.md").is_file()
+    ]
+
+    if not isinstance(obj, dict):
+        return {
+            "init_found": init_json.is_file(),
+            "init_readable": False,
+            "topology": None,
+            "declared_phases": [],
+            "installed_phases": installed,
+            "missing_phases": [],
+            "design_declared": False,
+            "design_role_in_json": None,
+            "expected_design_role": None,
+            "design_role_consistent": True,
+            "needs_repair": False,
+        }
+
+    topology = obj.get("topology")
+    raw_phases = obj.get("phases")
+    declared_set = {p for p in raw_phases if isinstance(p, str)} if isinstance(raw_phases, list) else set()
+    declared = [p for p in PHASES if p in declared_set]  # orden canónico
+    missing = [p for p in declared if p not in installed]
+
+    design_declared = "design" in declared_set
+    role_json = obj.get("design_role")
+    expected_role = derive_design_role(topology, design_declared)
+    role_consistent = role_json == expected_role
+
+    return {
+        "init_found": True,
+        "init_readable": True,
+        "topology": topology,
+        "declared_phases": declared,
+        "installed_phases": installed,
+        "missing_phases": missing,
+        "design_declared": design_declared,
+        "design_role_in_json": role_json,
+        "expected_design_role": expected_role,
+        "design_role_consistent": role_consistent,
+        "needs_repair": bool(missing) or not role_consistent,
+    }
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(
         prog="sdd-init-detect.py", add_help=True, description=__doc__,
@@ -260,6 +354,10 @@ def main(argv: list[str]) -> int:
     p_verify.add_argument("--phases", required=True, help="fases instaladas, separadas por comas")
     p_verify.add_argument("--root", default=None, help="raíz a verificar (default: cwd)")
     p_verify.add_argument("--json", action="store_true", help="salida JSON (default)")
+
+    p_repair = sub.add_parser("repair-plan", help="plan de reparación de init-incomplete (Paso 3b/5)")
+    p_repair.add_argument("--root", default=None, help="raíz a analizar (default: cwd)")
+    p_repair.add_argument("--json", action="store_true", help="salida JSON (default)")
 
     try:
         ns = parser.parse_args(argv)
@@ -283,6 +381,10 @@ def main(argv: list[str]) -> int:
         checks = verify(root, phases)
         print(json.dumps(checks, indent=2, ensure_ascii=False))
         return 0 if all(c["ok"] for c in checks) else 2
+
+    if ns.mode == "repair-plan":
+        print(json.dumps(repair_plan(root), indent=2, ensure_ascii=False))
+        return 0
 
     return fail(f"modo desconocido: {ns.mode}")
 

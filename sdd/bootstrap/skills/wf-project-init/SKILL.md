@@ -99,6 +99,8 @@ opciones:
 
 `MODE=extend` mantiene lo instalado y solo pregunta lo que falte. Si hay `--force` como argumento, rehacer sin preguntar.
 
+> **Reparación de fase declarada pero no instalada (extend).** No la pongas en cuestión ni preguntes el rol: `phases` es el contrato (el mismo campo con el que el hook declara `init-incomplete`). Ejecuta `python3 "$SDD_HOME/scripts/sdd-init-detect.py" repair-plan` y **aplica su plan**: instala `missing_phases` y fija `design_role`/`artifacts` según `expected_design_role` — derivado de la topología por el script (SSoT en código, testeado), **sin** `AskUserQuestion`. Quitar una fase declarada **no** es reparación: es un cambio explícito de alcance. Informa post-hoc de lo instalado (p. ej. "instalé `design` rol system porque estaba declarado; quítalo con 'Completar / ampliar' si no lo querías").
+
 > **Esquema nuevo (sin retrocompatibilidad).** Un `project-init.json` con el esquema legacy (`profiles`/`profile`/`type` en vez de `topology`/`surfaces`) **no es válido**: trátalo como init corrupto y ofrece "Rehacer desde cero". No migres campos legacy.
 
 **3c. Artefactos.** Refinar `KNOWN_STATE`: `prd/PRD.md` → `use_prd=true`; `design/DESIGN.md` o `DESIGN_BRIEF.md` → `has_design=true`; specs existentes (`spec/features/` o specs detectados en otra ruta) → `specs_exist=true` (anotar la ruta real si no es la canónica).

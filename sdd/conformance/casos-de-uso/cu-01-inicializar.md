@@ -44,14 +44,17 @@ para leer/ejecutar el CU.
 ### hook de sesión `bootstrap/sdd-session-check.sh` — directivas `SDD-PROTOCOL` (6)
 - [x] CU-1.a — Wizard de modo en proyecto virgen (`mode-undecided`) · ✓ 2026-06-17
 - [x] CU-1.c — Modo libre silencia SDD (`free`) · ✓ 2026-06-17
-- [ ] CU-1.d — Modo SDD sin init → `init-pending` (invoca wf-project-init)
-- [ ] CU-1.e — Init a medias → `init-incomplete` (invoca wf-project-init "Completar/ampliar")
+- [x] CU-1.d — Modo SDD sin init → `init-pending` (invoca wf-project-init) · ✓ 2026-06-17
+- [x] CU-1.e — Init a medias → `init-incomplete` (invoca wf-project-init "Completar/ampliar") · ✓ 2026-06-17 (criterio determinista: repair-plan, rol derivado de topología, sin preguntar)
 - [ ] CU-1.f — Versión anterior → `version-drift` (informativo)
 - [ ] CU-1.g — Sesión en subdirectorio → búsqueda de marcadores hacia arriba
 
 > **Capa determinista** (no son escenarios manuales): `install.sh`, `sdd-init-detect.py` y el propio
 > hook están cubiertos por unittests (`test_install_sh.py`, `test_setup_sh.py`,
-> `test_session_hook.py`, `test_sdd_init_detect.py`). Aquí se prueba la **conducta del agente** ante
+> `test_session_hook.py`, `test_sdd_init_detect.py`). En particular, la lógica de reparación de
+> CU-1.e — qué fases faltan y el `design_role` derivado de la topología — es la función pura
+> `sdd-init-detect.py repair-plan`, cubierta por `RepairPlanTest`; lo manual de CU-1.e es solo que el
+> agente **aplique** ese plan sin preguntar el rol. Aquí se prueba la **conducta del agente** ante
 > cada directiva / entrevista.
 
 ---
@@ -181,9 +184,17 @@ ficheros de instalación no están presentes.
    → **Esperado:** el agente invoca `wf-project-init` en modo **"Completar / ampliar"**
      para reparar las fases que faltan, **antes** de atender tu petición, y sin repetir
      el wizard de modo.
+2. (reparación determinista) El init repara el hueco **sin volver a poner la fase en
+   cuestión**: `phases` es el contrato. Apoyándose en `sdd-init-detect.py repair-plan`,
+   instala las `missing_phases` y fija el `design_role` **derivado de la topología**
+   (authoring→`system`, consumer-con-UI→`feature`, standalone→`full`) — **no** presenta
+   un `AskUserQuestion` para decidir el rol ni para "instalar vs quitar" la fase
+   declarada. Quitar una fase declarada es un cambio de alcance explícito, no reparación.
 
-**Resultado:** PASS si repara las fases ausentes sin re-entrevistar de cero · FALLO si
-ignora el hueco, o rehace todo el init.
+**Resultado:** PASS si repara las fases ausentes sin re-entrevistar de cero **y de forma
+determinista** (deriva el rol de la topología, sin preguntarlo) · FALLO si ignora el
+hueco, rehace todo el init, **o abre un `AskUserQuestion` para decidir el rol o el
+instalar-vs-quitar de una fase ya declarada**.
 **Desviación → reportar:** issue citando `CU-1.e`.
 
 ## CU-1.f — Instalación de versión anterior (`version-drift`)
