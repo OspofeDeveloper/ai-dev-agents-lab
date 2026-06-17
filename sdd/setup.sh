@@ -2,8 +2,9 @@
 # Setup global del ecosistema SDD. Instala en la maquina del usuario:
 #   1. wf-project-init en ~/.claude/skills/            (skill global de init)
 #   2. ~/.sdd-home                                      (ruta al framework SDD)
-#   3. Hook SessionStart en ~/.claude/hooks/            (chequeo determinista de estado SDD)
+#   3. Hook SessionStart + helper de status line en ~/.claude/hooks/ (estado SDD + segmento de statusline)
 #   4. Registro del hook en ~/.claude/settings.json     (merge, sin pisar otros hooks)
+#      4b. Status line SDD en settings.json SOLO si no hay una (nunca pisa la del usuario)
 #   5. Bloque gestionado SDD-BOOTSTRAP en ~/.claude/CLAUDE.md (protocolo de inicio de sesion)
 #
 # Uso:
@@ -40,8 +41,10 @@ if [ "$UNINSTALL" = "1" ]; then
   rm -rf "$GLOBAL_SKILLS_DIR/wf-project-init" "$GLOBAL_SKILLS_DIR/wf-sdd-update"
   rm -f "$HOME/.sdd-home"
   rm -f "$CLAUDE_DIR/hooks/sdd-session-check.sh"
+  rm -f "$CLAUDE_DIR/hooks/sdd-statusline.sh"
 
-  # Desregistrar el hook de settings.json preservando el resto de la config.
+  # Desregistrar el hook (y la status line SDD, si la pusimos) de settings.json
+  # preservando el resto de la config.
   if command -v python3 >/dev/null 2>&1 && [ -f "$CLAUDE_DIR/settings.json" ]; then
     SETTINGS="$CLAUDE_DIR/settings.json" python3 - <<'PYEOF'
 import json, os
@@ -67,6 +70,11 @@ if hooks:
     data["hooks"] = hooks
 else:
     data.pop("hooks", None)
+# Quitar la status line SOLO si es la nuestra (no tocar la del usuario).
+sl = data.get("statusLine")
+if isinstance(sl, dict) and sl.get("command", "").endswith("sdd-statusline.sh"):
+    data.pop("statusLine", None)
+    print("Status line SDD desregistrada de " + path)
 with open(path, "w") as f:
     json.dump(data, f, indent=2); f.write("\n")
 print("Hook SessionStart desregistrado de " + path)
@@ -169,6 +177,11 @@ mkdir -p "$HOOKS_DIR"
 cp "$SCRIPT_DIR/bootstrap/sdd-session-check.sh" "$HOOK_TARGET"
 chmod +x "$HOOK_TARGET"
 
+# Helper de status line (segmento con el modo SDD; se compone con la statusline del usuario).
+STATUSLINE_TARGET="$HOOKS_DIR/sdd-statusline.sh"
+cp "$SCRIPT_DIR/bootstrap/sdd-statusline.sh" "$STATUSLINE_TARGET"
+chmod +x "$STATUSLINE_TARGET"
+
 # ── 4. Registrar el hook en ~/.claude/settings.json (merge idempotente) ─────
 SETTINGS="$CLAUDE_DIR/settings.json" python3 - <<'PYEOF'
 import json, os
@@ -195,6 +208,31 @@ if not already:
     print("Hook SessionStart registrado en " + path)
 else:
     print("Hook SessionStart ya registrado en " + path)
+PYEOF
+
+# ── 4b. Status line: registrar SOLO si no hay una (nunca pisar la del usuario) ─
+SETTINGS="$CLAUDE_DIR/settings.json" python3 - <<'PYEOF'
+import json, os
+path = os.environ["SETTINGS"]
+data = {}
+if os.path.exists(path):
+    try:
+        with open(path) as f:
+            data = json.load(f)
+    except Exception:
+        raise SystemExit(0)  # JSON ilegible: no tocar
+sl_cmd = os.path.expanduser("~/.claude/hooks/sdd-statusline.sh")
+existing = data.get("statusLine")
+if not existing:
+    data["statusLine"] = {"type": "command", "command": sl_cmd}
+    with open(path, "w") as f:
+        json.dump(data, f, indent=2); f.write("\n")
+    print("Status line SDD registrada en " + path + " (mostrará el modo SDD; vacía fuera de un proyecto SDD)")
+elif isinstance(existing, dict) and existing.get("command", "").endswith("sdd-statusline.sh"):
+    print("Status line SDD ya registrada en " + path)
+else:
+    print("Tienes una status line propia: NO se toca. Para ver el modo SDD en ella, llama a")
+    print("  " + sl_cmd + " <cwd>   (imprime el segmento '⚙ SDD:…', vacío si no aplica) y añádelo a tu línea.")
 PYEOF
 
 # ── 5. Bloque gestionado en ~/.claude/CLAUDE.md ─────────────────────────────

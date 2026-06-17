@@ -43,7 +43,7 @@ para leer/ejecutar el CU.
 
 ### hook de sesión `bootstrap/sdd-session-check.sh` — directivas `SDD-PROTOCOL` (6)
 - [x] CU-1.a — Wizard de modo en proyecto virgen (`mode-undecided`) · ✓ 2026-06-17
-- [ ] CU-1.c — Modo libre silencia SDD (`free`)
+- [x] CU-1.c — Modo libre silencia SDD (`free`) · ✓ 2026-06-17
 - [ ] CU-1.d — Modo SDD sin init → `init-pending` (invoca wf-project-init)
 - [ ] CU-1.e — Init a medias → `init-incomplete` (invoca wf-project-init "Completar/ampliar")
 - [ ] CU-1.f — Versión anterior → `version-drift` (informativo)
@@ -148,11 +148,13 @@ escribe `project-init.json`.
    → **Esperado:** se crea `.claude/sdd-mode.json` con `{"mode":"free",…}` y la sesión
      continúa con normalidad.
 2. Abres una sesión nueva en el mismo proyecto.
-   → **Esperado:** el hook lee `mode: free` y **no vuelve a mencionar SDD** (sin
-     wizard, sin init).
+   → **Esperado:** el hook lee `mode: free` y **no menciona SDD en el chat** (sin
+     wizard, sin init, sin empujar SDD). La única señal de que el proyecto está en SDD
+     es **ambiente**, en la status line (`⚙ SDD:libre`) — no en la conversación (D-009).
 
-**Resultado:** PASS si escribe el JSON `free` y no vuelve a preguntar · FALLO si
-reinstala, o vuelve a presentar el wizard en sesiones posteriores.
+**Resultado:** PASS si escribe el JSON `free`, no vuelve a preguntar y no menciona SDD en
+el chat en sesiones posteriores (que la status line muestre `⚙ SDD:libre` es lo esperado,
+no un fallo) · FALLO si reinstala, vuelve a presentar el wizard, o empuja SDD en el chat.
 **Desviación → reportar:** issue citando `CU-1.c`.
 
 ## CU-1.d — Modo SDD marcado pero init no completado (`init-pending`)

@@ -6,6 +6,54 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-009 — La visibilidad del modo SDD es AMBIENTE (status line), no anuncios en el chat
+
+- **Fecha:** 2026-06-17 · **Estado:** Adoptada
+
+**Contexto.** Probando `CU-1.c` (modo libre), el agente anunciaba en el chat "el proyecto está en
+modo libre" en **cada** sesión. El usuario quería **ver** que el proyecto está en SDD/libre (por si
+algún día cambia), pero un anuncio por-sesión en el chat es ruido recurrente que contradice el valor
+mismo del modo libre (cero huella de SDD) y, por repetición, se vuelve invisible — no cumple ni el
+objetivo de discoverability. El spec ya pedía silencio en chat (`claude-global-block.md` modo libre:
+"No vuelvas a mencionar SDD…"); el anuncio era el agente saliéndose del spec.
+
+**Decisión.** Separar **avisar** (chat, puntual) de **recordar** (ambiente, permanente): el chat
+permanece en silencio sobre SDD en modo libre, y la visibilidad del estado SDD se da en la **status
+line** mediante un helper `bootstrap/sdd-statusline.sh` que imprime un **segmento corto** —
+`⚙ SDD:<topology>` (inicializado), `⚙ SDD:libre` (modo libre, tenue), `⚙ SDD:init pendiente` — por
+**find-up** (mismo criterio que el hook), o **nada** si SDD no aplica. Es **componible**: imprime solo
+el segmento, sin separadores, para encajar en cualquier status line. `setup.sh` lo copia a
+`~/.claude/hooks/` y registra una `statusLine` **solo si no hay una** (jamás pisa la del usuario; si
+existe, imprime la guía para llamarlo). El helper es **fuente única** de la lógica (sin duplicar en
+cada status line); `uninstall` borra el helper y desregistra la status line solo si es la nuestra.
+
+**Alternativas descartadas.**
+- *Anuncio por sesión en el chat* → ruido recurrente; se ignora por repetición; rompe el "cero huella".
+- *Silencio total sin indicador* → pierde la discoverability que el usuario pedía.
+- *Inlinear la lógica en cada status line* → drift entre copias; mejor un helper único.
+- *Auto-inyectar el segmento en la status line existente del usuario desde setup.sh* → inviable/invasivo
+  (puede ser cualquier comando); se documenta la integración manual en su lugar.
+
+**Consecuencias / aprendizaje.** `CU-1.c` se matiza: silencio en chat = correcto; que la status line
+muestre `⚙ SDD:libre` = esperado, no fallo. Para usuarios con status line propia la integración es
+manual (en este repo, el `statusline.py` del autor —fuera del repo— llama al helper con `cwd`, envuelto
+en try/except para no poder romper la línea). El helper **nunca falla** (siempre exit 0, imprime nada
+ante error): una status line no puede permitirse tumbar por un segmento.
+
+**Hueco detectado al implementar:** el silencio en chat estaba solo *implícito*. La rama de modo
+libre del wizard sí lo decía ("No vuelvas a mencionar SDD"), pero las secciones **"Sin directiva"** y
+el **fallback** del `claude-global-block.md` —que gobiernan las **sesiones recurrentes** (free ya
+fijado)— no lo prohibían, así que el agente anunciaba el modo "por transparencia" (visto en `CU-1.c`).
+Se endureció el bloque para **prohibir explícitamente anunciar el modo en el chat** (la status line es
+el canal). Requiere `bash setup.sh` para propagar el bloque a `~/.claude/CLAUDE.md`; hasta entonces el
+contexto del agente lleva el bloque viejo y la línea puede reaparecer.
+
+**Referencias.** `bootstrap/sdd-statusline.sh` · `setup.sh` (paso 4b + limpieza en uninstall) ·
+`conformance/casos-de-uso/cu-01-inicializar.md` (`CU-1.c`) · `bootstrap/claude-global-block.md`
+(silencio en chat en modo libre).
+
+---
+
 ## D-008 — Vista de cobertura "por componente" en cada CU (forward), con checklist de ejecución
 
 - **Fecha:** 2026-06-17 · **Estado:** Adoptada
