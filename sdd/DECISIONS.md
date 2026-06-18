@@ -6,6 +6,50 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-010 — La reparación de un init a medias es determinista: `phases` es el contrato, no se repregunta el rol
+
+- **Fecha:** 2026-06-18 · **Estado:** Adoptada
+
+**Contexto.** Probando `CU-1.e` (`init-incomplete`: una fase declarada en `phases` de
+`project-init.json` pero sin instalar), dos corridas del mismo escenario divergieron: en authoring
+con `design` declarado y `design_role: null`, una corrida abría un `AskUserQuestion` ("instalar design
+system / quitar design") y otra resolvía sola a `system`. Ambas pasaban el criterio de entonces
+(*"repara sin re-entrevistar de cero"*) porque una pregunta puntual no es re-entrevistar. La causa raíz:
+el SKILL recitaba en prosa la lógica de reparación y dejaba latitud al agente, así que el rol —que es
+**determinado** por la topología— se trataba como ambiguo.
+
+**Decisión.** La reparación (extend) es **determinista y silenciosa**: `phases` es el contrato (es el
+mismo campo con el que el hook declara `init-incomplete`), así que lo declarado-pero-no-instalado **se
+instala**, y el `design_role` se **deriva de la topología** (authoring→`system`, consumer-con-UI→
+`feature`, standalone→`full`) — sin `AskUserQuestion` para decidir el rol. Quitar una fase declarada
+**no** es reparación: es un cambio de alcance explícito (otra acción), no una verja insertada en cada
+repair. Para sacar el *qué* de la prosa, la derivación vive como **función pura testeada** en
+`sdd-init-detect.py` (`derive_design_role` + subcomando `repair-plan`, con `missing_phases`,
+`expected_design_role`, `needs_repair`); el SKILL solo dice "aplica el `repair-plan`, no preguntes". El
+agente informa **post-hoc** de lo instalado (p. ej. "instalé `design` rol system porque estaba
+declarado; quítalo con 'Completar / ampliar' si no lo querías").
+
+**Alternativas descartadas.**
+- *Preguntar siempre instalar-vs-quitar al reparar* → relitiga la misma declaración que disparó el
+  repair; añade fricción al caso común; el rol nunca es ambiguo dada la topología.
+- *Respetar `design_role: null` como "no hay diseño"* → contradice `phases` (que sí declara design);
+  `phases` es el campo autoritativo, `design_role` es metadato derivado a recomputar.
+- *Dejar la lógica solo en prosa del SKILL* → es lo que causó la divergencia; no es testeable.
+
+**Consecuencias / aprendizaje.** `CU-1.e` se endurece: abrir un `AskUserQuestion` para decidir el rol
+o el instalar-vs-quitar de una fase ya declarada es **FALLO**. El *qué repara* queda como invariante
+automático (`RepairPlanTest`, 9 casos); lo único manual es que el agente **aplique** el plan sin
+preguntar. Aprendizaje transversal (mismo patrón que D-009): cuando una conducta determinista se deja
+en prosa, el agente improvisa y diverge — hay que **codificarla** y dejar a la prosa solo el *cómo
+aplicarla*. Requiere `bash setup.sh` para propagar el SKILL nuevo a `~/.claude/skills/` (instala por
+copia, no symlink); hasta entonces el agente carga la regla vieja.
+
+**Referencias.** `scripts/sdd-init-detect.py` (`derive_design_role`, `repair-plan`) ·
+`tests/test_sdd_init_detect.py` (`RepairPlanTest`) · `bootstrap/skills/wf-project-init/SKILL.md`
+(reparación de fase declarada en extend) · `conformance/casos-de-uso/cu-01-inicializar.md` (`CU-1.e`).
+
+---
+
 ## D-009 — La visibilidad del modo SDD es AMBIENTE (status line), no anuncios en el chat
 
 - **Fecha:** 2026-06-17 · **Estado:** Adoptada
