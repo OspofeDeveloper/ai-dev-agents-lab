@@ -53,7 +53,8 @@ Los tokens son los valores normativos. El markdown explica intencion, tono y reg
 **Secciones custom** — el linter las preserva sin error; incluirlas en estas posiciones recomendadas:
 - `## Visual Personality` → despues de `## Overview`, antes de `## Colors`
 - `## Color Modes` → despues de `## Colors`, antes de `## Typography`
-- `## Accessibility` → despues de `## Components`, antes de `## Motion & Micro-interactions`
+- `## Platform Components` → despues de `## Components`, antes de `## Accessibility` (solo si el producto diverge nativamente — Regla 11)
+- `## Accessibility` → despues de `## Platform Components` (o `## Components` si esa no existe), antes de `## Motion & Micro-interactions`
 - `## Motion & Micro-interactions` → despues de `## Accessibility`, antes de `## Reference Apps`
 - `## Reference Apps` → despues de `## Motion`, antes de `## Voice & Microcopy`
 - `## Voice & Microcopy` → despues de `## Reference Apps`, antes de `## Do's and Don'ts`
@@ -269,6 +270,36 @@ Cuando `direction_confidence: provisional`, los campos de direccion inferidos si
 **El ciclo de vida `provisional → confirmed`** (que lo dispara, quien lo pone, quien lo limpia, su traza en `## Changelog`) **no vive aqui**: es la dimension temporal/operativa del artefacto y su SSoT es `kb-design-governance` Regla 5. Esta KB solo fija los **valores validos** del frontmatter; la gobernanza fija su transicion.
 
 > Coherencia con `kb-design-characterization`: esa KB documenta el header `origin: extracted` (+ `evidence_base`, `evidence_coverage`) del camino brownfield. Los tres valores de `origin` conviven limpio: `extracted` es ortogonal a la dimension de confianza de direccion (`direction_confidence` no aplica a un `extracted`, cuya confianza se expresa con `evidence_coverage`).
+
+## Regla 11: Capa de mapeo de componente por plataforma (divergencia nativa) ([[D-011]])
+
+Cuando un producto cubre **design targets que divergen a nivel de componente nativo** (topologia `design` de D-011, o cualquier producto multiplataforma: p. ej. `mobile-android` + `mobile-ios`, Material vs HIG), la **realizacion nativa** de un componente es una decision de **sistema** y vive AQUI, en `DESIGN.md`, no en las views por feature. Esto es lo que permite que `*_views.md` se mantenga agnostico y solo se overridee por layout/composicion (`kb-design-feature-artifacts` Regla 8): la view cita el componente por su **rol**, y su realizacion nativa se resuelve desde esta capa.
+
+**Cuando es obligatoria / cuando se omite:**
+- **Obligatoria** cuando los design targets del producto incluyen mas de una plataforma divergente dentro de una familia (tipico: `mobile-android` + `mobile-ios`) o plataformas con sistemas de componentes distintos cuya divergencia es de sistema (no de layout). Si falta estando declarados targets divergentes → `DESIGN_GAP`.
+- **Se omite** cuando hay una sola base (`mobile`, o una sola plataforma): no hay nada que mapear y anadirla seria ruido.
+
+**Que declara** — seccion custom `## Platform Components` (tras `## Components`). Por cada componente que **realmente diverja** (no todos):
+- el **rol/nombre abstracto** del componente (el mismo de `## Components` y el que citan las views);
+- por cada plataforma divergente (`android`/`ios`/`web`/`desktop`), su **realizacion nativa**: el componente del sistema de la plataforma y la diferencia de comportamiento/anatomia relevante;
+- lo que **se comparte** (tokens, color, tipografia, voz, motion) NO se redeclara: sigue siendo el sistema comun.
+
+Tabla minima por componente divergente:
+
+| Rol abstracto | android (Material) | ios (HIG) | web/desktop |
+|---|---|---|---|
+| primary-navigation | bottom navigation bar | tab bar | top nav / sidebar |
+| date-input | date picker modal (Material) | wheel/inline picker | `input` nativo / libreria |
+| confirmacion destructiva | dialog | action sheet | modal |
+
+Frontmatter opcional (objeto libre, como `motion`/`accessibility`): un bloque `platform_components:` keyed por plataforma con el mapeo rol→componente nativo, para consumo programatico. No obligatorio; la **seccion markdown es la SSoT legible**.
+
+**Lo que NO es:**
+- No es un fork del `DESIGN.md` por plataforma — el sistema (identidad, tokens, voz, motion) es uno solo y compartido; solo el **componente** diverge.
+- No duplica el spec del componente abstracto de `## Components`: lo **mapea** a su realizacion por plataforma.
+- No baja a layout de pantalla (eso es override per-view en `*_views.md`, `kb-design-feature-artifacts` Regla 8) ni a tokens (compartidos).
+
+> Las plataformas validas se derivan del eje de plataforma de los design targets del producto (D-011, SSoT en el init). La **familia** (`mobile/web/desktop`) sigue siendo SSoT de `accessibility.target_platforms` (Regla 2); esta capa anade el **detalle por plataforma** dentro de una familia que diverge.
 
 ## KB Load Status
 

@@ -179,7 +179,7 @@ Por defecto, `*_flows.md` y `*_views.md` son **una sola base agnóstica** de sup
 
 Un target sin directorio de override hereda toda la base (el caso común: un producto con un único target `mobile` no tiene `targets/`). Solo se materializa lo que diverge — **no se duplica lo idéntico**.
 
-**Per-component se descarta.** `*_views.md` es markdown en prosa, no un árbol de componentes con IDs estables; fusionar prosa componente-a-componente no es determinista. La especificidad de **componente nativo** (Material vs HIG, patrón de navegación) es un asunto de **sistema**, no de la vista: vive en la capa de mapeo de componente por plataforma del `DESIGN.md` (`kb-design-system-contract`). La vista se mantiene agnóstica y solo se overridea por **layout/composición** (p. ej. master-detail en tablet). **Per-state** queda como refinamiento futuro opt-in: solo si el uso real muestra una vista que diverge en un único estado y re-enunciarla molesta.
+**Per-component se descarta.** `*_views.md` es markdown en prosa, no un árbol de componentes con IDs estables; fusionar prosa componente-a-componente no es determinista. La especificidad de **componente nativo** (Material vs HIG, patrón de navegación) es un asunto de **sistema**, no de la vista: vive en la capa de mapeo de componente por plataforma del `DESIGN.md` (`kb-design-system-contract` Regla 11). La vista se mantiene agnóstica y solo se overridea por **layout/composición** (p. ej. master-detail en tablet). **Per-state** queda como refinamiento futuro opt-in: solo si el uso real muestra una vista que diverge en un único estado y re-enunciarla molesta.
 
 **Layout** (los overrides cuelgan de la base, no la sustituyen):
 ```
