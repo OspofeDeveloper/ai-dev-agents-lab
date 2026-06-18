@@ -114,6 +114,18 @@ Su encaje natural hoy es greenfield mobile sin diseñador con Stitch como destin
 - [x] 🟢 **7.5 — Evaluar consolidación de workflows pre-DESIGN.md** (`intake`+`discover`+`moodboard`) y la pareja `branch`/`variant` para equipos pequeños — la gobernanza ya necesita un decision-tree solo para explicar la diferencia, síntoma de sobre-segmentación. ✅ *2026-06-10 (v0.28.1): **veredicto NO consolidar**, decisión documentada (ítem de "evaluar y decidir", no de construir). Razón: el trío `moodboard`/`intake`/`discover` produce artefactos distintos (`_design_moodboard.md` de vibes → `DESIGN_BRIEF.md` cerrado → `_design_discovery.md` de reference apps) con SRP distinto; solo `intake` es gate obligatorio, `moodboard` y `discover` ya son opcionales — fusionarlos violaría SRP y acoplaría pasos opcionales al gate. La fricción de equipos pequeños no se resuelve fusionando sino haciendo explícito el camino mínimo. La pareja `branch` (sistema completo) / `variant` (feature concreta) tiene scope distinto y su desambiguación canónica ya vive en `kb-design-governance` Regla 4 (branch/delta/intake/variant): 4 propósitos legítimos en un árbol de 4 líneas es documentación sana, no sobre-segmentación. **Materializado:** párrafo "Camino mínimo (equipos pequeños / modo ligero)" en `design/CLAUDE.md` (sección "Camino canónico") — solo `wf-design-intake` es gate; `moodboard`/`discover` aceleradores opt-in (moodboard útil para juniors); `system → feature-prototype` aguas abajo no cambia; puntero a `kb-design-governance` Regla 4 para branch vs variant (sin segunda fuente). NO se crearon, eliminaron ni modificaron workflows.*
 - [x] 🟢 **7.6 — Integración Figma (evaluar).** Import de tokens/variables y export Figma Tokens en `wf-design-export`. Solo si el fit declarado en 7.1 decide cubrir equipos con diseñadores; si no, descartar explícitamente y documentarlo. ✅ *2026-06-10 (v0.28.1): **veredicto DESCARTAR por ahora**, decisión documentada, coherente con el fit declarado en 7.1/7.3 (equipos sin diseñador; destinos Stitch mobile y `web-generic` web/desktop). **Materializado:** se resolvió el puntero colgante "evaluación diferida a ROADMAP 7.6" que vivía en el fit de `design/CLAUDE.md` y `design/README.md` → ahora declara que Figma (import de variables / export de Figma Tokens) queda **fuera de alcance** por decisión 7.6, reconsiderable solo si el fit se expandiera a equipos con diseñador propio (decisión de producto, no técnica). `wf-design-export` no mencionaba Figma como pendiente/futuro → no requirió cambios. Cero código nuevo; ningún import/export Figma implementado. Con esto **la FASE 7 queda COMPLETA**.*
 
+> **Actualización 2026-06-18 (D-011) — reconciliación del fit declarado en 7.1/7.6.** La premisa
+> "equipos SIN diseñador dedicado" que fija 7.1 (y de la que 7.3/7.6 dependen) **se expande
+> conscientemente**: la decisión `D-011` (topología `design`: repo de diseño SSoT, divergencia
+> multi-superficie nativa, varios repos consumiendo un diseño compartido) abre el ecosistema a
+> **organizaciones con función de diseño dedicada y escala multi-repo**. Con ello queda **satisfecha
+> la condición de 7.6** (*"reconsiderable solo si el fit se expandiera a equipos con diseñador propio
+> — decisión de producto, no técnica"*): el gancho para reevaluar Figma existe, aunque D-011 no lo
+> reabre por sí sola (sigue fuera de alcance hasta que se decida). El fit escrito en
+> `design/CLAUDE.md`/`README.md` se actualizará **cuando se implemente la capacidad** (D-011 se
+> ejecuta por fases; este ciclo entrega solo las funciones foundational `derive_target_platforms` +
+> validación de etiquetas). Ver `DECISIONS.md` D-011.
+
 ---
 
 ## FASE 8 — Persistencia y memoria entre sesiones *(de GENTLE_AI_COMPARISON)*

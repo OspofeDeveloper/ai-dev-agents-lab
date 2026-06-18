@@ -6,6 +6,101 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-011 — Topología `design`: repo de diseño SSoT con bundles de feature por target (base ⊕ override) y consumer multi-fuente
+
+- **Fecha:** 2026-06-18 · **Estado:** Propuesta (borrador — pendiente de implementación en ciclo aparte)
+
+**Contexto.** El modelo de 3 topologías (D-005) coloca el sistema de diseño (`DESIGN.md`, rol `system`)
+dentro de `authoring` y deja que los `consumer` autoren `flows`/`views` localmente (rol `feature`)
+consumiendo un único SSoT (`artifacts_source`, CU-1.i). La regla de copia agnóstica de flows/views
+(hoy inline en la **Regla 7** de `kb-design-feature-artifacts`, `SKILL.md:131-136` — no hay "Regla 8"
+numerada) **fuerza `flows`/`views` a una sola copia agnóstica** + "Notas responsive"; solo el
+`ui_prompt` diverge por familia. Eso **no contempla** ni el split de componentes nativos Android/iOS
+ni phone/tablet, que exigen divergencia a nivel views/flows. Investigando el init se vio además que
+`surfaces`/`targets`/`has_ui` de `project-init.json` son **write-only** (se escriben, nadie los lee
+aguas abajo) y que `target_platforms` no se deriva de nada (el template del brief lo hardcodea a
+`iOS/Android`, `design_brief_template.md:18`).
+
+**Decisión.** Se adopta una **4ª topología `design`**: un repo SSoT de diseño que autora (a) el
+sistema agnóstico (`DESIGN.md`, brief, tokens; `design_role: system`, `phases:["design"]`, sin
+prd/spec/plan/tasks) y (b) los **bundles de feature por design target**. Núcleo:
+1. **Design target** = etiqueta con convención **validada** `<familia>[-<plataforma>][-<formfactor>]`;
+   la **familia es obligatoria** y debe ser una de `{mobile, web, desktop}` (token del que se deriva
+   `target_platforms`); el resto de tokens, libres.
+2. **base ⊕ override**: `flows`/`views` se autoran una vez como **base agnóstica**; un target añade
+   su **override** solo cuando diverge de verdad (componentes nativos, layout tablet). El consumidor
+   resuelve `base ⊕ override(target)` (el override gana donde existe). Relaja la regla de copia
+   agnóstica preservando el principio de no duplicar (solo se materializa lo que cambia).
+3. Los `flows`/`views` de feature **se mueven al repo `design`** en el caso consumer-con-repo-`design`:
+   el consumer los resuelve en **solo lectura** y ya no los autora localmente — esto **supersede a
+   CU-1.i** para ese caso. El caso co-localizado (`authoring`/`standalone`) los mantiene locales.
+4. `target_platforms` (familias) se **deriva** de los design targets declarados.
+5. El consumer con UI pasa a ser **multi-fuente**: declara dónde vive el `DESIGN.md` (mismo SSoT de
+   specs o repo `design` aparte → `design_source` + pin) y qué `design_targets` consume.
+6. **Aditivo, no reemplazo**: el caso co-localizado sigue válido para equipos pequeños.
+
+**Expansión de fit (decisión de producto, no técnica).** El fit declarado de la fase design
+(`pipeline/design/CLAUDE.md`, `design/README.md`, ROADMAP 7.1) era **equipos SIN diseñador dedicado,
+greenfield, prototipado Stitch/web-generic**; ROADMAP 7.6 descartó Figma con la condición textual
+*"reconsiderable solo si el fit se expandiera a equipos con diseñador propio — decisión de producto,
+no técnica"*. Esta decisión **es esa expansión**: el caso que motiva D-011 (repo de diseño SSoT
+propio, multi-superficie con divergencia nativa Android/iOS y phone/tablet, varios repos de código
+consumiendo un diseño compartido) es propio de **organizaciones con función de diseño dedicada y
+escala multi-repo**. Se asume conscientemente: el ecosistema pasa a cubrir también ese perfil. No
+reabre Figma por sí sola (sigue fuera por 7.6), pero **retira la premisa "sin diseñador" como límite
+duro** y la condición de 7.6 queda satisfecha — quien quiera reevaluar Figma ya tiene el gancho. El
+fit escrito en `design/CLAUDE.md`/`README.md` se actualizará **cuando la capacidad se implemente**
+(no antes, para no anunciar lo que aún no existe); este ciclo solo registra la decisión y reconcilia
+el ROADMAP.
+
+**Alternativas descartadas.**
+- *Modelar diseño como overlay/tecnología* → rompe el modelo de fases/targets; es topología, no stack.
+- *Etiquetas de target totalmente libres* → la derivación de `target_platforms` (familias) deja de ser
+  determinista; por eso la familia es token validado obligatorio.
+- *Duplicar `flows`/`views` completos por target* → viola el principio de no duplicar; el override
+  parcial sobre una base compartida lo respeta.
+- *Mantener `flows`/`views` locales en el consumer con repo `design`* → reintroduce duplicación y
+  divergencia entre repos; el SSoT único de diseño lo evita (a costa de staleness cross-repo, abajo).
+- *Mantener el fit "sin diseñador" y no soportar este caso* → descartado: el equipo objetivo real
+  (PM + diseño + devs) lo necesita; el coste de no cubrirlo es que el diseño multi-superficie viva
+  fuera del pipeline. La expansión es deliberada (ver arriba).
+
+**Consecuencias / aprendizaje.** (1) La 4ª opción de Q1 **agota el cupo de 4** de `AskUserQuestion`
+(`wf-project-init/SKILL.md:283-289`): futuras topologías necesitarían otra UX (pregunta en dos pasos).
+(2) Mover flows/views al repo `design` **multiplica la superficie de staleness cross-repo** (specs
+SSoT + design SSoT + N repos de código): exige pin de `design_source` y extender `wf-design-sync`
+para drift entre repos — es subsistema, no nota al pie. (3) Convierte campos write-only en derivables.
+(4) **Corrección factual respecto al borrador inicial:** `derive_target_platforms` **no existe** hoy;
+el trabajo previo (2) entregó `derive_design_role` + los write-only, no esta función — hay que
+**construirla** net-new siguiendo el patrón de D-010 (función pura testeada en `sdd-init-detect.py`).
+(5) **Riesgo técnico abierto:** el **grano del override** en `views` (¿por vista, por estado de
+pantalla, por componente?) es la decisión difícil del modelo; se resuelve en implementación.
+(6) **Vocabulario de familias fijado:** `target_platforms` ∈ `{mobile, web, desktop}` (3 familias).
+`tablet` NO es familia: es un **form-factor** dentro de `mobile`/`desktop` (un token más del design
+target, p. ej. `mobile-tablet`), tal como `kb-design-layout` ya lo trata como breakpoint. Esto resuelve
+la incoherencia del borrador (que en un punto listaba `{mobile, web, desktop, tablet}`).
+
+**Implementación por fases.** Se ejecuta de forma incremental, no en bloque (el grano del override
+y el subsistema cross-repo son los puntos de mayor riesgo). **Este ciclo (foundational, valor
+independiente):** se construyen en `sdd-init-detect.py` las funciones puras testeadas
+`derive_target_platforms` (familias desde design targets) y la validación de la convención de
+etiquetas (familia obligatoria), siguiendo el patrón de `derive_design_role` (D-010); y se alinea el
+vocabulario del template del brief (`design_brief_template.md`, hoy `iOS/Android`) a familias. Estas
+piezas tienen valor por sí solas (dan función a campos hoy write-only) aunque el resto no se construya.
+**Ciclos posteriores (diferido, tras cerrar el grano del override):** Q1 (4ª opción `design`), esquema
+de `project-init.json` (`design_targets`, `design_source`/pin), `kb-design-feature-artifacts` (promover
+la regla de copia agnóstica a una **Regla 8** numerada y relajarla), wiring del consumer multi-fuente,
+subsistema de staleness cross-repo y `CU-01`.
+
+**Referencias.** `floating-splashing-eclipse.md` (propuesta completa) ·
+`pipeline/design/skills/kb-design-feature-artifacts/SKILL.md:131-136` (regla de copia agnóstica) ·
+`bootstrap/skills/wf-project-init/SKILL.md` (Q1, límite de 4 opciones) ·
+`scripts/sdd-init-detect.py` (`derive_design_role` como precedente de patrón) ·
+`pipeline/design/skills/kb-design-brief/references/design_brief_template.md:18` (familias) ·
+D-005 (topologías), D-010 (función pura testeada).
+
+---
+
 ## D-010 — La reparación de un init a medias es determinista: `phases` es el contrato, no se repregunta el rol
 
 - **Fecha:** 2026-06-18 · **Estado:** Adoptada
