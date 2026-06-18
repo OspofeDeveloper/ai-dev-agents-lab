@@ -280,14 +280,15 @@ opciones:
 question: "¿Qué superficie(s) cubre este repo?"
 header: "Superficies"
 multiSelect: true
-opciones:
+opciones:                                  # EXACTAMENTE 4 — ver nota abajo
   - label: "App móvil"   (Android/iOS/multiplataforma)
   - label: "App desktop"
   - label: "Web"
   - label: "Backend (servicio/API)"
-  - label: "Otro (librería, CLI, tooling)"
 ```
-`surfaces = [...]`. `has_ui = surfaces ∩ {mobile, desktop, web} ≠ ∅`. **Caso mínimo**: PRD=no + Diseño=no + `surfaces = [other]` → `STACK = agnostico`, solo backbone `spec`/`plan`/`tasks`.
+> **No añadas "Otro" como quinta opción.** `AskUserQuestion` admite **máximo 4 opciones** y provee el slot **"Other"** automáticamente (texto libre). El caso librería/CLI/tooling/módulo entra por ese "Other": cualquier respuesta vía "Other" (sea "librería", "Módulo BLE", etc.) se mapea a `surfaces = [other]` (headless, sin UI). El enunciado puede recordarlo: "…si es librería/CLI/tooling/módulo, usa 'Other'".
+
+`surfaces = [...]` (los labels elegidos → `mobile|desktop|web|backend`; cualquier valor por "Other" → `other`). `has_ui = surfaces ∩ {mobile, desktop, web} ≠ ∅`. **Caso mínimo**: PRD=no + Diseño=no + `surfaces = [other]` → `STACK = agnostico`, solo backbone `spec`/`plan`/`tasks`.
 
 **5.S4 — Framework/Targets** [solo si `surfaces` incluye móvil] → ver 5.X.
 
