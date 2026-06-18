@@ -46,8 +46,8 @@ para leer/ejecutar el CU.
 - [x] CU-1.c — Modo libre silencia SDD (`free`) · ✓ 2026-06-17
 - [x] CU-1.d — Modo SDD sin init → `init-pending` (invoca wf-project-init) · ✓ 2026-06-17
 - [x] CU-1.e — Init a medias → `init-incomplete` (invoca wf-project-init "Completar/ampliar") · ✓ 2026-06-17 (criterio determinista: repair-plan, rol derivado de topología, sin preguntar)
-- [ ] CU-1.f — Versión anterior → `version-drift` (informativo)
-- [ ] CU-1.g — Sesión en subdirectorio → búsqueda de marcadores hacia arriba
+- [x] CU-1.f — Versión anterior → `version-drift` (informativo) · ✓ 2026-06-18
+- [x] CU-1.g — Sesión en subdirectorio → búsqueda de marcadores hacia arriba · ✓ 2026-06-18
 
 > **Capa determinista** (no son escenarios manuales): `install.sh`, `sdd-init-detect.py` y el propio
 > hook están cubiertos por unittests (`test_install_sh.py`, `test_setup_sh.py`,
