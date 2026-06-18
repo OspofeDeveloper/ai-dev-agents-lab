@@ -110,16 +110,23 @@ form-factor**. Decisiones tomadas:
 - El repo `design` dedicado es para sistema visual compartido por varias superficies/productos.
 
 ## Preguntas abiertas a cerrar en implementación
-1. **`DESIGN.md` y componentes nativos**: el sistema (identidad, tokens, voz, motion) se comparte;
-   ¿basta con que los overrides por target lleven la especificidad de componente (Material vs HIG),
-   o el `DESIGN.md` necesita una capa de mapeo de componentes por plataforma? (recomendado: sistema
-   compartido + override; revisar si se queda corto).
+1. *(CERRADA — ver abajo)* `DESIGN.md` y componentes nativos.
 2. Mecanismo de generación: ¿`wf-design-feature-prototype` aprende a emitir base + overrides, o se
-   apoya en el eje de `wf-design-variant` (hoy A/B por feature)? Resolución `base ⊕ override`.
+   apoya en el eje de `wf-design-variant` (hoy A/B por feature)? El **grano** (Q2 original) ya está
+   resuelto (per-view, abajo); queda el *cómo* lo emite el workflow/agente — decisión de wiring.
 3. Staleness cross-repo (**ya no opcional**, ver D): un override traza a su base + spec + `DESIGN.md`;
    pin de `design_source`; **extender `wf-design-sync` para drift entre repos** — subsistema a diseñar.
 
-> **Cerradas en este ciclo** (ya no son preguntas abiertas):
+> **Cerradas** (ya no son preguntas abiertas):
+> - *Grano del override* (antes Q2) → **per-view**: el override es por vista entera; si un target tiene
+>   override de una vista, gana completa; si no, hereda la base. Per-component se descarta (`views` es
+>   prosa, no árbol de componentes con IDs → fusión no determinista). *Per-state* = refinamiento futuro
+>   opt-in solo si el uso lo pide. Coherente con el layout (`targets/<target>/<feature>_views.md` =
+>   vista completa) y con D-009/D-010 (resolución determinista). Ver D-011 Consecuencia (5).
+> - *`DESIGN.md` y componentes nativos* (antes Q1) → **sí, el `DESIGN.md` gana una capa de mapeo de
+>   componente por plataforma** (Material vs HIG, patrón de navegación). La divergencia de *sistema*
+>   vive ahí, no en la vista; la vista queda agnóstica y solo se overridea por *layout/composición*
+>   (tablet), o se overridea `flows` si cambia la navegación. Esto descarga el grano fino de las vistas.
 > - *Convención de etiquetas* (antes Q4) → **se valida** el patrón `<familia>[-<plataforma>][-<formfactor>]`
 >   con familia obligatoria de `{mobile,web,desktop}`; resto de tokens libres (ver B y E).
 > - *Ownership de flows/views en consumer* → se **mueven al repo `design`** (ver D, supersede CU-1.i).

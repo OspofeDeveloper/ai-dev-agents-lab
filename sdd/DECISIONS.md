@@ -73,15 +73,27 @@ para drift entre repos — es subsistema, no nota al pie. (3) Convierte campos w
 (4) **Corrección factual respecto al borrador inicial:** `derive_target_platforms` **no existe** hoy;
 el trabajo previo (2) entregó `derive_design_role` + los write-only, no esta función — hay que
 **construirla** net-new siguiendo el patrón de D-010 (función pura testeada en `sdd-init-detect.py`).
-(5) **Riesgo técnico abierto:** el **grano del override** en `views` (¿por vista, por estado de
-pantalla, por componente?) es la decisión difícil del modelo; se resuelve en implementación.
+(5) **Grano del override (RESUELTO): per-view, con la divergencia de sistema empujada al `DESIGN.md`.**
+El override de `views` es **por vista entera** (la unidad ya es la pantalla — `views` es "SSoT de
+pantallas"): si un design target tiene override de una vista, gana esa vista completa; si no, hereda la
+base intacta. Resolución trivial y determinista (alineada con D-009/D-010), y coherente con el layout
+ya bocetado (`targets/<target>/<feature>_views.md` es un fichero de vista completo). **Per-component se
+descarta**: `views` es markdown en prosa, no un árbol de componentes con IDs estables, y fusionar prosa
+componente-a-componente sería el grano *menos* determinista. La especificidad de **componente nativo**
+(Material vs HIG, patrón de navegación) **no es de la vista sino del sistema**: vive en una **capa de
+mapeo de componentes por plataforma en el `DESIGN.md`** (esto resuelve también la open Q1) — así la
+vista queda agnóstica y solo se overridea cuando la *composición/layout* de la pantalla diverge de
+verdad (tablet), o se overridea `flows` si cambia la navegación. *Per-state* queda como refinamiento
+futuro opt-in (el vocabulario de estados es cerrado, así que es viable) solo si el uso real muestra
+vistas que divergen en un único estado y duplicarlas molesta — YAGNI hasta entonces. Coste aceptado:
+una vista overrideada **re-enuncia sus estados no cambiados**; está acotado a las vistas que divergen.
 (6) **Vocabulario de familias fijado:** `target_platforms` ∈ `{mobile, web, desktop}` (3 familias).
 `tablet` NO es familia: es un **form-factor** dentro de `mobile`/`desktop` (un token más del design
 target, p. ej. `mobile-tablet`), tal como `kb-design-layout` ya lo trata como breakpoint. Esto resuelve
 la incoherencia del borrador (que en un punto listaba `{mobile, web, desktop, tablet}`).
 
-**Implementación por fases.** Se ejecuta de forma incremental, no en bloque (el grano del override
-y el subsistema cross-repo son los puntos de mayor riesgo). **Este ciclo (foundational, valor
+**Implementación por fases.** Se ejecuta de forma incremental, no en bloque (con el grano del override
+ya resuelto —ver (5)—, el **subsistema de staleness cross-repo** es el punto de mayor riesgo restante). **Este ciclo (foundational, valor
 independiente):** se construyen en `sdd-init-detect.py` las funciones puras testeadas
 `derive_target_platforms` (familias desde design targets) y la validación de la convención de
 etiquetas (familia obligatoria), siguiendo el patrón de `derive_design_role` (D-010); y se alinea el
