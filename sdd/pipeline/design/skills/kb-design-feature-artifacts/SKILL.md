@@ -133,7 +133,7 @@ Selección de `target_tool` según la superficie:
 - `<feature>_ui_prompt.web.md` → `target_tool: web-generic`, `target_platforms: web`
 - (`desktop` se cubre con `web-generic` salvo que el stack imponga otra cosa; documéntalo en el prompt)
 
-Si el producto cubre una sola superficie, se genera un único `<feature>_ui_prompt.md` (sin sufijo). Los `*_flows.md` y `*_views.md` son **una sola copia agnóstica de superficie** con `### Notas responsive` cuando aplica (Regla 8): la navegación y el inventario de pantallas trazan al mismo spec; lo que diverge por superficie es el ensamblaje del `ui_prompt`, no los flows/views.
+Si el producto cubre una sola superficie, se genera un único `<feature>_ui_prompt.md` (sin sufijo). Los `*_flows.md` y `*_views.md` son por defecto **una sola copia agnóstica de superficie** con `### Notas responsive` cuando aplica: la divergencia *responsive* por superficie (tamaño/orientación) se resuelve en el ensamblaje del `ui_prompt`, no en los flows/views. La divergencia **real por design target** (componentes nativos Android/iOS, layout tablet) sí se materializa en flows/views, pero como **override per-view sobre la base agnóstica**, nunca duplicando la copia entera — ver **Regla 8**.
 
 El cuerpo del prompt es común a cualquier target (fuentes de verdad, vistas, restricciones); solo cambia el **vocabulario de componentes y estados** según `target_tool`.
 
@@ -167,3 +167,31 @@ No debe:
 - **`web-generic`** (web/desktop): componentes en términos de **HTML semántico y ARIA** (no widgets propietarios), **breakpoints responsive**, y estados completos (loading/empty/error/focus/hover/disabled). La accesibilidad web la gobierna `kb-a11y-web-expert`; el prompt remite a ella, no la recopia.
 
 → Template: `${CLAUDE_SKILL_DIR}/references/feature_ui_prompt_template.md`
+
+## Regla 8: Divergencia por design target — base agnóstica + override per-view ([[D-011]])
+
+Por defecto, `*_flows.md` y `*_views.md` son **una sola base agnóstica** de superficie (Regla 7). Cuando un producto diverge de verdad por **design target** —el caso de la topología `design` de D-011: componentes nativos Android Material vs iOS HIG, o layout phone/tablet— esa divergencia se modela como **base + override per-view**, **nunca** forkeando la copia entera ni metiendo condicionales de plataforma inline en la base.
+
+**Grano del override: la vista entera (per-view).** La unidad de override es la vista (el átomo de `*_views.md`, Regla 3); `flows` igual cuando cambia la navegación. La resolución para un consumidor es **`base ⊕ override(target)`**, determinista:
+
+- si el target tiene override de una vista → esa vista **gana completa**;
+- si no lo tiene → **hereda la base intacta**.
+
+Un target sin directorio de override hereda toda la base (el caso común: un producto con un único target `mobile` no tiene `targets/`). Solo se materializa lo que diverge — **no se duplica lo idéntico**.
+
+**Per-component se descarta.** `*_views.md` es markdown en prosa, no un árbol de componentes con IDs estables; fusionar prosa componente-a-componente no es determinista. La especificidad de **componente nativo** (Material vs HIG, patrón de navegación) es un asunto de **sistema**, no de la vista: vive en la capa de mapeo de componente por plataforma del `DESIGN.md` (`kb-design-system-contract`). La vista se mantiene agnóstica y solo se overridea por **layout/composición** (p. ej. master-detail en tablet). **Per-state** queda como refinamiento futuro opt-in: solo si el uso real muestra una vista que diverge en un único estado y re-enunciarla molesta.
+
+**Layout** (los overrides cuelgan de la base, no la sustituyen):
+```
+<feature>_flows.md            # base agnóstica
+<feature>_views.md            # base agnóstica
+<feature>_ui_prompt.<surface>.md
+targets/<design-target>/      # SOLO si ese target diverge de la base
+  <feature>_views.md          # override per-view (componentes nativos / layout tablet)
+  <feature>_flows.md          # override (solo si la navegación cambia)
+  <feature>_ui_prompt.md
+```
+
+**Trazabilidad (Regla 1 sigue vigente).** Un override traza a su vista base + el mismo journey/CA del spec + el `DESIGN.md`; no introduce vistas ni comportamiento ausentes de la base o el spec. La etiqueta de design target y su convención (`<familia>[-<plataforma>][-<formfactor>]`, familia ∈ `{mobile,web,desktop}`) son SSoT del init (D-011); aquí solo se consume para nombrar `targets/<design-target>/`.
+
+> **Dónde se aplica la resolución** (emitir/consumir base + overrides al generar o al resolver en el consumer) es responsabilidad de `wf-design-feature-prototype` + `design-feature-architect` (D-011 12.6); esta regla es el **contrato** que implementan. Coste asumido: una vista overrideada re-enuncia sus estados no cambiados — acotado a las vistas que divergen.
