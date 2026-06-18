@@ -78,6 +78,15 @@ Deriva las superficies a generar y su `target_tool`:
 
 Pasa al agente en el Paso 5 la lista de superficies con su `target_tool` (una o varias). `flows`/`views` se generan una sola vez (agnósticos); el `ui_prompt` se genera por superficie.
 
+## Paso 3d: Resolver design targets y divergencia (D-011)
+
+Lee `design_targets` de `.sdd/project-init.json` (topología `design`, o el `design_targets` que declara un consumer). Decide si hay divergencia per-target (`kb-design-feature-artifacts` Regla 8):
+
+- **Sin `design_targets`, o una sola base** (p. ej. `[mobile]`): NO hay overrides. `flows`/`views` se generan una sola vez como base agnóstica (comportamiento de siempre). Ignora el resto de este paso.
+- **Design targets que divergen** (p. ej. `[mobile-android, mobile-ios]`, o plataformas con sistemas de componentes distintos): además de la base se generan **overrides per-view por target** bajo `targets/<design-target>/`, **solo** para las vistas/flujos que divergen de verdad. La especificidad de **componente nativo** (Material vs HIG) la aporta la capa `## Platform Components` del `DESIGN.md` (`kb-design-system-contract` Regla 11), **no** la vista — la vista solo se overridea por layout/composición.
+
+Guarda `DESIGN_TARGETS` (los divergentes) para los Pasos 4 y 5.
+
 ## Paso 4: Determinar outputs y detectar features ya prototipadas
 
 Determina los tres paths de salida con el resolutor determinista de layout (respeta el layout del spec de entrada):
@@ -93,6 +102,12 @@ Crea los directorios intermedios antes de escribir. **Fallback** a mano:
 Alli se crean `<feature>_flows.md`, `<feature>_views.md` y el/los `ui_prompt`, donde `<feature>` es el nombre base del spec sin `_spec.md`. El `ui_prompt` se nombra según las superficies resueltas en 3c:
 - **una sola superficie** → `<feature>_ui_prompt.md` (sin sufijo, como hasta ahora).
 - **multi-superficie** → uno por superficie: `<feature>_ui_prompt.mobile.md`, `<feature>_ui_prompt.web.md` (el resolutor `write ui-prompt` da el path base; añade el sufijo `.<superficie>` antes de `.md`).
+
+**Si el Paso 3d marcó design targets divergentes**, los overrides cuelgan del mismo directorio de la base, en `targets/<design-target>/` (no sustituyen la base):
+- `targets/<target>/<feature>_views.md` — SOLO las vistas que divergen (per-view, Regla 8).
+- `targets/<target>/<feature>_flows.md` — solo si la navegación de ese target cambia.
+- `targets/<target>/<feature>_ui_prompt.md` — si el ensamblaje del target diverge.
+Un target sin divergencia real **no genera** override (hereda la base). La base nunca se duplica.
 
 Antes de continuar, verifica si el artefacto principal ya existe:
 ```bash
@@ -132,6 +147,9 @@ Contenido del DESIGN_BRIEF.md:
 Superficies a generar (resuelto en Paso 3c) — una por línea, con su target_tool:
 - <superficie> → <stitch | web-generic>   (p. ej. "mobile → stitch", "web → web-generic")
 ---
+Design targets divergentes (resuelto en Paso 3d; "ninguno" si no aplica):
+<lista_design_targets_divergentes_o_ninguno>
+---
 Features ya prototipadas (views + flows resumidos, opcional):
 ---
 <resumen_features_previas_o_N/A>
@@ -143,6 +161,7 @@ INSTRUCCION: produce los artefactos separados y completos:
    - una sola superficie → `<feature>_ui_prompt.md`.
    - varias superficies → uno por superficie: `<feature>_ui_prompt.mobile.md` (target_tool stitch), `<feature>_ui_prompt.web.md` (target_tool web-generic). Cada uno declara su `target_tool` y su `target_platforms` singular.
    Con `web-generic`, describe componentes en HTML semántico/ARIA, breakpoints y estados completos (loading/empty/error/focus/hover/disabled), y remite a `kb-a11y-web-expert` para a11y web sin recopiarla. Con `stitch`, mantén el formato Stitch mobile.
+4. (SOLO si hay design targets divergentes) Por cada target que diverja, genera `targets/<target>/<feature>_views.md` con **solo las vistas que cambian** respecto a la base (per-view, kb-design-feature-artifacts Regla 8) y `targets/<target>/<feature>_flows.md` solo si la navegación de ese target cambia. La divergencia de **componente nativo** (Material vs HIG) se toma de `## Platform Components` del DESIGN.md (kb-design-system-contract Regla 11) — NO la redefinas en la vista; la vista solo overridea layout/composición. NO dupliques vistas que no divergen: heredan la base. La resolución consumidor es `base ⊕ override` (determinista, `sdd-design-resolve.py`).
 
 Si se pasan features previas, ejecuta tambien una revision de conflictos siguiendo `kb-design-conflict-expert` (Reglas 1-5). Si detectas conflictos, listalos al final del bundle con el formato de la Regla 6 y NO escribas artefactos hasta que el usuario decida; si son falsos positivos, declara `[POSIBLE-CONFLICTO-DESIGN-XX]` segun Regla 7.
 
@@ -172,9 +191,12 @@ Parsea la respuesta del agente usando el formato de bundle de `${CLAUDE_SKILL_DI
 
 ## Paso 8: Informar al usuario
 
-- paths generados
-- total de vistas derivadas
+- paths generados (base y, si aplica, los overrides `targets/<target>/...`)
+- total de vistas derivadas; por target divergente, qué vistas overridea
 - `target_tool` / `target_platforms` resueltos
+- si se generaron overrides, recuerda cómo resolver un target (determinista):
+  > `python3 .sdd/scripts/sdd-design-resolve.py resolve --base <feature>_views.md --override targets/<target>/<feature>_views.md --merged`
+  > (sin `--override`, o si el target no tiene override, devuelve la base intacta)
 - siguiente paso recomendado (según `target_tool`):
   > Con `stitch`: "Usa `<feature>_ui_prompt.md` junto con `DESIGN.md` y `DESIGN_BRIEF.md` si existe en Stitch para generar las vistas y, tras validar con cliente, continúa con `/wf-prepare-plan generate <feature_spec.md>` y después `/wf-plan-validate <feature_plan.md>`."
   > Con `web-generic`: "Usa `<feature>_ui_prompt.md` junto con `DESIGN.md` (y `DESIGN_BRIEF.md` si existe) con tu generador de UI web (v0, Lovable, bolt) o como guía de implementación a mano y, tras validar con cliente, continúa con `/wf-prepare-plan generate <feature_spec.md>` y después `/wf-plan-validate <feature_plan.md>`."
