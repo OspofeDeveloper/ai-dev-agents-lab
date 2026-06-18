@@ -15,9 +15,8 @@ color_energy: low
 motion_level: low
 clarity_vs_brand: clarity-first
 reference_apps_policy: required
-target_platforms:
-  - iOS
-  - Android
+target_platforms:        # familias: mobile | web | desktop (iOS/Android ⇒ mobile)
+  - mobile
 accessibility_target: AA
 voice_tone:
   formality: neutral
@@ -74,7 +73,7 @@ voice_tone:
 
 ## Platforms & Accessibility
 
-- **Target platforms**: <iOS / Android / Web / tablet>
+- **Target platforms**: <familias: mobile | web | desktop — iOS/Android ⇒ mobile; tablet es form-factor, no familia>
 - **Accessibility target**: <AA | AAA>
 - **Notas especiales**: <reduce motion especialmente importante, high contrast, etc.>
 

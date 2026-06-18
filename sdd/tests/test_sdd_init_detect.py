@@ -38,6 +38,12 @@ def repair_plan(root):
     return json.loads(r.stdout)
 
 
+def target_platforms(targets_csv):
+    r = run_script(SCRIPT, "target-platforms", "--targets", targets_csv)
+    assert r.returncode == 0, r.stderr
+    return json.loads(r.stdout)
+
+
 class DetectStateTest(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -368,6 +374,66 @@ class RepairPlanTest(unittest.TestCase):
         self.assertTrue(p["init_found"])
         self.assertFalse(p["init_readable"])
         self.assertFalse(p["needs_repair"])
+
+
+class DesignTargetsTest(unittest.TestCase):
+    """Derivación de `target_platforms` + validación de la convención de design
+    targets (D-011, foundational). Funciones puras vía subcomando `target-platforms`,
+    igual de black-box que el resto. `tablet` es form-factor, no familia."""
+
+    def test_single_family(self):
+        r = target_platforms("mobile")
+        self.assertEqual(r["target_platforms"], ["mobile"])
+        self.assertTrue(r["all_valid"])
+        self.assertEqual(r["invalid"], [])
+
+    def test_canonical_example_dedups_and_keeps_two_families(self):
+        # El ejemplo de la Verification de D-011.
+        r = target_platforms("mobile-android,mobile-ios,desktop")
+        self.assertEqual(r["target_platforms"], ["mobile", "desktop"])
+        self.assertTrue(r["all_valid"])
+
+    def test_canonical_order_independent_of_input_order(self):
+        r = target_platforms("desktop,web,mobile")
+        self.assertEqual(r["target_platforms"], ["mobile", "web", "desktop"])
+
+    def test_tablet_and_phone_are_form_factors_not_families(self):
+        # mobile-phone y mobile-tablet colapsan a la familia mobile (D-011 dec. B).
+        r = target_platforms("mobile-phone,mobile-tablet")
+        self.assertEqual(r["target_platforms"], ["mobile"])
+        self.assertEqual(r["valid"], ["mobile-phone", "mobile-tablet"])
+
+    def test_unknown_family_is_invalid_and_ignored_in_derivation(self):
+        r = target_platforms("bogus,mobile")
+        self.assertEqual(r["invalid"], ["bogus"])
+        self.assertEqual(r["valid"], ["mobile"])
+        self.assertEqual(r["target_platforms"], ["mobile"])
+        self.assertFalse(r["all_valid"])
+
+    def test_bad_pattern_is_invalid(self):
+        # Mayúsculas y guión bajo rompen la convención kebab-case minúscula.
+        r = target_platforms("Mobile,mobile_ios")
+        self.assertEqual(sorted(r["invalid"]), ["Mobile", "mobile_ios"])
+        self.assertEqual(r["target_platforms"], [])
+        self.assertFalse(r["all_valid"])
+
+    def test_leading_or_trailing_dash_is_invalid(self):
+        r = target_platforms("mobile-,-web")
+        self.assertEqual(sorted(r["invalid"]), ["-web", "mobile-"])
+        self.assertEqual(r["target_platforms"], [])
+
+    def test_free_extra_tokens_after_family_are_valid(self):
+        # familia obligatoria; el resto de tokens son libres (form-factor/plataforma).
+        r = target_platforms("desktop-windows-wide,web-pwa")
+        self.assertEqual(r["valid"], ["desktop-windows-wide", "web-pwa"])
+        self.assertEqual(r["target_platforms"], ["web", "desktop"])
+        self.assertTrue(r["all_valid"])
+
+    def test_empty_targets_is_empty_report(self):
+        r = target_platforms("")
+        self.assertEqual(r["target_platforms"], [])
+        self.assertEqual(r["valid"], [])
+        self.assertTrue(r["all_valid"])
 
 
 if __name__ == "__main__":

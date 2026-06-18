@@ -35,6 +35,13 @@ Subcomandos:
         quitar una fase es un cambio de alcance explícito, no reparación). Pre-install
         no aplica: requiere un `project-init.json` previo.
 
+    target-platforms --targets <t1,t2,...>
+        Valida una lista de design targets contra su convención (familia obligatoria
+        de {mobile,web,desktop}) y deriva las familias `target_platforms` (D-011,
+        foundational). Emite (JSON) `valid`/`invalid`/`target_platforms`/`all_valid`.
+        Función pura testeada lista para el wiring de la topología `design` (diferido);
+        hoy no tiene aún consumidor — mismo patrón pre-wiring que tuvo `repair-plan`.
+
 Exit codes:
     0 = OK (detect/repair-plan siempre; verify si todos los checks pasan)
     1 = error de uso (argumentos inválidos)
@@ -73,6 +80,18 @@ DESIGN_ROLE_BY_TOPOLOGY = {
     "consumer": "feature",
     "standalone": "full",
 }
+
+# --- Design targets y derivación de target_platforms (D-011, foundational). ---
+# Familias de plataforma canónicas: token OBLIGATORIO (primer segmento) de un
+# design target. Es el vocabulario que consumen a11y (mobile/web/desktop),
+# `target_tool` (stitch|web-generic) y layout. `tablet` NO es familia: es un
+# form-factor dentro de `mobile`/`desktop` (otro token del target, p. ej.
+# `mobile-tablet`). SSoT del vocabulario de familias del ecosistema (D-011 dec. B).
+DESIGN_TARGET_FAMILIES = ("mobile", "web", "desktop")
+
+# Convención de etiqueta de design target: `<familia>[-<plataforma>][-<formfactor>]`.
+# Tokens kebab-case alfanuméricos en minúscula; la familia se valida aparte.
+_DESIGN_TARGET_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
 
 def fail(msg: str) -> int:
@@ -276,6 +295,68 @@ def derive_design_role(topology: str | None, design_declared: bool) -> str | Non
     return DESIGN_ROLE_BY_TOPOLOGY.get(topology)
 
 
+def parse_design_target(label: str) -> tuple[str, list[str]] | None:
+    """`(familia, tokens_extra)` de un design target válido, o None si no lo es.
+
+    Convención validada (D-011, decisión B): `<familia>[-<plataforma>][-<formfactor>]`.
+    La FAMILIA (primer token) es obligatoria y debe estar en DESIGN_TARGET_FAMILIES;
+    el resto de tokens son libres (kebab-case alfanumérico en minúscula). Net-new:
+    no existía. Es la pieza que el agente improvisaría al validar etiquetas en prosa.
+    """
+    if not isinstance(label, str) or not _DESIGN_TARGET_RE.match(label):
+        return None
+    parts = label.split("-")
+    family = parts[0]
+    if family not in DESIGN_TARGET_FAMILIES:
+        return None
+    return family, parts[1:]
+
+
+def is_valid_design_target(label: str) -> bool:
+    """¿`label` respeta la convención de design target (familia válida)?"""
+    return parse_design_target(label) is not None
+
+
+def derive_target_platforms(design_targets: list[str]) -> list[str]:
+    """Familias `target_platforms` derivadas de los design targets declarados.
+
+    Cada target aporta su familia (primer token); el resultado son las familias
+    DISTINTAS en orden canónico (mobile, web, desktop). Los targets inválidos
+    (familia desconocida o patrón roto) se ignoran — validarlos es cosa de
+    `is_valid_design_target`. Net-new (D-011, sección E): NO existía hoy; sigue el
+    patrón de `derive_design_role` (función pura testeada, D-010). Ejemplo:
+    `["mobile-android", "mobile-ios", "desktop"]` -> `["mobile", "desktop"]`.
+    """
+    if not isinstance(design_targets, list):
+        return []
+    found = set()
+    for label in design_targets:
+        parsed = parse_design_target(label)
+        if parsed is not None:
+            found.add(parsed[0])
+    return [fam for fam in DESIGN_TARGET_FAMILIES if fam in found]
+
+
+def design_targets_report(targets: list[str]) -> dict:
+    """Reporte determinista de una lista de design targets (subcomando target-platforms).
+
+    Valida cada etiqueta contra la convención (familia obligatoria) y deriva las
+    familias `target_platforms`. Pensado para que `wf-project-init` —cuando aterrice
+    la topología `design` (D-011, diferido)— compute `target_platforms` y rechace
+    etiquetas inválidas sin re-decidir en prosa, igual que `repair-plan` hace con
+    `design_role`. Hoy es foundational: testeado, listo para wiring.
+    """
+    valid = [t for t in targets if is_valid_design_target(t)]
+    invalid = [t for t in targets if not is_valid_design_target(t)]
+    return {
+        "design_targets": list(targets),
+        "valid": valid,
+        "invalid": invalid,
+        "target_platforms": derive_target_platforms(targets),
+        "all_valid": not invalid,
+    }
+
+
 def repair_plan(root: Path) -> dict:
     """Plan determinista de reparación de un `init-incomplete` (extend, Paso 3b/5).
 
@@ -359,6 +440,10 @@ def main(argv: list[str]) -> int:
     p_repair.add_argument("--root", default=None, help="raíz a analizar (default: cwd)")
     p_repair.add_argument("--json", action="store_true", help="salida JSON (default)")
 
+    p_targets = sub.add_parser("target-platforms", help="familias derivadas + validación de design targets (D-011)")
+    p_targets.add_argument("--targets", required=True, help="design targets separados por comas")
+    p_targets.add_argument("--json", action="store_true", help="salida JSON (default)")
+
     try:
         ns = parser.parse_args(argv)
     except SystemExit:
@@ -368,7 +453,8 @@ def main(argv: list[str]) -> int:
         parser.print_help(sys.stderr)
         return 1
 
-    root = Path(ns.root).resolve() if ns.root else Path.cwd()
+    ns_root = getattr(ns, "root", None)  # target-platforms no opera sobre una raíz
+    root = Path(ns_root).resolve() if ns_root else Path.cwd()
 
     if ns.mode == "detect":
         print(json.dumps(detect(root), indent=2, ensure_ascii=False))
@@ -384,6 +470,11 @@ def main(argv: list[str]) -> int:
 
     if ns.mode == "repair-plan":
         print(json.dumps(repair_plan(root), indent=2, ensure_ascii=False))
+        return 0
+
+    if ns.mode == "target-platforms":
+        targets = [t.strip() for t in ns.targets.split(",") if t.strip()]
+        print(json.dumps(design_targets_report(targets), indent=2, ensure_ascii=False))
         return 0
 
     return fail(f"modo desconocido: {ns.mode}")
