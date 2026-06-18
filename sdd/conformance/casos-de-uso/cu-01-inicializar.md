@@ -40,6 +40,7 @@ para leer/ejecutar el CU.
 - [x] CU-1.n — El init NO pregunta el rigor ([[D-006]]) · ✓ 2026-06-17
 - [ ] CU-1.o — Superficie/framework ramifican; caso Mínimo
 - [ ] CU-1.p — Los argumentos honran y saltan preguntas
+- [ ] CU-1.q — Topología design (repo de solo-diseño, [[D-011]])
 
 ### hook de sesión `bootstrap/sdd-session-check.sh` — directivas `SDD-PROTOCOL` (6)
 - [x] CU-1.a — Wizard de modo en proyecto virgen (`mode-undecided`) · ✓ 2026-06-17
@@ -76,7 +77,7 @@ ramas siguen. Los demás ejes se gatean dentro de cada topología.
 
 | Eje | Pregunta | Qué ramifica | Cobertura |
 |---|---|---|---|
-| **Topología** | 5.0 (Q1) | el reparto de backbone: `authoring` (prd?/spec/design? sin plan/tasks) · `consumer` (plan/tasks +design si UI, sin prd/spec) · `standalone` (todo) | `✓` (CU-1.h authoring/standalone; CU-1.i consumer) |
+| **Topología** | 5.0 (Q1) | el reparto de backbone: `authoring` (prd?/spec/design? sin plan/tasks) · `consumer` (plan/tasks +design si UI, sin prd/spec) · `standalone` (todo) · `design` (solo design rol system, sin prd/spec/plan/tasks) | `✓` (CU-1.h authoring/standalone; CU-1.i consumer; CU-1.q design) |
 | PRD sí/no | rama authoring/standalone | antepone (o no) la fase `prd` | `✓` (CU-1.h, CU-1.n) |
 | Diseño sí/no | rama authoring/standalone | inserta `design` (rol `system` en authoring, `full` en standalone) | `✓` (CU-1.h) |
 | Superficie | consumer (single) / standalone (multiSelect) | `con-UI` (mobile/desktop/web) instala diseño de feature; `backend`/`other` headless; deriva el `stack` | `✓` (CU-1.i con-UI/headless; CU-1.o) |
@@ -430,3 +431,31 @@ inválido no se acepta · FALLO si re-pregunta algo ya dado por flag, o acepta u
 parte determinista (detección/verificación) la cubren los unittest de `sdd-init-detect.py`
 (`test_sdd_init_detect.py`).
 **Desviación → reportar:** issue citando `CU-1.p`.
+
+## CU-1.q — Topología `design`: repo de solo-diseño ([[D-011]])
+
+**Precondición:** proyecto virgen; eliges "Modo SDD" (CU-1.b).
+**Mecanismo:** `wf-project-init` Q1 → **Diseño (solo sistema visual)** (4ª opción, tope de 4):
+rama DESIGN (5.D1) que declara los **design targets** que cubre y deriva `target_platforms` con el
+subcomando determinista `sdd-init-detect.py target-platforms`. Backbone: **solo `design`** (rol
+`system`), sin prd/spec/plan/tasks. La etiqueta sigue la convención validada
+`<familia>[-<plataforma>][-<formfactor>]`, familia ∈ `{mobile,web,desktop}`.
+
+1. Topología **Diseño** con design targets `mobile-android`, `mobile-ios` y (vía "Other") `desktop`.
+   → **Esperado:** instala `phases: ["design"]` (rol `system`), **sin prd/spec/plan/tasks**;
+     `topology: "design"`, `stack: "agnostico"`, `surfaces: []`, `has_ui: false`,
+     `design_role: "system"`; `design_targets: ["mobile-android","mobile-ios","desktop"]` y
+     `target_platforms: ["mobile","desktop"]` (derivado, no tecleado). `artifacts` con solo la clave
+     `design`; crea `<artifacts.design>/` y `features/`. El `CLAUDE.md` raíz lleva la sección
+     **"Topología: repo de diseño (SSoT visual)"**. No despacha a ningún `wf-<stack>-init`.
+2. (negativo) Un design target con familia inválida o patrón roto (p. ej. `Mobile`, `tablet`, `mobile_ios`).
+   → **Esperado:** el subcomando `target-platforms` lo marca en `invalid` (`all_valid: false`); el init
+     **muestra los inválidos y re-pregunta** — no inicializa con targets inválidos ni inventa la familia.
+
+**Resultado:** PASS si instala solo `design` rol `system`, persiste `design_targets` + `target_platforms`
+derivado, y rechaza targets inválidos · FALLO si instala plan/tasks/spec, teclea `target_platforms` a
+mano (en vez de derivarlo), o acepta una familia fuera de `{mobile,web,desktop}`.
+**Nota de testeo:** la entrevista es interactiva (`AskUserQuestion`) → **a mano**. La parte determinista
+—derivación/validación de targets y el esquema con topología `design`— la cubren `test_sdd_init_detect.py`
+(`DesignTargetsTest`, `VerifyTest.test_design_topology_passes`, `RepairPlanTest.test_design_topology_*`).
+**Desviación → reportar:** issue citando `CU-1.q`.

@@ -75,11 +75,17 @@ ARTIFACT_CANDIDATE_DIRS = {
 # authoring L29/229 → system, consumer L252 → feature, standalone L274 → full).
 # El rol NO depende de has_ui: en consumer, has_ui decide si design ESTÁ presente,
 # no su rol. Si design no está declarado, no hay rol (null).
+# La topología `design` (D-011) es un repo SSoT de solo-diseño: su única fase es
+# `design` y su rol es siempre `system` (autora el sistema visual + bundles por target).
 DESIGN_ROLE_BY_TOPOLOGY = {
     "authoring": "system",
     "consumer": "feature",
     "standalone": "full",
+    "design": "system",
 }
+
+# Topologías válidas del esquema (eje primario del init, D-005 + `design` de D-011).
+VALID_TOPOLOGIES = frozenset(DESIGN_ROLE_BY_TOPOLOGY)
 
 # --- Design targets y derivación de target_platforms (D-011, foundational). ---
 # Familias de plataforma canónicas: token OBLIGATORIO (primer segmento) de un
@@ -258,11 +264,11 @@ def verify(root: Path, phases: list[str]) -> list[dict]:
     # legacy "profiles"/"profile"/"type" ya no son válidas (break limpio).
     topo_ok = (
         isinstance(obj, dict)
-        and obj.get("topology") in {"authoring", "consumer", "standalone"}
+        and obj.get("topology") in VALID_TOPOLOGIES
         and "profiles" not in obj and "profile" not in obj and "type" not in obj
     )
     checks.append(_check("topology", topo_ok,
-                         "OK" if topo_ok else 'usar "topology" (authoring|consumer|standalone) y eliminar las claves legacy "profiles"/"profile"/"type" (Paso 8)'))
+                         "OK" if topo_ok else 'usar "topology" (authoring|consumer|standalone|design) y eliminar las claves legacy "profiles"/"profile"/"type" (Paso 8)'))
 
     scripts_ok = all((root / ".sdd/scripts" / s).is_file() for s in ENFORCEMENT_SCRIPTS)
     checks.append(_check("enforcement-scripts", scripts_ok,

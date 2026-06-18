@@ -247,6 +247,30 @@ class VerifyTest(unittest.TestCase):
         self.assertEqual(code, 0, [c for c in checks if not c["ok"]])
         self.assertTrue(next(c for c in checks if c["check"] == "topology")["ok"])
 
+    def test_design_topology_passes(self):
+        # design (D-011): solo fase design, artifacts.design, design_targets/target_platforms.
+        write(self.root / ".claude/rules/sdd-design.md", "x")
+        write(self.root / ".claude/CLAUDE.md", "x")
+        write(self.root / ".sdd/project-init.json", json.dumps({
+            "dispatcher": "wf-project-init",
+            "topology": "design",
+            "surfaces": [],
+            "has_ui": False,
+            "design_role": "system",
+            "design_targets": ["mobile-android", "mobile-ios", "desktop"],
+            "target_platforms": ["mobile", "desktop"],
+            "artifacts": {"design": "design"},
+        }))
+        for s in ("sdd-gate-check.py", "sdd-seal.py", "sdd-task-state.py",
+                  "sdd-sync-check.py", "sdd-skill-allow.py"):
+            write(self.root / ".sdd/scripts" / s, "x")
+        write(self.root / ".sdd/sdd-version.json", "{}")
+        write(self.root / ".gitignore", ".claude/settings.local.json\n")
+        code, checks = verify(self.root, "design")
+        self.assertEqual(code, 0, [c for c in checks if not c["ok"]])
+        self.assertTrue(next(c for c in checks if c["check"] == "topology")["ok"])
+        self.assertTrue(next(c for c in checks if c["check"] == "artifacts-map")["ok"])
+
     def test_legacy_schema_fails(self):
         # esquema viejo (profiles/profile/type) ya no es válido → check topology FALLA
         for legacy in ({"profiles": ["product"]}, {"profile": "product"}, {"type": "app"}):
@@ -324,6 +348,24 @@ class RepairPlanTest(unittest.TestCase):
         p = repair_plan(self.root)
         self.assertEqual(p["missing_phases"], ["design"])
         self.assertEqual(p["expected_design_role"], "full")
+
+    def test_design_topology_derives_system(self):
+        # design (D-011): única fase design, rol derivado system; repara si no instalada.
+        self._state(phases=["design"], installed=[],
+                    design_role=None, topology="design")
+        p = repair_plan(self.root)
+        self.assertEqual(p["missing_phases"], ["design"])
+        self.assertEqual(p["expected_design_role"], "system")
+        self.assertFalse(p["design_role_consistent"])  # null ≠ system
+        self.assertTrue(p["needs_repair"])
+
+    def test_design_topology_fully_consistent_needs_no_repair(self):
+        self._state(phases=["design"], installed=["design"],
+                    design_role="system", topology="design")
+        p = repair_plan(self.root)
+        self.assertEqual(p["missing_phases"], [])
+        self.assertTrue(p["design_role_consistent"])
+        self.assertFalse(p["needs_repair"])
 
     def test_declared_phases_in_canonical_order(self):
         # El JSON puede declararlas desordenadas; el plan las normaliza.

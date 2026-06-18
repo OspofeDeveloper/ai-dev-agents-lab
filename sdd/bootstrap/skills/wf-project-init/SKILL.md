@@ -1,8 +1,8 @@
 ---
 name: wf-project-init
-description: "Inicializa o amplia un proyecto SDD a partir de la TOPOLOGIA de contenido del repo: authoring (PRD/specs/sistema de diseño, sin código), consumer (código que consume specs de un repo SSoT) o standalone (todo junto). El backbone instalado depende de la topología. Genera el CLAUDE.md raiz, registra el estado en .sdd/project-init.json y despacha al init especialista del stack cuando hay código."
+description: "Inicializa o amplia un proyecto SDD a partir de la TOPOLOGIA de contenido del repo: authoring (PRD/specs/sistema de diseño, sin código), consumer (código que consume specs de un repo SSoT), standalone (todo junto) o design (repo SSoT de solo-diseño). El backbone instalado depende de la topología. Genera el CLAUDE.md raiz, registra el estado en .sdd/project-init.json y despacha al init especialista del stack cuando hay código."
 when_to_use: "Activa con frases como 'inicializa el proyecto', 'arranca el setup tecnico', 'init del proyecto', 'prepara este proyecto para SDD', 'quiero trabajar specs aqui', 'configura este repo para diseño', 'completa la entrevista tecnica del proyecto'. No activa para crear skills o agentes del ecosistema SDD (usa wf-skill-create, wf-agent-create) ni para ejecutar el init concreto de un stack ya conocido (invoca directamente wf-<stack>-init)."
-argument-hint: "[--topology <authoring|consumer|standalone>] [--surfaces <mobile,desktop,web,backend,other>] [--prd] [--design] [--stack <nombre>] [--name <nombre>] [--sdd-path <path>] [--force]"
+argument-hint: "[--topology <authoring|consumer|standalone|design>] [--surfaces <mobile,desktop,web,backend,other>] [--design-targets <mobile,mobile-android,web,...>] [--prd] [--design] [--stack <nombre>] [--name <nombre>] [--sdd-path <path>] [--force]"
 effort: low
 allowed-tools: [Read, Write, Bash, AskUserQuestion]
 user-invocable: true
@@ -19,6 +19,7 @@ Tu rol es de **onboarding y dispatcher**: detectas el contexto, identificas la *
 - **`authoring`** — el repo es la **fuente de verdad** del producto: PRD, specs y, si aplica, el sistema de diseño (`DESIGN.md`). Agnóstico de tecnología y de superficie. El código vive en otros repos. **No instala `plan`/`tasks` ni stack.**
 - **`consumer`** — el repo es **una superficie** (app móvil, desktop, web o backend) que **consume** los specs de un repo `authoring` (SSoT). Instala `plan`+`tasks` (+ overlay de stack) y, si tiene UI, la capa de diseño de feature. **No autora PRD/spec.**
 - **`standalone`** — el repo lo tiene **todo** (proyecto único o monorepo): PRD/specs/diseño + código. Pipeline completo.
+- **`design`** *(D-011)* — el repo es **solo diseño**: SSoT del sistema visual (`DESIGN.md`, brief, tokens) **y** de los bundles de feature (flows/views/ui_prompt) por design target, agnóstico de superficie. Instala únicamente la fase `design` (rol *system*). **Sin `prd`/`spec`/`plan`/`tasks`** — los consume de otros repos. Es el repo de diseño dedicado para equipos con diseño propio / varias superficies que comparten un mismo sistema.
 
 **Reglas de la entrevista:**
 
@@ -29,6 +30,7 @@ Tu rol es de **onboarding y dispatcher**: detectas el contexto, identificas la *
    - `authoring` → `spec` (+ `prd` si aplica, + `design` rol *system* si aplica). **Sin `plan`/`tasks`.**
    - `consumer` → `plan` + `tasks` (+ `design` rol *feature* si la superficie tiene UI). **Sin `prd`/`spec`** (viven en el SSoT).
    - `standalone` → `spec` + `plan` + `tasks` (+ `prd`/`design` rol *full* según se decida).
+   - `design` → solo `design` (rol *system*). **Sin `prd`/`spec`/`plan`/`tasks`**: repo SSoT de solo-diseño (D-011).
    La entrevista decide `prd`, `design`, las superficies y cuánta información técnica se captura — nunca el reparto de backbone, que lo fija la topología.
 5. **Agrupa preguntas independientes** — las que no se gatean entre sí van en una sola llamada a `AskUserQuestion` (hasta 4 por llamada). Abre una llamada nueva solo cuando una respuesta previa decide si —o qué— se pregunta después. El orden de las llamadas está en el Paso 5.
 
@@ -38,8 +40,9 @@ Tu rol es de **onboarding y dispatcher**: detectas el contexto, identificas la *
 
 Los argumentos llegan en `$ARGUMENTS` — tanto si el usuario teclea `/wf-project-init <flags>` como si el orquestador invoca el skill pasándolos en el campo `args` del Skill tool. Pre-rellenan `KNOWN_STATE` (regla 2 de la entrevista): un valor pasado por flag no se vuelve a preguntar, solo se confirma.
 
-- `--topology`: `authoring`, `consumer`, `standalone`. Omite la pregunta Q1 de contenido.
+- `--topology`: `authoring`, `consumer`, `standalone`, `design`. Omite la pregunta Q1 de contenido.
 - `--surfaces`: lista separada por comas de `mobile`, `desktop`, `web`, `backend`, `other`. Omite la pregunta de superficie.
+- `--design-targets`: lista separada por comas de design targets (`<familia>[-<plataforma>][-<formfactor>]`, familia ∈ `{mobile,web,desktop}`). Solo topología `design`; omite la pregunta de targets.
 - `--prd`: el proyecto usa PRD (omite la pregunta de PRD; ausencia ≠ "no", solo deja la pregunta abierta).
 - `--design`: el proyecto tiene diseño (omite la pregunta de diseño).
 - `--stack`: nombre del stack. Omite framework/targets.
@@ -194,9 +197,12 @@ opciones:
     description: "El código de una superficie (app, web, desktop, backend) que consume los specs de un repo de Producto. Instala plan y tasks (+ stack), y diseño de feature si tiene UI"
   - label: "Autónomo (todo aquí)"
     description: "Specs y código juntos: proyecto único o monorepo. Pipeline completo de spec a tasks. Para el caso mínimo, di luego que no a PRD y a diseño"
+  - label: "Diseño (solo sistema visual)"
+    description: "Repo SSoT de solo diseño (D-011): DESIGN.md, brief, tokens y los bundles de feature (flows/views/ui_prompt) por design target, agnóstico de superficie. No instala PRD/spec/plan/tasks ni stack. A continuación declaras los design targets que cubre"
 ```
+> **Q1 está ahora en el tope de 4 opciones** de `AskUserQuestion` (sin "Other"): no cabe una 5ª topología sin rediseñar la pregunta (D-011).
 
-`TOPOLOGY = authoring | consumer | standalone`.
+`TOPOLOGY = authoring | consumer | standalone | design`.
 
 `PIPELINE_MODE = standard` (fijo; el init no lo pregunta — ver la nota de arriba). La elección standard/ligero se ofrece por feature al crear el spec.
 
@@ -296,6 +302,31 @@ opciones:                                  # EXACTAMENTE 4 — ver nota abajo
 
 ---
 
+### Rama DESIGN *(D-011)*
+
+El repo `design` no tiene superficie ni stack: es agnóstico y autora **solo** diseño. `STACK = agnostico`, `surfaces = []`, `has_ui = false`, `design_role = system`. No pregunta PRD ni superficie.
+
+**5.D1 — Design targets que cubre** [multiSelect; omitida si llegó `--design-targets`]:
+```
+question: "¿Qué design targets cubre este repo de diseño?"
+header: "Design targets"
+multiSelect: true
+opciones:                                  # EXACTAMENTE 4 — el resto, vía "Other"
+  - label: "mobile"            (una sola base móvil; Android e iOS comparten diseño)
+  - label: "mobile-android"    (Material; diverge de iOS a nivel de componente/vista)
+  - label: "mobile-ios"        (HIG; diverge de Android)
+  - label: "web"
+```
+> **No añadas "Otro" como quinta opción.** Para `desktop`, `mobile-tablet`, `desktop-windows`, etc., usa el slot **"Other"** (texto libre). Convención validada: `<familia>[-<plataforma>][-<formfactor>]`, **familia obligatoria** ∈ `{mobile,web,desktop}` (`tablet`/`phone` son form-factor, no familia).
+
+**Validar y derivar `target_platforms` con el subcomando determinista** (no a mano — es la función foundational de 12.0):
+```bash
+python3 "$SDD_HOME/scripts/sdd-init-detect.py" target-platforms --targets "<t1,t2,...>" --json
+```
+Si `all_valid` es `false`, muestra los `invalid` al usuario y **re-pregunta** (familia inválida o patrón roto); no continúes con targets inválidos. Con `all_valid: true`, guarda `DESIGN_TARGETS = <lista>` y `TARGET_PLATFORMS = .target_platforms` (familias derivadas, p. ej. `[mobile-android, mobile-ios, desktop] → [mobile, desktop]`).
+
+---
+
 ### 5.X — Framework y Targets [solo si hay superficie móvil y no llegó `--stack`]
 
 ```
@@ -388,6 +419,9 @@ TOPOLOGY == standalone:
   SELECTED_PHASES = [spec, plan, tasks]
   use_prd == true     → anteponer prd
   has_design == true  → insertar design (rol full) tras spec
+
+TOPOLOGY == design:
+  SELECTED_PHASES = [design]   (rol system; sin prd/spec/plan/tasks)
 ```
 
 Orden canónico: `prd → spec → design → plan → tasks` (solo las presentes).
@@ -410,6 +444,8 @@ mkdir -p <artifacts.spec>/features                   # solo si se instala spec (
 
 En `consumer` no hay `ARTIFACTS_MAP`: crear solo `mkdir -p features` (ahí vivirán las subcarpetas `design/` (si UI), `plan/` y `tasks/` de cada feature, con `Spec origen` apuntando al checkout del SSoT).
 
+En `design` (D-011): `mkdir -p <artifacts.design> features` — el sistema visual (`DESIGN.md`/brief/tokens) vive en `<artifacts.design>/`; los bundles por feature (flows/views/ui_prompt base + overrides por target) en `features/<nombre>/design/`.
+
 **Ajustar los globs de las reglas al layout del proyecto**: si algún directorio de `ARTIFACTS_MAP` difiere del canónico, edita el frontmatter `paths:` de la regla correspondiente (`.claude/rules/sdd-prd.md`, `sdd-spec.md`, `sdd-design.md`) sustituyendo el glob del directorio canónico por el real. Los globs por nombre de artefacto no se tocan.
 
 No continuar al Paso 7 sin haber ejecutado el install con TODAS las fases seleccionadas.
@@ -423,7 +459,7 @@ No continuar al Paso 7 sin haber ejecutado el install con TODAS las fases selecc
 ```markdown
 # <nombre-proyecto> — Proyecto SDD
 
-Proyecto gestionado con Spec Driven Development. Topología: **<authoring|consumer|standalone>**. Fases instaladas: <lista en orden>.
+Proyecto gestionado con Spec Driven Development. Topología: **<authoring|consumer|standalone|design>**. Fases instaladas: <lista en orden>.
 
 ## Cómo operar
 
@@ -490,6 +526,18 @@ Proyecto gestionado con Spec Driven Development. Topología: **<authoring|consum
   - Pin de specs: `artifacts_source_pin` en `.sdd/project-init.json` — si el SSoT avanza, los workflows de plan avisan.
   ```
 
+- **design** *(D-011)* — sustituir "Layout de artefactos" por:
+  ```markdown
+  ## Topología: repo de diseño (SSoT visual)
+
+  Este repo es la fuente de verdad del **diseño** del producto, agnóstico de superficie. No tiene PRD/spec/plan/tasks: los consume de otros repos.
+
+  - Sistema visual (rol system): `<artifacts.design>/` — `DESIGN_BRIEF.md`, `DESIGN.md`, `tokens/`.
+  - Bundles por feature: `features/<nombre>/design/` — flows/views/ui_prompt base agnóstica + overrides **por design target** (solo donde diverge).
+  - Design targets que cubre: `design_targets` de `.sdd/project-init.json`; `target_platforms` (familias `{mobile,web,desktop}`) se deriva de ellos.
+  - Los repos de superficie (consumer) consumen este diseño en **solo lectura** (resuelven `base ⊕ override` por su target).
+  ```
+
 **`.gitignore` del proyecto**: asegura la línea `.claude/settings.local.json` (créalo si no existe; no toques el resto).
 
 ---
@@ -506,7 +554,7 @@ Proyecto gestionado con Spec Driven Development. Topología: **<authoring|consum
 ```json
 {
   "name": "<nombre-proyecto>",
-  "topology": "<authoring|consumer|standalone>",
+  "topology": "<authoring|consumer|standalone|design>",
   "surfaces": ["<mobile|desktop|web|backend|other>", "..."],
   "has_ui": <true|false>,
   "design_role": "<system|feature|full|null>",
@@ -523,9 +571,10 @@ Proyecto gestionado con Spec Driven Development. Topología: **<authoring|consum
 ```
 
 Reglas de los campos:
-- `surfaces`: `[]` en authoring. `has_ui`: derivado (`surfaces ∩ {mobile,desktop,web} ≠ ∅`).
-- `design_role`: `system` (authoring con diseño), `feature` (consumer con UI), `full` (standalone con diseño), `null` (sin diseño).
+- `surfaces`: `[]` en authoring y en `design`. `has_ui`: derivado (`surfaces ∩ {mobile,desktop,web} ≠ ∅`); `false` en `design`.
+- `design_role`: `system` (authoring con diseño **o topología `design`**), `feature` (consumer con UI), `full` (standalone con diseño), `null` (sin diseño).
 - `targets`: solo si multiplataforma; en otro caso omitir la clave.
+- **En topología `design` (D-011)** se añaden dos claves (omitidas en las demás topologías): `design_targets` (lista de etiquetas validadas `<familia>[-plataforma][-formfactor]`) y `target_platforms` (familias `{mobile,web,desktop}` **derivadas** de ellas vía el subcomando `target-platforms`, no a mano). `phases` = `["design"]`; `artifacts` lleva solo la clave `design`.
 - `artifacts`: una clave por fase de autoría instalada (`prd`/`spec`/`design`), relativa a la raíz. **En `consumer` se sustituye `artifacts` por**:
   ```json
   "artifacts_source": "<path local al checkout del repo SSoT>",
