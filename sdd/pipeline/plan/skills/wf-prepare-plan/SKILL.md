@@ -55,8 +55,10 @@ Antes de verificar el Spec, determina el contexto técnico del proyecto. Busca `
      > "⚠ El Spec tiene X items [INFORMATIVO] sin responder. Se usarán los valores por defecto. Puedes responderlos después si quieres más precisión."
 4. Verifica que el archivo parece un Spec validado (contiene "Criterios de Aceptación" e "Historias de Usuario"). Si parece un PRD sin procesar → informa:
    > "Este archivo no parece un Spec procesado. Primero ejecuta `/wf-spec-analyze <archivo.md>`"
-5. **Pin del SSoT (solo repos consumidores)**: si `.sdd/project-init.json` declara `artifacts_source` y `artifacts_source_pin`, compara el pin con `git -C <artifacts_source> rev-parse --short HEAD`. Si difieren → **advierte y continúa** (no bloquea):
+5. **Pins de fuentes externas (solo repos consumidores)**: si `.sdd/project-init.json` declara `artifacts_source` y `artifacts_source_pin`, compara el pin con `git -C <artifacts_source> rev-parse --short HEAD`. Si difieren → **advierte y continúa** (no bloquea):
    > "⚠ El repo de specs (`<artifacts_source>`) está en `<HEAD>` pero este repo planificó por última vez contra `<pin>`. Revisa los cambios de specs desde entonces y actualiza `artifacts_source_pin` en `.sdd/project-init.json` cuando los hayas asumido."
+
+   Si además declara `design_source` + `design_source_pin` (repo de diseño aparte, D-011), aplica el mismo chequeo contra `git -C <design_source> rev-parse --short HEAD` y avisa análogamente para `design_source_pin`.
 
 ---
 
@@ -89,7 +91,13 @@ Determina si la feature requiere handoff de Design exactamente según esa regla 
 
 Si **sí requiere** handoff de Design:
 
-> **Topología consumer (superficie con UI):** el `DESIGN.md` es el sistema visual del producto y vive en el repo SSoT (`artifacts_source` de `.sdd/project-init.json`), en **solo lectura** — resuélvelo ahí (bajo su `artifacts.design` o junto a los specs del SSoT), NO en local. Los `<feature>_flows.md`/`<feature>_views.md` de ESTA superficie SÍ son locales de este repo (los autora aquí `design-feature-architect` leyendo el `DESIGN.md` compartido). Combina: `DESIGN.md` remoto (SSoT) + flows/views locales.
+> **Topología consumer (superficie con UI) — dónde vive el diseño** (según `.sdd/project-init.json`):
+> - **Diseño co-localizado** (sin `design_source`; `design_role: feature`): el `DESIGN.md` vive en el SSoT (`artifacts_source`), en **solo lectura** (bajo su `artifacts.design` o junto a los specs), NO en local. Los `<feature>_flows.md`/`<feature>_views.md` de ESTA superficie SÍ son **locales** de este repo (los autora aquí `design-feature-architect`). Combina: `DESIGN.md` remoto + flows/views locales.
+> - **Repo de diseño aparte** (`design_source` + `design_targets`, D-011): el `DESIGN.md` **y** los `flows`/`views` viven en `<design_source>` en **solo lectura** — NO se autoran aquí. Resuelve los flows/views para el/los `design_targets` de este repo con `base ⊕ override` (determinista):
+>   ```bash
+>   !python3 .sdd/scripts/sdd-design-resolve.py resolve --base <design_source>/.../<feature>_views.md --override <design_source>/.../targets/<target>/<feature>_views.md --merged
+>   ```
+>   (sin override para ese target → base intacta; ídem `_flows.md`). Usa el resultado resuelto como handoff de Design. El pin `design_source_pin` se chequea como el de specs (Paso 2.5).
 
 1. Resuelve `DESIGN.md` y los artefactos de feature con el resolutor:
    ```bash

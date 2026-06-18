@@ -258,8 +258,10 @@ en otro repo SSoT del que tienes un checkout local (sibling `../<repo>` o submod
 `features/` o `*_features.md`).
 **Mecanismo:** `wf-project-init` Q1 → **Desarrollo (consumer)**: pide el path al checkout del SSoT y
 la **superficie** (5.C0/5.C1). `consumer` salta PRD/Diseño-sistema; instala `plan`+`tasks` (+`design`
-rol `feature` **si la superficie tiene UI**); escribe `artifacts_source` + `artifacts_source_pin`
-en `project-init.json` (no la clave `artifacts`).
+rol `feature` **si la superficie tiene UI** y el diseño es co-localizado); escribe `artifacts_source` +
+`artifacts_source_pin` en `project-init.json` (no la clave `artifacts`). Si tiene UI, **5.C1b** decide
+dónde vive el diseño: co-localizado en el SSoT (rol feature, flows/views locales) o en un **repo de
+diseño aparte** (D-011: `design_source` + `design_targets`, sin design local).
 
 1. Consumer con superficie **Web** (con-UI); das el path al checkout del SSoT.
    → **Esperado:** valida que el path existe y contiene specs; instala `phases: ["design","plan","tasks"]`
@@ -272,9 +274,18 @@ en `project-init.json` (no la clave `artifacts`).
 3. Das un path que **no** contiene specs.
    → **Esperado:** **no** continúa: re-pregunta el path o detiene con instrucciones de clonar el SSoT;
      no inventa una raíz de specs ni instala como standalone.
+4. Consumer con superficie **App móvil** (con-UI) y, en **5.C1b**, "repo de diseño aparte" ([[D-011]]);
+   das el path al checkout del repo `design` y el/los design target(s) que consume (p. ej. `mobile-android`).
+   → **Esperado:** instala **solo `plan`+`tasks`** (NO la fase `design`), `design_role: null`, `has_ui: true`;
+     escribe `artifacts_source`/pin **y** `design_source` + `design_source_pin` + `design_targets`. El
+     `CLAUDE.md` raíz indica que los `flows`/`views` se **resuelven en solo lectura** desde `<design_source>`
+     (`base ⊕ override` por target, `sdd-design-resolve.py`) — no se autoran aquí. `wf-prepare-plan` resuelve
+     el handoff de Design desde el repo `design`, no en local.
 
-**Resultado:** PASS si instala solo plan+tasks con `artifacts_source`/pin y exige un SSoT válido ·
-FALLO si instala prd/spec/design en un consumer, escribe la clave `artifacts` canónica, o acepta un path sin specs.
+**Resultado:** PASS si instala solo plan+tasks con `artifacts_source`/pin, exige un SSoT válido, y en el
+caso 4 persiste `design_source`/pin/`design_targets` sin instalar design local · FALLO si instala
+prd/spec/design en un consumer, escribe la clave `artifacts` canónica, acepta un path sin specs, o
+autora flows/views localmente cuando hay `design_source`.
 **Desviación → reportar:** issue citando `CU-1.i`.
 
 ## CU-1.j — Init invocado desde un subpaquete de un monorepo ya inicializado (gate de workflow)

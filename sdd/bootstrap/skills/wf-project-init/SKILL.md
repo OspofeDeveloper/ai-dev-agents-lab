@@ -257,7 +257,22 @@ opciones:
     description: "Sin UI: pasa de Spec directamente a Plan. No se instala diseño"
 ```
 
-`surfaces = [<una>]`. `has_ui = surface ∈ {mobile, desktop, web}`. `design_role = feature` si `has_ui`, si no `null`.
+`surfaces = [<una>]`. `has_ui = surface ∈ {mobile, desktop, web}`. Si `has_ui` es falso (backend): `design_role = null`, sin diseño, salta 5.C1b.
+
+**5.C1b — Dónde vive el diseño** [solo si `has_ui`]:
+```
+question: "¿Dónde vive el sistema de diseño (DESIGN.md y los flows/views) de este producto?"
+header: "Diseño"
+opciones:
+  - label: "En el mismo repo de specs (SSoT)"
+    description: "El DESIGN.md vive junto a los specs en el repo SSoT; este repo autora aquí sus flows/views de feature leyendo ese DESIGN.md (rol feature). Comportamiento de siempre"
+  - label: "En un repo de diseño aparte"
+    description: "Hay un repo de diseño dedicado (topología design, D-011); este repo NO autora flows/views: los resuelve (base ⊕ override por su target) desde ese repo en solo lectura"
+```
+- **SSoT de specs** (caso de siempre): `design_role = feature`, se instala la fase `design` (autoría de feature); los flows/views se autoran aquí leyendo el `DESIGN.md` del SSoT.
+- **Repo de diseño aparte** (D-011): `design_role = null`, **NO se instala la fase `design`** aquí (el diseño se resuelve del repo `design` en solo lectura). Captura:
+  - `DESIGN_SOURCE` = path local al checkout del repo `design` (validar como 5.C0: existe y contiene `DESIGN.md` o `features/`); `DESIGN_SOURCE_PIN = git -C <design_source> rev-parse --short HEAD` (o `unknown`).
+  - `DESIGN_TARGETS` = los design target(s) que este repo consume (multiSelect, mismas opciones que 5.D1; validar con `sdd-init-detect.py target-platforms`). P. ej. un repo Android-nativo consume `mobile-android`.
 
 **5.C2 — Framework/Targets** [solo si superficie móvil] → ver 5.X abajo. Para web/backend, derivar stack de la detección (Paso 4) o `agnostico`.
 
@@ -412,7 +427,8 @@ TOPOLOGY == authoring:
 
 TOPOLOGY == consumer:
   SELECTED_PHASES = [plan, tasks]
-  has_ui == true      → anteponer design (rol feature)
+  has_ui == true Y diseño co-localizado (SSoT de specs) → anteponer design (rol feature)
+  has_ui == true Y diseño en repo aparte (design_source) → NO se instala design (se resuelve del repo design, solo lectura)
   (sin prd/spec; la autoría vive en el SSoT)
 
 TOPOLOGY == standalone:
@@ -520,10 +536,10 @@ Proyecto gestionado con Spec Driven Development. Topología: **<authoring|consum
   Los PRD/specs/`DESIGN.md` de este producto viven en el repo SSoT: `<artifacts_source>` (checkout local). Este repo solo PLANIFICA y EJECUTA su superficie (`<surface>`):
 
   - Specs y `DESIGN.md` (solo lectura): bajo `<artifacts_source>/.../features/<nombre>/`.
-  - Diseño de feature (de este repo, solo si UI): `features/<nombre>/design/` — flows/views/ui_prompt de ESTA superficie, derivados leyendo el `DESIGN.md` compartido del SSoT.
+  - Diseño de feature: **(a)** si el diseño es co-localizado en el SSoT (`design_role: feature`), se autora en ESTE repo en `features/<nombre>/design/` leyendo el `DESIGN.md` del SSoT; **(b)** si hay repo de diseño aparte (`design_source`), NO se autora aquí — los flows/views se **resuelven en solo lectura** desde `<design_source>` (`base ⊕ override` por los `design_targets` de este repo, vía `.sdd/scripts/sdd-design-resolve.py`).
   - Planes y tasks (de este repo): `features/<nombre>/plan/` y `features/<nombre>/tasks/`, con `Spec origen` apuntando al checkout del SSoT.
-  - Cambios de spec o de sistema visual → se piden en el repo SSoT, nunca se editan aquí.
-  - Pin de specs: `artifacts_source_pin` en `.sdd/project-init.json` — si el SSoT avanza, los workflows de plan avisan.
+  - Cambios de spec o de sistema visual → se piden en el repo SSoT (o en el repo `design` si aplica), nunca se editan aquí.
+  - Pins: `artifacts_source_pin` (specs) y, si hay repo de diseño aparte, `design_source_pin` (diseño) en `.sdd/project-init.json` — si la fuente avanza, los workflows de plan avisan.
   ```
 
 - **design** *(D-011)* — sustituir "Layout de artefactos" por:
@@ -581,6 +597,12 @@ Reglas de los campos:
   "artifacts_source_pin": "<commit corto del SSoT al hacer el init | unknown>"
   ```
   (en consumer `phases` no incluye prd/spec; el `design` de consumer es rol feature y sus artefactos viven dentro de cada feature.)
+- **Consumer con diseño en repo aparte (D-011, 5.C1b)**: además de `artifacts_source`, añade `design_source` + `design_source_pin` (checkout del repo `design`) y `design_targets` (los que este repo consume). En ese caso `phases` **no** incluye `design` y `design_role` es `null` (no se autora diseño aquí; se resuelve del repo `design` en solo lectura con `sdd-design-resolve.py`).
+  ```json
+  "design_source": "<path local al checkout del repo design>",
+  "design_source_pin": "<commit corto del repo design al init | unknown>",
+  "design_targets": ["<design target(s) que consume este repo>"]
+  ```
 - `specialist_workflow`: solo si el stack es concreto Y existe `wf-<stack>-init`.
 - `pipeline_mode`: **siempre `standard`** en el init (no se pregunta). El rigor por feature se decide al crear el spec; el override de proyecto es editar este campo a mano.
 - `sdd_version`: de `.sdd/sdd-version.json` (lo escribe `install.sh`): `<version>+<commit>`. Si no existe, `unknown`.

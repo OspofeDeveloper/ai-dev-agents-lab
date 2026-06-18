@@ -226,6 +226,33 @@ class VerifyTest(unittest.TestCase):
         self.assertEqual(code, 0, [c for c in checks if not c["ok"]])
         self.assertTrue(next(c for c in checks if c["check"] == "artifacts-map")["ok"])
 
+    def test_consumer_with_separate_design_repo_passes(self):
+        # consumer D-011 (5.C1b): diseño en repo aparte → plan+tasks, sin design local;
+        # design_source + design_source_pin + design_targets; design_role null.
+        for f in ("plan", "tasks"):
+            write(self.root / f".claude/rules/sdd-{f}.md", "x")
+        write(self.root / ".claude/CLAUDE.md", "x")
+        write(self.root / ".sdd/project-init.json", json.dumps({
+            "dispatcher": "wf-project-init",
+            "topology": "consumer",
+            "has_ui": True,
+            "design_role": None,
+            "artifacts_source": "../shop-specs",
+            "artifacts_source_pin": "abc1234",
+            "design_source": "../shop-design",
+            "design_source_pin": "def5678",
+            "design_targets": ["mobile-android"],
+        }))
+        for s in ("sdd-gate-check.py", "sdd-seal.py", "sdd-task-state.py",
+                  "sdd-sync-check.py", "sdd-skill-allow.py"):
+            write(self.root / ".sdd/scripts" / s, "x")
+        write(self.root / ".sdd/sdd-version.json", "{}")
+        write(self.root / ".gitignore", ".claude/settings.local.json\n")
+        code, checks = verify(self.root, "plan,tasks")
+        self.assertEqual(code, 0, [c for c in checks if not c["ok"]])
+        self.assertTrue(next(c for c in checks if c["check"] == "topology")["ok"])
+        self.assertTrue(next(c for c in checks if c["check"] == "artifacts-map")["ok"])
+
     def test_authoring_no_plan_tasks_passes(self):
         # authoring: prd+spec+design, sin plan/tasks, con "artifacts"
         for f in ("prd", "spec", "design"):
