@@ -55,10 +55,14 @@ Antes de verificar el Spec, determina el contexto técnico del proyecto. Busca `
      > "⚠ El Spec tiene X items [INFORMATIVO] sin responder. Se usarán los valores por defecto. Puedes responderlos después si quieres más precisión."
 4. Verifica que el archivo parece un Spec validado (contiene "Criterios de Aceptación" e "Historias de Usuario"). Si parece un PRD sin procesar → informa:
    > "Este archivo no parece un Spec procesado. Primero ejecuta `/wf-spec-analyze <archivo.md>`"
-5. **Pins de fuentes externas (solo repos consumidores)**: si `.sdd/project-init.json` declara `artifacts_source` y `artifacts_source_pin`, compara el pin con `git -C <artifacts_source> rev-parse --short HEAD`. Si difieren → **advierte y continúa** (no bloquea):
-   > "⚠ El repo de specs (`<artifacts_source>`) está en `<HEAD>` pero este repo planificó por última vez contra `<pin>`. Revisa los cambios de specs desde entonces y actualiza `artifacts_source_pin` en `.sdd/project-init.json` cuando los hayas asumido."
+5. **Drift de fuentes externas (solo repos consumidores)** — usa el checker determinista, que consolida specs + design (D-011) en una sola pasada (SHA y diff los da git, no el agente):
+   ```bash
+   !python3 .sdd/scripts/sdd-source-drift.py check
+   ```
+   Por cada fuente con `drifted: true`, **advierte y continúa** (no bloquea), citando los artefactos relevantes que cambiaron (`changed`):
+   > "⚠ La fuente `<kind>` (`<path>`) está en `<head>` pero este repo planificó por última vez contra `<pin>`. Cambiaron: `<changed>`. Revísalos y actualiza el pin (`artifacts_source_pin` / `design_source_pin`) en `.sdd/project-init.json` cuando los hayas asumido."
 
-   Si además declara `design_source` + `design_source_pin` (repo de diseño aparte, D-011), aplica el mismo chequeo contra `git -C <design_source> rev-parse --short HEAD` y avisa análogamente para `design_source_pin`.
+   **Fallback** sin python3: compara a mano `<pin>` vs `git -C <source> rev-parse --short HEAD` para `artifacts_source_pin` y, si existe, `design_source_pin`.
 
 ---
 

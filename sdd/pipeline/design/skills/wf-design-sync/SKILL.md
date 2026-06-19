@@ -16,7 +16,7 @@ Tu objetivo es determinar qué artefactos de diseño derivados deben revisarse t
 
 Usa `kb-design-governance` (política de evolución, Regla 2) y `kb-design-expert` con criterio **conservador**: si no puedes demostrar que un artefacto sigue alineado con sus fuentes, no lo marques `in_sync`.
 
-> Alcance: este workflow hace **análisis de impacto** (lectura + razonamiento conservador), no detección por hash. El sellado determinista de la deriva diseño (hash de `DESIGN.md`/spec en el header de cada artefacto, à la `sdd-sync-check.py` de la fase spec) es endurecimiento futuro — anotado como candidato en ROADMAP 11.2. Hasta entonces, el criterio conservador es la red.
+> Alcance: el análisis de impacto **intra-repo** (qué artefactos derivados de ESTE repo quedaron stale) es lectura + razonamiento conservador, no detección por hash — el sellado determinista intra-repo (hash de `DESIGN.md`/spec en el header de cada artefacto, à la `sdd-sync-check.py`) sigue siendo endurecimiento futuro (ROADMAP 11.2), y hasta entonces el criterio conservador es la red. La deriva **cross-repo** (pin del repo de diseño aparte) **sí es determinista** vía `sdd-source-drift.py` (Paso 2b, D-011).
 
 ## Paso 1: Parsear argumentos
 
@@ -39,6 +39,14 @@ Desde esa raíz, descubre:
 - `<n>_spec.md` de cada feature (subcarpeta `spec/` o raíz legacy) — fuente funcional de sus prototipos
 - Exports de tokens si existen (salidas de `wf-design-export`: `css`, `style-dictionary`, `compose`, `swiftui`, `tailwind` bajo el `--output-dir` usado)
 - `<n>_design_discovery.md` / moodboard si existen (insumos pre-DESIGN)
+
+## Paso 2b: Drift cross-repo (consumer con diseño aparte, D-011)
+
+Si `.sdd/project-init.json` declara `design_source` (el `DESIGN.md` y los flows/views base viven en un repo `design` aparte, 5.C1b), la deriva relevante es **entre repos**: que el repo de diseño haya avanzado respecto al pin de este consumer. Detéctalo con el checker determinista (SHA y diff los da git, no el agente):
+```bash
+!python3 .sdd/scripts/sdd-source-drift.py check
+```
+Si la fuente `design` sale `drifted: true`, **repórtalo en la matriz** (Paso 5) como deriva cross-repo: los artefactos resueltos `base ⊕ override` que este repo consume —y, transitivamente, sus `_plan.md`/`_tasks.md`— pasan a `needs_review`; cita los artefactos cambiados (`changed`). Acción recomendada: revisar los cambios, re-resolver con `sdd-design-resolve.py` y actualizar `design_source_pin` cuando se asuman. (En un repo de diseño dedicado o con diseño co-localizado —sin `design_source`— este paso no aplica: la deriva es intra-repo, Pasos 3-6.)
 
 ## Paso 3: Leer el contexto mínimo necesario
 
