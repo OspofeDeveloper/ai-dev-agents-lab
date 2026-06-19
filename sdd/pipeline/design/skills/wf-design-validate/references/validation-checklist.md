@@ -178,6 +178,17 @@ Si el producto declara componentes de form (`input-text`, `input-textarea`, `sel
 
 ---
 
+## 19. Capa de componente nativo (kb-design-system-contract Regla 11, D-011)
+
+Aplica solo según el gate `REQUIRES_PLATFORM_COMPONENTS` que pasa `wf-design-validate` (Paso 4b, resuelto deterministicamente desde `design_targets`). No deduzcas tú la divergencia.
+
+- Si `REQUIRES_PLATFORM_COMPONENTS=true` (el producto declara ≥2 plataformas con componente nativo divergente, `NATIVE_PLATFORMS` p. ej. `android, ios`) y **falta** la sección `## Platform Components` → `[CRITICO]` `DESIGN_GAP` (la capa es obligatoria con targets divergentes).
+- Si está presente: debe ir **tras `## Components` y antes de `## Accessibility`**; mapear el **rol abstracto** de los componentes que divergen a su realización nativa por las plataformas de `NATIVE_PLATFORMS`; **no** redeclarar lo compartido (tokens/color/tipografía/voz/motion) ni forkear el sistema por plataforma. Posición incorrecta o redeclaración de lo compartido → `[MEDIO]`.
+- Si `REQUIRES_PLATFORM_COMPONENTS=false` (una sola base / sin targets divergentes) y la sección **aparece** → `[MEDIO]` (ruido: nada que mapear). Su ausencia en este caso **no** es hallazgo.
+- Esta es la Regla 11 del contrato `kb-design-system-contract` (capa de componente nativo), no la pauta de Visual Personality.
+
+---
+
 ## Formato de salida estándar
 
 ```

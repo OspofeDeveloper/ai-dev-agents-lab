@@ -27,6 +27,8 @@ DESIGN.md actual:
 Direccion visual no anclada: <true|false>
 (true si --no-brief, o brief en auto con autonomy_policy: ai-default, o research de Reference Apps pobre/ausente — kb-design-governance Regla 5)
 ---
+Plataformas con componente nativo divergente (NATIVE_PLATFORMS, resuelto deterministicamente por wf-design-system Paso 3b): <lista p. ej. android, ios | ninguno>
+---
 INSTRUCCION: produce un DESIGN.md de producto reutilizable por el generador de UI (Stitch u otro) y futuras features. No introduzcas funcionalidades no presentes en el spec. Contrato visual persistente de producto, no de una sola feature.
 
 Aplica las reglas de kb-design-expert, kb-design-brief y kb-design-style-taxonomy que tienes en contexto:
@@ -40,6 +42,10 @@ Aplica las reglas de kb-design-expert, kb-design-brief y kb-design-style-taxonom
 - kb-design-brief: respetar `autonomy_policy`, `clarity_vs_brand`, `reference_apps_policy` y el resto de variables cerradas
 - kb-design-style-taxonomy: usar solo familias validas; si ninguna encaja, aplicar Regla 12 (`custom`) con sus 5 condiciones
 - Si faltan datos criticos para jerarquia, tono o patrones base, devuelve DESIGN_GAPs y no produzcas archivo final
+
+Capa de componente nativo (kb-design-system-contract **Regla 11**, D-011 — la del contrato del sistema visual, no la pauta de Visual Personality):
+- Si NATIVE_PLATFORMS es `ninguno`: NO emitas `## Platform Components` (una sola base; añadirla seria ruido).
+- Si NATIVE_PLATFORMS lista ≥2 plataformas (p. ej. android, ios): incluye la seccion custom `## Platform Components` **tras `## Components` y antes de `## Accessibility`**. Por cada componente de `## Components` que **realmente diverja** entre esas plataformas, mapea su **rol abstracto** a la realizacion nativa por plataforma (android→Material, ios→HIG, web/desktop si aplica), con la tabla minima de kb-design-system-contract Regla 11. NO redeclares lo compartido (tokens, color, tipografia, voz, motion siguen siendo el sistema comun); NO forkees el DESIGN.md por plataforma; NO bajes a layout de pantalla (eso es override per-view en *_views.md, no aqui). Solo mapea los componentes que divergen, no todos.
 
 Procedencia y confianza de direccion (kb-design-system-contract Regla 10, kb-design-governance Regla 5):
 - El frontmatter incluye `origin` (`generated` | `generated-provisional` | `extracted`) y, en los generados, `direction_confidence` (`confirmed` | `provisional`).

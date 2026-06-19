@@ -37,10 +37,12 @@ Subcomandos:
 
     target-platforms --targets <t1,t2,...>
         Valida una lista de design targets contra su convención (familia obligatoria
-        de {mobile,web,desktop}) y deriva las familias `target_platforms` (D-011,
-        foundational). Emite (JSON) `valid`/`invalid`/`target_platforms`/`all_valid`.
-        Función pura testeada lista para el wiring de la topología `design` (diferido);
-        hoy no tiene aún consumidor — mismo patrón pre-wiring que tuvo `repair-plan`.
+        de {mobile,web,desktop}), deriva las familias `target_platforms` y resuelve el
+        gate de la capa `## Platform Components` (Regla 11, D-011). Emite (JSON)
+        `valid`/`invalid`/`target_platforms`/`all_valid` + `native_platforms` (las
+        plataformas con componente nativo divergente, p. ej. android+ios) y
+        `requires_platform_components` (true si ≥2). Lo consumen `wf-project-init`
+        (validar/derivar), `wf-design-intake` (familias) y `wf-design-system` (capa nativa).
 
 Exit codes:
     0 = OK (detect/repair-plan siempre; verify si todos los checks pasan)
@@ -98,6 +100,16 @@ DESIGN_TARGET_FAMILIES = ("mobile", "web", "desktop")
 # Convención de etiqueta de design target: `<familia>[-<plataforma>][-<formfactor>]`.
 # Tokens kebab-case alfanuméricos en minúscula; la familia se valida aparte.
 _DESIGN_TARGET_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+
+# Plataformas cuya REALIZACIÓN de componente nativo diverge a nivel de SISTEMA
+# (Material vs HIG): el disparador de la capa `## Platform Components` del DESIGN.md
+# (D-011, kb-design-system-contract Regla 11). SSoT del gate: solo tokens cuya
+# divergencia es de sistema, NO de layout. Los form-factors (`phone`, `tablet`,
+# `foldable`, `watch`, `tv`, `wide`…) NO entran: su divergencia es de composición y
+# se modela como override per-view (kb-design-feature-artifacts Regla 8), no aquí.
+# Conservador y ampliable: hoy el split realista es mobile → {android, ios}; añadir
+# un OS de desktop divergente sería editar este tuple, no reescribir el gate.
+NATIVE_COMPONENT_PLATFORMS = ("android", "ios")
 
 
 def fail(msg: str) -> int:
@@ -343,23 +355,58 @@ def derive_target_platforms(design_targets: list[str]) -> list[str]:
     return [fam for fam in DESIGN_TARGET_FAMILIES if fam in found]
 
 
+def design_platform_divergence(design_targets: list[str]) -> dict:
+    """¿Exige el producto la capa `## Platform Components`? (D-011, Regla 11).
+
+    Detecta divergencia de COMPONENTE NATIVO entre los design targets: si declaran
+    ≥2 plataformas con sistemas de componentes distintos (p. ej. `android` Material +
+    `ios` HIG dentro de la familia `mobile`), la realización nativa del componente es
+    una decisión de SISTEMA y la capa `## Platform Components` del `DESIGN.md` es
+    obligatoria (Regla 11). Los form-factors (`tablet`, `phone`, …) NO disparan: su
+    divergencia es de layout y se modela como override per-view
+    (`kb-design-feature-artifacts` Regla 8), no aquí. Solo cuentan los tokens de
+    `NATIVE_COMPONENT_PLATFORMS`. Función pura testeada (patrón D-010): el gate no lo
+    decide el agente en prosa. Devuelve las plataformas divergentes (orden de
+    `NATIVE_COMPONENT_PLATFORMS`) y el booleano del gate.
+    """
+    if not isinstance(design_targets, list):
+        design_targets = []
+    found = set()
+    for label in design_targets:
+        parsed = parse_design_target(label)
+        if parsed is None:
+            continue
+        _family, extra = parsed
+        for tok in extra:
+            if tok in NATIVE_COMPONENT_PLATFORMS:
+                found.add(tok)
+    diverging = [p for p in NATIVE_COMPONENT_PLATFORMS if p in found]
+    return {
+        "native_platforms": diverging,
+        "requires_platform_components": len(diverging) >= 2,
+    }
+
+
 def design_targets_report(targets: list[str]) -> dict:
     """Reporte determinista de una lista de design targets (subcomando target-platforms).
 
-    Valida cada etiqueta contra la convención (familia obligatoria) y deriva las
-    familias `target_platforms`. Pensado para que `wf-project-init` —cuando aterrice
-    la topología `design` (D-011, diferido)— compute `target_platforms` y rechace
-    etiquetas inválidas sin re-decidir en prosa, igual que `repair-plan` hace con
-    `design_role`. Hoy es foundational: testeado, listo para wiring.
+    Valida cada etiqueta contra la convención (familia obligatoria), deriva las
+    familias `target_platforms` y resuelve el gate de la capa `## Platform Components`
+    (Regla 11, D-011). Para que `wf-project-init` rechace etiquetas inválidas y
+    `wf-design-intake`/`wf-design-system` deriven familias y decidan la capa nativa
+    sin re-decidir en prosa, igual que `repair-plan` hace con `design_role`.
     """
     valid = [t for t in targets if is_valid_design_target(t)]
     invalid = [t for t in targets if not is_valid_design_target(t)]
+    divergence = design_platform_divergence(targets)
     return {
         "design_targets": list(targets),
         "valid": valid,
         "invalid": invalid,
         "target_platforms": derive_target_platforms(targets),
         "all_valid": not invalid,
+        "native_platforms": divergence["native_platforms"],
+        "requires_platform_components": divergence["requires_platform_components"],
     }
 
 

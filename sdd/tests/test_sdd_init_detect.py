@@ -505,5 +505,60 @@ class DesignTargetsTest(unittest.TestCase):
         self.assertTrue(r["all_valid"])
 
 
+class PlatformComponentsGateTest(unittest.TestCase):
+    """Gate de la capa `## Platform Components` (D-011, Regla 11): exige la capa solo
+    cuando los design targets declaran ≥2 plataformas con sistema de componentes nativo
+    divergente (android Material + ios HIG). Form-factors (tablet/phone) NO disparan:
+    su divergencia es de layout (override per-view), no de sistema. Black-box vía el
+    subcomando `target-platforms` (campos `native_platforms`/`requires_platform_components`)."""
+
+    def test_android_and_ios_require_the_layer(self):
+        # El caso canónico de D-011: Material vs HIG dentro de la familia mobile.
+        r = target_platforms("mobile-android,mobile-ios")
+        self.assertEqual(r["native_platforms"], ["android", "ios"])
+        self.assertTrue(r["requires_platform_components"])
+
+    def test_order_is_canonical_independent_of_input(self):
+        r = target_platforms("mobile-ios,mobile-android")
+        self.assertEqual(r["native_platforms"], ["android", "ios"])
+        self.assertTrue(r["requires_platform_components"])
+
+    def test_single_native_platform_does_not_require(self):
+        # Una sola plataforma nativa: no hay nada que mapear.
+        r = target_platforms("mobile-android")
+        self.assertEqual(r["native_platforms"], ["android"])
+        self.assertFalse(r["requires_platform_components"])
+
+    def test_form_factor_split_does_not_require(self):
+        # phone vs tablet en la misma plataforma = layout (per-view), NO sistema.
+        r = target_platforms("mobile-android,mobile-android-tablet")
+        self.assertEqual(r["native_platforms"], ["android"])
+        self.assertFalse(r["requires_platform_components"])
+
+    def test_single_base_family_does_not_require(self):
+        r = target_platforms("mobile")
+        self.assertEqual(r["native_platforms"], [])
+        self.assertFalse(r["requires_platform_components"])
+
+    def test_cross_family_without_native_split_does_not_require(self):
+        # mobile (base) + web + desktop: familias distintas, sin split android/ios.
+        # La divergencia cross-familia la cubre target_platforms + ui_prompt por superficie.
+        r = target_platforms("mobile,web,desktop")
+        self.assertEqual(r["native_platforms"], [])
+        self.assertFalse(r["requires_platform_components"])
+
+    def test_native_split_with_extra_families_still_requires(self):
+        r = target_platforms("mobile-android,mobile-ios,desktop")
+        self.assertEqual(r["native_platforms"], ["android", "ios"])
+        self.assertTrue(r["requires_platform_components"])
+
+    def test_invalid_targets_ignored_in_gate(self):
+        # Una etiqueta inválida no aporta plataforma nativa ni rompe el gate.
+        r = target_platforms("mobile-android,Bogus,mobile-ios")
+        self.assertEqual(r["native_platforms"], ["android", "ios"])
+        self.assertTrue(r["requires_platform_components"])
+        self.assertEqual(r["invalid"], ["Bogus"])
+
+
 if __name__ == "__main__":
     unittest.main()

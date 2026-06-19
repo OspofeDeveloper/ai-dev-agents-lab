@@ -275,9 +275,9 @@ Cuando `direction_confidence: provisional`, los campos de direccion inferidos si
 
 Cuando un producto cubre **design targets que divergen a nivel de componente nativo** (topologia `design` de D-011, o cualquier producto multiplataforma: p. ej. `mobile-android` + `mobile-ios`, Material vs HIG), la **realizacion nativa** de un componente es una decision de **sistema** y vive AQUI, en `DESIGN.md`, no en las views por feature. Esto es lo que permite que `*_views.md` se mantenga agnostico y solo se overridee por layout/composicion (`kb-design-feature-artifacts` Regla 8): la view cita el componente por su **rol**, y su realizacion nativa se resuelve desde esta capa.
 
-**Cuando es obligatoria / cuando se omite:**
-- **Obligatoria** cuando los design targets del producto incluyen mas de una plataforma divergente dentro de una familia (tipico: `mobile-android` + `mobile-ios`) o plataformas con sistemas de componentes distintos cuya divergencia es de sistema (no de layout). Si falta estando declarados targets divergentes → `DESIGN_GAP`.
-- **Se omite** cuando hay una sola base (`mobile`, o una sola plataforma): no hay nada que mapear y anadirla seria ruido.
+**Cuando es obligatoria / cuando se omite** (gate **determinista**, no a ojo): lo decide `sdd-init-detect.py target-platforms --targets <design_targets>` sobre los `design_targets` del `project-init.json` — campo `requires_platform_components` (true si `native_platforms` lista ≥2 plataformas con sistema de componentes nativo divergente). Lo consultan `wf-design-system` (Paso 3b) al generar y `wf-design-validate` (Paso 4b) al auditar.
+- **Obligatoria** cuando `requires_platform_components: true` — los design targets incluyen mas de una plataforma divergente dentro de una familia (tipico: `mobile-android` + `mobile-ios`, Material vs HIG). Si falta estando declarados targets divergentes → `DESIGN_GAP`.
+- **Se omite** cuando hay una sola base (`mobile`, o una sola plataforma): no hay nada que mapear y anadirla seria ruido. Los **form-factors** (`tablet`/`phone`) NO disparan la capa: su divergencia es de layout (override per-view, `kb-design-feature-artifacts` Regla 8), no de sistema — por eso el gate solo cuenta plataformas de componente nativo, no tokens de form-factor.
 
 **Que declara** — seccion custom `## Platform Components` (tras `## Components`). Por cada componente que **realmente diverja** (no todos):
 - el **rol/nombre abstracto** del componente (el mismo de `## Components` y el que citan las views);

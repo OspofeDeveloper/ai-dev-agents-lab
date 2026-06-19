@@ -98,11 +98,24 @@ Si el archivo **NO existe** y el brief declara `product_preset` distinto de `non
 - arranca con ese starter kit al 70% en lugar de DESIGN.md en blanco
 - pasa este contenido base al agente como `DESIGN.md actual` para que lo precise (no parta de cero)
 
+## Paso 3b: Resolver la capa de componente nativo (`## Platform Components`, D-011)
+
+La realización nativa de un componente (Material vs HIG) es una decisión de **sistema**: si el producto cubre design targets que divergen nativamente, el `DESIGN.md` debe llevar la capa `## Platform Components` (`kb-design-system-contract` Regla 11). El gate es **determinista**, no lo decide el agente:
+
+1. Lee `design_targets` de `.sdd/project-init.json` (directorio actual o un ancestro hasta la raíz git). Lo declaran la topología `design` y los consumer con repo de diseño aparte (D-011); en greenfield co-localizado típicamente no existe.
+2. Si hay `design_targets`, resuelve el gate con el subcomando determinista (no razones la divergencia en prosa):
+   ```bash
+   !python3 "$SDD_HOME/scripts/sdd-init-detect.py" target-platforms --targets "<design_targets separados por comas>" --json
+   ```
+   (fallback sin `$SDD_HOME`: `.sdd/scripts/sdd-init-detect.py`).
+   - Si `requires_platform_components: true` → guarda `NATIVE_PLATFORMS` (el array `native_platforms`, p. ej. `["android","ios"]`) para pasarlo al agente en el Paso 4: el `DESIGN.md` **debe** incluir `## Platform Components`.
+   - Si `false`, o no hay `design_targets` (una sola base): **no** hay capa nativa; añadirla sería ruido. Pasa `NATIVE_PLATFORMS: ninguno`.
+
 ## Paso 4: Delegar al agente design-system-architect
 
-Invoca al agente siguiendo las **Reglas 2, 3, 4 y 6** de `kb-design-system-contract` (formato y secciones, Visual Personality, Reference Apps, materializar el brief sin reabrirlo), la **Regla 3** de `kb-design-expert` (orden de derivación: dirección de producto primero) y la **Regla 2** de `kb-design-governance` (política de evolución extender vs mutar), mas la jerarquía de `kb-design-brief` y la taxonomía de `kb-design-style-taxonomy`.
+Invoca al agente siguiendo las **Reglas 2, 3, 4 y 6** de `kb-design-system-contract` (formato y secciones, Visual Personality, Reference Apps, materializar el brief sin reabrirlo), la **Regla 11** cuando el Paso 3b marcó plataformas nativas divergentes (capa `## Platform Components`), la **Regla 3** de `kb-design-expert` (orden de derivación: dirección de producto primero) y la **Regla 2** de `kb-design-governance` (política de evolución extender vs mutar), mas la jerarquía de `kb-design-brief` y la taxonomía de `kb-design-style-taxonomy`.
 
-Construye el prompt usando la plantilla de `${CLAUDE_SKILL_DIR}/references/design_system_prompt.md`, pasando el contenido de: spec, PRD (si existe), brief (si existe), research de apps (si existe), y DESIGN.md actual (si existe).
+Construye el prompt usando la plantilla de `${CLAUDE_SKILL_DIR}/references/design_system_prompt.md`, pasando el contenido de: spec, PRD (si existe), brief (si existe), research de apps (si existe), DESIGN.md actual (si existe), y `NATIVE_PLATFORMS` (resuelto en el Paso 3b).
 
 ## Paso 5: Manejar DESIGN_GAPs
 

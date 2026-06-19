@@ -50,6 +50,20 @@ Captura el resultado:
 - **Con errores** → guardar la lista completa de errores.
 - **npx no disponible** → registrar `linter: SKIPPED` con explicacion.
 
+## Paso 4b: Resolver el gate de la capa de componente nativo (`## Platform Components`, D-011)
+
+La capa `## Platform Components` (`kb-design-system-contract` Regla 11) es **obligatoria** cuando el producto declara design targets que divergen nativamente, y su ausencia en ese caso es `DESIGN_GAP`. El gate es determinista, no a ojo:
+
+1. Lee `design_targets` de `.sdd/project-init.json` (directorio actual o un ancestro hasta la raíz git).
+2. Si hay `design_targets`, resuelve el gate:
+   ```bash
+   !python3 "$SDD_HOME/scripts/sdd-init-detect.py" target-platforms --targets "<design_targets separados por comas>" --json
+   ```
+   (fallback sin `$SDD_HOME`: `.sdd/scripts/sdd-init-detect.py`). Usa `requires_platform_components` y `native_platforms`.
+3. Si no hay `design_targets` ni `.sdd/project-init.json` (DESIGN.md suelto, brownfield), `REQUIRES_PLATFORM_COMPONENTS: false` (no exigible sin targets declarados).
+
+Pasa `REQUIRES_PLATFORM_COMPONENTS` y `NATIVE_PLATFORMS` al agente en el prompt del Paso 5.
+
 ## Paso 5: Delegar auditoría al agente design-system-architect
 
 Lee el checklist completo de validación:
@@ -78,6 +92,7 @@ Resultado del linter:
 ---
 Flag --lenient: <true|false>
 Flag --pedagogical: <true|false>
+Capa de componente nativo (resuelto en Paso 4b): REQUIRES_PLATFORM_COMPONENTS=<true|false>, NATIVE_PLATFORMS=<lista o ninguno>
 
 Checklist de validación:
 ---

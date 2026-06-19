@@ -19,7 +19,7 @@ Cada kb es SSoT de su dominio. No redefinas aqui sus reglas: aplicalas cuando to
 
 - `kb-spec-expert` — lectura del Spec sin inventar comportamiento.
 - `kb-design-expert` — marco de la fase design: principios estructurales, separación producto/feature y orden del pipeline.
-- `kb-design-system-contract` — contrato del `DESIGN.md`: frontmatter YAML, secciones canónicas, type scale, color modes, componentes con estados, `accessibility.target_platforms`.
+- `kb-design-system-contract` — contrato del `DESIGN.md`: frontmatter YAML, secciones canónicas, type scale, color modes, componentes con estados, `accessibility.target_platforms` y la capa `## Platform Components` (Regla 11: realización de componente nativo por plataforma cuando los design targets divergen — Material vs HIG).
 - `kb-design-characterization` — metodología de ingeniería inversa: extraer un `DESIGN.md` desde la UI existente con evidencia obligatoria por token (CSS/tokens/componentes/capturas), marcador `[INFERIDO]`, documentar inconsistencias reales sin promediarlas, header `origin: extracted`. Aplícala en el modo `design-extract`.
 - `kb-design-governance` — gobernanza del sistema visual: handoff a plan, política extender vs mutar, versionado semver y distinción operativa entre los workflows incrementales.
 - `kb-design-brief` — interpretacion del `DESIGN_BRIEF.md`: modos, autonomia, presets, `target_platforms` y jerarquia de fuentes.
@@ -40,6 +40,7 @@ Cada kb es SSoT de su dominio. No redefinas aqui sus reglas: aplicalas cuando to
 - `DESIGN_BRIEF.md` del producto (precondicion obligatoria salvo override explicito `--no-brief`)
 - PRD del producto (opcional, mejora la precision de la `Visual Personality`)
 - research de apps de referencia o `<basename>_design_discovery.md` (segun workflow)
+- en `design-system`: `NATIVE_PLATFORMS` — las plataformas con componente nativo divergente (p. ej. `android, ios`) o `ninguno`, resuelto deterministicamente por `wf-design-system` (Paso 3b). Decide si el `DESIGN.md` lleva la capa `## Platform Components` (Regla 11)
 - si existe, contenido actual de `DESIGN.md`
 - en `design-delta-*`: el archivo de cambios o el `_delta_analysis.md` aprobado
 - en `design-validate`: el resultado del linter de Google design.md
@@ -77,6 +78,7 @@ Cada kb es SSoT de su dominio. No redefinas aqui sus reglas: aplicalas cuando to
 1. Lee spec, brief, PRD, research y `DESIGN.md` actual si existe.
 2. Verifica trazabilidad funcional: actor, journeys, CAs.
 3. Materializa el brief en tokens y componentes siguiendo Reglas 2, 3, 4 y 6 de `kb-design-system-contract`. Declara `accessibility.target_platforms` (copiado del brief) y, si incluye web/desktop, `min_target_pointer`.
+3b. **Capa de componente nativo (Regla 11 de `kb-design-system-contract`, D-011):** si `NATIVE_PLATFORMS` lista ≥2 plataformas (p. ej. `android, ios`), incluye la seccion custom `## Platform Components` **tras `## Components` y antes de `## Accessibility`**: por cada componente de `## Components` que **realmente diverja**, mapea su rol abstracto a la realizacion nativa por plataforma (android→Material, ios→HIG, web/desktop si aplica). NO redeclares lo compartido (tokens/color/tipografia/voz/motion siguen siendo el sistema comun), NO forkees el `DESIGN.md` por plataforma, NO bajes a layout de pantalla (eso es override per-view en `*_views.md`, `kb-design-feature-artifacts` Regla 8). Si `NATIVE_PLATFORMS` es `ninguno`, NO emitas la seccion. (Esta es la Regla 11 del contrato del sistema visual, no la pauta de Visual Personality.)
 4. Aplica `kb-design-style-taxonomy` (Reglas 2-12) para familia, escalas y anti-patrones.
 5. Si el DESIGN.md existe, preserva tokens previos (`kb-design-governance` Regla 2) y registra extensiones en `## Changelog`.
 6. Procedencia de direccion (`kb-design-system-contract` Regla 10, `kb-design-governance` Regla 5): si el prompt indica "Direccion visual no anclada: true", emite `origin: generated-provisional`, `direction_confidence: provisional`, marca `[INFERIDO]` los campos de direccion inferidos y arranca `## Changelog` con `[direccion: provisional]`. Si es false, emite `origin: generated`, `direction_confidence: confirmed`. El `[INFERIDO]` NO bloquea gates.
