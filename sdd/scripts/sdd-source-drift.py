@@ -19,6 +19,9 @@ Subcomando:
         externa pineada (`specs`, `design`): `pin`, `head`, `drifted`, `git_ok` y
         `changed` (artefactos relevantes cambiados `pin..HEAD`). `any_drift` resume.
         Repos sin fuentes externas (standalone/authoring/design) → `sources: []`.
+        Además, `design_ssot` (invariante D-012): si el consumer declara `design_source`
+        Y su `artifacts_source` también trae diseño co-localizado → `dual_design_ssot: true`
+        (dos SSoT de diseño; advisory).
 
 Exit codes:
     0 = OK (siempre; es un reporte advisory)
@@ -66,14 +69,49 @@ def _changed(src: Path, pin: str, head: str, tokens: tuple[str, ...]) -> list[st
     return [f for f in files if any(tok in f for tok in tokens)]
 
 
-def check(root: Path) -> dict:
-    init_json = root / ".sdd/project-init.json"
-    obj = None
-    if init_json.is_file():
+def _read_json(path: Path):
+    if path.is_file():
         try:
-            obj = json.loads(init_json.read_text(encoding="utf-8"))
+            return json.loads(path.read_text(encoding="utf-8"))
         except (OSError, ValueError):
-            obj = None
+            return None
+    return None
+
+
+def dual_design_ssot(root: Path) -> dict:
+    """¿Más de un SSoT de diseño para el producto? (invariante D-012, advisory).
+
+    Conflicto: el consumer declara `design_source` (el diseño vive en un repo de
+    diseño aparte, 5.C1b) PERO su `artifacts_source` (el repo SSoT de specs/authoring)
+    TAMBIÉN trae diseño co-localizado (su `project-init.json` declara la fase `design`).
+    Son dos `DESIGN.md` candidatos para el mismo producto → viola la SSoT: `wf-prepare-plan`
+    resuelve por `design_source` y el co-localizado queda compitiendo en silencio. Se
+    AVISA, no se bloquea (puede ser una ventana de migración). El veredicto sale del
+    estado declarado de los repos, no del agente.
+    """
+    obj = _read_json(root / ".sdd/project-init.json")
+    if not isinstance(obj, dict):
+        return {"design_source": None, "artifacts_source": None,
+                "artifacts_source_declares_design": False, "dual_design_ssot": False}
+    design_source = obj.get("design_source")
+    artifacts_source = obj.get("artifacts_source")
+    declares = False
+    if design_source and artifacts_source:
+        ssot = _read_json((root / artifacts_source / ".sdd/project-init.json").resolve())
+        if isinstance(ssot, dict):
+            phases = ssot.get("phases")
+            in_phases = "design" in phases if isinstance(phases, list) else False
+            declares = in_phases or ssot.get("design_role") in ("system", "full")
+    return {
+        "design_source": design_source,
+        "artifacts_source": artifacts_source,
+        "artifacts_source_declares_design": declares,
+        "dual_design_ssot": bool(design_source and declares),
+    }
+
+
+def check(root: Path) -> dict:
+    obj = _read_json(root / ".sdd/project-init.json")
 
     sources: list[dict] = []
     if isinstance(obj, dict):
@@ -97,7 +135,11 @@ def check(root: Path) -> dict:
                 "changed": changed,
             })
 
-    return {"sources": sources, "any_drift": any(s["drifted"] for s in sources)}
+    return {
+        "sources": sources,
+        "any_drift": any(s["drifted"] for s in sources),
+        "design_ssot": dual_design_ssot(root),
+    }
 
 
 def main(argv: list[str]) -> int:

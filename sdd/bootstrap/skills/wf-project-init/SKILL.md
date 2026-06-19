@@ -197,8 +197,8 @@ opciones:
     description: "El código de una superficie (app, web, desktop, backend) que consume los specs de un repo de Producto. Instala plan y tasks (+ stack), y diseño de feature si tiene UI"
   - label: "Autónomo (todo aquí)"
     description: "Specs y código juntos: proyecto único o monorepo. Pipeline completo de spec a tasks. Para el caso mínimo, di luego que no a PRD y a diseño"
-  - label: "Diseño (solo sistema visual)"
-    description: "Repo SSoT de solo diseño (D-011): DESIGN.md, brief, tokens y los bundles de feature (flows/views/ui_prompt) por design target, agnóstico de superficie. No instala PRD/spec/plan/tasks ni stack. A continuación declaras los design targets que cubre"
+  - label: "Diseño (repo de solo-diseño)"
+    description: "Repo SSoT de solo diseño: sistema visual (DESIGN.md, brief, tokens) Y los bundles de feature (flows/views/ui_prompt) por design target, agnóstico de superficie. No instala PRD/spec/plan/tasks ni stack. A continuación declaras los design targets que cubre"
 ```
 > **Q1 está ahora en el tope de 4 opciones** de `AskUserQuestion` (sin "Other"): no cabe una 5ª topología sin rediseñar la pregunta (D-011).
 
@@ -231,8 +231,10 @@ opciones:
   - label: "Sí, sistema visual"
     description: "Se instala design (rol system): brief, DESIGN.md y tokens. Las superficies derivan sus flows/views en sus repos"
   - label: "No"
-    description: "Sin diseño aquí; cada superficie que lo necesite lo añade en su repo"
+    description: "Sin diseño aquí; cada superficie que lo necesite lo añade en su repo, o el diseño vive en un repo de diseño dedicado (topología Diseño)"
 ```
+
+> **Un solo SSoT de diseño por producto (D-012).** Responde **No** si el diseño vivirá en un repo de diseño dedicado (topología **Diseño**): no actives el sistema aquí **y además** montes un repo `design` para el mismo producto — serían dos `DESIGN.md` compitiendo. El sistema co-localizado (**Sí**) es para cuando el diseño vive **en este repo**.
 
 Authoring **no** pregunta superficie, framework ni stack: es agnóstico. `STACK = agnostico`, `surfaces = []`, `has_ui = false`. `design_role = system` si hay sistema visual, si no `null`.
 
@@ -273,6 +275,7 @@ opciones:
 - **Repo de diseño aparte** (D-011): `design_role = null`, **NO se instala la fase `design`** aquí (el diseño se resuelve del repo `design` en solo lectura). Captura:
   - `DESIGN_SOURCE` = path local al checkout del repo `design` (validar como 5.C0: existe y contiene `DESIGN.md` o `features/`); `DESIGN_SOURCE_PIN = git -C <design_source> rev-parse --short HEAD` (o `unknown`).
   - `DESIGN_TARGETS` = los design target(s) que este repo consume (multiSelect, mismas opciones que 5.D1; validar con `sdd-init-detect.py target-platforms`). P. ej. un repo Android-nativo consume `mobile-android`.
+  - **Guard de SSoT único de diseño (D-012):** comprueba que el repo SSoT de specs (`ARTIFACTS_SOURCE`) **no** traiga además diseño co-localizado — lee `<ARTIFACTS_SOURCE>/.sdd/project-init.json`: si declara la fase `design` (o `design_role` ∈ {system, full}), **avisa** (no bloquea): «el repo de specs ya trae un `DESIGN.md` co-localizado y vas a apuntar a un repo de diseño aparte → dos SSoT de diseño para el mismo producto; gana `design_source` y el co-localizado quedará ignorado. Confirma que es intencional (p. ej. ventana de migración)». Una vez escrito el `project-init.json`, este conflicto lo reporta de forma determinista `sdd-source-drift.py check` (`design_ssot.dual_design_ssot`).
 
 **5.C2 — Framework/Targets** [solo si superficie móvil] → ver 5.X abajo. Para web/backend, derivar stack de la detección (Paso 4) o `agnostico`.
 

@@ -142,5 +142,54 @@ class SourceDriftTest(unittest.TestCase):
         self.assertFalse(d["any_drift"])
 
 
+class DualDesignSsotTest(unittest.TestCase):
+    """Invariante D-012: un producto tiene UN solo SSoT de diseño. Conflicto si el
+    consumer declara `design_source` Y su `artifacts_source` también trae diseño
+    co-localizado (su project-init.json declara la fase `design`). Advisory."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _consumer(self, **extra):
+        obj = {"dispatcher": "wf-project-init", "topology": "consumer"}
+        obj.update(extra)
+        write(self.root / ".sdd/project-init.json", json.dumps(obj))
+
+    def _ssot(self, rel, **extra):
+        write(self.root / rel / ".sdd/project-init.json",
+              json.dumps({"topology": "authoring", **extra}))
+
+    def test_design_source_plus_colocated_design_is_dual(self):
+        self._ssot("specs_repo", phases=["prd", "spec", "design"], design_role="system")
+        self._consumer(artifacts_source="specs_repo", design_source="design_repo")
+        d = check(self.root)["design_ssot"]
+        self.assertTrue(d["artifacts_source_declares_design"])
+        self.assertTrue(d["dual_design_ssot"])
+
+    def test_design_source_with_ssot_without_design_is_clean(self):
+        self._ssot("specs_repo", phases=["prd", "spec"], design_role=None)
+        self._consumer(artifacts_source="specs_repo", design_source="design_repo")
+        d = check(self.root)["design_ssot"]
+        self.assertFalse(d["artifacts_source_declares_design"])
+        self.assertFalse(d["dual_design_ssot"])
+
+    def test_no_design_source_is_not_dual(self):
+        # diseño co-localizado en el SSoT, sin repo de diseño aparte: caso válido, no dual.
+        self._ssot("specs_repo", phases=["prd", "spec", "design"], design_role="system")
+        self._consumer(artifacts_source="specs_repo")
+        d = check(self.root)["design_ssot"]
+        self.assertFalse(d["dual_design_ssot"])
+
+    def test_design_source_but_ssot_unreadable_is_not_dual(self):
+        # SSoT sin project-init.json legible: no se puede afirmar el conflicto → no dual.
+        self._consumer(artifacts_source="missing_repo", design_source="design_repo")
+        d = check(self.root)["design_ssot"]
+        self.assertFalse(d["dual_design_ssot"])
+
+
 if __name__ == "__main__":
     unittest.main()

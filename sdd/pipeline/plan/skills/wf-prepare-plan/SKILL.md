@@ -62,7 +62,10 @@ Antes de verificar el Spec, determina el contexto técnico del proyecto. Busca `
    Por cada fuente con `drifted: true`, **advierte y continúa** (no bloquea), citando los artefactos relevantes que cambiaron (`changed`):
    > "⚠ La fuente `<kind>` (`<path>`) está en `<head>` pero este repo planificó por última vez contra `<pin>`. Cambiaron: `<changed>`. Revísalos y actualiza el pin (`artifacts_source_pin` / `design_source_pin`) en `.sdd/project-init.json` cuando los hayas asumido."
 
-   **Fallback** sin python3: compara a mano `<pin>` vs `git -C <source> rev-parse --short HEAD` para `artifacts_source_pin` y, si existe, `design_source_pin`.
+   Además, si `design_ssot.dual_design_ssot` es `true` (invariante D-012: este consumer declara `design_source` **y** su `artifacts_source` también trae diseño co-localizado), **advierte y continúa** (no bloquea):
+   > "⚠ Hay dos SSoT de diseño para este producto: el repo de specs (`<artifacts_source>`) trae un `DESIGN.md` co-localizado y este repo apunta a un repo de diseño aparte (`design_source`). El handoff se resuelve por `design_source` y el co-localizado queda **ignorado**. Unifica el diseño en un solo SSoT (quita el diseño del repo de specs, o no uses `design_source`) — ver D-012."
+
+   **Fallback** sin python3: compara a mano `<pin>` vs `git -C <source> rev-parse --short HEAD` para `artifacts_source_pin` y, si existe, `design_source_pin`; y comprueba a mano si `<artifacts_source>` declara `design` en su `project-init.json` teniendo tú `design_source` (dual SSoT).
 
 ---
 
