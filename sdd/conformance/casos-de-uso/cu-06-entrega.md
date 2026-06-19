@@ -250,9 +250,15 @@ especialista (p. ej. KMM); o una feature con UI cuyo `DESIGN.md` no tiene `## Ac
    → **Esperado:** **detiene** pidiendo `/wf-<stack>-init` antes de producir el plan.
 4. La feature requiere Design y el `DESIGN.md` no tiene la sección `## Accessibility`.
    → **Esperado:** **detiene** pidiendo validar/corregir Design antes del plan.
+5. ([[D-011]]) Consumer con `design_source` (repo de diseño aparte): la feature requiere handoff de Design.
+   → **Esperado:** resuelve `DESIGN.md` **y** los flows/views desde `<design_source>` en **solo lectura**
+     (`base ⊕ override` por los `design_targets` del repo, vía `sdd-design-resolve.py`), **no** en local; chequea
+     el `design_source_pin` con `sdd-source-drift.py` (Paso 2.5) y avisa si el repo de diseño avanzó (no bloquea).
 
-**Resultado:** PASS si ramifica por stack (null/agnostico/especialista) y exige `## Accessibility` cuando
-hay Design · FALLO si genera el plan con `stack: null`, exige project_state en agnóstico, o planifica con un `DESIGN.md` sin Accessibility.
+**Resultado:** PASS si ramifica por stack (null/agnostico/especialista), exige `## Accessibility` cuando
+hay Design, y con `design_source` resuelve el handoff del repo de diseño en solo lectura · FALLO si genera el
+plan con `stack: null`, exige project_state en agnóstico, planifica con un `DESIGN.md` sin Accessibility, o
+autora flows/views en local cuando hay `design_source`.
 **Desviación → reportar:** issue citando `CU-6.k`.
 
 ## CU-6.l — Plan-validate: aprobación de deuda técnica y sellado determinista

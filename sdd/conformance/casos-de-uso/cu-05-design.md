@@ -30,9 +30,10 @@ CU-5 es un **objetivo de usuario** (diseñar una feature), no una sola skill: su
 - [ ] CU-5.b — Crear el sistema visual del producto (system)
 - [ ] CU-5.l — System: anclaje de dirección visual (provisional vs confirmed) y policy de referencias
 
-### `wf-design-feature-prototype` — deriva flows/views/ui_prompt de feature (2)
+### `wf-design-feature-prototype` — deriva flows/views/ui_prompt de feature (3)
 - [ ] CU-5.c — Derivar flows, views y prompt de feature (feature-prototype)
 - [ ] CU-5.n — Feature-prototype: resolución de `target_tool` y conflicto cross-feature
+- [ ] CU-5.w — Feature con design targets divergentes: base + overrides per-view ([[D-011]])
 
 ### `wf-design-extract` — ingeniería inversa del `DESIGN.md` (1)
 - [ ] CU-5.d — Onramp brownfield: derivar `DESIGN.md` de una UI en producción (extract)
@@ -68,8 +69,9 @@ CU-5 es un **objetivo de usuario** (diseñar una feature), no una sola skill: su
 ### `wf-design-a11y-audit` — auditoría de accesibilidad (1)
 - [ ] CU-5.q — A11y-audit: ramificación por plataforma
 
-### `wf-design-sync` — impacto de la deriva (read-only) (1)
+### `wf-design-sync` — impacto de la deriva (read-only) (2)
 - [ ] CU-5.r — Sync: propagación conservadora de la deriva (read-only)
+- [ ] CU-5.x — Sync cross-repo: drift del repo de diseño en un consumer ([[D-011]])
 
 ### `wf-design-export` — exporta tokens a formatos de código (1)
 - [ ] CU-5.u — Export: idempotencia, `EXPORT_GAP` y `--dry-run`
@@ -89,9 +91,14 @@ CU-5 es un **objetivo de usuario** (diseñar una feature), no una sola skill: su
    → **Esperado:** `design-system-architect` cierra modo de decisión, preset, familia visual,
      densidad, profundidad, motion y policy de referencias/autonomía, y escribe
      `DESIGN_BRIEF.md` (en `artifacts.design` o la raíz del producto).
+3. ([[D-011]]) El proyecto declara `design_targets` (topología `design` o consumer con repo de diseño).
+   → **Esperado:** el `target_platforms` del brief se **deriva** de los design targets (familias
+     `{mobile,web,desktop}`, Paso 5b / `kb-design-brief` Regla 11), vía `sdd-init-detect.py target-platforms` —
+     no se teclea ni se usa `iOS`/`Android`. Sin design targets, se fija desde las superficies (default `mobile`).
 
-**Resultado:** PASS si exige el brief antes del sistema y lo cierra delegando en el
-agente · FALLO si genera `DESIGN.md` sin brief.
+**Resultado:** PASS si exige el brief antes del sistema, lo cierra delegando en el
+agente y deriva `target_platforms` en familias · FALLO si genera `DESIGN.md` sin brief, o escribe
+`target_platforms` con plataformas (iOS/Android) en vez de familias cuando hay design targets.
 **Desviación → reportar:** issue citando `CU-5.a`.
 
 ## CU-5.b — Crear el sistema visual del producto (system)
@@ -475,3 +482,47 @@ runs, fabrica valores ausentes, o `--dry-run` escribe archivos.
 **Resultado:** PASS si captura literal, distingue `functional_change` (→Spec) y `out_of_scope` · FALLO si
 actúa el feedback sin triaje, o trata un cambio funcional como delta visual.
 **Desviación → reportar:** issue citando `CU-5.v`.
+
+## CU-5.w — Feature con design targets divergentes: base + overrides per-view ([[D-011]])
+
+**Precondición:** topología `design` (o consumer con repo de diseño) cuyo `project-init.json` declara
+`design_targets` que **divergen nativamente** (p. ej. `mobile-android` + `mobile-ios`); `DESIGN.md` con
+capa `## Platform Components` (`kb-design-system-contract` Regla 11) y brief listos.
+**Mecanismo:** `wf-design-feature-prototype` (Paso 3d divergencia + Paso 4 paths `targets/<target>/` +
+Paso 5 instrucción de overrides) → `design-feature-architect`. Resolución determinista:
+`.sdd/scripts/sdd-design-resolve.py` (cubierta por `test_sdd_design_resolve.py`).
+
+1. Le pides preparar las pantallas de la feature en un repo con design targets divergentes.
+   → **Esperado:** genera la **base agnóstica** (`<feature>_flows.md`/`_views.md`) y, **solo para las
+     vistas que divergen de verdad**, overrides **per-view** bajo `targets/<target>/<feature>_views.md`
+     (`kb-design-feature-artifacts` Regla 8). La especificidad de componente nativo (Material vs HIG) la
+     toma de `## Platform Components` del `DESIGN.md`, **no** la redefine en la vista. **No duplica** las
+     vistas que no divergen (heredan la base); un target sin divergencia real no genera `targets/`.
+2. Resuelves un target para un consumidor.
+   → **Esperado:** `sdd-design-resolve.py resolve --base … --override targets/<target>/… --merged` devuelve
+     `base ⊕ override` (la vista overrideada gana completa; las no overrideadas heredan la base intacta).
+     Sin override para ese target → base intacta.
+
+**Resultado:** PASS si emite base + overrides solo donde hay divergencia real y la resolución per-view es
+determinista · FALLO si duplica la base entera por target, mete condicionales de plataforma inline en la
+base, o baja la divergencia de componente nativo a la vista en vez del `DESIGN.md`.
+**Desviación → reportar:** issue citando `CU-5.w`.
+
+## CU-5.x — Sync cross-repo: drift del repo de diseño en un consumer ([[D-011]])
+
+**Precondición:** un repo consumer cuyo `project-init.json` declara `design_source` + `design_source_pin`
+(repo de diseño aparte, 5.C1b) y el repo de diseño **ha avanzado** desde el pin.
+**Mecanismo:** `wf-design-sync` (Paso 2b cross-repo) apoyado en `.sdd/scripts/sdd-source-drift.py check`
+(SHA y diff los da git, **advisory**; cubierto por `test_sdd_source_drift.py`).
+
+1. El repo de diseño avanzó (cambió un `_views.md` base o el `DESIGN.md`) respecto al pin de este repo.
+   → **Esperado:** `sdd-source-drift.py` marca la fuente `design` como `drifted: true` y lista los
+     artefactos relevantes cambiados (`changed`); `wf-design-sync` lo refleja como **deriva cross-repo**:
+     los artefactos resueltos `base ⊕ override` y, transitivamente, `_plan.md`/`_tasks.md` → `needs_review`.
+     Recomienda revisar, re-resolver (`sdd-design-resolve.py`) y actualizar `design_source_pin`.
+2. El repo de diseño NO avanzó (pin == HEAD).
+   → **Esperado:** `drifted: false`; no marca deriva cross-repo.
+
+**Resultado:** PASS si detecta el drift del repo de diseño por pin git y lo propaga conservadoramente ·
+FALLO si ignora el avance del repo de diseño, o el veredicto de drift lo decide el agente en vez de git.
+**Desviación → reportar:** issue citando `CU-5.x`.

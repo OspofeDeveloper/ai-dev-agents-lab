@@ -81,14 +81,14 @@ para garantizar que ningún skill se queda sin casos en los cuatro ejes de prueb
 
 | Skill | Args | Mecanismo (agente/script/hook) | CU que lo ejercitan | Happy | Edge | Harness | Args OK | Estado | Huecos detectados |
 |---|---|---|---|---|---|---|---|---|---|
-| wf-design-intake | `generate <feature_spec.md> [--prd] [--output] [--mode guided\|hybrid\|auto] [--preset <name>] [--learn]` | design-system-architect; kb-design-brief/-style-decision-tree | CU-5.a/m · CU-13.c | ✅ | ✅ | ✅ | 🟡 | COMPLETADO | `--learn`/`--preset` vía CU-11.b |
+| wf-design-intake | `generate <feature_spec.md> [--prd] [--output] [--mode guided\|hybrid\|auto] [--preset <name>] [--learn]` | design-system-architect; kb-design-brief/-style-decision-tree; `sdd-init-detect.py target-platforms` (D-011) | CU-5.a/m · CU-13.c | ✅ | ✅ | ✅ | 🟡 | COMPLETADO | `--learn`/`--preset` vía CU-11.b; `target_platforms` (familias) desde `design_targets` (D-011, CU-5.a.3) |
 | wf-design-discover | `<feature_spec.md> [--prd] [--brief] [--output] [--mode interactive\|auto]` | orquestador (sin agente); WebSearch/WebFetch | CU-5.g · CU-13.c | ✅ | ✅ | ✅ | 🟡 | COMPLETADO | modo `auto` (sin validación) vía variante de arg |
 | wf-design-moodboard | `<feature_spec.md> [--prd] [--output] [--mode interactive\|auto]` | design-system-architect; kb-design-style-taxonomy/-decision-tree | CU-5.f · CU-13.c/g | ✅ | ✅ | ✅ | 🟡 | COMPLETADO | alimenta intake, no cierra brief |
 | wf-design-system | `generate <feature_spec.md> [--prd] [--brief] [--design-file] [--no-brief]` | design-system-architect; kb-design-system-contract; linter `@google/design.md` | CU-5.b/k/l · CU-13.c/g | ✅ | ✅ | ✅ | 🟡 | COMPLETADO | — |
 | wf-design-validate | `<DESIGN.md> [--brief] [--views] [--lenient] [--pedagogical]` | design-system-architect; linter `@google/design.md`; kb-design-governance R5 | CU-5.e/o · CU-13.c/g | ✅ | ✅ | ✅ | 🟡 | COMPLETADO | promoción provisional→confirmed = única escritura (gated) |
 | wf-design-delta | `analyze <DESIGN.md> --new-reqs <cambios.md> [--brief] \| apply <DESIGN.md> <delta.md>` | design-system-architect; kb-design-expert R15 | CU-5.e/p · CU-13.c/g | ✅ | ✅ | ✅ | ✅ | COMPLETADO | — |
-| wf-design-sync | `<DESIGN.md>` | design-system-architect; kb-design-governance R2 (read-only) | CU-5.e/r · CU-13.c | ✅ | ✅ | ✅ | — | COMPLETADO | arg único posicional; deriva por razonamiento (hash futuro, ROADMAP 11.2) |
-| wf-design-feature-prototype | `generate <feature_spec.md> [--design-file] [--brief] [--no-brief]` | design-feature-architect; kb-design-feature-artifacts/-conflict-expert; `sdd-resolve-path.py` | CU-5.c/k/n · CU-13.c | ✅ | ✅ | ✅ | 🟡 | COMPLETADO | — |
+| wf-design-sync | `<DESIGN.md>` | design-system-architect; kb-design-governance R2 (read-only); `sdd-source-drift.py` (D-011, cross-repo) | CU-5.e/r/x · CU-13.c | ✅ | ✅ | ✅ | — | COMPLETADO | arg único posicional; deriva intra-repo por razonamiento (hash futuro, ROADMAP 11.2); drift cross-repo determinista por pin git (D-011, CU-5.x) |
+| wf-design-feature-prototype | `generate <feature_spec.md> [--design-file] [--brief] [--no-brief]` | design-feature-architect; kb-design-feature-artifacts/-conflict-expert; `sdd-resolve-path.py`; `sdd-design-resolve.py` (D-011) | CU-5.c/k/n/w · CU-13.c | ✅ | ✅ | ✅ | 🟡 | COMPLETADO | base⊕override per-view por design target (D-011, CU-5.w); resolución `sdd-design-resolve.py` |
 | wf-design-extract | `discover <path_ui> [--scope] \| generate <path_ui> [--from <extraction.md>] [--scope] [--design-file]` | design-system-architect; kb-design-characterization; linter `@google/design.md` | CU-5.d · CU-13.c/g | ✅ | ✅ | ✅ | 🟡 | COMPLETADO | gate discover→generate cubierto vía CU-5.d |
 | wf-design-branch | `create <branch> \| list \| compare <a> <b> \| merge <branch> --into <target> \| discard <branch>` | design-system-architect; kb-design-governance R22 | CU-5.h/s · CU-13.c/g | ✅ | ✅ | ✅ | ✅ | COMPLETADO | — |
 | wf-design-variant | `create <feature_spec.md> --variants A,B [--hypothesis] \| compare <feature_variants.md>` | design-feature-architect | CU-5.i/t · CU-13.c/g | ✅ | ✅ | ✅ | ✅ | COMPLETADO | — |
@@ -102,7 +102,7 @@ para garantizar que ningún skill se queda sin casos en los cuatro ejes de prueb
 
 | Skill | Args | Mecanismo (agente/script/hook) | CU que lo ejercitan | Happy | Edge | Harness | Args OK | Estado | Huecos detectados |
 |---|---|---|---|---|---|---|---|---|---|
-| wf-prepare-plan | `generate <spec.md>` | plan-architect; kb-plan-expert; `gate_spec_fiable`; `sdd-resolve-path.py` | CU-6.a/h/k · CU-9.e/f/g/h/i · CU-13.d | ✅ | ✅ | ✅ | — | COMPLETADO | arg único `generate <spec>`; stack KMM solapa con CU-12 |
+| wf-prepare-plan | `generate <spec.md>` | plan-architect; kb-plan-expert; `gate_spec_fiable`; `sdd-resolve-path.py`; `sdd-source-drift.py` + `sdd-design-resolve.py` (D-011, consumer) | CU-6.a/h/k · CU-9.e/f/g/h/i · CU-13.d | ✅ | ✅ | ✅ | — | COMPLETADO | arg único `generate <spec>`; stack KMM solapa con CU-12; consumer con `design_source` resuelve el handoff del repo de diseño en solo lectura + drift cross-repo (D-011, CU-6.k.5) |
 | wf-plan-validate | `<plan.md>` | plan-auditor; `sdd-seal.py` (autor≠sellador) | CU-6.b/i/l · CU-13.d | ✅ | ✅ | ✅ | — | COMPLETADO | gate de plan validado que consume tasks: CU-9.a–d |
 
 ---

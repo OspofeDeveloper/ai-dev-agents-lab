@@ -58,6 +58,14 @@ para leer/ejecutar el CU.
 > agente **aplique** ese plan sin preguntar el rol. Aquí se prueba la **conducta del agente** ante
 > cada directiva / entrevista.
 
+> **Re-test tras [[D-011]] (2026-06-18).** El SKILL `wf-project-init` cambió de forma material: Q1 ganó la
+> 4ª opción **Diseño** (topología `design`), la rama consumer ganó **5.C1b** (diseño co-localizado vs repo
+> de diseño aparte) y el esquema ganó `design_targets`/`design_source`/`target_platforms`. Los escenarios
+> ✓ que tocan el init (**CU-1.b** arranque del init, **CU-1.e** reparación) se validaron contra el SKILL
+> anterior; conviene **re-ejecutarlos** tras propagar el cambio (`bash setup.sh`) para confirmar que las
+> ramas nuevas no regresan los happy-paths. La capa determinista (`derive_design_role` incl. `design`,
+> `verify` con `topology design`, `target-platforms`) ya está cubierta por `test_sdd_init_detect.py`.
+
 ---
 
 ## Modelo de cobertura — qué ejes del wizard hay que probar y cuáles no
