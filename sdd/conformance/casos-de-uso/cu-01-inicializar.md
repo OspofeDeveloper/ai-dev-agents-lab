@@ -2,7 +2,7 @@
 
 **Objetivo:** verificar que, al abrir un proyecto, el sistema decide correctamente el
 modo de trabajo (wizard SDD/libre), inicializa el ecosistema según la **topología de
-contenido del repo** (authoring/consumer/standalone), repara instalaciones a medias,
+contenido del repo** (authoring/consumer/standalone/design), repara instalaciones a medias,
 avisa de versiones viejas sin bloquear, y encuentra los marcadores hacia arriba en un
 monorepo.
 **Proyecto a usar:** un repo/carpeta real **FUERA del repo del ecosistema** (p. ej.
@@ -29,7 +29,7 @@ componentes**. Marca cada escenario al ejecutarlo. El estado de cobertura autori
 happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es la **transpuesta**
 para leer/ejecutar el CU.
 
-### `wf-project-init` — la skill de init (10)
+### `wf-project-init` — la skill de init (11)
 - [x] CU-1.b — Modo SDD arranca el init · ✓ 2026-06-17 · 🔁 **RE-TEST pendiente tras D-011** (Q1 ganó la 4ª opción + esquema nuevo; re-ejecutar tras `bash setup.sh`)
 - [ ] CU-1.h — La topología decide qué se instala
 - [ ] CU-1.i — Topología consumer
@@ -92,6 +92,7 @@ ramas siguen. Los demás ejes se gatean dentro de cada topología.
 | PRD sí/no | rama authoring/standalone | antepone (o no) la fase `prd` | `✓` (CU-1.h, CU-1.n) |
 | Diseño sí/no | rama authoring/standalone | inserta `design` (rol `system` en authoring, `full` en standalone) | `✓` (CU-1.h) |
 | Superficie | consumer (single) / standalone (multiSelect) | `con-UI` (mobile/desktop/web) instala diseño de feature; `backend`/`other` headless; deriva el `stack` | `✓` (CU-1.i con-UI/headless; CU-1.o) |
+| Design targets | 5.D1 (topología `design`) / 5.C1b (consumer con repo de diseño aparte) | valida etiquetas `<familia>[-plataforma][-formfactor]` y **deriva** `target_platforms` (familias) — gate determinista `sdd-init-detect.py target-platforms` ([[D-011]]) | `✓` (CU-1.q design; CU-1.i caso 4 consumer; flag `--design-targets` en CU-1.p) |
 | Framework | superficie móvil | deriva el `stack` y gatea targets | `✓` (CU-1.o) |
 | Carpetas candidatas | 5.6 | gatea la pregunta de ubicación de artefactos | `✓` (CU-1.m) |
 | Init previo | 3b | extend / rehacer / dejar | `✓` (CU-1.d, CU-1.e, CU-1.l) |
@@ -140,19 +141,23 @@ pregunta, o atiende tu petición sin preguntar.
 
 1. Eliges "Modo SDD".
    → **Esperado:** se crea `.claude/sdd-mode.json` con `{"mode":"sdd",…}` y a
-     continuación se invoca `wf-project-init`, cuya **primera pregunta es la topología**
-     (Producto/authoring · Desarrollo/consumer · Autónomo/standalone) antes de instalar nada.
+     continuación se invoca `wf-project-init`, cuya **primera pregunta es la topología**, con
+     **cuatro opciones** (tope de `AskUserQuestion`): Producto/authoring · Desarrollo/consumer ·
+     Autónomo/standalone · **Diseño/design** (solo sistema visual, [[D-011]]) — antes de instalar nada.
 2. Completas la entrevista.
    → **Esperado:** instala el backbone que la topología determine (authoring: spec
-     +prd?/design?, sin plan/tasks; consumer: plan/tasks +design si UI; standalone: todo);
+     +prd?/design?, sin plan/tasks; consumer: plan/tasks +design si UI; standalone: todo;
+     **design**: solo `design` rol `system`, sin prd/spec/plan/tasks — ver CU-1.q);
      escribe `.sdd/project-init.json` (con `topology`, `surfaces`, `design_role`, `phases`,
-     `artifacts`/`artifacts_source`, `sdd_version`…), genera el `.claude/CLAUDE.md` raíz, y
-     si hay código con stack concreto despacha a `wf-<stack>-init`.
+     `artifacts`/`artifacts_source`, `sdd_version`… y, en topología `design`, `design_targets` +
+     `target_platforms` derivado), genera el `.claude/CLAUDE.md` raíz, y si hay código con stack
+     concreto despacha a `wf-<stack>-init`.
 
-**Resultado:** PASS si escribe el JSON de modo, pregunta la topología primero e instala el
-backbone que la topología decide · FALLO si instala sin preguntar la topología, o no
-escribe `project-init.json`.
-**Desviación → reportar:** issue citando `CU-1.b`.
+**Resultado:** PASS si escribe el JSON de modo, presenta la topología primero con sus **cuatro**
+opciones (incluida Diseño/design) e instala el backbone que la topología decide · FALLO si instala
+sin preguntar la topología, si Q1 no ofrece la 4ª opción Diseño, o no escribe `project-init.json`.
+**Desviación → reportar:** issue citando `CU-1.b`. La cobertura específica de la topología `design`
+(backbone, `design_targets`, `target_platforms`) vive en **CU-1.q**; aquí solo se verifica que Q1 la ofrece.
 
 ## CU-1.c — Elegir "Modo libre" silencia SDD para siempre
 
@@ -199,7 +204,7 @@ ficheros de instalación no están presentes.
 2. (reparación determinista) El init repara el hueco **sin volver a poner la fase en
    cuestión**: `phases` es el contrato. Apoyándose en `sdd-init-detect.py repair-plan`,
    instala las `missing_phases` y fija el `design_role` **derivado de la topología**
-   (authoring→`system`, consumer-con-UI→`feature`, standalone→`full`) — **no** presenta
+   (authoring→`system`, consumer-con-UI→`feature`, standalone→`full`, design→`system`) — **no** presenta
    un `AskUserQuestion` para decidir el rol ni para "instalar vs quitar" la fase
    declarada. Quitar una fase declarada es un cambio de alcance explícito, no reparación.
 
@@ -443,12 +448,21 @@ en lenguaje natural). Ambas vías son equivalentes.
 3. (entrada por orquestador) Sin teclear el skill, una petición en lenguaje natural que el
    orquestador mapea a `wf-project-init` pasando `args`.
    → **Esperado:** mismo efecto que tecleado — los flags saltan sus preguntas.
-4. (negativo) Un flag con valor fuera del enum (p. ej. `--topology xxx`).
+4. ([[D-011]]) `/wf-project-init --topology design --design-targets mobile-android,mobile-ios`.
+   → **Esperado:** salta **Q1** (topología) **y 5.D1** (design targets) — los da por conocidos; valida
+     los targets con `sdd-init-detect.py target-platforms` y **deriva** `target_platforms: [mobile]`
+     (no lo teclea). `project-init.json` registra `topology: design`, `phases: ["design"]` (rol
+     `system`), `design_targets: ["mobile-android","mobile-ios"]` y `target_platforms` derivado.
+5. (negativo) Un flag con valor fuera del enum (p. ej. `--topology xxx`), o un `--design-targets` con
+   etiqueta inválida (p. ej. `mobile_ios`, familia rota).
    → **Esperado:** no se traga en silencio — lo ignora y pregunta, o pide un valor válido; nunca
-     inicializa con una topología inexistente.
+     inicializa con una topología inexistente ni con design targets inválidos (el subcomando
+     `target-platforms` los marca en `invalid` y el init re-pregunta).
 
-**Resultado:** PASS si los flags válidos saltan su pregunta y aterrizan en el estado, y un flag
-inválido no se acepta · FALLO si re-pregunta algo ya dado por flag, o acepta un valor fuera del enum.
+**Resultado:** PASS si los flags válidos saltan su pregunta y aterrizan en el estado (incluidos
+`--topology design` y `--design-targets`, con `target_platforms` derivado), y un flag inválido no se
+acepta · FALLO si re-pregunta algo ya dado por flag, teclea `target_platforms` en vez de derivarlo, o
+acepta un valor fuera del enum / design target inválido.
 **Nota de testeo:** la entrevista es interactiva (`AskUserQuestion`) → se valida **a mano**. La
 parte determinista (detección/verificación) la cubren los unittest de `sdd-init-detect.py`
 (`test_sdd_init_detect.py`).

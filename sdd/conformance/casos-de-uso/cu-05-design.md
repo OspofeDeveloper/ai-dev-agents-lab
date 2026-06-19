@@ -112,9 +112,29 @@ agente y deriva `target_platforms` en familias · FALLO si genera `DESIGN.md` si
      light/dark, type scale, iconography, motion, voice, reference apps; `origin:
      generated`) conforme al contrato, sin contradecir el brief ni inventar dirección
      no anclada.
+2. ([[D-011]]) El proyecto declara `design_targets` que **divergen nativamente dentro de una familia**
+   (p. ej. `mobile-android` + `mobile-ios`, Material vs HIG; leídos de `.sdd/project-init.json`).
+   → **Esperado:** el `DESIGN.md` incluye la sección custom **`## Platform Components`**
+     (`kb-design-system-contract` Regla 11), posicionada **tras `## Components` y antes de
+     `## Accessibility`**: mapea el **rol abstracto** de cada componente que **realmente diverja** a su
+     realización nativa por plataforma (android/Material, ios/HIG, web/desktop), **sin redeclarar lo
+     compartido** (tokens/color/tipografía/voz/motion siguen siendo el sistema común). El sistema sigue
+     siendo **uno solo**: no forkea el `DESIGN.md` por plataforma.
+3. ([[D-011]]) El proyecto tiene una **sola base** (`target_platforms: [mobile]`, o una sola plataforma).
+   → **Esperado:** **no** emite `## Platform Components` (no hay nada que mapear; añadirla sería ruido).
 
-**Resultado:** PASS si genera un `DESIGN.md` conforme al contrato y al brief · FALLO
-si ignora el brief, o deja el frontmatter incompleto.
+**Resultado:** PASS si genera un `DESIGN.md` conforme al contrato y al brief, y emite
+`## Platform Components` **solo** cuando los design targets divergen nativamente (en la posición de
+sección correcta, mapeando rol→realización nativa sin redeclarar lo compartido) · FALLO si ignora el
+brief, deja el frontmatter incompleto, **omite `## Platform Components` con targets divergentes
+declarados**, **la añade con una sola base**, o la usa para forkear/duplicar el sistema en vez de mapear
+solo los componentes que divergen.
+**Nota de testeo ([[D-011]]):** los casos 2-3 ejercitan el **lado productor** de la Regla 11. El gate es
+**determinista**: `wf-design-system` Paso 3b lee `design_targets` de `.sdd/project-init.json` y resuelve
+`requires_platform_components`/`native_platforms` con `sdd-init-detect.py target-platforms` (cubierto por
+`PlatformComponentsGateTest` en `test_sdd_init_detect.py`); lo manual es que el agente **emita** (o no) la
+sección según `NATIVE_PLATFORMS`. Un form-factor (`mobile-android` + `mobile-android-tablet`) **no** debe
+disparar la capa (es layout → override per-view, CU-5.w), solo el split nativo (android+ios).
 **Desviación → reportar:** issue citando `CU-5.b`.
 
 ## CU-5.c — Derivar flows, views y prompt de feature (feature-prototype)
@@ -175,10 +195,22 @@ brief + DESIGN.md) → **`design-feature-architect`**. Output:
 5. Le pides exportar los tokens.
    → **Esperado:** `wf-design-export` genera los formatos pedidos (css, style-dictionary,
      compose, swiftui, tailwind) sin duplicar la SSoT.
+6. ([[D-011]]) Auditas un `DESIGN.md` de un producto con `design_targets` que **divergen nativamente**
+   (p. ej. `mobile-android` + `mobile-ios`) pero **sin** sección `## Platform Components`.
+   → **Esperado:** `wf-design-validate` reporta **`DESIGN_GAP`** (Regla 11: la capa es obligatoria con
+     targets divergentes declarados), **sin regenerar** el archivo. Con una **sola base**, su ausencia
+     **no** es gap (no la exige).
 
 **Resultado:** PASS si cada acción respeta su contrato (validar/auditar no regeneran;
-delta preserva; sync no edita) · FALLO si validate reescribe el `DESIGN.md`, o delta
-pisa lo previo.
+delta preserva; sync no edita) y validate marca `DESIGN_GAP` por `## Platform Components` ausente solo
+cuando hay targets divergentes · FALLO si validate reescribe el `DESIGN.md`, delta pisa lo previo, o
+validate **ignora** la ausencia de `## Platform Components` con targets divergentes (o la exige con una
+sola base).
+**Nota de testeo ([[D-011]]):** el caso 6 ejercita el **gate de validación** de la Regla 11. `wf-design-validate`
+Paso 4b resuelve `requires_platform_components` con el mismo subcomando determinista (`sdd-init-detect.py
+target-platforms`) y pasa `REQUIRES_PLATFORM_COMPONENTS`/`NATIVE_PLATFORMS` al agente; el check 19 del
+`validation-checklist.md` marca `DESIGN_GAP` si falta la capa con el gate en `true`. Sin `design_targets`
+declarados (DESIGN.md suelto), el gate es `false` y su ausencia no es hallazgo.
 **Desviación → reportar:** issue citando `CU-5.e`.
 
 ---
