@@ -64,6 +64,19 @@ Busca `<basename>_design_moodboard.md`: en la subcarpeta `design/` de la feature
 - Si existe, leelo completo y pasalo al agente como input adicional para `style_family`, `adjectives` y Visual Personality.
 - Si no existe y el modo es `guided` o `hybrid` con `--learn` activo, sugiere al usuario ejecutar primero `/wf-design-moodboard`. Si rechaza o el modo es `auto`, continua sin moodboard.
 
+## Paso 5b: Resolver `target_platforms` (familias) — D-011
+
+`target_platforms` del brief usa el vocabulario de **familias** `{mobile, web, desktop}` (`kb-design-brief` Regla 11), no `iOS`/`Android`. Resuélvelo antes de delegar:
+
+- Si `.sdd/project-init.json` declara `design_targets` (topología `design`, o consumer con repo de diseño aparte), **derívalo** con el subcomando determinista (no lo teclees):
+  ```bash
+  !python3 "$SDD_HOME/scripts/sdd-init-detect.py" target-platforms --targets "<design_targets separados por comas>" --json
+  ```
+  Usa su `.target_platforms`.
+- Si no hay `design_targets`, tómalo de las superficies del proyecto (init/spec/PRD), con el mismo vocabulario de familias. Default `[mobile]` si nada lo declara.
+
+Pásalo al agente en el prompt del Paso 6.
+
 ## Paso 6: Delegar al agente design-system-architect
 
 Construye el prompt para el agente con:
@@ -90,6 +103,7 @@ Contenido del moodboard (si existe):
 Modo de decision: <guided|hybrid|auto>
 Modo enseñanza (--learn): <true|false>
 Preset solicitado (--preset): <valor o "ninguno">
+target_platforms (resuelto en Paso 5b, familias mobile|web|desktop): <lista>
 
 INSTRUCCION:
 1. Aplica `kb-design-brief`, `kb-design-style-decision-tree` y `kb-design-style-taxonomy` para cerrar las variables del brief segun el modo de decision:
@@ -99,7 +113,8 @@ INSTRUCCION:
 2. Aplica deteccion de preset segun la heuristica de `kb-design-brief`. Si se paso --preset, usalo directo. Si ninguno encaja, usa `none`.
 3. Valida consistencia con los checks de `kb-design-brief`. Resuelve conflictos segun el modo (preguntar en guided, proponer correccion en hybrid, autocorregir y documentar en auto). No cierres con conflictos silenciosos.
 4. Genera el contenido completo del `DESIGN_BRIEF.md` siguiendo la plantilla de `kb-design-brief`. El brief debe dejar claro: quien decide ambiguedades, direccion visual base, tradeoff claridad vs marca y que puede completar la IA mas adelante.
-5. Si una decision critica no puede tomarse (usuario no responde, contradiccion irresoluble), devuelve `DESIGN_GAP` con la variable concreta y NO produzcas el brief.
+5. Fija `target_platforms` con el valor resuelto en el Paso 5b (familias `{mobile, web, desktop}`, `kb-design-brief` Regla 11 — nunca `iOS`/`Android`). Si quedara indefinido, márcalo `DESIGN_GAP`.
+6. Si una decision critica no puede tomarse (usuario no responde, contradiccion irresoluble), devuelve `DESIGN_GAP` con la variable concreta y NO produzcas el brief.
 ```
 
 Invoca el agente `design-system-architect` con ese prompt.

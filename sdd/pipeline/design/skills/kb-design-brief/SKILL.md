@@ -164,3 +164,13 @@ Jerarquia de fuentes:
 4. research de referencias
 
 Si `DESIGN.md` propuesto contradice el brief, manda el brief.
+
+## Regla 11: `target_platforms` usa familias y se deriva de los design targets ([[D-011]])
+
+`target_platforms` del brief es la lista de **familias** de superficie que cubre el producto: valores cerrados `{mobile, web, desktop}` (NO `iOS`/`Android` — son plataformas dentro de la familia `mobile`). Es la SSoT de superficie que heredan el `DESIGN.md` (`accessibility.target_platforms`, `kb-design-system-contract` Regla 2) y los artefactos de feature (`ui_prompt` por superficie, `kb-design-feature-artifacts` Regla 7).
+
+Cómo fijarlo:
+- **Si el proyecto declara `design_targets`** (topología `design`, o un consumer con repo de diseño aparte — D-011): `target_platforms` se **deriva** de ellos, no se teclea. Las familias son el primer token de cada design target; usar `sdd-init-detect.py target-platforms --targets <...>` (determinista, p. ej. `[mobile-android, mobile-ios, desktop] → [mobile, desktop]`).
+- **Si no hay design targets**: se fija desde las superficies del producto (del init o del spec/PRD) con el mismo vocabulario de familias. Default `[mobile]` si nada lo declara.
+
+`tablet`/`phone` NO son familias: son form-factor dentro de `mobile`/`desktop` — la divergencia phone/tablet se modela como design target + override per-view (`kb-design-feature-artifacts` Regla 8), no como `target_platform`.
