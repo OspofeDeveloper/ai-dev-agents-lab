@@ -30,7 +30,7 @@ happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es
 para leer/ejecutar el CU.
 
 ### `wf-project-init` — la skill de init (10)
-- [x] CU-1.b — Modo SDD arranca el init · ✓ 2026-06-17
+- [x] CU-1.b — Modo SDD arranca el init · ✓ 2026-06-17 · 🔁 **RE-TEST pendiente tras D-011** (Q1 ganó la 4ª opción + esquema nuevo; re-ejecutar tras `bash setup.sh`)
 - [ ] CU-1.h — La topología decide qué se instala
 - [ ] CU-1.i — Topología consumer
 - [ ] CU-1.j — Init desde subpaquete (gate de workflow)
@@ -60,11 +60,14 @@ para leer/ejecutar el CU.
 
 > **Re-test tras [[D-011]] (2026-06-18).** El SKILL `wf-project-init` cambió de forma material: Q1 ganó la
 > 4ª opción **Diseño** (topología `design`), la rama consumer ganó **5.C1b** (diseño co-localizado vs repo
-> de diseño aparte) y el esquema ganó `design_targets`/`design_source`/`target_platforms`. Los escenarios
-> ✓ que tocan el init (**CU-1.b** arranque del init, **CU-1.e** reparación) se validaron contra el SKILL
-> anterior; conviene **re-ejecutarlos** tras propagar el cambio (`bash setup.sh`) para confirmar que las
-> ramas nuevas no regresan los happy-paths. La capa determinista (`derive_design_role` incl. `design`,
-> `verify` con `topology design`, `target-platforms`) ya está cubierta por `test_sdd_init_detect.py`.
+> de diseño aparte) y el esquema ganó `design_targets`/`design_source`/`target_platforms`. **A re-probar:**
+> el único ✓ que vuelve a ejercitar el SKILL cambiado es **CU-1.b** (arranque del init: el wizard muestra
+> ahora 4 opciones y se escribe el esquema nuevo) → marcado 🔁 arriba; re-ejecutar tras `bash setup.sh`.
+> **No requieren re-test:** los demás ✓ son del hook de sesión (CU-1.a/c/d/f/g — el hook no cambió con
+> D-011) o de la capa determinista ya cubierta por `test_sdd_init_detect.py` — incluida la reparación de
+> **CU-1.e** (el caso nuevo de topología `design` lo cubre `RepairPlanTest`; la conducta manual del agente
+> no cambia). Lo nuevo a probar de cero (no es re-test) son **CU-1.q** (topología `design`) y **CU-1.i**
+> caso 4 (consumer con repo de diseño), ambos `[ ]`.
 
 ---
 
