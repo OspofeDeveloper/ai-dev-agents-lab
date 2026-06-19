@@ -254,11 +254,17 @@ especialista (p. ej. KMM); o una feature con UI cuyo `DESIGN.md` no tiene `## Ac
    → **Esperado:** resuelve `DESIGN.md` **y** los flows/views desde `<design_source>` en **solo lectura**
      (`base ⊕ override` por los `design_targets` del repo, vía `sdd-design-resolve.py`), **no** en local; chequea
      el `design_source_pin` con `sdd-source-drift.py` (Paso 2.5) y avisa si el repo de diseño avanzó (no bloquea).
+6. ([[D-012]]) Consumer con `design_source` **y** cuyo `artifacts_source` también trae diseño co-localizado
+   (doble SSoT de diseño).
+   → **Esperado:** `sdd-source-drift.py check` devuelve `design_ssot.dual_design_ssot: true` y `wf-prepare-plan`
+     **avisa** (no bloquea, Paso 2.5): el handoff se resuelve por `design_source` y el `DESIGN.md` co-localizado
+     queda **ignorado**; recomienda unificar en un solo SSoT (D-012). El plan se genera igualmente.
 
 **Resultado:** PASS si ramifica por stack (null/agnostico/especialista), exige `## Accessibility` cuando
-hay Design, y con `design_source` resuelve el handoff del repo de diseño en solo lectura · FALLO si genera el
-plan con `stack: null`, exige project_state en agnóstico, planifica con un `DESIGN.md` sin Accessibility, o
-autora flows/views en local cuando hay `design_source`.
+hay Design, con `design_source` resuelve el handoff del repo de diseño en solo lectura, y avisa del doble
+SSoT de diseño sin bloquear · FALLO si genera el plan con `stack: null`, exige project_state en agnóstico,
+planifica con un `DESIGN.md` sin Accessibility, autora flows/views en local cuando hay `design_source`, o
+**calla** ante el doble SSoT de diseño (caso 6).
 **Desviación → reportar:** issue citando `CU-6.k`.
 
 ## CU-6.l — Plan-validate: aprobación de deuda técnica y sellado determinista

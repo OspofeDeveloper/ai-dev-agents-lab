@@ -41,7 +41,7 @@ para garantizar que ningún skill se queda sin casos en los cuatro ejes de prueb
 
 | Skill | Args | Mecanismo (agente/script/hook) | CU que lo ejercitan | Happy | Edge | Harness | Args OK | Estado | Huecos detectados |
 |---|---|---|---|---|---|---|---|---|---|
-| wf-project-init | `--topology <a\|c\|s\|design>` `--surfaces <…>` `--design-targets <…>` `--prd` `--design` `--stack` `--name` `--sdd-path` `--force` | orquestador en hilo principal (`AskUserQuestion`, sin fork); `sdd-init-detect.py` (detect/verify/target-platforms); `install.sh --no-claude-md`; hook SessionStart; `sdd-version.json` | CU-1.b/d/e/h/i/j/k/l/m/n/o/p/q · CU-10.d | ✅ | ✅ | ✅ | ✅ | COMPLETADO | Flags y enum inválido cubiertos por CU-1.p (incl. `--topology design` + `--design-targets`, D-011); topología `design` y consumer con repo de diseño en CU-1.q / CU-1.i caso 4; entrevista interactiva validada a mano (los escenarios hook-only a/c/f/g son cobertura del hook de sesión, sin fila propia) |
+| wf-project-init | `--topology <a\|c\|s\|design>` `--surfaces <…>` `--design-targets <…>` `--prd` `--design` `--stack` `--name` `--sdd-path` `--force` | orquestador en hilo principal (`AskUserQuestion`, sin fork); `sdd-init-detect.py` (detect/verify/target-platforms); `install.sh --no-claude-md`; hook SessionStart; `sdd-version.json` | CU-1.b/d/e/h/i/j/k/l/m/n/o/p/q · CU-10.d | ✅ | ✅ | ✅ | ✅ | COMPLETADO | Flags y enum inválido cubiertos por CU-1.p (incl. `--topology design` + `--design-targets`, D-011); topología `design` y consumer con repo de diseño en CU-1.q / CU-1.i caso 4; guard de doble SSoT de diseño (D-012, CU-1.i caso 5); entrevista interactiva validada a mano (los escenarios hook-only a/c/f/g son cobertura del hook de sesión, sin fila propia) |
 | wf-sdd-update | `--force` | `install.sh --prune` + overlay; `CHANGELOG.md`; `sdd-version.json` | CU-1.f · CU-10.a/b/i/j/k | ✅ | ✅ | ✅ | ✅ | COMPLETADO | — |
 
 ---
@@ -102,7 +102,7 @@ para garantizar que ningún skill se queda sin casos en los cuatro ejes de prueb
 
 | Skill | Args | Mecanismo (agente/script/hook) | CU que lo ejercitan | Happy | Edge | Harness | Args OK | Estado | Huecos detectados |
 |---|---|---|---|---|---|---|---|---|---|
-| wf-prepare-plan | `generate <spec.md>` | plan-architect; kb-plan-expert; `gate_spec_fiable`; `sdd-resolve-path.py`; `sdd-source-drift.py` + `sdd-design-resolve.py` (D-011, consumer) | CU-6.a/h/k · CU-9.e/f/g/h/i · CU-13.d | ✅ | ✅ | ✅ | — | COMPLETADO | arg único `generate <spec>`; stack KMM solapa con CU-12; consumer con `design_source` resuelve el handoff del repo de diseño en solo lectura + drift cross-repo (D-011, CU-6.k.5) |
+| wf-prepare-plan | `generate <spec.md>` | plan-architect; kb-plan-expert; `gate_spec_fiable`; `sdd-resolve-path.py`; `sdd-source-drift.py` (drift + `design_ssot`) + `sdd-design-resolve.py` (D-011/D-012, consumer) | CU-6.a/h/k · CU-9.e/f/g/h/i · CU-13.d | ✅ | ✅ | ✅ | — | COMPLETADO | arg único `generate <spec>`; stack KMM solapa con CU-12; consumer con `design_source` resuelve el handoff del repo de diseño en solo lectura + drift cross-repo (D-011, CU-6.k.5); aviso de doble SSoT de diseño (D-012, CU-6.k.6) |
 | wf-plan-validate | `<plan.md>` | plan-auditor; `sdd-seal.py` (autor≠sellador) | CU-6.b/i/l · CU-13.d | ✅ | ✅ | ✅ | — | COMPLETADO | gate de plan validado que consume tasks: CU-9.a–d |
 
 ---

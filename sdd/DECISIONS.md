@@ -6,6 +6,53 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-012 — Un solo SSoT de diseño por producto: las opciones de diseño son un fork excluyente, con guard advisory en el consumer
+
+- **Fecha:** 2026-06-19 · **Estado:** Adoptada
+
+**Contexto.** Tras D-011, el diseño puede vivir en dos sitios: co-localizado en el repo `authoring`
+(rol `system`, para equipos pequeños) o en un repo `design` dedicado (topología `design`). Probando
+`CU-1.b` se planteó la duda: ¿es contraproducente ofrecer diseño en `authoring` **y** además la
+topología `design`? ¿No deberíamos unificar todo el diseño en el repo SSoT y usarlo siempre, aunque
+el equipo sea pequeño? El riesgo real percibido: que un producto acabe con **dos `DESIGN.md`**
+(uno co-localizado en specs + uno en el repo de diseño), violando la SSoT.
+
+**Decisión.** Las dos opciones **se mantienen** y son un **fork excluyente** (no una duplicación):
+el diseño de un producto vive **en exactamente un sitio** — co-localizado en `authoring` (equipo
+pequeño, un repo) **o** en un repo `design` dedicado (equipo de diseño / multi-superficie), nunca en
+ambos. No se unifica a la fuerza en el repo de diseño: obligar a un equipo de un solo repo a mantener
+**dos** repos solo para tener un `DESIGN.md` es el coste que D-011 decidió evitar (regresión de
+ergonomía, no mejora). El invariante **«un solo SSoT de diseño por producto»** se protege con un
+**guard advisory en el consumer** —el único punto que ve ambos repos a la vez—, no con un hard-block
+en el init (los repos se inicializan por separado y no se ven entre sí):
+1. Detección **determinista** en `sdd-source-drift.py` (`dual_design_ssot`): un consumer con
+   `design_source` cuyo `artifacts_source` **también** declara la fase `design` → `dual_design_ssot:
+   true`. Expuesto en `check` (campo `design_ssot`).
+2. `wf-prepare-plan` (Paso 2.5) y `wf-project-init` 5.C1b **avisan** (no bloquean): el handoff se
+   resuelve por `design_source` y el co-localizado queda ignorado; unifica en un solo SSoT.
+3. **Nudge** en la pregunta de diseño de `authoring` (5.A2): responde *No* si el diseño vivirá en un
+   repo dedicado.
+
+**Alternativas descartadas.**
+- *Quitar diseño de `authoring`* → mata el caso pequeño co-localizado que D-011 protegió expresamente.
+- *Unificar siempre en el repo de diseño (obligatorio)* → peaje de dos repos para todo equipo; peor
+  ergonomía sin beneficio para quien no tiene función de diseño separada.
+- *Hard-block en el init* → inviable: el init es per-repo y no ve de forma fiable el otro checkout. El
+  consumer es la única junta donde el conflicto es observable.
+- *Dejarlo solo en prosa* → el conflicto quedaba silencioso (el handoff elige `design_source` sin
+  avisar de que hay un `DESIGN.md` compitiendo); por eso el veredicto es determinista (script testeado).
+
+**Consecuencias / aprendizaje.** El guard es **advisory**, no bloqueante: una ventana de migración
+(mover el diseño de co-localizado a repo dedicado) es legítima y transitoria. La detección vive donde
+el conflicto es visible (consumer), no donde se origina (dos inits independientes). `DualDesignSsotTest`
+(4 casos) fija el invariante. Conformance: `CU-1.i` (caso 4) y `CU-6.k`.
+
+**Referencias.** `scripts/sdd-source-drift.py` (`dual_design_ssot`) · `tests/test_sdd_source_drift.py`
+(`DualDesignSsotTest`) · `bootstrap/skills/wf-project-init/SKILL.md` (5.A2 nudge, 5.C1b guard) ·
+`pipeline/plan/skills/wf-prepare-plan/SKILL.md` (Paso 2.5) · D-011 (topologías de diseño).
+
+---
+
 ## D-011 — Topología `design`: repo de diseño SSoT con bundles de feature por target (base ⊕ override) y consumer multi-fuente
 
 - **Fecha:** 2026-06-18 · **Estado:** Propuesta (borrador — pendiente de implementación en ciclo aparte)

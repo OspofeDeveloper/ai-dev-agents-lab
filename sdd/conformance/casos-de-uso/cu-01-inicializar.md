@@ -143,7 +143,7 @@ pregunta, o atiende tu petición sin preguntar.
    → **Esperado:** se crea `.claude/sdd-mode.json` con `{"mode":"sdd",…}` y a
      continuación se invoca `wf-project-init`, cuya **primera pregunta es la topología**, con
      **cuatro opciones** (tope de `AskUserQuestion`): Producto/authoring · Desarrollo/consumer ·
-     Autónomo/standalone · **Diseño/design** (solo sistema visual, [[D-011]]) — antes de instalar nada.
+     Autónomo/standalone · **Diseño/design** (repo de solo-diseño: sistema visual + bundles de feature, [[D-011]]) — antes de instalar nada.
 2. Completas la entrevista.
    → **Esperado:** instala el backbone que la topología determine (authoring: spec
      +prd?/design?, sin plan/tasks; consumer: plan/tasks +design si UI; standalone: todo;
@@ -297,11 +297,18 @@ diseño aparte** (D-011: `design_source` + `design_targets`, sin design local).
      `CLAUDE.md` raíz indica que los `flows`/`views` se **resuelven en solo lectura** desde `<design_source>`
      (`base ⊕ override` por target, `sdd-design-resolve.py`) — no se autoran aquí. `wf-prepare-plan` resuelve
      el handoff de Design desde el repo `design`, no en local.
+5. ([[D-012]]) Como el caso 4, pero el repo SSoT de specs (`artifacts_source`) **también** trae diseño
+   co-localizado (su `project-init.json` declara la fase `design`).
+   → **Esperado:** el init **avisa** (no bloquea) del **doble SSoT de diseño**: el repo de specs ya trae un
+     `DESIGN.md` y vas a apuntar a un repo de diseño aparte → gana `design_source` y el co-localizado queda
+     ignorado; sugiere unificar en un solo SSoT. Continúa si el usuario confirma (p. ej. migración). Tras
+     escribir el `project-init.json`, `sdd-source-drift.py check` lo reporta como `design_ssot.dual_design_ssot: true`.
 
-**Resultado:** PASS si instala solo plan+tasks con `artifacts_source`/pin, exige un SSoT válido, y en el
-caso 4 persiste `design_source`/pin/`design_targets` sin instalar design local · FALLO si instala
-prd/spec/design en un consumer, escribe la clave `artifacts` canónica, acepta un path sin specs, o
-autora flows/views localmente cuando hay `design_source`.
+**Resultado:** PASS si instala solo plan+tasks con `artifacts_source`/pin, exige un SSoT válido, en el
+caso 4 persiste `design_source`/pin/`design_targets` sin instalar design local, y en el caso 5 **avisa**
+del doble SSoT de diseño sin bloquear · FALLO si instala prd/spec/design en un consumer, escribe la clave
+`artifacts` canónica, acepta un path sin specs, autora flows/views localmente cuando hay `design_source`,
+o **calla** ante el doble SSoT de diseño (caso 5).
 **Desviación → reportar:** issue citando `CU-1.i`.
 
 ## CU-1.j — Init invocado desde un subpaquete de un monorepo ya inicializado (gate de workflow)
@@ -471,7 +478,7 @@ parte determinista (detección/verificación) la cubren los unittest de `sdd-ini
 ## CU-1.q — Topología `design`: repo de solo-diseño ([[D-011]])
 
 **Precondición:** proyecto virgen; eliges "Modo SDD" (CU-1.b).
-**Mecanismo:** `wf-project-init` Q1 → **Diseño (solo sistema visual)** (4ª opción, tope de 4):
+**Mecanismo:** `wf-project-init` Q1 → **Diseño (repo de solo-diseño)** (4ª opción, tope de 4):
 rama DESIGN (5.D1) que declara los **design targets** que cubre y deriva `target_platforms` con el
 subcomando determinista `sdd-init-detect.py target-platforms`. Backbone: **solo `design`** (rol
 `system`), sin prd/spec/plan/tasks. La etiqueta sigue la convención validada
