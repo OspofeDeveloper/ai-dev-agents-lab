@@ -624,7 +624,15 @@ Reglas de los campos:
 { "mode": "sdd", "decided_at": "<salida de date -u>", "decided_by": "wf-project-init" }
 ```
 
-5. **Solo si** `specialist_workflow` no es null → invocar `wf-<stack>-init` **via Skill tool** (nunca `tech/<stack>/install.sh` a mano).
+5. **Solo si** `specialist_workflow` no es null (proyecto con stack que tiene overlay) → **instalar el overlay del stack AHORA** re-ejecutando el install base. Ya existe `project-init.json` declarando el stack, así que la cola canónica de `install.sh` aplica el overlay (`install.sh` → `tech/<stack>/install.sh`; **nunca** invoques `tech/<stack>/install.sh` a mano):
+
+   ```bash
+   bash "$SDD_HOME/install.sh" <fase1,fase2,...> --no-claude-md ${DESIGN_ROLE:+--design-role=$DESIGN_ROLE}
+   ```
+
+   En el Paso 6 el overlay **no** se instaló: la cola de `install.sh` solo lo aplica cuando `project-init.json` declara el stack, y en el Paso 6 ese fichero aún no existía. Este re-run lo deja en disco: `wf-<stack>-init`, los agentes `<stack>-*`, sus KBs y la regla `sdd-<stack>.md`. **Verifica** que `.claude/skills/wf-<stack>-init/` existe tras el re-run.
+
+   **NO invoques `wf-<stack>-init` en esta sesión.** Skills y agentes se cargan al **arrancar** la sesión; un overlay recién instalado no está cargado, así que `Skill(wf-<stack>-init)` fallaría con *Unknown skill* (y en proyecto virgen `.claude/skills/` ni se vigila hasta reiniciar). El init técnico del stack es trabajo de una **sesión nueva**: lo retoma solo el hook `SessionStart` vía la directiva `specialist-init-pending` (precondición contextual del trabajo de stack — ver el bloque SDD del `~/.claude/CLAUDE.md`). Refléjalo en el informe final (Paso 10): el overlay queda instalado y su init técnico se lanzará automáticamente cuando, en una sesión nueva, vayas a planificar/implementar (o el usuario puede forzarlo con `/wf-<stack>-init`).
 
 ---
 
@@ -681,9 +689,10 @@ esac
 ## Paso 10: Informe final
 
 - **Topología, superficie(s) y fases instaladas**
-- **Stack**: configurado y despachado / agnóstico (modo genérico) / no aplica (authoring)
+- **Stack**: overlay instalado (init técnico pendiente) / agnóstico (modo genérico) / no aplica (authoring)
 - **Diseño**: rol instalado (system / feature / full / sin diseño)
 - **Verificación**: resultado de los checks del Paso 9
+- **Si hay stack con overlay** (`specialist_workflow` no null): indica que el overlay quedó instalado pero su **init técnico** (`wf-<stack>-init`, que genera el estado técnico del stack) **no corre en esta sesión**. Se lanzará **solo** en una sesión nueva, como precondición, cuando vayas a planificar/implementar (lo dispara el hook vía `specialist-init-pending`); el usuario también puede forzarlo con `/wf-<stack>-init`. No prometas que ya está hecho.
 - **Siguiente paso según topología**:
   - authoring → `/wf-prd-create` o `/wf-prd-review` (si PRD); si no, `/wf-spec-analyze`. Si hay diseño: `/wf-design-intake generate <feature_spec>`.
   - consumer → leer specs del SSoT y `/wf-prepare-plan generate <feature_spec>` (si UI, antes `/wf-design-feature-prototype`).

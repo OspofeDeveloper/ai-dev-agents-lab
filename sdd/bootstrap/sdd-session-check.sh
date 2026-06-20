@@ -4,7 +4,11 @@
 # procede, inyecta una directiva [SDD-PROTOCOL] en el contexto de la sesion.
 #
 # Estados:
-#   .sdd/project-init.json existe                  → proyecto SDD inicializado, no inyecta nada
+#   .sdd/project-init.json existe                  → proyecto SDD inicializado:
+#       - fases declaradas sin instalar             → init-incomplete
+#       - specialist_workflow sin run en            → specialist-init-pending (no bloquea)
+#         .sdd/stack-runs.jsonl
+#       - version del sello != ecosistema           → version-drift (no bloquea)
 #   .claude/sdd-mode.json con mode "free"          → modo libre, no inyecta nada
 #   .claude/sdd-mode.json con mode "sdd" sin init  → inyecta directiva init-pending
 #   sin marcador ni init                           → inyecta directiva mode-undecided (wizard)
@@ -139,6 +143,22 @@ except Exception:
   if [ -n "$MISSING" ]; then
     echo "[SDD-PROTOCOL] init-incomplete — Este proyecto declara las fases [$MISSING ] en .sdd/project-init.json pero no estan instaladas (falta .claude/phases/<fase>.md). Antes de atender la peticion del usuario, invoca el skill wf-project-init (opcion 'Completar / ampliar') para reparar la instalacion. No repitas el wizard de modo."
     exit 0
+  fi
+
+  # Init especialista de stack pendiente (precondicion contextual, NUNCA bloquea):
+  # si project-init.json declara specialist_workflow y no hay run registrado en
+  # .sdd/stack-runs.jsonl, avisar para completar el init tecnico del stack ANTES de
+  # plan/tasks/implementacion. La logica vive en sdd-init-detect.py (specialist-status);
+  # degrada en silencio sin SDD_HOME / python3 / script. No hace exit: la deriva de
+  # version puede coexistir como segundo aviso.
+  if [ -n "$SDD_HOME" ] && command -v python3 >/dev/null 2>&1 \
+     && [ -f "$SDD_HOME/scripts/sdd-init-detect.py" ]; then
+    SPECIALIST_STATUS="$(python3 "$SDD_HOME/scripts/sdd-init-detect.py" specialist-status --root "$INIT_ROOT" 2>/dev/null || true)"
+    if printf '%s' "$SPECIALIST_STATUS" | grep -q '"pending"[[:space:]]*:[[:space:]]*true'; then
+      SPECIALIST_WF="$(printf '%s' "$SPECIALIST_STATUS" | grep -o '"specialist_workflow"[[:space:]]*:[[:space:]]*"[^"]*"' | head -1 | sed 's/.*"\([^"]*\)"$/\1/' || true)"
+      [ -z "$SPECIALIST_WF" ] && SPECIALIST_WF="wf-<stack>-init"
+      echo "[SDD-PROTOCOL] specialist-init-pending — El init tecnico del stack de este proyecto ($SPECIALIST_WF) aun no se ha ejecutado (sin registro en .sdd/stack-runs.jsonl). NUNCA bloquea: ante una peticion de PRD/spec/design solo menciona en UNA linea que esta pendiente y atiende al usuario con normalidad. Antes de cualquier trabajo de stack (plan, tasks o implementacion) invoca $SPECIALIST_WF como precondicion, y solo entonces. No repitas el wizard de modo."
+    fi
   fi
 
   # Deteccion de deriva de version (informativa, nunca bloquea): compara el

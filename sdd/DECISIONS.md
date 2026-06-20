@@ -6,6 +6,25 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-014 — El init técnico de stack es un handoff a sesión nueva (directiva `specialist-init-pending`), no una invocación in-session
+
+- **Fecha:** 2026-06-20 · **Estado:** Adoptada · **Corrige:** el Paso 8.5 de `wf-project-init`
+
+**Contexto.** Probando el escenario 3 de CU-1.h (standalone con stack KMM detectable) sobre un repo real, el despacho prescrito en `wf-project-init` Paso 8 (*"invocar `wf-<stack>-init` via Skill tool"*) falló con **`Unknown skill: wf-kmm-init`**. Dos defectos encadenados: **(A)** el Paso 6 instala el backbone **antes** de escribir `project-init.json`, así que la cola de `install.sh` que aplica el overlay (`tech/<stack>/install.sh`) es un no-op (aún no hay stack declarado) → el overlay, que **contiene** `wf-kmm-init`, no se instala antes del despacho. **(B)** aunque el overlay estuviera en disco, skills y agentes se cargan al **arrancar** la sesión; un overlay recién instalado no es invocable in-session (y en proyecto virgen `.claude/skills/` ni se vigila hasta reiniciar). `wf-kmm-init` además forka a `kmm-explorer` (agente local), que tampoco estaría cargado. La sesión del init solo "se salvó" porque el orquestador improvisó un re-run de `install.sh`; el flujo prescrito era incapaz de cumplirse.
+
+**Decisión.** Separar instalación de ejecución. **(A)** `wf-project-init` Paso 8, tras escribir `project-init.json`, **re-ejecuta `install.sh <fases>`**: ahora la cola ve el stack y aplica el overlay por el camino canónico (nunca `tech/<stack>/install.sh` a mano). **(B)** el init **no** invoca `wf-<stack>-init`; su trabajo acaba en "overlay instalado y verificado en disco". La ejecución del init técnico se difiere a una **sesión nueva** y la dispara el hook `SessionStart` con una directiva nueva, **`specialist-init-pending`**: pendiente = `specialist_workflow` no nulo en `project-init.json` **y** sin run en `.sdd/stack-runs.jsonl`. Es **precondición contextual, no bloqueante**: en PRD/spec/design solo se menciona en una línea; antes de cualquier trabajo de stack (plan/tasks/implementación) se invoca `wf-<stack>-init` como precondición. Modelo idéntico a `init-pending`/`mode-undecided`: el hook detecta, la directiva instruye, el modelo actúa en una sesión donde el overlay **sí** está cargado.
+
+**Alternativas descartadas.**
+- *Invocar `wf-<stack>-init` in-session tras instalar el overlay* → imposible de raíz: la carga de skills/agentes es al arranque de sesión (verificado con claude-code-guide); en proyecto virgen ni hay live-reload.
+- *Globalizar los `wf-<stack>-init` en `setup.sh`* → no basta (forkan a agentes y KBs locales del overlay, que seguirían sin cargar) y contamina el namespace global de cualquier usuario con todos los stacks. 
+- *Auto-run inmediato o pregunta al arrancar* → más intrusivo; lanzar el cuestionario técnico a quien solo quería escribir un PRD. La precondición contextual no interrumpe las fases tempranas.
+
+**Consecuencias / aprendizaje.** Señal de detección genérica y agnóstica de stack: `.sdd/stack-runs.jsonl` (lo escribe `wf-<stack>-init` al completar) — no hace falta que el hook conozca el fichero de estado de cada stack. Aprendizaje: un workflow **no puede invocar via Skill tool un skill que él mismo acaba de instalar** en la misma sesión; lo recién instalado se ejecuta en la siguiente. El init deja el sistema *listo*; el primer uso lo *activa*.
+
+**Referencias.** `bootstrap/skills/wf-project-init/SKILL.md` (Paso 8.5, Paso 10) · `scripts/sdd-init-detect.py` (`specialist_status`, subcomando `specialist-status`) · `bootstrap/sdd-session-check.sh` (rama `specialist-init-pending`) · `bootstrap/claude-global-block.md` (directiva + fallback) · `install.sh` (cola de re-aplicación de overlay, L475) · `conformance/casos-de-uso/cu-01-inicializar.md` (CU-1.h.3 instalación, CU-1.s emisión+handoff) · `conformance/casos-de-uso/cu-14-secuenciacion.md` (CU-14.i: disparo como precondición del trabajo de stack).
+
+---
+
 ## D-013 — La topología `design` instala rol `full`, no `system` (corrección de D-011)
 
 - **Fecha:** 2026-06-20 · **Estado:** Adoptada · **Corrige:** D-011 (slice 12.3)

@@ -31,7 +31,7 @@ para leer/ejecutar el CU.
 
 ### `wf-project-init` — la skill de init (12)
 - [x] CU-1.b — Modo SDD arranca el init · ✓ 2026-06-20 (RE-TEST D-011 cerrado: Q1 con 4 opciones; la 4ª, Diseño, arranca end-to-end y escribe el esquema nuevo — ver CU-1.q)
-- [ ] CU-1.h — La topología decide qué se instala
+- [x] CU-1.h — La topología decide qué se instala · ✓ 2026-06-20 (esc. 1 authoring + esc. 2 standalone mínimo en sesiones previas; esc. 3 standalone+KMM+diseño full verificado en disco: overlay instalado vía re-run del Paso 8.5, **sin `Unknown skill`** [[D-014]], rol full con ambos agentes, 6 reglas, `verify` exit 0, sin `stack-runs.jsonl`)
 - [ ] CU-1.i — Topología consumer
 - [ ] CU-1.j — Init desde subpaquete (gate de workflow)
 - [ ] CU-1.k — Verificación bloqueante
@@ -43,13 +43,14 @@ para leer/ejecutar el CU.
 - [x] CU-1.q — Topología design (repo de solo-diseño, [[D-011]]) · ✓ 2026-06-20 (rol `full`, ambos agentes + workflows de feature, sin fugas, `needs_repair: false`; reparación de rol verificada vía "Completar/ampliar")
 - [x] CU-1.r — Aviso de SSoT sin git (advisory, topologías productoras) · ✓ 2026-06-20 (3 corridas: aviso advisory consistente en semántica; literal varía por ser informe NL, no es FALLO)
 
-### hook de sesión `bootstrap/sdd-session-check.sh` — directivas `SDD-PROTOCOL` (6)
+### hook de sesión `bootstrap/sdd-session-check.sh` — directivas `SDD-PROTOCOL` (7)
 - [x] CU-1.a — Wizard de modo en proyecto virgen (`mode-undecided`) · ✓ 2026-06-17
 - [x] CU-1.c — Modo libre silencia SDD (`free`) · ✓ 2026-06-17
 - [x] CU-1.d — Modo SDD sin init → `init-pending` (invoca wf-project-init) · ✓ 2026-06-17
 - [x] CU-1.e — Init a medias → `init-incomplete` (invoca wf-project-init "Completar/ampliar") · ✓ 2026-06-17 (criterio determinista: repair-plan, rol derivado de topología, sin preguntar)
 - [x] CU-1.f — Versión anterior → `version-drift` (informativo) · ✓ 2026-06-18
 - [x] CU-1.g — Sesión en subdirectorio → búsqueda de marcadores hacia arriba · ✓ 2026-06-18
+- [ ] CU-1.s — Stack con overlay sin init técnico → `specialist-init-pending` ([[D-014]], emisión + handoff; el disparo como precondición → [[CU-14.i]]) · capa determinista ✓ (`SpecialistStatusTest`, `SpecialistInitPendingTest`; hook instalado emite la directiva en repo KMM real); **pendiente E2E en repo virgen** (se emite al arrancar, avisa en PRD/spec/design sin lanzarlo, deja de avisar tras el run)
 
 > **Capa determinista** (no son escenarios manuales): `install.sh`, `sdd-init-detect.py` y el propio
 > hook están cubiertos por unittests (`test_install_sh.py`, `test_setup_sh.py`,
@@ -246,6 +247,36 @@ bloquea la petición, o actualiza sin pedírselo, o repite el aviso.
 preguntar el modo o intenta inicializar el subpaquete por su cuenta.
 **Desviación → reportar:** issue citando `CU-1.g`.
 
+## CU-1.s — Init técnico de stack pendiente (`specialist-init-pending`, [[D-014]])
+
+**Precondición:** proyecto SDD con stack que tiene overlay (`project-init.json` con
+`specialist_workflow` no nulo, p. ej. `wf-kmm-init`) cuyo init técnico **aún no ha corrido**
+(no hay línea suya en `.sdd/stack-runs.jsonl`). Es el estado en que queda un standalone/consumer
+con stack justo tras `wf-project-init` (CU-1.h.3).
+**Mecanismo:** hook → `sdd-init-detect.py specialist-status` → directiva
+`[SDD-PROTOCOL] specialist-init-pending` (**precondición contextual, nunca bloqueante**).
+
+> **Alcance.** Este caso cubre la **emisión de la directiva y el handoff del init** — todo
+> observable en un repo recién inicializado / sesión nueva, **sin** necesidad de plan ni specs.
+> El **disparo** de `wf-<stack>-init` como precondición del trabajo de stack (que sí requiere
+> llegar a un plan generable) vive en **[[CU-14.i]]** (Principio de precondiciones), no aquí.
+
+1. Tras el init (CU-1.h.3), **abres una sesión nueva**.
+   → **Esperado:** el hook emite `specialist-init-pending` al arrancar (la directiva nombra el
+     `specialist_workflow`). En un repo virgen es además el primer arranque que **carga** el overlay.
+2. Pides algo de **PRD/spec/diseño** (o conversacional).
+   → **Esperado:** el agente lo menciona **en una línea** ("init técnico del stack pendiente,
+     lo lanzo al planificar/implementar") y **atiende la petición con normalidad**. No lanza
+     `wf-<stack>-init` ni bloquea.
+3. Tras correr `wf-<stack>-init` (queda su run en `.sdd/stack-runs.jsonl`), reabres sesión.
+   → **Esperado:** el hook **ya no** emite la directiva (`pending: false`).
+
+**Resultado:** PASS si la directiva se emite al arrancar con el init pendiente, el orquestador
+avisa en una línea **sin** bloquear ni lanzar el init en fases tempranas, y deja de emitirse tras
+el run registrado · FALLO si no se emite con init pendiente, si bloquea PRD/spec/design, o si sigue
+avisando tras el run. (El disparo como precondición del trabajo de stack → `CU-14.i`.)
+**Desviación → reportar:** issue citando `CU-1.s`.
+
 ## CU-1.h — La topología decide qué se instala
 
 **Precondición:** proyecto virgen; eliges "Modo SDD" (CU-1.b).
@@ -260,12 +291,19 @@ preguntar el modo o intenta inicializar el subpaquete por su cuenta.
      sin `prd`/`design`; `design_role: null`.
 3. Topología **Autónomo (standalone)** con diseño y superficie **móvil** sobre un stack detectable.
    → **Esperado:** instala `prd?`+`spec`+`design` (rol `full`)+`plan`+`tasks`, entrevista
-     técnica (framework→stack), registra el `stack` y despacha a `wf-<stack>-init` al cerrar.
+     técnica (framework→stack), registra el `stack` (incl. `specialist_workflow`) e **instala el
+     overlay del stack al cerrar** (re-run de `install.sh` tras escribir `project-init.json` → la cola
+     aplica `tech/<stack>/install.sh`: `wf-<stack>-init`, agentes `<stack>-*`, KBs, regla `sdd-<stack>.md`).
+     **NO invoca `wf-<stack>-init` in-session** ([[D-014]]): el init técnico se difiere a una sesión
+     nueva, donde el hook emite `specialist-init-pending` y se ejecuta como precondición del primer
+     trabajo de stack.
 
 **Resultado:** PASS si el set de fases y el `design_role` coinciden con la topología/diseño
-elegidos (authoring **sin** plan/tasks; standalone completo; mínimo = solo backbone) · FALLO
-si instala plan/tasks en authoring, instala diseño donde se dijo que no, o salta la entrevista
-técnica en standalone con código.
+elegidos (authoring **sin** plan/tasks; standalone completo; mínimo = solo backbone) **y**, con stack,
+el overlay queda instalado en disco sin intentar invocarlo in-session · FALLO si instala plan/tasks
+en authoring, instala diseño donde se dijo que no, salta la entrevista técnica en standalone con
+código, **deja el overlay sin instalar, o intenta `Skill(wf-<stack>-init)` en la sesión del init**
+(`Unknown skill` — el bug que corrige [[D-014]]).
 **Desviación → reportar:** issue citando `CU-1.h`.
 
 ## CU-1.i — Topología consumer: repo que consume specs de un SSoT

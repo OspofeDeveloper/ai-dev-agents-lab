@@ -44,6 +44,12 @@ def target_platforms(targets_csv):
     return json.loads(r.stdout)
 
 
+def specialist_status(root):
+    r = run_script(SCRIPT, "specialist-status", "--root", str(root))
+    assert r.returncode == 0, r.stderr
+    return json.loads(r.stdout)
+
+
 class DetectStateTest(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -462,6 +468,67 @@ class RepairPlanTest(unittest.TestCase):
         self.assertTrue(p["init_found"])
         self.assertFalse(p["init_readable"])
         self.assertFalse(p["needs_repair"])
+
+
+class SpecialistStatusTest(unittest.TestCase):
+    """Detección del init técnico de stack pendiente (D-014). Señal genérica:
+    `specialist_workflow` no nulo en project-init.json Y sin run en
+    `.sdd/stack-runs.jsonl`. La consume el hook para `specialist-init-pending`."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _init(self, **fields):
+        write(self.root / ".sdd/project-init.json", json.dumps(fields))
+
+    def _run(self, **entry):
+        line = json.dumps(entry)
+        log = self.root / ".sdd/stack-runs.jsonl"
+        prev = log.read_text() if log.is_file() else ""
+        write(log, prev + line + "\n")
+
+    def test_pending_when_workflow_declared_and_no_run(self):
+        self._init(stack="kmm", specialist_workflow="wf-kmm-init", phases=["spec", "plan", "tasks"])
+        s = specialist_status(self.root)
+        self.assertTrue(s["pending"])
+        self.assertEqual(s["specialist_workflow"], "wf-kmm-init")
+        self.assertFalse(s["specialist_ran"])
+
+    def test_not_pending_after_run_logged(self):
+        self._init(stack="kmm", specialist_workflow="wf-kmm-init", phases=["spec", "plan", "tasks"])
+        self._run(workflow="wf-kmm-init", stack="kmm", mode="configure", executed_at="2026-06-20T21:00:00Z")
+        s = specialist_status(self.root)
+        self.assertFalse(s["pending"])
+        self.assertTrue(s["specialist_ran"])
+        self.assertEqual(s["runs_found"], 1)
+
+    def test_matches_run_by_stack_even_if_workflow_name_differs(self):
+        # Robustez: una línea del log con el mismo stack también cuenta como "corrió".
+        self._init(stack="kmm", specialist_workflow="wf-kmm-init", phases=["plan", "tasks"])
+        self._run(workflow="otro", stack="kmm")
+        self.assertFalse(specialist_status(self.root)["pending"])
+
+    def test_not_pending_when_specialist_workflow_null(self):
+        self._init(stack="agnostico", specialist_workflow=None, phases=["spec", "plan", "tasks"])
+        s = specialist_status(self.root)
+        self.assertFalse(s["pending"])
+        self.assertIsNone(s["specialist_workflow"])
+
+    def test_not_pending_when_no_init(self):
+        s = specialist_status(self.root)
+        self.assertFalse(s["pending"])
+        self.assertFalse(s["init_found"])
+
+    def test_malformed_jsonl_lines_ignored(self):
+        self._init(stack="kmm", specialist_workflow="wf-kmm-init", phases=["plan", "tasks"])
+        write(self.root / ".sdd/stack-runs.jsonl", "no es json\n{\"workflow\":\"wf-kmm-init\",\"stack\":\"kmm\"}\n")
+        s = specialist_status(self.root)
+        self.assertFalse(s["pending"])  # la línea válida cuenta; la basura se ignora
+        self.assertEqual(s["runs_found"], 1)
 
 
 class DesignTargetsTest(unittest.TestCase):

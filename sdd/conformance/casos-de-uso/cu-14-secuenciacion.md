@@ -32,7 +32,7 @@ la **guía proactiva** del orquestador es manual.
 
 CU-14 es un **objetivo de usuario** (pedir una fase fuera de orden y verificar la redirección), no una sola skill: sus escenarios ejercitan **1 componente**. Marca cada escenario al ejecutarlo. El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es la **transpuesta** para leer/ejecutar el CU.
 
-### orquestador — Principio de precondiciones (redirección al paso pendiente) (8)
+### orquestador — Principio de precondiciones (redirección al paso pendiente) (9)
 - [ ] CU-14.a — Pedir specs sin PRD
 - [ ] CU-14.b — Pedir Design sin spec validado
 - [ ] CU-14.c — Pedir Plan sin spec
@@ -41,6 +41,7 @@ CU-14 es un **objetivo de usuario** (pedir una fase fuera de orden y verificar l
 - [ ] CU-14.f — Verificar QA sin plan de QA ni implementación
 - [ ] CU-14.g — Releasar sin QA
 - [ ] CU-14.h — Saltarse varias fases de golpe
+- [ ] CU-14.i — Pedir trabajo de stack (plan/tasks/impl) con el init técnico de stack pendiente ([[D-014]])
 
 ---
 
@@ -156,3 +157,27 @@ sin QA apto.
 **Resultado:** PASS si descompone y empieza por el primer paso pendiente · FALLO si
 intenta materializar toda la cadena de golpe saltándose fases y checkpoints.
 **Desviación → reportar:** issue citando `CU-14.h`.
+
+## CU-14.i — Trabajo de stack con el init técnico de stack pendiente ([[D-014]])
+
+**Precondición:** proyecto con stack que tiene overlay (`project-init.json` con
+`specialist_workflow` no nulo, p. ej. `wf-kmm-init`) cuyo init técnico **aún no ha corrido**
+(sin línea en `.sdd/stack-runs.jsonl`) **y** una feature con spec ya generable a plan (el
+prerequisito upstream —spec— debe existir, o salta antes la redirección de `CU-14.c`).
+**Mecanismo:** orquestador, avisado por la directiva `specialist-init-pending` (ver
+`CU-1.s`). A diferencia del resto de CU-14 —donde el prerequisito lo **produce el usuario**
+y el orquestador solo **guía**—, aquí el prerequisito (el estado técnico del stack) lo
+**auto-satisface** el orquestador ejecutando `wf-<stack>-init` antes de seguir.
+
+1. Pides **el plan** (`wf-prepare-plan`) de una feature con spec, con el init de stack pendiente.
+   → **Esperado:** invoca `wf-<stack>-init` **como precondición**, y solo tras dejar el estado
+     técnico continúa con el plan. No genera el plan técnico sin el estado del stack.
+2. Pides **implementar / ejecutar tasks** con el init de stack pendiente.
+   → **Esperado:** igual — `wf-<stack>-init` primero, luego el trabajo de stack.
+3. Tras correr `wf-<stack>-init` (queda su run en `.sdd/stack-runs.jsonl`), repites la petición.
+   → **Esperado:** ya **no** re-ejecuta el init (la directiva dejó de emitirse); va directo al trabajo.
+
+**Resultado:** PASS si auto-satisface el init técnico antes del primer trabajo de stack y no
+lo repite una vez registrado · FALLO si genera plan/tasks/código sin el estado del stack, o si
+re-corre `wf-<stack>-init` en cada petición pese al run ya registrado.
+**Desviación → reportar:** issue citando `CU-14.i`.

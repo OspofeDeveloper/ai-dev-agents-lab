@@ -143,6 +143,38 @@ class VersionDriftTest(HookBase):
         self.assertSilent(self.run_hook())
 
 
+class SpecialistInitPendingTest(HookBase):
+    """Directiva specialist-init-pending (D-014): stack con overlay cuyo init
+    tecnico aun no corrio. Apunta .sdd-home al SDD_ROOT real para que el hook
+    resuelva sdd-init-detect.py (degrada en silencio si no lo encuentra)."""
+
+    def _stack_init(self, *, specialist_workflow, stack="kmm"):
+        write(self.home / ".sdd-home", str(SDD_ROOT))
+        obj = {"phases": ["spec", "plan", "tasks"], "stack": stack,
+               "specialist_workflow": specialist_workflow}
+        write(self.proj / ".sdd" / "project-init.json", json.dumps(obj, indent=2))
+        for f in ("spec", "plan", "tasks"):
+            write(self.proj / ".claude" / "rules" / f"sdd-{f}.md", "---\npaths: []\n---\n")
+
+    def test_pending_emits_directive(self):
+        self._stack_init(specialist_workflow="wf-kmm-init")
+        out = self.run_hook()
+        self.assertDirective(out, "specialist-init-pending")
+        self.assertIn("wf-kmm-init", out)
+
+    def test_silent_after_run_logged(self):
+        self._stack_init(specialist_workflow="wf-kmm-init")
+        write(self.proj / ".sdd" / "stack-runs.jsonl",
+              json.dumps({"workflow": "wf-kmm-init", "stack": "kmm"}) + "\n")
+        out = self.run_hook()
+        self.assertNotIn("specialist-init-pending", out)
+
+    def test_silent_when_no_specialist_workflow(self):
+        self._stack_init(specialist_workflow=None, stack="agnostico")
+        out = self.run_hook()
+        self.assertNotIn("specialist-init-pending", out)
+
+
 class OptOutTest(HookBase):
     def test_ci_true_suppresses(self):
         # proyecto virgen que normalmente pediria wizard, pero CI=true -> silencio

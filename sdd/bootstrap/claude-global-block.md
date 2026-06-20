@@ -38,6 +38,16 @@ El proyecto está en modo SDD pero la inicialización no se completó (no existe
 
 El proyecto declara fases en `.sdd/project-init.json` que no están instaladas (un init anterior se quedó a medias). Invoca `wf-project-init` (opción "Completar / ampliar") para reparar ANTES de atender la petición del usuario. No repitas el wizard de modo.
 
+## Directiva `[SDD-PROTOCOL] specialist-init-pending`
+
+El proyecto tiene un stack con overlay instalado, pero su **init técnico** (`wf-<stack>-init`, p. ej. `wf-kmm-init`) aún no se ha ejecutado (no hay registro en `.sdd/stack-runs.jsonl`). Ese init produce el estado técnico del stack que los agentes de plan/tasks/implementación leen al arrancar. Es una **precondición contextual, nunca bloqueante** — el nombre exacto del workflow viene en la directiva (y en `specialist_workflow` de `.sdd/project-init.json`):
+
+- Si la petición es de **PRD, spec o diseño** (o conversacional): **no lo lances**. Menciónalo en **una línea** (p. ej. "ℹ El init técnico del stack `<stack>` está pendiente; lo lanzo cuando pasemos a planificar/implementar") y atiende la petición con total normalidad.
+- **Antes** de cualquier trabajo de **stack** —generar o validar plan, generar o ejecutar tasks, o implementar código— invoca `wf-<stack>-init` (vía Skill tool) como precondición, y **solo entonces** continúa con lo que pidió el usuario.
+- El usuario puede forzarlo cuando quiera con `/wf-<stack>-init`.
+
+No repitas el wizard de modo. En cuanto `wf-<stack>-init` registra su run en `.sdd/stack-runs.jsonl`, el hook deja de emitir esta directiva.
+
 ## Directiva `[SDD-PROTOCOL] version-drift`
 
 La instalación SDD del proyecto es de una versión anterior a la del ecosistema. Es **solo informativa y nunca bloquea**: menciona en una línea al usuario que puede actualizar con `/wf-sdd-update` cuando le convenga, y atiende su petición con total normalidad. No actualices sin que lo pida explícitamente y no repitas el aviso en la misma sesión.
@@ -63,7 +73,7 @@ El opt-out por repo y commiteable sigue siendo `.claude/sdd-mode.json`. Para ret
 
 Si no recibes directiva pero tampoco hay evidencia de que el hook se haya ejecutado (p. ej. tras una reinstalación), aplica manualmente esta máquina de estados al inicio de la sesión en un proyecto. En un monorepo los marcadores (`.sdd/`, `.claude/sdd-mode.json`) viven en la raíz del proyecto: si la sesión se abrió en un subpaquete, búscalos **hacia arriba hasta la raíz git** (gana el ancestro más cercano).
 
-1. ¿Existe `.sdd/project-init.json` (aquí o en un ancestro hasta la raíz git)? → proyecto SDD inicializado, opera según su `.claude/CLAUDE.md`.
+1. ¿Existe `.sdd/project-init.json` (aquí o en un ancestro hasta la raíz git)? → proyecto SDD inicializado, opera según su `.claude/CLAUDE.md`. Además, si ese `project-init.json` tiene `specialist_workflow` no nulo y **no** hay una línea para él en `.sdd/stack-runs.jsonl`, aplica la directiva `specialist-init-pending` de arriba (precondición contextual del trabajo de stack; no bloquea PRD/spec/design).
 2. ¿Existe `.claude/sdd-mode.json` con `"mode": "free"`? → sesión normal, no preguntar nunca **ni anunciar el modo en el chat** (la status line lo muestra).
 3. ¿Existe `.claude/sdd-mode.json` con `"mode": "sdd"` pero sin `.sdd/project-init.json`? → invoca `wf-project-init`.
 4. ¿Nada de lo anterior y el directorio es un proyecto real (no `~`, no el repo del ecosistema SDD)? → wizard de modo de arriba.

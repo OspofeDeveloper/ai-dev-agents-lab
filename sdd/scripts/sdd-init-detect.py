@@ -44,6 +44,13 @@ Subcomandos:
         `requires_platform_components` (true si ≥2). Lo consumen `wf-project-init`
         (validar/derivar), `wf-design-intake` (familias) y `wf-design-system` (capa nativa).
 
+    specialist-status [--root <dir>]
+        ¿Falta el init técnico del stack? Emite (JSON) `pending` = `project-init.json`
+        declara `specialist_workflow` no nulo Y no hay run registrado en
+        `.sdd/stack-runs.jsonl`. Lo consume el hook `SessionStart` para la directiva
+        `specialist-init-pending` (precondición contextual de plan/tasks, no bloquea).
+        Requiere un `project-init.json` previo.
+
 Exit codes:
     0 = OK (detect/repair-plan siempre; verify si todos los checks pasan)
     1 = error de uso (argumentos inválidos)
@@ -479,6 +486,74 @@ def repair_plan(root: Path) -> dict:
     }
 
 
+def specialist_status(root: Path) -> dict:
+    """¿Falta correr el init especialista de stack (`wf-<stack>-init`)?
+
+    Señal genérica y agnóstica de stack: el init de stack registra su ejecución
+    en `.sdd/stack-runs.jsonl` (append-only). `pending` = `project-init.json`
+    declara un `specialist_workflow` no nulo Y no hay ninguna línea del log que lo
+    registre (por `workflow` o por `stack`). Lo consume el hook `SessionStart`
+    para emitir la directiva `specialist-init-pending` (precondición contextual
+    del trabajo de stack, nunca bloqueante). Requiere un `project-init.json`
+    previo; sin él no aplica (`pending: false`).
+    """
+    init_json = root / ".sdd/project-init.json"
+    obj = None
+    if init_json.is_file():
+        try:
+            obj = json.loads(init_json.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            obj = None
+
+    if not isinstance(obj, dict):
+        return {
+            "init_found": init_json.is_file(),
+            "init_readable": False,
+            "specialist_workflow": None,
+            "stack": None,
+            "runs_found": 0,
+            "specialist_ran": False,
+            "pending": False,
+        }
+
+    wf = obj.get("specialist_workflow")
+    stack = obj.get("stack")
+    wf = wf if isinstance(wf, str) and wf.strip() else None
+    stack = stack if isinstance(stack, str) and stack.strip() else None
+
+    runs_log = root / ".sdd/stack-runs.jsonl"
+    ran = False
+    runs_found = 0
+    if wf and runs_log.is_file():
+        try:
+            for line in runs_log.read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    entry = json.loads(line)
+                except ValueError:
+                    continue
+                runs_found += 1
+                if isinstance(entry, dict) and (
+                    entry.get("workflow") == wf
+                    or (stack and entry.get("stack") == stack)
+                ):
+                    ran = True
+        except OSError:
+            pass
+
+    return {
+        "init_found": True,
+        "init_readable": True,
+        "specialist_workflow": wf,
+        "stack": stack,
+        "runs_found": runs_found,
+        "specialist_ran": ran,
+        "pending": bool(wf) and not ran,
+    }
+
+
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(
         prog="sdd-init-detect.py", add_help=True, description=__doc__,
@@ -502,6 +577,10 @@ def main(argv: list[str]) -> int:
     p_targets = sub.add_parser("target-platforms", help="familias derivadas + validación de design targets (D-011)")
     p_targets.add_argument("--targets", required=True, help="design targets separados por comas")
     p_targets.add_argument("--json", action="store_true", help="salida JSON (default)")
+
+    p_special = sub.add_parser("specialist-status", help="¿falta el init especialista de stack? (directiva specialist-init-pending)")
+    p_special.add_argument("--root", default=None, help="raíz a analizar (default: cwd)")
+    p_special.add_argument("--json", action="store_true", help="salida JSON (default)")
 
     try:
         ns = parser.parse_args(argv)
@@ -534,6 +613,10 @@ def main(argv: list[str]) -> int:
     if ns.mode == "target-platforms":
         targets = [t.strip() for t in ns.targets.split(",") if t.strip()]
         print(json.dumps(design_targets_report(targets), indent=2, ensure_ascii=False))
+        return 0
+
+    if ns.mode == "specialist-status":
+        print(json.dumps(specialist_status(root), indent=2, ensure_ascii=False))
         return 0
 
     return fail(f"modo desconocido: {ns.mode}")
