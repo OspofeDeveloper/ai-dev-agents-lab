@@ -229,6 +229,7 @@ def detect(root: Path) -> dict:
         "init_found": (root / ".sdd/project-init.json").is_file(),
         "mode_found": (root / ".claude/sdd-mode.json").is_file(),
         "mode": read_mode(root),
+        "is_git_repo": git_toplevel(root) is not None,
         "installed_phases": installed,
         "artifact_candidates": candidates,
         "detected_stack": stack,

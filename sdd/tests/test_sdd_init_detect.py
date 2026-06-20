@@ -93,6 +93,14 @@ class DetectStateTest(unittest.TestCase):
         self.assertEqual(d["artifact_candidates"].get("prd"), ["docs/prd"])
         self.assertNotIn("design", d["artifact_candidates"])
 
+    def test_is_git_repo_false_when_not_under_git(self):
+        # tmp dir aislado, no es un work tree git → el aviso SSoT-sin-git puede dispararse
+        self.assertFalse(detect(self.root)["is_git_repo"])
+
+    def test_is_git_repo_true_after_git_init(self):
+        subprocess.run(["git", "-C", str(self.root), "init"], capture_output=True, check=True)
+        self.assertTrue(detect(self.root)["is_git_repo"])
+
 
 class DetectStackTest(unittest.TestCase):
     def setUp(self):
