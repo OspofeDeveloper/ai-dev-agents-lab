@@ -29,7 +29,7 @@ componentes**. Marca cada escenario al ejecutarlo. El estado de cobertura autori
 happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es la **transpuesta**
 para leer/ejecutar el CU.
 
-### `wf-project-init` — la skill de init (11)
+### `wf-project-init` — la skill de init (12)
 - [x] CU-1.b — Modo SDD arranca el init · ✓ 2026-06-17 · 🔁 **RE-TEST pendiente tras D-011** (Q1 ganó la 4ª opción + esquema nuevo; re-ejecutar tras `bash setup.sh`)
 - [ ] CU-1.h — La topología decide qué se instala
 - [ ] CU-1.i — Topología consumer
@@ -41,6 +41,7 @@ para leer/ejecutar el CU.
 - [ ] CU-1.o — Superficie/framework ramifican; caso Mínimo
 - [ ] CU-1.p — Los argumentos honran y saltan preguntas
 - [ ] CU-1.q — Topología design (repo de solo-diseño, [[D-011]])
+- [ ] CU-1.r — Aviso de SSoT sin git (advisory, topologías productoras)
 
 ### hook de sesión `bootstrap/sdd-session-check.sh` — directivas `SDD-PROTOCOL` (6)
 - [x] CU-1.a — Wizard de modo en proyecto virgen (`mode-undecided`) · ✓ 2026-06-17
@@ -98,6 +99,7 @@ ramas siguen. Los demás ejes se gatean dentro de cada topología.
 | Init previo | 3b | extend / rehacer / dejar | `✓` (CU-1.d, CU-1.e, CU-1.l) |
 | Monorepo (marcadores en ancestro) | 3.0 | operar desde la raíz vs anidar | `✓` (CU-1.g, CU-1.j) |
 | Modo libre previo | 3a | confirmar conversión a SDD | `✓` (CU-1.c) |
+| Repo bajo git (SSoT) | 9b | aviso advisory si una topología productora de SSoT (`authoring`/`design`/`standalone`) no está bajo git (pin de consumers quedaría `unknown`) | `✓` (CU-1.r) |
 
 **Ejes que solo se registran (recorded-only) — un único caso parametrizado (CU-1.n).** No
 cambian el install; solo escriben un campo en `project-init.json`.
@@ -502,3 +504,25 @@ mano (en vez de derivarlo), o acepta una familia fuera de `{mobile,web,desktop}`
 —derivación/validación de targets y el esquema con topología `design`— la cubren `test_sdd_init_detect.py`
 (`DesignTargetsTest`, `VerifyTest.test_design_topology_passes`, `RepairPlanTest.test_design_topology_*`).
 **Desviación → reportar:** issue citando `CU-1.q`.
+
+## CU-1.r — Aviso de SSoT sin git (advisory, topologías productoras)
+
+**Precondición:** proyecto virgen **no inicializado como repo git** (`git rev-parse` falla); eliges "Modo SDD".
+**Mecanismo:** `wf-project-init` Paso 9b — tras la verificación, si la topología produce un SSoT que los
+consumers pinean por SHA (`authoring`/`design`/`standalone`) y `sdd-init-detect.py detect` reporta
+`is_git_repo: false`, avisa (no bloquea). El `consumer` queda **excluido** (no es SSoT).
+
+1. Topología **Producto (authoring)** en un directorio que **no** está bajo git.
+   → **Esperado:** el init completa la instalación con normalidad y, al final, **avisa** (advisory, no
+     bloquea): este repo es un SSoT que los consumers pinearán por SHA pero no está bajo control de
+     versiones; recomienda `git init` + primer commit para que el pin no quede `unknown`. No reintenta
+     ni aborta el init.
+2. La misma topología en un directorio **sí** bajo git (o cualquier topología **consumer**, con o sin git).
+   → **Esperado:** **no** emite el aviso (git presente, o consumer = no es SSoT).
+
+**Resultado:** PASS si avisa solo para `authoring`/`design`/`standalone` sin git, sin bloquear, y calla
+con git presente o en `consumer` · FALLO si bloquea el init por falta de git, avisa en un `consumer`, o
+calla en una topología productora sin git.
+**Nota de testeo:** el estado git es determinista (`sdd-init-detect.py detect` → `is_git_repo`, cubierto
+por `DetectStateTest.test_is_git_repo_*`); lo manual es que el agente **emita** el aviso según la topología.
+**Desviación → reportar:** issue citando `CU-1.r`.
