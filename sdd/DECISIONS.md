@@ -6,6 +6,49 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-013 — La topología `design` instala rol `full`, no `system` (corrección de D-011)
+
+- **Fecha:** 2026-06-20 · **Estado:** Adoptada · **Corrige:** D-011 (slice 12.3)
+
+**Contexto.** Probando el init de la topología `design` (CU-1.b/CU-1.q) sobre repos reales se vio que
+solo se instalaba `design-system-architect` + workflows de sistema: **faltaban** `design-feature-architect`,
+`wf-design-feature-prototype`, `wf-design-variant` y `kb-design-feature-artifacts`. Causa: D-011 (12.3)
+fijó `DESIGN_ROLE_BY_TOPOLOGY["design"] = "system"`, y `install.sh --design-role=system` instala solo el
+agente de sistema. Pero la **definición** de la topología `design` (en el propio SKILL) es que el repo
+autora **ambos** niveles: el sistema visual (`DESIGN.md`/brief/tokens) **y** los bundles de feature
+(flows/views/ui_prompt + overrides `base ⊕ override per-view`). Con rol `system`, el repo de diseño **no
+podía producir los bundles per-view** — que son el núcleo de D-011 (lo que prueba CU-5.w). El bug era
+auto-contradictorio: el `CLAUDE.md` generado y el informe del init prometían `wf-design-feature-prototype`
+y `features/<nombre>/design/`, workflows que no quedaban instalados.
+
+**Decisión.** La topología `design` deriva **`design_role: full`** (ambos agentes). `full` aquí significa
+"los dos agentes de la fase design" (system + feature); **no** arrastra plan/tasks — eso lo gobierna
+`phases` (`["design"]`), no el `design_role`. Distinción que se mantiene: `authoring` con diseño sigue en
+rol `system` (ahí los consumers derivan flows/views en SUS repos), mientras que el repo `design` **sí**
+autora los bundles localmente — esa es su razón de ser. Cambio en la función pura testeada
+(`DESIGN_ROLE_BY_TOPOLOGY`), no en prosa.
+
+**Alternativas descartadas.**
+- *Mantener `system` y documentar que los bundles se autoran en otro sitio* → contradice D-011 (el repo
+  `design` ES el SSoT de los bundles per-view) y deja `wf-design-feature-prototype` sin hogar.
+- *Ampliar el rol `system` para que instale también el feature-architect* → rompe la semántica de `system`
+  (que en authoring debe seguir instalando solo el sistema); el rol correcto ya existe: `full`.
+
+**Consecuencias / aprendizaje.** `RepairPlanTest` se endurece: un repo `design` con rol `system` es
+**inconsistente** (`needs_repair`), y la reparación determinista lo lleva a `full`. Los proyectos `design`
+inicializados antes de este fix tienen el feature-architect ausente: se reparan con `/wf-project-init` →
+"Completar / ampliar" (el repair-plan instala lo que falta) tras `bash setup.sh`. Aprendizaje: cuando una
+topología declara una capacidad ("autora bundles de feature"), el rol de instalación debe **instalar el
+agente que la ejecuta** — el `design_role` no es una etiqueta descriptiva, es el contrato de qué se instala.
+
+**Referencias.** `scripts/sdd-init-detect.py` (`DESIGN_ROLE_BY_TOPOLOGY["design"]`) ·
+`tests/test_sdd_init_detect.py` (`RepairPlanTest.test_design_topology_derives_full`,
+`test_design_topology_system_role_is_inconsistent`) · `bootstrap/skills/wf-project-init/SKILL.md` (rama
+DESIGN, def de topología, esquema) · `conformance/casos-de-uso/cu-01-inicializar.md` (CU-1.q) ·
+`install.sh` (`--design-role`) · D-011 (topología design).
+
+---
+
 ## D-012 — Un solo SSoT de diseño por producto: las opciones de diseño son un fork excluyente, con guard advisory en el consumer
 
 - **Fecha:** 2026-06-19 · **Estado:** Adoptada

@@ -89,7 +89,7 @@ ramas siguen. Los demás ejes se gatean dentro de cada topología.
 
 | Eje | Pregunta | Qué ramifica | Cobertura |
 |---|---|---|---|
-| **Topología** | 5.0 (Q1) | el reparto de backbone: `authoring` (prd?/spec/design? sin plan/tasks) · `consumer` (plan/tasks +design si UI, sin prd/spec) · `standalone` (todo) · `design` (solo design rol system, sin prd/spec/plan/tasks) | `✓` (CU-1.h authoring/standalone; CU-1.i consumer; CU-1.q design) |
+| **Topología** | 5.0 (Q1) | el reparto de backbone: `authoring` (prd?/spec/design? sin plan/tasks) · `consumer` (plan/tasks +design si UI, sin prd/spec) · `standalone` (todo) · `design` (solo design rol **full**: sistema + bundles de feature, sin prd/spec/plan/tasks) | `✓` (CU-1.h authoring/standalone; CU-1.i consumer; CU-1.q design) |
 | PRD sí/no | rama authoring/standalone | antepone (o no) la fase `prd` | `✓` (CU-1.h, CU-1.n) |
 | Diseño sí/no | rama authoring/standalone | inserta `design` (rol `system` en authoring, `full` en standalone) | `✓` (CU-1.h) |
 | Superficie | consumer (single) / standalone (multiSelect) | `con-UI` (mobile/desktop/web) instala diseño de feature; `backend`/`other` headless; deriva el `stack` | `✓` (CU-1.i con-UI/headless; CU-1.o) |
@@ -150,7 +150,7 @@ el fork es incompatible con `AskUserQuestion`).
 2. Completas la entrevista.
    → **Esperado:** instala el backbone que la topología determine (authoring: spec
      +prd?/design?, sin plan/tasks; consumer: plan/tasks +design si UI; standalone: todo;
-     **design**: solo `design` rol `system`, sin prd/spec/plan/tasks — ver CU-1.q);
+     **design**: solo `design` rol `full` (sistema + bundles de feature), sin prd/spec/plan/tasks — ver CU-1.q);
      escribe `.sdd/project-init.json` (con `topology`, `surfaces`, `design_role`, `phases`,
      `artifacts`/`artifacts_source`, `sdd_version`… y, en topología `design`, `design_targets` +
      `target_platforms` derivado), genera el `.claude/CLAUDE.md` raíz, y si hay código con stack
@@ -483,27 +483,33 @@ parte determinista (detección/verificación) la cubren los unittest de `sdd-ini
 **Precondición:** proyecto virgen; eliges "Modo SDD" (CU-1.b).
 **Mecanismo:** `wf-project-init` Q1 → **Diseño (repo de solo-diseño)** (4ª opción, tope de 4):
 rama DESIGN (5.D1) que declara los **design targets** que cubre y deriva `target_platforms` con el
-subcomando determinista `sdd-init-detect.py target-platforms`. Backbone: **solo `design`** (rol
-`system`), sin prd/spec/plan/tasks. La etiqueta sigue la convención validada
-`<familia>[-<plataforma>][-<formfactor>]`, familia ∈ `{mobile,web,desktop}`.
+subcomando determinista `sdd-init-detect.py target-platforms`. Backbone: **solo `design`** con **rol
+`full`** (el repo autora **ambos** niveles: sistema + bundles de feature, [[D-011]]), sin prd/spec/plan/tasks.
+La etiqueta sigue la convención validada `<familia>[-<plataforma>][-<formfactor>]`, familia ∈ `{mobile,web,desktop}`.
 
 1. Topología **Diseño** con design targets `mobile-android`, `mobile-ios` y (vía "Other") `desktop`.
-   → **Esperado:** instala `phases: ["design"]` (rol `system`), **sin prd/spec/plan/tasks**;
+   → **Esperado:** instala `phases: ["design"]` con **rol `full`**, **sin prd/spec/plan/tasks**;
      `topology: "design"`, `stack: "agnostico"`, `surfaces: []`, `has_ui: false`,
-     `design_role: "system"`; `design_targets: ["mobile-android","mobile-ios","desktop"]` y
+     `design_role: "full"`; `design_targets: ["mobile-android","mobile-ios","desktop"]` y
      `target_platforms: ["mobile","desktop"]` (derivado, no tecleado). `artifacts` con solo la clave
-     `design`; crea `<artifacts.design>/` y `features/`. El `CLAUDE.md` raíz lleva la sección
-     **"Topología: repo de diseño (SSoT visual)"**. No despacha a ningún `wf-<stack>-init`.
+     `design`; crea `<artifacts.design>/` y `features/`. Instala **ambos** agentes
+     (`design-system-architect` **y** `design-feature-architect`) y los workflows de feature
+     (`wf-design-feature-prototype`, `wf-design-variant`, `kb-design-feature-artifacts`) además de los de
+     sistema — el repo debe poder autorar el `DESIGN.md` **y** los bundles `base ⊕ override per-view`. El
+     `CLAUDE.md` raíz lleva la sección **"Topología: repo de diseño (SSoT visual)"**. No despacha a ningún `wf-<stack>-init`.
 2. (negativo) Un design target con familia inválida o patrón roto (p. ej. `Mobile`, `tablet`, `mobile_ios`).
    → **Esperado:** el subcomando `target-platforms` lo marca en `invalid` (`all_valid: false`); el init
      **muestra los inválidos y re-pregunta** — no inicializa con targets inválidos ni inventa la familia.
 
-**Resultado:** PASS si instala solo `design` rol `system`, persiste `design_targets` + `target_platforms`
-derivado, y rechaza targets inválidos · FALLO si instala plan/tasks/spec, teclea `target_platforms` a
-mano (en vez de derivarlo), o acepta una familia fuera de `{mobile,web,desktop}`.
+**Resultado:** PASS si instala solo `design` con **rol `full`** (ambos agentes + workflows de feature),
+persiste `design_targets` + `target_platforms` derivado, y rechaza targets inválidos · FALLO si instala
+plan/tasks/spec, instala **solo `design-system-architect`** sin el feature-architect (el repo no podría
+autorar bundles per-view — bug pre-D-011-fix), teclea `target_platforms` a mano, o acepta una familia
+fuera de `{mobile,web,desktop}`.
 **Nota de testeo:** la entrevista es interactiva (`AskUserQuestion`) → **a mano**. La parte determinista
-—derivación/validación de targets y el esquema con topología `design`— la cubren `test_sdd_init_detect.py`
-(`DesignTargetsTest`, `VerifyTest.test_design_topology_passes`, `RepairPlanTest.test_design_topology_*`).
+—derivación/validación de targets, el rol `full` y el esquema con topología `design`— la cubren
+`test_sdd_init_detect.py` (`DesignTargetsTest`, `VerifyTest.test_design_topology_passes`,
+`RepairPlanTest.test_design_topology_derives_full` / `test_design_topology_system_role_is_inconsistent`).
 **Desviación → reportar:** issue citando `CU-1.q`.
 
 ## CU-1.r — Aviso de SSoT sin git (advisory, topologías productoras)
