@@ -81,18 +81,26 @@ piezas que el proyecto no tiene, o no produce el `kmm_project_state.md`.
 ## CU-12.b — Init en modo configure y guarda de re-ejecución
 
 **Precondición:** un proyecto KMM nuevo (o pides reconfigurar).
-**Mecanismo:** skill `wf-kmm-init --mode configure` → **`kmm-explorer`**; registra el run
-en `.sdd/stack-runs.jsonl`.
+**Mecanismo:** skill `wf-kmm-init --mode configure` en el **hilo principal** ([[D-015]]:
+sin `context: fork`; entrevista con `AskUserQuestion`, delega *detect* a `kmm-explorer`
+vía `Agent`); registra el run en `.sdd/stack-runs.jsonl`.
 
 1. Le pides configurar un proyecto KMM nuevo.
-   → **Esperado:** hace las preguntas de configuración y escribe `kmm_project_state.md`;
-     registra el run en `.sdd/stack-runs.jsonl`.
-2. Vuelves a lanzar el init con un `kmm_project_state.md` ya existente.
-   → **Esperado:** **pregunta si rehacerlo** antes de sobrescribir (no lo pisa en
-     silencio); solo regenera con confirmación o `--force`.
+   → **Esperado:** hace las preguntas de configuración **con `AskUserQuestion`** (opciones
+     reales, no texto plano) y escribe `kmm_project_state.md`; registra el run en
+     `.sdd/stack-runs.jsonl`.
+2. **Lee `.sdd/project-init.json` y no re-pregunta lo ya decidido** ([[D-015]]): si los
+   `targets` (p. ej. android, ios) ya están ahí, los da por buenos sin volver a preguntar.
+3. **Topology-aware:** en `standalone`/`consumer` opera sobre **este** repo (el código vive
+   aquí); **no** pregunta "¿el código está en otro repo?".
+4. Vuelves a lanzar el init con un `kmm_project_state.md` ya existente.
+   → **Esperado:** **pregunta si rehacerlo** (con `AskUserQuestion`) antes de sobrescribir;
+     solo regenera con confirmación o `--force`.
 
-**Resultado:** PASS si configura, registra el run y pregunta antes de rehacer · FALLO si
-sobrescribe el estado sin preguntar, o no registra el run.
+**Resultado:** PASS si entrevista con `AskUserQuestion` en el hilo principal, reutiliza los
+`targets` de `project-init.json`, no presupone repo de código aparte, configura, registra el
+run y pregunta antes de rehacer · FALLO si pregunta como texto plano (señal de fork), re-pregunta
+los `targets`, presupone otro repo en standalone, sobrescribe sin preguntar o no registra el run.
 **Desviación → reportar:** issue citando `CU-12.b`.
 
 ## CU-12.c — Stack completo (Ktor + Keycloak + Koin) por composición

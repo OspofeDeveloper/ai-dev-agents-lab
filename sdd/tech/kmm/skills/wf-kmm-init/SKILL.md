@@ -4,25 +4,36 @@ description: "Init especialista del stack KMM: produce kmm_project_state.md con 
 when_to_use: "Activa con frases como 'init de KMM', 'inicializa el stack KMM', 'detecta el estado KMM del proyecto', 'configura un nuevo proyecto KMM', 'arranca el setup KMM', 'genera el estado tecnico KMM'. No activa para el init generico de stack desconocido (usa wf-project-init que despacha a este) ni para configurar piezas concretas como auth o networking (usa wf-kmm-auth-setup-keycloak, wf-kmm-network-setup, wf-kmm-stack-setup-ktor-keycloak-koin)."
 argument-hint: "[--mode detect|configure] [--force] [--output <path>]"
 effort: medium
-allowed-tools: [Read, Write, Bash]
-context: fork
-agent: kmm-explorer
+allowed-tools: [Read, Write, Bash, AskUserQuestion, Agent]
 user-invocable: true
 ---
 
 # wf-kmm-init — Init especialista del stack KMM
 
-Tu rol es de **orquestador**: decides el modo de operacion (detect o configure), recoges el estado actual, delegas la exploracion al agente `kmm-explorer` cuando aplique, y escribes `kmm_project_state.md` con el resultado consolidado. No diagnosticas la arquitectura por tu cuenta — eso es trabajo del agente.
+Tu rol es de **orquestador** y corres en el **hilo principal** (no `context: fork`): decides el modo de operacion (detect o configure), recoges el estado actual y escribes `kmm_project_state.md` con el resultado consolidado.
+
+- En **modo configure** entrevistas al usuario con la herramienta **`AskUserQuestion`** (preguntas reales con opciones, no texto libre). Esto solo es posible porque corres en el hilo principal — un fork no puede preguntar ([[D-015]]).
+- En **modo detect** delegas la exploracion del repositorio al agente **`kmm-explorer`** mediante la herramienta **`Agent`** (contexto aislado, sin fork). No diagnosticas la arquitectura por tu cuenta — eso es trabajo del agente.
 
 ---
 
-## Paso 1: Parsear argumentos
+## Paso 1: Parsear argumentos y leer el contexto del proyecto
 
 Extrae de `$ARGUMENTS`:
 
 - `--mode`: `detect` o `configure`. Opcional. Si no se especifica, se infiere en el paso 3.
 - `--force`: rehacer aunque ya exista `kmm_project_state.md`.
 - `--output`: path del archivo a generar. Por defecto `kmm_project_state.md` en la raiz del proyecto.
+
+Luego lee `.sdd/project-init.json` (si existe) y quédate con `topology`, `stack`, `targets` y `surfaces`. **No re-preguntes lo que ya está decidido ahí** — en particular los `targets` (Paso 5.1) y la topología:
+
+```bash
+test -f .sdd/project-init.json && python3 -c 'import json;d=json.load(open(".sdd/project-init.json"));print("topology="+str(d.get("topology")),"stack="+str(d.get("stack")),"targets="+str(d.get("targets")))' 2>/dev/null
+```
+
+- **`topology: standalone`** → el código vive **en este mismo repo**. La decisión detect/configure es "¿ya hay código KMM **aquí**?" (Paso 3), **no** "¿en qué otro repo está el código?". Nunca preguntes por un repo de código aparte.
+- **`topology: consumer`** → el código vive aquí (es la superficie); los specs/diseño se resuelven del SSoT. Igual: opera sobre este repo.
+- Si no existe `project-init.json`, continúa igual (Paso 7 ya avisa de que el flujo recomendado es `wf-project-init` primero).
 
 ---
 
@@ -35,11 +46,10 @@ test -f kmm_project_state.md && echo "state-found"
 Si existe y **no** hay `--force`:
 
 1. Leer el archivo y mostrar al usuario un resumen (targets, arquitectura, fecha del ultimo init).
-2. Preguntar:
-   > "Ya existe un `kmm_project_state.md`. Que quieres hacer?"
-   > 1. Mantener el estado actual (cerrar workflow)
-   > 2. Rehacerlo (equivale a `--force`)
-   > 3. Solo actualizar campos concretos (indicar cuales)
+2. Preguntar con **`AskUserQuestion`** (header "KMM state", opciones):
+   - **Mantener** — conservar el estado actual y cerrar el workflow.
+   - **Rehacer** — regenerar entero (equivale a `--force`).
+   - **Actualizar campos** — regenerar solo los campos que indique el usuario.
 
 3. Segun la respuesta:
    - Opcion 1 → cerrar workflow con confirmacion.
@@ -63,16 +73,19 @@ test -d shared && echo "shared-module"
 test -f settings.gradle.kts && echo "settings-kts"
 ```
 
-- Si hay al menos 2 indicios → `detect` (proyecto existente).
-- Si no hay indicios o solo hay 1 debil → `configure` (proyecto nuevo).
-- Si la inferencia es ambigua, preguntar al usuario:
-  > "He encontrado indicios parciales de KMM. Quieres ejecutar `detect` (auto-explorar lo que hay) o `configure` (definir el stack desde cero)?"
+Los indicios se buscan **en este repo** (no en otro): en `standalone`/`consumer` el código KMM, si existe, vive aquí.
+
+- Si hay al menos 2 indicios → `detect` (ya hay código KMM en este repo).
+- Si no hay indicios o solo hay 1 debil → `configure` (greenfield: aún no hay código KMM aquí).
+- Si la inferencia es ambigua, preguntar con **`AskUserQuestion`** (header "KMM mode"):
+  - **detect** — auto-explorar el código KMM que ya hay en el repo.
+  - **configure** — definir el stack desde cero (aún no hay código).
 
 ---
 
-## Paso 4 (modo detect): Delegar exploracion a `kmm-explorer`
+## Paso 4 (modo detect): Delegar exploracion a `kmm-explorer` vía `Agent`
 
-Construye el prompt para el agente:
+Invoca al agente `kmm-explorer` con la herramienta **`Agent`** (subagente de contexto aislado; **no** es un fork de este workflow). Construye el prompt:
 
 ```text
 Modo: kmm-init-detect
@@ -98,24 +111,21 @@ Por cada seccion, cita la ruta concreta de los archivos clave (build.gradle.kts,
 Devuelve el contenido en formato markdown listo para escribirse como `kmm_project_state.md`. No incluyas plan de remediacion: solo el estado actual.
 ```
 
-Invoca el agente `kmm-explorer` con ese prompt y espera el contenido generado.
+Invoca `kmm-explorer` con la tool `Agent` pasando ese prompt y espera el contenido generado.
 
 ---
 
-## Paso 5 (modo configure): Preguntar al usuario con listas de opciones
+## Paso 5 (modo configure): Entrevistar al usuario con `AskUserQuestion`
 
-Pregunta secuencialmente, una opcion a la vez. Esperar respuesta antes de pasar a la siguiente:
+Cada decisión es una pregunta con **`AskUserQuestion`** (opciones reales, no texto libre). Puedes **agrupar** varias preguntas relacionadas en una sola llamada de `AskUserQuestion`. Corres en el hilo principal, así que la herramienta está disponible.
 
 ### 5.1 Targets
 
-```
-Que plataformas vas a soportar? (multiselect)
-1. Android
-2. iOS
-3. Desktop (JVM)
-```
+**Si `project-init.json` ya declara `targets`** (caso normal cuando llegas despachado por `wf-project-init`), **NO los re-preguntes**: dalos por buenos y, como mucho, confírmalos en una línea. Solo si no hay `targets` declarados, pregunta con `AskUserQuestion` (multiSelect):
 
-Para cada plataforma seleccionada, preguntar versiones minimas (minSdk Android, deployment target iOS, JVM target).
+- Android · iOS · Desktop (JVM)
+
+Para cada plataforma, recoge sus versiones mínimas (minSdk Android, deployment target iOS, JVM target) — preferentemente en la misma tanda de preguntas.
 
 ### 5.2 Arquitectura
 

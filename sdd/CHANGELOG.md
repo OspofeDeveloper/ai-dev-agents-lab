@@ -2,6 +2,17 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.35.0 — 2026-06-21
+
+Las skills de stack KMM que **entrevistan** al usuario corrían bajo `context: fork`, donde `AskUserQuestion` no existe — el mismo bug que cerró 0.33.0, pero estas se escaparon porque entrevistan **en prosa** sin declarar la tool, así que ni el sweep ni el lint las vieron. Lo destapó el primer `/wf-kmm-init` real tras D-014: preguntaba como texto plano, re-preguntaba los `targets` ya capturados y presuponía "código en otro repo" en un proyecto standalone. De las 8 `wf-kmm-*` (todas fork), solo 2 entrevistan. Decisión completa en `DECISIONS.md` (**D-015**).
+
+- ⚠ **`wf-kmm-init`** pasa al **hilo principal** (sin `context: fork`): modo configure entrevista con `AskUserQuestion`; modo detect delega la exploración a `kmm-explorer` vía la tool `Agent`. Además **lee `.sdd/project-init.json`** → no re-pregunta `targets` y es topology-aware (en standalone el código vive aquí; no pregunta por "otro repo").
+- ⚠ **`wf-kmm-environments`** igual: recoge requisitos y **confirma la matriz brand×env con `AskUserQuestion`** en el hilo principal (gate humano), y delega la implementación a `kmm-platform-integrator` vía `Agent`.
+- Las otras 6 `wf-kmm-*` (network/auth/datastore/database/testing/stack-setup) son **delegación pura** (params de `$ARGUMENTS` o inferidos del repo) → se quedan con `context: fork`.
+- **Lint:** nueva regla `FORK-INTERVIEW` (**warning**, no blocking) en `sdd-structural-lint.py` — caza `context: fork` + marcadores fuertes de entrevista en prosa, calibrada para no marcar las 6 sanas. Se deja como warning para no romper CI por una heurística de prosa.
+- Conformance: `CU-12.b` actualizado (hilo principal + `AskUserQuestion` + lee `project-init.json` + topology-aware). Tests: regla del lint cubierta (`test_fork_interview_*`).
+- **`⚠` por qué:** son overlay de proyecto; un proyecto KMM ya inicializado recibe las skills corregidas al correr `wf-sdd-update`.
+
 ## 0.34.0 — 2026-06-20
 
 El despacho al init técnico de stack en `wf-project-init` (Paso 8) estaba roto y la prueba del escenario 3 de CU-1.h lo destapó: `Skill(wf-kmm-init)` → **`Unknown skill`**. Dos defectos encadenados — (A) el Paso 6 instala el backbone **antes** de escribir `project-init.json`, así que la cola de `install.sh` que aplica el overlay (`tech/<stack>/install.sh`) es un no-op y `wf-<stack>-init` no llega a instalarse; (B) skills/agentes se cargan al arrancar la sesión, así que un overlay recién instalado **no es invocable in-session** (y forka a un agente local que tampoco cargaría). Fix: separar instalación de ejecución y diferir el init técnico a una sesión nueva por la vía de directivas que ya usa el ecosistema. Decisión completa en `DECISIONS.md` (**D-014**).

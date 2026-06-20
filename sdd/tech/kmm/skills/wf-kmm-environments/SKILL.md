@@ -4,9 +4,7 @@ description: "Configura un sistema multi-brand/multi-environment en un proyecto 
 when_to_use: "Activa con frases como 'configura entornos en KMM', 'añade multi-environment al proyecto', 'setup de variantes por brand', 'necesito pre y pro en KMM', 'configura multi-brand'. No activa para el stack completo (usa wf-kmm-stack-setup-ktor-keycloak-koin) ni para configurar solo networking (usa wf-kmm-network-setup)."
 argument-hint: "[brands y entornos, ej: 'pre pro' o 'cuideo felizvita con pre y pro']"
 effort: high
-allowed-tools: [Read, Write, Bash]
-context: fork
-agent: kmm-platform-integrator
+allowed-tools: [Read, Bash, AskUserQuestion, Agent]
 user-invocable: true
 ---
 
@@ -14,18 +12,26 @@ user-invocable: true
 
 Configura un sistema multi-brand/multi-environment en un proyecto KMM componiendo semántica estable y sus implementaciones por plataforma.
 
+Corres en el **hilo principal** (no `context: fork`): recoges los requisitos y confirmas la matriz con **`AskUserQuestion`**, y luego **delegas la implementación** (Pasos 2-6) al agente `kmm-platform-integrator` mediante la herramienta **`Agent`**. Un fork no podría preguntar ni confirmar la matriz ([[D-015]]).
+
 ---
 
-## Paso 1: Recopilar requisitos
+## Paso 1: Recopilar requisitos (hilo principal, `AskUserQuestion`)
 
-Si el usuario no ha especificado todos los parámetros, preguntar:
+Toma de `$ARGUMENTS` lo que el usuario ya haya dado. Para lo que falte, pregunta con **`AskUserQuestion`** (puedes agrupar varias en una llamada):
 
 1. **Brands** — ¿Cuántas marcas? ¿Nombres y Application IDs?
 2. **Entornos** — ¿Qué entornos de build? ¿Alguno añade sufijo al App ID?
 3. **URLs de API** — Una URL base por combinación brand×env.
 4. **Variables adicionales** — API keys, feature flags, claves de analytics que varíen por variante.
 
-Cuando tengas los datos, calcular la matriz `brand × env` y confirmarla con el usuario antes de tocar ningún fichero, siguiendo la **Regla 2** de `kb-kmm-environments` y la **Regla 2** de `kb-kmm-brands`.
+Cuando tengas los datos, calcula la matriz `brand × env` y **confírmala con el usuario** (otra `AskUserQuestion`: aceptar / corregir) **antes de delegar nada** — es un gate humano, siguiendo la **Regla 2** de `kb-kmm-environments` y la **Regla 2** de `kb-kmm-brands`.
+
+---
+
+## Paso 1.5: Delegar la implementación a `kmm-platform-integrator` vía `Agent`
+
+Con la matriz **ya confirmada**, invoca al agente `kmm-platform-integrator` con la herramienta **`Agent`** (contexto aislado, no fork), pasándole la matriz `brand × env`, las URLs y variables recogidas, y la instrucción de ejecutar los **Pasos 2-6** de abajo. Los Pasos 2-6 son el **brief del agente**, no trabajo del hilo principal. Al volver, continúa con el Paso 7 (informe).
 
 ---
 

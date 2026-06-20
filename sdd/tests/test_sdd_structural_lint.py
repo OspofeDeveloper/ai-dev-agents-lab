@@ -202,6 +202,27 @@ class StructuralLintTest(unittest.TestCase):
         r, types = types_in(self.root, "--severity", "warning")
         self.assertNotIn("ALLOWED-TOOLS-MISMATCH", types, r.stdout)
 
+    # === FORK-INTERVIEW (warning, D-015) ==================================
+    def test_fork_interview_flagged_as_warning(self):
+        # fork que entrevista EN PROSA (sin declarar AskUserQuestion) → warning
+        body = "Paso 1: pregunta secuencialmente, una opcion a la vez. Esperar respuesta.\n"
+        write(self.root / "design" / "skills" / "wf-fork-iv" / "SKILL.md",
+              skill_md("wf-fork-iv", body,
+                       extra_fm="allowed-tools: [Read, Bash]\ncontext: fork\n"
+                                "agent: kmm-explorer\n"))
+        r, types = types_in(self.root, "--severity", "warning")
+        self.assertIn("FORK-INTERVIEW", types, r.stdout)
+
+    def test_fork_delegation_not_flagged_as_interview(self):
+        # fork que solo delega con args ("confirmar o inferir") → NO es entrevista
+        body = "Paso 1: confirmar con el usuario o inferir del proyecto, y delegar al agente.\n"
+        write(self.root / "design" / "skills" / "wf-fork-deleg" / "SKILL.md",
+              skill_md("wf-fork-deleg", body,
+                       extra_fm="allowed-tools: [Read, Bash]\ncontext: fork\n"
+                                "agent: kmm-platform-integrator\n"))
+        _, types = types_in(self.root)
+        self.assertNotIn("FORK-INTERVIEW", types)
+
     # === Exit codes =======================================================
     def test_exit_0_when_clean(self):
         # Un arbol con una sola skill perfectamente formada -> sin findings

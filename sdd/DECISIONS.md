@@ -6,6 +6,24 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-015 — Las skills de stack que entrevistan corren en el hilo principal (no `context: fork`); el fork solo para delegación pura
+
+- **Fecha:** 2026-06-21 · **Estado:** Adoptada · **Extiende:** la regla de 0.33.0 (fork ⊥ `AskUserQuestion`)
+
+**Contexto.** Al validar D-014, el primer `/wf-kmm-init` real sobre un proyecto destapó cuatro síntomas: (1) hacía las preguntas como texto plano ("No hay herramienta AskUserQuestion disponible"), (2) re-preguntaba los `targets` que `wf-project-init` ya había capturado, (3) relanzaba `Skill(wf-kmm-init)`, y (4) preguntaba "¿el código está en otro repo?" en un proyecto **standalone** (donde el código vive aquí). Causa raíz de (1) y (3): `wf-kmm-init` tenía `context: fork` + `agent: kmm-explorer`, y su modo configure es una **entrevista de 10 preguntas** — pero un fork no puede usar `AskUserQuestion` (mismo muro que cerró 0.33.0). (2) y (4) eran aguas abajo: no leía `project-init.json` (ni `targets` ni `topology`), así que el agente del fork improvisaba la topología. El sweep de 0.33.0 corrigió 8 skills concretas y la regla de lint `FORK-ASKUSER-CONFLICT` solo caza forks que **declaran** `AskUserQuestion`; estas skills **entrevistan en prosa** sin declararla, así que pasaron por debajo del radar. De las 8 `wf-kmm-*` (todas `context: fork`), solo 2 entrevistan: `wf-kmm-init` y `wf-kmm-environments`.
+
+**Decisión.** Una `wf-*` que **entrevista** al usuario (preguntas que ramifican, confirmaciones que bloquean escritura) corre en el **hilo principal** (sin `context: fork`) y usa `AskUserQuestion`; el trabajo pesado lo delega vía la tool `Agent` (contexto aislado, ortogonal al fork). El `context: fork` queda reservado para skills de **delegación pura** (toman params de `$ARGUMENTS` o los infieren leyendo el repo, sin preguntar). Aplicado a `wf-kmm-init` (configure entrevista con `AskUserQuestion`; detect delega a `kmm-explorer` vía `Agent`; lee `project-init.json` para no re-preguntar `targets` ni improvisar topología) y `wf-kmm-environments` (entrevista + confirmación de matriz en hilo principal; implementación delegada a `kmm-platform-integrator`). Las otras 6 `wf-kmm-*` son delegación pura → se quedan con fork.
+
+**Alternativas descartadas.**
+- *Globalizar / dejar el fork y pedir en prosa* → es exactamente el bug no determinista que 0.33.0 prohibió.
+- *Convertir el lint en blocking para forks-que-entrevistan* → la señal es prosa (heurística) y arriesga falsos positivos sobre las 6 que dicen "confirmar **o** inferir". Se elige **warning** `FORK-INTERVIEW` (no blocking): avisa sin romper CI por una heurística.
+
+**Consecuencias / aprendizaje.** Nueva regla de lint `FORK-INTERVIEW` (warning): `context: fork` + marcadores fuertes de entrevista en prosa (`pregunta secuencialmente`, `una opción a la vez`, `esperar respuesta`, `antes de tocar ning…`), calibrada para no marcar las 6 sanas. Aprendizaje: el lint estructural debe vigilar no solo lo que una skill **declara** sino lo que su **prosa hace** — una entrevista sin `AskUserQuestion` declarada es igual de rota bajo fork. Es overlay de proyecto: los proyectos KMM ya inicializados reciben las skills corregidas con `wf-sdd-update`.
+
+**Referencias.** `tech/kmm/skills/wf-kmm-init/SKILL.md` · `tech/kmm/skills/wf-kmm-environments/SKILL.md` · `scripts/sdd-structural-lint.py` (`FORK-INTERVIEW`, `INTERVIEW_RE`) · `tests/test_sdd_structural_lint.py` · `conformance/casos-de-uso/cu-12-overlay-kmm.md` (CU-12.b) · 0.33.0 (fork ⊥ `AskUserQuestion`) · D-014 (que hizo invocable `wf-kmm-init` y destapó esto).
+
+---
+
 ## D-014 — El init técnico de stack es un handoff a sesión nueva (directiva `specialist-init-pending`), no una invocación in-session
 
 - **Fecha:** 2026-06-20 · **Estado:** Adoptada · **Corrige:** el Paso 8.5 de `wf-project-init`
