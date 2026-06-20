@@ -171,7 +171,7 @@ except Exception:
     PROJ_COMMIT="$(grep -o '"commit"[[:space:]]*:[[:space:]]*"[^"]*"' "$INIT_ROOT/.sdd/sdd-version.json" | head -1 | sed 's/.*"\([^"]*\)"$/\1/' || true)"
     if [ -n "$ECO_VERSION" ] && [ -n "$PROJ_VERSION" ]; then
       if [ "$ECO_VERSION" != "$PROJ_VERSION" ] || { [ -n "$ECO_COMMIT" ] && [ -n "$PROJ_COMMIT" ] && [ "$ECO_COMMIT" != "$PROJ_COMMIT" ]; }; then
-        echo "[SDD-PROTOCOL] version-drift — La instalacion SDD de este proyecto es de la version $PROJ_VERSION+${PROJ_COMMIT:-?} y el ecosistema esta en $ECO_VERSION+${ECO_COMMIT:-?}. Es solo un aviso: menciona brevemente al usuario que puede actualizar con /wf-sdd-update cuando le convenga, y continua con su peticion con normalidad. No actualices sin que lo pida."
+        echo "[SDD-PROTOCOL] version-drift — La instalacion SDD de este proyecto es de la version $PROJ_VERSION+${PROJ_COMMIT:-?} y el ecosistema esta en $ECO_VERSION+${ECO_COMMIT:-?}. Es solo un aviso: menciona brevemente al usuario que, cuando le convenga, puede PEDIRTE que actualices el proyecto, y continua con su peticion con normalidad. NO le des el comando crudo (/wf-sdd-update): si lo pide, invoca tu el skill wf-sdd-update via Skill tool (asi evitas que lance el slash-command a secas, que pierde contexto e idioma). No actualices sin que lo pida."
       fi
     fi
   fi

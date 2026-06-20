@@ -2,6 +2,14 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.36.0 — 2026-06-21
+
+Dos ajustes del protocolo de sesión (bootstrap global), motivados por una prueba real: lanzar un skill "a secas" (`/wf-sdd-update` sin texto) hacía que el agente respondiera en inglés y dudara, porque un slash-command pelado no deja anclaje de idioma ni una intención clara.
+
+- **Ancla de idioma** en el bloque `SDD-BOOTSTRAP` del `~/.claude/CLAUDE.md`: responde siempre en el idioma del usuario, también cuando la sesión arranca con un slash-command sin texto (no derivar a inglés por el andamiaje del comando).
+- **`version-drift` deja de recomendar el comando crudo.** Antes decía "actualiza con `/wf-sdd-update`"; ahora el agente menciona que el usuario puede **pedirle que actualice el proyecto**, y es **el agente** quien invoca `wf-sdd-update` vía Skill tool. Evita que el usuario teclee el slash-command a secas (que pierde contexto e idioma) y respeta la filosofía del orquestador (intención → skill). Cambio en el hook `sdd-session-check.sh` y en el bloque global.
+- Sin `⚠`: es bootstrap global (se refresca con `bash setup.sh`, no por `wf-sdd-update`); ningún artefacto ni skill de proyecto cambia.
+
 ## 0.35.0 — 2026-06-21
 
 Las skills de stack KMM que **entrevistan** al usuario corrían bajo `context: fork`, donde `AskUserQuestion` no existe — el mismo bug que cerró 0.33.0, pero estas se escaparon porque entrevistan **en prosa** sin declarar la tool, así que ni el sweep ni el lint las vieron. Lo destapó el primer `/wf-kmm-init` real tras D-014: preguntaba como texto plano, re-preguntaba los `targets` ya capturados y presuponía "código en otro repo" en un proyecto standalone. De las 8 `wf-kmm-*` (todas fork), solo 2 entrevistan. Decisión completa en `DECISIONS.md` (**D-015**).

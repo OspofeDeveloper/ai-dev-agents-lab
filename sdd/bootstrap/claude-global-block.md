@@ -3,6 +3,8 @@
 
 Un hook `SessionStart` (`~/.claude/hooks/sdd-session-check.sh`) comprueba el estado SDD del proyecto al iniciar cada sesión y, cuando procede, inyecta una directiva `[SDD-PROTOCOL]` en contexto. Actúa así según la directiva recibida:
 
+> **Idioma de respuesta.** Responde siempre en el idioma del usuario (por defecto, el de su último mensaje). Manténlo también cuando la sesión arranca con un **slash-command a secas** (p. ej. `/wf-…` sin texto): en ese caso no hay mensaje del usuario al que anclarse y es fácil derivar a inglés — usa el idioma del proyecto/conversación, no el del andamiaje del comando.
+
 ## Directiva `[SDD-PROTOCOL] mode-undecided`
 
 ANTES de atender la primera petición del usuario, presenta el wizard de modo con la herramienta `AskUserQuestion` (nunca como pregunta de texto libre):
@@ -50,7 +52,7 @@ No repitas el wizard de modo. En cuanto `wf-<stack>-init` registra su run en `.s
 
 ## Directiva `[SDD-PROTOCOL] version-drift`
 
-La instalación SDD del proyecto es de una versión anterior a la del ecosistema. Es **solo informativa y nunca bloquea**: menciona en una línea al usuario que puede actualizar con `/wf-sdd-update` cuando le convenga, y atiende su petición con total normalidad. No actualices sin que lo pida explícitamente y no repitas el aviso en la misma sesión.
+La instalación SDD del proyecto es de una versión anterior a la del ecosistema. Es **solo informativa y nunca bloquea**: menciona en una línea al usuario que, **cuando le convenga, puede pedirte que actualices el proyecto** — y atiende su petición con total normalidad. **No le des el comando crudo (`/wf-sdd-update`)**: si te lo pide, **tú** invocas `wf-sdd-update` vía la Skill tool (así evitas que el usuario lance el slash-command a secas, que pierde contexto e idioma). No actualices sin que lo pida explícitamente y no repitas el aviso en la misma sesión.
 
 ## Sin directiva
 
