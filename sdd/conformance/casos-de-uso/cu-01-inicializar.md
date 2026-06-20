@@ -524,5 +524,8 @@ consumers pinean por SHA (`authoring`/`design`/`standalone`) y `sdd-init-detect.
 con git presente o en `consumer` · FALLO si bloquea el init por falta de git, avisa en un `consumer`, o
 calla en una topología productora sin git.
 **Nota de testeo:** el estado git es determinista (`sdd-init-detect.py detect` → `is_git_repo`, cubierto
-por `DetectStateTest.test_is_git_repo_*`); lo manual es que el agente **emita** el aviso según la topología.
+por `DetectStateTest.test_is_git_repo_*`) y el aviso se emite por **`echo` determinista** (Paso 9b, `case`
+sobre la topología): el texto es **idéntico entre corridas**, no parafraseado — dos ejecuciones sobre el
+mismo repo deben dar la **misma línea palabra por palabra** (igual que el recordatorio del Paso 11). Lo
+manual es solo ejecutar el bloque y mostrar su salida tal cual.
 **Desviación → reportar:** issue citando `CU-1.r`.

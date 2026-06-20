@@ -658,14 +658,19 @@ grep -qx '\.claude/settings\.local\.json' .gitignore 2>/dev/null && echo "OK git
 
 Las topologías que **producen un SSoT** que otros repos consumen —`authoring`, `design` y `standalone`— son pineadas por SHA desde los consumers (`artifacts_source_pin` / `design_source_pin` = `git rev-parse --short HEAD`). Si el repo **no está bajo git**, ese pin queda `unknown` y el subsistema de drift cross-repo (D-011/D-012) se degrada a no-op para esta fuente.
 
-Comprueba el estado git de forma determinista (lo reporta el detector del Paso 3, campo `is_git_repo`; o recalcúlalo):
+Emite el aviso con un `echo` **determinista** (no lo parafrasees: garantiza el texto exacto y que solo aparezca cuando aplica). El propio bloque comprueba la condición —topología productora de SSoT (`authoring`/`design`/`standalone`, **no** `consumer`) **y** `is_git_repo: false`— y no imprime nada en caso contrario:
+
 ```bash
-python3 "$SDD_HOME/scripts/sdd-init-detect.py" detect --json | grep -q '"is_git_repo": true' && echo "git OK" || echo "SIN GIT"
+TOPOLOGY="<TOPOLOGY>"   # la topología elegida en Q1
+case "$TOPOLOGY" in
+  authoring|design|standalone)
+    if python3 "$SDD_HOME/scripts/sdd-init-detect.py" detect --json | grep -q '"is_git_repo": false'; then
+      echo "⚠ Este repo es un SSoT de $TOPOLOGY que los repos consumidores pinearán por SHA, pero no está bajo control de versiones. Ejecuta git init (y un primer commit) para que sea pineable; sin git, el pin de los consumers quedará unknown y el aviso de drift cross-repo no podrá funcionar."
+    fi ;;
+esac
 ```
-- Si la topología es `consumer` → **no apliques este aviso** (un consumer no es SSoT; su falta de git no rompe pins ajenos).
-- Si es `authoring`/`design`/`standalone` y **no** está bajo git → **avisa** (no bloquea, el init ya está completo):
-  > "⚠ Este repo es un SSoT de `<topology>` que los repos consumidores pinearán por SHA, pero **no está bajo control de versiones**. Ejecuta `git init` (y un primer commit) para que sea pineable; sin git, el pin de los consumers quedará `unknown` y el aviso de drift cross-repo no podrá funcionar."
-- Si está bajo git, o es `consumer` → no emitas nada.
+
+`consumer` no entra en el `case` (no es SSoT; su falta de git no rompe pins ajenos). Si está bajo git, o es `consumer`, el bloque no imprime nada. Muestra al usuario, tal cual, la línea que emita el `echo` (no la reformules).
 
 ---
 
