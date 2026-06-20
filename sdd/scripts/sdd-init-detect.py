@@ -74,16 +74,21 @@ ARTIFACT_CANDIDATE_DIRS = {
 }
 
 # Rol de design derivado de la topología (SSoT en código del Paso 5 del SKILL:
-# authoring L29/229 → system, consumer L252 → feature, standalone L274 → full).
+# authoring → system, consumer → feature, standalone → full).
 # El rol NO depende de has_ui: en consumer, has_ui decide si design ESTÁ presente,
 # no su rol. Si design no está declarado, no hay rol (null).
-# La topología `design` (D-011) es un repo SSoT de solo-diseño: su única fase es
-# `design` y su rol es siempre `system` (autora el sistema visual + bundles por target).
+# La topología `design` (D-011) es un repo SSoT de solo-diseño que autora AMBOS
+# niveles —el sistema visual (DESIGN.md/brief/tokens) Y los bundles de feature
+# (flows/views/ui_prompt + overrides per-view por target)—, así que su rol es `full`:
+# necesita design-system-architect Y design-feature-architect. `system` solo instalaría
+# el primero y el repo no podría producir los bundles base⊕override (núcleo de D-011).
+# (En authoring el rol es `system` porque ahí los consumers derivan flows/views en SUS
+# repos; el repo `design` sí los autora localmente — esa es su razón de ser.)
 DESIGN_ROLE_BY_TOPOLOGY = {
     "authoring": "system",
     "consumer": "feature",
     "standalone": "full",
-    "design": "system",
+    "design": "full",
 }
 
 # Topologías válidas del esquema (eje primario del init, D-005 + `design` de D-011).

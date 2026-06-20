@@ -291,7 +291,7 @@ class VerifyTest(unittest.TestCase):
             "topology": "design",
             "surfaces": [],
             "has_ui": False,
-            "design_role": "system",
+            "design_role": "full",
             "design_targets": ["mobile-android", "mobile-ios", "desktop"],
             "target_platforms": ["mobile", "desktop"],
             "artifacts": {"design": "design"},
@@ -384,19 +384,30 @@ class RepairPlanTest(unittest.TestCase):
         self.assertEqual(p["missing_phases"], ["design"])
         self.assertEqual(p["expected_design_role"], "full")
 
-    def test_design_topology_derives_system(self):
-        # design (D-011): única fase design, rol derivado system; repara si no instalada.
+    def test_design_topology_derives_full(self):
+        # design (D-011): única fase design, rol derivado FULL (autora sistema + bundles
+        # de feature → necesita ambos agentes); repara si no instalada.
         self._state(phases=["design"], installed=[],
                     design_role=None, topology="design")
         p = repair_plan(self.root)
         self.assertEqual(p["missing_phases"], ["design"])
-        self.assertEqual(p["expected_design_role"], "system")
-        self.assertFalse(p["design_role_consistent"])  # null ≠ system
+        self.assertEqual(p["expected_design_role"], "full")
+        self.assertFalse(p["design_role_consistent"])  # null ≠ full
+        self.assertTrue(p["needs_repair"])
+
+    def test_design_topology_system_role_is_inconsistent(self):
+        # un repo design con rol `system` (bug pre-fix) NO es consistente: le falta el
+        # feature-architect; el repair-plan debe marcarlo para corregir a `full`.
+        self._state(phases=["design"], installed=["design"],
+                    design_role="system", topology="design")
+        p = repair_plan(self.root)
+        self.assertEqual(p["expected_design_role"], "full")
+        self.assertFalse(p["design_role_consistent"])
         self.assertTrue(p["needs_repair"])
 
     def test_design_topology_fully_consistent_needs_no_repair(self):
         self._state(phases=["design"], installed=["design"],
-                    design_role="system", topology="design")
+                    design_role="full", topology="design")
         p = repair_plan(self.root)
         self.assertEqual(p["missing_phases"], [])
         self.assertTrue(p["design_role_consistent"])

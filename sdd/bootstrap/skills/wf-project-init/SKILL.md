@@ -19,7 +19,7 @@ Tu rol es de **onboarding y dispatcher**: detectas el contexto, identificas la *
 - **`authoring`** — el repo es la **fuente de verdad** del producto: PRD, specs y, si aplica, el sistema de diseño (`DESIGN.md`). Agnóstico de tecnología y de superficie. El código vive en otros repos. **No instala `plan`/`tasks` ni stack.**
 - **`consumer`** — el repo es **una superficie** (app móvil, desktop, web o backend) que **consume** los specs de un repo `authoring` (SSoT). Instala `plan`+`tasks` (+ overlay de stack) y, si tiene UI, la capa de diseño de feature. **No autora PRD/spec.**
 - **`standalone`** — el repo lo tiene **todo** (proyecto único o monorepo): PRD/specs/diseño + código. Pipeline completo.
-- **`design`** *(D-011)* — el repo es **solo diseño**: SSoT del sistema visual (`DESIGN.md`, brief, tokens) **y** de los bundles de feature (flows/views/ui_prompt) por design target, agnóstico de superficie. Instala únicamente la fase `design` (rol *system*). **Sin `prd`/`spec`/`plan`/`tasks`** — los consume de otros repos. Es el repo de diseño dedicado para equipos con diseño propio / varias superficies que comparten un mismo sistema.
+- **`design`** *(D-011)* — el repo es **solo diseño**: SSoT del sistema visual (`DESIGN.md`, brief, tokens) **y** de los bundles de feature (flows/views/ui_prompt + overrides per-view por design target), agnóstico de superficie. Instala únicamente la fase `design`, pero con **rol *full*** (necesita **ambos** agentes: `design-system-architect` para el sistema **y** `design-feature-architect` para los bundles de feature). **Sin `prd`/`spec`/`plan`/`tasks`** — los consume de otros repos. Es el repo de diseño dedicado para equipos con diseño propio / varias superficies que comparten un mismo sistema.
 
 **Reglas de la entrevista:**
 
@@ -30,7 +30,7 @@ Tu rol es de **onboarding y dispatcher**: detectas el contexto, identificas la *
    - `authoring` → `spec` (+ `prd` si aplica, + `design` rol *system* si aplica). **Sin `plan`/`tasks`.**
    - `consumer` → `plan` + `tasks` (+ `design` rol *feature* si la superficie tiene UI). **Sin `prd`/`spec`** (viven en el SSoT).
    - `standalone` → `spec` + `plan` + `tasks` (+ `prd`/`design` rol *full* según se decida).
-   - `design` → solo `design` (rol *system*). **Sin `prd`/`spec`/`plan`/`tasks`**: repo SSoT de solo-diseño (D-011).
+   - `design` → solo `design` (rol *full*: sistema + bundles de feature). **Sin `prd`/`spec`/`plan`/`tasks`**: repo SSoT de solo-diseño (D-011).
    La entrevista decide `prd`, `design`, las superficies y cuánta información técnica se captura — nunca el reparto de backbone, que lo fija la topología.
 5. **Agrupa preguntas independientes** — las que no se gatean entre sí van en una sola llamada a `AskUserQuestion` (hasta 4 por llamada). Abre una llamada nueva solo cuando una respuesta previa decide si —o qué— se pregunta después. El orden de las llamadas está en el Paso 5.
 
@@ -322,7 +322,7 @@ opciones:                                  # EXACTAMENTE 4 — ver nota abajo
 
 ### Rama DESIGN *(D-011)*
 
-El repo `design` no tiene superficie ni stack: es agnóstico y autora **solo** diseño. `STACK = agnostico`, `surfaces = []`, `has_ui = false`, `design_role = system`. No pregunta PRD ni superficie.
+El repo `design` no tiene superficie ni stack: es agnóstico y autora **solo** diseño, pero **ambos niveles** (sistema + bundles de feature). `STACK = agnostico`, `surfaces = []`, `has_ui = false`, `design_role = full`. No pregunta PRD ni superficie.
 
 **5.D1 — Design targets que cubre** [multiSelect; omitida si llegó `--design-targets`]:
 ```
@@ -440,7 +440,7 @@ TOPOLOGY == standalone:
   has_design == true  → insertar design (rol full) tras spec
 
 TOPOLOGY == design:
-  SELECTED_PHASES = [design]   (rol system; sin prd/spec/plan/tasks)
+  SELECTED_PHASES = [design]   (rol full: sistema + bundles de feature; sin prd/spec/plan/tasks)
 ```
 
 Orden canónico: `prd → spec → design → plan → tasks` (solo las presentes).
@@ -551,8 +551,8 @@ Proyecto gestionado con Spec Driven Development. Topología: **<authoring|consum
 
   Este repo es la fuente de verdad del **diseño** del producto, agnóstico de superficie. No tiene PRD/spec/plan/tasks: los consume de otros repos.
 
-  - Sistema visual (rol system): `<artifacts.design>/` — `DESIGN_BRIEF.md`, `DESIGN.md`, `tokens/`.
-  - Bundles por feature: `features/<nombre>/design/` — flows/views/ui_prompt base agnóstica + overrides **por design target** (solo donde diverge).
+  - Sistema visual (`design-system-architect`): `<artifacts.design>/` — `DESIGN_BRIEF.md`, `DESIGN.md`, `tokens/`.
+  - Bundles por feature (`design-feature-architect`): `features/<nombre>/design/` — flows/views/ui_prompt base agnóstica + overrides **por design target** (solo donde diverge).
   - Design targets que cubre: `design_targets` de `.sdd/project-init.json`; `target_platforms` (familias `{mobile,web,desktop}`) se deriva de ellos.
   - Los repos de superficie (consumer) consumen este diseño en **solo lectura** (resuelven `base ⊕ override` por su target).
   ```
@@ -591,7 +591,7 @@ Proyecto gestionado con Spec Driven Development. Topología: **<authoring|consum
 
 Reglas de los campos:
 - `surfaces`: `[]` en authoring y en `design`. `has_ui`: derivado (`surfaces ∩ {mobile,desktop,web} ≠ ∅`); `false` en `design`.
-- `design_role`: `system` (authoring con diseño **o topología `design`**), `feature` (consumer con UI), `full` (standalone con diseño), `null` (sin diseño).
+- `design_role`: `system` (authoring con diseño: solo el sistema, los consumers derivan flows/views en sus repos), `feature` (consumer con UI), `full` (standalone con diseño **o topología `design`**: ambos agentes — sistema + bundles de feature), `null` (sin diseño).
 - `targets`: solo si multiplataforma; en otro caso omitir la clave.
 - **En topología `design` (D-011)** se añaden dos claves (omitidas en las demás topologías): `design_targets` (lista de etiquetas validadas `<familia>[-plataforma][-formfactor]`) y `target_platforms` (familias `{mobile,web,desktop}` **derivadas** de ellas vía el subcomando `target-platforms`, no a mano). `phases` = `["design"]`; `artifacts` lleva solo la clave `design`.
 - `artifacts`: una clave por fase de autoría instalada (`prd`/`spec`/`design`), relativa a la raíz. **En `consumer` se sustituye `artifacts` por**:
