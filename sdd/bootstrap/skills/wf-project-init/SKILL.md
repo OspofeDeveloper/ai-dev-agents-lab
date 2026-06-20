@@ -449,10 +449,14 @@ Instalación única **desde la raíz del proyecto**. Pasa siempre `--no-claude-m
 
 ```bash
 DESIGN_ROLE=<system|feature|full>   # según design_role; omitir el flag si no hay design
-bash "$SDD_HOME/install.sh" <fase1,fase2,...> --no-claude-md ${DESIGN_ROLE:+--design-role=$DESIGN_ROLE}
+bash "$SDD_HOME/install.sh" <fase1,fase2,...> --no-claude-md ${DESIGN_ROLE:+--design-role=$DESIGN_ROLE} ${PRUNE:+--prune}
 ```
 
-En `MODE=extend`, pasar solo las fases que falten. Con `--force`, pasar todas.
+> **Flags de `install.sh`** (no confundir con los del wizard): solo acepta `[<fases>] [--prune] [--design-role=system|feature|full] [--no-claude-md]`. **`--force` NO es un flag de `install.sh`** — es el modo del **wizard** (rehacer vs extend); pasárselo a `install.sh` aborta con `fase no reconocida: '--force'`. Para reinstalar limpio se usa **`--prune`**, no `--force`.
+
+Qué pasar según el modo:
+- **`MODE=extend`** que solo añade fases nuevas → pasar **solo las fases que faltan**, sin `--prune`.
+- **`MODE=extend` que cambia el rol/capa de una fase ya instalada** (p. ej. reparar `design` de `system` a `full`) o **"Rehacer desde cero" (`--force`)** → pasar **todas** las fases seleccionadas **con `--prune`** (`PRUNE=1`), para que el `.claude/` quede sin piezas del rol/fases anteriores.
 
 Crear los directorios de artefactos según `ARTIFACTS_MAP` (5.6):
 
