@@ -139,7 +139,8 @@ pregunta, o atiende tu petición sin preguntar.
 
 **Precondición:** wizard de modo presentado (CU-1.a).
 **Mecanismo:** bloque de protocolo → escribe `.claude/sdd-mode.json` → invoca el skill
-`wf-project-init` (subagente: orquestador del propio skill, `context: fork`).
+`wf-project-init`, que orquesta **en el hilo principal** (usa `AskUserQuestion`, **sin** `context: fork` —
+el fork es incompatible con `AskUserQuestion`).
 
 1. Eliges "Modo SDD".
    → **Esperado:** se crea `.claude/sdd-mode.json` con `{"mode":"sdd",…}` y a
