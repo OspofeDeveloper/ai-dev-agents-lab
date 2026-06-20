@@ -30,7 +30,7 @@ happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es
 para leer/ejecutar el CU.
 
 ### `wf-project-init` — la skill de init (12)
-- [x] CU-1.b — Modo SDD arranca el init · ✓ 2026-06-17 · 🔁 **RE-TEST pendiente tras D-011** (Q1 ganó la 4ª opción + esquema nuevo; re-ejecutar tras `bash setup.sh`)
+- [x] CU-1.b — Modo SDD arranca el init · ✓ 2026-06-20 (RE-TEST D-011 cerrado: Q1 con 4 opciones; la 4ª, Diseño, arranca end-to-end y escribe el esquema nuevo — ver CU-1.q)
 - [ ] CU-1.h — La topología decide qué se instala
 - [ ] CU-1.i — Topología consumer
 - [ ] CU-1.j — Init desde subpaquete (gate de workflow)
@@ -40,7 +40,7 @@ para leer/ejecutar el CU.
 - [x] CU-1.n — El init NO pregunta el rigor ([[D-006]]) · ✓ 2026-06-17
 - [ ] CU-1.o — Superficie/framework ramifican; caso Mínimo
 - [ ] CU-1.p — Los argumentos honran y saltan preguntas
-- [ ] CU-1.q — Topología design (repo de solo-diseño, [[D-011]])
+- [x] CU-1.q — Topología design (repo de solo-diseño, [[D-011]]) · ✓ 2026-06-20 (rol `full`, ambos agentes + workflows de feature, sin fugas, `needs_repair: false`; reparación de rol verificada vía "Completar/ampliar")
 - [x] CU-1.r — Aviso de SSoT sin git (advisory, topologías productoras) · ✓ 2026-06-20 (3 corridas: aviso advisory consistente en semántica; literal varía por ser informe NL, no es FALLO)
 
 ### hook de sesión `bootstrap/sdd-session-check.sh` — directivas `SDD-PROTOCOL` (6)
@@ -59,16 +59,14 @@ para leer/ejecutar el CU.
 > agente **aplique** ese plan sin preguntar el rol. Aquí se prueba la **conducta del agente** ante
 > cada directiva / entrevista.
 
-> **Re-test tras [[D-011]] (2026-06-18).** El SKILL `wf-project-init` cambió de forma material: Q1 ganó la
-> 4ª opción **Diseño** (topología `design`), la rama consumer ganó **5.C1b** (diseño co-localizado vs repo
-> de diseño aparte) y el esquema ganó `design_targets`/`design_source`/`target_platforms`. **A re-probar:**
-> el único ✓ que vuelve a ejercitar el SKILL cambiado es **CU-1.b** (arranque del init: el wizard muestra
-> ahora 4 opciones y se escribe el esquema nuevo) → marcado 🔁 arriba; re-ejecutar tras `bash setup.sh`.
-> **No requieren re-test:** los demás ✓ son del hook de sesión (CU-1.a/c/d/f/g — el hook no cambió con
-> D-011) o de la capa determinista ya cubierta por `test_sdd_init_detect.py` — incluida la reparación de
-> **CU-1.e** (el caso nuevo de topología `design` lo cubre `RepairPlanTest`; la conducta manual del agente
-> no cambia). Lo nuevo a probar de cero (no es re-test) son **CU-1.q** (topología `design`) y **CU-1.i**
-> caso 4 (consumer con repo de diseño), ambos `[ ]`.
+> **Re-test tras [[D-011]] — CERRADO (2026-06-20).** El SKILL `wf-project-init` cambió de forma material:
+> Q1 ganó la 4ª opción **Diseño** (topología `design`), la rama consumer ganó **5.C1b** (diseño co-localizado
+> vs repo de diseño aparte) y el esquema ganó `design_targets`/`design_source`/`target_platforms`. **CU-1.b**
+> se re-probó (✓ 2026-06-20): Q1 muestra las 4 opciones y la 4ª arranca end-to-end con el esquema nuevo.
+> **CU-1.q** (topología `design`, rol `full` tras [[D-013]]) también verificado (✓ 2026-06-20), incluida la
+> reparación del rol vía "Completar/ampliar". Los demás ✓ son del hook de sesión (CU-1.a/c/d/f/g — el hook no
+> cambió con D-011) o de la capa determinista cubierta por `test_sdd_init_detect.py`. Pendiente de ejecución
+> manual: **CU-1.i** caso 4-5 (consumer con repo de diseño / guard D-012) y **CU-1.p/r**.
 
 ---
 
