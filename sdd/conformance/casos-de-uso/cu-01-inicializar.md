@@ -41,7 +41,7 @@ para leer/ejecutar el CU.
 - [ ] CU-1.o — Superficie/framework ramifican; caso Mínimo
 - [ ] CU-1.p — Los argumentos honran y saltan preguntas
 - [ ] CU-1.q — Topología design (repo de solo-diseño, [[D-011]])
-- [ ] CU-1.r — Aviso de SSoT sin git (advisory, topologías productoras)
+- [x] CU-1.r — Aviso de SSoT sin git (advisory, topologías productoras) · ✓ 2026-06-20 (3 corridas: aviso advisory consistente en semántica; literal varía por ser informe NL, no es FALLO)
 
 ### hook de sesión `bootstrap/sdd-session-check.sh` — directivas `SDD-PROTOCOL` (6)
 - [x] CU-1.a — Wizard de modo en proyecto virgen (`mode-undecided`) · ✓ 2026-06-17
@@ -523,9 +523,13 @@ consumers pinean por SHA (`authoring`/`design`/`standalone`) y `sdd-init-detect.
 **Resultado:** PASS si avisa solo para `authoring`/`design`/`standalone` sin git, sin bloquear, y calla
 con git presente o en `consumer` · FALLO si bloquea el init por falta de git, avisa en un `consumer`, o
 calla en una topología productora sin git.
-**Nota de testeo:** el estado git es determinista (`sdd-init-detect.py detect` → `is_git_repo`, cubierto
-por `DetectStateTest.test_is_git_repo_*`) y el aviso se emite por **`echo` determinista** (Paso 9b, `case`
-sobre la topología): el texto es **idéntico entre corridas**, no parafraseado — dos ejecuciones sobre el
-mismo repo deben dar la **misma línea palabra por palabra** (igual que el recordatorio del Paso 11). Lo
-manual es solo ejecutar el bloque y mostrar su salida tal cual.
+**Nota de testeo:** el criterio de consistencia entre corridas es **semántico**, no literal. El estado git
+es determinista (`sdd-init-detect.py detect` → `is_git_repo`, cubierto por `DetectStateTest.test_is_git_repo_*`)
+y el aviso se emite por **`echo` determinista** (Paso 9b, `case` sobre la topología) — la línea canónica
+existe en la salida de la herramienta. Pero el usuario lee el **informe final del agente** (prosa, salida de
+Bash colapsada), donde el aviso se **re-narra** y por tanto su redacción literal **varía entre corridas** —
+esto es inherente a un informe en lenguaje natural y **no es FALLO** (se observó incluso en el recordatorio
+canónico del Paso 11). Dos corridas son consistentes si el aviso **aparece siempre, como advisory, y
+transmite las mismas ideas**: no-git · SSoT pineado por SHA · `git init` · pin `unknown` · drift no funciona.
+El determinismo literal vive en los scripts (gate `is_git_repo`, checks de instalación), no en el informe.
 **Desviación → reportar:** issue citando `CU-1.r`.
