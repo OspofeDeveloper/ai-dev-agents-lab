@@ -31,7 +31,7 @@ happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es
 
 ### `wf-kmm-init` — init del stack (detect/configure) → `kmm-explorer` (2)
 - [ ] CU-12.a — Init del stack en modo detect (proyecto KMM existente)
-- [ ] CU-12.b — Init en modo configure y guarda de re-ejecución
+- [x] CU-12.b — Init en modo configure y guarda de re-ejecución · ✓ 2026-06-21 ([[D-015]]: hilo principal con `AskUserQuestion` agrupada, lee `project-init.json` (no re-pregunta targets), topology-aware (standalone → configure greenfield, sin "otro repo"), escribe `kmm_project_state.md` y registra el run; guarda de re-ejecución por inspección del Paso 2)
 
 ### `wf-kmm-stack-setup-ktor-keycloak-koin` — stack completo por composición → `kmm-network-auth-implementer` (1)
 - [ ] CU-12.c — Stack completo (Ktor + Keycloak + Koin) por composición

@@ -50,7 +50,7 @@ para leer/ejecutar el CU.
 - [x] CU-1.e — Init a medias → `init-incomplete` (invoca wf-project-init "Completar/ampliar") · ✓ 2026-06-17 (criterio determinista: repair-plan, rol derivado de topología, sin preguntar)
 - [x] CU-1.f — Versión anterior → `version-drift` (informativo) · ✓ 2026-06-18
 - [x] CU-1.g — Sesión en subdirectorio → búsqueda de marcadores hacia arriba · ✓ 2026-06-18
-- [ ] CU-1.s — Stack con overlay sin init técnico → `specialist-init-pending` ([[D-014]], emisión + handoff; el disparo como precondición → [[CU-14.i]]) · capa determinista ✓ (`SpecialistStatusTest`, `SpecialistInitPendingTest`; hook instalado emite la directiva en repo KMM real); **pendiente E2E en repo virgen** (se emite al arrancar, avisa en PRD/spec/design sin lanzarlo, deja de avisar tras el run)
+- [x] CU-1.s — Stack con overlay sin init técnico → `specialist-init-pending` ([[D-014]], emisión + handoff; el disparo como precondición → [[CU-14.i]]) · ✓ 2026-06-21 (capa determinista: `SpecialistStatusTest`/`SpecialistInitPendingTest`; E2E en repo KMM real: la directiva se emite al arrancar, el agente avisa en una línea sin lanzar `wf-kmm-init`, y tras correrlo `stack-runs.jsonl` registra el run → `pending:false` y el hook deja de emitir)
 
 > **Capa determinista** (no son escenarios manuales): `install.sh`, `sdd-init-detect.py` y el propio
 > hook están cubiertos por unittests (`test_install_sh.py`, `test_setup_sh.py`,
