@@ -242,7 +242,7 @@ Authoring **no** pregunta superficie, framework ni stack: es agnóstico. `STACK 
 
 ### Rama CONSUMER
 
-**5.C0 — Path al repo SSoT** (texto libre vía opción "Other" de AskUserQuestion, o pregúntalo directamente si el usuario ya lo dio): path local al checkout del repo `authoring` (sibling `../<repo>` o submodule). Validar: el path existe y contiene specs (`features/` o `*_features.md`, buscando también bajo `artifacts.spec` de SU `project-init.json` si lo tiene). Si no valida → re-preguntar o detener con instrucciones de clonarlo. Guardar `ARTIFACTS_SOURCE = <path>` y `ARTIFACTS_SOURCE_PIN = git -C <path> rev-parse --short HEAD` (o `unknown`).
+**5.C0 — Path al repo SSoT** (texto libre vía opción "Other" de AskUserQuestion, o pregúntalo directamente si el usuario ya lo dio): path local al checkout del repo `authoring` (sibling `../<repo>` o submodule). Validar: el path existe y contiene specs (`features/` o `*_features.md`, buscando también bajo `artifacts.spec` de SU `project-init.json` si lo tiene). Si no valida → re-preguntar o detener con instrucciones de clonarlo. **Guarda `ARTIFACTS_SOURCE` como ruta RELATIVA a la raíz de ESTE repo** (no absoluta): así el par SSoT+consumer sobrevive a mover/clonar el workspace entero (preserva el offset relativo); una ruta absoluta se rompería. Normalízala con `python3 -c "import os,sys;print(os.path.relpath(os.path.realpath(sys.argv[1]), os.path.realpath('.')))" "<path_dado>"` desde la raíz del proyecto (típicamente da `../<repo>`). `ARTIFACTS_SOURCE_PIN = git -C <path_resuelto> rev-parse --short HEAD` (o `unknown`) — el pin se calcula sobre el path resuelto, pero lo que se PERSISTE es la ruta relativa.
 
 **5.C1 — Superficie** (en la misma llamada que el path no, porque el path se valida antes):
 ```
@@ -273,7 +273,7 @@ opciones:
 ```
 - **SSoT de specs** (caso de siempre): `design_role = feature`, se instala la fase `design` (autoría de feature); los flows/views se autoran aquí leyendo el `DESIGN.md` del SSoT.
 - **Repo de diseño aparte** (D-011): `design_role = null`, **NO se instala la fase `design`** aquí (el diseño se resuelve del repo `design` en solo lectura). Captura:
-  - `DESIGN_SOURCE` = path local al checkout del repo `design` (validar como 5.C0: existe y contiene `DESIGN.md` o `features/`); `DESIGN_SOURCE_PIN = git -C <design_source> rev-parse --short HEAD` (o `unknown`).
+  - `DESIGN_SOURCE` = path local al checkout del repo `design` (validar como 5.C0: existe y contiene `DESIGN.md` o `features/`). **Guárdalo RELATIVO a la raíz de este repo** (misma normalización `os.path.relpath` que 5.C0), no absoluto. `DESIGN_SOURCE_PIN = git -C <path_resuelto> rev-parse --short HEAD` (o `unknown`) — el pin se calcula sobre el path resuelto, se persiste la ruta relativa.
   - `DESIGN_TARGETS` = los design target(s) que este repo consume (multiSelect, mismas opciones que 5.D1; validar con `sdd-init-detect.py target-platforms`). P. ej. un repo Android-nativo consume `mobile-android`.
   - **Guard de SSoT único de diseño (D-012):** comprueba que el repo SSoT de specs (`ARTIFACTS_SOURCE`) **no** traiga además diseño co-localizado — lee `<ARTIFACTS_SOURCE>/.sdd/project-init.json`: si declara la fase `design` (o `design_role` ∈ {system, full}), **avisa** (no bloquea): «el repo de specs ya trae un `DESIGN.md` co-localizado y vas a apuntar a un repo de diseño aparte → dos SSoT de diseño para el mismo producto; gana `design_source` y el co-localizado quedará ignorado. Confirma que es intencional (p. ej. ventana de migración)». Una vez escrito el `project-init.json`, este conflicto lo reporta de forma determinista `sdd-source-drift.py check` (`design_ssot.dual_design_ssot`).
 
@@ -600,13 +600,13 @@ Reglas de los campos:
 - **En topología `design` (D-011)** se añaden dos claves (omitidas en las demás topologías): `design_targets` (lista de etiquetas validadas `<familia>[-plataforma][-formfactor]`) y `target_platforms` (familias `{mobile,web,desktop}` **derivadas** de ellas vía el subcomando `target-platforms`, no a mano). `phases` = `["design"]`; `artifacts` lleva solo la clave `design`.
 - `artifacts`: una clave por fase de autoría instalada (`prd`/`spec`/`design`), relativa a la raíz. **En `consumer` se sustituye `artifacts` por**:
   ```json
-  "artifacts_source": "<path local al checkout del repo SSoT>",
+  "artifacts_source": "<path RELATIVO a la raíz de este repo al checkout del SSoT (p. ej. ../<repo>)>",
   "artifacts_source_pin": "<commit corto del SSoT al hacer el init | unknown>"
   ```
-  (en consumer `phases` no incluye prd/spec; el `design` de consumer es rol feature y sus artefactos viven dentro de cada feature.)
+  (en consumer `phases` no incluye prd/spec; el `design` de consumer es rol feature y sus artefactos viven dentro de cada feature.) **La ruta es relativa** (5.C0): los lectores la resuelven contra la raíz del repo (`sdd-source-drift.py` hace `root / artifacts_source`), así sobrevive a mover el workspace.
 - **Consumer con diseño en repo aparte (D-011, 5.C1b)**: además de `artifacts_source`, añade `design_source` + `design_source_pin` (checkout del repo `design`) y `design_targets` (los que este repo consume). En ese caso `phases` **no** incluye `design` y `design_role` es `null` (no se autora diseño aquí; se resuelve del repo `design` en solo lectura con `sdd-design-resolve.py`).
   ```json
-  "design_source": "<path local al checkout del repo design>",
+  "design_source": "<path RELATIVO a la raíz de este repo al checkout del repo design (p. ej. ../<repo>)>",
   "design_source_pin": "<commit corto del repo design al init | unknown>",
   "design_targets": ["<design target(s) que consume este repo>"]
   ```

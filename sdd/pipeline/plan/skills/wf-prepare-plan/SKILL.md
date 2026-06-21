@@ -59,13 +59,16 @@ Antes de verificar el Spec, determina el contexto técnico del proyecto. Busca `
    ```bash
    !python3 .sdd/scripts/sdd-source-drift.py check
    ```
+   Si `any_missing: true`, alguna fuente pineada **ya no resuelve en disco** (`exists: false` en esa fuente — el repo SSoT/diseño se movió o se borró de forma independiente, rompiendo la ruta relativa). Es más grave que drift, no es staleness: **detén la ejecución** si la fuente que falta es la que necesitas en este paso (el `artifacts_source` para leer el spec, o el `design_source` para el handoff de Design) e indica re-apuntar:
+   > "✋ La fuente `<kind>` (`<path>`) ya no existe en disco. Si moviste/clonaste solo uno de los repos (no el workspace entero), la ruta relativa quedó rota: re-apúntala con `/wf-project-init` → "Completar / ampliar" (re-pregunta el path del SSoT/diseño y reescribe `artifacts_source`/`design_source`). No puedo planificar hasta que la fuente resuelva."
+
    Por cada fuente con `drifted: true`, **advierte y continúa** (no bloquea), citando los artefactos relevantes que cambiaron (`changed`):
    > "⚠ La fuente `<kind>` (`<path>`) está en `<head>` pero este repo planificó por última vez contra `<pin>`. Cambiaron: `<changed>`. Revísalos y actualiza el pin (`artifacts_source_pin` / `design_source_pin`) en `.sdd/project-init.json` cuando los hayas asumido."
 
    Además, si `design_ssot.dual_design_ssot` es `true` (invariante D-012: este consumer declara `design_source` **y** su `artifacts_source` también trae diseño co-localizado), **advierte y continúa** (no bloquea):
    > "⚠ Hay dos SSoT de diseño para este producto: el repo de specs (`<artifacts_source>`) trae un `DESIGN.md` co-localizado y este repo apunta a un repo de diseño aparte (`design_source`). El handoff se resuelve por `design_source` y el co-localizado queda **ignorado**. Unifica el diseño en un solo SSoT (quita el diseño del repo de specs, o no uses `design_source`) — ver D-012."
 
-   **Fallback** sin python3: compara a mano `<pin>` vs `git -C <source> rev-parse --short HEAD` para `artifacts_source_pin` y, si existe, `design_source_pin`; y comprueba a mano si `<artifacts_source>` declara `design` en su `project-init.json` teniendo tú `design_source` (dual SSoT).
+   **Fallback** sin python3: comprueba primero que `<source>` **existe** (`test -d <source>` resuelto desde la raíz del repo) — si no, es el caso `any_missing` (re-apuntar). Luego compara a mano `<pin>` vs `git -C <source> rev-parse --short HEAD` para `artifacts_source_pin` y, si existe, `design_source_pin`; y comprueba a mano si `<artifacts_source>` declara `design` en su `project-init.json` teniendo tú `design_source` (dual SSoT).
 
 ---
 

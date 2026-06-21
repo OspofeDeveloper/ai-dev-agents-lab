@@ -6,6 +6,27 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-017 — Las fuentes externas del consumer se pinean por ruta RELATIVA, con detección explícita de fuente movida
+
+- **Fecha:** 2026-06-21 · **Estado:** Adoptada · **Extiende:** D-011/D-012 (subsistema de drift cross-repo)
+
+**Contexto.** Probando CU-1.i esc. 1 en repos reales (`myops-app-specs` SSoT + `myops-app-dev-kmm` consumer web), `wf-project-init` guardó `artifacts_source` como **ruta absoluta** (un path tipo `/abs/…/myops-app-specs`). Un consumer pinea sus fuentes (SSoT de specs, y repo de diseño si aplica) por path en `project-init.json`; con ruta absoluta, **mover o clonar el workspace rompe el enlace** aunque la disposición relativa entre repos se mantenga. Además, el `CLAUDE.md` raíz ya mostraba la relativa (`../myops-app-specs`) → incoherencia doc/estado.
+
+**Decisión.** Dos piezas:
+1. **Pin por ruta relativa.** `wf-project-init` persiste `artifacts_source` y `design_source` **relativos a la raíz del repo consumer** (`os.path.relpath`, típicamente `../<repo>`). Los lectores ya resolvían relativo a la raíz (`sdd-source-drift.py`: `root / path`; los tests cubrían `specs_repo`), así que es solo cambio de escritura — y la absoluta seguía resolviendo (`root / abs = abs`), por lo que los consumers ya inicializados no se rompen. La relativa sobrevive al caso común: mover el **workspace entero** preservando el offset.
+2. **Detección explícita de fuente movida.** La relativa **no** protege el movimiento *independiente* de un repo (cambia el offset; ningún esquema sobrevive → hay que re-apuntar). Antes ese caso era un **fallo silencioso**: `sdd-source-drift.py` marcaba `git_ok:false`, indistinguible de "fuente sin git". Ahora emite **`exists`** por fuente y **`any_missing`** de nivel superior; `wf-prepare-plan` (Paso 2.5) lo consume como precondición y **se detiene** si la fuente que necesita no resuelve, indicando re-apuntar con `/wf-project-init` → "Completar / ampliar".
+
+**Alternativas descartadas.**
+- *Seguir con ruta absoluta* → rompe al mover/clonar el workspace, el caso de portabilidad más común; e incoherente con el `CLAUDE.md` que ya mostraba relativa.
+- *Intentar auto-reparar un movimiento independiente* → imposible sin heurística frágil (buscar el repo por nombre podría acertar el equivocado). Lo correcto es un diagnóstico claro y re-apuntar explícito por el usuario.
+- *Dejar la detección como `git_ok:false`* → colapsa dos causas distintas (movido vs sin git) en una señal; el `exists` explícito las separa.
+
+**Consecuencias / aprendizaje.** El pin cross-repo es ahora portable por defecto y los movimientos independientes dejan de ser silenciosos. Aprendizaje: una señal booleana que **colapsa dos causas** (`git_ok` = "tiene git Y pin conocido Y resuelve") esconde el fallo accionable; separar el "resuelve en disco" (`exists`) del "está bajo git" hace el diagnóstico preciso. El veredicto sigue siendo **advisory** en el subsistema de drift; la única parada dura es en `wf-prepare-plan` cuando la fuente que necesita para trabajar no existe.
+
+**Referencias.** `bootstrap/skills/wf-project-init/SKILL.md` (5.C0 / 5.C1b / Paso 8) · `scripts/sdd-source-drift.py` (`exists`, `any_missing`) · `pipeline/plan/skills/wf-prepare-plan/SKILL.md` (Paso 2.5) · `tests/test_sdd_source_drift.py` · `conformance/casos-de-uso/cu-01-inicializar.md` (CU-1.i) · D-011/D-012 (subsistema de pin/drift cross-repo).
+
+---
+
 ## D-016 — Barrido completo del bug *fork ⊥ interacción de usuario*: `wf-sdd-update` y `wf-bug` al hilo principal; el lint cubre también gates de confirmación
 
 - **Fecha:** 2026-06-21 · **Estado:** Adoptada · **Extiende:** [[D-015]] (mismo principio, instancias restantes)

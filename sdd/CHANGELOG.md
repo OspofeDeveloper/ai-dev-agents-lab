@@ -2,6 +2,15 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.38.0 — 2026-06-21
+
+Refinamiento de la topología **consumer** + harness de fuente movida ([[D-017]], probando CU-1.i esc. 1 en repos reales): `wf-project-init` guardaba `artifacts_source`/`design_source` como **ruta absoluta**. Un consumer pinea su SSoT por path; con ruta absoluta, mover/clonar el workspace rompe el enlace. La relativa (`../<repo>`) sobrevive al caso común (mover los dos repos juntos preservando el offset) y es la que ya mostraba el `CLAUDE.md` raíz.
+
+- **`wf-project-init` persiste `artifacts_source` y `design_source` RELATIVOS a la raíz del repo** (5.C0 / 5.C1b / Paso 8), normalizados con `os.path.relpath`. El pin se sigue calculando sobre el path resuelto; lo que se persiste es la ruta relativa.
+- **Sin cambio en los lectores**: ya resolvían relativo a la raíz (`sdd-source-drift.py` hace `root / artifacts_source`; los tests cubren rutas relativas como `specs_repo`). La absoluta también seguía resolviendo (`root / abs = abs`), así que los consumers ya inicializados no se rompen — solo los nuevos nacen portables.
+- **Harness de fuente movida.** La ruta relativa solo protege el movimiento del workspace **entero**; mover un repo de forma independiente rompe el offset y **ningún** esquema sobrevive → hay que re-apuntar. Antes esto era un fallo silencioso (`sdd-source-drift.py` marcaba `git_ok:false`, indistinguible de "sin git"). Ahora `sdd-source-drift.py check` emite **`exists`** por fuente y **`any_missing`** de nivel superior, y **`wf-prepare-plan`** (Paso 2.5) lo consume como precondición: si la fuente que necesita no resuelve, **se detiene** e indica re-apuntar con `/wf-project-init` → "Completar / ampliar". Tests nuevos en `test_sdd_source_drift.py`.
+- Sin `⚠`: `wf-project-init` y `wf-prepare-plan` son infraestructura (bootstrap global / overlay-distribuible, se refrescan con `setup.sh`/`wf-sdd-update`); ningún artefacto ni consumer ya inicializado cambia de contenido. `sdd-source-drift.py` añade campos al JSON (aditivo, no rompe consumidores).
+
 ## 0.37.0 — 2026-06-21
 
 Barrido completo del bug *fork ⊥ interacción de usuario*. Validando D-015 en una sesión real, `/wf-sdd-update` reprodujo el síntoma que D-015 acababa de cerrar: era `context: fork` y "**Esperaba confirmación del usuario**" (Paso 3.4) antes de instalar — pero un fork no puede usar `AskUserQuestion`, así que devolvía una respuesta genérica sin hacer el trabajo. Es el **hermano olvidado de `wf-project-init`** (des-forkeado en 0.33.0). El `grep` del patrón completo destapó un **tercer caso idéntico, `wf-bug`** (gate de triaje "Espera confirmación antes de actuar"). El `FORK-INTERVIEW` de D-015 no los cazaba: solo tenía marcadores de *entrevista*, no de *gate de confirmación*. Decisión completa en `DECISIONS.md` (**D-016**).

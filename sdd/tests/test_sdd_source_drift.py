@@ -114,11 +114,28 @@ class SourceDriftTest(unittest.TestCase):
         self.assertFalse(s["git_ok"])
         self.assertFalse(s["drifted"])
 
+    def test_present_source_exists_and_not_missing(self):
+        self._init_json(design_source="design_repo", design_source_pin=self.pin)
+        d = check(self.root)
+        self.assertTrue(d["sources"][0]["exists"])
+        self.assertFalse(d["any_missing"])
+
+    def test_missing_source_is_flagged(self):
+        # el repo pineado ya no resuelve (movido/borrado de forma independiente): exists
+        # False + any_missing True, distinguible de "sin git" (git_ok False con exists True).
+        self._init_json(design_source="moved_repo", design_source_pin="abc1234")
+        d = check(self.root)
+        s = d["sources"][0]
+        self.assertFalse(s["exists"])
+        self.assertFalse(s["git_ok"])
+        self.assertTrue(d["any_missing"])
+
     def test_no_external_sources_is_empty(self):
         self._init_json(artifacts={"spec": "spec"})  # standalone-like, sin fuentes externas
         d = check(self.root)
         self.assertEqual(d["sources"], [])
         self.assertFalse(d["any_drift"])
+        self.assertFalse(d["any_missing"])
 
     def test_both_specs_and_design_sources(self):
         specs = self.root / "specs_repo"

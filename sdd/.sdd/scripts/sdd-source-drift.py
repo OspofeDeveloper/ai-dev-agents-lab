@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# sdd-version: 0.37.0+3cdfd2d
 """Detección determinista de drift de fuentes externas pineadas (D-011 12.5).
 
 Un repo consumer pinea las fuentes de las que depende en `.sdd/project-init.json`:
@@ -121,8 +122,7 @@ def check(root: Path) -> dict:
             if not path or not pin:
                 continue
             src = (root / path).resolve()
-            exists = src.exists()
-            head = _git(src, "rev-parse", "--short", "HEAD") if exists else None
+            head = _git(src, "rev-parse", "--short", "HEAD") if src.exists() else None
             git_ok = head is not None and pin != "unknown"
             drifted = bool(git_ok and head != pin)
             changed = _changed(src, pin, head, tokens) if drifted else []
@@ -130,10 +130,6 @@ def check(root: Path) -> dict:
                 "kind": kind,
                 "path": path,
                 "pin": pin,
-                # `exists` distingue "la ruta no resuelve" (repo movido/borrado → re-apuntar
-                # con /wf-project-init → Completar/ampliar) de "sin git" (git_ok:false con
-                # exists:true): antes ambos colapsaban en git_ok:false, un fallo silencioso.
-                "exists": exists,
                 "head": head,
                 "git_ok": git_ok,
                 "drifted": drifted,
@@ -143,10 +139,6 @@ def check(root: Path) -> dict:
     return {
         "sources": sources,
         "any_drift": any(s["drifted"] for s in sources),
-        # `any_missing`: alguna fuente pineada ya no resuelve en disco (ruta relativa rota
-        # por mover un repo de forma independiente). Señal explícita para re-apuntar; los
-        # workflows de plan la consumen como precondición advisory.
-        "any_missing": any(not s["exists"] for s in sources),
         "design_ssot": dual_design_ssot(root),
     }
 
