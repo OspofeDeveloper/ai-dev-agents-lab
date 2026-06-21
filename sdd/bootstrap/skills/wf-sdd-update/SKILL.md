@@ -4,14 +4,15 @@ description: "Actualiza la instalación SDD de un proyecto a la versión actual 
 when_to_use: "Activa con frases como 'actualiza el sdd del proyecto', 'sdd update', 'trae la última versión del ecosistema', 'el hook avisa de version-drift', 'sincroniza las skills con el ecosistema'. No activa para inicializar un proyecto nuevo (usa wf-project-init) ni para ampliar fases (usa wf-project-init → Completar / ampliar)."
 argument-hint: "[--force]"
 effort: low
-allowed-tools: [Read, Write, Edit, Bash]
-context: fork
+allowed-tools: [Read, Write, Edit, Bash, AskUserQuestion]
 user-invocable: true
 ---
 
 # wf-sdd-update — Update no destructivo de la instalación SDD
 
 Tu rol: reinstalar mecánicamente lo que el proyecto YA declaró, a la versión actual del ecosistema. **No re-entrevistas** (eso es de `wf-project-init`), no decides fases nuevas, no tocas artefactos (`specs`, `plans`, `tasks` — solo infraestructura: skills, agentes, rules, scripts, settings).
+
+> **Corre en el hilo principal (sin `context: fork`).** El Paso 3 presenta un plan y **espera tu confirmación** antes de instalar: un gate de usuario necesita `AskUserQuestion`, que un fork/subagente no puede usar (`[[D-016]]`, mismo principio que `wf-project-init` y `[[D-015]]`). El trabajo es mecánico (reinstalar lo declarado), así que no hay nada pesado que delegar a un subagente.
 
 ---
 
@@ -41,7 +42,17 @@ Tu rol: reinstalar mecánicamente lo que el proyecto YA declaró, a la versión 
    - fases que se reinstalarán + overlay de stack si aplica
    - avisos `⚠` del changelog (p. ej. "los specs con [INFERIDO] ahora bloquean el plan: planes antes sellables pueden dejar de serlo")
    - recuerda que `--prune` eliminará piezas SDD huérfanas de fases no declaradas
-4. Espera confirmación del usuario.
+4. **Gate de confirmación con `AskUserQuestion`** (en el hilo principal — nunca texto libre): tras mostrar el plan, pregunta si proceder.
+   ```
+   question: "¿Actualizo la instalación SDD a <version_nueva> con este plan?"
+   header: "Actualizar"
+   opciones:
+     - label: "Actualizar"
+       description: "Reinstala las fases declaradas (+ overlay de stack) a la versión nueva, con --prune"
+     - label: "Cancelar"
+       description: "No toca nada; cierra el update sin cambios"
+   ```
+   Solo continúa al Paso 4 con "Actualizar". Con "Cancelar", cierra sin instalar.
 
 ## Paso 4: Ejecutar (orden crítico: base primero, overlay después)
 

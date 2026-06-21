@@ -4,14 +4,15 @@ description: "Fast-lane de mantenimiento: triaje de un bug contra los specs de l
 when_to_use: "Activa en frases como 'hay un bug', 'esto no funciona como debería', 'arregla este fallo', 'la app crashea cuando', 'reporta este defecto'. No activa para cambiar el comportamiento esperado de una feature (usa wf-spec-delta), ni para implementar tasks pendientes (usa wf-task-run)."
 argument-hint: "<descripcion.md|texto> [--feature <nombre>]"
 effort: medium
-allowed-tools: [Read, Write, Edit, Bash, Agent, Grep, Glob]
-context: fork
+allowed-tools: [Read, Write, Edit, Bash, Agent, Grep, Glob, AskUserQuestion]
 user-invocable: true
 ---
 
 # bug — Fast-lane de mantenimiento con triaje contra spec
 
 Tu rol: triajear el bug contra el spec ANTES de tocar código. La pregunta central no es "¿cómo lo arreglo?" sino **"¿qué dice el spec que debería pasar?"**. Sin esa respuesta no hay fix, hay parche ciego.
+
+> **Corre en el hilo principal (sin `context: fork`).** El Paso 3 presenta el triaje y **espera tu confirmación** antes de actuar: ese gate necesita `AskUserQuestion`, que un fork/subagente no puede usar (`[[D-016]]`, mismo principio que `[[D-015]]`). El trabajo pesado —el fix de código— se delega al agente owner vía la tool `Agent` (Paso 4), que aísla su contexto igual de bien.
 
 ---
 
@@ -38,7 +39,21 @@ Lee el spec completo. Contrasta el comportamiento reportado con los Criterios de
 - **Hay un CA, pero lo que el usuario espera es DISTINTO de lo que el CA dice** → `SPEC_CHANGE`. El "bug" es un cambio de comportamiento esperado.
 - **Ningún CA cubre el comportamiento reportado** → `UNSPEC`. El spec tiene un hueco; arreglarlo en silencio agrandaría la divergencia documental.
 
-Presenta el triaje al usuario con el CA citado textualmente y tu clasificación razonada. **Espera confirmación** antes de actuar — el triaje decide si se toca código, spec o nada.
+Presenta el triaje al usuario con el CA citado textualmente y tu clasificación razonada. **Confirma con `AskUserQuestion`** (hilo principal, nunca texto libre) antes de actuar — el triaje decide si se toca código, spec o nada:
+
+```
+question: "Triaje del bug: <clasificación>. <CA-XXX citado>. ¿Procedo así?"
+header: "Triaje"
+opciones:
+  - label: "Confirmar <CODE_BUG|SPEC_CHANGE|UNSPEC>"
+    description: "Procede según el triaje: fix de código / escalar a wf-spec-delta / registrar hueco de spec"
+  - label: "Reclasificar"
+    description: "El triaje no es correcto; reconsidera contra el CA antes de actuar"
+  - label: "Cancelar"
+    description: "No toca código ni spec"
+```
+
+Solo pasa al Paso 4 con la confirmación. Con "Reclasificar" vuelve al triaje; con "Cancelar" cierra sin tocar nada.
 
 ## Paso 4: Actuar según triaje
 

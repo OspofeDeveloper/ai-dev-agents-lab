@@ -21,7 +21,7 @@ Checks (cada finding: severidad, tipo, archivo:linea, mensaje):
   SKILL-REF-MISSING      [warning]   Token `kb-X`/`wf-X` en docs que no es una skill real.
   ALLOWED-TOOLS-MISMATCH [blocking/warning] frontmatter allowed-tools no cubre el body.
   FORK-ASKUSER-CONFLICT  [blocking]  wf con context: fork que declara/usa AskUserQuestion (un fork no puede preguntar).
-  FORK-INTERVIEW         [warning]   wf con context: fork que entrevista en prosa (sin declarar AskUserQuestion): mismo bug latente.
+  FORK-INTERVIEW         [warning]   wf con context: fork que entrevista o presenta gate de confirmacion en prosa (sin declarar AskUserQuestion): mismo bug latente.
   DESCRIPTION-TOO-LONG   [warning]   description del frontmatter > 220 chars.
   USER-INVOCABLE-MISSING [warning]   wf sin user-invocable; kb sin user-invocable: false.
 
@@ -98,12 +98,13 @@ REFERENCE_PATH_RE = re.compile(
 # --- Frontmatter ------------------------------------------------------------
 ALLOWED_TOOLS_RE = re.compile(r"^allowed-tools:\s*\[([^\]]*)\]", re.MULTILINE)
 CONTEXT_FORK_RE = re.compile(r"^context:\s*fork\b", re.MULTILINE)
-# Marcadores FUERTES de entrevista bloqueante en prosa (no "confirmar o inferir",
-# que sí es viable en fork). Calibrados para distinguir una entrevista interactiva
-# real de la mera delegación con args. Ver FORK-INTERVIEW (warning).
+# Marcadores FUERTES de interaccion bloqueante en prosa: entrevista secuencial O
+# gate de confirmacion ("espera(r) confirmacion"), ambos imposibles bajo fork. NO
+# "confirmar o inferir", que si es viable en fork. Calibrados para distinguir una
+# interaccion real con el usuario de la mera delegacion con args. Ver FORK-INTERVIEW.
 INTERVIEW_RE = re.compile(
     r"pregunta(?:r)? secuencialmente|una opci[oó]n a la vez|esperar respuesta|"
-    r"antes de tocar ning",
+    r"antes de tocar ning|espera(?:r)?\s+confirmaci[oó]n",
     re.IGNORECASE)
 AGENT_RE = re.compile(r"^agent:\s*\S+", re.MULTILINE)
 USER_INVOCABLE_RE = re.compile(r"^user-invocable:\s*(true|false)\b", re.MULTILINE)
@@ -395,20 +396,21 @@ def check_allowed_tools(findings):
 
         # --- FORK-INTERVIEW (warning) ---
         # Complemento heuristico de FORK-ASKUSER-CONFLICT: una wf-* con `context: fork`
-        # que entrevista EN PROSA (sin declarar/usar AskUserQuestion, por eso el check de
-        # arriba no la ve) tiene el mismo bug latente — el fork no podra preguntar. Es
-        # WARNING, no blocking: la senal es prosa y se prefiere no arriesgar falsos
-        # positivos sobre skills que solo delegan con args ("confirmar o inferir"). [[D-015]]
+        # que entrevista o presenta un GATE DE CONFIRMACION EN PROSA (sin declarar/usar
+        # AskUserQuestion, por eso el check de arriba no la ve) tiene el mismo bug latente
+        # — el fork no podra preguntar. Es WARNING, no blocking: la senal es prosa y se
+        # prefiere no arriesgar falsos positivos sobre skills que solo delegan con args
+        # ("confirmar o inferir"). [[D-015]] (entrevista) / [[D-016]] (gate de confirmacion).
         if has_fork and not ("AskUserQuestion" in tools or ask_line):
             iv = INTERVIEW_RE.search(body)
             if iv:
                 lineno = body_start + body[:iv.start()].count("\n")
                 findings.append(Finding(
                     "warning", "FORK-INTERVIEW", rp, lineno,
-                    f"`context: fork` con senal de entrevista en prosa (\"{iv.group(0)}\"): "
-                    "un fork no puede usar AskUserQuestion. Si la skill pregunta al usuario, "
-                    "debe correr en el hilo principal (sin fork) y delegar via `Agent`; si "
-                    "solo delega con args, ignora este aviso."))
+                    f"`context: fork` con senal de interaccion en prosa (\"{iv.group(0)}\"): "
+                    "un fork no puede usar AskUserQuestion. Si la skill pregunta o confirma "
+                    "con el usuario, debe correr en el hilo principal (sin fork) y delegar "
+                    "via `Agent`; si solo delega con args, ignora este aviso."))
 
         # --- Senal de Agent ---
         # Solo si hay invocacion explicita `Agent(` Y NO es patron fork.

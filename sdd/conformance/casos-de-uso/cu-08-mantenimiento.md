@@ -24,11 +24,12 @@ skill: sus escenarios ejercitan **2 componentes**. Marca cada escenario al ejecu
 estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 [`ROADMAP.md`](../ROADMAP.md) — esta vista es la **transpuesta** para leer/ejecutar el CU.
 
-### `wf-bug` — triaje de bug contra el spec (`CODE_BUG`/`SPEC_CHANGE`/`UNSPEC`) (4)
+### `wf-bug` — triaje de bug contra el spec (`CODE_BUG`/`SPEC_CHANGE`/`UNSPEC`) (5)
 - [ ] CU-8.a — Bug que es defecto de código (`CODE_BUG`)
 - [ ] CU-8.b — Lo reportado es un cambio de comportamiento (`SPEC_CHANGE`)
 - [ ] CU-8.c — Comportamiento no especificado (`UNSPEC`)
 - [ ] CU-8.f — Bug: UNSPEC con override de gobernanza y verificación del fix
+- [ ] CU-8.g — El gate de triaje corre en el hilo principal y confirma con `AskUserQuestion`
 
 ### `wf-spec-amend` — aclaración quirúrgica de un CA ambiguo (back-edge) (2)
 - [ ] CU-8.d — Aclarar un CA ambiguo descubierto al implementar (back-edge)
@@ -133,6 +134,24 @@ lo "aclara" sin que exista en el spec.
 **Resultado:** PASS si el `UNSPEC` override deja aviso de gobernanza y el `CODE_BUG` se verifica con evidencia +
 regresión · FALLO si registra un `UNSPEC` como si tuviera CA, o cierra un fix sin verificación ejecutable.
 **Desviación → reportar:** issue citando `CU-8.f`.
+
+## CU-8.g — El gate de triaje corre en el hilo principal y confirma con `AskUserQuestion`
+
+**Precondición:** una feature entregada con un bug reportado (cualquier clasificación).
+**Mecanismo:** skill `wf-bug` en el **hilo principal** ([[D-016]]: sin `context: fork`; el gate del
+triaje del Paso 3 usa `AskUserQuestion`). Conserva `Agent`: el fix de código se delega al owner (Paso 4).
+
+1. Le reportas el fallo.
+   → **Esperado:** presenta el triaje (CA citado + clasificación) y **confirma con `AskUserQuestion`**
+     (opciones reales Confirmar / Reclasificar / Cancelar, no texto plano) antes de actuar; el gate se
+     renderiza de verdad (no es una ejecución forked que devuelve respuesta genérica).
+2. Eliges "Cancelar".
+   → **Esperado:** cierra sin tocar código ni spec.
+
+**Resultado:** PASS si el gate de triaje se presenta con `AskUserQuestion` en el hilo principal y el fix
+se delega vía `Agent` solo tras confirmar · FALLO si pregunta como texto plano (señal de fork), actúa sin
+confirmar, o la ejecución forked no presenta el gate.
+**Desviación → reportar:** issue citando `CU-8.g`.
 
 > [!NOTE]
 > **El cambio de producto vive en [`cu-07-cambio-producto.md`](cu-07-cambio-producto.md).**

@@ -29,11 +29,12 @@ escenarios ejercitan **6 componentes**. Marca cada escenario al ejecutarlo. El e
 cobertura autoritativo (ejes happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md)
 — esta vista es la **transpuesta** para leer/ejecutar el CU.
 
-### `wf-sdd-update` — actualizar la instalación SDD sin re-entrevistar (4)
+### `wf-sdd-update` — actualizar la instalación SDD sin re-entrevistar (5)
 - [ ] CU-10.a — Actualizar un proyecto con overlay de stack
 - [ ] CU-10.i — Update sin novedad: "ya está al día" y override con `--force`
 - [ ] CU-10.j — Update sobre un proyecto sin instalación SDD
 - [ ] CU-10.k — El update no toca artefactos ni re-ejecuta el init de stack
+- [ ] CU-10.l — El update corre en el hilo principal y confirma con `AskUserQuestion`
 
 ### `install.sh` — instalación e idempotencia (2)
 - [ ] CU-10.b — `--prune` poda piezas huérfanas
@@ -235,3 +236,22 @@ settings); no toca artefactos ni el estado de proyecto del stack.
 **Resultado:** PASS si la infraestructura se actualiza dejando artefactos y estado de stack intactos ·
 FALLO si modifica un spec/plan/task, o re-corre el init de stack.
 **Desviación → reportar:** issue citando `CU-10.k`.
+
+## CU-10.l — El update corre en el hilo principal y confirma con `AskUserQuestion`
+
+**Precondición:** un proyecto SDD en versión anterior a la del ecosistema (hay drift real).
+**Mecanismo:** `wf-sdd-update` en el **hilo principal** ([[D-016]]: sin `context: fork`; el gate del
+Paso 3 usa `AskUserQuestion`). Espejo de `CU-12.b` para el update.
+
+1. Le pides actualizar el SDD del proyecto.
+   → **Esperado:** presenta el plan (versión→versión, fases, overlay si aplica, avisos `⚠`) y
+     **confirma con `AskUserQuestion`** (opciones reales Actualizar / Cancelar, no texto plano);
+     solo instala tras la confirmación. La ejecución hace el trabajo real (no devuelve una respuesta
+     genérica de fork).
+2. Eliges "Cancelar" en el gate.
+   → **Esperado:** cierra sin instalar nada.
+
+**Resultado:** PASS si el gate se presenta con `AskUserQuestion` en el hilo principal y el update
+ejecuta el trabajo real tras confirmar · FALLO si pregunta como texto plano (señal de fork), instala
+sin confirmar, o la ejecución forked devuelve una respuesta genérica sin instalar.
+**Desviación → reportar:** issue citando `CU-10.l`.

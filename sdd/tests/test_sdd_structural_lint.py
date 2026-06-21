@@ -223,6 +223,15 @@ class StructuralLintTest(unittest.TestCase):
         _, types = types_in(self.root)
         self.assertNotIn("FORK-INTERVIEW", types)
 
+    def test_fork_confirmation_gate_flagged_as_warning(self):
+        # fork con GATE DE CONFIRMACION en prosa (sin AskUserQuestion) → warning [[D-016]]
+        body = "Paso 3: presenta el plan. Espera confirmacion del usuario antes de instalar.\n"
+        write(self.root / "design" / "skills" / "wf-fork-gate" / "SKILL.md",
+              skill_md("wf-fork-gate", body,
+                       extra_fm="allowed-tools: [Read, Bash]\ncontext: fork\n"))
+        r, types = types_in(self.root, "--severity", "warning")
+        self.assertIn("FORK-INTERVIEW", types, r.stdout)
+
     # === Exit codes =======================================================
     def test_exit_0_when_clean(self):
         # Un arbol con una sola skill perfectamente formada -> sin findings

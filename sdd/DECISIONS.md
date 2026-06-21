@@ -6,6 +6,28 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-016 — Barrido completo del bug *fork ⊥ interacción de usuario*: `wf-sdd-update` y `wf-bug` al hilo principal; el lint cubre también gates de confirmación
+
+- **Fecha:** 2026-06-21 · **Estado:** Adoptada · **Extiende:** [[D-015]] (mismo principio, instancias restantes)
+
+**Contexto.** Validando D-015 en una sesión real, `/wf-sdd-update` reprodujo el síntoma que D-015 acababa de cerrar en las KMM: era `context: fork`, presentaba el plan de actualización y **"Espera confirmación del usuario"** (Paso 3.4) antes de instalar — pero un fork no puede usar `AskUserQuestion`, así que la ejecución forked devolvía una respuesta genérica sin hacer el trabajo real. Es el **hermano olvidado de `wf-project-init`**: el sweep de 0.33.0 des-forkeó éste pero no a `wf-sdd-update`. Al rastrear el ecosistema (`grep 'context: fork'` + frase de confirmación) apareció un **tercer caso idéntico, `wf-bug`**: forkeado, con gate "**Espera confirmación** antes de actuar" (Paso 3) seguido de "Paso 4: Actuar según triaje". El gate de triaje es el corazón de la skill (un fix sin confirmar es justo lo que prohíbe) y bajo fork no puede renderizarse. El `FORK-INTERVIEW` de D-015 **no** los cazaba: su `INTERVIEW_RE` solo tenía marcadores de *entrevista* (`pregunta secuencialmente`, …), no de *gate de confirmación* (`espera confirmación`).
+
+**Decisión.** Des-forkear las dos skills restantes (mismo principio que D-015 y `wf-project-init`):
+- **`wf-sdd-update`** corre en el hilo principal; el gate del Paso 3 usa `AskUserQuestion` (Actualizar / Cancelar). No hay exploración pesada que delegar — reinstala lo que `project-init.json` ya declara —, así que queda **todo en hilo principal** (sin `Agent`), espejo de `wf-project-init`.
+- **`wf-bug`** corre en el hilo principal; el gate de triaje del Paso 3 usa `AskUserQuestion` (Confirmar / Reclasificar / Cancelar). **Conserva `Agent`**: el trabajo pesado —el fix de código— se sigue delegando al agente owner (Paso 4), que aísla su contexto igual de bien. Es el ejemplo canónico del principio: *preguntar → orquestador; trabajo pesado → subagente*.
+- **Lint:** `INTERVIEW_RE` se extiende con `espera(r) confirmación` para que `FORK-INTERVIEW` cubra también gates de confirmación, no solo entrevistas. Sigue siendo **warning** (heurística de prosa).
+
+**Alternativas descartadas.**
+- *Arreglar solo `wf-sdd-update`* → dejaría `wf-bug` con el mismo bug latente y silencioso; el barrido sistemático de esta clase de bug exige cerrarla entera.
+- *No extender el lint* → la frase `espera confirmación` se escaparía y un futuro `context: fork` + gate volvería a colarse (es exactamente cómo se escapó `wf-sdd-update` del sweep de 0.33.0).
+- *Añadir el marcador laxo "confirmación del usuario"* → marcaría `kb-design-style-taxonomy` (que la contiene). Se elige el verbo de gate `espera(r) confirmación`, preciso; además el check fork solo corre sobre `wf-*`, no sobre `kb-*`.
+
+**Consecuencias / aprendizaje.** Tras el fix, `FORK-INTERVIEW` marca **0** skills reales (ambas arregladas); el lint queda como red de seguridad para la próxima. `wf-sdd-update` es **bootstrap global** → su corrección se propaga a `~/.claude` re-ejecutando `setup.sh` (no `wf-sdd-update`); `wf-bug` es overlay de proyecto → llega a los proyectos con `wf-sdd-update`. Aprendizaje: cuando una clase de bug se descubre, el barrido debe ser **exhaustivo por construcción** (grep del patrón completo, no solo el caso que saltó), y el detector debe ampliarse al **fraseo real** que se escapó, no solo al que ya cazaba.
+
+**Referencias.** `bootstrap/skills/wf-sdd-update/SKILL.md` (Paso 3 gate) · `pipeline/tasks/skills/wf-bug/SKILL.md` (Paso 3 gate; `Agent` en Paso 4) · `scripts/sdd-structural-lint.py` (`INTERVIEW_RE`, `FORK-INTERVIEW`) · `tests/test_sdd_structural_lint.py` (`test_fork_confirmation_gate_flagged_as_warning`) · [[D-015]] · 0.33.0 (fork ⊥ `AskUserQuestion`).
+
+---
+
 ## D-015 — Las skills de stack que entrevistan corren en el hilo principal (no `context: fork`); el fork solo para delegación pura
 
 - **Fecha:** 2026-06-21 · **Estado:** Adoptada · **Extiende:** la regla de 0.33.0 (fork ⊥ `AskUserQuestion`)

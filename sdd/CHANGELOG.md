@@ -2,6 +2,16 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.37.0 — 2026-06-21
+
+Barrido completo del bug *fork ⊥ interacción de usuario*. Validando D-015 en una sesión real, `/wf-sdd-update` reprodujo el síntoma que D-015 acababa de cerrar: era `context: fork` y "**Esperaba confirmación del usuario**" (Paso 3.4) antes de instalar — pero un fork no puede usar `AskUserQuestion`, así que devolvía una respuesta genérica sin hacer el trabajo. Es el **hermano olvidado de `wf-project-init`** (des-forkeado en 0.33.0). El `grep` del patrón completo destapó un **tercer caso idéntico, `wf-bug`** (gate de triaje "Espera confirmación antes de actuar"). El `FORK-INTERVIEW` de D-015 no los cazaba: solo tenía marcadores de *entrevista*, no de *gate de confirmación*. Decisión completa en `DECISIONS.md` (**D-016**).
+
+- **`wf-sdd-update`** pasa al **hilo principal** (sin `context: fork`): el gate del Paso 3 usa `AskUserQuestion` (Actualizar / Cancelar). No hay exploración pesada que delegar (reinstala lo que `project-init.json` ya declara) → todo en hilo principal, espejo de `wf-project-init`.
+- ⚠ **`wf-bug`** pasa al **hilo principal** (sin `context: fork`): el gate de triaje del Paso 3 usa `AskUserQuestion` (Confirmar / Reclasificar / Cancelar). **Conserva `Agent`** — el fix de código se sigue delegando al agente owner (Paso 4). Es el ejemplo canónico del principio: *preguntar → orquestador; trabajo pesado → subagente*.
+- **Lint:** `INTERVIEW_RE` extendido con `espera(r) confirmación` → `FORK-INTERVIEW` (warning) cubre también gates de confirmación, no solo entrevistas. Tras el fix, marca **0** skills reales (red de seguridad para la próxima). Test nuevo `test_fork_confirmation_gate_flagged_as_warning`.
+- Verificación: `sdd-structural-lint.py` 0 blocking, FORK-INTERVIEW=0; suite `unittest` verde.
+- **`⚠` solo en `wf-bug`:** es overlay de proyecto (un proyecto con tasks lo recibe corregido al correr `wf-sdd-update`). `wf-sdd-update` es **bootstrap global** → se refresca con `bash setup.sh`, no por sí mismo.
+
 ## 0.36.0 — 2026-06-21
 
 Dos ajustes del protocolo de sesión (bootstrap global), motivados por una prueba real: lanzar un skill "a secas" (`/wf-sdd-update` sin texto) hacía que el agente respondiera en inglés y dudara, porque un slash-command pelado no deja anclaje de idioma ni una intención clara.
