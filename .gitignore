@@ -8,6 +8,11 @@ __pycache__/
 # sdd/meta/ y se materializa aqui via `bash sdd/setup.sh --dev` (symlinks)
 sdd/.claude/
 
+# Artefacto de instalacion local: install.sh copia los scripts deterministas a
+# .sdd/scripts/ y sella .sdd/sdd-version.json cuando se corre con cwd en el repo.
+# La fuente canonica vive en sdd/scripts/; .sdd/ es regenerable, no se versiona.
+sdd/.sdd/
+
 # Output compilado de MkDocs: regenerable con `mkdocs build`; el CI lo publica
 # a gh-pages via `mkdocs gh-deploy` (.github/workflows/docs.yml). No versionar.
 sdd/site/
