@@ -2,6 +2,13 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.41.0 — 2026-06-21
+
+Corrección del recordatorio de activación post-init: decía "Si quieres empezar con contexto limpio, ejecuta `/clear`" — pero `/clear` **no recarga** skills/agentes (se cargan al **arrancar** la sesión; un overlay/fase recién instalado no aparece con `/clear`). Texto nuevo: "**Si no lo ha hecho, comienza una sesión nueva de Claude para que se carguen.**"
+
+- Actualizado en `install.sh` (línea final que emite el aviso) y en `wf-project-init` Paso 11 (el `echo` determinista + el bullet del informe). El registro histórico de `DECISIONS.md` se deja intacto (no se reescribe).
+- Sin `⚠`: es texto de un aviso de bootstrap global (se refresca con `bash setup.sh`); ningún artefacto ni comportamiento de proyecto cambia.
+
 ## 0.40.0 — 2026-06-21
 
 Cierre del residual de 0.39.0 (re-probando CU-1.i esc. 1): tras quitar la pregunta de Framework para Web, el agente **seguía inventando** una aclaración no canónica — "el repo se llama `-kmm` pero elegiste Web, ¿qué describe mejor?" — re-litigando una respuesta que el usuario ya dio. Misma raíz que la Obs 1 original: trata el **nombre del repo** como un hecho que contradice la respuesta explícita, en vez de como mera pista de pre-relleno.

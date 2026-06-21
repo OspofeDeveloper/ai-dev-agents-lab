@@ -503,4 +503,4 @@ if command -v python3 >/dev/null 2>&1 && [ -f "$ENFORCE_ROOT/.sdd/scripts/sdd-kb
 fi
 
 echo ""
-echo "Done. Ejecuta /skills y /agents para revisar que Claude ha cargado correctamente el ecosistema. Si quieres empezar con contexto limpio, ejecuta /clear."
+echo "Done. Ejecuta /skills y /agents para revisar que Claude ha cargado correctamente el ecosistema. Si no lo ha hecho, comienza una sesión nueva de Claude para que se carguen."

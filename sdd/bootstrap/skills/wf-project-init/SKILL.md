@@ -711,6 +711,6 @@ esac
 **Siempre, como última acción del init** (tras el informe del Paso 10). `install.sh` ya emite este aviso, pero su salida queda **colapsada** en el output del Paso 6 y el usuario no lo ve. Emítelo con un `echo` **determinista** (no lo parafrasees: garantiza el texto exacto y que siempre aparezca):
 
 ```bash
-echo "Ejecuta /skills y /agents para revisar que Claude ha cargado correctamente el ecosistema. Si quieres empezar con contexto limpio, ejecuta /clear."
+echo "Ejecuta /skills y /agents para revisar que Claude ha cargado correctamente el ecosistema. Si no lo ha hecho, comienza una sesión nueva de Claude para que se carguen."
 ```
-- **Recordatorio de activación (siempre, como última línea del informe):** indica al usuario que ejecute `/skills` y `/agents` para revisar que Claude ha cargado correctamente el ecosistema, y `/clear` si quiere empezar con contexto limpio. `install.sh` emite este aviso, pero su salida queda **colapsada** en el output del Paso 6, así que el informe del skill **debe** repetirlo explícitamente o el usuario no lo verá.
+- **Recordatorio de activación (siempre, como última línea del informe):** indica al usuario que ejecute `/skills` y `/agents` para revisar que Claude ha cargado correctamente el ecosistema, y que **si no se han cargado, inicie una sesión nueva de Claude** para que se carguen (las skills/agentes recién instalados se cargan al **arrancar** la sesión, no con `/clear`). `install.sh` emite este aviso, pero su salida queda **colapsada** en el output del Paso 6, así que el informe del skill **debe** repetirlo explícitamente o el usuario no lo verá.
