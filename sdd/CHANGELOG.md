@@ -2,6 +2,15 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.42.0 — 2026-06-21
+
+Validación del SSoT glob-safe en la entrevista **consumer** de `wf-project-init` (visto probando CU-1.i esc. 2, consumer backend): el `SKILL.md` describía la validación del path en prosa ("contiene specs: `features/` o `*_features.md`") **sin dar un snippet**, y el agente improvisó un sondeo de candidatos con un glob suelto `../<repo>/*_features.md`. Bajo **zsh** (shell por defecto en macOS) un glob sin match es un error de *parse-time* (`nomatch`) que **aborta el comando con exit 1**, y `2>/dev/null` **no** lo silencia (la expansión ocurre antes de la redirección). La validación seguía adelante por inercia, pero el paso quedaba en rojo.
+
+- **5.C0 gana un snippet canónico glob-safe (úsalo verbatim).** Detecta presencia de `*_features.md` con `find … -name '*_features.md'` (patrón entrecomillado, lo expande `find`, no la shell) en vez de un glob suelto; vale tanto para **sondear siblings candidatos** como para **validar el path elegido**. Además **honra `artifacts.spec`** del `project-init.json` del SSoT (lo que la prosa pedía pero no daba en código) y calcula `REL` (ruta relativa, [[D-017]]) + `PIN` de una pieza.
+- Nota normativa añadida en 5.C0: prohibido un glob suelto `<path>/*_features.md` en línea de comando (zsh `nomatch`); usar siempre `find`.
+- Re-probado en CU-1.i esc. 2: el sondeo de candidatos corre limpio (`OK rel=… pin=… specroot=…`, sin `no matches found`) y resuelve `specroot` desde `artifacts.spec`.
+- Sin `⚠`: `wf-project-init` es bootstrap global (se refresca con `bash setup.sh`); afecta solo a inits **nuevos**, ningún proyecto ya inicializado cambia.
+
 ## 0.41.0 — 2026-06-21
 
 Corrección del recordatorio de activación post-init: decía "Si quieres empezar con contexto limpio, ejecuta `/clear`" — pero `/clear` **no recarga** skills/agentes (se cargan al **arrancar** la sesión; un overlay/fase recién instalado no aparece con `/clear`). Texto nuevo: "**Si no lo ha hecho, comienza una sesión nueva de Claude para que se carguen.**"

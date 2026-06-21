@@ -242,7 +242,27 @@ Authoring **no** pregunta superficie, framework ni stack: es agnóstico. `STACK 
 
 ### Rama CONSUMER
 
-**5.C0 — Path al repo SSoT** — **SIEMPRE con `AskUserQuestion`, nunca auto-seleccionado.** Path local al checkout del repo `authoring` (sibling `../<repo>` o submodule). **Detectar ≠ decidir:** aunque encuentres uno o varios siblings `authoring` como candidatos, **no los des por buenos** — preséntalos como opciones de la pregunta (la opción "Other" permite teclear otro path) y **exige confirmación explícita del usuario**. Solo puedes saltarte la pregunta si el path ya está registrado en `project-init.json` o el usuario ya lo indicó en esta sesión. Validar: el path existe y contiene specs (`features/` o `*_features.md`, buscando también bajo `artifacts.spec` de SU `project-init.json` si lo tiene). Si no valida → re-preguntar o detener con instrucciones de clonarlo. **Guarda `ARTIFACTS_SOURCE` como ruta RELATIVA a la raíz de ESTE repo** (no absoluta): así el par SSoT+consumer sobrevive a mover/clonar el workspace entero (preserva el offset relativo); una ruta absoluta se rompería. Normalízala con `python3 -c "import os,sys;print(os.path.relpath(os.path.realpath(sys.argv[1]), os.path.realpath('.')))" "<path_dado>"` desde la raíz del proyecto (típicamente da `../<repo>`). `ARTIFACTS_SOURCE_PIN = git -C <path_resuelto> rev-parse --short HEAD` (o `unknown`) — el pin se calcula sobre el path resuelto, pero lo que se PERSISTE es la ruta relativa.
+**5.C0 — Path al repo SSoT** — **SIEMPRE con `AskUserQuestion`, nunca auto-seleccionado.** Path local al checkout del repo `authoring` (sibling `../<repo>` o submodule). **Detectar ≠ decidir:** aunque encuentres uno o varios siblings `authoring` como candidatos, **no los des por buenos** — preséntalos como opciones de la pregunta (la opción "Other" permite teclear otro path) y **exige confirmación explícita del usuario**. Solo puedes saltarte la pregunta si el path ya está registrado en `project-init.json` o el usuario ya lo indicó en esta sesión. Validar: el path existe y contiene specs (`features/` o `*_features.md`, buscando también bajo `artifacts.spec` de SU `project-init.json` si lo tiene). Si no valida → re-preguntar o detener con instrucciones de clonarlo.
+
+> **Glob-safe (zsh).** Nunca pongas un glob suelto como `<path>/*_features.md` en una línea de comando: bajo zsh (shell por defecto en macOS) un glob sin match es un error de *parse-time* (`nomatch`) que aborta el comando con exit 1, y `2>/dev/null` **no** lo silencia (la expansión ocurre antes de la redirección). Detecta presencia de `*_features.md` con `find … -name '*_features.md'` (patrón **entrecomillado**, lo expande `find`, no la shell). Esto vale tanto para **sondear siblings candidatos** como para **validar el path elegido**. Snippet canónico de validación (úsalo verbatim):
+
+```sh
+SSoT="$1"                                    # path dado/elegido (relativo o absoluto)
+[ -d "$SSoT" ] || { echo "NO_EXISTE"; exit 1; }
+SPECROOT="$SSoT"                             # raíz de specs: su artifacts.spec si lo declara, si no la propia raíz
+if [ -f "$SSoT/.sdd/project-init.json" ]; then
+  AS=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1])).get('artifacts',{}).get('spec','') or '')" "$SSoT/.sdd/project-init.json" 2>/dev/null)
+  [ -n "$AS" ] && [ -d "$SSoT/$AS" ] && SPECROOT="$SSoT/$AS"
+fi
+if [ -d "$SPECROOT/features" ] || [ -d "$SPECROOT/spec/features" ] \
+   || find "$SPECROOT" -maxdepth 2 -name '*_features.md' -print -quit 2>/dev/null | grep -q .; then
+  REL=$(python3 -c "import os,sys;print(os.path.relpath(os.path.realpath(sys.argv[1]),os.path.realpath('.')))" "$SSoT")
+  PIN=$(git -C "$SSoT" rev-parse --short HEAD 2>/dev/null || echo unknown)
+  echo "OK rel=$REL pin=$PIN"
+else
+  echo "SIN_SPECS"                           # re-preguntar o detener (clonar el SSoT)
+fi
+``` **Guarda `ARTIFACTS_SOURCE` como ruta RELATIVA a la raíz de ESTE repo** (no absoluta): así el par SSoT+consumer sobrevive a mover/clonar el workspace entero (preserva el offset relativo); una ruta absoluta se rompería. Normalízala con `python3 -c "import os,sys;print(os.path.relpath(os.path.realpath(sys.argv[1]), os.path.realpath('.')))" "<path_dado>"` desde la raíz del proyecto (típicamente da `../<repo>`). `ARTIFACTS_SOURCE_PIN = git -C <path_resuelto> rev-parse --short HEAD` (o `unknown`) — el pin se calcula sobre el path resuelto, pero lo que se PERSISTE es la ruta relativa.
 
 **5.C1 — Superficie** (en la misma llamada que el path no, porque el path se valida antes):
 ```
