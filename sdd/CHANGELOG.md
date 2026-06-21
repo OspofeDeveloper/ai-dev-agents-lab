@@ -2,6 +2,15 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.39.0 — 2026-06-21
+
+Hardening de la entrevista **consumer** de `wf-project-init` (dos desviaciones vistas probando CU-1.i esc. 1): el agente (1) **preguntó Framework** ("¿qué app móvil?") con superficie **Web**, y luego inventó una pregunta para resolver la "incoherencia Web+Compose Multiplatform"; y (2) **auto-seleccionó el SSoT** (`../myops-app-specs`) sin confirmar, solo por detectarlo como sibling. Causa raíz: agrupó en una sola llamada `AskUserQuestion` preguntas que **dependen** de respuestas previas (Framework está *gated* a `surface = App móvil`), y dio por bueno un candidato detectado sin confirmación.
+
+- **5.C0 — el SSoT se confirma SIEMPRE con `AskUserQuestion`, nunca auto-seleccionado.** Detectar un sibling `authoring` ≠ decidirlo: se ofrece como opción y se exige confirmación explícita (salvo que ya esté registrado o el usuario lo haya dado en la sesión).
+- **5.C1 / 5.X — la Superficie GATEA la técnica.** Framework (5.X) y "¿dónde vive el diseño?" (5.C1b) van en **llamadas separadas posteriores**, nunca agrupadas con la Superficie. Framework **solo** si surface = *App móvil*; para **web/desktop/backend NO se pregunta** (stack derivado o `agnostico`) — así no aparece la falsa "incoherencia Web+Compose".
+- Conformance: CU-1.i esc. 1 endurecido (PASS exige confirmar el SSoT y no preguntar Framework salvo móvil; FALLO si auto-selecciona el SSoT o pregunta Framework para no-móvil).
+- Sin `⚠`: `wf-project-init` es bootstrap global (se refresca con `bash setup.sh`); afecta solo a inits **nuevos**, ningún proyecto ya inicializado cambia.
+
 ## 0.38.0 — 2026-06-21
 
 Refinamiento de la topología **consumer** + harness de fuente movida ([[D-017]], probando CU-1.i esc. 1 en repos reales): `wf-project-init` guardaba `artifacts_source`/`design_source` como **ruta absoluta**. Un consumer pinea su SSoT por path; con ruta absoluta, mover/clonar el workspace rompe el enlace. La relativa (`../<repo>`) sobrevive al caso común (mover los dos repos juntos preservando el offset) y es la que ya mostraba el `CLAUDE.md` raíz.

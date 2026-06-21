@@ -178,8 +178,8 @@ Las preguntas que no se gatean entre sí se agrupan en una misma llamada a `AskU
 Llamada 1 — incondicional: Q1 Contenido (gatea toda la rama)
 Rama según Q1:
   authoring   → ¿PRD? + ¿Sistema visual?
-  consumer    → path al SSoT + Superficie (gatea técnica)  → Framework/Targets si móvil
-  standalone  → ¿PRD? + ¿Diseño? + Superficie(s)           → Framework/Targets si móvil
+  consumer    → confirmar path SSoT + Superficie (gatea)   → [solo si móvil] Framework/Targets ; [solo si has_ui] dónde vive el diseño
+  standalone  → ¿PRD? + ¿Diseño? + Superficie(s)           → [solo si móvil] Framework/Targets
 Siempre al final: Resumen y confirmación
 ```
 
@@ -242,7 +242,7 @@ Authoring **no** pregunta superficie, framework ni stack: es agnóstico. `STACK 
 
 ### Rama CONSUMER
 
-**5.C0 — Path al repo SSoT** (texto libre vía opción "Other" de AskUserQuestion, o pregúntalo directamente si el usuario ya lo dio): path local al checkout del repo `authoring` (sibling `../<repo>` o submodule). Validar: el path existe y contiene specs (`features/` o `*_features.md`, buscando también bajo `artifacts.spec` de SU `project-init.json` si lo tiene). Si no valida → re-preguntar o detener con instrucciones de clonarlo. **Guarda `ARTIFACTS_SOURCE` como ruta RELATIVA a la raíz de ESTE repo** (no absoluta): así el par SSoT+consumer sobrevive a mover/clonar el workspace entero (preserva el offset relativo); una ruta absoluta se rompería. Normalízala con `python3 -c "import os,sys;print(os.path.relpath(os.path.realpath(sys.argv[1]), os.path.realpath('.')))" "<path_dado>"` desde la raíz del proyecto (típicamente da `../<repo>`). `ARTIFACTS_SOURCE_PIN = git -C <path_resuelto> rev-parse --short HEAD` (o `unknown`) — el pin se calcula sobre el path resuelto, pero lo que se PERSISTE es la ruta relativa.
+**5.C0 — Path al repo SSoT** — **SIEMPRE con `AskUserQuestion`, nunca auto-seleccionado.** Path local al checkout del repo `authoring` (sibling `../<repo>` o submodule). **Detectar ≠ decidir:** aunque encuentres uno o varios siblings `authoring` como candidatos, **no los des por buenos** — preséntalos como opciones de la pregunta (la opción "Other" permite teclear otro path) y **exige confirmación explícita del usuario**. Solo puedes saltarte la pregunta si el path ya está registrado en `project-init.json` o el usuario ya lo indicó en esta sesión. Validar: el path existe y contiene specs (`features/` o `*_features.md`, buscando también bajo `artifacts.spec` de SU `project-init.json` si lo tiene). Si no valida → re-preguntar o detener con instrucciones de clonarlo. **Guarda `ARTIFACTS_SOURCE` como ruta RELATIVA a la raíz de ESTE repo** (no absoluta): así el par SSoT+consumer sobrevive a mover/clonar el workspace entero (preserva el offset relativo); una ruta absoluta se rompería. Normalízala con `python3 -c "import os,sys;print(os.path.relpath(os.path.realpath(sys.argv[1]), os.path.realpath('.')))" "<path_dado>"` desde la raíz del proyecto (típicamente da `../<repo>`). `ARTIFACTS_SOURCE_PIN = git -C <path_resuelto> rev-parse --short HEAD` (o `unknown`) — el pin se calcula sobre el path resuelto, pero lo que se PERSISTE es la ruta relativa.
 
 **5.C1 — Superficie** (en la misma llamada que el path no, porque el path se valida antes):
 ```
@@ -260,6 +260,8 @@ opciones:
 ```
 
 `surfaces = [<una>]`. `has_ui = surface ∈ {mobile, desktop, web}`. Si `has_ui` es falso (backend): `design_role = null`, sin diseño, salta 5.C1b.
+
+> **La Superficie GATEA la técnica — NO la agrupes con lo que depende de ella.** La pregunta de Framework (5.X) y la de "¿dónde vive el diseño?" (5.C1b) **dependen de esta respuesta** (Framework solo si surface = *App móvil*; 5.C1b solo si `has_ui`), así que van en **llamadas posteriores y separadas**, NUNCA en la misma llamada `AskUserQuestion` que la Superficie. En particular: para **Web / Desktop / Backend NO se pregunta Framework** (no son móvil) — el stack se deriva de la detección (Paso 4) o queda `agnostico`. Si no preguntaste Framework, no hay "incoherencia Web+Compose Multiplatform" que resolver: ese síntoma solo aparece cuando se agrupó mal.
 
 **5.C1b — Dónde vive el diseño** [solo si `has_ui`]:
 ```
@@ -345,7 +347,9 @@ Si `all_valid` es `false`, muestra los `invalid` al usuario y **re-pregunta** (f
 
 ---
 
-### 5.X — Framework y Targets [solo si hay superficie móvil y no llegó `--stack`]
+### 5.X — Framework y Targets [solo si la Superficie elegida es *App móvil*, y no llegó `--stack`]
+
+> **Gate duro:** esta pregunta **solo** existe cuando la Superficie es *App móvil*. Si es **web, desktop o backend, NO se pregunta** (deriva el stack de la detección del Paso 4 o `agnostico`). Y nunca se presenta en la misma llamada que la Superficie: se hace **después** de conocer su respuesta (regla 5).
 
 ```
 question: "¿Qué tipo de app móvil vas a hacer?"

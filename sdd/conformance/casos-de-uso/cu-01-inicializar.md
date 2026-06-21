@@ -319,11 +319,14 @@ dónde vive el diseño: co-localizado en el SSoT (rol feature, flows/views local
 diseño aparte** (D-011: `design_source` + `design_targets`, sin design local).
 
 1. Consumer con superficie **Web** (con-UI); das el path al checkout del SSoT.
-   → **Esperado:** valida que el path existe y contiene specs; instala `phases: ["design","plan","tasks"]`
-     (design rol feature, **sin prd/spec**), `design_role: "feature"`, `has_ui: true`; crea `features/`
-     y escribe `artifacts_source` + `artifacts_source_pin` (commit corto del SSoT). El `CLAUDE.md` raíz
-     lleva la sección **"Topología: repo consumidor"** (specs **y `DESIGN.md`** del SSoT en solo lectura;
-     `flows`/`views` locales de esta superficie).
+   → **Esperado:** **confirma el SSoT con `AskUserQuestion`** (aunque detecte un sibling `authoring`, NO lo
+     auto-selecciona: lo ofrece como opción y espera confirmación); **NO pregunta Framework** (es web, no
+     móvil — esa pregunta es solo de *App móvil* y va en llamada separada tras la Superficie). Valida que el
+     path existe y contiene specs; instala `phases: ["design","plan","tasks"]` (design rol feature, **sin
+     prd/spec**), `design_role: "feature"`, `has_ui: true`; crea `features/` y escribe `artifacts_source`
+     (**ruta relativa**, [[D-017]]) + `artifacts_source_pin` (commit corto del SSoT, o `unknown` sin git). El
+     `CLAUDE.md` raíz lleva la sección **"Topología: repo consumidor"** (specs **y `DESIGN.md`** del SSoT en
+     solo lectura; `flows`/`views` locales de esta superficie).
 2. Consumer con superficie **Backend** (headless).
    → **Esperado:** instala **solo `plan`+`tasks`**, `design_role: null`, `has_ui: false`; sin diseño.
 3. Das un path que **no** contiene specs.
@@ -343,11 +346,13 @@ diseño aparte** (D-011: `design_source` + `design_targets`, sin design local).
      ignorado; sugiere unificar en un solo SSoT. Continúa si el usuario confirma (p. ej. migración). Tras
      escribir el `project-init.json`, `sdd-source-drift.py check` lo reporta como `design_ssot.dual_design_ssot: true`.
 
-**Resultado:** PASS si instala solo plan+tasks con `artifacts_source`/pin, exige un SSoT válido, en el
+**Resultado:** PASS si instala solo plan+tasks con `artifacts_source`/pin (ruta relativa), **confirma el SSoT
+con `AskUserQuestion`** y **no pregunta Framework salvo superficie móvil**, exige un SSoT válido, en el
 caso 4 persiste `design_source`/pin/`design_targets` sin instalar design local, y en el caso 5 **avisa**
 del doble SSoT de diseño sin bloquear · FALLO si instala prd/spec/design en un consumer, escribe la clave
-`artifacts` canónica, acepta un path sin specs, autora flows/views localmente cuando hay `design_source`,
-o **calla** ante el doble SSoT de diseño (caso 5).
+`artifacts` canónica, **auto-selecciona el SSoT sin confirmar**, **pregunta Framework para web/desktop/backend**,
+acepta un path sin specs, autora flows/views localmente cuando hay `design_source`, o **calla** ante el doble
+SSoT de diseño (caso 5).
 **Desviación → reportar:** issue citando `CU-1.i`.
 
 ## CU-1.j — Init invocado desde un subpaquete de un monorepo ya inicializado (gate de workflow)
