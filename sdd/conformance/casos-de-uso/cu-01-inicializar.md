@@ -351,8 +351,9 @@ con `AskUserQuestion`** y **no pregunta Framework salvo superficie móvil**, exi
 caso 4 persiste `design_source`/pin/`design_targets` sin instalar design local, y en el caso 5 **avisa**
 del doble SSoT de diseño sin bloquear · FALLO si instala prd/spec/design en un consumer, escribe la clave
 `artifacts` canónica, **auto-selecciona el SSoT sin confirmar**, **pregunta Framework para web/desktop/backend**,
-acepta un path sin specs, autora flows/views localmente cuando hay `design_source`, o **calla** ante el doble
-SSoT de diseño (caso 5).
+**inventa una aclaración no canónica para reconciliar el nombre del repo con la superficie elegida** (la respuesta
+explícita es autoritativa), acepta un path sin specs, autora flows/views localmente cuando hay `design_source`, o
+**calla** ante el doble SSoT de diseño (caso 5).
 **Desviación → reportar:** issue citando `CU-1.i`.
 
 ## CU-1.j — Init invocado desde un subpaquete de un monorepo ya inicializado (gate de workflow)

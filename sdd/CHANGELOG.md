@@ -2,6 +2,14 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.40.0 — 2026-06-21
+
+Cierre del residual de 0.39.0 (re-probando CU-1.i esc. 1): tras quitar la pregunta de Framework para Web, el agente **seguía inventando** una aclaración no canónica — "el repo se llama `-kmm` pero elegiste Web, ¿qué describe mejor?" — re-litigando una respuesta que el usuario ya dio. Misma raíz que la Obs 1 original: trata el **nombre del repo** como un hecho que contradice la respuesta explícita, en vez de como mera pista de pre-relleno.
+
+- **Reglas 2 y 3 de la entrevista de `wf-project-init` endurecidas:** las pistas heurísticas (nombre del repo, detección del Paso 4) **solo pre-rellenan el default** de una pregunta canónica, no son hechos; y **una respuesta canónica del usuario es autoritativa** — prohibido inventar preguntas de aclaración para reconciliarla con una pista (el error de dedo se corrige en el **Resumen** 5.8, no a media entrevista).
+- Conformance: CU-1.i esc. 1 — FALLO añadido si inventa la aclaración nombre-vs-superficie.
+- Sin `⚠`: `wf-project-init` es bootstrap global (se refresca con `bash setup.sh`); solo afecta a inits **nuevos**.
+
 ## 0.39.0 — 2026-06-21
 
 Hardening de la entrevista **consumer** de `wf-project-init` (dos desviaciones vistas probando CU-1.i esc. 1): el agente (1) **preguntó Framework** ("¿qué app móvil?") con superficie **Web**, y luego inventó una pregunta para resolver la "incoherencia Web+Compose Multiplatform"; y (2) **auto-seleccionó el SSoT** (`../myops-app-specs`) sin confirmar, solo por detectarlo como sibling. Causa raíz: agrupó en una sola llamada `AskUserQuestion` preguntas que **dependen** de respuestas previas (Framework está *gated* a `surface = App móvil`), y dio por bueno un candidato detectado sin confirmación.

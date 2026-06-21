@@ -24,8 +24,8 @@ Tu rol es de **onboarding y dispatcher**: detectas el contexto, identificas la *
 **Reglas de la entrevista:**
 
 1. **Toda pregunta usa `AskUserQuestion`** — nunca texto libre. No producir texto antes de la primera pregunta.
-2. **No preguntar lo que ya se sabe** — argumentos, `KNOWN_STATE` o artefactos detectados pre-rellenan. Valor conocido → confirmación ("Sí, correcto" / "No, cambiar"); desconocido → pregunta completa.
-3. **Opciones exactas** — las escritas aquí. No añadir, quitar ni sustituir.
+2. **No preguntar lo que ya se sabe** — argumentos, `KNOWN_STATE` o artefactos detectados pre-rellenan. Valor conocido → confirmación ("Sí, correcto" / "No, cambiar"); desconocido → pregunta completa. **Las pistas heurísticas (nombre del repo, detección del Paso 4) SOLO pre-rellenan el default de una pregunta canónica; no son hechos.**
+3. **Opciones exactas, y NINGUNA pregunta inventada** — usa solo las preguntas y opciones escritas en este SKILL; no añadas, quites ni sustituyas. En particular, **una vez el usuario responde una pregunta canónica, su respuesta es AUTORITATIVA**: NO inventes una pregunta de aclaración para reconciliarla con una pista heurística (p. ej. "el repo se llama `-kmm` pero elegiste Web, ¿seguro?"). El nombre del repo es solo pre-relleno (regla 2); si de verdad hubo un error de dedo, el lugar para corregirlo es el **Resumen** (5.8), no una pregunta extra a media entrevista.
 4. **Backbone variable por topología** — lo que se instala depende del eje primario (SDD es un flujo agnóstico a la tecnología: siempre hay spec→plan→tasks en algún repo, nunca implementación directa, pero esas fases se reparten según la topología):
    - `authoring` → `spec` (+ `prd` si aplica, + `design` rol *system* si aplica). **Sin `plan`/`tasks`.**
    - `consumer` → `plan` + `tasks` (+ `design` rol *feature* si la superficie tiene UI). **Sin `prd`/`spec`** (viven en el SSoT).
