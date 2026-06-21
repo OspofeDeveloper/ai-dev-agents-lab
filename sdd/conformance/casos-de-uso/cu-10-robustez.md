@@ -34,7 +34,7 @@ cobertura autoritativo (ejes happy/edge/harness/args) vive en [`ROADMAP.md`](../
 - [ ] CU-10.i — Update sin novedad: "ya está al día" y override con `--force`
 - [ ] CU-10.j — Update sobre un proyecto sin instalación SDD
 - [ ] CU-10.k — El update no toca artefactos ni re-ejecuta el init de stack
-- [ ] CU-10.l — El update corre en el hilo principal y confirma con `AskUserQuestion`
+- [x] CU-10.l — El update corre en el hilo principal y confirma con `AskUserQuestion` · ✓ 2026-06-21 ([[D-016]]: sobre repo KMM real 0.36.0→0.37.0; aviso de drift en una línea sin auto-actualizar, gate `AskUserQuestion` (Actualizar/Cancelar) renderizado en hilo principal, install real (base+overlay), sello sincronizado; `wf-bug` aterrizó sin `context: fork`)
 
 ### `install.sh` — instalación e idempotencia (2)
 - [ ] CU-10.b — `--prune` poda piezas huérfanas
