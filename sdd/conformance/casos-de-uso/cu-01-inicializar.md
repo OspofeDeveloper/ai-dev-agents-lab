@@ -32,7 +32,7 @@ para leer/ejecutar el CU.
 ### `wf-project-init` — la skill de init (12)
 - [x] CU-1.b — Modo SDD arranca el init · ✓ 2026-06-20 (RE-TEST D-011 cerrado: Q1 con 4 opciones; la 4ª, Diseño, arranca end-to-end y escribe el esquema nuevo — ver CU-1.q)
 - [x] CU-1.h — La topología decide qué se instala · ✓ 2026-06-20 (esc. 1 authoring + esc. 2 standalone mínimo en sesiones previas; esc. 3 standalone+KMM+diseño full verificado en disco: overlay instalado vía re-run del Paso 8.5, **sin `Unknown skill`** [[D-014]], rol full con ambos agentes, 6 reglas, `verify` exit 0, sin `stack-runs.jsonl`)
-- [ ] CU-1.i — Topología consumer
+- [x] CU-1.i — Topología consumer · ✓ 2026-06-24 (esc. 1-6 PASS en repos reales; endurecido tras campaña: glob SSoT glob-safe en zsh, confirmaciones ≥2 opciones sin "indicar otro" redundante con el slot Other, consumer sin `target_platforms`. esc. 6 (SSoT `OK_EMPTY`) confirmado: `../myops-app-specs-2` authoring vacío aceptado y etiquetado "aún sin specs", no rechazado, JSON sin `target_platforms`)
 - [ ] CU-1.j — Init desde subpaquete (gate de workflow)
 - [ ] CU-1.k — Verificación bloqueante
 - [ ] CU-1.l — Evolución authoring→standalone (extend)
@@ -209,11 +209,21 @@ ficheros de instalación no están presentes.
    (authoring→`system`, consumer-con-UI→`feature`, standalone→`full`, design→`system`) — **no** presenta
    un `AskUserQuestion` para decidir el rol ni para "instalar vs quitar" la fase
    declarada. Quitar una fase declarada es un cambio de alcance explícito, no reparación.
+3. (`.claude/` borrado, `.sdd/` superviviente — ✓ 2026-06-24) `.sdd/project-init.json`
+   sobrevive pero `.claude/` se borró entero (sin `sdd-mode.json` ni `rules/`).
+   → **Esperado:** el hook encuentra el contrato vía find-up y dispara `init-incomplete` (no `mode-undecided`,
+     pese a faltar `sdd-mode.json`); `wf-project-init` detecta `init_found` (deriva **solo** de
+     `.sdd/project-init.json`) y entra **directo al Paso 3b** (extend/repair) — **NO** arranca una entrevista
+     fresca ni re-pregunta topología/SSoT/superficie. El contrato manda; solo "Rehacer desde cero" re-entrevista.
+     **Verificado:** `detect` → `init_found:true, mode_found:false, installed_phases:[]`; reparó `plan`+`tasks`+overlay,
+     regeneró el `CLAUDE.md` ausente, 10/10, sin entrevista.
 
 **Resultado:** PASS si repara las fases ausentes sin re-entrevistar de cero **y de forma
-determinista** (deriva el rol de la topología, sin preguntarlo) · FALLO si ignora el
-hueco, rehace todo el init, **o abre un `AskUserQuestion` para decidir el rol o el
-instalar-vs-quitar de una fase ya declarada**.
+determinista** (deriva el rol de la topología, sin preguntarlo), **y si `init_found` (existe
+`.sdd/project-init.json`) gana SIEMPRE a la entrevista aunque `.claude/` se haya borrado** · FALLO si ignora el
+hueco, rehace todo el init, **abre un `AskUserQuestion` para decidir el rol o el
+instalar-vs-quitar de una fase ya declarada**, **o arranca una entrevista fresca (Q1 Contenido/SSoT/superficie)
+teniendo ya un `.sdd/project-init.json`**.
 **Desviación → reportar:** issue citando `CU-1.e`.
 
 ## CU-1.f — Instalación de versión anterior (`version-drift`)
@@ -345,15 +355,26 @@ diseño aparte** (D-011: `design_source` + `design_targets`, sin design local).
      `DESIGN.md` y vas a apuntar a un repo de diseño aparte → gana `design_source` y el co-localizado queda
      ignorado; sugiere unificar en un solo SSoT. Continúa si el usuario confirma (p. ej. migración). Tras
      escribir el `project-init.json`, `sdd-source-drift.py check` lo reporta como `design_ssot.dual_design_ssot: true`.
+6. (SSoT válido pero **aún sin specs**) Das como SSoT un repo `authoring`/`standalone` ya inicializado (tiene
+   `.sdd/project-init.json`) pero **sin specs autorados todavía** (`features/` vacío o inexistente, sin `*_features.md`).
+   → **Esperado:** la validación lo clasifica `OK_EMPTY` (no `SIN_SPECS`): es un SSoT SDD válido, se **acepta**, pero
+     se **etiqueta con honestidad** ("(SSoT válido, **aún sin specs** — los autorarás en su repo)") en la opción y el
+     resumen — **nunca** como "contiene specs". Un `features/` **vacío no cuenta** como tener specs. Un path que **ni**
+     tiene specs **ni** es repo authoring/standalone sigue siendo `SIN_SPECS` (rechazo, como el caso 3).
 
 **Resultado:** PASS si instala solo plan+tasks con `artifacts_source`/pin (ruta relativa), **confirma el SSoT
-con `AskUserQuestion`** y **no pregunta Framework salvo superficie móvil**, exige un SSoT válido, en el
-caso 4 persiste `design_source`/pin/`design_targets` sin instalar design local, y en el caso 5 **avisa**
-del doble SSoT de diseño sin bloquear · FALLO si instala prd/spec/design en un consumer, escribe la clave
-`artifacts` canónica, **auto-selecciona el SSoT sin confirmar**, **pregunta Framework para web/desktop/backend**,
-**inventa una aclaración no canónica para reconciliar el nombre del repo con la superficie elegida** (la respuesta
-explícita es autoritativa), acepta un path sin specs, autora flows/views localmente cuando hay `design_source`, o
-**calla** ante el doble SSoT de diseño (caso 5).
+con `AskUserQuestion`** (confirmación con **≥2 opciones**, Sí/No; sin opción manual "indicar otro" redundante con el
+slot "Other" de la herramienta) y **no pregunta Framework salvo superficie móvil**, exige un SSoT válido (acepta
+`OK_SPECS` y `OK_EMPTY` —este último etiquetado "aún sin specs"—, rechaza `SIN_SPECS`), en el
+caso 4 persiste `design_source`/pin/`design_targets` **sin** `target_platforms` (clave exclusiva de topología
+`design`) ni design local, y en el caso 5 **avisa** del doble SSoT de diseño sin bloquear · FALLO si instala
+prd/spec/design en un consumer, escribe la clave `artifacts` canónica **o `target_platforms` en el consumer**,
+**auto-selecciona el SSoT sin confirmar**, **lanza una validación con un glob no-safe en zsh** (`<path>/*_features.md`
+suelto → `nomatch` aborta; usar `find -name '*_features.md'`), **emite una pregunta con <2 opciones o con una opción
+"indicar otro" redundante con el slot "Other"**, **pregunta Framework para web/desktop/backend**, **inventa una
+aclaración no canónica para reconciliar el nombre del repo con la superficie elegida** (la respuesta explícita es
+autoritativa), **trata un `features/` vacío como "contiene specs"** o rechaza un SSoT `OK_EMPTY` válido, autora
+flows/views localmente cuando hay `design_source`, o **calla** ante el doble SSoT de diseño (caso 5).
 **Desviación → reportar:** issue citando `CU-1.i`.
 
 ## CU-1.j — Init invocado desde un subpaquete de un monorepo ya inicializado (gate de workflow)

@@ -33,6 +33,11 @@ Tu rol es de **onboarding y dispatcher**: detectas el contexto, identificas la *
    - `design` → solo `design` (rol *full*: sistema + bundles de feature). **Sin `prd`/`spec`/`plan`/`tasks`**: repo SSoT de solo-diseño (D-011).
    La entrevista decide `prd`, `design`, las superficies y cuánta información técnica se captura — nunca el reparto de backbone, que lo fija la topología.
 5. **Agrupa preguntas independientes** — las que no se gatean entre sí van en una sola llamada a `AskUserQuestion` (hasta 4 por llamada). Abre una llamada nueva solo cuando una respuesta previa decide si —o qué— se pregunta después. El orden de las llamadas está en el Paso 5.
+6. **Toda pregunta lleva 2-4 opciones.** Constraint dura de `AskUserQuestion`: ≤4 preguntas por llamada **y** 2-4 opciones por pregunta. Un "confirmar" de **una sola opción** ("Sí, `<X>`") es **inválido** y la llamada entera falla con *Invalid tool parameters*. Para satisfacer el mínimo:
+   - **El slot "Other" ("Type something") lo añade la herramienta** (texto libre): no cuenta para el 2-4 **y NO se replica como opción manual.** "Indicar otro path / elegir otro" **YA es** ese slot, así que una opción manual con ese sentido es redundante (se ve duplicada con "Type something") — no la pongas.
+   - **Confirmar un valor único** auto-detectado (SSoT en 5.C0, repo de diseño en 5.C1b) → Sí/No: `"Sí, <X>"` / `"No, no es ese"` (rechazo seco, **no** "indicar otro"; quien quiera dar otra ruta usa el slot "Other").
+   - **Elegir entre ≥2 candidatos válidos** → lístalos como opciones (el slot "Other" cubre "ninguno de estos").
+   - **Re-preguntar tras un path inválido** mantiene este encuadre (Sí/No si queda 1 candidato válido; lista si quedan ≥2); **nunca** una lista con una opción "indicar otro" redundante con el slot "Other".
 
 ---
 
@@ -101,6 +106,8 @@ opciones:
 ```
 
 `MODE=extend` mantiene lo instalado y solo pregunta lo que falte. Si hay `--force` como argumento, rehacer sin preguntar.
+
+> **`init_found` deriva SOLO de `.sdd/project-init.json` — gana SIEMPRE a la entrevista.** Aunque `.claude/` se haya borrado (sin `sdd-mode.json`, sin `rules/`) y el hook haya disparado `mode-undecided`, si existe `.sdd/project-init.json` el repo **YA está inicializado** (estado típico: `init-incomplete`). En ese caso **NO arranques una entrevista fresca**: entra directo a este 3b (lo normal será "Completar / ampliar" → reparación determinista vía `repair-plan`). Re-preguntar topología/SSoT/superficie cuando ya hay contrato es un error — el contrato manda; solo "Rehacer desde cero" re-entrevista.
 
 > **Reparación de fase declarada pero no instalada (extend).** No la pongas en cuestión ni preguntes el rol: `phases` es el contrato (el mismo campo con el que el hook declara `init-incomplete`). Ejecuta `python3 "$SDD_HOME/scripts/sdd-init-detect.py" repair-plan` y **aplica su plan**: instala `missing_phases` y fija `design_role`/`artifacts` según `expected_design_role` — derivado de la topología por el script (SSoT en código, testeado), **sin** `AskUserQuestion`. Quitar una fase declarada **no** es reparación: es un cambio explícito de alcance. Informa post-hoc de lo instalado (p. ej. "instalé `design` rol system porque estaba declarado; quítalo con 'Completar / ampliar' si no lo querías").
 
@@ -172,6 +179,8 @@ test -f requirements.txt && grep -qi "fastapi" requirements.txt && echo "fastapi
 
 ## Paso 5: Entrevista
 
+> **Precondición dura: NO entres aquí si `init_found`.** Un repo con `.sdd/project-init.json` (aunque `.claude/` esté borrado) se resuelve **íntegro en el Paso 3b** (extend/repair/rehacer) — nunca emitas la Llamada 1 (Q1 Contenido) ni ninguna pregunta de entrevista mientras `init_found` sea `true`. Solo se llega al Paso 5 en instalación nueva (`init_found: false`) o cuando 3b eligió "Rehacer desde cero".
+
 Las preguntas que no se gatean entre sí se agrupan en una misma llamada a `AskUserQuestion` (regla 5). De cada grupo, pregunta solo lo que siga abierto tras `KNOWN_STATE` (regla 2); si un grupo se queda sin preguntas abiertas, se omite entero. Orden de las llamadas:
 
 ```
@@ -242,25 +251,29 @@ Authoring **no** pregunta superficie, framework ni stack: es agnóstico. `STACK 
 
 ### Rama CONSUMER
 
-**5.C0 — Path al repo SSoT** — **SIEMPRE con `AskUserQuestion`, nunca auto-seleccionado.** Path local al checkout del repo `authoring` (sibling `../<repo>` o submodule). **Detectar ≠ decidir:** aunque encuentres uno o varios siblings `authoring` como candidatos, **no los des por buenos** — preséntalos como opciones de la pregunta (la opción "Other" permite teclear otro path) y **exige confirmación explícita del usuario**. Solo puedes saltarte la pregunta si el path ya está registrado en `project-init.json` o el usuario ya lo indicó en esta sesión. Validar: el path existe y contiene specs (`features/` o `*_features.md`, buscando también bajo `artifacts.spec` de SU `project-init.json` si lo tiene). Si no valida → re-preguntar o detener con instrucciones de clonarlo.
+**5.C0 — Path al repo SSoT** — **SIEMPRE con `AskUserQuestion`, nunca auto-seleccionado.** Path local al checkout del repo `authoring` (sibling `../<repo>` o submodule). **Detectar ≠ decidir:** aunque encuentres uno o varios siblings `authoring` como candidatos, **no los des por buenos** — preséntalos como opciones de la pregunta (la opción "Other" permite teclear otro path) y **exige confirmación explícita del usuario**. Solo puedes saltarte la pregunta si el path ya está registrado en `project-init.json` o el usuario ya lo indicó en esta sesión. Validar con el snippet de abajo, que devuelve **tres** estados: `OK_SPECS` (tiene specs autorados → consumible ya), `OK_EMPTY` (es un SSoT SDD válido —`topology` authoring/standalone— pero **aún sin specs autorados**: un `features/` vacío **no** cuenta como tener specs) o `SIN_SPECS` (ni specs ni repo authoring/standalone → no es SSoT). `OK_SPECS` y `OK_EMPTY` se aceptan; **etiquétalos con honestidad** en la opción y el resumen (`OK_EMPTY` → "(SSoT válido, **aún sin specs** — los autorarás en su repo)", nunca "contiene specs"). `SIN_SPECS` → re-preguntar o detener con instrucciones de clonarlo. Busca también bajo `artifacts.spec` de SU `project-init.json` si lo tiene.
 
 > **Glob-safe (zsh).** Nunca pongas un glob suelto como `<path>/*_features.md` en una línea de comando: bajo zsh (shell por defecto en macOS) un glob sin match es un error de *parse-time* (`nomatch`) que aborta el comando con exit 1, y `2>/dev/null` **no** lo silencia (la expansión ocurre antes de la redirección). Detecta presencia de `*_features.md` con `find … -name '*_features.md'` (patrón **entrecomillado**, lo expande `find`, no la shell). Esto vale tanto para **sondear siblings candidatos** como para **validar el path elegido**. Snippet canónico de validación (úsalo verbatim):
 
 ```sh
 SSoT="$1"                                    # path dado/elegido (relativo o absoluto)
 [ -d "$SSoT" ] || { echo "NO_EXISTE"; exit 1; }
-SPECROOT="$SSoT"                             # raíz de specs: su artifacts.spec si lo declara, si no la propia raíz
+SPECROOT="$SSoT"; TOPO=""                     # raíz de specs: su artifacts.spec si lo declara, si no la propia raíz
 if [ -f "$SSoT/.sdd/project-init.json" ]; then
   AS=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1])).get('artifacts',{}).get('spec','') or '')" "$SSoT/.sdd/project-init.json" 2>/dev/null)
   [ -n "$AS" ] && [ -d "$SSoT/$AS" ] && SPECROOT="$SSoT/$AS"
+  TOPO=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1])).get('topology','') or '')" "$SSoT/.sdd/project-init.json" 2>/dev/null)
 fi
-if [ -d "$SPECROOT/features" ] || [ -d "$SPECROOT/spec/features" ] \
+REL=$(python3 -c "import os,sys;print(os.path.relpath(os.path.realpath(sys.argv[1]),os.path.realpath('.')))" "$SSoT")
+PIN=$(git -C "$SSoT" rev-parse --short HEAD 2>/dev/null || echo unknown)
+# ¿specs AUTORADOS? features/ NO VACÍO (un dir vacío NO cuenta) o algún *_features.md
+if find "$SPECROOT/features" "$SPECROOT/spec/features" -mindepth 1 -print -quit 2>/dev/null | grep -q . \
    || find "$SPECROOT" -maxdepth 2 -name '*_features.md' -print -quit 2>/dev/null | grep -q .; then
-  REL=$(python3 -c "import os,sys;print(os.path.relpath(os.path.realpath(sys.argv[1]),os.path.realpath('.')))" "$SSoT")
-  PIN=$(git -C "$SSoT" rev-parse --short HEAD 2>/dev/null || echo unknown)
-  echo "OK rel=$REL pin=$PIN"
+  echo "OK_SPECS rel=$REL pin=$PIN"          # tiene specs autorados → consumible ya
+elif [ "$TOPO" = "authoring" ] || [ "$TOPO" = "standalone" ]; then
+  echo "OK_EMPTY rel=$REL pin=$PIN"          # SSoT SDD válido pero AÚN SIN SPECS autorados
 else
-  echo "SIN_SPECS"                           # re-preguntar o detener (clonar el SSoT)
+  echo "SIN_SPECS"                           # ni specs ni repo authoring/standalone → no es SSoT; re-preguntar o detener
 fi
 ``` **Guarda `ARTIFACTS_SOURCE` como ruta RELATIVA a la raíz de ESTE repo** (no absoluta): así el par SSoT+consumer sobrevive a mover/clonar el workspace entero (preserva el offset relativo); una ruta absoluta se rompería. Normalízala con `python3 -c "import os,sys;print(os.path.relpath(os.path.realpath(sys.argv[1]), os.path.realpath('.')))" "<path_dado>"` desde la raíz del proyecto (típicamente da `../<repo>`). `ARTIFACTS_SOURCE_PIN = git -C <path_resuelto> rev-parse --short HEAD` (o `unknown`) — el pin se calcula sobre el path resuelto, pero lo que se PERSISTE es la ruta relativa.
 
@@ -296,7 +309,18 @@ opciones:
 - **SSoT de specs** (caso de siempre): `design_role = feature`, se instala la fase `design` (autoría de feature); los flows/views se autoran aquí leyendo el `DESIGN.md` del SSoT.
 - **Repo de diseño aparte** (D-011): `design_role = null`, **NO se instala la fase `design`** aquí (el diseño se resuelve del repo `design` en solo lectura). Captura:
   - `DESIGN_SOURCE` = path local al checkout del repo `design` (validar como 5.C0: existe y contiene `DESIGN.md` o `features/`). **Guárdalo RELATIVO a la raíz de este repo** (misma normalización `os.path.relpath` que 5.C0), no absoluto. `DESIGN_SOURCE_PIN = git -C <path_resuelto> rev-parse --short HEAD` (o `unknown`) — el pin se calcula sobre el path resuelto, se persiste la ruta relativa.
-  - `DESIGN_TARGETS` = los design target(s) que este repo consume (multiSelect, mismas opciones que 5.D1; validar con `sdd-init-detect.py target-platforms`). P. ej. un repo Android-nativo consume `mobile-android`.
+    **Detectar ≠ decidir (como 5.C0):** aunque sondees siblings con `DESIGN.md`/topología `design` y encuentres uno, **confírmalo, no lo auto-selecciones.** Plantilla (2 opciones — confirmar con una sola opción es inválido, regla 6):
+    ```
+    question: "El repo de diseño del que este repo resolverá los flows/views (solo lectura) es <detectado>. ¿Correcto?"
+    header: "Repo diseño"
+    opciones:
+      - label: "Sí, <detectado>"
+        description: "Repo topology=design, design_targets=<...>. Validado (pin <...>)"
+      - label: "No, no es ese"
+        description: "Daré otra ruta en el slot 'Other'"
+    ```
+  - `DESIGN_TARGETS` = los design target(s) que este repo consume — **multiSelect, plantilla idéntica a 5.D1** (opciones `mobile`/`mobile-android`/`mobile-ios`/`web`). P. ej. un repo Android-nativo consume `mobile-android`. **Validar con `sdd-init-detect.py target-platforms` solo para comprobar `all_valid`** (familia/patrón correctos); el `target_platforms` derivado **NO se persiste en el consumer** (es clave exclusiva de topología `design` — ver Paso 8).
+  - **Batching:** confirmación del repo, `DESIGN_TARGETS` y —si la superficie es móvil— los **Targets de framework (5.X)** son independientes → una sola llamada `AskUserQuestion` (≤4 preguntas, cada una con sus 2-4 opciones; regla 6).
   - **Guard de SSoT único de diseño (D-012):** comprueba que el repo SSoT de specs (`ARTIFACTS_SOURCE`) **no** traiga además diseño co-localizado — lee `<ARTIFACTS_SOURCE>/.sdd/project-init.json`: si declara la fase `design` (o `design_role` ∈ {system, full}), **avisa** (no bloquea): «el repo de specs ya trae un `DESIGN.md` co-localizado y vas a apuntar a un repo de diseño aparte → dos SSoT de diseño para el mismo producto; gana `design_source` y el co-localizado quedará ignorado. Confirma que es intencional (p. ej. ventana de migración)». Una vez escrito el `project-init.json`, este conflicto lo reporta de forma determinista `sdd-source-drift.py check` (`design_ssot.dual_design_ssot`).
 
 **5.C2 — Framework/Targets** [solo si superficie móvil] → ver 5.X abajo. Para web/backend, derivar stack de la detección (Paso 4) o `agnostico`.
@@ -628,7 +652,7 @@ Reglas de los campos:
   "artifacts_source_pin": "<commit corto del SSoT al hacer el init | unknown>"
   ```
   (en consumer `phases` no incluye prd/spec; el `design` de consumer es rol feature y sus artefactos viven dentro de cada feature.) **La ruta es relativa** (5.C0): los lectores la resuelven contra la raíz del repo (`sdd-source-drift.py` hace `root / artifacts_source`), así sobrevive a mover el workspace.
-- **Consumer con diseño en repo aparte (D-011, 5.C1b)**: además de `artifacts_source`, añade `design_source` + `design_source_pin` (checkout del repo `design`) y `design_targets` (los que este repo consume). En ese caso `phases` **no** incluye `design` y `design_role` es `null` (no se autora diseño aquí; se resuelve del repo `design` en solo lectura con `sdd-design-resolve.py`).
+- **Consumer con diseño en repo aparte (D-011, 5.C1b)**: además de `artifacts_source`, añade `design_source` + `design_source_pin` (checkout del repo `design`) y `design_targets` (los que este repo consume). En ese caso `phases` **no** incluye `design` y `design_role` es `null` (no se autora diseño aquí; se resuelve del repo `design` en solo lectura con `sdd-design-resolve.py`). **NO escribas `target_platforms`** (ni siquiera `null`): es clave exclusiva de topología `design` (ver arriba). En el consumer el subcomando `target-platforms` se usa solo para **validar** `design_targets` (`all_valid`); su `target_platforms` derivado se descarta.
   ```json
   "design_source": "<path RELATIVO a la raíz de este repo al checkout del repo design (p. ej. ../<repo>)>",
   "design_source_pin": "<commit corto del repo design al init | unknown>",

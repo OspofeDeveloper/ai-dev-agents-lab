@@ -2,6 +2,19 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.43.0 — 2026-06-24
+
+Endurecimiento de la entrevista **consumer** de `wf-project-init` cerrando CU-1.i (esc. 1-6) y CU-1.e (paso 3) tras una campaña de pruebas en repos reales. Cinco correcciones, todas en `bootstrap/skills/wf-project-init/SKILL.md` (más conformance):
+
+- **OBS1 — `Invalid tool parameters` en la rama consumer-móvil + diseño aparte.** 5.C1b describía en prosa qué preguntar pero sin plantilla, y el agente improvisaba una confirmación de **una sola opción** ("Sí, `<X>`") → `AskUserQuestion` exige 2-4 opciones y la llamada entera fallaba. Nueva **regla 6** (toda pregunta 2-4 opciones; un confirm de 1 opción es inválido) + plantillas concretas en 5.C1b para confirmar el repo de diseño y los design targets, con nota de batching.
+- **OBS2 — `target_platforms` escrito en el consumer.** Es clave **exclusiva de topología `design`**; el consumer con diseño aparte ya no la persiste (ni `null`). El subcomando `target-platforms` se usa solo para validar `all_valid`; su `target_platforms` derivado se descarta. Reforzado en 5.C1b y Paso 8.
+- **Redundancia del slot "Other".** "Indicar otro path / elegir otro" **ya es** el slot "Other" que añade la herramienta → no se replica como opción manual (se veía duplicado con "Type something"). Las confirmaciones de valor único son Sí/No con **rechazo seco** ("No, no es ese"), no "indicar otro"; las re-preguntas mantienen el encuadre (Sí/No si 1 candidato, lista si ≥2).
+- **3a — `init_found` gana SIEMPRE a la entrevista.** Deriva **solo** de `.sdd/project-init.json`: aunque `.claude/` se haya borrado (sin `sdd-mode.json` ni `rules/`), si existe el contrato el repo está inicializado → Paso 3b (repair), **nunca** entrevista fresca. Precondición dura añadida a la entrada del Paso 5. (CU-1.e paso 3.)
+- **3b — validación de SSoT de tres vías.** `OK_SPECS` (specs autorados) · `OK_EMPTY` (repo authoring/standalone válido pero **aún sin specs** — un `features/` vacío **no** cuenta) · `SIN_SPECS` (ni specs ni repo SSoT → rechazo). El `OK_EMPTY` se acepta y se etiqueta "aún sin specs", nunca "contiene specs". (CU-1.i esc. 6.)
+
+- Conformance: `cu-01-inicializar.md` — `[x] CU-1.i` (esc. 1-6, + esc. 6 nuevo), CU-1.e paso 3 nuevo, criterios FALLO de toda la campaña en la línea Resultado.
+- Sin `⚠`: `wf-project-init` es bootstrap global (se refresca con `bash setup.sh`); afecta solo a inits **nuevos**, ningún proyecto ya inicializado cambia.
+
 ## 0.42.0 — 2026-06-21
 
 Validación del SSoT glob-safe en la entrevista **consumer** de `wf-project-init` (visto probando CU-1.i esc. 2, consumer backend): el `SKILL.md` describía la validación del path en prosa ("contiene specs: `features/` o `*_features.md`") **sin dar un snippet**, y el agente improvisó un sondeo de candidatos con un glob suelto `../<repo>/*_features.md`. Bajo **zsh** (shell por defecto en macOS) un glob sin match es un error de *parse-time* (`nomatch`) que **aborta el comando con exit 1**, y `2>/dev/null` **no** lo silencia (la expansión ocurre antes de la redirección). La validación seguía adelante por inercia, pero el paso quedaba en rojo.
