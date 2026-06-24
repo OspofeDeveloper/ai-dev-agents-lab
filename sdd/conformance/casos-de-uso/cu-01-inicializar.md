@@ -33,7 +33,7 @@ para leer/ejecutar el CU.
 - [x] CU-1.b — Modo SDD arranca el init · ✓ 2026-06-20 (RE-TEST D-011 cerrado: Q1 con 4 opciones; la 4ª, Diseño, arranca end-to-end y escribe el esquema nuevo — ver CU-1.q)
 - [x] CU-1.h — La topología decide qué se instala · ✓ 2026-06-20 (esc. 1 authoring + esc. 2 standalone mínimo en sesiones previas; esc. 3 standalone+KMM+diseño full verificado en disco: overlay instalado vía re-run del Paso 8.5, **sin `Unknown skill`** [[D-014]], rol full con ambos agentes, 6 reglas, `verify` exit 0, sin `stack-runs.jsonl`)
 - [x] CU-1.i — Topología consumer · ✓ 2026-06-24 (esc. 1-6 PASS en repos reales; endurecido tras campaña: glob SSoT glob-safe en zsh, confirmaciones ≥2 opciones sin "indicar otro" redundante con el slot Other, consumer sin `target_platforms`. esc. 6 (SSoT `OK_EMPTY`) confirmado: `../myops-app-specs-2` authoring vacío aceptado y etiquetado "aún sin specs", no rechazado, JSON sin `target_platforms`)
-- [ ] CU-1.j — Init desde subpaquete (gate de workflow)
+- [x] CU-1.j — Init desde subpaquete (gate de workflow) · ✓ 2026-06-24: el gate de `wf-project-init` Paso 3.0 es correcto cuando se invoca la skill; el cortocircuito era de la **capa orquestador** (resolvía el estado a mano con `find-up`+`cat` del ancestro → "ya inicializado" **sin** gate). Pre-fix: campaña de 9 corridas desde `apps/api` → **2/9 cortocircuitaban (~22%)**, correladas con el wording "inicializa este **proyecto**" (0/5 con "directorio/aquí"). Fix de enrutado v0.44.0: sección "Petición explícita de inicializar/configurar SDD" + aclaración del fallback en `bootstrap/claude-global-block.md`, y `when_to_use` endurecido en `wf-project-init` SKILL. Post-fix (verificado activo en `~/.claude/`): **6/6 PASS** con los wordings más adversariales —incluida la frase exacta que fallaba y el peor caso "¿ya está inicializado? si no, inicialízalo"—; en este último el agente razona "no voy a resolver yo mismo el estado de init… esa decisión es del flujo de inicialización" (la regla del fix reflejada). **Capa orquestador, no determinista por construcción**: el fix maximiza cobertura pero no garantiza 100% por diseño.
 - [ ] CU-1.k — Verificación bloqueante
 - [ ] CU-1.l — Evolución authoring→standalone (extend)
 - [ ] CU-1.m — Ubicación de artefactos no canónica
@@ -48,7 +48,7 @@ para leer/ejecutar el CU.
 - [x] CU-1.c — Modo libre silencia SDD (`free`) · ✓ 2026-06-17
 - [x] CU-1.d — Modo SDD sin init → `init-pending` (invoca wf-project-init) · ✓ 2026-06-17
 - [x] CU-1.e — Init a medias → `init-incomplete` (invoca wf-project-init "Completar/ampliar") · ✓ 2026-06-17 (criterio determinista: repair-plan, rol derivado de topología, sin preguntar)
-- [x] CU-1.f — Versión anterior → `version-drift` (informativo) · ✓ 2026-06-18
+- [x] CU-1.f — Versión anterior → `version-drift` (informativo) · ✓ 2026-06-18 · criterio reescopado 2026-06-24: el re-narrado **suave** del advisory en el recap de turnos largos (p. ej. el init) es comportamiento del modelo que la instrucción no suprime (verificado 6/6). El criterio acepta un recordatorio de una línea en el cierre; el FALLO es **re-emitirlo como preocupación nueva o bloqueante**. Cláusula de instrucción inefectiva revertida del bloque global.
 - [x] CU-1.g — Sesión en subdirectorio → búsqueda de marcadores hacia arriba · ✓ 2026-06-18
 - [x] CU-1.s — Stack con overlay sin init técnico → `specialist-init-pending` ([[D-014]], emisión + handoff; el disparo como precondición → [[CU-14.i]]) · ✓ 2026-06-21 (capa determinista: `SpecialistStatusTest`/`SpecialistInitPendingTest`; E2E en repo KMM real: la directiva se emite al arrancar, el agente avisa en una línea sin lanzar `wf-kmm-init`, y tras correrlo `stack-runs.jsonl` registra el run → `pending:false` y el hook deja de emitir)
 
@@ -235,10 +235,18 @@ ecosistema (`$SDD_HOME/VERSION`).
 1. Abres Claude Code en ese proyecto y pides algo normal.
    → **Esperado:** el agente menciona **en una línea** que puedes actualizar con
      `/wf-sdd-update` cuando te convenga, y **atiende tu petición con normalidad**. No
-     actualiza sin que lo pidas ni repite el aviso en la misma sesión.
+     actualiza sin que lo pidas ni lo re-emite como una preocupación nueva/bloqueante.
 
-**Resultado:** PASS si avisa en una línea, no bloquea y no actualiza solo · FALLO si
-bloquea la petición, o actualiza sin pedírselo, o repite el aviso.
+> **Criterio reescopado (2026-06-24).** El advisory se **re-narra de forma suave** en el recap de
+> turnos largos (p. ej. cuando la petición arranca el init): es comportamiento del modelo que la
+> instrucción no suprime (verificado 6/6 en la campaña de CU-1.j). Un **recordatorio de una línea**
+> en un bloque de notas final ("recuerda que…", "como te mencioné…") **NO es FALLO**: es suave,
+> no bloquea y no re-abre el tema como nuevo. El FALLO es re-emitir el aviso como **preocupación
+> nueva o bloqueante** (volver a alarmar, bloquear la petición, o tratarlo como si no se hubiera dicho).
+
+**Resultado:** PASS si avisa en una línea, no bloquea y no actualiza solo (un recordatorio suave en
+el cierre es aceptable) · FALLO si bloquea la petición, actualiza sin pedírselo, o **re-emite el aviso
+como preocupación nueva/bloqueante**.
 **Desviación → reportar:** issue citando `CU-1.f`.
 
 ## CU-1.g — Sesión abierta en un subdirectorio (monorepo)

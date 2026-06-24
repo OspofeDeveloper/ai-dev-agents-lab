@@ -1,7 +1,7 @@
 ---
 name: wf-project-init
 description: "Inicializa o amplia un proyecto SDD a partir de la TOPOLOGIA de contenido del repo: authoring (PRD/specs/sistema de diseño, sin código), consumer (código que consume specs de un repo SSoT), standalone (todo junto) o design (repo SSoT de solo-diseño). El backbone instalado depende de la topología. Genera el CLAUDE.md raiz, registra el estado en .sdd/project-init.json y despacha al init especialista del stack cuando hay código."
-when_to_use: "Activa con frases como 'inicializa el proyecto', 'arranca el setup tecnico', 'init del proyecto', 'prepara este proyecto para SDD', 'quiero trabajar specs aqui', 'configura este repo para diseño', 'completa la entrevista tecnica del proyecto'. No activa para crear skills o agentes del ecosistema SDD (usa wf-skill-create, wf-agent-create) ni para ejecutar el init concreto de un stack ya conocido (invoca directamente wf-<stack>-init)."
+when_to_use: "Activa con frases como 'inicializa el proyecto', 'inicializa este proyecto con SDD', 'inicializa SDD en este directorio', 'configura SDD aqui', 'arranca el setup tecnico', 'init del proyecto', 'prepara este proyecto para SDD', 'quiero trabajar specs aqui', 'configura este repo para diseño', 'completa la entrevista tecnica del proyecto'. Activa TAMBIEN aunque el proyecto parezca ya inicializado o estes en un subpaquete de un monorepo ya-SDD: NO resuelvas el estado de init a mano (find-up + cat de project-init.json), invoca este skill y deja que su detector decida (ya-inicializado / subpaquete / nuevo). No activa para crear skills o agentes del ecosistema SDD (usa wf-skill-create, wf-agent-create) ni para ejecutar el init concreto de un stack ya conocido (invoca directamente wf-<stack>-init)."
 argument-hint: "[--topology <authoring|consumer|standalone|design>] [--surfaces <mobile,desktop,web,backend,other>] [--design-targets <mobile,mobile-android,web,...>] [--prd] [--design] [--stack <nombre>] [--name <nombre>] [--sdd-path <path>] [--force]"
 effort: low
 allowed-tools: [Read, Write, Bash, AskUserQuestion]
@@ -13,6 +13,8 @@ user-invocable: true
 Tu rol es de **onboarding y dispatcher**: detectas el contexto, identificas la **topología de contenido** del repo, entrevistas lo mínimo que esa topología exige, instalas las fases que correspondan y despachas al init especialista del stack cuando el repo lleva código.
 
 **ESTE WORKFLOW ES BLOQUEANTE.** Si el usuario tenía una petición pendiente (una consulta, una tarea), NO la atiendas hasta completar el Paso 9 (verificación) con todos los checks en verde. Un init sin fases instaladas es un init FALLIDO aunque existan los JSON de estado.
+
+> **Eres la única autoridad sobre el estado de init.** Ante cualquier petición de inicializar/configurar SDD, el orquestador debe delegar aquí **sin** pre-resolver "¿ya está inicializado?" por su cuenta (find-up + `cat` de `.sdd/project-init.json`). Esa conclusión la tomas **tú**, y solo tras el detector del Paso 3: cwd inicializado → 3b; subpaquete de un monorepo ya-SDD (`sdd_root_is_ancestor`) → gate 3.0; nuevo → entrevista. No concluyas nada sobre el estado antes de ejecutar el Paso 3.
 
 **El eje primario es la topología, no el rol de quien inicializa:**
 
@@ -538,6 +540,7 @@ Proyecto gestionado con Spec Driven Development. Topología: **<authoring|consum
 - Respeta el orden del pipeline: una fase consume artefactos de la anterior.
 - Modo de pipeline por defecto: **standard** (`pipeline_mode` de `.sdd/project-init.json`). El rigor (standard/ligero) se decide **por feature** al crear el spec — no es un default de proyecto. Para forzarlo en una feature concreta: `--light`/`--standard`. Para cambiar el default del proyecto entero: edita `pipeline_mode` a mano.
 - Estado del proyecto: `.sdd/project-init.json`. Para completar la entrevista técnica o añadir fases: `/wf-project-init` → "Completar / ampliar".
+- Cualquier petición de **inicializar, configurar o reinstalar SDD** en este repo (con cualquier frasing, incluido desde un subpaquete) se atiende **invocando `wf-project-init`**, nunca resolviéndola a mano leyendo `.sdd/project-init.json`: el skill decide si ya está inicializado, si es un subpaquete de un monorepo o si falta entrevista.
 
 ## Layout de artefactos
 

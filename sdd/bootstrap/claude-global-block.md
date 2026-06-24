@@ -52,7 +52,19 @@ No repitas el wizard de modo. En cuanto `wf-<stack>-init` registra su run en `.s
 
 ## Directiva `[SDD-PROTOCOL] version-drift`
 
-La instalación SDD del proyecto es de una versión anterior a la del ecosistema. Es **solo informativa y nunca bloquea**: menciona en una línea al usuario que, **cuando le convenga, puede pedirte que actualices el proyecto** — y atiende su petición con total normalidad. **No le des el comando crudo (`/wf-sdd-update`)**: si te lo pide, **tú** invocas `wf-sdd-update` vía la Skill tool (así evitas que el usuario lance el slash-command a secas, que pierde contexto e idioma). No actualices sin que lo pida explícitamente y no repitas el aviso en la misma sesión.
+La instalación SDD del proyecto es de una versión anterior a la del ecosistema. Es **solo informativa y nunca bloquea**: menciona en una línea al usuario que, **cuando le convenga, puede pedirte que actualices el proyecto** — y atiende su petición con total normalidad. **No le des el comando crudo (`/wf-sdd-update`)**: si te lo pide, **tú** invocas `wf-sdd-update` vía la Skill tool (así evitas que el usuario lance el slash-command a secas, que pierde contexto e idioma). No actualices sin que lo pida explícitamente. Preséntalo **una vez** como aviso de una línea; un recordatorio suave posterior (p. ej. en un bloque de notas final) no es problema, pero **no lo re-emitas como una preocupación nueva ni bloqueante**.
+
+## Petición explícita de inicializar / configurar SDD
+
+Cuando el usuario pida **inicializar, configurar, arrancar, preparar o reinstalar SDD** en este repo o directorio —con CUALQUIER frasing: "inicializa este proyecto", "configura SDD aquí", "arranca el init", "inicializa SDD en este directorio"— **invoca SIEMPRE el skill `wf-project-init` vía la Skill tool**. La intención es invariante al wording: "este proyecto", "este directorio" y "aquí" son lo mismo; no enrutes distinto según la palabra elegida.
+
+**No resuelvas el estado de init por tu cuenta.** No hagas `find-up` ni `cat`/`Read` de `.sdd/project-init.json` para concluir tú mismo "ya está inicializado" y responder con una tabla de estado: esa decisión es **exclusiva de `wf-project-init`**, que tras su detector distingue de forma determinista:
+
+- **cwd ya inicializado** (`init_found` en el cwd) → ofrece "Completar / ampliar" · "Rehacer" · "Dejar como está";
+- **subpaquete de un monorepo cuya raíz ya tiene SDD** (`sdd_root_is_ancestor: true`, `init_found: false` en el cwd) → gate "Operar desde la raíz" · "Inicializar aquí (subproyecto)";
+- **instalación nueva** → entrevista de topología.
+
+Que un **ancestro** tenga `.sdd/` **no** equivale a que **este** directorio esté inicializado: aun así, delega en el skill — él presenta el gate de subpaquete. La única excepción es el modo CI/headless de abajo.
 
 ## Sin directiva
 
@@ -75,7 +87,7 @@ El opt-out por repo y commiteable sigue siendo `.claude/sdd-mode.json`. Para ret
 
 Si no recibes directiva pero tampoco hay evidencia de que el hook se haya ejecutado (p. ej. tras una reinstalación), aplica manualmente esta máquina de estados al inicio de la sesión en un proyecto. En un monorepo los marcadores (`.sdd/`, `.claude/sdd-mode.json`) viven en la raíz del proyecto: si la sesión se abrió en un subpaquete, búscalos **hacia arriba hasta la raíz git** (gana el ancestro más cercano).
 
-1. ¿Existe `.sdd/project-init.json` (aquí o en un ancestro hasta la raíz git)? → proyecto SDD inicializado, opera según su `.claude/CLAUDE.md`. Además, si ese `project-init.json` tiene `specialist_workflow` no nulo y **no** hay una línea para él en `.sdd/stack-runs.jsonl`, aplica la directiva `specialist-init-pending` de arriba (precondición contextual del trabajo de stack; no bloquea PRD/spec/design).
+1. ¿Existe `.sdd/project-init.json` (aquí o en un ancestro hasta la raíz git)? → proyecto SDD inicializado, opera según su `.claude/CLAUDE.md`. Además, si ese `project-init.json` tiene `specialist_workflow` no nulo y **no** hay una línea para él en `.sdd/stack-runs.jsonl`, aplica la directiva `specialist-init-pending` de arriba (precondición contextual del trabajo de stack; no bloquea PRD/spec/design). **Esta regla decide si el proyecto cuenta como inicializado para no repetir el wizard de modo en peticiones normales; NO te autoriza a responder a mano una petición explícita de init** (sobre todo desde un subpaquete donde el `.sdd/` está en un ancestro pero el cwd no está inicializado): para eso aplica «Petición explícita de inicializar / configurar SDD» y delega en `wf-project-init`, que presentará el gate de subpaquete.
 2. ¿Existe `.claude/sdd-mode.json` con `"mode": "free"`? → sesión normal, no preguntar nunca **ni anunciar el modo en el chat** (la status line lo muestra).
 3. ¿Existe `.claude/sdd-mode.json` con `"mode": "sdd"` pero sin `.sdd/project-init.json`? → invoca `wf-project-init`.
 4. ¿Nada de lo anterior y el directorio es un proyecto real (no `~`, no el repo del ecosistema SDD)? → wizard de modo de arriba.

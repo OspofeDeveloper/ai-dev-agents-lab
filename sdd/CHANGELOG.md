@@ -2,6 +2,17 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.44.0 — 2026-06-24
+
+Fix de **enrutado del orquestador** para CU-1.j (init desde un subpaquete de un monorepo ya inicializado), visto en una campaña de 9 corridas manuales desde `apps/api`: el **gate** de `wf-project-init` (Paso 3.0, "Operar desde la raíz" / "Inicializar aquí") funciona 7/7 cuando se invoca la skill, pero el orquestador **cortocircuitaba ~22%** de las veces — resolvía el estado de init a mano (`find-up` + `cat .sdd/project-init.json` del ancestro) y respondía "este proyecto ya está inicializado" **sin** presentar el gate ni ofrecer anidar como consumer. Correlación clara con el wording: las 2 desviaciones usaron "inicializa este **proyecto**"; 0/5 con frasing de "**directorio**/aquí". El gate vive en la skill, pero la decisión de invocarla es del orquestador, y nada en el contexto cargado en un subpaquete (bloque global + `CLAUDE.md` generado del ancestro) le obligaba a delegar.
+
+- **`bootstrap/claude-global-block.md` — nueva sección "Petición explícita de inicializar / configurar SDD".** Ante cualquier intención de init (invariante al wording), invocar SIEMPRE `wf-project-init`; prohibido resolver el estado a mano (find-up + cat). La skill es la única autoridad: cwd inicializado → 3b; subpaquete (`sdd_root_is_ancestor`) → gate 3.0; nuevo → entrevista.
+- **`claude-global-block.md` — aclarada la regla 1 del fallback.** "project-init.json en un ancestro → inicializado" sirve para no repetir el wizard de modo en peticiones normales; NO autoriza responder a mano una petición explícita de init desde un subpaquete no inicializado.
+- **`wf-project-init` SKILL — defensa en profundidad.** `when_to_use` cubre "inicializa este proyecto" / "ya inicializado" / subpaquete; nota de "única autoridad sobre el estado de init" en la cabecera; el template del `CLAUDE.md` generado (Paso 7) gana un bullet "init/config → siempre `wf-project-init`, nunca a mano".
+- **CU-1.f — criterio reescopado (no fix de instrucción).** El re-narrado **suave** del advisory en el recap de turnos largos es comportamiento del modelo que la instrucción no suprime (verificado 6/6). En vez de mantener una cláusula muerta, se **reescopa el criterio de CU-1.f**: un recordatorio de una línea en el cierre es aceptable; el FALLO es re-emitir el aviso como preocupación **nueva o bloqueante**. Se revirtió la cláusula inefectiva del bloque global y se alineó la guía de `version-drift` con el criterio (mencionar una vez; recordatorio suave OK; nunca re-alarmar ni bloquear).
+- Conformance: `cu-01-inicializar.md` — **CU-1.j cerrado `[x]`** (post-fix 6/6 en wordings adversariales, fix verificado activo en `~/.claude/`); nota de edge abierto en CU-1.f.
+- Sin `⚠`: el bloque global y `wf-project-init` son **bootstrap global** (se refrescan con `bash setup.sh`); la sección nueva mejora la conducta de sesión en todos los proyectos pero no muta ningún artefacto ya escrito.
+
 ## 0.43.0 — 2026-06-24
 
 Endurecimiento de la entrevista **consumer** de `wf-project-init` cerrando CU-1.i (esc. 1-6) y CU-1.e (paso 3) tras una campaña de pruebas en repos reales. Cinco correcciones, todas en `bootstrap/skills/wf-project-init/SKILL.md` (más conformance):
