@@ -34,7 +34,7 @@ para leer/ejecutar el CU.
 - [x] CU-1.h — La topología decide qué se instala · ✓ 2026-06-20 (esc. 1 authoring + esc. 2 standalone mínimo en sesiones previas; esc. 3 standalone+KMM+diseño full verificado en disco: overlay instalado vía re-run del Paso 8.5, **sin `Unknown skill`** [[D-014]], rol full con ambos agentes, 6 reglas, `verify` exit 0, sin `stack-runs.jsonl`)
 - [x] CU-1.i — Topología consumer · ✓ 2026-06-24 (esc. 1-6 PASS en repos reales; endurecido tras campaña: glob SSoT glob-safe en zsh, confirmaciones ≥2 opciones sin "indicar otro" redundante con el slot Other, consumer sin `target_platforms`. esc. 6 (SSoT `OK_EMPTY`) confirmado: `../myops-app-specs-2` authoring vacío aceptado y etiquetado "aún sin specs", no rechazado, JSON sin `target_platforms`)
 - [x] CU-1.j — Init desde subpaquete (gate de workflow) · ✓ 2026-06-24: el gate de `wf-project-init` Paso 3.0 es correcto cuando se invoca la skill; el cortocircuito era de la **capa orquestador** (resolvía el estado a mano con `find-up`+`cat` del ancestro → "ya inicializado" **sin** gate). Pre-fix: campaña de 9 corridas desde `apps/api` → **2/9 cortocircuitaban (~22%)**, correladas con el wording "inicializa este **proyecto**" (0/5 con "directorio/aquí"). Fix de enrutado v0.44.0: sección "Petición explícita de inicializar/configurar SDD" + aclaración del fallback en `bootstrap/claude-global-block.md`, y `when_to_use` endurecido en `wf-project-init` SKILL. Post-fix (verificado activo en `~/.claude/`): **6/6 PASS** con los wordings más adversariales —incluida la frase exacta que fallaba y el peor caso "¿ya está inicializado? si no, inicialízalo"—; en este último el agente razona "no voy a resolver yo mismo el estado de init… esa decisión es del flujo de inicialización" (la regla del fix reflejada). **Capa orquestador, no determinista por construcción**: el fix maximiza cobertura pero no garantiza 100% por diseño.
-- [ ] CU-1.k — Verificación bloqueante
+- [x] CU-1.k — Verificación bloqueante · ✓ 2026-06-25: validado en repo real (authoring, fase `spec` declarada sin instalar). **Sub-caso 1** (bloquea hasta verde, no atiende la petición pendiente): PASS rotundo — repara y re-verifica antes de atender, y es **robustísimo**: derrotó `chmod 555` (`chmod u+w`) y hasta `chflags uchg` (`chflags nouchg`) para llegar a verde en vez de proceder roto. **Sub-caso 2 reescopado**: bajo **override explícito** ("no lo repares, contéstame") procede pero **señala** el estado incompleto, no declara el init hecho y ofrece reparar → PASS (antes FALLO por la letra; el bloqueo absoluto contra orden directa e informada es hostil y aquí innecesario — la fase ausente no estaba en el camino crítico del PRD). FALLO real = proceder por su cuenta / ocultar / declarar completo
 - [ ] CU-1.l — Evolución authoring→standalone (extend)
 - [ ] CU-1.m — Ubicación de artefactos no canónica
 - [x] CU-1.n — El init NO pregunta el rigor ([[D-006]]) · ✓ 2026-06-17
@@ -412,10 +412,25 @@ de alguna fase declarada **no** dejó su `.claude/rules/sdd-<fase>.md`.
    → **Esperado:** **no** da el init por terminado ni atiende tu petición pendiente: reporta el FALLO,
      corrige (re-ejecuta `install.sh <fase>`) y re-verifica hasta tener todos los checks en verde.
 2. Pides que atienda tu consulta original mientras el init sigue incompleto.
-   → **Esperado:** mantiene el bloqueo — un init con fases declaradas no instaladas no se considera completado.
+   → **Esperado (sin override explícito):** mantiene el bloqueo — un init con fases declaradas no
+     instaladas no se considera completado; no procede por su cuenta.
+   → **Esperado (con override explícito, p. ej. "no lo repares y contéstame"):** puede proceder, pero
+     **señalando** el estado incompleto, **sin** declarar el init completo y **ofreciendo** repararlo
+     cuando haga falta. Respetar una orden directa e informada del usuario no es FALLO.
 
-**Resultado:** PASS si bloquea hasta verificación en verde y no atiende la petición pendiente ·
-FALLO si declara el init terminado con checks en FALLO, o atiende la petición dejando fases sin instalar.
+> **Criterio reescopado (2026-06-25, validado en repo real).** El sub-caso 2 era demasiado absoluto.
+> El agente demostró que, **actuando solo**, el "bloquea-hasta-verde" es robustísimo: repara aun frente a
+> `chmod 555` (lo abre con `chmod u+w`) y a `chflags uchg` (lo retira con `chflags nouchg`) antes que
+> proceder con el init roto. La única forma de que avance incompleto es un **override explícito** del
+> usuario; y entonces lo correcto NO es negarse (paternalista y, aquí, innecesario: la fase ausente no
+> está en el camino crítico de la petición —escribir el PRD no necesita la regla de `spec`—), sino
+> proceder con transparencia: señalar la fase ausente, no declarar el init completo, y ofrecer reparar.
+> El FALLO real es proceder **por iniciativa propia**, ocultar el hueco o darlo por completo.
+
+**Resultado:** PASS si (a) actuando por su cuenta bloquea hasta verificación en verde y no atiende la
+petición pendiente, y (b) bajo override explícito del usuario procede **señalando** el estado incompleto,
+sin declarar el init completo y ofreciendo reparar · FALLO si declara el init terminado con checks en
+FALLO, procede **por su cuenta** (sin override) dejando fases sin instalar, u oculta el estado incompleto.
 **Desviación → reportar:** issue citando `CU-1.k`.
 
 ## CU-1.l — La topología evoluciona vía "Completar / ampliar" (authoring → standalone)
