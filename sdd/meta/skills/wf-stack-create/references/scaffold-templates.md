@@ -43,7 +43,7 @@ for skill_dir in "$SCRIPT_DIR/skills"/wf-*/; do install_skill "$skill_dir"; done
 # 3. CLAUDE.md del overlay
 cp "$SCRIPT_DIR/CLAUDE.md" "$CLAUDE_DIR/CLAUDE.md"
 echo "  ✓ CLAUDE.md"
-echo "Done. Reinicia Claude Code para activar el overlay <stack>."
+echo "Done. Ejecuta /skills y /agents para revisar que Claude ha cargado el overlay <stack>. Si no lo ha hecho, comienza una sesión nueva de Claude para que se carguen."
 ```
 
 ---
