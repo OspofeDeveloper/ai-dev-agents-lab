@@ -618,7 +618,7 @@ Proyecto gestionado con Spec Driven Development. Topología: **<authoring|consum
 
 ## Paso 8: Registrar estado y despachar
 
-1. `mkdir -p .sdd`. Timestamp real: `date -u +%Y-%m-%dT%H:%M:%SZ` y usar SU SALIDA.
+1. `mkdir -p .sdd`. Timestamp real: `date -u +%Y-%m-%dT%H:%M:%SZ` y usar SU SALIDA — es el `updated_at` (esta escritura). **`initialized_at` NO se regenera en un extend/reparación:** un extend no re-inicializa el repo. En `MODE=extend` (o reparación) **lee el `initialized_at` del `project-init.json` previo y consérvalo**; solo una instalación nueva (sin JSON previo) lo crea (= `updated_at`).
 2. **Resuelve `sdd_version` ANTES de escribir** (no escribas un placeholder `unknown` para corregirlo luego con un segundo `Edit`/`Update` — eso choca con la regla de "leer antes de editar" del harness). Léelo de `.sdd/sdd-version.json` (lo dejó `install.sh` en el Paso 6):
    ```bash
    SDD_VER=$(python3 -c "import json;d=json.load(open('.sdd/sdd-version.json'));print(f\"{d['version']}+{d['commit']}\")" 2>/dev/null || echo unknown)
@@ -638,7 +638,8 @@ Proyecto gestionado con Spec Driven Development. Topología: **<authoring|consum
   "artifacts": { "prd": "<dir>", "spec": "<dir>", "design": "<dir>" },
   "pipeline_mode": "standard",
   "sdd_version": "<version+commit del sello>",
-  "initialized_at": "<salida de date -u>",
+  "initialized_at": "<primer init: salida de date -u; en extend/reparación: el valor previo, PRESERVADO>",
+  "updated_at": "<salida de date -u — esta escritura; en init nuevo coincide con initialized_at>",
   "dispatcher": "wf-project-init",
   "specialist_workflow": "<wf-<stack>-init | null>"
 }
@@ -664,6 +665,7 @@ Reglas de los campos:
 - `specialist_workflow`: solo si el stack es concreto Y existe `wf-<stack>-init`.
 - `pipeline_mode`: **siempre `standard`** en el init (no se pregunta). El rigor por feature se decide al crear el spec; el override de proyecto es editar este campo a mano.
 - `sdd_version`: de `.sdd/sdd-version.json` (lo escribe `install.sh`): `<version>+<commit>`. Si no existe, `unknown`.
+- `initialized_at` / `updated_at`: `initialized_at` = cuándo se inicializó SDD el repo **por primera vez**; **se preserva** mientras exista un `project-init.json` previo legible (extend y reparación lo conservan — léelo del JSON anterior, no lo regeneres). Solo una instalación nueva (sin JSON previo) lo crea. `updated_at` = `date -u` de **esta** escritura; en init nuevo coincide con `initialized_at`. (Los proyectos previos a este campo no tienen `updated_at`: el primer extend lo añade.)
 
 > El registro de ejecuciones del init de stack vive en `.sdd/stack-runs.jsonl` (append-only), no aquí. `project-init.json` queda como config estable.
 

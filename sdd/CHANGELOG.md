@@ -2,6 +2,14 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.45.0 — 2026-06-25
+
+Fix menor en `wf-project-init` (visto probando CU-1.l) y nuevo backlog de mejoras no críticas.
+
+- **`initialized_at` se regeneraba en cada `extend`.** El Paso 8 escribía `initialized_at` con `date -u` en toda escritura, así que un "Completar / ampliar" (p. ej. la evolución authoring→standalone de CU-1.l) **perdía la fecha del init original**. Ahora `initialized_at` se **preserva** del `project-init.json` previo en extend/reparación (solo lo crea una instalación nueva) y se añade **`updated_at`** = timestamp de la última escritura (en init nuevo coincide con `initialized_at`).
+- **Nuevo `docs/OPTIMIZACIONES.md`** — backlog de mejoras **no críticas** (pulido/coherencia que no afecta al funcionamiento principal), hermano de `docs/ROADMAP.md`. Primer ítem **O-1**: `design_role: full` se ofrece en superficies sin UI (hoy working-as-intended con aviso; mejora futura = preguntar superficie antes que diseño). Origen: CU-1.l.
+- Sin `⚠`: `wf-project-init` es bootstrap global (se refresca con `bash setup.sh`); afecta solo a inits/extends **nuevos** — ningún `project-init.json` ya escrito cambia.
+
 ## 0.44.0 — 2026-06-24
 
 Fix de **enrutado del orquestador** para CU-1.j (init desde un subpaquete de un monorepo ya inicializado), visto en una campaña de 9 corridas manuales desde `apps/api`: el **gate** de `wf-project-init` (Paso 3.0, "Operar desde la raíz" / "Inicializar aquí") funciona 7/7 cuando se invoca la skill, pero el orquestador **cortocircuitaba ~22%** de las veces — resolvía el estado de init a mano (`find-up` + `cat .sdd/project-init.json` del ancestro) y respondía "este proyecto ya está inicializado" **sin** presentar el gate ni ofrecer anidar como consumer. Correlación clara con el wording: las 2 desviaciones usaron "inicializa este **proyecto**"; 0/5 con frasing de "**directorio**/aquí". El gate vive en la skill, pero la decisión de invocarla es del orquestador, y nada en el contexto cargado en un subpaquete (bloque global + `CLAUDE.md` generado del ancestro) le obligaba a delegar.
