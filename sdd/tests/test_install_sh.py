@@ -228,6 +228,57 @@ class PruneTest(InstallBase):
         self.assertIn("fases no seleccionadas", r.stdout)
 
 
+class StaleOverlayPruneTest(InstallBase):
+    """Cambiar el stack de un overlay (kmm) a uno sin overlay (ios) retira el
+    overlay ajeno SIEMPRE (sin --prune): no es inerte como una fase de mas, su
+    regla cargaria convenciones del stack equivocado y solo puede haber un stack.
+    Regresion del bug visto probando CU-1.o B2 (correccion kmm->ios dejaba el
+    overlay kmm huerfano: skills wf-kmm-*/kb-kmm-*, agentes kmm-*, sdd-kmm.md)."""
+
+    def _init_json(self, stack):
+        write(self.proj / ".sdd" / "project-init.json",
+              json.dumps({"name": "s", "topology": "standalone",
+                          "stack": stack, "phases": ["spec", "plan", "tasks"]}))
+
+    def test_stack_change_prunes_foreign_overlay(self):
+        self._init_json("kmm")
+        self.install("spec,plan,tasks")
+        # baseline: overlay kmm presente
+        self.assertTrue(self.skill_dir("wf-kmm-init").exists())
+        self.assertTrue(self.agent_file("kmm-tester.md").exists())
+        self.assertTrue((self.claude / "rules" / "sdd-kmm.md").exists())
+
+        # cambio de stack a ios (sin overlay) y re-install SIN --prune
+        self._init_json("ios")
+        r = self.install("spec,plan,tasks")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        # overlay kmm retirado por completo (exclusivas: wf-/kb-kmm-/kb-cmp-, agentes kmm-*, regla)
+        self.assertFalse(self.skill_dir("wf-kmm-init").exists(),
+                         "wf-kmm-init deberia haberse podado")
+        self.assertFalse(self.skill_dir("kb-kmm-clean-architecture").exists())
+        self.assertFalse(self.skill_dir("kb-cmp-resources").exists())
+        self.assertFalse(self.agent_file("kmm-tester.md").exists())
+        self.assertFalse((self.claude / "rules" / "sdd-kmm.md").exists())
+        # base intacto: las de basename compartido vuelven a su variante generica
+        self.assertTrue(self.skill_dir("kb-plan-expert").exists())
+        self.assertTrue(self.agent_file("plan-architect.md").exists())
+        self.assertTrue(self.agent_file("task-generator.md").exists())
+        # aviso de modo generico para un stack sin overlay
+        self.assertIn("no tiene overlay especialista", r.stdout)
+        self.assertIn("overlay ajeno", r.stdout)
+
+    def test_same_stack_reinstall_keeps_overlay(self):
+        # mismo stack: 6b NO debe podar el overlay del propio proyecto
+        self._init_json("kmm")
+        self.install("spec,plan,tasks")
+        r = self.install("spec,plan,tasks")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertTrue(self.skill_dir("wf-kmm-init").exists())
+        self.assertTrue(self.agent_file("kmm-tester.md").exists())
+        self.assertTrue((self.claude / "rules" / "sdd-kmm.md").exists())
+        self.assertNotIn("overlay ajeno", r.stdout)
+
+
 class IdempotencyTest(InstallBase):
     def test_settings_merge_idempotent(self):
         self.install("all")

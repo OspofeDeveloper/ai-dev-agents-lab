@@ -2,6 +2,17 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.47.0 — 2026-06-25
+
+Fix de **`install.sh`** (overlay de stack obsoleto tras cambio de stack), cazado probando **CU-1.o B2** en repo real: tras inicializar como `kmm` (overlay completo instalado), corregir el stack a `ios` (nativo, sin overlay) y reinstalar con `--prune` **dejaba el overlay kmm huérfano** — ~40 skills `wf-kmm-*`/`kb-kmm-*`/`kb-*-cmp-*`, los 7 agentes `kmm-*` y la regla `sdd-kmm.md` sobrevivían. La única salida era un `rm -rf .claude/{skills,agents,rules}` manual, no prescrito por ningún flujo. Esto contamina cualquier reconfiguración que cruce la frontera de overlay (`wf-project-init` "Completar / ampliar" con cambio de stack, `wf-sdd-update`, o ejecución manual).
+
+- **Causa raíz:** la reconciliación de huérfanos del Paso 6 (`MANAGED_SKILLS`/`MANAGED_AGENTS`) solo globa `pipeline/{prd,spec,design,plan,tasks}/` — los overlays (`tech/<stack>/`) quedan **fuera por diseño**, así que las piezas del overlay viejo nunca se clasifican como huérfanas y `--prune` no las toca. El Paso 7 entonces avisaba (sin poder limpiar) y degradaba en silencio.
+- **(Paso 6b nuevo, `install.sh`) Poda incondicional de overlays ajenos.** Si el proyecto declara un `stack` conocido, las piezas **exclusivas** de cualquier `tech/<otro_stack>/` presente en `.claude/` se retiran **siempre** (no requieren `--prune`): a diferencia de una fase de más —inerte e invocable sin daño—, una regla `sdd-<stack>.md` de otro stack carga convenciones del stack equivocado sobre `.kt`/`plan`/`tasks`, y solo puede haber **un** stack por proyecto. Las piezas de **basename compartido** (`plan-architect.md`, `kb-plan-expert`…) **no** se tocan: el install base ya las restaura a su variante genérica. El overlay del **propio** stack declarado se preserva (lo re-aplica el Paso 7).
+- **Aviso del Paso 7 corregido.** Para un stack sin overlay en el ecosistema (`ios`/`android`/`agnostico`) el mensaje pasó de un `⚠ …re-aplica el overlay manualmente` (engañoso: no hay overlay que reaplicar y las piezas genéricas son el estado correcto) a un `ℹ …plan/tasks operan en modo genérico. Nada que reinstalar`.
+- **Tests:** `StaleOverlayPruneTest` (2) en `test_install_sh.py` — cambio `kmm→ios` poda el overlay ajeno conservando el base; re-install con el mismo stack `kmm` **no** poda su propio overlay.
+- **Conformance:** `cu-01-inicializar.md` gana **CU-1.o sub-caso D** (cambio de stack que cruza la frontera de overlay) como caso de regresión re-ejecutable.
+- Sin `⚠`: `install.sh` es herramienta de ecosistema (se refresca con `bash setup.sh`); ningún `project-init.json` ya escrito cambia. Proyectos con un overlay huérfano de antes de esta versión se sanean solos en el próximo `wf-sdd-update` o reinstalando.
+
 ## 0.46.0 — 2026-06-25
 
 Fix de **CU-1.m** (ubicación de artefactos no canónica), cazado probando el caso en repo real: al elegir una carpeta no canónica (p. ej. `spec → specs`), el init **registraba** `artifacts.spec: "specs"` pero **dejaba la regla de carga perezosa apuntando al canónico** `"spec/**"` (un directorio inexistente). El glob lo ajustaba un sub-bullet del Paso 6 que el agente **omitía**, y la verificación bloqueante (Paso 9) **no lo detectaba** — el layout no canónico era el único camino del init sin red determinista. Fix en dos capas (defensa en profundidad):

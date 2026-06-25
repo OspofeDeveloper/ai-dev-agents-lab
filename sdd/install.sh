@@ -418,6 +418,23 @@ in_list() {
   return 1
 }
 
+# Stack declarado por el proyecto (si ya escribió su project-init.json). Lo usan
+# tanto la poda de overlays obsoletos (6b) como la re-aplicación del overlay
+# (Paso 7). Vacío si aún no hay project-init.json (p. ej. el primer install de un
+# init nuevo, antes de que el agente escriba el estado).
+PROJECT_STACK=""
+if command -v python3 >/dev/null 2>&1 && [ -f "$ENFORCE_ROOT/.sdd/project-init.json" ]; then
+  PROJECT_STACK="$(python3 - "$ENFORCE_ROOT/.sdd/project-init.json" <<'PYEOF'
+import json, sys
+try:
+    stack = json.load(open(sys.argv[1])).get("stack")
+    print(stack if isinstance(stack, str) and stack.replace("-", "").isalnum() else "")
+except Exception:
+    print("")
+PYEOF
+)"
+fi
+
 MANAGED_SKILLS=""
 MANAGED_AGENTS=""
 for d in prd spec design plan tasks; do
@@ -479,25 +496,72 @@ if [ -n "$ORPHAN_SKILLS" ] || [ -n "$ORPHAN_AGENTS" ] || [ -n "$ORPHAN_PHASE_DOC
   fi
 fi
 
+# ── 6b. Podar overlays de stack obsoletos (cambio de stack) ─────────────────
+# Un overlay de OTRO stack (p. ej. kmm) que sobreviva tras cambiar el stack del
+# proyecto (p. ej. a ios/android/agnostico) NO es inerte como una fase de más:
+# su regla sdd-<stack>.md carga convenciones del stack equivocado sobre .kt y
+# artefactos de plan/tasks, y sus agentes/skills (wf-<stack>-*, <stack>-*) son
+# basura invocable. Como un proyecto solo puede tener UN stack, si el proyecto
+# declara un stack conocido distinto, las piezas EXCLUSIVAS del overlay ajeno se
+# retiran SIEMPRE (a diferencia de una fase de más, no son inertes; no requieren
+# --prune). Las piezas de basename compartido (plan-architect.md, kb-plan-expert…)
+# NO se tocan: el install base de arriba ya las restauró a su variante genérica.
+if [ -n "$PROJECT_STACK" ]; then
+  STALE_OVL_SKILLS=""
+  STALE_OVL_AGENTS=""
+  STALE_OVL_RULES=""
+  for techdir in "$SCRIPT_DIR/tech"/*/; do
+    [ -d "$techdir" ] || continue
+    st=$(basename "$techdir")
+    [ "$st" = "$PROJECT_STACK" ] && continue
+    # skills exclusivas del overlay (raíz + subdirs plan/ y tasks/, como las
+    # instala tech/<stack>/install.sh). Los contenedores plan/tasks se saltan.
+    for s in "$techdir"skills/*/ "$techdir"skills/plan/*/ "$techdir"skills/tasks/*/; do
+      [ -d "$s" ] || continue
+      n=$(basename "$s")
+      case "$n" in plan|tasks) continue ;; esac
+      if ! in_list "$n" "$MANAGED_SKILLS" && [ -d "$CLAUDE_DIR/skills/$n" ]; then
+        in_list "$n" "$STALE_OVL_SKILLS" || STALE_OVL_SKILLS="$STALE_OVL_SKILLS $n"
+      fi
+    done
+    # agentes exclusivos del overlay (los de basename compartido los restaura el base)
+    for a in "$techdir"agents/*.md; do
+      [ -f "$a" ] || continue
+      n=$(basename "$a")
+      if ! in_list "$n" "$MANAGED_AGENTS" && [ -f "$CLAUDE_DIR/agents/$n" ]; then
+        in_list "$n" "$STALE_OVL_AGENTS" || STALE_OVL_AGENTS="$STALE_OVL_AGENTS $n"
+      fi
+    done
+    # regla del stack ajeno (convención sdd-<stack>.md)
+    if [ -f "$CLAUDE_DIR/rules/sdd-$st.md" ]; then
+      STALE_OVL_RULES="$STALE_OVL_RULES $st"
+    fi
+  done
+  if [ -n "$STALE_OVL_SKILLS" ] || [ -n "$STALE_OVL_AGENTS" ] || [ -n "$STALE_OVL_RULES" ]; then
+    echo ""
+    echo "Retirando overlay(s) de stack obsoleto(s) (el proyecto declara stack '$PROJECT_STACK')..."
+    for name in $STALE_OVL_SKILLS; do
+      rm -rf "$CLAUDE_DIR/skills/$name"
+      echo "  ✗ skills/$name/ (overlay ajeno)"
+    done
+    for name in $STALE_OVL_AGENTS; do
+      rm -f "$CLAUDE_DIR/agents/$name"
+      echo "  ✗ agents/$name (overlay ajeno)"
+    done
+    for st in $STALE_OVL_RULES; do
+      rm -f "$CLAUDE_DIR/rules/sdd-$st.md"
+      echo "  ✗ rules/sdd-$st.md (overlay ajeno)"
+    done
+  fi
+fi
+
 # ── 7. Re-aplicar el overlay de stack si el proyecto lo declara ─────────────
 # La instalación de fases genéricas copia por basename y PISA las variantes
 # del overlay (plan-architect.md, kb-plan-expert...). Si el proyecto declara
 # un stack en .sdd/project-init.json, re-aplicar el overlay al final restaura
 # las variantes. (/wf-sdd-update ya sigue este orden; esto cubre la ejecución
 # manual de install.sh, que antes degradaba el proyecto en silencio.)
-
-PROJECT_STACK=""
-if command -v python3 >/dev/null 2>&1 && [ -f "$ENFORCE_ROOT/.sdd/project-init.json" ]; then
-  PROJECT_STACK="$(python3 - "$ENFORCE_ROOT/.sdd/project-init.json" <<'PYEOF'
-import json, sys
-try:
-    stack = json.load(open(sys.argv[1])).get("stack")
-    print(stack if isinstance(stack, str) and stack.replace("-", "").isalnum() else "")
-except Exception:
-    print("")
-PYEOF
-)"
-fi
+# PROJECT_STACK se calcula antes del Paso 6 (lo comparte con la poda 6b).
 
 if [ -n "$PROJECT_STACK" ] && { has_phase plan || has_phase tasks; }; then
   if [ -f "$SCRIPT_DIR/tech/$PROJECT_STACK/install.sh" ]; then
@@ -507,9 +571,8 @@ if [ -n "$PROJECT_STACK" ] && { has_phase plan || has_phase tasks; }; then
     (cd "$ENFORCE_ROOT" && bash "$SCRIPT_DIR/tech/$PROJECT_STACK/install.sh")
   else
     echo ""
-    echo "⚠ El proyecto declara stack '$PROJECT_STACK' pero este ecosistema no tiene"
-    echo "  tech/$PROJECT_STACK/install.sh. Las variantes del overlay pueden haber quedado"
-    echo "  pisadas por las piezas genéricas de plan/tasks — re-aplica el overlay manualmente."
+    echo "ℹ El stack '$PROJECT_STACK' no tiene overlay especialista en este ecosistema:"
+    echo "  plan/tasks operan en modo genérico (agentes stack-agnósticos). Nada que reinstalar."
   fi
 fi
 

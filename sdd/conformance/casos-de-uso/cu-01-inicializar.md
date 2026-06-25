@@ -38,7 +38,7 @@ para leer/ejecutar el CU.
 - [x] CU-1.l — Evolución authoring→standalone (extend) · ✓ 2026-06-25: ambos sub-casos PASS en repo real. **Sub-caso 1** (authoring→standalone): `topology` reescrita, `plan`+`tasks` añadidos, `prd`/`spec`/`design` preservados (extend sin `--prune`), entrevista sin re-preguntar lo conocido. **Sub-caso 2** (idempotencia): re-extend sin cambios, **2 corridas consecutivas idénticas** → `repair-plan` `needs_repair: false`, no duplica fases, no reinstala y **no reescribe `project-init.json`** (`updated_at` intacto, `mtime` sin mover en ambas). De paso validó el fix `initialized_at` (v0.45.0): preservado entre extends, con `updated_at` para la última escritura.
 - [x] CU-1.m — Ubicación de artefactos no canónica · ✓ 2026-06-25 (validado en repo real, authoring con `specs/`): **primera corrida FALLÓ** — el init registraba `artifacts.spec: "specs"` pero dejaba la regla en el glob canónico `"spec/**"` (Paso 6 era una edición a mano del agente, omitida; y el Paso 9 no lo detectaba → único camino del init sin red determinista). **Fix v0.46.0 en dos capas** (defensa en profundidad): **(B)** `install.sh` gana `--artifacts-{prd,spec,design}=<dir>` y reescribe el glob de directorio desde plantilla (el fichero ya no aterriza mal); **(A)** `sdd-init-detect.py verify` gana el check **`rule-globs`** bloqueante (`artifacts.<fase>`≠canónico y la regla no apunta a `<dir>/**` → exit 2). `wf-project-init` Paso 6 pasa el flag; `wf-sdd-update` lo **propaga** (si no, reescribir desde plantilla regresaría el layout a canónico) y corre el verificador completo. Tests: `VerifyTest` (3) + `ArtifactsGlobTest` (4, incl. E2E A+B). **Re-corrida post-fix**: el agente pasa `--artifacts-spec=specs` solo, `rule-globs OK`, 12/12 verde, `artifacts.spec: "specs"` y regla en `specs/**`. FALLO real = registrar la ruta pero dejar la regla en el canónico no usado, o tocar los globs por nombre.
 - [x] CU-1.n — El init NO pregunta el rigor ([[D-006]]) · ✓ 2026-06-17
-- [ ] CU-1.o — Superficie/framework ramifican; caso Mínimo
+- [x] CU-1.o — Superficie/framework ramifican; caso Mínimo · ✓ 2026-06-25: **B1** (Compose MP → Targets sí, `stack: kmm`, `targets: [android,ios]`) PASS ×2 reproducible; **B2** (nativo → sin Targets, clave `targets` omitida) PASS en `android` y `ios` end-states; **C** (Mínimo: standalone + PRD=no + diseño=no + superficie Other) PASS — sin framework/targets, `stack: agnostico`, `phases: [spec,plan,tasks]`, `design_role: null`, sin fase design (solo la dep cross-fase `kb-design-governance` de plan), 12/12; validó además que el slot "Other" acepta una superficie sin-UI arbitraria (se tecleó "Firmware BLE" → `surfaces:[other]`, `has_ui:false`); **D** (cambio de stack cruzando overlay) PASS E2E ×2 en repo real — desde un kmm con overlay en disco, reconfigurar a iOS Nativo vía `wf-project-init` (extend) disparó el Paso 6b: poda completa del overlay (0 skills/agentes kmm, `sdd-kmm.md` fuera), base restaurado a genérico, `CLAUDE.md` limpio, **sin `rm -rf` manual**, 14/14; conducta del agente correcta (gate "Rehacer/Dejar como está", `initialized_at` preservado). **Hallazgo + fix v0.47.0**: corregir `kmm→ios` dejaba el overlay kmm huérfano (`install.sh` `--prune` no toca overlays); Paso 6b nuevo poda el overlay ajeno incondicionalmente — `StaleOverlayPruneTest` (2)
 - [ ] CU-1.p — Los argumentos honran y saltan preguntas
 - [x] CU-1.q — Topología design (repo de solo-diseño, [[D-011]]) · ✓ 2026-06-20 (rol `full`, ambos agentes + workflows de feature, sin fugas, `needs_repair: false`; reparación de rol verificada vía "Completar/ampliar")
 - [x] CU-1.r — Aviso de SSoT sin git (advisory, topologías productoras) · ✓ 2026-06-20 (3 corridas: aviso advisory consistente en semántica; literal varía por ser informe NL, no es FALLO)
@@ -521,9 +521,30 @@ gatea **Targets**; 5.7 deriva el `stack`.
    → **Esperado:** **NO** pregunta framework ni targets; `stack` = `agnostico`; `phases` = solo el
      backbone `spec`/`plan`/`tasks`; `design_role: null`. Es la configuración mínima del pipeline.
 
+**D — cambio de stack que cruza la frontera de overlay (regresión v0.47.0).** Cazado probando B2 en
+repo real: corregir el framework de uno **con** overlay (`kmm`) a uno **sin** overlay (`ios`/`android`)
+dejaba el overlay viejo huérfano.
+4. Inicializa standalone móvil con framework **Compose Multiplatform** → `stack: kmm`, overlay completo
+   instalado (skills `wf-kmm-*`/`kb-kmm-*`/`kb-*-cmp-*`, agentes `kmm-*`, regla `sdd-kmm.md`). Luego, en
+   el **mismo repo**, cambia el framework a **iOS Nativa** (`stack: ios`, sin overlay) vía "Completar /
+   ampliar" — o corrige `stack` en `project-init.json` y reinstala.
+   → **Esperado:** el overlay kmm se **retira por completo** (`install.sh` Paso 6b poda las piezas
+     exclusivas del overlay ajeno; **no** requiere `--prune`); `plan-architect`/`task-generator` vuelven
+     a su **variante genérica** (no la KMM); `project-init.json` queda `stack: "ios"`,
+     `specialist_workflow: null`, **sin** `targets`. No sobreviven `wf-kmm-*`/`kb-kmm-*`/`kb-*-cmp-*`,
+     `kmm-*` ni `sdd-kmm.md`. El aviso para un stack sin overlay es informativo ("modo genérico", no
+     "re-aplica manualmente"). El caso inverso (reinstalar **sin** cambiar el stack) **preserva** el
+     overlay del propio stack.
+
 **Resultado:** PASS si el set de preguntas que aparecen y el `stack`/`targets`/`phases` coinciden con
-la superficie/framework elegidos · FALLO si pregunta framework sin superficie móvil, deriva un stack
-que no corresponde al framework, o instala diseño en el caso mínimo.
+la superficie/framework elegidos, **y (D) un cambio de stack que cruza la frontera de overlay retira el
+overlay ajeno sin dejar piezas huérfanas y restaura los agentes genéricos** · FALLO si pregunta framework
+sin superficie móvil, deriva un stack que no corresponde al framework, instala diseño en el caso mínimo,
+**o deja el overlay del stack anterior huérfano tras cambiar de stack (skills `wf-<viejo>-*`/`kb-<viejo>-*`,
+agentes `<viejo>-*` o `sdd-<viejo>.md` supervivientes)**.
+**Nota de testeo:** la parte determinista de D la cubre `StaleOverlayPruneTest` en `test_install_sh.py`
+(cambio `kmm→ios` poda el overlay ajeno conservando el base; mismo stack no poda). Lo manual es que el
+flujo de reconfiguración (extend / corrección in-session) llegue a re-correr `install.sh`.
 **Desviación → reportar:** issue citando `CU-1.o`.
 
 ## CU-1.p — Los argumentos honran y saltan preguntas (por usuario o por orquestador)
