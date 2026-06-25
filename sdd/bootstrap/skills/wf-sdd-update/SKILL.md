@@ -59,10 +59,12 @@ Tu rol: reinstalar mecánicamente lo que el proyecto YA declaró, a la versión 
 Desde la raíz del proyecto:
 
 ```bash
-!SDD_HOME=$(cat ~/.sdd-home) && SDD_PROJECT_ROOT="$(pwd)" bash "$SDD_HOME/install.sh" <fase1,fase2,...> --prune ${DESIGN_ROLE:+--design-role=$DESIGN_ROLE}
+!SDD_HOME=$(cat ~/.sdd-home) && SDD_PROJECT_ROOT="$(pwd)" bash "$SDD_HOME/install.sh" <fase1,fase2,...> --prune ${DESIGN_ROLE:+--design-role=$DESIGN_ROLE} ${ART_PRD:+--artifacts-prd=$ART_PRD} ${ART_SPEC:+--artifacts-spec=$ART_SPEC} ${ART_DESIGN:+--artifacts-design=$ART_DESIGN}
 ```
 
 > Si `phases` incluye `design`, pasa `--design-role=<design_role>` (el valor leído de `project-init.json`: `system`, `feature` o `full`) para reinstalar el mismo agente/bundle que tenía el proyecto — sin el flag, `install.sh` instalaría ambos agentes (`full`) por defecto y degradaría un repo authoring/consumer. Si `design` no está en `phases`, omite el flag.
+>
+> **Preserva el layout no canónico.** `install.sh` reescribe las reglas de fase desde plantilla en cada run; si `artifacts.<fase>` del `project-init.json` difiere del canónico (= nombre de la fase, p. ej. `spec → specs`), pasa `--artifacts-<fase>=<dir>` con ese valor, o el update **regresaría** el glob de directorio de la regla al canónico (un directorio que no existe). Solo para las fases con directorio no canónico; el resto se omite. El check `rule-globs` del verificador lo detecta si se olvida.
 
 Si `stack` es concreto (ni `agnostico` ni null) y existe `$SDD_HOME/tech/<stack>/install.sh`:
 
@@ -100,7 +102,8 @@ Asegura que el `.gitignore` del proyecto contiene la línea `.claude/settings.lo
 1. Checks mecánicos:
    ```bash
    !cat .sdd/sdd-version.json && head -2 .sdd/scripts/sdd-seal.py | tail -1
-   !for f in $(python3 -c "import json;print(' '.join(json.load(open('.sdd/project-init.json'))['phases']))" 2>/dev/null); do test -f ".claude/rules/sdd-$f.md" && echo "OK rule sdd-$f" || echo "FALTA rule sdd-$f"; done
+   !SDD_HOME=$(cat ~/.sdd-home); PHASES=$(python3 -c "import json;print(','.join(json.load(open('.sdd/project-init.json'))['phases']))" 2>/dev/null); python3 "$SDD_HOME/scripts/sdd-init-detect.py" verify --phases "$PHASES"
    ```
+   El verificador (exit 2 si algún check falla) subsume la existencia de cada regla y, además, el check `rule-globs`: si el proyecto usa un layout no canónico y olvidaste el `--artifacts-<fase>` en el Paso 4, el update lo deja en FALLO en vez de degradar la regla en silencio. Corrige (re-ejecuta el install con el flag) y re-verifica antes de cerrar.
 2. Reporta: versión vieja → nueva, fases reinstaladas, overlay re-aplicado (sí/no), avisos `⚠` aplicables, y piezas eliminadas por `--prune` si las hubo.
 3. Recuerda: reiniciar Claude Code para recargar skills/agents, y commitear los cambios de `.claude/` y `.sdd/` (la política de git del proyecto los versiona; la única excepción es `settings.local.json`).

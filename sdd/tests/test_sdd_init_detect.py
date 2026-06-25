@@ -312,6 +312,57 @@ class VerifyTest(unittest.TestCase):
         self.assertTrue(next(c for c in checks if c["check"] == "topology")["ok"])
         self.assertTrue(next(c for c in checks if c["check"] == "artifacts-map")["ok"])
 
+    def _rule_with_globs(self, phase, globs):
+        """Escribe .claude/rules/sdd-<phase>.md con un frontmatter `paths:` real."""
+        body = "---\npaths:\n" + "".join(f'  - "{g}"\n' for g in globs) + "---\n\nx\n"
+        write(self.root / f".claude/rules/sdd-{phase}.md", body)
+
+    def _install_authoring_spec_dir(self, spec_dir, spec_globs):
+        """authoring prd+spec+design con artifacts.spec=<spec_dir> y la regla spec dada."""
+        self._rule_with_globs("prd", ["prd/**", "**/prd*.md"])
+        self._rule_with_globs("spec", spec_globs)
+        self._rule_with_globs("design", ["design/**", "**/DESIGN*.md"])
+        write(self.root / ".claude/CLAUDE.md", "x")
+        write(self.root / ".sdd/project-init.json", json.dumps({
+            "dispatcher": "wf-project-init",
+            "topology": "authoring",
+            "surfaces": [],
+            "design_role": "system",
+            "artifacts": {"prd": "prd", "spec": spec_dir, "design": "design"},
+        }))
+        for s in ("sdd-gate-check.py", "sdd-seal.py", "sdd-task-state.py",
+                  "sdd-sync-check.py", "sdd-skill-allow.py"):
+            write(self.root / ".sdd/scripts" / s, "x")
+        write(self.root / ".sdd/sdd-version.json", "{}")
+        write(self.root / ".gitignore", ".claude/settings.local.json\n")
+
+    def test_noncanonical_glob_rewritten_passes(self):
+        # artifacts.spec="specs" y la regla apunta a "specs/**" (no "spec/**") → rule-globs OK.
+        # El glob de layout de feature "**/features/*/spec/**" NO debe disparar el check
+        # (contiene la subcadena "spec/**" pero es otra entrada de path).
+        self._install_authoring_spec_dir("specs", [
+            "specs/**", "**/features/*/spec/**", "**/*_spec.md", "**/*_features.md"])
+        code, checks = verify(self.root, "prd,spec,design")
+        self.assertEqual(code, 0, [c for c in checks if not c["ok"]])
+        self.assertTrue(next(c for c in checks if c["check"] == "rule-globs")["ok"])
+
+    def test_noncanonical_glob_not_rewritten_fails(self):
+        # artifacts.spec="specs" pero la regla conserva el canónico "spec/**" → rule-globs FALLA
+        # (es el bug de CU-1.m: la carga perezosa apuntaría a un directorio inexistente).
+        self._install_authoring_spec_dir("specs", [
+            "spec/**", "**/features/*/spec/**", "**/*_spec.md", "**/*_features.md"])
+        code, checks = verify(self.root, "prd,spec,design")
+        self.assertEqual(code, 2)
+        self.assertFalse(next(c for c in checks if c["check"] == "rule-globs")["ok"])
+
+    def test_canonical_layout_rule_globs_ok(self):
+        # Layout canónico (artifacts.spec="spec"): no hay nada que reescribir → rule-globs OK.
+        self._install_authoring_spec_dir("spec", [
+            "spec/**", "**/features/*/spec/**", "**/*_spec.md", "**/*_features.md"])
+        code, checks = verify(self.root, "prd,spec,design")
+        self.assertEqual(code, 0, [c for c in checks if not c["ok"]])
+        self.assertTrue(next(c for c in checks if c["check"] == "rule-globs")["ok"])
+
     def test_legacy_schema_fails(self):
         # esquema viejo (profiles/profile/type) ya no es válido → check topology FALLA
         for legacy in ({"profiles": ["product"]}, {"profile": "product"}, {"type": "app"}):

@@ -80,6 +80,15 @@ ARTIFACT_CANDIDATE_DIRS = {
     "design": ["docs/design", "design-system"],
 }
 
+# Fases cuya regla `.claude/rules/sdd-<fase>.md` tiene un glob de DIRECTORIO
+# configurable por el mapa `artifacts` (Paso 5.6/6 de wf-project-init). El glob
+# canónico es "<fase>/**" (el directorio coincide con el nombre de la fase); si
+# `artifacts.<fase>` difiere del canónico, la regla debe apuntar a "<elegido>/**"
+# y NO conservar el canónico — si no, la carga perezosa observa un directorio que
+# no existe (CU-1.m). plan/tasks NO entran: sus artefactos son relativos a la
+# feature (globs por nombre, sin directorio raíz configurable).
+ARTIFACT_DIR_PHASES = ("prd", "spec", "design")
+
 # Rol de design derivado de la topología (SSoT en código del Paso 5 del SKILL:
 # authoring → system, consumer → feature, standalone → full).
 # El rol NO depende de has_ui: en consumer, has_ui decide si design ESTÁ presente,
@@ -254,6 +263,33 @@ def _check(name: str, ok: bool, message: str) -> dict:
     return {"check": name, "ok": ok, "message": message}
 
 
+def _rule_path_globs(root: Path, phase: str) -> list[str] | None:
+    """Globs declarados en el frontmatter `paths:` de `.claude/rules/sdd-<fase>.md`.
+
+    Devuelve la lista de patrones (sin comillas) o None si la regla no existe o no
+    abre con un bloque frontmatter `---`. Parser deliberadamente mínimo: el bloque
+    lo escribe `install.sh` con un formato estable (`  - "<glob>"`), no es YAML
+    arbitrario.
+    """
+    p = root / f".claude/rules/sdd-{phase}.md"
+    if not p.is_file():
+        return None
+    try:
+        lines = p.read_text(encoding="utf-8", errors="replace").splitlines()
+    except OSError:
+        return None
+    if not lines or lines[0].strip() != "---":
+        return None
+    globs = []
+    for line in lines[1:]:
+        if line.strip() == "---":
+            break
+        m = re.match(r'\s*-\s*"(.*)"\s*$', line)
+        if m:
+            globs.append(m.group(1))
+    return globs
+
+
 def verify(root: Path, phases: list[str]) -> list[dict]:
     checks = []
     for f in phases:
@@ -284,6 +320,39 @@ def verify(root: Path, phases: list[str]) -> list[dict]:
     artifacts_ok = isinstance(obj, dict) and ("artifacts" in obj or "artifacts_source" in obj)
     checks.append(_check("artifacts-map", artifacts_ok,
                          "OK" if artifacts_ok else 'falta "artifacts" (standalone) o "artifacts_source" (consumer) (Paso 8)'))
+
+    # Glob de directorio de cada regla ↔ artifacts.<fase> (CU-1.m): si el layout NO
+    # es canónico (p. ej. artifacts.spec = "specs"), la regla debe declarar el glob
+    # del directorio elegido ("specs/**") y NO conservar el canónico ("spec/**"), o
+    # la regla de carga perezosa apuntaría a un directorio inexistente. Backstop
+    # determinista de la reescritura que hace install.sh (--artifacts-<fase>); blinda
+    # también ediciones manuales y futuras regresiones. Solo aplica al esquema con
+    # "artifacts" (authoring/standalone/design); consumer no configura directorio.
+    artifacts = obj.get("artifacts") if isinstance(obj, dict) else None
+    glob_problems = []
+    if isinstance(artifacts, dict):
+        for ph in ARTIFACT_DIR_PHASES:
+            if ph not in phases:
+                continue
+            chosen = artifacts.get(ph)
+            if not isinstance(chosen, str) or not chosen.strip("/"):
+                continue
+            chosen = chosen.strip("/")
+            if chosen == ph:
+                continue  # layout canónico: no hay nada que reescribir
+            globs = _rule_path_globs(root, ph)
+            if globs is None:
+                continue  # la ausencia/ilegibilidad de la regla ya la reporta fase-<ph>
+            chosen_glob, canon_glob = f"{chosen}/**", f"{ph}/**"
+            if chosen_glob not in globs or canon_glob in globs:
+                glob_problems.append(
+                    f'{ph}: la regla debe declarar "{chosen_glob}" y no "{canon_glob}"')
+    globs_ok = not glob_problems
+    checks.append(_check(
+        "rule-globs", globs_ok,
+        "OK" if globs_ok else
+        "ajustar el glob de directorio de la(s) regla(s) al layout elegido "
+        "(install.sh --artifacts-<fase>, Paso 6): " + "; ".join(glob_problems)))
 
     # Esquema nuevo (topología-first): el eje primario es "topology"; las claves
     # legacy "profiles"/"profile"/"type" ya no son válidas (break limpio).

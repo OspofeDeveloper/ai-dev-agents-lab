@@ -22,7 +22,7 @@ import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _helpers import SDD_ROOT, run_bash  # noqa: E402
+from _helpers import SDD_ROOT, run_bash, run_script, write  # noqa: E402
 
 INSTALL = SDD_ROOT / "install.sh"
 
@@ -111,6 +111,51 @@ class InstallAllTest(InstallBase):
         r = self.install()
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertTrue(self.skill_dir("kb-plan-expert").exists())
+
+
+class ArtifactsGlobTest(InstallBase):
+    """--artifacts-<fase>=<dir> reescribe el glob de directorio de la regla (CU-1.m, (B))."""
+
+    def _spec_rule(self):
+        return (self.claude / "rules" / "sdd-spec.md").read_text(encoding="utf-8")
+
+    def test_noncanonical_dir_rewrites_directory_glob(self):
+        r = self.install("spec", "--artifacts-spec=specs")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        rule = self._spec_rule()
+        self.assertIn('"specs/**"', rule)          # glob de directorio reescrito
+        self.assertNotIn('"spec/**"', rule)         # el canónico ya no está
+        # los globs por nombre de artefacto no se tocan
+        self.assertIn('"**/*_spec.md"', rule)
+        self.assertIn('"**/features/*/spec/**"', rule)
+
+    def test_trailing_slash_is_trimmed(self):
+        r = self.install("spec", "--artifacts-spec=specs/")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        rule = self._spec_rule()
+        self.assertIn('"specs/**"', rule)
+        self.assertNotIn('"specs//**"', rule)
+
+    def test_no_flag_keeps_canonical_glob(self):
+        r = self.install("spec")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn('"spec/**"', self._spec_rule())
+
+    def test_verify_accepts_the_rewritten_rule(self):
+        # (A)+(B) end-to-end: install reescribe, verify (rule-globs) lo acepta.
+        self.install("prd,spec,design", "--design-role=system", "--artifacts-spec=specs")
+        write(self.proj / ".sdd" / "project-init.json", json.dumps({
+            "dispatcher": "wf-project-init", "topology": "authoring",
+            "surfaces": [], "design_role": "system",
+            "artifacts": {"prd": "prd", "spec": "specs", "design": "design"},
+        }))
+        write(self.proj / ".claude" / "CLAUDE.md", "x")
+        write(self.proj / ".gitignore", ".claude/settings.local.json\n")
+        r = run_script("sdd-init-detect.py",
+                       "verify", "--phases", "prd,spec,design", "--root", str(self.proj))
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        checks = json.loads(r.stdout)
+        self.assertTrue(next(c for c in checks if c["check"] == "rule-globs")["ok"])
 
 
 class InstallByPhaseTest(InstallBase):

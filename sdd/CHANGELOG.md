@@ -2,6 +2,17 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.46.0 — 2026-06-25
+
+Fix de **CU-1.m** (ubicación de artefactos no canónica), cazado probando el caso en repo real: al elegir una carpeta no canónica (p. ej. `spec → specs`), el init **registraba** `artifacts.spec: "specs"` pero **dejaba la regla de carga perezosa apuntando al canónico** `"spec/**"` (un directorio inexistente). El glob lo ajustaba un sub-bullet del Paso 6 que el agente **omitía**, y la verificación bloqueante (Paso 9) **no lo detectaba** — el layout no canónico era el único camino del init sin red determinista. Fix en dos capas (defensa en profundidad):
+
+- **(B) `install.sh` reescribe el glob de directorio de forma determinista.** Nuevos flags `--artifacts-prd=<dir>` / `--artifacts-spec=<dir>` / `--artifacts-design=<dir>`: cuando el directorio difiere del canónico, `install.sh` escribe el frontmatter `paths:` de la regla con `"<dir>/**"` desde el inicio (los globs por nombre de artefacto y el de layout de feature `**/features/*/spec/**` no se tocan). El fichero ya no aterriza mal: deja de depender de que el agente recuerde editarlo a mano.
+- **(A) `sdd-init-detect.py verify` gana el check `rule-globs` (bloqueante).** Si `artifacts.<fase>` (authoring/standalone/design) difiere del canónico y la regla no declara `"<dir>/**"` o conserva el canónico `"<fase>/**"`, el check FALLA (exit 2) — backstop del Paso 9 que blinda también ediciones manuales y regresiones futuras. Cubierto por `VerifyTest` (3 casos) y `ArtifactsGlobTest` de install (4 casos, incl. end-to-end (A)+(B)).
+- **`wf-project-init` SKILL (Paso 6):** la invocación de `install.sh` pasa los `--artifacts-<fase>` según el `ARTIFACTS_MAP`; el bullet de "editar el glob a mano" pasa a "lo hace `install.sh`; no edites las reglas a mano; `rule-globs` lo verifica".
+- **`wf-sdd-update` SKILL:** el update ahora **propaga** los `--artifacts-<fase>` leídos del `project-init.json` (si no, reescribir la regla desde plantilla **regresaría** un layout no canónico al canónico), y su Paso 6 corre el **verificador completo** (`sdd-init-detect.py verify`, antes solo `test -f`) para que `rule-globs` cace un flag olvidado durante el update.
+- Proyectos ya inicializados con layout no canónico **antes de esta versión** tienen el glob de directorio mal en disco (los globs por nombre seguían capturando los artefactos, así que el síntoma era latente): se corrige solo en el próximo `wf-sdd-update` (que ya pasa los flags) o reinstalando con `--artifacts-<fase>`.
+- Sin `⚠`: `install.sh`/`sdd-init-detect.py` son herramientas de ecosistema y los SKILL son bootstrap global (se refrescan con `bash setup.sh`); ningún `project-init.json` ya escrito cambia.
+
 ## 0.45.0 — 2026-06-25
 
 Fix menor en `wf-project-init` (visto probando CU-1.l) y nuevo backlog de mejoras no críticas.

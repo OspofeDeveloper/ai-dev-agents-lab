@@ -28,6 +28,10 @@ usage() {
   echo "  --design-role <r> : con la fase design, qué capa instalar: system (autora DESIGN.md),"
   echo "                      feature (autora flows/views/ui_prompt) o full (ambas, por defecto)."
   echo "                      Forma: --design-role=system|feature|full"
+  echo "  --artifacts-<fase>=<dir> : directorio raíz de los artefactos de esa fase (prd|spec|design)"
+  echo "                      cuando NO es el canónico (p. ej. --artifacts-spec=specs). Reescribe el"
+  echo "                      glob de directorio de la regla a '<dir>/**'. Lo pasa wf-project-init"
+  echo "                      según el mapa artifacts del proyecto (Paso 5.6/6)."
   echo "  --no-claude-md    : no siembra .claude/CLAUDE.md (lo autora wf-project-init en su Paso 7)"
 }
 
@@ -35,10 +39,18 @@ RAW_ARG="all"
 PRUNE=0
 DESIGN_ROLE="full"   # system | feature | full — qué agente+bundle de la fase design instalar
 NO_CLAUDE_MD=0       # 1 = no sembrar CLAUDE.md (wf-project-init lo autora él mismo en su Paso 7)
+# Directorio raíz de artefactos por fase si NO es el canónico (Paso 5.6/6). Vacío =
+# canónico (= nombre de la fase). bash 3.2 (macOS) no tiene arrays asociativos: tres vars.
+ART_PRD=""
+ART_SPEC=""
+ART_DESIGN=""
 for arg in "$@"; do
   case "$arg" in
     --prune) PRUNE=1 ;;
     --design-role=*) DESIGN_ROLE="${arg#*=}" ;;
+    --artifacts-prd=*)    ART_PRD="${arg#*=}";    ART_PRD="${ART_PRD%/}" ;;
+    --artifacts-spec=*)   ART_SPEC="${arg#*=}";   ART_SPEC="${ART_SPEC%/}" ;;
+    --artifacts-design=*) ART_DESIGN="${arg#*=}"; ART_DESIGN="${ART_DESIGN%/}" ;;
     --no-claude-md) NO_CLAUDE_MD=1 ;;
     -h|--help|help) usage; exit 0 ;;
     *) RAW_ARG="$arg" ;;
@@ -264,14 +276,29 @@ echo "Instalando CLAUDE.md y reglas de fase..."
 # cuando se tocan ficheros que matchean los globs — sin depender de que el
 # modelo obedezca prosa. Los globs por defecto combinan el directorio canónico
 # de la fase con patrones por nombre de artefacto (independientes del layout);
-# wf-project-init añade el directorio real del mapa `artifacts` del proyecto.
+# si el proyecto usa un directorio no canónico (Paso 5.6/6), wf-project-init lo
+# pasa con --artifacts-<fase> y la reescritura del glob de directorio la hace
+# este script de forma determinista (antes era una edición a mano del agente,
+# fácil de omitir — CU-1.m). El backstop es el check rule-globs de verify().
 mkdir -p "$CLAUDE_DIR/rules"
 
-phase_globs() {
+# Directorio raíz del glob de cada fase: el override de --artifacts-<fase> o, si
+# no se dio, el canónico (= nombre de la fase).
+phase_dir() {
   case "$1" in
-    prd)    printf '%s\n' "prd/**" "**/prd*.md" "**/*_analysis.md" "**/*_discovery.md" ;;
-    spec)   printf '%s\n' "spec/**" "**/features/*/spec/**" "**/*_spec.md" "**/*_features.md" ;;
-    design) printf '%s\n' "design/**" "**/features/*/design/**" "**/DESIGN*.md" "**/*_flows.md" "**/*_views.md" "**/*_ui_prompt*.md" ;;
+    prd)    echo "${ART_PRD:-prd}" ;;
+    spec)   echo "${ART_SPEC:-spec}" ;;
+    design) echo "${ART_DESIGN:-design}" ;;
+    *)      echo "" ;;
+  esac
+}
+
+phase_globs() {
+  local dir
+  case "$1" in
+    prd)    dir="$(phase_dir prd)";    printf '%s\n' "$dir/**" "**/prd*.md" "**/*_analysis.md" "**/*_discovery.md" ;;
+    spec)   dir="$(phase_dir spec)";   printf '%s\n' "$dir/**" "**/features/*/spec/**" "**/*_spec.md" "**/*_features.md" ;;
+    design) dir="$(phase_dir design)"; printf '%s\n' "$dir/**" "**/features/*/design/**" "**/DESIGN*.md" "**/*_flows.md" "**/*_views.md" "**/*_ui_prompt*.md" ;;
     plan)   printf '%s\n' "**/*_plan.md" ;;
     tasks)  printf '%s\n' "**/*_tasks.md" "**/*_bugs.md" "**/*_qa_plan.md" "**/*_qa_report.md" ;;
   esac

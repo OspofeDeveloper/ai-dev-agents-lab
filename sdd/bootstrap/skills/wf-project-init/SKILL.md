@@ -495,14 +495,18 @@ TOPOLOGY == design:
 
 Orden canónico: `prd → spec → design → plan → tasks` (solo las presentes).
 
-Instalación única **desde la raíz del proyecto**. Pasa siempre `--no-claude-md` (este skill autora el `CLAUDE.md` raíz en el Paso 7; sin el flag, `install.sh` lo sembraría y tu `Write` chocaría con un fichero pre-existente no leído). Cuando `design` está en las fases, añade `--design-role`:
+Instalación única **desde la raíz del proyecto**. Pasa siempre `--no-claude-md` (este skill autora el `CLAUDE.md` raíz en el Paso 7; sin el flag, `install.sh` lo sembraría y tu `Write` chocaría con un fichero pre-existente no leído). Cuando `design` está en las fases, añade `--design-role`. **Si alguna fase usa un directorio NO canónico** (5.6: `ARTIFACTS_MAP[fase]` ≠ nombre de la fase, p. ej. `spec → specs`), pásalo con `--artifacts-<fase>=<dir>` para que `install.sh` escriba la regla con el glob de directorio correcto desde el inicio (no es una edición posterior a mano):
 
 ```bash
 DESIGN_ROLE=<system|feature|full>   # según design_role; omitir el flag si no hay design
-bash "$SDD_HOME/install.sh" <fase1,fase2,...> --no-claude-md ${DESIGN_ROLE:+--design-role=$DESIGN_ROLE} ${PRUNE:+--prune}
+# Por cada fase con directorio no canónico (prd|spec|design), añade --artifacts-<fase>=<dir>.
+# Ej.: artifacts.spec = "specs" → --artifacts-spec=specs
+bash "$SDD_HOME/install.sh" <fase1,fase2,...> --no-claude-md \
+  ${DESIGN_ROLE:+--design-role=$DESIGN_ROLE} ${PRUNE:+--prune} \
+  ${ART_PRD:+--artifacts-prd=$ART_PRD} ${ART_SPEC:+--artifacts-spec=$ART_SPEC} ${ART_DESIGN:+--artifacts-design=$ART_DESIGN}
 ```
 
-> **Flags de `install.sh`** (no confundir con los del wizard): solo acepta `[<fases>] [--prune] [--design-role=system|feature|full] [--no-claude-md]`. **`--force` NO es un flag de `install.sh`** — es el modo del **wizard** (rehacer vs extend); pasárselo a `install.sh` aborta con `fase no reconocida: '--force'`. Para reinstalar limpio se usa **`--prune`**, no `--force`.
+> **Flags de `install.sh`** (no confundir con los del wizard): solo acepta `[<fases>] [--prune] [--design-role=system|feature|full] [--artifacts-prd=<dir>] [--artifacts-spec=<dir>] [--artifacts-design=<dir>] [--no-claude-md]`. **`--force` NO es un flag de `install.sh`** — es el modo del **wizard** (rehacer vs extend); pasárselo a `install.sh` aborta con `fase no reconocida: '--force'`. Para reinstalar limpio se usa **`--prune`**, no `--force`.
 
 Qué pasar según el modo:
 - **`MODE=extend`** que solo añade fases nuevas → pasar **solo las fases que faltan**, sin `--prune`.
@@ -519,7 +523,7 @@ En `consumer` no hay `ARTIFACTS_MAP`: crear solo `mkdir -p features` (ahí vivir
 
 En `design` (D-011): `mkdir -p <artifacts.design> features` — el sistema visual (`DESIGN.md`/brief/tokens) vive en `<artifacts.design>/`; los bundles por feature (flows/views/ui_prompt base + overrides por target) en `features/<nombre>/design/`.
 
-**Ajustar los globs de las reglas al layout del proyecto**: si algún directorio de `ARTIFACTS_MAP` difiere del canónico, edita el frontmatter `paths:` de la regla correspondiente (`.claude/rules/sdd-prd.md`, `sdd-spec.md`, `sdd-design.md`) sustituyendo el glob del directorio canónico por el real. Los globs por nombre de artefacto no se tocan.
+**Glob de directorio de las reglas al layout del proyecto**: lo hace `install.sh` de forma determinista con los `--artifacts-<fase>` que le pasaste arriba — reescribe el glob de directorio (`"<fase>/**"` → `"<dir>/**"`) al escribir el frontmatter `paths:` de la regla. Los globs por nombre de artefacto (`**/*_spec.md`, …) no se tocan. **No edites las reglas a mano**: si pasaste bien los flags, ya quedan correctas; el check `rule-globs` del Paso 9 lo verifica y bloquea si quedó algún glob de directorio apuntando al canónico que no se usa.
 
 No continuar al Paso 7 sin haber ejecutado el install con TODAS las fases seleccionadas.
 
