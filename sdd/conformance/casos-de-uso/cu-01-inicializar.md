@@ -39,7 +39,7 @@ para leer/ejecutar el CU.
 - [x] CU-1.m — Ubicación de artefactos no canónica · ✓ 2026-06-25 (validado en repo real, authoring con `specs/`): **primera corrida FALLÓ** — el init registraba `artifacts.spec: "specs"` pero dejaba la regla en el glob canónico `"spec/**"` (Paso 6 era una edición a mano del agente, omitida; y el Paso 9 no lo detectaba → único camino del init sin red determinista). **Fix v0.46.0 en dos capas** (defensa en profundidad): **(B)** `install.sh` gana `--artifacts-{prd,spec,design}=<dir>` y reescribe el glob de directorio desde plantilla (el fichero ya no aterriza mal); **(A)** `sdd-init-detect.py verify` gana el check **`rule-globs`** bloqueante (`artifacts.<fase>`≠canónico y la regla no apunta a `<dir>/**` → exit 2). `wf-project-init` Paso 6 pasa el flag; `wf-sdd-update` lo **propaga** (si no, reescribir desde plantilla regresaría el layout a canónico) y corre el verificador completo. Tests: `VerifyTest` (3) + `ArtifactsGlobTest` (4, incl. E2E A+B). **Re-corrida post-fix**: el agente pasa `--artifacts-spec=specs` solo, `rule-globs OK`, 12/12 verde, `artifacts.spec: "specs"` y regla en `specs/**`. FALLO real = registrar la ruta pero dejar la regla en el canónico no usado, o tocar los globs por nombre.
 - [x] CU-1.n — El init NO pregunta el rigor ([[D-006]]) · ✓ 2026-06-17
 - [x] CU-1.o — Superficie/framework ramifican; caso Mínimo · ✓ 2026-06-25: **B1** (Compose MP → Targets sí, `stack: kmm`, `targets: [android,ios]`) PASS ×2 reproducible; **B2** (nativo → sin Targets, clave `targets` omitida) PASS en `android` y `ios` end-states; **C** (Mínimo: standalone + PRD=no + diseño=no + superficie Other) PASS — sin framework/targets, `stack: agnostico`, `phases: [spec,plan,tasks]`, `design_role: null`, sin fase design (solo la dep cross-fase `kb-design-governance` de plan), 12/12; validó además que el slot "Other" acepta una superficie sin-UI arbitraria (se tecleó "Firmware BLE" → `surfaces:[other]`, `has_ui:false`); **D** (cambio de stack cruzando overlay) PASS E2E ×2 en repo real — desde un kmm con overlay en disco, reconfigurar a iOS Nativo vía `wf-project-init` (extend) disparó el Paso 6b: poda completa del overlay (0 skills/agentes kmm, `sdd-kmm.md` fuera), base restaurado a genérico, `CLAUDE.md` limpio, **sin `rm -rf` manual**, 14/14; conducta del agente correcta (gate "Rehacer/Dejar como está", `initialized_at` preservado). **Hallazgo + fix v0.47.0**: corregir `kmm→ios` dejaba el overlay kmm huérfano (`install.sh` `--prune` no toca overlays); Paso 6b nuevo poda el overlay ajeno incondicionalmente — `StaleOverlayPruneTest` (2)
-- [ ] CU-1.p — Los argumentos honran y saltan preguntas
+- [x] CU-1.p — Los argumentos honran y saltan preguntas · ✓ 2026-06-25: campaña **NL-first 8/8 PASS** en repo real (2 wordings por caso). Casos 1/2/4 vía orquestador (NL) — **absorbe el caso 3**; caso 5 tecleado por construcción (el negativo no tiene forma NL honesta). Flags válidos saltan su pregunta y aterrizan (`--topology design` salta Q1; `target_platforms` **derivado**, no tecleado; `stack: kmm` derivado **consistente** desde "KMM" y "Kotlin Multiplatform"); inválidos rechazados sin tragar (`--topology xxx` cae a Q1; `--design-targets mobile_io` → re-pregunta + sugiere `mobile-ios` sin auto-aplicar, jamás inicializa con el token roto). De paso corregido el texto del CU: caso 2 (targets **no** derivables del stack → preguntarlos es correcto, solo se saltan con `--targets`) y caso 4 (rol `full`, no `system`, [[D-013]]). **3 hallazgos laterales (NO FALLO de CU-1.p):** (a) **wizard de modo no determinista** — 1·A lo salta ante init explícito, el resto lo presenta → **fixeado y verificado post-fix (2/2 wordings saltan el wizard, incl. el que antes lo presentaba)** codificando el salto como canónico en el bloque global `mode-undecided` (init SDD explícito como primer mensaje ⇒ `mode:sdd` implícito, sin wizard), alineado con "no preguntar lo que ya se sabe" y el precedente anti-paternalista de CU-1.k; (b) **skip de Q1 sensible al wording** — "producto" en la frase (keyword de authoring) dispara confirmación de topología con recomendación correcta (4·B) vs salto directo (4·A): conducta **deseable** ante ambigüedad léxica, no se toca; (c) **language drift a inglés** en slash-commands a secas (5·A/B): limitación blanda conocida, **no** se instrumenta con más instrucción global (precedente CU-1.f: cláusula inefectiva revertida) — el uso real es NL, donde el idioma ancla bien
 - [x] CU-1.q — Topología design (repo de solo-diseño, [[D-011]]) · ✓ 2026-06-20 (rol `full`, ambos agentes + workflows de feature, sin fugas, `needs_repair: false`; reparación de rol verificada vía "Completar/ampliar")
 - [x] CU-1.r — Aviso de SSoT sin git (advisory, topologías productoras) · ✓ 2026-06-20 (3 corridas: aviso advisory consistente en semántica; literal varía por ser informe NL, no es FALLO)
 
@@ -560,8 +560,10 @@ en lenguaje natural). Ambas vías son equivalentes.
      entrevista sigue solo con lo que falta (sistema de diseño, pipeline). `project-init.json`
      registra `topology: authoring` y la fase `prd`.
 2. `/wf-project-init --topology standalone --surfaces mobile --stack kmm`.
-   → **Esperado:** salta topología, superficie, framework y targets (stack derivado del flag); va
-     directo a lo que falte (PRD, diseño, pipeline).
+   → **Esperado:** salta topología, superficie y framework (stack derivado del flag); **pregunta
+     targets** (Android/iOS/Desktop **no son derivables** del stack — KMM sin targets es indecidible)
+     salvo que se pase `--targets`; sigue con lo que falte (PRD, diseño). Con `--targets android,ios`
+     añadido, también los salta.
 3. (entrada por orquestador) Sin teclear el skill, una petición en lenguaje natural que el
    orquestador mapea a `wf-project-init` pasando `args`.
    → **Esperado:** mismo efecto que tecleado — los flags saltan sus preguntas.
@@ -569,7 +571,7 @@ en lenguaje natural). Ambas vías son equivalentes.
    → **Esperado:** salta **Q1** (topología) **y 5.D1** (design targets) — los da por conocidos; valida
      los targets con `sdd-init-detect.py target-platforms` y **deriva** `target_platforms: [mobile]`
      (no lo teclea). `project-init.json` registra `topology: design`, `phases: ["design"]` (rol
-     `system`), `design_targets: ["mobile-android","mobile-ios"]` y `target_platforms` derivado.
+     `full`, [[D-013]]), `design_targets: ["mobile-android","mobile-ios"]` y `target_platforms` derivado.
 5. (negativo) Un flag con valor fuera del enum (p. ej. `--topology xxx`), o un `--design-targets` con
    etiqueta inválida (p. ej. `mobile_ios`, familia rota).
    → **Esperado:** no se traga en silencio — lo ignora y pregunta, o pide un valor válido; nunca
@@ -583,6 +585,17 @@ acepta un valor fuera del enum / design target inválido.
 **Nota de testeo:** la entrevista es interactiva (`AskUserQuestion`) → se valida **a mano**. La
 parte determinista (detección/verificación) la cubren los unittest de `sdd-init-detect.py`
 (`test_sdd_init_detect.py`).
+**Vía NL (orquestador) — qué NO es FALLO (campaña 2026-06-25).** En NL no hay flags literales; "honrar
+flags" se lee como "honrar la intención declarada". Dos conductas observadas son **aceptables**, no FALLO:
+(1) **confirmar en vez de saltar** una pregunta cuya respuesta el NL **no fija sin ambigüedad** — p. ej. una
+frase con "**producto**" (keyword de `authoring`) ante intención `design` legítima confirma la topología vía
+Q1 con la opción correcta **recomendada**; o un NL que da las plataformas pero no la **granularidad** de los
+design targets (base `mobile` única vs `mobile-android`+`mobile-ios` divergentes) pregunta esa granularidad.
+La claridad del NL gobierna saltar-vs-confirmar; un confirm con recomendación correcta que no re-deriva desde
+cero **no** es FALLO. (2) **Language drift** a inglés en slash-commands **a secas** (sin texto del usuario al
+que anclar el idioma): limitación blanda conocida del modelo; el uso real es NL, donde el idioma ancla. No se
+instrumenta con más instrucción global (precedente CU-1.f). El FALLO sí es: re-derivar una topología/PRD
+**inequívoca** del NL desde cero, o teclear `target_platforms` en vez de derivarlo.
 **Desviación → reportar:** issue citando `CU-1.p`.
 
 ## CU-1.q — Topología `design`: repo de solo-diseño ([[D-011]])

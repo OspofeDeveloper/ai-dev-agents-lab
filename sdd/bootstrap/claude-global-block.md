@@ -7,6 +7,8 @@ Un hook `SessionStart` (`~/.claude/hooks/sdd-session-check.sh`) comprueba el est
 
 ## Directiva `[SDD-PROTOCOL] mode-undecided`
 
+> **Excepción — el primer mensaje ya es una petición explícita de init.** Si la primera petición del usuario es ya **inicializar/configurar/preparar SDD** (ver «Petición explícita de inicializar / configurar SDD»), el **modo SDD queda implícito** —pedir un init SDD *es* elegir SDD; «modo libre» es justo lo contrario— así que **NO presentes el wizard** (preguntar "¿SDD o libre?" a quien acaba de pedir un init SDD es preguntar lo ya respondido): escribe directamente `.claude/sdd-mode.json` con `mode: sdd` (`decided_by: "sdd-session-protocol"`) e invoca `wf-project-init`. El wizard de abajo es **solo** para el arranque virgen **sin** una petición que ya decida el modo.
+
 ANTES de atender la primera petición del usuario, presenta el wizard de modo con la herramienta `AskUserQuestion` (nunca como pregunta de texto libre):
 
 ```
