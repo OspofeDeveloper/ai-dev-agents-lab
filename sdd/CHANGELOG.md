@@ -8,6 +8,7 @@ Fix menor en `wf-project-init` (visto probando CU-1.l) y nuevo backlog de mejora
 
 - **`initialized_at` se regeneraba en cada `extend`.** El Paso 8 escribía `initialized_at` con `date -u` en toda escritura, así que un "Completar / ampliar" (p. ej. la evolución authoring→standalone de CU-1.l) **perdía la fecha del init original**. Ahora `initialized_at` se **preserva** del `project-init.json` previo en extend/reparación (solo lo crea una instalación nueva) y se añade **`updated_at`** = timestamp de la última escritura (en init nuevo coincide con `initialized_at`).
 - **Nuevo `docs/OPTIMIZACIONES.md`** — backlog de mejoras **no críticas** (pulido/coherencia que no afecta al funcionamiento principal), hermano de `docs/ROADMAP.md`. Primer ítem **O-1**: `design_role: full` se ofrece en superficies sin UI (hoy working-as-intended con aviso; mejora futura = preguntar superficie antes que diseño). Origen: CU-1.l.
+- Conformance: **CU-1.l cerrado `[x]`** (ambos sub-casos: authoring→standalone + idempotencia del extend), validado en repo real — fue donde se cazó y validó el fix de `initialized_at`.
 - Sin `⚠`: `wf-project-init` es bootstrap global (se refresca con `bash setup.sh`); afecta solo a inits/extends **nuevos** — ningún `project-init.json` ya escrito cambia.
 
 ## 0.44.0 — 2026-06-24
