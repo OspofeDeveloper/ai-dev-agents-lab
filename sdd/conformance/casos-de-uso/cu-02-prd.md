@@ -25,11 +25,12 @@ escenarios ejercitan **dos componentes**. Marca cada escenario al ejecutarlo. El
 cobertura autoritativo (ejes happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) —
 esta vista es la **transpuesta** para leer/ejecutar el CU.
 
-### `wf-prd-create` — redactar el PRD (`prd-expert`) (4)
+### `wf-prd-create` — redactar el PRD (`prd-expert`) (5)
 - [ ] CU-2.a — Crear el PRD desde notas
 - [ ] CU-2.b — Crear el PRD sin notas (brief oral)
 - [ ] CU-2.c — Apuntar a un directorio o fuente inexistente
 - [ ] CU-2.d — Regenerar un PRD que ya existe
+- [ ] CU-2.i — Crear el PRD a una ruta de salida explícita (`--output`)
 
 ### `wf-prd-review` — revisar el PRD y sellar (`prd-expert`) (4)
 - [ ] CU-2.e — Revisar el PRD: gate de asunciones (lo más crítico)
@@ -97,13 +98,30 @@ a ciegas.
 **Resultado:** PASS si pregunta antes de pisar · FALLO si sobrescribe sin confirmación.
 **Desviación → reportar:** issue citando `CU-2.d`.
 
+## CU-2.i — Crear el PRD a una ruta de salida explícita (`--output`)
+
+**Precondición:** pides el PRD indicando un destino concreto distinto del layout por defecto
+(ni `artifacts.prd` ni `<dir>/prd.md`).
+**Mecanismo:** skill `wf-prd-create` (Paso 5: la rama `--output` tiene prioridad sobre
+`artifacts.prd` y sobre el default `<dir>/prd.md`).
+
+1. Le pides crear el PRD con una ruta de salida explícita.
+   → **Esperado:** escribe el PRD **exactamente en esa ruta** y reporta ese path; no usa
+     `artifacts.prd` ni `<dir>/prd.md`.
+
+**Resultado:** PASS si respeta la ruta dada · FALLO si la ignora y cae al layout por defecto.
+**Desviación → reportar:** issue citando `CU-2.i`.
+
 ---
 
 ## CU-2.e — Revisar el PRD: gate de asunciones (lo más crítico)
 
 **Precondición:** el `prd.md` contiene marcas `[ASUNCIÓN]` / `[ASN-XXX]`.
-**Mecanismo:** skill `wf-prd-review` → `prd-expert`; `allowed-tools` incluye
-`AskUserQuestion`. Check determinista `grep "[ASUNCIÓN]"` (Paso 5.5).
+**Mecanismo:** skill `wf-prd-review` en el **hilo principal** (no es `context: fork`).
+El `prd-expert` (Paso 4) solo **diagnostica y lista** las asunciones (read-only); el
+**orquestador** corre el check determinista `grep "[ASUNCIÓN]"` (Paso 5.5), presenta cada
+`[ASN-XXX]` con `AskUserQuestion` y edita el PRD según tu decisión. `allowed-tools` incluye
+`AskUserQuestion`.
 
 1. Le pides que revise el PRD.
    → **Esperado:** detecta las asunciones por grep y te presenta **cada** `[ASN-XXX]`
@@ -111,15 +129,26 @@ a ciegas.
      tu decisión.
 2. Dejas alguna asunción sin confirmar.
    → **Esperado:** el veredicto **no puede ser `LISTO`** mientras quede una abierta.
+3. Sobre una asunción, eliges **Rechazar**.
+   → **Esperado:** elimina del PRD esa afirmación **y el contenido que dependía de ella**,
+     y quita su entrada de `## Asunciones del PRD`; no la deja huérfana.
+4. Sobre otra, eliges **Editar** y das el dato real.
+   → **Esperado:** sustituye la afirmación por tu texto confirmado y quita el marcador inline.
+5. Cuando una sección queda sin asunciones, elimina su entrada; si no queda ninguna, elimina
+   la sección `## Asunciones del PRD` entera.
 
-**Resultado:** PASS si presenta cada asunción y no marca `LISTO` con alguna abierta ·
-FALLO si marca `LISTO` con asunciones abiertas, o las confirma él solo.
+**Resultado:** PASS si presenta cada asunción, aplica fielmente confirmar/rechazar/editar
+(rechazar borra también el contenido dependiente) y no marca `LISTO` con alguna abierta ·
+FALLO si marca `LISTO` con asunciones abiertas, las confirma él solo, o al rechazar deja
+contenido huérfano.
 **Desviación → reportar:** issue citando `CU-2.e`.
 
 ## CU-2.f — Veredicto LISTO y sello de aprobación
 
 **Precondición:** PRD limpio, sin asunciones pendientes.
-**Mecanismo:** skill `wf-prd-review` → `prd-expert` (Paso 6, sello `Aprobado por:`).
+**Mecanismo:** skill `wf-prd-review`, Paso 6 — el **orquestador** (hilo principal) captura
+el rol aprobador con `AskUserQuestion` y estampa el sello `Aprobado por:`. El `prd-expert`
+**no interviene** en el sello.
 
 1. Le pides revisar el PRD ya limpio.
    → **Esperado:** te pide el rol aprobador con `AskUserQuestion` (default PM/PO).
@@ -127,9 +156,12 @@ FALLO si marca `LISTO` con asunciones abiertas, o las confirma él solo.
    → **Esperado:** escribe `Aprobado por: <rol> (<fecha>)` en el PRD.
 3. **No** respondes.
    → **Esperado:** **no autoaprueba** (no escribe la línea).
+4. Re-ejecutas la revisión sobre el PRD ya sellado y respondes con un rol.
+   → **Esperado:** **sobrescribe** la línea `Aprobado por:` previa (no añade una segunda);
+     no acumula sellos duplicados.
 
-**Resultado:** PASS si solo sella con respuesta humana · FALLO si estampa
-`Aprobado por:` sin que respondas.
+**Resultado:** PASS si solo sella con respuesta humana y la re-revisión sobrescribe el sello ·
+FALLO si estampa `Aprobado por:` sin que respondas, o si acumula sellos duplicados.
 **Desviación → reportar:** issue citando `CU-2.f`.
 
 ## CU-2.g — Pasar algo que no es un PRD
@@ -146,12 +178,15 @@ FALLO si marca `LISTO` con asunciones abiertas, o las confirma él solo.
 ## CU-2.h — La revisión no reescribe a su cosecha
 
 **Precondición:** PRD con problemas de estructura o contaminación técnica.
-**Mecanismo:** skill `wf-prd-review` → `prd-expert` (diagnostica, no edita salvo 5.5 y 6).
+**Mecanismo:** skill `wf-prd-review`. El `prd-expert` **solo diagnostica** (read-only): cita
+el fragmento, la regla del catálogo y propone reescritura, pero **nunca edita** el PRD. Las
+dos únicas ediciones —asunciones (5.5) y sello (6)— las hace el **orquestador**, no el agente.
 
 1. Le pides revisar un PRD con secciones mal planteadas o con tecnología metida.
-   → **Esperado:** **diagnostica** (cita el fragmento, la regla del catálogo y una
-     reescritura propuesta) pero **no edita** el PRD por su cuenta; las únicas
-     ediciones permitidas son la confirmación de asunciones (5.5) y el sello (6).
+   → **Esperado:** el `prd-expert` **diagnostica** (cita el fragmento, la regla del catálogo
+     y una reescritura propuesta) pero **no edita** el PRD por su cuenta. Las únicas ediciones
+     de todo el review son las del orquestador en 5.5/6, ajenas a arreglar contaminación: este
+     escenario verifica que la contaminación se **diagnostica**, no se reescribe sola.
 
 **Resultado:** PASS si solo diagnostica · FALLO si reescribe secciones sin que se lo
 pidas.
