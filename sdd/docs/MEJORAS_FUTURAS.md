@@ -1,6 +1,6 @@
-# Optimizaciones y mejoras no críticas — ecosistema SDD
+# Mejoras futuras no críticas — ecosistema SDD
 
-**Creado:** 2026-06-25
+**Creado:** 2026-06-25 (como `OPTIMIZACIONES.md`; renombrado a `MEJORAS_FUTURAS.md` el 2026-06-26)
 
 **Qué es este documento.** Backlog de mejoras **no críticas**: pulido, coherencia y calidad de vida que **no afectan al funcionamiento principal** del pipeline ni bloquean ningún caso de conformance. Son cosas interesantes de abordar en el futuro, sin urgencia. El trabajo estructurado y crítico (bugs, enforcement, ciclo de vida) vive en [`ROADMAP.md`](ROADMAP.md); este fichero es deliberadamente de **baja prioridad**.
 
@@ -23,6 +23,17 @@
   - *Mejora posible:* que `wf-project-init`, en extend, pase a `install.sh` **todas** las fases del contrato (no solo las nuevas) para que no haya "huérfanas" espurias; o que el aviso de `install.sh` distinga "huérfana real" de "fase instalada en otra pasada del mismo proyecto".
   - *Por qué no es crítico:* el agente no sigue la sugerencia; las piezas previas quedan intactas y el `verify` pasa. Es ruido/footgun textual, no pérdida de datos real.
   - *Origen:* observado en las dos corridas de **CU-1.l** (extend authoring→standalone, instalando solo `plan,tasks`).
+
+---
+
+## Fase spec (`wf-spec-discover` / `wf-spec-readiness`)
+
+- [ ] 🟡 **O-3 — readiness/discovery no señalan qué features dependen del diseño.** `wf-spec-readiness` ordena por dependencias + shared models + gaps/conflictos, y el discovery troquela por cohesión funcional — pero **ninguno marca, por feature, si su Plan disparará el gate de "Design obligatorio"** (presentación/navegación/a11y de UI; regla canónica de `kb-plan-expert`). Consecuencia práctica: un equipo que quiere **empezar las capas sin UI (domain/data/networking) mientras el diseño aún no está listo** no tiene una vista de "qué features son 100% construibles ya vs cuáles tienen una rebanada de presentación esperando al diseño". El orden de readiness ya front-loadea las features cimentadoras (las que más bloquean) por dependencias —lo cual ayuda—, pero no es lo mismo que un flag explícito de design-dependency.
+  - *Mejora posible:* añadir al readiness report (y/o al `_features.md`/discovery) un campo por feature tipo **"🎨 necesita diseño / ✅ sin UI"**, derivado de si el spec describe journeys/pantallas con surface UI visible.
+  - *Matiz:* la regla de diseño-obligatorio vive en fase **Plan** (`kb-plan-expert`), aguas abajo del readiness. El campo sería por tanto una **heurística de spec** (¿la feature describe UI visible?), no la aplicación exacta de la regla de plan — útil como semáforo, no como veredicto.
+  - *Por qué no es crítico:* la base transversal (API/red/auth/storage) ya es `:core:*`/setup de stack, **independiente de discovery y diseño** (se arranca ya, p. ej. con los `wf-kmm-*-setup`); y el domain/data por feature se planifica sin diseño en cuanto existe su spec (el gate solo frena la **presentación**, no las capas de abajo). La mejora es **conveniencia de visibilidad**, no desbloquea nada que hoy esté bloqueado.
+  - *Coste:* medio — heurística de detección de UI en el spec + nuevo campo en el readiness report (y, opcionalmente, en discovery/`_features.md`).
+  - *Origen:* conversación 2026-06-26 sobre arrancar domain/data/networking de un consumer KMM antes de que el diseño esté listo (la regla canónica de `kb-plan-expert` exime explícitamente networking/auth/storage/domain del gate de diseño).
 
 ---
 
