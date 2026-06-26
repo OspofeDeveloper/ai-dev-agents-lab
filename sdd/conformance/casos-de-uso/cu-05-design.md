@@ -30,10 +30,11 @@ CU-5 es un **objetivo de usuario** (diseñar una feature), no una sola skill: su
 - [ ] CU-5.b — Crear el sistema visual del producto (system)
 - [ ] CU-5.l — System: anclaje de dirección visual (provisional vs confirmed) y policy de referencias
 
-### `wf-design-feature-prototype` — deriva flows/views/ui_prompt de feature (3)
+### `wf-design-feature-prototype` — deriva flows/views/ui_prompt de feature (4)
 - [ ] CU-5.c — Derivar flows, views y prompt de feature (feature-prototype)
 - [ ] CU-5.n — Feature-prototype: resolución de `target_tool` y conflicto cross-feature
 - [ ] CU-5.w — Feature con design targets divergentes: base + overrides per-view ([[D-011]])
+- [ ] CU-5.y — Feature-prototype sobre un `DESIGN.md` de otra familia de plataforma (mismatch co-localizado, [[D-011]]) · **AÑADIDO 2026-06-26 — pendiente de implementar la detección; en rojo hasta entonces**
 
 ### `wf-design-extract` — ingeniería inversa del `DESIGN.md` (1)
 - [ ] CU-5.d — Onramp brownfield: derivar `DESIGN.md` de una UI en producción (extract)
@@ -558,3 +559,31 @@ base, o baja la divergencia de componente nativo a la vista en vez del `DESIGN.m
 **Resultado:** PASS si detecta el drift del repo de diseño por pin git y lo propaga conservadoramente ·
 FALLO si ignora el avance del repo de diseño, o el veredicto de drift lo decide el agente en vez de git.
 **Desviación → reportar:** issue citando `CU-5.x`.
+
+## CU-5.y — Feature-prototype sobre un `DESIGN.md` de otra familia de plataforma (mismatch co-localizado, [[D-011]])
+
+**Precondición:** una feature con superficie **móvil** que consume un `DESIGN.md` **co-localizado** autorado
+para **web** — el `DESIGN.md` declara `target_platforms: [web]` (referencias, breakpoints y tokens sesgados a
+puntero/desktop). Caso típico: un consumer móvil cuyo `artifacts_source` trae diseño co-localizado web, o un
+standalone cuyas superficies viran de web a móvil. **No hay repo de diseño aparte** — si lo hubiera, el mismatch
+lo caza el guard de cobertura **en el init** (→ `CU-1.i` caso 7); aquí el `DESIGN.md` es el contrato y su
+frontmatter `target_platforms` es la única señal, detectable solo al **autorar la feature**.
+**Mecanismo:** `wf-design-feature-prototype` → `design-feature-architect`, que al derivar flows/views **compara
+la familia de la superficie de la feature con el `target_platforms` del `DESIGN.md`** (frontmatter,
+`kb-design-system-contract`). Es **advisory** (no bloquea): la familia ausente se resuelve evolucionando el
+`DESIGN.md` (`wf-design-delta`), no fabricando tokens fuera de contrato.
+
+1. Pides derivar las pantallas **móviles** de la feature contra un `DESIGN.md` cuyo `target_platforms` es `[web]`.
+   → **Esperado:** el agente **detecta el mismatch de familia** y lo **señala** (advisory): el contrato visual se
+     autoró para `web` (layout de puntero, breakpoints desktop, sin touch targets) y la feature es `mobile`;
+     derivar pantallas móviles heredaría ese sesgo. Recomienda **evolucionar el `DESIGN.md`** a la familia móvil
+     (`wf-design-delta`) o confirmar que es intencional, **antes** de producir los artefactos como si el contrato
+     encajara. **No fabrica** tokens/escala/touch targets móviles que el `DESIGN.md` no define, ni los baja a la vista.
+2. El `DESIGN.md` cubre la familia de la feature (`target_platforms` incluye `mobile`).
+   → **Esperado:** sin aviso; deriva con normalidad.
+
+**Resultado:** PASS si señala el mismatch de familia entre la superficie de la feature y el `target_platforms`
+del `DESIGN.md` (advisory, sin bloquear ni inventar capa visual fuera de contrato) y calla cuando hay cobertura ·
+FALLO si produce silenciosamente pantallas de una familia que el `DESIGN.md` no cubre, o **inventa** la capa
+visual de la plataforma ausente en vez de remitir a evolucionar el `DESIGN.md`.
+**Desviación → reportar:** issue citando `CU-5.y`.

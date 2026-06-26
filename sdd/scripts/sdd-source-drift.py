@@ -19,9 +19,12 @@ Subcomando:
         externa pineada (`specs`, `design`): `pin`, `head`, `drifted`, `git_ok` y
         `changed` (artefactos relevantes cambiados `pin..HEAD`). `any_drift` resume.
         Repos sin fuentes externas (standalone/authoring/design) → `sources: []`.
-        Además, `design_ssot` (invariante D-012): si el consumer declara `design_source`
-        Y su `artifacts_source` también trae diseño co-localizado → `dual_design_ssot: true`
-        (dos SSoT de diseño; advisory).
+        Además, `design_ssot` agrupa dos invariantes cross-repo de diseño (advisory):
+        - `dual_design_ssot` (D-012): el consumer declara `design_source` Y su
+          `artifacts_source` también trae diseño co-localizado → dos SSoT de diseño.
+        - `design_target_coverage` (D-011/D-012): la familia de plataforma que el
+          consumer consume (`design_targets`) no está entre las que autora el repo de
+          diseño (`target_platforms` del `design_source`) → `gap: true` + `uncovered_families`.
 
 Exit codes:
     0 = OK (siempre; es un reporte advisory)
@@ -110,6 +113,57 @@ def dual_design_ssot(root: Path) -> dict:
     }
 
 
+def _family(label: str) -> str | None:
+    """Familia de un design target (`<familia>[-<plataforma>][-<formfactor>]`): primer
+    token antes del `-`. Net: la cobertura se mide por familia, no por etiqueta completa."""
+    if not isinstance(label, str) or not label.strip():
+        return None
+    return label.split("-", 1)[0]
+
+
+def design_target_coverage(root: Path) -> dict:
+    """¿El repo de diseño cubre la familia de plataforma que consume el consumer?
+    (cobertura cross-repo, advisory — hermano de `dual_design_ssot`, D-011/D-012).
+
+    Un consumer con repo de diseño aparte (5.C1b) declara `design_source` + `design_targets`
+    (los targets que consume, p. ej. `mobile-android`). El repo de diseño declara su
+    `target_platforms` (familias que autora, p. ej. `["web"]`). Si la familia del consumer
+    NO está entre las del repo de diseño, no hay bundles para su plataforma: al resolver
+    heredará la base agnóstica (posiblemente sesgada a otra superficie). Se AVISA, no se
+    bloquea (el repo de diseño puede ampliarse). El veredicto sale del estado declarado de
+    ambos repos, no del agente. Si no podemos leer las familias del `design_source`, no se
+    afirma un gap (`gap: false`, `source_target_platforms: null`)."""
+    empty = {
+        "design_targets": [],
+        "consumer_families": [],
+        "source_target_platforms": None,
+        "uncovered_families": [],
+        "gap": False,
+    }
+    obj = _read_json(root / ".sdd/project-init.json")
+    if not isinstance(obj, dict):
+        return empty
+    design_source = obj.get("design_source")
+    design_targets = obj.get("design_targets")
+    if not design_source or not isinstance(design_targets, list) or not design_targets:
+        return empty
+    consumer_families = sorted({f for t in design_targets if (f := _family(t))})
+    src = _read_json((root / design_source / ".sdd/project-init.json").resolve())
+    source_platforms = src.get("target_platforms") if isinstance(src, dict) else None
+    if not isinstance(source_platforms, list) or not source_platforms:
+        # Sin las familias del repo de diseño no podemos afirmar un gap.
+        return {**empty, "design_targets": design_targets,
+                "consumer_families": consumer_families}
+    uncovered = sorted(f for f in consumer_families if f not in source_platforms)
+    return {
+        "design_targets": design_targets,
+        "consumer_families": consumer_families,
+        "source_target_platforms": source_platforms,
+        "uncovered_families": uncovered,
+        "gap": bool(uncovered),
+    }
+
+
 def check(root: Path) -> dict:
     obj = _read_json(root / ".sdd/project-init.json")
 
@@ -147,7 +201,10 @@ def check(root: Path) -> dict:
         # por mover un repo de forma independiente). Señal explícita para re-apuntar; los
         # workflows de plan la consumen como precondición advisory.
         "any_missing": any(not s["exists"] for s in sources),
-        "design_ssot": dual_design_ssot(root),
+        "design_ssot": {
+            **dual_design_ssot(root),
+            "design_target_coverage": design_target_coverage(root),
+        },
     }
 
 

@@ -32,7 +32,7 @@ para leer/ejecutar el CU.
 ### `wf-project-init` — la skill de init (12)
 - [x] CU-1.b — Modo SDD arranca el init · ✓ 2026-06-20 (RE-TEST D-011 cerrado: Q1 con 4 opciones; la 4ª, Diseño, arranca end-to-end y escribe el esquema nuevo — ver CU-1.q)
 - [x] CU-1.h — La topología decide qué se instala · ✓ 2026-06-20 (esc. 1 authoring + esc. 2 standalone mínimo en sesiones previas; esc. 3 standalone+KMM+diseño full verificado en disco: overlay instalado vía re-run del Paso 8.5, **sin `Unknown skill`** [[D-014]], rol full con ambos agentes, 6 reglas, `verify` exit 0, sin `stack-runs.jsonl`)
-- [x] CU-1.i — Topología consumer · ✓ 2026-06-24 (esc. 1-6 PASS en repos reales; endurecido tras campaña: glob SSoT glob-safe en zsh, confirmaciones ≥2 opciones sin "indicar otro" redundante con el slot Other, consumer sin `target_platforms`. esc. 6 (SSoT `OK_EMPTY`) confirmado: `../myops-app-specs-2` authoring vacío aceptado y etiquetado "aún sin specs", no rechazado, JSON sin `target_platforms`)
+- [x] CU-1.i — Topología consumer · esc. 1-6 ✓ 2026-06-24 (PASS en repos reales; endurecido tras campaña: glob SSoT glob-safe en zsh, confirmaciones ≥2 opciones sin "indicar otro" redundante con el slot Other, consumer sin `target_platforms`. esc. 6 (SSoT `OK_EMPTY`) confirmado: `../myops-app-specs-2` authoring vacío aceptado y etiquetado "aún sin specs", no rechazado, JSON sin `target_platforms`). **esc. 7 (mismatch de cobertura de target cross-repo, [[D-011]]/[[D-012]]) ✓ 2026-06-26.** Guard en dos momentos: (a) init-time en `wf-project-init` 5.C1b (lee `target_platforms` del `design_source`; avisa si la familia del consumer no está cubierta, advisory); (b) espejo determinista post-init `design_target_coverage` en `sdd-source-drift.py` (`DesignTargetCoverageTest` 7/7 OK). Validado en repo real `myops-app-dev-kmm`→`myops-design` `[web]` (consumer móvil): **PASS emergente ×2** pre-guard y **PASS dirigido por el SKILL post-guard** (tras `setup.sh` + sesión nueva) — el aviso aparece **inline en la opción del gate de diseño** ("⚠ ese repo cubre solo 'web', no móvil"), en la pregunta de design-target y en el resumen, con recomendación `wf-design-delta`; advisory, sin bloquear, sin inventar bundles ni reescribir los targets del repo de diseño. Disparó también el doble-SSoT (esc. 5). Conducta de agente (best-effort determinista, como CU-1.j/p)
 - [x] CU-1.j — Init desde subpaquete (gate de workflow) · ✓ 2026-06-24: el gate de `wf-project-init` Paso 3.0 es correcto cuando se invoca la skill; el cortocircuito era de la **capa orquestador** (resolvía el estado a mano con `find-up`+`cat` del ancestro → "ya inicializado" **sin** gate). Pre-fix: campaña de 9 corridas desde `apps/api` → **2/9 cortocircuitaban (~22%)**, correladas con el wording "inicializa este **proyecto**" (0/5 con "directorio/aquí"). Fix de enrutado v0.44.0: sección "Petición explícita de inicializar/configurar SDD" + aclaración del fallback en `bootstrap/claude-global-block.md`, y `when_to_use` endurecido en `wf-project-init` SKILL. Post-fix (verificado activo en `~/.claude/`): **6/6 PASS** con los wordings más adversariales —incluida la frase exacta que fallaba y el peor caso "¿ya está inicializado? si no, inicialízalo"—; en este último el agente razona "no voy a resolver yo mismo el estado de init… esa decisión es del flujo de inicialización" (la regla del fix reflejada). **Capa orquestador, no determinista por construcción**: el fix maximiza cobertura pero no garantiza 100% por diseño.
 - [x] CU-1.k — Verificación bloqueante · ✓ 2026-06-25: validado en repo real (authoring, fase `spec` declarada sin instalar). **Sub-caso 1** (bloquea hasta verde, no atiende la petición pendiente): PASS rotundo — repara y re-verifica antes de atender, y es **robustísimo**: derrotó `chmod 555` (`chmod u+w`) y hasta `chflags uchg` (`chflags nouchg`) para llegar a verde en vez de proceder roto. **Sub-caso 2 reescopado**: bajo **override explícito** ("no lo repares, contéstame") procede pero **señala** el estado incompleto, no declara el init hecho y ofrece reparar → PASS (antes FALLO por la letra; el bloqueo absoluto contra orden directa e informada es hostil y aquí innecesario — la fase ausente no estaba en el camino crítico del PRD). FALLO real = proceder por su cuenta / ocultar / declarar completo
 - [x] CU-1.l — Evolución authoring→standalone (extend) · ✓ 2026-06-25: ambos sub-casos PASS en repo real. **Sub-caso 1** (authoring→standalone): `topology` reescrita, `plan`+`tasks` añadidos, `prd`/`spec`/`design` preservados (extend sin `--prune`), entrevista sin re-preguntar lo conocido. **Sub-caso 2** (idempotencia): re-extend sin cambios, **2 corridas consecutivas idénticas** → `repair-plan` `needs_repair: false`, no duplica fases, no reinstala y **no reescribe `project-init.json`** (`updated_at` intacto, `mtime` sin mover en ambas). De paso validó el fix `initialized_at` (v0.45.0): preservado entre extends, con `updated_at` para la última escritura.
@@ -369,20 +369,38 @@ diseño aparte** (D-011: `design_source` + `design_targets`, sin design local).
      se **etiqueta con honestidad** ("(SSoT válido, **aún sin specs** — los autorarás en su repo)") en la opción y el
      resumen — **nunca** como "contiene specs". Un `features/` **vacío no cuenta** como tener specs. Un path que **ni**
      tiene specs **ni** es repo authoring/standalone sigue siendo `SIN_SPECS` (rechazo, como el caso 3).
+7. ([[D-011]]/[[D-012]] — **mismatch de cobertura de target cross-repo**) Como el caso 4 (consumer con
+   superficie **móvil** y repo de diseño aparte en 5.C1b), pero el repo de diseño que das **no cubre la
+   familia del consumer**: su `project-init.json` declara `target_platforms: ["web"]` (design targets solo
+   `web`) y tú declaras consumir `mobile-android`/`mobile-ios`.
+   → **Esperado:** la validación de etiqueta sigue dando `all_valid: true` (`mobile-android` es sintáctica­mente
+     válido — el problema **no es de sintaxis** sino de **cobertura cross-repo**). El init **lee
+     `<DESIGN_SOURCE>/.sdd/project-init.json` → `target_platforms`** y, como la familia del consumer (`mobile`)
+     **no** está cubierta por las del repo de diseño (`web`), **avisa** (no bloquea, espejo de D-012): «el repo
+     de diseño cubre `[web]` pero esta app consume `[mobile]`; no hay bundles para tu plataforma → al resolver
+     heredarás la **base agnóstica** (posiblemente sesgada a otra superficie). Amplía el repo de diseño a la
+     familia `mobile` o revisa el `design_source`». Continúa si el usuario confirma (p. ej. el repo de diseño
+     va a ampliarse). Tras escribir el `project-init.json`, el espejo determinista lo reporta
+     `sdd-source-drift.py check` como `design_ssot.design_target_coverage` (familias del consumer ⊄ familias
+     del `design_source`). **No** inventa bundles móviles inexistentes ni reescribe los `design_targets` del repo
+     de diseño.
 
 **Resultado:** PASS si instala solo plan+tasks con `artifacts_source`/pin (ruta relativa), **confirma el SSoT
 con `AskUserQuestion`** (confirmación con **≥2 opciones**, Sí/No; sin opción manual "indicar otro" redundante con el
 slot "Other" de la herramienta) y **no pregunta Framework salvo superficie móvil**, exige un SSoT válido (acepta
 `OK_SPECS` y `OK_EMPTY` —este último etiquetado "aún sin specs"—, rechaza `SIN_SPECS`), en el
 caso 4 persiste `design_source`/pin/`design_targets` **sin** `target_platforms` (clave exclusiva de topología
-`design`) ni design local, y en el caso 5 **avisa** del doble SSoT de diseño sin bloquear · FALLO si instala
-prd/spec/design en un consumer, escribe la clave `artifacts` canónica **o `target_platforms` en el consumer**,
+`design`) ni design local, en el caso 5 **avisa** del doble SSoT de diseño sin bloquear, y en el caso 7
+**avisa** del mismatch de cobertura de target (familia del consumer ⊄ familias del `design_source`) sin
+bloquear · FALLO si instala prd/spec/design en un consumer, escribe la clave `artifacts` canónica **o `target_platforms` en el consumer**,
 **auto-selecciona el SSoT sin confirmar**, **lanza una validación con un glob no-safe en zsh** (`<path>/*_features.md`
 suelto → `nomatch` aborta; usar `find -name '*_features.md'`), **emite una pregunta con <2 opciones o con una opción
 "indicar otro" redundante con el slot "Other"**, **pregunta Framework para web/desktop/backend**, **inventa una
 aclaración no canónica para reconciliar el nombre del repo con la superficie elegida** (la respuesta explícita es
 autoritativa), **trata un `features/` vacío como "contiene specs"** o rechaza un SSoT `OK_EMPTY` válido, autora
-flows/views localmente cuando hay `design_source`, o **calla** ante el doble SSoT de diseño (caso 5).
+flows/views localmente cuando hay `design_source`, **calla** ante el doble SSoT de diseño (caso 5), o
+**calla** ante un `design_source` que no cubre la familia del consumer / **reescribe** los `design_targets`
+del repo de diseño o **inventa** bundles para una plataforma que el repo de diseño no autora (caso 7).
 **Desviación → reportar:** issue citando `CU-1.i`.
 
 ## CU-1.j — Init invocado desde un subpaquete de un monorepo ya inicializado (gate de workflow)

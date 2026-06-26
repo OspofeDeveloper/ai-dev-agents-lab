@@ -208,5 +208,87 @@ class DualDesignSsotTest(unittest.TestCase):
         self.assertFalse(d["dual_design_ssot"])
 
 
+class DesignTargetCoverageTest(unittest.TestCase):
+    """Cobertura cross-repo (D-011/D-012): la familia de plataforma que consume el
+    consumer (`design_targets`) debe estar entre las que autora el repo de diseño
+    (`target_platforms` del `design_source`). Si no → `gap`, advisory. El repo de
+    diseño solo necesita su project-init.json (la cobertura no mira git)."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _consumer(self, **extra):
+        obj = {"dispatcher": "wf-project-init", "topology": "consumer"}
+        obj.update(extra)
+        write(self.root / ".sdd/project-init.json", json.dumps(obj))
+
+    def _design_repo(self, rel, **extra):
+        write(self.root / rel / ".sdd/project-init.json",
+              json.dumps({"topology": "design", "design_role": "full", **extra}))
+
+    def _cov(self):
+        return check(self.root)["design_ssot"]["design_target_coverage"]
+
+    def test_mobile_consumer_web_design_is_gap(self):
+        self._design_repo("design_repo", target_platforms=["web"])
+        self._consumer(design_source="design_repo",
+                       design_targets=["mobile-android", "mobile-ios"])
+        c = self._cov()
+        self.assertEqual(c["consumer_families"], ["mobile"])
+        self.assertEqual(c["source_target_platforms"], ["web"])
+        self.assertEqual(c["uncovered_families"], ["mobile"])
+        self.assertTrue(c["gap"])
+
+    def test_mobile_consumer_mobile_design_is_covered(self):
+        self._design_repo("design_repo", target_platforms=["mobile"])
+        self._consumer(design_source="design_repo", design_targets=["mobile-android"])
+        c = self._cov()
+        self.assertEqual(c["uncovered_families"], [])
+        self.assertFalse(c["gap"])
+
+    def test_partial_coverage_is_gap(self):
+        # consume mobile + web; el repo de diseño solo cubre web → mobile sin cubrir.
+        self._design_repo("design_repo", target_platforms=["web"])
+        self._consumer(design_source="design_repo",
+                       design_targets=["mobile-android", "web"])
+        c = self._cov()
+        self.assertEqual(c["consumer_families"], ["mobile", "web"])
+        self.assertEqual(c["uncovered_families"], ["mobile"])
+        self.assertTrue(c["gap"])
+
+    def test_family_derived_from_multitoken_label(self):
+        # `mobile-ios-tablet` → familia `mobile` (primer token); cubierto por [mobile].
+        self._design_repo("design_repo", target_platforms=["mobile"])
+        self._consumer(design_source="design_repo", design_targets=["mobile-ios-tablet"])
+        c = self._cov()
+        self.assertEqual(c["consumer_families"], ["mobile"])
+        self.assertFalse(c["gap"])
+
+    def test_no_design_source_is_no_gap(self):
+        self._consumer(design_targets=["mobile-android"])
+        c = self._cov()
+        self.assertFalse(c["gap"])
+        self.assertEqual(c["uncovered_families"], [])
+
+    def test_no_design_targets_is_no_gap(self):
+        self._design_repo("design_repo", target_platforms=["web"])
+        self._consumer(design_source="design_repo")
+        c = self._cov()
+        self.assertFalse(c["gap"])
+
+    def test_source_without_target_platforms_cannot_assert_gap(self):
+        # repo de diseño sin `target_platforms` legible → no se afirma gap (conservador).
+        self._design_repo("design_repo")  # sin target_platforms
+        self._consumer(design_source="design_repo", design_targets=["mobile-android"])
+        c = self._cov()
+        self.assertIsNone(c["source_target_platforms"])
+        self.assertFalse(c["gap"])
+        self.assertEqual(c["consumer_families"], ["mobile"])
+
+
 if __name__ == "__main__":
     unittest.main()
