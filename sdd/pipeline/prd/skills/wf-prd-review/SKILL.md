@@ -34,14 +34,14 @@ Verifica que el archivo existe:
 
 Si no existe, informa al usuario con la ruta exacta y detén.
 
-Si el nombre termina en `_spec.md`, `_plan.md` o `_tasks.md`, informa:
+Si el nombre termina en `_spec.md`, `_plan.md` o `_tasks.md`, informa y **detén** (no continúes a los Pasos 3-4):
 > "Este archivo parece un artefacto posterior del pipeline. `/wf-prd-review` opera sobre PRDs o documentos de requisitos iniciales."
 
 ---
 
-## Paso 3: Leer el contenido
+## Paso 3: No cargues el PRD en el hilo principal
 
-Lee el PRD completo.
+No leas el PRD completo aquí: su lectura y análisis se delegan al `prd-expert` (Paso 4), que recibe el **path** y lo lee con su propia `Read` + `kb-prd-expert`. El orquestador solo vuelve a tocar el fichero —de forma puntual y acotada— cuando tiene que **editarlo**: el gate de asunciones (Paso 5.5, solo si `grep -c` > 0) y el sello (Paso 6, solo si el veredicto es `LISTO`). Así el contexto del orquestador no carga el documento entero (que además se duplicaría en el prompt del agente).
 
 ---
 
@@ -52,11 +52,7 @@ El análisis del PRD lo hace el agente `prd-expert` (carga `kb-prd-expert` en su
 ```text
 Modo: review-prd
 Path del PRD: <path>
-Contenido del PRD:
----
-<contenido_prd>
----
-INSTRUCCIÓN: evalúa el documento contra `kb-prd-expert` y devuelve un diagnóstico estructurado:
+INSTRUCCIÓN: lee el PRD con `Read` desde ese path y evalúalo contra `kb-prd-expert`; devuelve un diagnóstico estructurado:
 1. Estructura y frontera: ¿describe un único producto o está partido artificialmente?, ¿actores explícitos?, ¿alcance dentro/fuera claro?, ¿reglas de negocio transversales?, ¿estructura procesable (por actor / por RFs numerados / por secciones funcionales — no penalices la elegida si es clara y trazable)?
 2. Contaminación técnica: aplica la Prueba de Negocio (`kb-prd-expert` Regla 6) a cada sección y cótejala contra el catálogo de elementos prohibidos (`references/prd_prohibited_items.md` de `kb-prd-expert`: stack, frameworks, patrones de diseño, endpoints, esquemas de datos, timelines, criterios técnicos de QA, pantallas como unidad de feature, etc.). Por cada fragmento problemático: cita el fragmento exacto, indica qué entrada del catálogo viola y propón la reescritura funcional equivalente. La SSoT de la frontera es `kb-prd-expert`, no una frontera inline.
 3. Asunciones: reporta los marcadores `[ASUNCIÓN]`/`[ASN-XXX]` presentes (su confirmación con el usuario la gestiona el orquestador en el Paso 5.5; tú solo los listas).
