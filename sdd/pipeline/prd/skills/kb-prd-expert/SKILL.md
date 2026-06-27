@@ -239,7 +239,7 @@ El riesgo es máximo cuando la fuente es pobre: sin `--source`, o con un brief d
 
 ### Formato del marcador
 
-- **Inline**, pegado a la afirmación inferida:
+- **Inline**, pegado a la afirmación inferida. El marcador inline es **exactamente la bandera `[ASUNCIÓN]`** (token literal, sin texto dentro de los corchetes): la justificación y el hueco van **solo** en la sección dedicada (`[ASN-XXX]`), no incrustados inline. No uses la forma `[ASUNCIÓN: explicación …]`: duplica el contenido de la sección y el detector determinista del review (`grep "\[ASUNCIÓN"`) cuenta una vez por marca igualmente, así que el texto inline no aporta y sí ensucia.
   - actor: `### Coordinador [ASUNCIÓN]`
   - capacidad / exclusión / regla: `- Aprueba las solicitudes de los cuidadores [ASUNCIÓN]`
 - **Sección dedicada** (al final del PRD, antes de cualquier anexo), que recopila todas para que el review las procese una a una:

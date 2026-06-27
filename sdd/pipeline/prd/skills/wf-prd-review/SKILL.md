@@ -67,9 +67,9 @@ El diagnóstico que devuelve `prd-expert` alimenta el veredicto del Paso 6. Las 
 
 `kb-prd-expert` Regla 12 obliga a que toda afirmación de negocio no trazable a la fuente esté marcada `[ASUNCIÓN]`. Este paso es el **gate de confirmación humana** de esas asunciones — el contrapunto a la generación: el autor marca lo que infirió, el review lo confirma o lo descarta.
 
-**Detección determinista** (no a ojo):
+**Detección determinista** (no a ojo) — el patrón **no exige el `]` de cierre**, para detectar tanto el marcador canónico `[ASUNCIÓN]` como la variante verbosa `[ASUNCIÓN: …]` que la generación pueda emitir (si no, esa variante daría conteo `0` y el gate se saltaría en silencio):
 ```
-!grep -n "\[ASUNCIÓN\]" "<path>"; grep -c "\[ASUNCIÓN\]" "<path>"
+!grep -n "\[ASUNCIÓN" "<path>"; grep -c "\[ASUNCIÓN" "<path>"
 ```
 
 - **Cuenta `0`** → no hay asunciones pendientes; sigue al veredicto.

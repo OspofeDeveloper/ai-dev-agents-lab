@@ -53,7 +53,7 @@ Si no existe, informa al usuario con la ruta exacta y detén.
 
 ### Si hay `--source`
 
-Lee el archivo completo y úsalo como material base para el PRD.
+**No leas el fichero en el hilo principal.** Solo verificaste que existe (Paso 2); pásalo por **path** a `prd-expert` (Paso 4), que lo leerá con su propia `Read`. Así el contenido no se duplica en el contexto del orquestador ni se incrusta en el prompt del agente.
 
 ### Si NO hay `--source`
 
@@ -71,7 +71,7 @@ Si el usuario aporta texto libre, úsalo como brief inicial.
 ## Paso 4: Delegar al agente `prd-expert`
 
 Invoca al agente `prd-expert` con:
-- el contenido fuente disponible
+- **el material de entrada por referencia, no incrustado**: si hay `--source`, la **ruta** del fichero fuente (que `prd-expert` leerá con `Read`), nunca su contenido pegado en el prompt; si NO hay `--source`, el brief que el usuario dio en sesión (Paso 3)
 - la ruta objetivo
 - la instrucción de producir un PRD completo en Markdown
 
