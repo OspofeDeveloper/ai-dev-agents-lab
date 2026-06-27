@@ -8,7 +8,8 @@ mientras queden asunciones sin confirmar ni se autoaprueba.
 que el PRD tenga que marcar `[ASUNCIÓN]`.
 **Cobertura automática:** ninguna directa — la calidad del PRD y el respeto del gate
 de asunciones son juicio del agente `prd-expert`, así que estos escenarios son
-**manuales**. El conteo de asunciones (`grep "[ASUNCIÓN]"`) sí es determinista.
+**manuales**. El conteo de asunciones (`grep "[ASUNCIÓN"`, sin exigir el `]` de cierre para
+tolerar también la forma verbosa `[ASUNCIÓN: …]`) sí es determinista.
 
 > [!IMPORTANT]
 > **La regla que gobierna toda la fase — anti-fabricación (Regla 12 de
@@ -39,7 +40,7 @@ esta vista es la **transpuesta** para leer/ejecutar el CU.
 - [ ] CU-2.h — La revisión no reescribe a su cosecha
 
 > **Capa determinista** (no es un escenario manual): el conteo de asunciones
-> (`grep "[ASUNCIÓN]"`, Paso 5.5 de `wf-prd-review`) es el único check automático de la fase.
+> (`grep "[ASUNCIÓN"`, Paso 5.5 de `wf-prd-review`) es el único check automático de la fase.
 
 ---
 
@@ -53,11 +54,18 @@ carga `kb-prd-expert`). Output: `prd.md` (en `--output`, o `artifacts.prd` de
 1. Le pides que te cree el PRD a partir de esas notas ("créame el PRD desde este brief").
    → **Esperado:** `prd-expert` redacta `prd.md` con las secciones mínimas (Resumen,
      Actores, Alcance dentro/fuera, Reglas transversales); lo que no traza a la fuente
-     va marcado `[ASUNCIÓN]`; te reporta el **path** del PRD y el **nº de asunciones**.
+     va marcado con la bandera inline **`[ASUNCIÓN]`** (token literal, la explicación va en
+     `## Asunciones del PRD`) + su `[ASN-XXX]`; te reporta el **path** del PRD y el **nº de
+     asunciones**.
 
-**Resultado:** PASS si redacta el PRD trazado a la fuente, marca lo no dicho y reporta
-path + nº de asunciones · FALLO si inventa actores/alcance sin marcarlos, o mete
-tecnología.
+> **Comprobación de formato (capa determinista):** `grep -c "\[ASUNCIÓN" prd.md` debe igualar
+> el nº de marcas inline. El gate de `wf-prd-review` tolera la forma verbosa `[ASUNCIÓN: …]`,
+> pero el contrato (`kb-prd-expert` Regla 12) pide la bandera escueta `[ASUNCIÓN]`: la verbosa
+> duplica la sección y es señal de deriva del agente, aunque ya no rompe el conteo.
+
+**Resultado:** PASS si redacta el PRD trazado a la fuente, marca lo no dicho con la bandera
+detectable por el gate y reporta path + nº de asunciones · FALLO si inventa actores/alcance
+sin marcarlos, o mete tecnología.
 **Desviación → reportar:** issue citando `CU-2.a`.
 
 ## CU-2.b — Crear el PRD sin notas (brief oral)
@@ -119,7 +127,7 @@ a ciegas.
 **Precondición:** el `prd.md` contiene marcas `[ASUNCIÓN]` / `[ASN-XXX]`.
 **Mecanismo:** skill `wf-prd-review` en el **hilo principal** (no es `context: fork`).
 El `prd-expert` (Paso 4) solo **diagnostica y lista** las asunciones (read-only); el
-**orquestador** corre el check determinista `grep "[ASUNCIÓN]"` (Paso 5.5), presenta cada
+**orquestador** corre el check determinista `grep "[ASUNCIÓN"` (Paso 5.5), presenta cada
 `[ASN-XXX]` con `AskUserQuestion` y edita el PRD según tu decisión. `allowed-tools` incluye
 `AskUserQuestion`.
 
