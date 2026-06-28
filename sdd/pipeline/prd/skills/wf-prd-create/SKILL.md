@@ -129,5 +129,14 @@ Tras escribir el archivo, informa:
 - **número de `[ASUNCIÓN]` marcadas** (Regla 12) y aviso de que el PRD **no está listo** hasta confirmarlas: son afirmaciones que la generación infirió, no datos que el usuario haya dado. Cuantas más, más débil era la fuente.
 - si quedaron huecos explícitos que el usuario debería revisar manualmente
 
-**Siguiente paso recomendado:**
-> "Revisa el PRD y luego ejecuta `/wf-prd-review <path/prd.md>`: confirmará una a una las asunciones `[ASN-XXX]` y validará la entrada antes del análisis SDD."
+**DETENTE aquí. No resuelvas tú las asunciones.**
+El gate de confirmación de las `[ASUNCIÓN]`/`[ASN-XXX]` (presentarlas una a una,
+confirmar/rechazar/editar, limpiar la sección `## Asunciones del PRD`, subir versión y sellar
+`Aprobado por:`) es **exclusivo de `wf-prd-review`** (sus Pasos 5.5 y 6). No lances
+`AskUserQuestion` por las asunciones, no edites el PRD para integrarlas y no improvises ese
+gate aquí: es trabajo de otra skill. Si el usuario no ejecuta review, las asunciones residuales
+bajan como gaps a `wf-spec-analyze` (`kb-prd-expert` Regla 12) — nunca las resuelves tú.
+
+**Siguiente paso:**
+> Revisa el PRD y luego ejecuta `/wf-prd-review <path/prd.md>`: confirmará una a una las
+> asunciones `[ASN-XXX]`, validará la entrada y sellará la aprobación antes del análisis SDD.

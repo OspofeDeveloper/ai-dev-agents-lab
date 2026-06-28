@@ -57,6 +57,8 @@ Las `kb-*` viven en el frontmatter `skills: [...]` de los agentes de la fase; el
 
 Los workflow skills tienen sus propias validaciones. **No las bypasses.** Si un skill reporta bloqueos o información faltante, comunícalos al usuario y espera a que los resuelva antes de reintentar.
 
+**Frontera create → review.** Tras `wf-prd-create`, si el PRD trae marcadores `[ASUNCIÓN]`/`[ASN-XXX]`, **no resuelvas tú el gate de asunciones**: no lances `AskUserQuestion` por ellas, no edites el PRD para integrarlas, no subas versión ni selles aprobación. Ese gate (confirmar/rechazar/editar cada asunción, limpiar la sección, sello `Aprobado por:`) es exclusivo de `wf-prd-review` (Pasos 5.5 y 6). Tu única acción correcta es **parar y remitir** a `/wf-prd-review <path/prd.md>`. Si el usuario decide no revisar, las asunciones residuales bajan como gaps a `wf-spec-analyze` (no las resuelves tú en ningún caso).
+
 ## Principio de autonomía por capas
 
 El ecosistema PRD opera en tres capas:
