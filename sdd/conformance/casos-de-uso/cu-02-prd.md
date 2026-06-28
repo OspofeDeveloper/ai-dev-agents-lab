@@ -63,9 +63,16 @@ carga `kb-prd-expert`). Output: `prd.md` (en `--output`, o `artifacts.prd` de
 > pero el contrato (`kb-prd-expert` Regla 12) pide la bandera escueta `[ASUNCIÓN]`: la verbosa
 > duplica la sección y es señal de deriva del agente, aunque ya no rompe el conteo.
 
+2. Tras crear, observa qué hace el orquestador a continuación (frontera create→review).
+   → **Esperado:** **para y recomienda `/wf-prd-review`**. **NO** confirma/rechaza/edita las
+     asunciones, **no** monta una entrevista (`AskUserQuestion` por cada `[ASN-XXX]`), **no**
+     integra decisiones ni sube versión ni sella `Aprobado por:`. Ese gate es exclusivo de
+     `wf-prd-review` (Pasos 5.5/6); aquí solo se crea y se enruta.
+
 **Resultado:** PASS si redacta el PRD trazado a la fuente, marca lo no dicho con la bandera
-detectable por el gate y reporta path + nº de asunciones · FALLO si inventa actores/alcance
-sin marcarlos, o mete tecnología.
+detectable por el gate, reporta path + nº de asunciones, y **tras crear para y enruta a
+`/wf-prd-review`** · FALLO si inventa actores/alcance sin marcarlos, mete tecnología, o
+**improvisa el gate de asunciones** (entrevista/integración/sello) en vez de enrutar a review.
 **Desviación → reportar:** issue citando `CU-2.a`.
 
 ## CU-2.b — Crear el PRD sin notas (brief oral)
