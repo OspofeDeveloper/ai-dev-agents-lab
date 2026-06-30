@@ -47,9 +47,12 @@ esta vista es la **transpuesta** para leer/ejecutar el CU.
 ## CU-2.a — Crear el PRD desde notas
 
 **Precondición:** existe un fichero de notas/brief válido (tus notas reales del producto).
-**Mecanismo:** skill `wf-prd-create` → subagente **`prd-expert`** (`context: fork`,
-carga `kb-prd-expert`). Output: `prd.md` (en `--output`, o `artifacts.prd` de
-`project-init.json`, o `<dir>/prd.md`).
+**Mecanismo:** skill `wf-prd-create` en el **hilo principal** (gates `AskUserQuestion`: brief
+si no hay `--source`, confirmación de sobreescritura); delega la redacción al agente
+**`prd-expert`** (carga `kb-prd-expert`) vía la tool `Agent`, en **una sola invocación
+síncrona** (espera el resultado; no relanza ni sondea el filesystem → sin race de doble
+escritura). Output: `prd.md` (en `--output`, o `artifacts.prd` de `project-init.json`, o
+`<dir>/prd.md`).
 
 1. Le pides que te cree el PRD a partir de esas notas ("créame el PRD desde este brief").
    → **Esperado:** `prd-expert` redacta `prd.md` con las secciones mínimas (Resumen,
