@@ -110,17 +110,7 @@ Si ya existe → pregunta al usuario:
 
 Escribe el documento generado en el path de salida.
 
-El resultado debe incluir como mínimo:
-- **Frontmatter YAML** (obligatorio, según `kb-prd-expert` → `references/prd_structure_guide.md`): `type: product-requirements`, `product`, `version: 1.0`, `created: <YYYY-MM-DD>`, `status: draft`. Lo consume downstream (bump de versión en `wf-prd-review`, gobernanza de cambios).
-- La línea placeholder `> **Aprobado por:** [pendiente de review — lo escribe wf-prd-review cuando el veredicto es LISTO; ver kb-traceability-rules Regla 10]` bajo el `# PRD:`.
-- `# PRD: ...`
-- `## Resumen Ejecutivo`
-- `## Actores`
-- `## Alcance`
-- `### Dentro del Alcance`
-- `### Fuera del Alcance`
-- `## Reglas de Negocio Transversales`
-- `## Asunciones del PRD` — **si la generación marcó cualquier `[ASUNCIÓN]`** (Regla 12): una entrada `[ASN-XXX]` por afirmación inferida, con su hueco y casilla de confirmación. Omitir solo si todo trazaba a la fuente.
+La estructura y el frontmatter del PRD los define `kb-prd-expert` (Regla 3 + `references/prd_structure_guide.md`) — la SSoT que el agente aplica; esta skill **no la replica**. Solo dos recordatorios operativos: la sección `## Asunciones del PRD` aparece **si y solo si** se marcó algún `[ASUNCIÓN]` (Regla 12), y el frontmatter (`version`, `status`) lo consumen aguas abajo `wf-prd-review` (bump de versión, sello) y la gobernanza de cambios.
 
 ---
 

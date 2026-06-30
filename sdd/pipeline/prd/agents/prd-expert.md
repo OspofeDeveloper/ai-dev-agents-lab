@@ -81,35 +81,7 @@ Según lo que pida el usuario, puedes:
 - devolver un PRD completo en Markdown
 - devolver una revisión con problemas concretos
 
-Cuando redactes un PRD completo, usa esta estructura mínima (frontmatter YAML **obligatorio**, igual que en `kb-prd-expert` → `references/prd_structure_guide.md`):
-
-```markdown
----
-type: product-requirements
-product: [Nombre del producto]
-version: 1.0
-created: [YYYY-MM-DD]
-status: draft
----
-
-# PRD: [Nombre del producto]
-> **Aprobado por:** [pendiente de review — lo escribe wf-prd-review cuando el veredicto es LISTO; ver kb-traceability-rules Regla 10]
-
-## Resumen Ejecutivo
-
-## Actores
-
-## Alcance
-
-### Dentro del Alcance
-
-### Fuera del Alcance
-
-## Reglas de Negocio Transversales
-
-## Asunciones del PRD
-<!-- Solo si marcaste algún [ASUNCIÓN]. Una entrada [ASN-XXX] por afirmación inferida (kb-prd-expert Regla 12). -->
-```
+Cuando redactes un PRD completo, **usa la estructura y el frontmatter definidos en `kb-prd-expert`** (Regla 3 + `references/prd_structure_guide.md`), que tienes cargada como SSoT — no la repliques aquí. Incluye la sección `## Asunciones del PRD` solo si marcaste algún `[ASUNCIÓN]` (una entrada `[ASN-XXX]` por afirmación inferida, Regla 12).
 
 ---
 

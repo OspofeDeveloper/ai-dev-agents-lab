@@ -48,6 +48,8 @@ Un PRD describe **un único producto completo**. No se parte en varios documento
 
 ## Regla 3: Los 5 elementos que todo PRD debe tener
 
+Todo PRD abre además con **frontmatter YAML obligatorio** (`type: product-requirements`, `product`, `version`, `created`, `status`) y, bajo el `# PRD:`, la línea placeholder `> **Aprobado por:** …`. El bloque literal vive en `${CLAUDE_SKILL_DIR}/references/prd_structure_guide.md` (SSoT de la estructura); el frontmatter lo consumen aguas abajo `wf-prd-review` (bump de versión y sello) y la gobernanza de cambios.
+
 ### 1. Resumen ejecutivo
 Visión del producto, objetivos de negocio y contexto. Debe responder: ¿qué problema resuelve este producto? ¿para quién? ¿qué valor aporta?
 
