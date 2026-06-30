@@ -4,15 +4,15 @@ description: "Crea un PRD inicial guiado para el pipeline SDD. Puede partir de n
 when_to_use: "Activa en frases como 'ayudame a crear el PRD', 'genera un PRD', 'construye el documento de requisitos', 'convierte estas notas en un PRD'."
 argument-hint: "<directorio_proyecto> [--source <notas.md>] [--output <prd.md>]"
 effort: medium
-allowed-tools: [Read, Write, Bash]
-context: fork
-agent: prd-expert
+allowed-tools: [Read, Write, Bash, Agent, AskUserQuestion]
 user-invocable: true
 ---
 
 # Workflow: PRD Create
 
-Tu objetivo es ayudar al usuario a crear un `prd.md` usable por el pipeline SDD. Delegas la redacción y organización del contenido al agente `prd-expert`.
+Tu objetivo es ayudar al usuario a crear un `prd.md` usable por el pipeline SDD. Delegas la redacción del contenido al agente `prd-expert`.
+
+Este workflow corre en el **hilo principal** (igual que `wf-prd-review`, y **no** en `context: fork`): necesita `AskUserQuestion` para dos gates —pedir un brief mínimo si no hay `--source` (Paso 3) y confirmar la sobreescritura si el PRD ya existe (Paso 4)—, una tool que no existe dentro de un subagente. La **redacción** del PRD la hace el agente `prd-expert` (carga `kb-prd-expert`), al que invocas **una sola vez** vía la tool `Agent` (Paso 5) y de quien **esperas** el resultado.
 
 **Regla de oro:** generas un PRD, no un Spec. Mantén el nivel en negocio, actores, alcance y reglas transversales.
 
@@ -31,7 +31,7 @@ Si no hay directorio, informa al usuario:
 
 ---
 
-## Paso 2: Verificar el directorio
+## Paso 2: Verificar el directorio (y la fuente)
 
 Verifica que el directorio existe:
 ```
@@ -53,70 +53,61 @@ Si no existe, informa al usuario con la ruta exacta y detén.
 
 ### Si hay `--source`
 
-**No leas el fichero en el hilo principal.** Solo verificaste que existe (Paso 2); pásalo por **path** a `prd-expert` (Paso 4), que lo leerá con su propia `Read`. Así el contenido no se duplica en el contexto del orquestador ni se incrusta en el prompt del agente.
+**No leas el fichero en el hilo principal.** Solo verificaste que existe (Paso 2); pásalo por **path** a `prd-expert` (Paso 5), que lo leerá con su propia `Read`. Así el contenido no se duplica en el contexto del orquestador ni se incrusta en el prompt del agente.
 
 ### Si NO hay `--source`
 
-Pide al usuario una base mínima antes de delegar:
+Pide al usuario una base mínima con `AskUserQuestion` (o en texto libre si encaja mejor) **antes** de delegar:
 - nombre del producto
 - actores principales
 - problema que resuelve
 - capacidades principales
 - fuera de alcance conocido, si existe
 
-Si el usuario aporta texto libre, úsalo como brief inicial.
+No continúes sin esa base: si el usuario no aporta nada, no inventes el PRD. Si aporta texto libre, úsalo como brief inicial (se lo pasarás al agente en el Paso 5).
 
 ---
 
-## Paso 4: Delegar al agente `prd-expert`
+## Paso 4: Determinar el path de salida y confirmar sobreescritura
 
-Invoca al agente `prd-expert` con:
+Resuelve el path **antes** de delegar la escritura:
+- Si el usuario proporcionó `--output`, úsalo.
+- Si no (regla de layout): si `.sdd/project-init.json` (en `<directorio_proyecto>` o un ancestro) declara `artifacts.prd`, el path es `<raíz>/<artifacts.prd>/prd.md`; si no, por defecto `<directorio_proyecto>/prd.md`.
+
+Verifica si ya existe:
+```bash
+!test -f "<path_calculado>" && echo "EXISTE" || echo "NO_EXISTE"
+```
+Si ya existe → confirma con `AskUserQuestion`:
+> "Ya existe `<path>`. ¿Deseas regenerarlo?"
+- **No** → informa el path del artefacto existente y **detén** (no delegues ni escribas).
+- **Sí** → continúa al Paso 5.
+
+---
+
+## Paso 5: Delegar la redacción al agente `prd-expert` (vía la tool `Agent`, y esperar)
+
+Invoca al agente `prd-expert` **una sola vez** con la tool `Agent` y **espera su resultado**. Es una delegación **síncrona**: no sondees el filesystem para decidir si "no se creó" ni relances un segundo agente — espera a que el `Agent` termine y devuelva. (Una sola invocación evita el race de dos agentes escribiendo el mismo `prd.md`.)
+
+Pásale:
 - **el material de entrada por referencia, no incrustado**: si hay `--source`, la **ruta** del fichero fuente (que `prd-expert` leerá con `Read`), nunca su contenido pegado en el prompt; si NO hay `--source`, el brief que el usuario dio en sesión (Paso 3)
-- la ruta objetivo
+- el **path de salida** ya resuelto (Paso 4), donde debe escribir el PRD con `Write`
 - la instrucción de producir un PRD completo en Markdown
 
 Indícale explícitamente:
-- que use `kb-prd-expert` como SSoT
+- que use `kb-prd-expert` como SSoT (estructura + frontmatter en Regla 3 + `references/prd_structure_guide.md`)
 - **que aplique la Regla 12 (anti-fabricación)**: toda afirmación de negocio (actor, capacidad, exclusión, regla, objetivo) traza al material fuente / al brief del usuario, o se marca `[ASUNCIÓN]` inline y se recopila en `## Asunciones del PRD` con un `[ASN-XXX]` por entrada. Prohibido inventar contenido de negocio sin marcarlo: ante la duda, se marca.
 - que convierta detalles técnicos en observaciones a excluir, no en contenido del PRD
 - que mantenga una estructura compatible con `wf-spec-analyze`
-- que en su mensaje final te devuelva el **path** y los **huecos cualitativos** (qué trazó a la fuente vs qué infirió, qué asunciones son las más sensibles), **no un recuento numérico**: el número de `[ASUNCIÓN]` lo obtienes tú de forma determinista con grep (Paso 7), nunca de su narración — un agente cuenta mal sobre su propio texto
+- que en su mensaje final te devuelva el **path** y los **huecos cualitativos** (qué trazó a la fuente vs qué infirió, qué asunciones son las más sensibles), **no un recuento numérico**: el número de `[ASUNCIÓN]` lo obtienes tú de forma determinista con grep (Paso 6), nunca de su narración — un agente cuenta mal sobre su propio texto
 
 **Énfasis si NO hay `--source`** (el material es un brief breve dado en sesión): casi todo lo que exceda lo que el usuario dijo literalmente es inferencia → marcar `[ASUNCIÓN]` de forma agresiva. Un PRD honestamente lleno de `[ASUNCIÓN]` es correcto; un PRD que presenta invenciones como hechos es el fallo que esta regla previene.
 
 ---
 
-## Paso 5: Determinar path de salida
+## Paso 6: Informar al usuario
 
-Si el usuario proporcionó `--output`, úsalo.
-
-Si no lo proporcionó (regla de layout): si `.sdd/project-init.json` (en el directorio actual o un ancestro) declara `artifacts.prd`, escribe en `<raíz>/<artifacts.prd>/prd.md`; si no, escribe por defecto:
-```
-<directorio_proyecto>/prd.md
-```
-
-Antes de escribir, verifica si el archivo ya existe:
-```bash
-!test -f "<path_calculado>" && echo "EXISTE" || echo "NO_EXISTE"
-```
-Si ya existe → pregunta al usuario:
-> "Ya existe `<path>`. ¿Deseas regenerarlo?"
-- Si responde **no** → informa el path del artefacto existente y detén.
-- Si responde **sí** → continúa.
-
----
-
-## Paso 6: Escribir el PRD
-
-Escribe el documento generado en el path de salida.
-
-La estructura y el frontmatter del PRD los define `kb-prd-expert` (Regla 3 + `references/prd_structure_guide.md`) — la SSoT que el agente aplica; esta skill **no la replica**. Solo dos recordatorios operativos: la sección `## Asunciones del PRD` aparece **si y solo si** se marcó algún `[ASUNCIÓN]` (Regla 12), y el frontmatter (`version`, `status`) lo consumen aguas abajo `wf-prd-review` (bump de versión, sello) y la gobernanza de cambios.
-
----
-
-## Paso 7: Informar al usuario
-
-Tras escribir el archivo, informa:
+El `prd-expert` ya escribió el PRD en el path (Paso 5). Tras recibir su resultado, informa:
 - path del PRD generado
 - si se usó o no archivo fuente
 - **número de `[ASUNCIÓN]` marcadas**, obtenido de forma determinista con `grep -c "\[ASUNCIÓN" <path>` (**nunca** de la narración del agente: cuenta mal sobre su propio texto), y aviso de que el PRD **no está listo** hasta confirmarlas: son afirmaciones que la generación infirió, no datos que el usuario haya dado. Cuantas más, más débil era la fuente.
