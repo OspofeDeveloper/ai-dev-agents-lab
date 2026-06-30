@@ -63,6 +63,12 @@ carga `kb-prd-expert`). Output: `prd.md` (en `--output`, o `artifacts.prd` de
 > pero el contrato (`kb-prd-expert` Regla 12) pide la bandera escueta `[ASUNCIÓN]`: la verbosa
 > duplica la sección y es señal de deriva del agente, aunque ya no rompe el conteo.
 
+> **Frontmatter y conteo (capa determinista):** el PRD debe abrir con el frontmatter YAML
+> obligatorio (`type`, `product`, `version`, `created`, `status`) + el placeholder
+> `> **Aprobado por:** [pendiente…]` (guía de estructura de `kb-prd-expert`). Y el **nº de
+> asunciones que reporta el orquestador** sale del `grep`, **no** de la prosa del agente (que
+> puede contar mal sobre su propio texto — verificado: dijo 11, grep=10).
+
 2. Tras crear, observa qué hace el orquestador a continuación (frontera create→review).
    → **Esperado:** **para y recomienda `/wf-prd-review`**. **NO** confirma/rechaza/edita las
      asunciones, **no** monta una entrevista (`AskUserQuestion` por cada `[ASN-XXX]`), **no**
