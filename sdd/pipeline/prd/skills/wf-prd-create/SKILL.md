@@ -80,6 +80,7 @@ Indícale explícitamente:
 - **que aplique la Regla 12 (anti-fabricación)**: toda afirmación de negocio (actor, capacidad, exclusión, regla, objetivo) traza al material fuente / al brief del usuario, o se marca `[ASUNCIÓN]` inline y se recopila en `## Asunciones del PRD` con un `[ASN-XXX]` por entrada. Prohibido inventar contenido de negocio sin marcarlo: ante la duda, se marca.
 - que convierta detalles técnicos en observaciones a excluir, no en contenido del PRD
 - que mantenga una estructura compatible con `wf-spec-analyze`
+- que en su mensaje final te devuelva el **path** y los **huecos cualitativos** (qué trazó a la fuente vs qué infirió, qué asunciones son las más sensibles), **no un recuento numérico**: el número de `[ASUNCIÓN]` lo obtienes tú de forma determinista con grep (Paso 7), nunca de su narración — un agente cuenta mal sobre su propio texto
 
 **Énfasis si NO hay `--source`** (el material es un brief breve dado en sesión): casi todo lo que exceda lo que el usuario dijo literalmente es inferencia → marcar `[ASUNCIÓN]` de forma agresiva. Un PRD honestamente lleno de `[ASUNCIÓN]` es correcto; un PRD que presenta invenciones como hechos es el fallo que esta regla previene.
 
@@ -110,6 +111,8 @@ Si ya existe → pregunta al usuario:
 Escribe el documento generado en el path de salida.
 
 El resultado debe incluir como mínimo:
+- **Frontmatter YAML** (obligatorio, según `kb-prd-expert` → `references/prd_structure_guide.md`): `type: product-requirements`, `product`, `version: 1.0`, `created: <YYYY-MM-DD>`, `status: draft`. Lo consume downstream (bump de versión en `wf-prd-review`, gobernanza de cambios).
+- La línea placeholder `> **Aprobado por:** [pendiente de review — lo escribe wf-prd-review cuando el veredicto es LISTO; ver kb-traceability-rules Regla 10]` bajo el `# PRD:`.
 - `# PRD: ...`
 - `## Resumen Ejecutivo`
 - `## Actores`
@@ -126,7 +129,7 @@ El resultado debe incluir como mínimo:
 Tras escribir el archivo, informa:
 - path del PRD generado
 - si se usó o no archivo fuente
-- **número de `[ASUNCIÓN]` marcadas** (Regla 12) y aviso de que el PRD **no está listo** hasta confirmarlas: son afirmaciones que la generación infirió, no datos que el usuario haya dado. Cuantas más, más débil era la fuente.
+- **número de `[ASUNCIÓN]` marcadas**, obtenido de forma determinista con `grep -c "\[ASUNCIÓN" <path>` (**nunca** de la narración del agente: cuenta mal sobre su propio texto), y aviso de que el PRD **no está listo** hasta confirmarlas: son afirmaciones que la generación infirió, no datos que el usuario haya dado. Cuantas más, más débil era la fuente.
 - si quedaron huecos explícitos que el usuario debería revisar manualmente
 
 **DETENTE aquí. No resuelvas tú las asunciones.**

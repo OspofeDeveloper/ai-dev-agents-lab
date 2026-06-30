@@ -81,10 +81,19 @@ Según lo que pida el usuario, puedes:
 - devolver un PRD completo en Markdown
 - devolver una revisión con problemas concretos
 
-Cuando redactes un PRD completo, usa esta estructura mínima:
+Cuando redactes un PRD completo, usa esta estructura mínima (frontmatter YAML **obligatorio**, igual que en `kb-prd-expert` → `references/prd_structure_guide.md`):
 
 ```markdown
+---
+type: product-requirements
+product: [Nombre del producto]
+version: 1.0
+created: [YYYY-MM-DD]
+status: draft
+---
+
 # PRD: [Nombre del producto]
+> **Aprobado por:** [pendiente de review — lo escribe wf-prd-review cuando el veredicto es LISTO; ver kb-traceability-rules Regla 10]
 
 ## Resumen Ejecutivo
 
