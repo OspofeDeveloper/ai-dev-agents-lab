@@ -106,4 +106,16 @@ Asegura que el `.gitignore` del proyecto contiene la línea `.claude/settings.lo
    ```
    El verificador (exit 2 si algún check falla) subsume la existencia de cada regla y, además, el check `rule-globs`: si el proyecto usa un layout no canónico y olvidaste el `--artifacts-<fase>` en el Paso 4, el update lo deja en FALLO en vez de degradar la regla en silencio. Corrige (re-ejecuta el install con el flag) y re-verifica antes de cerrar.
 2. Reporta: versión vieja → nueva, fases reinstaladas, overlay re-aplicado (sí/no), avisos `⚠` aplicables, y piezas eliminadas por `--prune` si las hubo.
-3. Recuerda: reiniciar Claude Code para recargar skills/agents, y commitear los cambios de `.claude/` y `.sdd/` (la política de git del proyecto los versiona; la única excepción es `settings.local.json`).
+3. Indica que hay que **commitear** los cambios de `.claude/` y `.sdd/` (la política de git del proyecto los versiona; la única excepción es `settings.local.json`).
+
+## Paso 7: Parada obligatoria — reiniciar antes de seguir
+
+**DETENTE aquí. No reanudes la petición que trajo al usuario a este update ni encadenes ningún trabajo posterior: no invoques ningún `wf-*`, no delegues a ningún agente, no continúes la tarea original.**
+
+Claude Code carga las skills y los agentes **en memoria al arrancar la sesión** y no los re-lee en cada invocación: los que acabas de reinstalar en disco **no tienen efecto en esta sesión**. Si continúas ahora, seguirás ejecutando las **versiones viejas en memoria** — justo lo que el update pretendía corregir.
+
+Cierra con este aviso, claro e inequívoco, y **termina el turno**:
+
+> ⚠ **La actualización no surtirá efecto hasta que reinicies Claude Code.** Esta sesión sigue usando las skills/agentes anteriores cargados en memoria. Reinícialo (recomendado) antes de continuar; si sigues en esta sesión, lo harás sobre las versiones previas.
+
+La decisión de reiniciar o seguir es del usuario y la expresa con su **próximo mensaje**: no la conviertas en un gate (`AskUserQuestion`) ni la resuelvas tú, y **no auto-reanudes** la tarea original bajo ningún concepto.
