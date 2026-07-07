@@ -138,13 +138,15 @@ class InstallReappliesOverlayTest(KmmOverlayBase):
                          "reinstalar plan/tasks no debe degradar la variante KMM")
 
     def test_unknown_stack_warns_not_crashes(self):
-        # stack declarado pero sin overlay en el ecosistema -> aviso, no fallo
+        # stack declarado pero sin overlay en el ecosistema -> info, no fallo
+        # (desde 0.47.0 el mensaje pasó de "⚠ re-aplica el overlay manualmente"
+        # a "ℹ …modo genérico. Nada que reinstalar")
         write(self.proj / ".sdd" / "project-init.json",
               json.dumps({"stack": "flutter", "phases": ["plan"]}, indent=2))
         r = self.install("plan")
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertIn("flutter", r.stdout)
-        self.assertIn("re-aplica el overlay manualmente", r.stdout)
+        self.assertIn("modo genérico", r.stdout)
 
 
 if __name__ == "__main__":
