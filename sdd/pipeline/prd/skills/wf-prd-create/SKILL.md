@@ -12,7 +12,7 @@ user-invocable: true
 
 Tu objetivo es ayudar al usuario a crear un `prd.md` usable por el pipeline SDD. Delegas la redacción del contenido al agente `prd-expert`.
 
-Este workflow corre en el **hilo principal** (igual que `wf-prd-review`, y **no** en `context: fork`): necesita `AskUserQuestion` para dos gates —pedir un brief mínimo si no hay `--source` (Paso 3) y confirmar la sobreescritura si el PRD ya existe (Paso 4)—, una tool que no existe dentro de un subagente. La **redacción** del PRD la hace el agente `prd-expert` (carga `kb-prd-expert`), al que invocas **una sola vez** vía la tool `Agent` (Paso 5) y de quien **esperas** el resultado.
+Este workflow corre en el **hilo principal** (igual que `wf-prd-review`, y **no** en `context: fork`): necesita `AskUserQuestion` para dos gates —pedir un brief mínimo si no hay `--source` (Paso 3) y confirmar la sobreescritura si el PRD ya existe (Paso 4)—, una tool que no existe dentro de un subagente. La **redacción** del PRD la hace el agente `prd-expert` (carga `kb-prd-expert`), al que invocas **una sola vez** vía la tool `Agent`, en **foreground** (`run_in_background: false`, Paso 5), y de quien **esperas** el resultado.
 
 **Regla de oro:** generas un PRD, no un Spec. Mantén el nivel en negocio, actores, alcance y reglas transversales.
 
@@ -87,7 +87,7 @@ Si ya existe → confirma con `AskUserQuestion`:
 
 ## Paso 5: Delegar la redacción al agente `prd-expert` (vía la tool `Agent`, y esperar)
 
-Invoca al agente `prd-expert` **una sola vez** con la tool `Agent` y **espera su resultado**. Es una delegación **síncrona**: no sondees el filesystem para decidir si "no se creó" ni relances un segundo agente — espera a que el `Agent` termine y devuelva. (Una sola invocación evita el race de dos agentes escribiendo el mismo `prd.md`.)
+Invoca al agente `prd-expert` **una sola vez** con la tool `Agent`, en **foreground (síncrono)**: pásale explícitamente **`run_in_background: false`** en la invocación. Esto es **obligatorio** — desde Claude Code v2.1.198 los subagentes corren en **background por defecto**, y aquí el orquestador necesita el resultado en el acto (el Paso 6 hace `grep` sobre el fichero que el agente escribe). Sin `run_in_background: false`, el harness puede lanzar el agente en background y el orquestador contaría/reportaría **antes** de que termine de escribir → lectura prematura o race. **Espera** su resultado: no sondees el filesystem para decidir si "no se creó" ni relances un segundo agente. (Una sola invocación síncrona evita el race de dos agentes escribiendo el mismo `prd.md`.)
 
 Pásale:
 - **el material de entrada por referencia, no incrustado**: si hay `--source`, la **ruta** del fichero fuente (que `prd-expert` leerá con `Read`), nunca su contenido pegado en el prompt; si NO hay `--source`, el brief que el usuario dio en sesión (Paso 3)
