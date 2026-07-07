@@ -48,7 +48,7 @@ para leer/ejecutar el CU.
 - [x] CU-1.c — Modo libre silencia SDD (`free`) · ✓ 2026-06-17
 - [x] CU-1.d — Modo SDD sin init → `init-pending` (invoca wf-project-init) · ✓ 2026-06-17
 - [x] CU-1.e — Init a medias → `init-incomplete` (invoca wf-project-init "Completar/ampliar") · ✓ 2026-06-17 (criterio determinista: repair-plan, rol derivado de topología, sin preguntar)
-- [x] CU-1.f — Versión anterior → `version-drift` (informativo) · ✓ 2026-06-18 · criterio reescopado 2026-06-24: el re-narrado **suave** del advisory en el recap de turnos largos (p. ej. el init) es comportamiento del modelo que la instrucción no suprime (verificado 6/6). El criterio acepta un recordatorio de una línea en el cierre; el FALLO es **re-emitirlo como preocupación nueva o bloqueante**. Cláusula de instrucción inefectiva revertida del bloque global.
+- [ ] CU-1.f — Deriva de versión: gate no decidido (`version-drift-undecided`) + aviso ya declinado (`version-drift`) · **aviso blando** ✓ 2026-06-18 (reescopado 2026-06-24: el re-narrado suave del advisory en el recap de turnos largos es comportamiento del modelo que la instrucción no suprime, verificado 6/6; acepta recordatorio de una línea en el cierre, FALLO = re-emitirlo como preocupación nueva o bloqueante; cláusula inefectiva revertida del bloque global). **Gate `version-drift-undecided` + memoria local `.sdd/version-denied` nuevos en v0.48.0: capa determinista en `test_session_hook.py` (`VersionDriftTest`); E2E pendiente.**
 - [x] CU-1.g — Sesión en subdirectorio → búsqueda de marcadores hacia arriba · ✓ 2026-06-18
 - [x] CU-1.s — Stack con overlay sin init técnico → `specialist-init-pending` ([[D-014]], emisión + handoff; el disparo como precondición → [[CU-14.i]]) · ✓ 2026-06-21 (capa determinista: `SpecialistStatusTest`/`SpecialistInitPendingTest`; E2E en repo KMM real: la directiva se emite al arrancar, el agente avisa en una línea sin lanzar `wf-kmm-init`, y tras correrlo `stack-runs.jsonl` registra el run → `pending:false` y el hook deja de emitir)
 
@@ -226,27 +226,41 @@ instalar-vs-quitar de una fase ya declarada**, **o arranca una entrevista fresca
 teniendo ya un `.sdd/project-init.json`**.
 **Desviación → reportar:** issue citando `CU-1.e`.
 
-## CU-1.f — Instalación de versión anterior (`version-drift`)
+## CU-1.f — Deriva de versión: gate no decidido + aviso ya declinado (`version-drift-undecided` / `version-drift`)
 
 **Precondición:** `.sdd/sdd-version.json` declara una versión/commit anterior a la del
 ecosistema (`$SDD_HOME/VERSION`).
-**Mecanismo:** hook → directiva `[SDD-PROTOCOL] version-drift` (**solo informativa**).
+**Mecanismo:** el hook ramifica según la memoria local `.sdd/version-denied` (por-desarrollador,
+**gitignored**): sin decisión —o con un rechazo de una versión anterior— → `[SDD-PROTOCOL]
+version-drift-undecided` (**gate una vez**, antes de atender la petición); versión actual ya
+declinada → `[SDD-PROTOCOL] version-drift` (**aviso blando**, como siempre). Nunca bloquea de
+forma dura.
 
-1. Abres Claude Code en ese proyecto y pides algo normal.
-   → **Esperado:** el agente menciona **en una línea** que puedes actualizar con
-     `/wf-sdd-update` cuando te convenga, y **atiende tu petición con normalidad**. No
-     actualiza sin que lo pidas ni lo re-emite como una preocupación nueva/bloqueante.
+1. **Versión nueva no decidida** (sin `.sdd/version-denied`, o con un rechazo anterior). Abres
+   Claude Code y pides algo normal.
+   → **Esperado:** ANTES de atender la petición, presenta **un** `AskUserQuestion` (Actualizar
+     ahora / Ahora no); no monta texto libre, no actualiza solo.
+2. Eliges **Ahora no**.
+   → **Esperado:** escribe la cadena `<version>+<commit>` del ecosistema en `.sdd/version-denied`
+     y **continúa con tu petición con normalidad**. No bloquea.
+3. Reabres sesión con la **misma** versión del ecosistema (ya declinada).
+   → **Esperado:** **no** vuelve a presentar el gate; solo el **aviso blando de una línea**
+     (puedes pedir la actualización cuando quieras), y atiende tu petición.
+4. Aparece una versión del ecosistema **más nueva** que la declinada.
+   → **Esperado:** el gate **reaparece** (es una versión no decidida).
+5. Eliges **Actualizar ahora**.
+   → **Esperado:** invoca `wf-sdd-update` vía Skill tool (que a su vez para para reiniciar, su Paso 7).
 
-> **Criterio reescopado (2026-06-24).** El advisory se **re-narra de forma suave** en el recap de
-> turnos largos (p. ej. cuando la petición arranca el init): es comportamiento del modelo que la
-> instrucción no suprime (verificado 6/6 en la campaña de CU-1.j). Un **recordatorio de una línea**
-> en un bloque de notas final ("recuerda que…", "como te mencioné…") **NO es FALLO**: es suave,
-> no bloquea y no re-abre el tema como nuevo. El FALLO es re-emitir el aviso como **preocupación
-> nueva o bloqueante** (volver a alarmar, bloquear la petición, o tratarlo como si no se hubiera dicho).
+> **Capa determinista:** la ramificación del hook (gate vs blando según `.sdd/version-denied`) la
+> cubre `test_session_hook.py` (`VersionDriftTest`). El criterio anti-paternalista del aviso blando
+> (re-narrado suave en recaps largos aceptable; FALLO = re-emitir como preocupación nueva/bloqueante)
+> se mantiene del reescopado 2026-06-24.
 
-**Resultado:** PASS si avisa en una línea, no bloquea y no actualiza solo (un recordatorio suave en
-el cierre es aceptable) · FALLO si bloquea la petición, actualiza sin pedírselo, o **re-emite el aviso
-como preocupación nueva/bloqueante**.
+**Resultado:** PASS si (1) presenta el gate una vez ante versión no decidida, (2) "Ahora no" persiste
+`.sdd/version-denied` y continúa sin bloquear, (3) una versión ya declinada baja al aviso blando sin
+re-preguntar, y (4) una versión más nueva re-dispara el gate · FALLO si presenta el gate a una versión
+ya declinada (nagging), no persiste la decisión, bloquea de forma dura, o actualiza sin la elección del
+usuario.
 **Desviación → reportar:** issue citando `CU-1.f`.
 
 ## CU-1.g — Sesión abierta en un subdirectorio (monorepo)

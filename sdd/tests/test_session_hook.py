@@ -120,14 +120,39 @@ class VersionDriftTest(HookBase):
         write(self.home / ".sdd-home", str(eco))
         return eco
 
-    def test_drift_warns_when_versions_differ(self):
+    def _denied(self, value):
+        # memoria local por-dev; en tests ECO_ID = solo la version (commit vacio,
+        # eco no es repo git), asi que se declina pasando "<version>"
+        write(self.proj / ".sdd" / "version-denied", value + "\n")
+
+    def test_undecided_version_emits_gate(self):
+        # drift sin .sdd/version-denied -> gate (version-drift-undecided)
         self._eco("0.30.0")
         _init_json(self.proj, ["spec"], complete=True)
         _version_json(self.proj, "0.29.0")
         out = self.run_hook()
-        self.assertDirective(out, "version-drift")
+        self.assertDirective(out, "version-drift-undecided")
         self.assertIn("0.29.0", out)
         self.assertIn("0.30.0", out)
+
+    def test_declined_current_version_soft_notice(self):
+        # el usuario ya declino la version actual del ecosistema -> aviso blando,
+        # NO el gate
+        self._eco("0.30.0")
+        _init_json(self.proj, ["spec"], complete=True)
+        _version_json(self.proj, "0.29.0")
+        self._denied("0.30.0")
+        out = self.run_hook()
+        self.assertDirective(out, "version-drift")
+        self.assertNotIn("version-drift-undecided", out)
+
+    def test_new_version_re_gates_after_denial(self):
+        # se declino una version anterior; el ecosistema avanza -> el gate reaparece
+        self._eco("0.31.0")
+        _init_json(self.proj, ["spec"], complete=True)
+        _version_json(self.proj, "0.29.0")
+        self._denied("0.30.0")
+        self.assertDirective(self.run_hook(), "version-drift-undecided")
 
     def test_no_drift_when_versions_match(self):
         self._eco("0.29.0")

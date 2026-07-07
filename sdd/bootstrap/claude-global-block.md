@@ -52,9 +52,20 @@ El proyecto tiene un stack con overlay instalado, pero su **init técnico** (`wf
 
 No repitas el wizard de modo. En cuanto `wf-<stack>-init` registra su run en `.sdd/stack-runs.jsonl`, el hook deja de emitir esta directiva.
 
+## Directiva `[SDD-PROTOCOL] version-drift-undecided`
+
+Hay una versión del ecosistema más nueva que la instalada y el usuario **todavía no ha decidido** sobre ella (ni la ha actualizado, ni la ha rechazado). Como lo normal es querer la última versión —no tiene sentido haberse bajado el ecosistema y no traerlo al proyecto— y un **despiste** no debe dejar trabajo hecho sobre una versión vieja, esta es la **única** variante de drift que **interrumpe una vez** antes de atender la petición:
+
+**ANTES de atender la primera petición del usuario**, presenta **un** `AskUserQuestion` (nunca texto libre) preguntando si quiere actualizar ahora, con dos opciones:
+
+- **Actualizar ahora** → invoca el skill `wf-sdd-update` vía la Skill tool. (El update **parará para que reinicies** Claude Code; la petición original se retoma en la sesión nueva.)
+- **Ahora no** → escribe la versión del ecosistema (la cadena `<version>+<commit>` que te da la directiva del hook) en `.sdd/version-denied` del proyecto —**memoria local por desarrollador, NO commiteada**— y **continúa con la petición del usuario con total normalidad**.
+
+**Nunca bloquees de forma dura.** "Ahora no" se honra y se **recuerda**: no vuelves a preguntar por esa versión (el hook baja a la directiva blanda `version-drift`), y solo re-preguntas cuando aparezca una versión **más nueva** que la ya rechazada. No actualices sin la elección del usuario ni le des el comando crudo (`/wf-sdd-update`).
+
 ## Directiva `[SDD-PROTOCOL] version-drift`
 
-La instalación SDD del proyecto es de una versión anterior a la del ecosistema. Es **solo informativa y nunca bloquea**: menciona en una línea al usuario que, **cuando le convenga, puede pedirte que actualices el proyecto** — y atiende su petición con total normalidad. **No le des el comando crudo (`/wf-sdd-update`)**: si te lo pide, **tú** invocas `wf-sdd-update` vía la Skill tool (así evitas que el usuario lance el slash-command a secas, que pierde contexto e idioma). No actualices sin que lo pida explícitamente. Preséntalo **una vez** como aviso de una línea; un recordatorio suave posterior (p. ej. en un bloque de notas final) no es problema, pero **no lo re-emitas como una preocupación nueva ni bloqueante**.
+La instalación SDD del proyecto es anterior a la del ecosistema, **pero el usuario ya declinó esta versión** (consta en `.sdd/version-denied`). Es **solo informativa y nunca bloquea**: menciona en una línea que, **cuando le convenga, puede pedirte que actualices el proyecto** — y atiende su petición con total normalidad. **No le des el comando crudo (`/wf-sdd-update`)**: si te lo pide, **tú** invocas `wf-sdd-update` vía la Skill tool (así evitas que el usuario lance el slash-command a secas, que pierde contexto e idioma). No actualices sin que lo pida explícitamente. Preséntalo **una vez** como aviso de una línea; un recordatorio suave posterior (p. ej. en un bloque de notas final) no es problema, pero **no lo re-emitas como una preocupación nueva ni bloqueante**.
 
 ## Petición explícita de inicializar / configurar SDD
 

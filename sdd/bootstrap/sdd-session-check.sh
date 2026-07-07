@@ -8,7 +8,8 @@
 #       - fases declaradas sin instalar             → init-incomplete
 #       - specialist_workflow sin run en            → specialist-init-pending (no bloquea)
 #         .sdd/stack-runs.jsonl
-#       - version del sello != ecosistema           → version-drift (no bloquea)
+#       - version del sello != ecosistema, no decidida → version-drift-undecided (gate 1x)
+#       - version del sello != ecosistema, ya declinada → version-drift (aviso blando)
 #   .claude/sdd-mode.json con mode "free"          → modo libre, no inyecta nada
 #   .claude/sdd-mode.json con mode "sdd" sin init  → inyecta directiva init-pending
 #   sin marcador ni init                           → inyecta directiva mode-undecided (wizard)
@@ -161,9 +162,17 @@ except Exception:
     fi
   fi
 
-  # Deteccion de deriva de version (informativa, nunca bloquea): compara el
-  # sello de la instalacion (.sdd/sdd-version.json) con el VERSION del
-  # ecosistema. Solo avisa si ambos lados son legibles y difieren.
+  # Deteccion de deriva de version. Compara el sello de la instalacion
+  # (.sdd/sdd-version.json) con el VERSION del ecosistema; solo actua si ambos
+  # lados son legibles y difieren. DOS variantes segun la memoria local de
+  # decision .sdd/version-denied (por-desarrollador, NO commiteada):
+  #   - ecosistema aun NO decidido (sin fichero, o se declino una version
+  #     anterior) → version-drift-undecided: gate AskUserQuestion una vez, antes
+  #     de atender la peticion.
+  #   - version del ecosistema YA declinada (version-denied == ECO_ID) →
+  #     version-drift: aviso blando de una linea (informativo, como siempre).
+  # Nunca bloquea de forma dura: "Ahora no" se honra y se recuerda; solo se
+  # re-pregunta cuando aparece una version que el usuario no ha declinado.
   if [ -n "$SDD_HOME" ] && [ -f "$SDD_HOME/VERSION" ] && [ -f "$INIT_ROOT/.sdd/sdd-version.json" ]; then
     ECO_VERSION="$(tr -d '[:space:]' < "$SDD_HOME/VERSION" 2>/dev/null || true)"
     ECO_COMMIT="$(git -C "$SDD_HOME" rev-parse --short HEAD 2>/dev/null || true)"
@@ -171,7 +180,13 @@ except Exception:
     PROJ_COMMIT="$(grep -o '"commit"[[:space:]]*:[[:space:]]*"[^"]*"' "$INIT_ROOT/.sdd/sdd-version.json" | head -1 | sed 's/.*"\([^"]*\)"$/\1/' || true)"
     if [ -n "$ECO_VERSION" ] && [ -n "$PROJ_VERSION" ]; then
       if [ "$ECO_VERSION" != "$PROJ_VERSION" ] || { [ -n "$ECO_COMMIT" ] && [ -n "$PROJ_COMMIT" ] && [ "$ECO_COMMIT" != "$PROJ_COMMIT" ]; }; then
-        echo "[SDD-PROTOCOL] version-drift — La instalacion SDD de este proyecto es de la version $PROJ_VERSION+${PROJ_COMMIT:-?} y el ecosistema esta en $ECO_VERSION+${ECO_COMMIT:-?}. Es solo un aviso: menciona brevemente al usuario que, cuando le convenga, puede PEDIRTE que actualices el proyecto, y continua con su peticion con normalidad. NO le des el comando crudo (/wf-sdd-update): si lo pide, invoca tu el skill wf-sdd-update via Skill tool (asi evitas que lance el slash-command a secas, que pierde contexto e idioma). No actualices sin que lo pida."
+        ECO_ID="${ECO_VERSION}${ECO_COMMIT:++$ECO_COMMIT}"
+        DENIED="$(tr -d '[:space:]' < "$INIT_ROOT/.sdd/version-denied" 2>/dev/null || true)"
+        if [ "$DENIED" = "$ECO_ID" ]; then
+          echo "[SDD-PROTOCOL] version-drift — La instalacion SDD de este proyecto es de la version $PROJ_VERSION+${PROJ_COMMIT:-?} y el ecosistema esta en $ECO_VERSION+${ECO_COMMIT:-?}, y el usuario YA declino esta version. Es solo un aviso: menciona brevemente que, cuando le convenga, puede PEDIRTE que actualices el proyecto, y continua con su peticion con normalidad. NO le des el comando crudo (/wf-sdd-update): si lo pide, invoca tu el skill wf-sdd-update via Skill tool. No actualices sin que lo pida ni lo re-emitas como preocupacion nueva o bloqueante."
+        else
+          echo "[SDD-PROTOCOL] version-drift-undecided — Hay una version del ecosistema mas nueva que la instalada ($PROJ_VERSION+${PROJ_COMMIT:-?} -> $ECO_VERSION+${ECO_COMMIT:-?}) y el usuario aun NO ha decidido sobre ella. ANTES de atender su primera peticion, presenta UN solo AskUserQuestion (nunca texto libre) preguntando si quiere actualizar ahora, con opciones 'Actualizar ahora' y 'Ahora no'. Si elige actualizar: invoca el skill wf-sdd-update via Skill tool (el update parara para que reinicies Claude Code; la peticion original se retoma tras el reinicio). Si elige 'Ahora no': escribe EXACTAMENTE la cadena '$ECO_ID' en el fichero .sdd/version-denied del proyecto (memoria local por-desarrollador, NO commiteada) y continua con la peticion del usuario con total normalidad. NUNCA bloquees de forma dura: 'Ahora no' se honra y se recuerda — no se vuelve a preguntar por esta version, solo cuando aparezca una mas nueva. No des el comando crudo /wf-sdd-update ni actualices sin la eleccion del usuario. No repitas el wizard de modo."
+        fi
       fi
     fi
   fi

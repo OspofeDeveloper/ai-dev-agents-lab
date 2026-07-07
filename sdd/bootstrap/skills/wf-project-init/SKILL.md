@@ -617,7 +617,7 @@ Proyecto gestionado con Spec Driven Development. Topología: **<authoring|consum
   - Los repos de superficie (consumer) consumen este diseño en **solo lectura** (resuelven `base ⊕ override` por su target).
   ```
 
-**`.gitignore` del proyecto**: asegura la línea `.claude/settings.local.json` (créalo si no existe; no toques el resto).
+**`.gitignore` del proyecto**: asegura **dos** líneas locales-no-commiteadas — `.claude/settings.local.json` y `.sdd/version-denied` (memoria local por-desarrollador de la directiva `version-drift-undecided`) — añadiendo las que falten (créalo si no existe; no toques el resto).
 
 ---
 

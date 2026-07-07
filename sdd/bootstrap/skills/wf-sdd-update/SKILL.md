@@ -93,9 +93,13 @@ print("sdd_version =", data["sdd_version"])
 EOF
 ```
 
-## Paso 5b: Asegurar `.gitignore`
+## Paso 5b: Housekeeping local (`.gitignore` y decisión de versión)
 
-Asegura que el `.gitignore` del proyecto contiene la línea `.claude/settings.local.json` — añádela si falta (crea el archivo si no existe; nunca toques el resto del contenido). Es la única pieza SDD que no se commitea; los proyectos inicializados antes de la 0.5.0 no la tienen.
+Asegura que el `.gitignore` del proyecto contiene las **dos** líneas locales-no-commiteadas — añade las que falten (crea el archivo si no existe; nunca toques el resto del contenido):
+- `.claude/settings.local.json` (los proyectos inicializados antes de la 0.5.0 no la tienen).
+- `.sdd/version-denied` (memoria local por-desarrollador de la directiva `version-drift-undecided`).
+
+Y **borra `.sdd/version-denied` si existe**: acabas de actualizar, así que cualquier rechazo de versión previo queda obsoleto — eliminarlo hace que un futuro drift arranque como no-decidido (gate), no como aviso blando.
 
 ## Paso 6: Verificar y reportar
 

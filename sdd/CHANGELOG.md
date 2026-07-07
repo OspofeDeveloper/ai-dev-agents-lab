@@ -2,6 +2,17 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.48.0 — 2026-07-07
+
+**Deriva de versión con memoria de decisión**: la directiva `version-drift` deja de ser un aviso pasivo fácil de pasar por alto y se desdobla en dos, para que **no actualizar sea una decisión y no un despiste**.
+
+- **(hook `sdd-session-check.sh`) Dos variantes según `.sdd/version-denied`** (memoria local **por-desarrollador, gitignored**): si el usuario aún no decidió sobre la versión nueva del ecosistema (sin fichero, o declinó una anterior) → `[SDD-PROTOCOL] version-drift-undecided`, que pide **un `AskUserQuestion` una vez** antes de atender la petición; si ya declinó la versión actual → `[SDD-PROTOCOL] version-drift`, el aviso blando de una línea de siempre. El drift lo sigue disparando la diferencia versión/commit; la novedad es la ramificación por decisión.
+- **Nunca bloquea de forma dura.** "Ahora no" se honra, persiste en `.sdd/version-denied` y se recuerda: no se vuelve a preguntar por esa versión (baja a la directiva blanda), solo cuando aparece una más nueva. "Actualizar ahora" invoca `wf-sdd-update` (que a su vez para para reiniciar). Espeja el patrón del wizard de modo (preguntar una vez, recordar la decisión).
+- **`wf-sdd-update`:** el Paso 5b asegura `.sdd/version-denied` en el `.gitignore` (junto a `.claude/settings.local.json`) y **borra la decisión** al actualizar con éxito. **`wf-project-init`:** el `.gitignore` del proyecto añade ambas líneas locales.
+- **`CLAUDE.md` global (`claude-global-block.md`):** la sección de la directiva pasa a definir las dos conductas (gate vs blando). Cambia el contrato documentado ("solo informativa") de forma deliberada; el criterio anti-paternalista del aviso blando se conserva.
+- **Tests/Conformance:** `test_session_hook.py` `VersionDriftTest` gana gate/blando/re-gate; `cu-01-inicializar.md` reescribe **CU-1.f** con los cinco escenarios (E2E del gate pendiente).
+- Sin `⚠`: hook, bloque global y SKILL son bootstrap global (se refrescan con `bash setup.sh`); ningún `project-init.json` ya escrito cambia. `.sdd/version-denied` es local y regenerable.
+
 ## 0.47.0 — 2026-06-25
 
 Fix de **`install.sh`** (overlay de stack obsoleto tras cambio de stack), cazado probando **CU-1.o B2** en repo real: tras inicializar como `kmm` (overlay completo instalado), corregir el stack a `ios` (nativo, sin overlay) y reinstalar con `--prune` **dejaba el overlay kmm huérfano** — ~40 skills `wf-kmm-*`/`kb-kmm-*`/`kb-*-cmp-*`, los 7 agentes `kmm-*` y la regla `sdd-kmm.md` sobrevivían. La única salida era un `rm -rf .claude/{skills,agents,rules}` manual, no prescrito por ningún flujo. Esto contamina cualquier reconfiguración que cruce la frontera de overlay (`wf-project-init` "Completar / ampliar" con cambio de stack, `wf-sdd-update`, o ejecución manual).
