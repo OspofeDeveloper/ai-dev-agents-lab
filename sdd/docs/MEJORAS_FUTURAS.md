@@ -37,6 +37,27 @@
 
 ---
 
+## Arquitectura cross-repo (exploratorio)
+
+- [ ] 🔴 **O-4 — ¿MCP para comunicar los repos `spec` / `design` / `consumer`? (exploratorio, gated a escala).** Hoy el acoplamiento cross-repo es **git-native y determinista**: `artifacts_source`/`design_source` (rutas relativas a checkouts locales) + `*_pin` (SHA git); `sdd-source-drift.py` = `git diff pin..HEAD`; `sdd-design-resolve.py` = merge de ficheros local. Reproducible, offline, auditable, CI-safe. La ocurrencia: exponer specs/design como un **MCP** consultable, en vez de exigir checkouts locales.
+
+  **CUÁNDO SÍ aporta (condiciones que deben darse juntas):**
+  - **Escala multi-repo real**: muchos repos consumer y una plataforma/SSoT central de specs+design; la fricción de "clona y mantén frescos `../specs` y `../design` en cada consumer" es un coste tangible y repetido.
+  - Se diseña como **capa de SOLO LECTURA que sirve una versión PINEADA** (no "lo último"), **complementando** git — nunca reemplazando el pin.
+  - El valor está en **vistas computadas** como tool (CAs de F-XXX, shared models por feature, resolución `base ⊕ override` de un target, drift) y en **acceso cross-tool/IDE**, no en "leer un .md" (eso ya lo hace el filesystem).
+
+  **CUÁNDO NO (y por qué NO implementarlo entonces):**
+  - **Dev individual o equipo pequeño** / pocos repos: el modelo file+git es más simple y robusto; el MCP solo añade infra.
+  - Si sirviera **"lo último" en vez de una versión pineada**: rompe el *pinning* —que es el punto del contrato consumer↔SSoT (construir contra una versión conocida)— y se convierte en "git con más pasos".
+  - **Contexto CI/headless**: los MCP autenticados interactivamente **desaparecen en runners headless/cron**; sustituir el checkout git por MCP en el contrato lo vuelve frágil donde hoy es determinista.
+  - Como **SSoT del contrato**: jamás. El MCP sería capa de conveniencia/alcance; la fuente de verdad sigue siendo el repo + git.
+
+  - *Regla de oro:* cambiar git por MCP en el núcleo = cambiar **determinismo por liveness**, el trade equivocado para un sistema de contratos. Solo entra como capa read-only pineada **encima** de git, y solo cuando la fricción de clonado a escala lo justifique.
+  - *Coste:* alto — servidor MCP (build/host/auth/versionado), mantener el esquema en sync, y fragilidad en CI. No es drop-in.
+  - *Origen:* conversación 2026-06-26 (ocurrencia sobre comunicar spec/design/consumer); explícitamente marcado para **no implementar si no aporta** (ver "cuándo no").
+
+---
+
 ## Completado
 
 _(vacío)_
