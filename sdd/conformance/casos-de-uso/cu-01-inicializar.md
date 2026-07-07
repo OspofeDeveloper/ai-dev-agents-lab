@@ -48,7 +48,7 @@ para leer/ejecutar el CU.
 - [x] CU-1.c — Modo libre silencia SDD (`free`) · ✓ 2026-06-17
 - [x] CU-1.d — Modo SDD sin init → `init-pending` (invoca wf-project-init) · ✓ 2026-06-17
 - [x] CU-1.e — Init a medias → `init-incomplete` (invoca wf-project-init "Completar/ampliar") · ✓ 2026-06-17 (criterio determinista: repair-plan, rol derivado de topología, sin preguntar)
-- [ ] CU-1.f — Deriva de versión: gate no decidido (`version-drift-undecided`) + aviso ya declinado (`version-drift`) · **aviso blando** ✓ 2026-06-18 (reescopado 2026-06-24: el re-narrado suave del advisory en el recap de turnos largos es comportamiento del modelo que la instrucción no suprime, verificado 6/6; acepta recordatorio de una línea en el cierre, FALLO = re-emitirlo como preocupación nueva o bloqueante; cláusula inefectiva revertida del bloque global). **Gate `version-drift-undecided` + memoria local `.sdd/version-denied` nuevos en v0.48.0: capa determinista en `test_session_hook.py` (`VersionDriftTest`); E2E pendiente.**
+- [x] CU-1.f — Deriva de versión: gate no decidido (`version-drift-undecided`) + aviso ya declinado (`version-drift`) · **aviso blando** ✓ 2026-06-18 (reescopado 2026-06-24: el re-narrado suave del advisory en el recap de turnos largos es comportamiento del modelo que la instrucción no suprime, verificado 6/6; acepta recordatorio de una línea en el cierre, FALLO = re-emitirlo como preocupación nueva o bloqueante; cláusula inefectiva revertida del bloque global). **Gate `version-drift-undecided` + memoria local `.sdd/version-denied` nuevos en v0.48.0: capa determinista en `test_session_hook.py` (`VersionDriftTest`).** **E2E del gate ✓ 2026-07-07** en repo real `myops-app-specs` (drift 0.47.0→0.48.0, primera petición NL no-init): las **5 ramas PASS** — (1) versión no decidida → gate `AskUserQuestion` una vez, sin wizard de modo; (5) "Actualizar ahora" → `wf-sdd-update` que sella 0.48.0, gitignora+borra `version-denied` y para para reiniciar; (2) "Ahora no" → escribe exactamente `0.48.0+cc3f612` en `.sdd/version-denied` (gitignored) y continúa sin bloquear; (3) reabrir con versión ya declinada → **solo aviso blando de una línea, sin re-gate**; (4) versión más nueva que la declinada (`version-denied` viejo `0.47.5+aaaaaaa`) → **el gate reaparece**. Escenarios armados retrocediendo el sello `.sdd/sdd-version.json` y tocando `.sdd/version-denied`; estado del proyecto restaurado tras la campaña.
 - [x] CU-1.g — Sesión en subdirectorio → búsqueda de marcadores hacia arriba · ✓ 2026-06-18
 - [x] CU-1.s — Stack con overlay sin init técnico → `specialist-init-pending` ([[D-014]], emisión + handoff; el disparo como precondición → [[CU-14.i]]) · ✓ 2026-06-21 (capa determinista: `SpecialistStatusTest`/`SpecialistInitPendingTest`; E2E en repo KMM real: la directiva se emite al arrancar, el agente avisa en una línea sin lanzar `wf-kmm-init`, y tras correrlo `stack-runs.jsonl` registra el run → `pending:false` y el hook deja de emitir)
 
@@ -251,10 +251,16 @@ forma dura.
 5. Eliges **Actualizar ahora**.
    → **Esperado:** invoca `wf-sdd-update` vía Skill tool (que a su vez para para reiniciar, su Paso 7).
 
-> **Capa determinista:** la ramificación del hook (gate vs blando según `.sdd/version-denied`) la
-> cubre `test_session_hook.py` (`VersionDriftTest`). El criterio anti-paternalista del aviso blando
-> (re-narrado suave en recaps largos aceptable; FALLO = re-emitir como preocupación nueva/bloqueante)
-> se mantiene del reescopado 2026-06-24.
+> **Capa determinista:** `test_session_hook.py` (`VersionDriftTest`, 10 casos) fija la decisión del
+> hook para las **5 ramas por número** (1 gate · 2 el gate dicta el `ECO_ID` exacto a persistir en
+> `.sdd/version-denied` · 3 declinada→blando sin `AskUserQuestion` · 4a versión nueva→re-gate · 4b
+> mismo `<version>`, distinto commit→re-gate · +5 el gate nombra `wf-sdd-update`), la **dimensión
+> commit** del drift (mismo `<version>`, distinto commit del sello→drift) y el no-drift (versión y
+> commit coinciden / sin sello). El eco es un **repo git** para que `ECO_ID = <version>+<commit>` como
+> en producción; las ramas 2 y 5 son conducta del agente, aquí se ancla su **contrato** (el gate
+> contiene la cadena exacta y nombra `AskUserQuestion`/`wf-sdd-update`). El criterio anti-paternalista
+> del aviso blando (re-narrado suave en recaps largos aceptable; FALLO = re-emitir como preocupación
+> nueva/bloqueante) se mantiene del reescopado 2026-06-24.
 
 **Resultado:** PASS si (1) presenta el gate una vez ante versión no decidida, (2) "Ahora no" persiste
 `.sdd/version-denied` y continúa sin bloquear, (3) una versión ya declinada baja al aviso blando sin

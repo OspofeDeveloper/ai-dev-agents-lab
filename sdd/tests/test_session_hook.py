@@ -114,18 +114,49 @@ class BasicStatesTest(HookBase):
 
 
 class VersionDriftTest(HookBase):
+    """Las 5 ramas de CU-1.f a nivel de DECISION del hook (que directiva emite
+    ante cada estado) + la dimension commit del drift.
+
+    Las ramas 2 ('Ahora no' escribe .sdd/version-denied) y 5 ('Actualizar
+    ahora' -> wf-sdd-update) son conducta del agente y no se unit-testean; lo
+    que SI es determinista es su CONTRATO: la directiva del gate contiene el
+    ECO_ID exacto a persistir y nombra tanto AskUserQuestion como wf-sdd-update.
+
+    ECO_ID = '<version>+<commit corto>', igual que en el E2E real: por eso los
+    casos que dependen del ECO_ID usan _eco_git() (eco es un repo git con un
+    commit), no _eco() (sin commit, ECO_ID = solo la version)."""
+
     def _eco(self, version):
+        """eco NO-git: ECO_COMMIT vacio -> ECO_ID = solo la version."""
         eco = self.base / "eco"
         write(eco / "VERSION", version + "\n")
         write(self.home / ".sdd-home", str(eco))
         return eco
 
+    def _eco_git(self, version):
+        """eco como repo git con un commit: ECO_ID = '<version>+<commit>',
+        como en produccion. Devuelve (eco, eco_id)."""
+        eco = self.base / "eco"
+        write(eco / "VERSION", version + "\n")
+        subprocess.run([GIT, "-C", str(eco), "init", "-q"],
+                       check=True, capture_output=True)
+        subprocess.run([GIT, "-C", str(eco), "add", "-A"],
+                       check=True, capture_output=True)
+        subprocess.run([GIT, "-C", str(eco),
+                        "-c", "user.email=t@t", "-c", "user.name=t",
+                        "commit", "-q", "-m", "eco"],
+                       check=True, capture_output=True)
+        short = subprocess.run([GIT, "-C", str(eco), "rev-parse", "--short", "HEAD"],
+                               check=True, capture_output=True, text=True).stdout.strip()
+        write(self.home / ".sdd-home", str(eco))
+        return eco, f"{version}+{short}"
+
     def _denied(self, value):
-        # memoria local por-dev; en tests ECO_ID = solo la version (commit vacio,
-        # eco no es repo git), asi que se declina pasando "<version>"
+        # memoria local por-dev: el agente escribe el ECO_ID (<version>+<commit>).
         write(self.proj / ".sdd" / "version-denied", value + "\n")
 
-    def test_undecided_version_emits_gate(self):
+    # --- Escenario 1: version no decidida -> gate --------------------------
+    def test_1_undecided_emits_gate(self):
         # drift sin .sdd/version-denied -> gate (version-drift-undecided)
         self._eco("0.30.0")
         _init_json(self.proj, ["spec"], complete=True)
@@ -135,30 +166,75 @@ class VersionDriftTest(HookBase):
         self.assertIn("0.29.0", out)
         self.assertIn("0.30.0", out)
 
-    def test_declined_current_version_soft_notice(self):
-        # el usuario ya declino la version actual del ecosistema -> aviso blando,
-        # NO el gate
+    # --- Escenarios 1+5: el gate nombra AskUserQuestion y wf-sdd-update -----
+    def test_15_gate_contract_names_askuserquestion_and_update(self):
         self._eco("0.30.0")
         _init_json(self.proj, ["spec"], complete=True)
         _version_json(self.proj, "0.29.0")
-        self._denied("0.30.0")
+        out = self.run_hook()
+        self.assertIn("AskUserQuestion", out)   # rama 1: gate, nunca texto libre
+        self.assertIn("wf-sdd-update", out)     # rama 5: Actualizar ahora
+
+    # --- Escenario 2: el gate dicta el ECO_ID EXACTO a persistir -----------
+    def test_2_gate_dictates_exact_eco_id_to_persist(self):
+        # con eco git, ECO_ID = version+commit: la directiva debe nombrar el
+        # fichero y contener la cadena exacta que el agente escribira alli.
+        _, eco_id = self._eco_git("0.30.0")
+        _init_json(self.proj, ["spec"], complete=True)
+        _version_json(self.proj, "0.29.0")
+        out = self.run_hook()
+        self.assertDirective(out, "version-drift-undecided")
+        self.assertIn("version-denied", out)
+        self.assertIn(eco_id, out)
+
+    # --- Escenario 3: version actual ya declinada -> aviso blando, sin gate -
+    def test_3_declined_current_is_soft_no_gate(self):
+        _, eco_id = self._eco_git("0.30.0")
+        _init_json(self.proj, ["spec"], complete=True)
+        _version_json(self.proj, "0.29.0")
+        self._denied(eco_id)  # declina el ECO_ID completo (version+commit)
         out = self.run_hook()
         self.assertDirective(out, "version-drift")
         self.assertNotIn("version-drift-undecided", out)
+        self.assertNotIn("AskUserQuestion", out)
 
-    def test_new_version_re_gates_after_denial(self):
-        # se declino una version anterior; el ecosistema avanza -> el gate reaparece
-        self._eco("0.31.0")
+    # --- Escenario 4a: el ecosistema avanza de VERSION -> re-gate ----------
+    def test_4a_newer_version_re_gates(self):
+        _, eco_id = self._eco_git("0.31.0")
         _init_json(self.proj, ["spec"], complete=True)
         _version_json(self.proj, "0.29.0")
-        self._denied("0.30.0")
+        self._denied("0.30.0+deadbee")  # declino una version anterior
         self.assertDirective(self.run_hook(), "version-drift-undecided")
 
+    # --- Escenario 4b: misma VERSION, distinto COMMIT declinado -> re-gate --
+    def test_4b_same_version_new_commit_re_gates(self):
+        _, eco_id = self._eco_git("0.30.0")
+        _init_json(self.proj, ["spec"], complete=True)
+        _version_json(self.proj, "0.29.0")
+        self._denied("0.30.0+0000000")  # DENIED != ECO_ID (otro commit) -> gate
+        self.assertDirective(self.run_hook(), "version-drift-undecided")
+
+    # --- Dimension commit: misma version, distinto commit del sello -> drift
+    def test_commit_only_drift_emits_gate(self):
+        _, eco_id = self._eco_git("0.30.0")
+        _init_json(self.proj, ["spec"], complete=True)
+        _version_json(self.proj, "0.30.0", commit="0000000")  # ver igual, commit no
+        self.assertDirective(self.run_hook(), "version-drift-undecided")
+
+    # --- Sin drift ---------------------------------------------------------
     def test_no_drift_when_versions_match(self):
         self._eco("0.29.0")
         _init_json(self.proj, ["spec"], complete=True)
         _version_json(self.proj, "0.29.0")
         # commit del ecosistema vacio (eco no es repo git) -> no compara commit
+        self.assertSilent(self.run_hook())
+
+    def test_no_drift_when_version_and_commit_match(self):
+        eco, _ = self._eco_git("0.29.0")
+        short = subprocess.run([GIT, "-C", str(eco), "rev-parse", "--short", "HEAD"],
+                               check=True, capture_output=True, text=True).stdout.strip()
+        _init_json(self.proj, ["spec"], complete=True)
+        _version_json(self.proj, "0.29.0", commit=short)
         self.assertSilent(self.run_hook())
 
     def test_no_drift_without_version_stamp(self):
