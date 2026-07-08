@@ -37,6 +37,12 @@ Si no hay argumento, informa al usuario:
 
 Verifica que el archivo existe; si no → informa con ruta exacta y detén. Si el nombre termina en `_spec.md`, `_plan.md` o `_tasks.md` → informa que este skill opera sobre PRDs, no sobre artefactos derivados del pipeline.
 
+**Readiness del PRD (advisory, [[D-020]]).** Discover produce un mapa de features (no specs), así que **no bloquea**, pero surfacea si el PRD arrastra asunciones sin confirmar —el mapa se estaría construyendo sobre inferencias no validadas—:
+```
+!python3 .sdd/scripts/sdd-prd-ready.py "<path>"
+```
+Si el veredicto es `OPEN_ASSUMPTIONS`/`ASSUMPTION_MISMATCH`, avísalo en la salida ("el PRD arrastra N `[ASUNCIÓN]` sin confirmar; el gate bloqueará la generación de specs en `wf-spec-features-first` hasta revisarlas con `/wf-prd-review`"). Si falta el script, omite el aviso y continúa.
+
 ---
 
 ## Paso 3: Leer el contenido

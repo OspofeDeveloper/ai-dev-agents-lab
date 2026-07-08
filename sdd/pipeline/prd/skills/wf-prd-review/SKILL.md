@@ -67,13 +67,15 @@ El diagnóstico que devuelve `prd-expert` alimenta el veredicto del Paso 6. Las 
 
 `kb-prd-expert` Regla 12 obliga a que toda afirmación de negocio no trazable a la fuente esté marcada `[ASUNCIÓN]`. Este paso es el **gate de confirmación humana** de esas asunciones — el contrapunto a la generación: el autor marca lo que infirió, el review lo confirma o lo descarta.
 
-**Detección determinista** (no a ojo) — el patrón **no exige el `]` de cierre**, para detectar tanto el marcador canónico `[ASUNCIÓN]` como la variante verbosa `[ASUNCIÓN: …]` que la generación pueda emitir (si no, esa variante daría conteo `0` y el gate se saltaría en silencio):
+**Detección determinista** (no a ojo). Usa `sdd-prd-ready.py`, que cuenta las marcas inline `[ASUNCIÓN]` (incluida la variante verbosa `[ASUNCIÓN: …]`) **excluyendo menciones en prosa** —callouts `>`, la nota de la sección— que inflan un `grep -c` crudo (la falsa-positiva de CU-2.b), y **verifica el invariante 1:1** (marcas inline == entradas `[ASN-XXX]`), reportando huérfanas:
 ```
-!grep -n "\[ASUNCIÓN" "<path>"; grep -c "\[ASUNCIÓN" "<path>"
+!python3 .sdd/scripts/sdd-prd-ready.py "<path>" --json
+!grep -n "\[ASUNCIÓN" "<path>"   # localización línea a línea para procesar cada una
 ```
+El campo `inline_marks` es el conteo real; `ASSUMPTION_MISMATCH` señala una marca huérfana o una entrada sin marca — corrígela antes de seguir. Esto **cierra la verificación mecánica del 1:1** que antes dependía de un `grep` improvisado por el agente (reserva de CU-2.a/b). Si falta el script, cae al `grep -c "\[ASUNCIÓN"` como degradación.
 
-- **Cuenta `0`** → no hay asunciones pendientes; sigue al veredicto.
-- **Cuenta `> 0`** → localiza la sección `## Asunciones del PRD` y procesa **cada `[ASN-XXX]` una a una con el usuario** (usa `AskUserQuestion` cuando haya varias): para cada una, presenta la afirmación inferida y su hueco, y pide decisión:
+- **`inline_marks` es `0`** → no hay asunciones pendientes; sigue al veredicto.
+- **`inline_marks` `> 0`** → localiza la sección `## Asunciones del PRD` y procesa **cada `[ASN-XXX]` una a una con el usuario** (usa `AskUserQuestion` cuando haya varias): para cada una, presenta la afirmación inferida y su hueco, y pide decisión:
   - **Confirmar** → es correcta: marca la casilla `[x]` y elimina el marcador `[ASUNCIÓN]` inline de esa afirmación (pasa a ser hecho de negocio).
   - **Rechazar** → no es lo que el negocio quiere: elimina del PRD la afirmación y su marcador (y el contenido que dependía de ella).
   - **Editar** → el usuario da el dato real: sustituye la afirmación por el texto confirmado y quita el marcador.

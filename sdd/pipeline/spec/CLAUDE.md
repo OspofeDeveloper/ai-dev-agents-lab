@@ -14,9 +14,17 @@ Las `kb-*` viven en los subagentes y se cargan automáticamente en su contexto. 
 
 ## Precondición de esta fase
 
-La etapa Spec **requiere un PRD existente** como artefacto de entrada. Ese PRD puede haberse creado o revisado en la fase anterior (`sdd/prd`), pero **esta fase no sustituye a PRD**.
+La etapa Spec **requiere un PRD existente y en estado revisable** como artefacto de entrada: sin marcas `[ASUNCIÓN]` abiertas y **sellado** (`Aprobado por:` con un aprobador real, no el placeholder). Ese PRD puede haberse creado o revisado en la fase anterior (`sdd/prd`), pero **esta fase no sustituye a PRD**.
 
-Si el usuario todavía no tiene `prd.md` o el documento base no está listo, detén el flujo de Spec y redirígelo a la fase PRD.
+La readiness **no la decides a ojo ni por la topología de ficheros** (que `spec/features/` esté vacío no significa "toca spec"): se verifica **mecánicamente** con `python3 .sdd/scripts/sdd-prd-ready.py <prd.md>` (autor≠verificador; ver [[D-020]]). Veredictos: `READY` · `OPEN_ASSUMPTIONS` (hay asunciones sin confirmar) · `UNSEALED` (sin sellar) · `ASSUMPTION_MISMATCH` (1:1 roto).
+
+Si no está `READY`, **no declares "el PRD está listo" ni avances a spec en silencio**; surfacea el estado. Dos niveles:
+- `OPEN_ASSUMPTIONS` o `ASSUMPTION_MISMATCH` (hay marcas `[ASUNCIÓN]` sin confirmar) → **bloquea**: generar specs hornearía inferencias no validadas. Remite a `wf-prd-review`; solo se continúa con **decisión informada** (`--allow-unreviewed-prd`), dejando constancia de alcance no-revisado.
+- `UNSEALED` (sin asunciones abiertas pero sin sello, o el input es un documento de requisitos crudo sin concepto de sello) → **advisory**: recomienda cerrar la aprobación con `wf-prd-review`, pero no bloquea.
+
+Las propias workflows de entrada (`wf-spec-analyze`, `wf-spec-features-first`, `wf-spec-discover`) aplican este gate en su Paso 2.
+
+Si el usuario todavía no tiene `prd.md`, detén el flujo de Spec y redirígelo a la fase PRD.
 
 **Excepción brownfield**: si no hay PRD porque el sistema ya existe (legacy, proyecto heredado), el onramp es `/wf-spec-from-code` — genera specs de caracterización con el código como fuente de verdad (CAs con evidencia; los `[INFERIDO]` bloquean el plan hasta confirmación humana vía `/wf-spec-gap-resolve`).
 

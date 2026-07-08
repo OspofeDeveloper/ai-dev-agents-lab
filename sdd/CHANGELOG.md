@@ -2,6 +2,17 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.51.0 — 2026-07-08
+
+**Gate de readiness PRD→spec mecánico (`sdd-prd-ready.py`)** — [[DECISIONS D-020]]. Probando CU-2.e, el orquestador —con un PRD con 9 `[ASUNCIÓN]` abiertas y sin sellar— declaraba "El PRD está listo" y saltaba a `wf-spec-features-first`, horneando inferencias sin confirmar en los specs: no había precondición de readiness en la entrada a spec, ni gate mecánico, y la red documentada ("las asunciones bajan como gaps a `wf-spec-analyze`") **no existía en código**.
+
+- ⚠ **Nuevo script `sdd-prd-ready.py`** (se instala en `.sdd/scripts/`): verifica readiness de un PRD (sin `[ASUNCIÓN]` abiertas, 1:1 marcas↔`[ASN-XXX]`, sellado). Veredictos `READY`/`OPEN_ASSUMPTIONS`/`UNSEALED`/`ASSUMPTION_MISMATCH`. Excluye menciones del token en prosa (falsa-positiva de CU-2.b).
+- ⚠ **Precondición de readiness en las entradas de spec.** `wf-spec-features-first` (Paso 2) **bloquea** la generación de specs si el PRD tiene asunciones abiertas / 1:1 roto, salvo override explícito **`--allow-unreviewed-prd`**; `UNSEALED` es advisory. `wf-spec-analyze`/`wf-spec-discover` **surfacean** las asunciones abiertas sin bloquear (implementan de verdad la red antes aspiracional).
+- ⚠ **Regla de fase `sdd-spec.md` regenerada:** la precondición pasa de *"PRD existente"* a *"PRD existente y en estado revisable"*, verificado mecánicamente. Se regenera sola en el próximo `wf-sdd-update`.
+- **`prd/CLAUDE.md`:** corregida la afirmación falsa "bajan como gaps"; añadida la regla de readiness ante "¿cuál es el siguiente paso?" (nunca declarar "PRD listo" por topología).
+- **Reserva del 1:1 cerrada:** `wf-prd-review` Paso 5.5 usa `sdd-prd-ready.py` para la verificación mecánica inline↔entradas (pendiente registrado en 0.50.0) — cierra reservas de CU-2.a/b.
+- **Conformance:** CU-2.e reescrito como procedimiento conversacional A-F (gate de asunciones + orden PRD→spec), con cross-ref a CU-14/CU-9/CU-11.
+
 ## 0.50.0 — 2026-07-07
 
 **`kb-prd-expert`: correspondencia 1:1 entre marca inline `[ASUNCIÓN]` y entrada `[ASN-XXX]`.** Probando CU-2.a en repo real, `prd-expert` emitía **más marcas inline que entradas** (`[ASN-XXX]`) de forma reproducible (1, 2 y 3 huérfanas en tres corridas), siempre por dos derivas: (a) **agrupar** varias exclusiones inferidas de `## Fuera del Alcance` bajo un único `[ASN-XXX]`, y (b) **reafirmar** en `## Reglas de Negocio Transversales` una asunción ya capturada en el alcance, con una segunda marca `[ASUNCIÓN]` desnuda. Como `wf-prd-review` (Paso 5.5) itera **sobre las entradas `[ASN-XXX]`** y limpia la marca inline emparejada, cada marca sin entrada queda **huérfana** — un marcador muerto que sobrevive en un PRD ya sellado (riesgo directo de CU-2.e).

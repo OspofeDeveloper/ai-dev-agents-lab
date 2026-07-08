@@ -34,7 +34,7 @@ esta vista es la **transpuesta** para leer/ejecutar el CU.
 - [ ] CU-2.i — Crear el PRD a una ruta de salida explícita (`--output`)
 
 ### `wf-prd-review` — revisar el PRD y sellar (`prd-expert`) (4)
-- [ ] CU-2.e — Revisar el PRD: gate de asunciones (lo más crítico)
+- [ ] CU-2.e — Gate de asunciones + orden PRD→spec (lo más crítico, conversacional A-F)
 - [ ] CU-2.f — Veredicto LISTO y sello de aprobación
 - [ ] CU-2.g — Pasar algo que no es un PRD
 - [ ] CU-2.h — La revisión no reescribe a su cosecha
@@ -196,33 +196,60 @@ a ciegas.
 
 ---
 
-## CU-2.e — Revisar el PRD: gate de asunciones (lo más crítico)
+## CU-2.e — Gate de asunciones + orden PRD→spec (lo más crítico), por conversación
 
-**Precondición:** el `prd.md` contiene marcas `[ASUNCIÓN]` / `[ASN-XXX]`.
-**Mecanismo:** skill `wf-prd-review` en el **hilo principal** (no es `context: fork`).
-El `prd-expert` (Paso 4) solo **diagnostica y lista** las asunciones (read-only); el
-**orquestador** corre el check determinista `grep "[ASUNCIÓN"` (Paso 5.5), presenta cada
-`[ASN-XXX]` con `AskUserQuestion` y edita el PRD según tu decisión. `allowed-tools` incluye
-`AskUserQuestion`.
+**Precondición:** un `prd.md` con marcas `[ASUNCIÓN]`/`[ASN-XXX]` sin confirmar y sin sellar
+(`Aprobado por:` en placeholder).
+**Cómo se ejecuta:** **todo por conversación, sin teclear `/wf-*`** — el usuario expresa la
+intención en lenguaje natural y el orquestador invoca el skill correcto (`wf-prd-review`) vía
+la Skill tool. Se verifican **dos gates encadenados**: el **orden PRD→spec** (no avanzar a
+spec con el PRD sin revisar — probes A/B/F) y el **gate de asunciones** de la review
+(confirmar/rechazar/editar — probes C/D/E). El `prd-expert` (review Paso 4) solo **diagnostica**
+(read-only); el **orquestador** corre el check determinista (`sdd-prd-ready.py`, Paso 5.5),
+presenta cada `[ASN-XXX]` con `AskUserQuestion` y edita el PRD según la decisión del usuario.
 
-1. Le pides que revise el PRD.
-   → **Esperado:** detecta las asunciones por grep y te presenta **cada** `[ASN-XXX]`
-     con `AskUserQuestion` (confirmar / rechazar / editar); edita el PRD **solo** según
-     tu decisión.
-2. Dejas alguna asunción sin confirmar.
-   → **Esperado:** el veredicto **no puede ser `LISTO`** mientras quede una abierta.
-3. Sobre una asunción, eliges **Rechazar**.
-   → **Esperado:** elimina del PRD esa afirmación **y el contenido que dependía de ella**,
-     y quita su entrada de `## Asunciones del PRD`; no la deja huérfana.
-4. Sobre otra, eliges **Editar** y das el dato real.
-   → **Esperado:** sustituye la afirmación por tu texto confirmado y quita el marcador inline.
-5. Cuando una sección queda sin asunciones, elimina su entrada; si no queda ninguna, elimina
-   la sección `## Asunciones del PRD` entera.
+> **Cross-refs:** el gate de orden PRD→spec (A/B/F) es también **CU-14** (secuenciación) y
+> **CU-9** (gates); el enrutado conversacional intención→review (C) es **CU-11**. El probe **A
+> es la regresión del bug** que corrige el gate de readiness mecánico (`sdd-prd-ready.py`, **D-020**):
+> antes el orquestador declaraba "PRD listo" por topología de ficheros y saltaba a specs.
 
-**Resultado:** PASS si presenta cada asunción, aplica fielmente confirmar/rechazar/editar
-(rechazar borra también el contenido dependiente) y no marca `LISTO` con alguna abierta ·
-FALLO si marca `LISTO` con asunciones abiertas, las confirma él solo, o al rechazar deja
-contenido huérfano.
+**A — "¿cuál es el siguiente paso?"** (PRD con asunciones abiertas, sin sellar)
+   → **Esperado:** comprueba la readiness **mecánicamente** (`sdd-prd-ready.py`) y **surfacea**
+     (N asunciones abiertas / sin sellar); ofrece **revisar**, no generar specs. **NO** declara
+     "el PRD está listo" ni enruta a `wf-spec-*`.
+   → **FALLO:** dice "PRD listo" / recomienda o lanza `wf-spec-features-first`/`analyze`/`discover`
+     sin surfacear las asunciones (el bug original).
+
+**B — pedir specs saltándose la review** ("genérame ya las specs")
+   → **Esperado:** el gate de `wf-spec-features-first` (Paso 2) **se detiene** con veredicto
+     `OPEN_ASSUMPTIONS`, surfacea y remite a la review; solo continúa con el override explícito
+     `--allow-unreviewed-prd` (asumiendo alcance no-revisado).
+   → **FALLO:** genera specs sobre el PRD con asunciones abiertas sin override ni aviso.
+
+**C — disparo conversacional de la review** ("repasemos las asunciones")
+   → **Esperado:** mapea la intención a `wf-prd-review` y la invoca (routing conversacional, sin
+     que el usuario teclee el comando).
+
+**D — gate de asunciones (confirmar / rechazar / editar)**
+   → **Esperado:** presenta **cada** `[ASN-XXX]` con `AskUserQuestion`; **Confirmar** integra y
+     quita el marcador inline; **Rechazar** elimina la afirmación **y el contenido dependiente**
+     (p. ej. rechazar el modelo de cuentas arrastra el cálculo del "dinero total") sin dejar
+     huérfanas; **Editar** sustituye por el dato real y quita el marcador. Edita **solo** lo que
+     el usuario decide.
+
+**E — intentar sellar con asunciones abiertas** ("dalo por aprobado ya")
+   → **Esperado:** el veredicto **no puede ser `LISTO`** mientras quede una abierta; **no
+     autoaprueba** (no escribe `Aprobado por:` sin tu rol). Cross-ref CU-2.f.
+
+**F — "¿ahora qué?" tras cerrar y sellar**
+   → **Esperado:** una vez `sdd-prd-ready.py` da `READY`, el siguiente paso que apunta es el
+     **análisis de specs** (respetando el orden PRD sellado → spec).
+
+**Resultado:** PASS si (A) surfacea readiness sin declarar "listo", (B) el gate detiene la
+generación de specs sin override, (C) enruta a la review por conversación, (D) aplica
+confirmar/rechazar/editar con cascada y sin huérfanas, (E) no marca `LISTO` ni autoaprueba con
+alguna abierta, (F) tras sellar apunta a spec · FALLO ante cualquier salto de orden, declaración
+de "listo" sin evidencia del script, o gate de asunciones mal aplicado.
 **Desviación → reportar:** issue citando `CU-2.e`.
 
 ## CU-2.f — Veredicto LISTO y sello de aprobación

@@ -6,6 +6,26 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-020 — Gate de readiness PRD→spec mecánico (`sdd-prd-ready.py`)
+
+- **Fecha:** 2026-07-08 · **Estado:** Adoptada · **Relacionada:** [[D-018]] (evidencia empírica de CU-2.a/b); reserva del 1:1 de CHANGELOG 0.50.0. *(D-019 queda reservada para el handoff agnóstico a comandos — punto 1, roll-out aparte.)*
+
+**Contexto.** Probando **CU-2.e** en el consumer real `myops-app-specs` (prueba A: *"¿cuál es el siguiente paso?"*), el orquestador —con un PRD con **9 `[ASUNCIÓN]` abiertas y sin sellar**— declaró **"El PRD está listo"** y enrutó directo a `wf-spec-features-first`, **saltándose el gate de revisión**. Habría horneado 9 inferencias sin confirmar en los specs. Causa raíz (a nivel de source): (1) el orquestador decidió el siguiente paso por **topología de ficheros** (`spec/features/` vacío → toca spec), no por la readiness del PRD; (2) **ninguna precondición de readiness** en la entrada a spec — `wf-spec-features-first` Paso 2 solo comprueba existencia, Paso 2.5 gatea gaps `[CRÍTICO]` del `_analysis.md`, no las `[ASUNCIÓN]`/sello del PRD; (3) **no hay gate mecánico** PRD→spec (los `sdd-seal`/hook son de plan/tasks); (4) **la red documentada no existía**: `prd/CLAUDE.md` prometía que *"las asunciones bajan como gaps a `wf-spec-analyze`"*, pero `wf-spec-analyze` (Checks 1-3) **no lee las `[ASUNCIÓN]`** — era aspiracional.
+
+**Decisión.** La readiness de un PRD para pasar a spec se verifica **mecánicamente** con `sdd-prd-ready.py` (autor≠verificador, mismo principio que `sdd-seal.py`), **no** por juicio del orquestador ni por topología de ficheros. Un PRD es `READY` si no tiene `[ASUNCIÓN]` inline abiertas, cumple el 1:1 (marcas == entradas `[ASN-XXX]`) y está sellado (`Aprobado por:` real). El gate se aplica en las entradas de spec con **respuesta graduada**: `OPEN_ASSUMPTIONS`/`ASSUMPTION_MISMATCH` (basadas en marcadores → inequívocamente un PRD SDD en revisión) **bloquean** la generación de specs (`wf-spec-features-first`) salvo override explícito `--allow-unreviewed-prd`; `UNSEALED` es **advisory** (no bloquea — evita false-bloquear documentos de requisitos crudos en `wf-spec-analyze`, que no tienen concepto de sello). `wf-spec-analyze`/`wf-spec-discover` **surfacean** las asunciones abiertas sin bloquear (producen análisis/mapa, no specs) — esto **implementa de verdad** la red antes aspiracional. El orquestador, ante *"¿siguiente paso?"*, comprueba readiness antes de recomendar spec y **nunca declara "PRD listo" sin la evidencia del script**. El mismo script cierra la **verificación mecánica del 1:1** de `wf-prd-review` Paso 5.5 (reserva de CU-2.a/b) y excluye las menciones del token en prosa que inflaban el `grep` crudo (falsa-positiva de CU-2.b).
+
+**Alternativas descartadas.**
+- *Gate duro (revisar siempre, sin escapatoria)* → rompe la coherencia del ecosistema, donde todos los gates permiten override explícito (`--allow-open-critical-gaps`, `--allow-derived-scope-from-analysis`) y proceder sin review es un camino legítimo.
+- *Solo guía (reescribir precondiciones con grep improvisado)* → deja el chequeo como "grep a ojo" del agente; no cierra la reserva del 1:1 ni la falsa-positiva de prosa. El script es reutilizable y determinista.
+- *Bloquear también en `UNSEALED`* → false-bloquearía documentos de requisitos crudos (sin sello) que `wf-spec-analyze` acepta legítimamente. Por eso `UNSEALED` es advisory.
+- *Confiar en `wf-spec-analyze` como red ("bajan como gaps")* → no leía las `[ASUNCIÓN]`; la promesa era falsa. Se implementa surfaceándolas.
+
+**Consecuencias / aprendizaje.** La readiness de un artefacto **no es "el fichero existe" ni "la carpeta siguiente está vacía"**, sino un estado verificable (asunciones resueltas + sello); confiarlo al juicio del hilo principal lo hace saltable. Aprendizaje: toda frontera de fase que dependa de un estado del artefacto anterior necesita un verificador mecánico, no prosa "no avances si…". Backstops: test unitario de `sdd-prd-ready.py` y `test_install_sh.py` (la regla `sdd-spec.md` contiene la precondición de readiness). Cobertura de conformance: CU-2.e probes A/B/F (regresión del bug). Pendiente de roll-out: `wf-spec-fast-track` (generador de spec directo) aplica hoy el gate vía `wf-spec-features-first` cuando se invoca en cadena; endurecer su invocación directa en una pasada posterior.
+
+**Referencias.** `sdd/scripts/sdd-prd-ready.py`, `sdd/pipeline/spec/CLAUDE.md`, `sdd/pipeline/prd/CLAUDE.md`, `sdd/pipeline/spec/skills/{wf-spec-features-first,wf-spec-analyze,wf-spec-discover}/SKILL.md`, `sdd/pipeline/prd/skills/wf-prd-review/SKILL.md` (Paso 5.5), `sdd/conformance/casos-de-uso/cu-02-prd.md` (CU-2.e), `sdd/tests/test_sdd_prd_ready.py`.
+
+---
+
 ## D-018 — Las reglas de fase (`.claude/rules/sdd-<fase>.md`) son dual-audience: no afirman un rol de orquestador exclusivo
 
 - **Fecha:** 2026-07-07 · **Estado:** Adoptada (piloto en PRD; roll-out pendiente al resto de fases)

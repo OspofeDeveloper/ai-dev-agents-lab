@@ -25,15 +25,26 @@ Tu objetivo es ejecutar el flujo features-first: identificar features de un PRD 
 
 Extrae de `$ARGUMENTS`:
 - **Path del PRD**: el primer argumento
-- **Flags opcionales**: `--features F-001,...` (IDs a procesar, requiere discovery previo); `--light`/`--standard` (modo del pipeline — se propaga a cada fast-track; sin flag rige `pipeline_mode` de `.sdd/project-init.json`); `--allow-open-critical-gaps` (genera con gaps críticos abiertos → HUs `[INCOMPLETO]`); `--allow-derived-scope-from-analysis` (continúa aunque el analysis expanda el PRD); `--all-features` (full-run override para PRDs grandes); `--skip-conflict`/`--skip-readiness` (omitir checks finales).
+- **Flags opcionales**: `--features F-001,...` (IDs a procesar, requiere discovery previo); `--light`/`--standard` (modo del pipeline — se propaga a cada fast-track; sin flag rige `pipeline_mode` de `.sdd/project-init.json`); `--allow-open-critical-gaps` (genera con gaps críticos abiertos → HUs `[INCOMPLETO]`); `--allow-derived-scope-from-analysis` (continúa aunque el analysis expanda el PRD); `--allow-unreviewed-prd` (continúa aunque el PRD tenga `[ASUNCIÓN]` sin confirmar / sin sellar → alcance no-revisado); `--all-features` (full-run override para PRDs grandes); `--skip-conflict`/`--skip-readiness` (omitir checks finales).
 
 Si no hay argumento, informa el uso con todos los flags opcionales y ejemplos de los modos principales: completo sin flags, subset con `--features`, con `--allow-open-critical-gaps`, con `--allow-derived-scope-from-analysis`.
 
 ---
 
-## Paso 2: Verificar el archivo
+## Paso 2: Verificar el archivo y la readiness del PRD
 
 Verifica que el archivo PRD existe; si no → informa con ruta exacta y detén.
+
+**Gate de readiness PRD→spec ([[D-020]]).** Un PRD con `[ASUNCIÓN]` sin confirmar hornearía inferencias no validadas en los specs. Compruébalo mecánicamente (no a ojo ni por topología):
+```
+!python3 .sdd/scripts/sdd-prd-ready.py "<prd.md>"
+```
+- Veredicto `READY` → continúa.
+- `OPEN_ASSUMPTIONS` o `ASSUMPTION_MISMATCH`, y **no** se pasó `--allow-unreviewed-prd` → **DETENTE** e informa:
+  > "El PRD no está listo para spec (`<veredicto>`): <detalle del script>. Revísalo con `/wf-prd-review <prd.md>` (confirma las asunciones y sella la aprobación) y vuelve a ejecutar. Si quieres continuar igualmente asumiendo alcance no-revisado, re-ejecuta añadiendo `--allow-unreviewed-prd`."
+- `UNSEALED` → **advisory**: avisa ("el PRD no está sellado; recomendable cerrar la aprobación con `/wf-prd-review`") y continúa.
+- Con `--allow-unreviewed-prd` sobre un veredicto bloqueante → continúa dejando constancia explícita de que los derivados se generan sobre un PRD **no-revisado**.
+- Si falta el script (`.sdd/scripts/sdd-prd-ready.py` no existe) → avisa (reinstala el ecosistema con `install.sh`) y continúa (conservador: no bloquees por falta de tooling).
 
 ---
 

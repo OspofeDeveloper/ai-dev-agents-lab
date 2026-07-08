@@ -44,6 +44,12 @@ Si no existe → informa al usuario con la ruta exacta y detén.
 Si el nombre termina en `_spec.md`, `_plan.md` o `_tasks.md` → informa:
 > "Este archivo parece un artefacto posterior del pipeline SDD. `/wf-spec-analyze` opera sobre PRDs o documentos de requisitos previos a Spec."
 
+**Readiness del PRD (advisory, [[D-020]]).** Analyze solo produce un `_analysis.md` (no genera specs), así que **no bloquea**, pero **sí surfacea** las asunciones sin confirmar del PRD —la red que la fase PRD promete pero que este análisis, por sí solo, no resolvía—:
+```
+!python3 .sdd/scripts/sdd-prd-ready.py "<path>"
+```
+Si el veredicto es `OPEN_ASSUMPTIONS`/`ASSUMPTION_MISMATCH`, inclúyelo en el informe (Paso 8) como aviso: "el PRD arrastra N `[ASUNCIÓN]` sin confirmar; revísalas con `/wf-prd-review` antes de generar specs — este análisis no las resuelve". Si falta el script, omite el aviso y continúa.
+
 ---
 
 ## Paso 3: Leer el contenido

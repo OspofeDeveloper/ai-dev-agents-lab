@@ -32,6 +32,7 @@ ENFORCEMENT_SCRIPTS = [
     "sdd-skill-allow.py", "sdd-amend.py", "sdd-features-index.py",
     "sdd-project-status.py", "sdd-kb-check.py", "sdd-release.py", "sdd-next-id.py",
     "sdd-resolve-path.py", "sdd-design-resolve.py", "sdd-source-drift.py",
+    "sdd-prd-ready.py",
 ]
 
 
@@ -117,6 +118,15 @@ class InstallAllTest(InstallBase):
         self.assertNotIn("No redactas el documento final por tu cuenta", prd_rule)
         # marca positiva del framing dual-audience
         self.assertIn("Audiencia.", prd_rule)
+
+    def test_spec_rule_has_readiness_precondition(self):
+        # La precondicion de la fase spec no es solo "PRD existente": exige un PRD
+        # en estado revisable (sin [ASUNCION] abiertas / sellado), verificado
+        # mecanicamente con sdd-prd-ready.py. Ver DECISIONS D-020.
+        self.install("all")
+        spec_rule = (self.claude / "rules" / "sdd-spec.md").read_text(encoding="utf-8")
+        self.assertIn("en estado revisable", spec_rule)
+        self.assertIn("sdd-prd-ready.py", spec_rule)
 
     def test_default_arg_is_all(self):
         # sin argumento equivale a 'all'
