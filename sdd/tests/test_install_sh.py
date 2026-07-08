@@ -128,6 +128,50 @@ class InstallAllTest(InstallBase):
         self.assertIn("en estado revisable", spec_rule)
         self.assertIn("sdd-prd-ready.py", spec_rule)
 
+    def _orch_rule(self):
+        return (self.claude / "rules" / "sdd-orchestration.md").read_text(encoding="utf-8")
+
+    def test_orchestration_rule_is_eager(self):
+        # La disciplina transversal va en una regla SIN `paths:`, que Claude Code
+        # carga eager (al arrancar), a diferencia de las reglas de fase lazy. Ese
+        # carril es el que cubre el momento "orientar antes de tocar ficheros".
+        # Ver DECISIONS D-021.
+        self.install("all")
+        rule = self._orch_rule()
+        # frontmatter presente pero SIN paths: (la ausencia de paths: = eager)
+        self.assertTrue(rule.startswith("---\n"),
+                        "la regla de orquestacion debe tener frontmatter")
+        header = rule.split("---", 2)[1]
+        # ninguna linea del frontmatter puede ser la clave `paths:` (eso lo haria lazy)
+        self.assertFalse(
+            any(ln.strip().startswith("paths:") for ln in header.splitlines()),
+            "la regla eager NO debe declarar la clave paths: (o seria lazy)")
+        # senales de disciplina transversal
+        self.assertIn("topología", rule)
+        self.assertIn("readiness", rule.lower())
+        self.assertIn("Orden del pipeline", rule)
+
+    def test_orchestration_rule_is_dual_audience(self):
+        # Al ser eager, la heredan tambien los subagentes escritores (sin opt-out,
+        # ver D-018). No puede afirmar un rol de orquestador exclusivo en 2a persona.
+        self.install("all")
+        rule = self._orch_rule()
+        self.assertNotIn("Eres el orquestador", rule)
+        self.assertNotIn("No redactas", rule)
+        self.assertIn("Audiencia.", rule)
+
+    def test_orchestration_rule_readiness_line_is_topology_gated(self):
+        # La linea de la frontera PRD->Spec solo aparece si se instalan ambas
+        # fases; en una topologia sin ese par no se cuela (D-021).
+        self.install("prd,spec")
+        self.assertIn("sdd-prd-ready.py", self._orch_rule())
+        # instalacion limpia (otro tmpdir) con una fase sin el par prd+spec
+        with tempfile.TemporaryDirectory() as other:
+            r = run_bash(INSTALL, "plan", cwd=Path(other))
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            rule = (Path(other) / ".claude" / "rules" / "sdd-orchestration.md").read_text(encoding="utf-8")
+            self.assertNotIn("sdd-prd-ready.py", rule)
+
     def test_default_arg_is_all(self):
         # sin argumento equivale a 'all'
         r = self.install()

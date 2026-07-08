@@ -32,7 +32,7 @@ la **guía proactiva** del orquestador es manual.
 
 CU-14 es un **objetivo de usuario** (pedir una fase fuera de orden y verificar la redirección), no una sola skill: sus escenarios ejercitan **1 componente**. Marca cada escenario al ejecutarlo. El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es la **transpuesta** para leer/ejecutar el CU.
 
-### orquestador — Principio de precondiciones (redirección al paso pendiente) (9)
+### orquestador — Principio de precondiciones (redirección al paso pendiente) (10)
 - [ ] CU-14.a — Pedir specs sin PRD
 - [ ] CU-14.b — Pedir Design sin spec validado
 - [ ] CU-14.c — Pedir Plan sin spec
@@ -42,6 +42,7 @@ CU-14 es un **objetivo de usuario** (pedir una fase fuera de orden y verificar l
 - [ ] CU-14.g — Releasar sin QA
 - [ ] CU-14.h — Saltarse varias fases de golpe
 - [ ] CU-14.i — Pedir trabajo de stack (plan/tasks/impl) con el init técnico de stack pendiente ([[D-014]])
+- [ ] CU-14.j — Orientar sin tocar ficheros: la disciplina eager (`sdd-orchestration.md`) actúa ([[D-021]])
 
 ---
 
@@ -181,3 +182,19 @@ y el orquestador solo **guía**—, aquí el prerequisito (el estado técnico de
 lo repite una vez registrado · FALLO si genera plan/tasks/código sin el estado del stack, o si
 re-corre `wf-<stack>-init` en cada petición pese al run ya registrado.
 **Desviación → reportar:** issue citando `CU-14.i`.
+
+## CU-14.j — Orientar sin tocar ficheros: la disciplina eager actúa ([[D-021]])
+
+**Precondición:** proyecto authoring/standalone con un `prd/prd.md` que tiene `[ASUNCIÓN]` abiertas y sin sellar (mismo estado que destapó el bug de [[D-020]] / probe A de `CU-2.e`).
+**Mecanismo:** la regla **eager** `.claude/rules/sdd-orchestration.md` (sin `paths:`, [[D-021]]) — carga al arrancar, **antes** de que el hilo toque ningún artefacto. Cubre justo el hueco que las reglas de fase (lazy por `paths:`) dejan cuando el orquestador solo **orienta**. Este CU prueba que la regla **carga y se aplica** en sesión real; el que se **instale** bien es `CU-1.t`; el gate mecánico dentro del skill es [[D-020]] / `CU-2.e`.
+
+> **Distinción con CU-2.e / probe A.** Allí la red que atrapa el probe podía ser el gate mecánico *dentro* del skill (se dispara al invocar `wf-spec-features-first`). Aquí se prueba el **carril eager** aislado: el orquestador debe aplicar la disciplina **sin llegar a invocar el skill**, solo respondiendo a la orientación.
+
+1. **(a) Sesión abierta en la raíz del proyecto.** Con el PRD con asunciones abiertas, preguntas *"¿cuál es el siguiente paso?"* / *"he terminado de mirar el PRD, ¿qué sigue?"* — **sin** pedir que lea ni edite ningún fichero.
+   → **Esperado:** el orquestador aplica la disciplina eager: **no** declara "el PRD está listo" por topología (que `spec/features/` esté vacío no es señal), comprueba la readiness mecánicamente (`sdd-prd-ready.py`) o remite a revisar el PRD (`wf-prd-review`) como siguiente paso correcto. No salta a generar specs en silencio.
+2. **(b) Sesión abierta en el subdirectorio `prd/`** (mismo PRD, misma pregunta).
+   → **Esperado (límite documentado, [[D-018]]):** lanzar en un subdirectorio **des-registra la memoria de proyecto** — ni el `CLAUDE.md` raíz ni las reglas (eager o lazy) cargan. Que aquí la disciplina **no** se aplique es una **limitación conocida**, no una regresión; la recomendación operativa es lanzar desde la raíz. Se registra como observación, no como FALLO del carril eager.
+
+**Resultado:** PASS si en (a) el orquestador aplica la disciplina (readiness, no-topología, remisión a revisar) **sin depender de tocar ficheros**; (b) confirma el límite D-018 como observación · FALLO si en (a), con sesión desde la raíz, declara "PRD listo" por topología o salta a specs sin comprobar readiness.
+**Nota de testeo:** conducta de la capa orquestador (no determinista por construcción, como CU-1.j/p); el determinismo vive en el test de install (`test_orchestration_rule_is_eager`, que garantiza que la regla se genera **sin `paths:`** = eager) y en el gate mecánico de D-020. Cross-ref: `CU-2.e`/probe A (gate dentro del skill), `CU-11.a` (hablar, no teclear), `CU-1.t` (instalación), `CU-1.g` (búsqueda de marcadores hacia arriba desde subdirectorio).
+**Desviación → reportar:** issue citando `CU-14.j`.

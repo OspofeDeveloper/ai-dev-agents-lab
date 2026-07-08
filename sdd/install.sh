@@ -323,6 +323,33 @@ for p in prd spec design plan tasks; do
   fi
 done
 
+# Regla de orquestación EAGER: una regla en .claude/rules/ SIN frontmatter
+# `paths:` se carga al arrancar la sesión, igual que un CLAUDE.md (doc Claude
+# Code: memory §path-specific-rules). Es el carril para la disciplina transversal
+# que el orquestador necesita ANTES de tocar ficheros (readiness mecánica, no por
+# topología; orden del pipeline; no bypasear gates) — justo el momento que las
+# reglas de fase (lazy por `paths:`) no cubren. Ver DECISIONS D-021. Se escribe
+# siempre (no lo alcanza el --prune, que solo borra sdd-<fase>.md / overlays).
+install_orchestration_rule() {
+  {
+    echo "---"
+    echo "description: Disciplina de orquestación SDD (transversal, carga eager — no declara globs)"
+    echo "---"
+    echo ""
+    cat "$PIPELINE_DIR/orchestration.md"
+    # Línea específica de frontera, activada por topología: solo tiene sentido si
+    # el proyecto instala PRD y Spec (la única frontera con verificador hoy).
+    if has_phase prd && has_phase spec; then
+      echo ""
+      echo "## Frontera PRD → Spec"
+      echo ""
+      echo "- Antes de recomendar o entrar en Spec con un PRD existente, comprueba la readiness mecánicamente: \`python3 .sdd/scripts/sdd-prd-ready.py <prd.md>\`. Si el veredicto no es \`READY\` (hay \`OPEN_ASSUMPTIONS\`/\`ASSUMPTION_MISMATCH\`, o está \`UNSEALED\`), el siguiente paso correcto es **revisar el PRD** (\`wf-prd-review\`), no generar specs. Nunca declares el PRD \"listo\" sin la evidencia del script."
+    fi
+  } > "$CLAUDE_DIR/rules/sdd-orchestration.md"
+  echo "  ✓ rules/sdd-orchestration.md (eager)"
+}
+install_orchestration_rule
+
 # CLAUDE.md raíz: SOLO se siembra si no existe ya uno. wf-project-init lo regenera
 # después (Paso 7) con la plantilla específica del proyecto; wf-sdd-update reinstala
 # fases SIN pisar ese CLAUDE.md con el genérico del ecosistema (191 líneas). Por eso,

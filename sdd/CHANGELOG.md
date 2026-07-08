@@ -2,6 +2,16 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.52.0 — 2026-07-08
+
+**Disciplina de orquestación en un carril *eager* nativo (`sdd-orchestration.md`)** — [[DECISIONS D-021]]. El gate de 0.51.0 corta el daño dentro del skill, pero su capa de **guía** vivía en las reglas de fase (lazy por `paths:`): al responder *"¿cuál es el siguiente paso?"* **sin tocar ficheros**, esa guía no cargaba y el orquestador aún podía declarar "PRD listo" por topología. La doc de Claude Code confirma un tercer carril que no usábamos: una regla en `.claude/rules/` **sin `paths:` carga eager** (como un `CLAUDE.md`).
+
+- ⚠ **Nueva regla eager `.claude/rules/sdd-orchestration.md`** (generada por `install.sh` desde `pipeline/orchestration.md`, sin `paths:`): disciplina transversal presente **antes de tocar ficheros** — readiness mecánica y no por topología, orden del pipeline, no bypasear gates. Se regenera sola en el próximo `wf-sdd-update`.
+- ⚠ **Línea de la frontera PRD→Spec activada por topología:** solo aparece si el proyecto instala `prd`+`spec` (authoring/standalone); recuerda comprobar `sdd-prd-ready.py` antes de entrar en spec y no declarar "PRD listo" sin evidencia.
+- **Dual-audience por construcción** (al ser eager la heredan los subagentes, como las reglas de fase): invariantes de proyecto, sin rol en 2ª persona. Backstops en `test_install_sh.py` (sin clave `paths:` = eager; sin rol; línea topology-gated).
+- **Límite conocido documentado:** el carril eager depende de **lanzar desde la raíz del proyecto** (lanzar en un subdirectorio des-registra la memoria de proyecto — [[DECISIONS D-018]]).
+- **Conformance:** CU-1.t (se instala en toda topología) y CU-14.j (carga eager al orientar sin tocar ficheros; sub-caso subdir = límite D-018).
+
 ## 0.51.0 — 2026-07-08
 
 **Gate de readiness PRD→spec mecánico (`sdd-prd-ready.py`)** — [[DECISIONS D-020]]. Probando CU-2.e, el orquestador —con un PRD con 9 `[ASUNCIÓN]` abiertas y sin sellar— declaraba "El PRD está listo" y saltaba a `wf-spec-features-first`, horneando inferencias sin confirmar en los specs: no había precondición de readiness en la entrada a spec, ni gate mecánico, y la red documentada ("las asunciones bajan como gaps a `wf-spec-analyze`") **no existía en código**.

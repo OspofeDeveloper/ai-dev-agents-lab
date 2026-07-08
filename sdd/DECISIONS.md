@@ -6,6 +6,26 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-021 — Disciplina de orquestación en una regla *eager* dedicada (`sdd-orchestration.md`)
+
+- **Fecha:** 2026-07-08 · **Estado:** Adoptada · **Relacionada:** [[D-020]] (el gate mecánico que esta regla complementa), [[D-018]] (dual-audience + límite del subdirectorio).
+
+**Contexto.** El fix de [[D-020]] tiene un núcleo mecánico robusto (`sdd-prd-ready.py` dispara **dentro** de la invocación del skill y corta el daño), pero su **capa de guía** vive en las reglas de fase `.claude/rules/sdd-<fase>.md`, que son **lazy por `paths:`**: solo cargan cuando el hilo toca un artefacto que matchea. El escenario que destapó el bug —el orquestador respondiendo *"¿cuál es el siguiente paso?"* **sin** leer/editar ningún fichero— **no** carga esa guía, así que el orquestador podía seguir declarando "PRD listo" por topología antes de que el gate mecánico lo parase. Es un fallo de **corrección/UX** (frase equivocada), no de integridad (el daño ya lo corta D-020).
+
+**Decisión.** La disciplina **transversal** que el orquestador necesita **antes de tocar ficheros** (readiness mecánica y no por topología; orden del pipeline; no bypasear gates) vive en una regla dedicada `.claude/rules/sdd-orchestration.md` que se genera **sin frontmatter `paths:`**. Confirmado en la doc oficial de Claude Code (*memory* §path-specific-rules): una regla **sin `paths:` se carga eager** (al arrancar la sesión, como un `CLAUDE.md`); solo es lazy *porque* declara `paths:`. La regla la genera `install.sh` (que ya es dueño de `.claude/rules/`), a partir de la fuente única `pipeline/orchestration.md`, con una línea específica de la frontera PRD→Spec **activada por topología** (`has_phase prd && has_phase spec`). Complementa —no sustituye— el gate mecánico de D-020 y las reglas de fase lazy. Es **dual-audience por construcción** (invariantes de proyecto, no rol en 2ª persona): al ser eager la heredan también los subagentes escritores, igual que las reglas de fase — mismo invariante que [[D-018]].
+
+**Alternativas descartadas.**
+- *Inyectar trozos de cada `CLAUDE.md` de fase en el `CLAUDE.md` raíz* → dos dueños del mismo fichero (lo autora `wf-project-init` con `Write`, install lo omite con `--no-claude-md`) y engorda el raíz eager con N resúmenes de fase. Lo eager-worthy es disciplina **cross-fase**, pequeña, no un resumen por fase.
+- *Splice de un bloque gestionado (markers + awk, patrón SDD-BOOTSTRAP) en el raíz* → misma pelea de dueños con `wf-project-init`. El carril nativo de rules lo evita.
+- *Hook `SessionStart`/`UserPromptSubmit` inyectando la disciplina* → el texto de hook entra como *system-reminder* (prioridad menor que la memoria) y añade lógica de shell con estado; peor que un fichero de memoria para esto.
+- *Extracción por marcador (`<!-- sdd:eager -->`) de cada fase* → maquinaria (contrato de marcador + splice) desproporcionada para **una** frontera con verificador hoy. Si aparecen más, se evoluciona sin cambiar el destino (`sdd-orchestration.md`).
+
+**Consecuencias / aprendizaje.** El eje **eager vs lazy** de las rules no es "rules = lazy": lo determina la **presencia de `paths:`**. Eso da un tercer carril que no estábamos usando —una regla eager separada del `CLAUDE.md` raíz y de las reglas de fase— ideal para "disciplina siempre presente + detalle de fase bajo demanda". **Límite conocido que ninguna opción cura** (documentado, no resuelto): [[D-018]] mostró que lanzar la sesión desde un **subdirectorio** des-registra la memoria de proyecto (ni raíz ni rules cargan); el carril eager, como el `CLAUDE.md` raíz, **depende de lanzar desde la raíz del proyecto** —recomendación operativa ya vigente—. Backstops en `test_install_sh.py`: `sdd-orchestration.md` existe, **sin** clave `paths:` (eager), dual-audience (sin rol en 2ª persona) y con la línea de readiness **topology-gated**. Cobertura de conformance: CU-1.t (se instala en toda topología) y CU-14.j (carga eager al orientar sin tocar ficheros; sub-caso subdir = límite D-018).
+
+**Referencias.** `sdd/pipeline/orchestration.md`, `sdd/install.sh` (`install_orchestration_rule`), `sdd/tests/test_install_sh.py`, `sdd/conformance/casos-de-uso/cu-01-inicializar.md` (CU-1.t), `sdd/conformance/casos-de-uso/cu-14-secuenciacion.md` (CU-14.j). Docs Claude Code: *memory* (path-specific rules; import; discovery).
+
+---
+
 ## D-020 — Gate de readiness PRD→spec mecánico (`sdd-prd-ready.py`)
 
 - **Fecha:** 2026-07-08 · **Estado:** Adoptada · **Relacionada:** [[D-018]] (evidencia empírica de CU-2.a/b); reserva del 1:1 de CHANGELOG 0.50.0. *(D-019 queda reservada para el handoff agnóstico a comandos — punto 1, roll-out aparte.)*

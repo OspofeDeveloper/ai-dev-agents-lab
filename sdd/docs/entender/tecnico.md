@@ -20,7 +20,8 @@ se necesita y **cuánto cuesta tenerlo cargado**.
 | Soporte | Qué contiene | Cuándo se carga | Coste fijo |
 |---|---|---|---|
 | **`CLAUDE.md`** (raíz + fase) | Rootmap intención→workflow, principios del orquestador | *Eager*: siempre en sesión | Su cuerpo completo |
-| **Rules** (`.claude/rules/sdd-*.md`) | El `CLAUDE.md` de la fase, activado por archivo | *Lazy por `paths:`*: al tocar un archivo que matchea | Solo el frontmatter |
+| **Rules de fase** (`.claude/rules/sdd-<fase>.md`) | El `CLAUDE.md` de la fase, activado por archivo | *Lazy por `paths:`*: al tocar un archivo que matchea | Solo el frontmatter |
+| **Rule de orquestación** (`.claude/rules/sdd-orchestration.md`) | Disciplina transversal (readiness mecánica, orden del pipeline, no bypasear gates) | *Eager* — una rule **sin `paths:`** carga al arrancar, como un `CLAUDE.md` | Su cuerpo completo (deliberadamente fino) |
 | **kb-\*** (knowledge bases) | Reglas SSoT y referencias de una fase | *Lazy*: cuando un agente las declara | Solo su `description` |
 | **wf-\*** (workflows) | Procedimiento: parsea, valida, delega | *Lazy*: al invocar la skill | Solo su `description` |
 | **Agentes** | El worker que ejecuta, con sus kb-\* inyectadas | *Lazy*: al delegar en él | Su frontmatter |
