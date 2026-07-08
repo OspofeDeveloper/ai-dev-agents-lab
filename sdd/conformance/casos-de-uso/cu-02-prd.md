@@ -28,7 +28,7 @@ esta vista es la **transpuesta** para leer/ejecutar el CU.
 
 ### `wf-prd-create` — redactar el PRD (`prd-expert`) (5)
 - [x] CU-2.a — Crear el PRD desde notas ✅ validado 2026-07-08
-- [ ] CU-2.b — Crear el PRD sin notas (brief oral)
+- [x] CU-2.b — Crear el PRD sin notas (brief oral) ✅ validado 2026-07-08
 - [ ] CU-2.c — Apuntar a un directorio o fuente inexistente
 - [ ] CU-2.d — Regenerar un PRD que ya existe
 - [ ] CU-2.i — Crear el PRD a una ruta de salida explícita (`--output`)
@@ -123,6 +123,30 @@ detectable por el gate, reporta path + nº de asunciones, y **tras crear para y 
 **Resultado:** PASS si pide brief y marca asunciones agresivamente · FALLO si rellena
 el PRD con invención silenciosa.
 **Desviación → reportar:** issue citando `CU-2.b`.
+
+> **Validación (2026-07-08, consumer real `myops-app-specs`).** PASS en sus **dos mitades**:
+> (a) **petición seca** ("empieza el proyecto", sin describir producto) → el orquestador **paró y
+> pidió una base mínima** con 5 preguntas estructuradas (nombre/problema/actores/capacidades/fuera
+> de alcance), dijo explícitamente *"No voy a inventar el producto"* y ofreció la vía `--source`;
+> **no continuó sin input**. La única inferencia (nombre "myops" del repo) la emitió **como
+> pregunta**, no como aserción. (b) tras recibir un **brief mínimo**, marcó `[ASUNCIÓN]`
+> agresivamente (13), mantuvo el 1:1 y remitió a `/wf-prd-review` sin tocar el gate.
+> - **El conteo no escala con la pobreza de la fuente.** El brief mínimo dio **13** asunciones,
+>   *menos* que los briefs completos (15/15/17): el nº sigue la **verbosidad del PRD**, no la
+>   pobreza del material. Confirma —otra vez— que el conteo **no es criterio de sello**; el
+>   invariante es el 1:1.
+> - **Falsa positiva del conteo (evidencia para el backstop pendiente).** El autochequeo del agente
+>   detectó **14 inline ≠ 13 entradas**: el párrafo de intro `⚠ Origen de este PRD` **mencionaba**
+>   el token `[ASUNCIÓN]` en prosa explicativa y el `grep` lo contó como marca. El agente lo corrigió
+>   (reescribió la prosa sin el token → 13=13), pero el modo de fallo es real: **prosa que menciona
+>   el token infla el conteo**, y el `grep` de `wf-prd-review` Paso 5.5 lo sufriría igual. El backstop
+>   determinista pendiente (CHANGELOG 0.50.0) debe **excluir menciones en prosa** (intro/cabeceras),
+>   no solo contar `[ASUNCIÓN`. Convención emergente: no usar el token literal en prosa explicativa
+>   (candidata a `kb-prd-expert`).
+> - **Reserva (compartida con CU-2.a).** El 1:1 es hoy **autoimpuesto por el agente** (marca +
+>   autochequeo con un `grep` que compone él), no **verificado por máquina** — y este run muestra
+>   que ese autochequeo, además de improvisado, se satisface **editando el documento**. Sello
+>   definitivo del todo cuando aterrice el backstop de `wf-prd-review` Paso 5.5.
 
 ## CU-2.c — Apuntar a un directorio o fuente inexistente
 
