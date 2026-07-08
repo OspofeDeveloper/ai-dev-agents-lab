@@ -27,7 +27,7 @@ cobertura autoritativo (ejes happy/edge/harness/args) vive en [`ROADMAP.md`](../
 esta vista es la **transpuesta** para leer/ejecutar el CU.
 
 ### `wf-prd-create` — redactar el PRD (`prd-expert`) (5)
-- [ ] CU-2.a — Crear el PRD desde notas
+- [x] CU-2.a — Crear el PRD desde notas ✅ validado 2026-07-08
 - [ ] CU-2.b — Crear el PRD sin notas (brief oral)
 - [ ] CU-2.c — Apuntar a un directorio o fuente inexistente
 - [ ] CU-2.d — Regenerar un PRD que ya existe
@@ -91,6 +91,24 @@ detectable por el gate, reporta path + nº de asunciones, y **tras crear para y 
 `/wf-prd-review`** · FALLO si inventa actores/alcance sin marcarlos, mete tecnología, o
 **improvisa el gate de asunciones** (entrevista/integración/sello) en vez de enrutar a review.
 **Desviación → reportar:** issue citando `CU-2.a`.
+
+> **Validación (2026-07-08, consumer real `myops-app-specs`).** PASS en **tres** puntos de
+> lanzamiento —raíz del proyecto, subdirectorio `prd/` y subdirectorio `spec/`—: en las tres
+> el orquestador enrutó a `wf-prd-create`, delegó a `prd-expert`, obtuvo el nº de asunciones por
+> `grep` (no de la prosa del agente) y **tras crear paró y remitió a `/wf-prd-review`** sin tocar
+> el gate. El invariante **1:1** se cumplió en las tres (9=9, 17=17, 15=15); el conteo varía por
+> ser no determinista y **no** es criterio de sello. Desde subdirectorio el orquestador usó rutas
+> **absolutas** y resolvió bien la salida (`prd/prd.md` de la raíz).
+> - **Reserva.** El 1:1 es hoy **autoimpuesto por el agente** (marca + autochequeo con un `grep`
+>   que compone él), no **verificado por máquina**. El sello es definitivo del todo cuando aterrice
+>   el backstop determinista de `wf-prd-review` Paso 5.5 (igualdad + reporte de huérfanas) — ya
+>   anotado como *pendiente* en CHANGELOG 0.50.0.
+> - **Hallazgo colateral (no bloquea CU-2.a; evidencia para D-018 / CU-11).** Lanzando desde
+>   `prd/` o `spec/`, la regla de fase `sdd-prd.md` **no se cargó** en el subagente ni (probablemente)
+>   en el orquestador: el riesgo del lanzamiento-en-subdirectorio se materializa en el **hilo
+>   principal** (pierde su rootmap de fase), no en el escritor —cuyo contrato es autocontenido
+>   (system prompt + `kb-prd-expert`)—. Se salvó porque "crear PRD" es inequívoco y la *description*
+>   de `wf-prd-create` bastó. Recomendación operativa: **lanzar siempre desde la raíz**.
 
 ## CU-2.b — Crear el PRD sin notas (brief oral)
 
