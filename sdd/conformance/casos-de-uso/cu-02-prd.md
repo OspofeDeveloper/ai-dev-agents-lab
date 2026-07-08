@@ -143,9 +143,17 @@ el PRD con invención silenciosa.
 >   determinista pendiente (CHANGELOG 0.50.0) debe **excluir menciones en prosa** (intro/cabeceras),
 >   no solo contar `[ASUNCIÓN`. Convención emergente: no usar el token literal en prosa explicativa
 >   (candidata a `kb-prd-expert`).
+> - **Anti-fabricación bajo out-of-scope vacío (2ª corrida, respuesta parcial).** Con actores y
+>   fuera-de-alcance respondidos *"no lo he pensado"*, el agente **incluyó** las exclusiones que en
+>   las corridas anteriores el usuario daba explícitas (sin banco, sin multiusuario, sin multidivisa,
+>   migración Notion) **pero marcadas `[ASUNCIÓN]`**, no como hechos. La **misma** afirmación se trata
+>   como *hecho* cuando el usuario la declara y como *asunción* cuando la infiere el agente: Regla 12
+>   por procedencia. Además **no asumió plataforma** pese al nombre del repo (`myops-app`), la dejó
+>   como *hueco abierto (pregunta)*. 1:1 limpio (14=14), **sin** la falsa-positiva de prosa del run
+>   previo. Demostración más nítida de la disciplina anti-fabricación en el caso difícil.
 > - **Reserva (compartida con CU-2.a).** El 1:1 es hoy **autoimpuesto por el agente** (marca +
->   autochequeo con un `grep` que compone él), no **verificado por máquina** — y este run muestra
->   que ese autochequeo, además de improvisado, se satisface **editando el documento**. Sello
+>   autochequeo con un `grep` que compone él), no **verificado por máquina** — y una de las corridas
+>   muestra que ese autochequeo, además de improvisado, se satisface **editando el documento**. Sello
 >   definitivo del todo cuando aterrice el backstop de `wf-prd-review` Paso 5.5.
 
 ## CU-2.c — Apuntar a un directorio o fuente inexistente
