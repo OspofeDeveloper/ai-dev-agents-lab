@@ -66,6 +66,14 @@ escritura). Output: `prd.md` (en `--output`, o `artifacts.prd` de `project-init.
 > pero el contrato (`kb-prd-expert` Regla 12) pide la bandera escueta `[ASUNCIÓN]`: la verbosa
 > duplica la sección y es señal de deriva del agente, aunque ya no rompe el conteo.
 
+> **Correspondencia 1:1 (capa determinista):** el nº de marcas inline `[ASUNCIÓN]` debe **igualar**
+> el nº de entradas `[ASN-XXX]` de `## Asunciones del PRD` (`kb-prd-expert` Regla 12, "Correspondencia 1:1"):
+> `[ $(grep -c "\[ASUNCIÓN" prd.md) -eq $(grep -oE "\[ASN-[0-9]+\]" prd.md | sort -u | wc -l) ]`. Una
+> marca de más = **huérfana** (el review itera sobre `[ASN-XXX]` y no la limpiará → marcador muerto en un
+> PRD sellado; es justo lo que CU-2.e vigila al rechazar). Derivas observadas: agrupar varias exclusiones
+> de `## Fuera del Alcance` bajo un solo `[ASN-XXX]`, o reafirmar en `## Reglas de Negocio Transversales`
+> una asunción ya catalogada. `inline > entradas` es FALLO de formato.
+
 > **Frontmatter y conteo (capa determinista):** el PRD debe abrir con el frontmatter YAML
 > obligatorio (`type`, `product`, `version`, `created`, `status`) + el placeholder
 > `> **Aprobado por:** [pendiente…]` (guía de estructura de `kb-prd-expert`). Y el **nº de

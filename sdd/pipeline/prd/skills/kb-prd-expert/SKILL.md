@@ -257,6 +257,20 @@ El riesgo es máximo cuando la fuente es pobre: sin `--source`, o con un brief d
 
 IDs `[ASN-XXX]` secuenciales desde `001`, propios del PRD (no se confunden con los `[P-XXX]` de gaps ni con los `[A-XXX]` de asunciones aplicadas del spec).
 
+### Correspondencia 1:1 — cada marca inline tiene su propia entrada `[ASN-XXX]`
+
+**Invariante:** el nº de marcas inline `[ASUNCIÓN]` **iguala** el nº de entradas `[ASN-XXX]` de la sección — **una marca ↔ una entrada**. El marcador inline es anónimo (sin ID incrustado, por diseño); `wf-prd-review` (Paso 5.5) itera **sobre las entradas `[ASN-XXX]`** y, al confirmar/rechazar una, empareja y limpia la marca inline **de esa afirmación**. Por tanto:
+
+- una marca inline **sin** entrada queda **huérfana**: el review nunca la procesa y sobrevive como marcador muerto en un PRD ya sellado;
+- una entrada **sin** marca no tiene qué limpiar.
+
+Dos derivas frecuentes que rompen el 1:1 (ambas observadas) y cómo evitarlas:
+
+- **No agrupes varias afirmaciones inferidas bajo un solo `[ASN-XXX]`.** Si `## Fuera del Alcance` lista cuatro exclusiones inferidas, cada una es una decisión **independiente** que el usuario puede confirmar o rechazar por separado → **cuatro** marcas y **cuatro** entradas (`[ASN-010]`…`[ASN-013]`), nunca una sola entrada que las cubra. Agrupar rompe el conteo y, peor, impide resolverlas una a una (y deja huérfanas las marcas no emparejadas).
+- **No repitas la misma asunción en varias secciones.** Una afirmación inferida se enuncia **una vez** en su lugar canónico, con **una** marca y **una** entrada. No la reafirmes en `## Reglas de Negocio Transversales` (p. ej. "moneda única", "sin autenticación") si ya está capturada como exclusión o capacidad: sería una segunda marca `[ASUNCIÓN]` desnuda sin entrada propia → huérfana. Si la regla transversal es una afirmación inferida **distinta** (no un reenunciado), entonces sí lleva su propia marca **y** su propia entrada.
+
+**Autochequeo antes de cerrar:** `grep -c "\[ASUNCIÓN" prd.md` debe igualar el nº de entradas `[ASN-XXX]`. Si no cuadra, hay una marca huérfana o una entrada sin marca — corrígelo antes de entregar.
+
 ### Asunción ≠ gap
 
 | | `[ASUNCIÓN]` (PRD) | gap `[P-XXX]` (analyze) |

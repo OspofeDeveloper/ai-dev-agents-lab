@@ -6,6 +6,26 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-018 — Las reglas de fase (`.claude/rules/sdd-<fase>.md`) son dual-audience: no afirman un rol de orquestador exclusivo
+
+- **Fecha:** 2026-07-07 · **Estado:** Adoptada (piloto en PRD; roll-out pendiente al resto de fases)
+
+**Contexto.** Probando **CU-2.a** en el consumer real `myops-app-specs`, el subagente `prd-expert` cargaba en su contexto `.claude/rules/sdd-prd.md` (además del `CLAUDE.md` raíz). Esa regla es contenido de **orquestador** —"*Eres el orquestador. No redactas el documento final por tu cuenta*"— e inyectarla en el agente cuyo único trabajo es **redactar** el PRD es una **contradicción de rol**. Se confirmó vía docs de Claude Code que **los subagentes heredan toda la jerarquía de memoria del hilo principal (CLAUDE.md + project rules) por defecto**, y que **solo los built-in Explore/Plan se lo saltan, sin campo de frontmatter para opt-out**. Las reglas por `paths:` disparan cuando se lee/escribe un fichero que matchea el glob — y el agente escritor toca ese fichero por definición. El leak es sistémico: afecta a ~13 subagentes escritores (pipeline + overlay KMM); los read-only (`disallowedTools: Write, Edit`) son inmunes.
+
+**Decisión.** El contenido de las reglas de fase debe ser **dual-audience**: describir el **reparto de trabajo** de la fase (cierto para cualquier lector) en vez de **direccionar en 2ª persona al orquestador** ni **afirmar un rol** ("eres el orquestador / no redactas"). Se conserva todo el contenido útil (rootmap de enrutado, tabla de agentes, precondiciones, frontera create→review); solo cambia el *marco*. El rootmap **no se puede borrar ni mover a la raíz**: en topologías authoring/consumer, el `CLAUDE.md` raíz que autora `wf-project-init` es mínimo y **apunta** a las reglas, así que la regla de fase es la **única** fuente de enrutado de esa fase para el hilo principal. Piloto en `pipeline/prd/CLAUDE.md`; roll-out al resto (spec/design/plan/tasks/kmm) tras validar.
+
+**Alternativas descartadas.**
+- *Excluir la regla de los subagentes por config* → **no existe** mecanismo documentado (ni frontmatter de agente ni opt-out de rules).
+- *Levantar Claude por directorio de fase para "escopar" por cwd* → los globs `paths:` matchean **relativo a la raíz del proyecto, no al cwd**; lanzar en un subdirectorio no re-escopa nada y rompería el pipeline cross-fase (features-first lee `prd/` y escribe `spec/` en una sesión). No es cómo funciona la carga perezosa.
+- *Guard de audiencia ligero* (prepend "si eres subagente, ignora el rol de abajo") → depende de obediencia a prosa (lo que el diseño por `paths:` evita) y deja el cuerpo contradictorio intacto.
+- *Reorganizar skills/agents por directorio de fase* → no arregla el leak (es prosa de rules, no skills); además los **agents no son escopables** en Claude Code y `paths:` en una skill **no** retira su descripción del contexto.
+
+**Consecuencias / aprendizaje.** Un fichero de instrucciones que se carga por `paths:` es leído por **quien toque el artefacto**, hilo principal o subagente indistintamente; escribirlo en 2ª persona asumiendo un único lector (el orquestador) inyecta órdenes equivocadas en el especialista. Aprendizaje: el contenido cargado por path debe ser **agnóstico del lector**. Backstop determinista en `test_install_sh.py` (`test_prd_rule_is_dual_audience`): la regla PRD no contiene la afirmación de rol exclusiva. El invariante se elevará a todas las fases en el roll-out.
+
+**Referencias.** `sdd/pipeline/prd/CLAUDE.md`, `sdd/install.sh` (`install_phase_rule` L307-318), `sdd/tests/test_install_sh.py`, CU-2.a. Docs Claude Code: *sub-agents* (What loads at startup), *memory* (path-specific rules).
+
+---
+
 ## D-017 — Las fuentes externas del consumer se pinean por ruta RELATIVA, con detección explícita de fuente movida
 
 - **Fecha:** 2026-06-21 · **Estado:** Adoptada · **Extiende:** D-011/D-012 (subsistema de drift cross-repo)

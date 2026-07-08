@@ -2,6 +2,24 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.50.0 — 2026-07-07
+
+**`kb-prd-expert`: correspondencia 1:1 entre marca inline `[ASUNCIÓN]` y entrada `[ASN-XXX]`.** Probando CU-2.a en repo real, `prd-expert` emitía **más marcas inline que entradas** (`[ASN-XXX]`) de forma reproducible (1, 2 y 3 huérfanas en tres corridas), siempre por dos derivas: (a) **agrupar** varias exclusiones inferidas de `## Fuera del Alcance` bajo un único `[ASN-XXX]`, y (b) **reafirmar** en `## Reglas de Negocio Transversales` una asunción ya capturada en el alcance, con una segunda marca `[ASUNCIÓN]` desnuda. Como `wf-prd-review` (Paso 5.5) itera **sobre las entradas `[ASN-XXX]`** y limpia la marca inline emparejada, cada marca sin entrada queda **huérfana** — un marcador muerto que sobrevive en un PRD ya sellado (riesgo directo de CU-2.e).
+
+- **(`kb-prd-expert` Regla 12, "Formato del marcador")** nueva subsección **"Correspondencia 1:1"**: el nº de marcas inline debe igualar el nº de entradas `[ASN-XXX]`; **no** agrupar afirmaciones independientes bajo una entrada (cada exclusión es una decisión que se confirma/rechaza por separado); **no** repetir la misma asunción en varias secciones (se enuncia una vez, una marca, una entrada). Autochequeo: `grep -c "\[ASUNCIÓN" == nº de [ASN-XXX]`.
+- **Conformance:** `cu-02-prd.md` (CU-2.a) suma el invariante 1:1 a su capa determinista.
+- **Pendiente (complemento determinista):** que `wf-prd-review` Paso 5.5 verifique la igualdad y reporte marcas huérfanas (backstop del contrato). Sin él, el 1:1 depende de que `prd-expert` lo cumpla.
+- Sin `⚠`: cambia conocimiento del agente; se refresca en el próximo `wf-sdd-update`.
+
+## 0.49.0 — 2026-07-07
+
+**Reglas de fase dual-audience** (piloto en PRD): la regla `.claude/rules/sdd-<fase>.md` se hereda en los subagentes escritores (Claude Code inyecta las project rules en los subagentes por defecto, sin opt-out documentado; solo Explore/Plan se lo saltan). Estaba escrita como *"Instrucciones para el Orquestador"* ("Eres el orquestador. No redactas el documento final por tu cuenta"), así que se colaba en `prd-expert` —el agente cuyo trabajo es redactar el PRD— como una **contradicción de rol**. Cazado probando **CU-2.a** en el consumer real `myops-app-specs`.
+
+- **(`pipeline/prd/CLAUDE.md`) Reescritura a framing descriptivo por audiencia.** El título pasa a `# PRD Lab — Guía de la fase PRD` + una nota de **Audiencia**; el `## Tu rol` en 2ª persona se convierte en `## Reparto de trabajo` en 3ª persona (el hilo principal enruta y no redacta; `prd-expert` redacta). Se conserva **todo** el contenido útil (rootmap de enrutado, tabla de agentes, precondiciones, frontera create→review); solo cambia el marco, no la información. El rootmap **no se mueve**: en authoring/consumer es la única fuente de enrutado de la fase (el `CLAUDE.md` raíz solo apunta a las reglas).
+- **Backstop determinista** en `test_install_sh.py` (`test_prd_rule_is_dual_audience`): la regla PRD instalada no contiene la afirmación de rol exclusiva ni el título de orquestador.
+- **Pendiente (roll-out):** aplicar el mismo patrón a spec/design/plan/tasks/kmm y elevar el backstop a invariante sistémico. Ver **DECISIONS D-018**.
+- Sin `⚠`: la regla se regenera sola en el próximo `wf-sdd-update`; ningún `project-init.json` cambia. El leak era latente (en las corridas de CU-2.a el agente redactó bien pese a la contradicción).
+
 ## 0.48.0 — 2026-07-07
 
 **Deriva de versión con memoria de decisión**: la directiva `version-drift` deja de ser un aviso pasivo fácil de pasar por alto y se desdobla en dos, para que **no actualizar sea una decisión y no un despiste**.

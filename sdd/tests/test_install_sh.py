@@ -106,6 +106,18 @@ class InstallAllTest(InstallBase):
                         "la regla de fase debe empezar con frontmatter paths:")
         self.assertIn('"**/*_spec.md"', spec_rule)
 
+    def test_prd_rule_is_dual_audience(self):
+        # La regla de fase se hereda en los subagentes escritores (Claude Code
+        # inyecta project rules en subagentes, sin opt-out). Su contenido no puede
+        # afirmar un rol de orquestador exclusivo, o contradice al agente que sí
+        # redacta el PRD (`prd-expert`). Ver DECISIONS D-018.
+        self.install("all")
+        prd_rule = (self.claude / "rules" / "sdd-prd.md").read_text(encoding="utf-8")
+        self.assertNotIn("Instrucciones para el Orquestador", prd_rule)
+        self.assertNotIn("No redactas el documento final por tu cuenta", prd_rule)
+        # marca positiva del framing dual-audience
+        self.assertIn("Audiencia.", prd_rule)
+
     def test_default_arg_is_all(self):
         # sin argumento equivale a 'all'
         r = self.install()
