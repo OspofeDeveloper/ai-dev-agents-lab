@@ -2,6 +2,16 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.55.0 — 2026-07-09
+
+**Roll-out D-022 (fase PRD): desambiguación eager de PRD + higiene** — [[DECISIONS D-022]]. Se aplica a la fase PRD el patrón validado como determinista en el piloto de spec. **Cambio de estrategia** frente a la 0.54.0: el roll-out es **aditivo** (mantiene el rootmap lazy como referencia) y se respalda con la suite unit + `CU-1.u` on-disk; la **validación conductual** de cada fase se hace en orden de fase vía `CU-13.a–g` (no se bloquea el roll-out en el piloto). Lo único que sigue gated en esa validación es **borrar el rootmap** (paso irreversible).
+
+- ⚠ **`pipeline/prd/routing.md`** (nuevo) → contribuye a la regla eager `sdd-routing.md`: desambiguación crear vs revisar, **frontera create → review** (gate de asunciones, no lo resuelve el hilo principal), cuándo un gap de Spec es cambio de producto, y puntero a la frontera PRD→Spec de `sdd-orchestration.md`.
+- ⚠ **`pipeline/prd/CLAUDE.md` adelgazado** (regla lazy `sdd-prd.md`): se **deduplica** la disciplina D ya-eager (precondiciones genéricas, readiness-antes-de-spec, autonomía por capas), se **relocaliza** la desambiguación a `routing.md` y el rootmap-tabla queda marcado como referencia. El framing dual-audience ya estaba (piloto D-018).
+- **Tests:** `test_routing_rule_has_prd_border` (prd aporta la frontera create → review a `sdd-routing.md`, eager, dual-audience).
+- **Conformance:** `CU-1.u` (instalación on-disk de `sdd-routing.md`) y framing de `CU-13` alineado a D-022 (el enrutado lo hacen las `description`; cada `CU-13.x` valida de paso el mecanismo en su fase).
+- **Pendiente:** mismas ediciones para design/plan/tasks (una por commit).
+
 ## 0.54.0 — 2026-07-09
 
 **Las `description` ya enrutan; a eager va solo la desambiguación (piloto en spec)** — [[DECISIONS D-022]]. Las reglas de fase eran ~90% enrutado de orquestador pero cargaban lazy. La auditoría confirmó que las `description` de los skills ya hacen el enrutado intención→skill (eager): el rootmap-tabla es redundante. Lo que falta al orientar es la **desambiguación** que las descriptions no cubren.

@@ -210,13 +210,26 @@ class InstallAllTest(InstallBase):
         self.assertIn("Audiencia.", routing)
 
     def test_routing_rule_topology_gated(self):
-        # Solo las fases instaladas con routing.md contribuyen. En el piloto solo
-        # spec tiene routing.md, así que una instalación sin spec no deja el fichero.
+        # Solo las fases instaladas con routing.md contribuyen. Ni plan ni tasks
+        # aportan routing.md todavía, así que una instalación de solo plan no deja
+        # el fichero. (Al cerrarse el roll-out de D-022 este gate se endurece.)
         with tempfile.TemporaryDirectory() as other:
             r = run_bash(INSTALL, "plan", cwd=Path(other))
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
             self.assertFalse((Path(other) / ".claude" / "rules" / "sdd-routing.md").exists(),
                              "sdd-routing.md no debe existir sin fases que aporten routing.md")
+
+    def test_routing_rule_has_prd_border(self):
+        # La fase prd aporta su desambiguación eager (frontera create → review /
+        # gate de asunciones) a sdd-routing.md. Ver DECISIONS D-022 (roll-out).
+        self.install("prd")
+        routing_path = self.claude / "rules" / "sdd-routing.md"
+        self.assertTrue(routing_path.exists(), "falta rules/sdd-routing.md con prd instalado")
+        routing = routing_path.read_text(encoding="utf-8")
+        self.assertIn("create → review", routing)
+        self.assertIn("wf-prd-review", routing)
+        # dual-audience también en la contribución de prd
+        self.assertIn("Audiencia.", routing)
 
     def test_default_arg_is_all(self):
         # sin argumento equivale a 'all'

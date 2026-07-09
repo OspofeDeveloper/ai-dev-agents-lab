@@ -43,6 +43,7 @@ para leer/ejecutar el CU.
 - [x] CU-1.q — Topología design (repo de solo-diseño, [[D-011]]) · ✓ 2026-06-20 (rol `full`, ambos agentes + workflows de feature, sin fugas, `needs_repair: false`; reparación de rol verificada vía "Completar/ampliar")
 - [x] CU-1.r — Aviso de SSoT sin git (advisory, topologías productoras) · ✓ 2026-06-20 (3 corridas: aviso advisory consistente en semántica; literal varía por ser informe NL, no es FALLO)
 - [x] CU-1.t — La regla eager `sdd-orchestration.md` se instala en toda topología ([[D-021]]) · ✓ 2026-07-09 (verificado on-disk en `myops-app-specs` 0.52.0: existe, frontmatter **sin** clave `paths:` = eager, disciplina transversal + línea de frontera PRD→Spec presente por ser authoring; sub-caso consumer-puro cubierto por el test determinista `test_orchestration_rule_readiness_line_is_topology_gated`)
+- [ ] CU-1.u — La regla eager `sdd-routing.md` se instala **topology-gated** ([[D-022]]) · backstop determinista `test_routing_rule_is_eager_and_dual_audience` / `_topology_gated` / `_has_spec_precondition`; pendiente de verificación on-disk en repo real (0.54.0)
 
 ### hook de sesión `bootstrap/sdd-session-check.sh` — directivas `SDD-PROTOCOL` (7)
 - [x] CU-1.a — Wizard de modo en proyecto virgen (`mode-undecided`) · ✓ 2026-06-17
@@ -713,3 +714,18 @@ El determinismo literal vive en los scripts (gate `is_git_repo`, checks de insta
 
 **Resultado:** PASS si el fichero se instala en ambas topologías, sin `paths:`, con la línea de frontera presente solo cuando hay `prd`+`spec` · FALLO si falta el fichero, si declara `paths:` (lazy), o si la línea de frontera aparece en una topología sin ese par.
 **Desviación → reportar:** issue citando `CU-1.t`.
+
+## CU-1.u — La regla eager `sdd-routing.md` se instala topology-gated ([[D-022]])
+
+**Precondición:** proyecto recién inicializado (o reinstalado con `wf-sdd-update`).
+**Mecanismo:** `install.sh` `install_routing_rule` — ensambla `.claude/rules/sdd-routing.md` concatenando el `pipeline/<fase>/routing.md` de **cada fase instalada** (`has_phase`, topology-gated), **sin** frontmatter `paths:` (carril eager, igual que `sdd-orchestration.md`). Contiene solo la **desambiguación + precondiciones/fronteras** que las `description` de los skills no cubren (p. ej. "crea specs → features-first, NO discover", patrón "fase X", elección de rigor, precondición "PRD revisable"); el rootmap-tabla de la regla de fase (lazy) queda como **referencia**, no se replica aquí. A diferencia de `sdd-orchestration.md` (que se instala **siempre**), esta regla **solo existe si alguna fase instalada aporta su `routing.md`**: si ninguna lo hace, `install_routing_rule` **borra** el fichero (no deja un `sdd-routing.md` vacío). Distínguelo de CU-1.t: allí la regla es transversal e incondicional; aquí es por-fase y puede no existir. Backstop determinista: `test_install_sh.py` (`test_routing_rule_is_eager_and_dual_audience`, `test_routing_rule_topology_gated`, `test_routing_rule_has_spec_precondition`); este CU valida el resultado **en disco** en un repo real.
+
+1. Topología con **spec** instalada (authoring/standalone): tras el init, inspeccionar `.claude/rules/sdd-routing.md`.
+   → **Esperado:** el fichero existe; su frontmatter **no** contiene la clave `paths:`; el cuerpo trae la desambiguación de spec (marcadores "features-first", "rigor", precondición "revisable") y la nota `> **Audiencia.**` (dual-audience); **no** aparece "Eres el **orquestador**".
+2. Topología **sin spec** y sin ninguna otra fase que aporte `routing.md` todavía (p. ej. consumer solo `plan`/`tasks` mientras el roll-out de la Parte 3 no ha creado `pipeline/plan/routing.md`): misma inspección.
+   → **Esperado:** `sdd-routing.md` **no existe** (ninguna fase contribuyó). No un fichero vacío ni con solo frontmatter.
+3. Verificar que **no** hay clave `paths:` en el frontmatter cuando el fichero sí existe (si la hubiera, sería lazy y no cargaría eager — regresión del propósito).
+
+**Resultado:** PASS si el fichero existe (sin `paths:`, dual-audience, con la desambiguación de las fases instaladas que la aportan) cuando alguna fase la contribuye, y **no existe** cuando ninguna lo hace · FALLO si falta pese a haber una fase con `routing.md`, si declara `paths:` (lazy), si queda un fichero vacío, o si arrastra desambiguación de una fase no instalada.
+**Nota:** hasta completar la Parte 3 de [[D-022]] (roll-out de `routing.md` a prd/design/plan/tasks), **solo spec** aporta desambiguación eager; por eso el caso 2 hoy cubre cualquier topología sin spec. Al cerrarse el roll-out, actualizar el caso 2 (el gate deja de ser "sin spec" y pasa a "sin ninguna de las 5 fases").
+**Desviación → reportar:** issue citando `CU-1.u`.

@@ -1,0 +1,11 @@
+## Fase PRD — precondiciones, desambiguación y fronteras
+
+> **Audiencia.** El **hilo principal (orquestador)** aplica esto al orientar y enrutar peticiones de PRD. Un subagente que lo herede lo lee como **contexto de proyecto** (invariantes de la fase), no como instrucción de rol.
+
+**Desambiguación crear vs revisar.** Ante ambigüedad entre **crear** un PRD nuevo y **revisar/limpiar** uno existente, el hilo principal pregunta por la ruta del documento o el material base antes de invocar; no asume cuál. Una **duda conceptual** sobre qué debe contener un PRD se resuelve delegando a `prd-expert` (ya carga `kb-prd-expert`), no respondiéndola el hilo principal a pelo.
+
+**Frontera create → review (gate de asunciones).** Tras `wf-prd-create`, si el PRD trae marcadores `[ASUNCIÓN]`/`[ASN-XXX]`, ese gate **no lo resuelve el hilo principal**: no lanza `AskUserQuestion` por ellas, no edita el PRD para integrarlas, no sube versión ni sella aprobación. Confirmar/rechazar/editar cada asunción, limpiar la sección y el sello `Aprobado por:` es exclusivo de `wf-prd-review` (Pasos 5.5 y 6). La única acción correcta tras crear es **parar y remitir** a `wf-prd-review <path/prd.md>`. Si el usuario decide no revisar, las asunciones sin confirmar **no desaparecen ni "bajan como gaps" en silencio**: la entrada a Spec las **detecta** (`sdd-prd-ready.py`) y **obliga a elegir** —revisar o continuar con `--allow-unreviewed-prd` asumiendo alcance no-revisado— (ver [[D-020]]); nunca se hornean en los specs.
+
+**Cambio de producto vs gap de Spec.** Si una respuesta a un gap de Spec añade una **entidad persistente**, un **catálogo reutilizable** o una **nueva granularidad funcional** no comprometida en el PRD, no es un gap normal: es cambio de producto y el handoff correcto es `wf-prd-change` (la ejecución pertenece a esta fase, aunque el disparo surja en Spec).
+
+**Frontera PRD → Spec (readiness).** La disciplina de "¿cuál es el siguiente paso?" —no declarar el PRD listo por topología de ficheros, verificar la readiness **mecánicamente** con `sdd-prd-ready.py`, y remitir a `wf-prd-review` si hay asunciones abiertas— es transversal y vive en la regla eager `sdd-orchestration.md` ("Frontera PRD → Spec"). No se duplica aquí.

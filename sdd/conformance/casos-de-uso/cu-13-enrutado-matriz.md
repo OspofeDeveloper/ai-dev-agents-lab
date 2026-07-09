@@ -8,8 +8,20 @@ por cada uno de los 50 workflows + los pares de desambiguación.
 falta dejar correr el workflow hasta el final: basta observar **qué skill anuncia/invoca
 el orquestador** antes de ejecutarlo.
 **Cobertura automática:** ninguna — el acierto del routing es decisión del LLM. La SSoT
-de disparadores son los `when_to_use` de cada `SKILL.md` y el rootmap intención→skill de
-`CLAUDE.md` (esos sí podrían lint-earse contra drift; el acierto en sí es **manual**).
+de disparadores efectiva son las **`description`** de cada `SKILL.md` (cargan *eager* y
+hacen el enrutado intención→skill, [[D-022]]) y, para lo que la `description` no expresa,
+la desambiguación *eager* de `sdd-routing.md`; el rootmap intención→skill de `CLAUDE.md`
+es **referencia** (podría lint-earse contra drift; el acierto en sí es **manual**).
+
+> [!NOTE]
+> **Cada fila valida de paso el mecanismo de [[D-022]] en su fase.** La hipótesis de D-022
+> es que las `description` (eager) + la desambiguación de `sdd-routing.md` (eager) bastan
+> para enrutar bien **sin** el rootmap-tabla lazy. Como estas filas se validan **en orden
+> de fase** durante la campaña de conformance (`CU-13.a` PRD primero, luego `.b` Spec, …),
+> un PASS de `CU-13.x` confirma además que el enrutado de esa fase aguanta con el carril
+> eager. Cuando todas las fases con `routing.md` pasen, se habilita **borrar el rootmap
+> plano** de las reglas lazy (el único paso irreversible de D-022, hoy gated). El
+> *mecanismo* transversal (hablar, no teclear; narración sin surfacear `wf-*`) es `CU-11.a`.
 
 > [!IMPORTANT]
 > **Cómo se prueba cada fila.** Dices la frase de la columna **Dices** (en lenguaje
@@ -49,7 +61,7 @@ happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es
 
 ## CU-13.a — Fase PRD
 
-**Mecanismo:** orquestador (rootmap de `CLAUDE.md`) + `when_to_use` de cada `SKILL.md`.
+**Mecanismo:** orquestador enrutando por las **`description`** de los skills (eager) + la desambiguación *eager* de `sdd-routing.md` (frontera create → review, crear vs revisar; [[D-022]]); el rootmap de `sdd-prd.md` es referencia.
 
 | Dices | Debe disparar | No confundir con |
 |---|---|---|
