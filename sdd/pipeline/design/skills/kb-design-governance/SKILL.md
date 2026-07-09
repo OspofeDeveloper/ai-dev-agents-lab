@@ -42,7 +42,7 @@ Reglas de mutacion:
 
 1. Una regeneracion via `wf-design-system` **no debe mutar tokens existentes silenciosamente**. Si detecta una mutacion necesaria (ej. el nuevo feature obliga a un radio mayor por accesibilidad), debe marcarla como `DESIGN_GAP` y proponerla en el rationale.
 2. Las mutaciones intencionales se canalizan via `wf-design-delta analyze | apply`, no por regeneracion completa.
-3. Si el `DESIGN_BRIEF.md` cambia (cambia `style_family`, `clarity_vs_brand`, etc.), eso es por definicion una mutacion del sistema: usar `wf-design-delta` y documentar la razon.
+3. Si el `DESIGN_BRIEF.md` cambia (cambia `style_family`, `clarity_vs_brand`, etc.), eso es un cambio de **brief**, no un delta del sistema: se canaliza via `wf-design-intake` (ver Regla 4). Solo la rematerializacion posterior del `DESIGN.md`, ya con el brief nuevo, pasa por `wf-design-delta`. Cambiar `style_family`/`clarity_vs_brand` directamente con `delta` rompe la trazabilidad (anti-patron, ver Regla 4).
 4. Toda mutacion aplicada debe dejar traza en la seccion `## Changelog` del `DESIGN.md` con `[feature: <id>] <que cambio y por que>`.
 
 Anti-patron: regenerar `DESIGN.md` con una segunda feature como spec de entrada y dejar que el agente "actualice" valores sin avisar. El cliente pierde la trazabilidad y los componentes implementados rompen.

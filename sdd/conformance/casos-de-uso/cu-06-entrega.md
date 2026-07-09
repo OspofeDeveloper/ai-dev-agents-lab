@@ -284,9 +284,11 @@ aprobaciones (deuda y gate) vía `AskUserQuestion`.
    → **Esperado:** el plan queda `BORRADOR`; muestra los checks `✗`; no sugiere pasar a tasks.
 4. Falta el `Spec origen` resoluble.
    → **Esperado:** **detiene**; no valida un plan sin su spec.
+5. El plan trae gaps abiertos del handoff con su **código** (`DESIGN_GAP`, `TECH_GAP`, `TRACE_GAP` o `PLAN_GAP` — la taxonomía de `kb-plan-expert`).
+   → **Esperado:** `wf-plan-validate` **no sella**: reporta el/los código(s) de gap y remite a corregir la pieza que toca antes de reintentar — `DESIGN_GAP` → handoff de Design; `TRACE_GAP` → trazabilidad a CAs del spec; `TECH_GAP` → decisión técnica del plan; `PLAN_GAP` → el propio plan. El plan queda `BORRADOR`; **no se bypasea** ni se autovalida con gaps abiertos.
 
-**Resultado:** PASS si las TD requieren aprobación humana, el sello lo pone el script y exit 2 deja
-`BORRADOR` · FALLO si autoaprueba una TD, sella a mano, o valida con exit 2 / sin `Spec origen`.
+**Resultado:** PASS si las TD requieren aprobación humana, el sello lo pone el script, exit 2 deja
+`BORRADOR`, y un gap del handoff (`DESIGN_GAP`/`TECH_GAP`/`TRACE_GAP`/`PLAN_GAP`) se reporta por su código y remite a corregir · FALLO si autoaprueba una TD, sella a mano, valida con exit 2 / sin `Spec origen`, o sella un plan con gaps del handoff abiertos.
 **Desviación → reportar:** issue citando `CU-6.l`.
 
 ## CU-6.m — Task-run: verificación ejecutable del DoD y disciplina de commit

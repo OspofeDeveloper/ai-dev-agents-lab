@@ -2,6 +2,16 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.58.1 — 2026-07-09
+
+**Auditoría de cobertura del roll-out D-022: cierre de contradicciones y huecos de conformance** — [[DECISIONS D-022]]. Auditoría exhaustiva (6 agentes, una por fase + transversal) cruzando cada `routing.md` contra toda la suite de conformance. Resultado: la gran mayoría cubierta; se corrigen 3 contradicciones y se cierran 5 huecos.
+
+- ⚠ **Fix SSoT `kb-design-governance` (Regla 2.3)**: decía que cambiar `style_family`/`clarity_vs_brand` es `wf-design-delta`, contradiciendo su propia Regla 4 (es `wf-design-intake` — cambio de brief). Alineado; el anti-patrón (delta que rompe `style_family`) queda explícito. **Único cambio sobre artefacto instalable.**
+- **Fix CU-13** (conformance): la matriz enrutaba "cambia el `style_family`" → `wf-design-delta`; corregido a `wf-design-intake` (fila desdoblada en CU-13.c + CU-13.g#2), alineado con la SSoT y con `CU-5.p`.
+- **Fix CU-1.u** (conformance): el párrafo *Mecanismo* citaba un test renombrado (`topology_gated`→`is_scoped`) y la semántica "puede no existir" ya superada; alineado con el estado post-roll-out (5 fases, scoping).
+- **Huecos cerrados** (nuevos casos de conformance): `CU-3.r`.5 (auto-promoción light→standard cuando la feature toca shared models/entidades/alcance); `CU-13.a` (duda conceptual de PRD → `prd-expert`, no responder a pelo); `CU-13.c` ("que decida menos la IA" → `wf-design-intake` antes de `system`; negativo branch↔delta); `CU-6.l`.5 (taxonomía de gaps del handoff `DESIGN_GAP`/`TECH_GAP`/`TRACE_GAP`/`PLAN_GAP` — códigos reales de `kb-plan-expert`, antes sin cobertura por nombre).
+- **Sin cambios de código de instalación**: suite intacta.
+
 ## 0.58.0 — 2026-07-09
 
 **Roll-out D-022 (fase Tasks): cierre del roll-out — las 5 fases con desambiguación eager** — [[DECISIONS D-022]]. Último eslabón: prd+spec+design+plan+tasks completan `routing.md` y dual-audience.

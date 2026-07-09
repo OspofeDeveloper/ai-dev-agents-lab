@@ -372,8 +372,12 @@ oferta ocurre en el **hilo principal** antes de delegar.
    → **Esperado:** usa `light` sin preguntar (el equipo ya fijó el default de proyecto).
 4. Pides generar un lote con `wf-spec-features-first` sin flag.
    → **Esperado:** pregunta el modo **una sola vez** para toda la pasada, nunca feature a feature.
+5. Pides `--light` sobre una feature que **toca shared models, introduce entidades nuevas o expande alcance**.
+   → **Esperado:** el rigor ligero **se prohíbe solo**: la workflow lo fuerza a `standard` pese al flag (regla en `kb-spec-expert`), porque en ese perfil de feature se relaja ceremonia pero **no** rigor. No genera un spec ligero sobre una feature con shared models / entidades nuevas / alcance expandido. (Es el guardrail de la última línea de `pipeline/spec/routing.md`.)
 
 **Resultado:** PASS si ofrece la elección al crear (no en el init), respeta el flag explícito y el
-override de proyecto, y pregunta una sola vez por lote · FALLO si genera ligeros sin ofrecer la elección,
-re-pregunta pese a un flag explícito, o pregunta feature a feature en un lote.
+override de proyecto, pregunta una sola vez por lote, y **fuerza standard cuando la feature toca shared
+models / entidades / alcance pese a `--light`** · FALLO si genera ligeros sin ofrecer la elección,
+re-pregunta pese a un flag explícito, pregunta feature a feature en un lote, o **deja pasar un spec ligero
+sobre una feature que expande alcance / toca shared models**.
 **Desviación → reportar:** issue citando `CU-3.r`.

@@ -69,9 +69,11 @@ happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es
 | "revisa mi PRD" / "haz preflight del PRD" | `wf-prd-review` | crear (`wf-prd-create`) |
 | "cambia el alcance del PRD" / "gestiona este cambio de producto" | `wf-prd-change` | propagar (`wf-prd-change-cascade`) |
 | "propaga este cambio de PRD por todo el pipeline" | `wf-prd-change-cascade` | cambio aislado (`wf-prd-change`) · medir sin aplicar (`wf-prd-sync-impact`) · solo specs (`wf-spec-sync-from-prd`) |
+| "¿qué debe llevar un PRD?" / "ayúdame a estructurar/pensar este PRD" (duda conceptual, sin `wf-*` exacta) | delega al agente **`prd-expert`** | responderla el hilo principal **a pelo** (debe delegar, `prd-expert` ya carga `kb-prd-expert`) |
 
-**Resultado:** PASS si cada frase enruta a su skill y respeta los negativos · FALLO si
-confunde change con cascade, o crea con revisa.
+**Resultado:** PASS si cada frase enruta a su skill y respeta los negativos, y una duda
+conceptual de PRD se **delega a `prd-expert`** en vez de responderla a pelo · FALLO si
+confunde change con cascade, crea con revisa, o teoriza sobre PRDs sin delegar.
 **Desviación → reportar:** issue citando `CU-13.a`.
 
 ## CU-13.b — Fase Spec
@@ -108,19 +110,22 @@ cualquier confusión (sobre todo "crea las specs" → discover).
 | "captura inspiración / vibes antes del brief" | `wf-design-moodboard` | cerrar brief (`wf-design-intake`) · sistema (`wf-design-system`) |
 | "busca apps de referencia" | `wf-design-discover` | crear DESIGN.md (`wf-design-system`) |
 | "crea el DESIGN.md" / "genera el sistema visual" | `wf-design-system` | cambio incremental (`wf-design-delta`) |
-| "actualiza el DESIGN.md con estos cambios" / "cambia el style_family" | `wf-design-delta` | **desde cero (`wf-design-system`)** (ver CU-13.g) |
+| "actualiza el DESIGN.md con estos cambios" (dentro de la misma familia visual) | `wf-design-delta` | desde cero (`wf-design-system`) · **cambio de brief → `wf-design-intake`** (ver CU-13.g) |
+| "cambia el `style_family`" / "cambia `clarity_vs_brand`" | `wf-design-intake` | **NO `wf-design-delta`**: cambiar una variable del brief no es delta (`kb-design-governance` R4; ver CU-13.g y CU-5.p) |
 | "genera las vistas/flows para Stitch" | `wf-design-feature-prototype` | — |
 | "valida el DESIGN.md" | `wf-design-validate` | accesibilidad (`wf-design-a11y-audit`) |
 | "valida la accesibilidad / contraste WCAG" | `wf-design-a11y-audit` | validación general (`wf-design-validate`) |
 | "qué artefactos de diseño quedaron stale" | `wf-design-sync` | evolucionar (`wf-design-delta`) · auditar (`wf-design-validate`) |
 | "exporta los tokens" / "tokens para iOS" | `wf-design-export` | — |
 | "extrae el DESIGN.md de la UI existente" | `wf-design-extract` | desde cero (`wf-design-system`) · cambiar extraído (`wf-design-delta`) |
-| "crea una rama del DESIGN para probar otra familia" | `wf-design-branch` | A/B de feature (`wf-design-variant`) |
+| "crea una rama del DESIGN para probar otra familia" | `wf-design-branch` | A/B de feature (`wf-design-variant`) · cambio incremental (`wf-design-delta`) — explorar sin comprometer main NO es delta |
 | "haz un A/B del checkout" | `wf-design-variant` | rama del sistema (`wf-design-branch`) |
+| "quiero que el usuario elija el estilo" / "que decida menos la IA en el diseño" | `wf-design-intake` (**antes** de `wf-design-system`) | saltar directo a generar el sistema (`wf-design-system`) sin cerrar la policy de autonomía en el brief |
 | "incorpora este feedback del cliente sobre el diseño" | `wf-design-feedback` | — |
 
 **Resultado:** PASS si cada frase enruta a su skill y respeta los negativos · FALLO
-sobre todo en "actualiza el DESIGN.md" (system vs delta) o validate vs a11y.
+sobre todo en "actualiza el DESIGN.md"/"cambia el style_family" (delta vs **intake**),
+"que decida menos la IA" (system en vez de intake), o validate vs a11y.
 **Desviación → reportar:** issue citando `CU-13.c`.
 
 ## CU-13.d — Plan, Tasks y entrega
@@ -206,10 +211,14 @@ es **citable como `CU-13.g`** y conviene probarla aparte:
    `wf-spec-discover` — aunque el `when_to_use` de discover liste "features-first" y
    "mapa de features". Discover solo cuando pides **explícitamente** un subset / "fase 1"
    / "estas N features" / el mapa de features. *(Regla explícita en `CLAUDE.md`.)*
-2. **"actualiza el DESIGN.md"** → ambiguo a propósito: **desde cero / regenerar** =
-   `wf-design-system`; **cambio incremental** ("con estos cambios", "cambia el
-   style_family") = `wf-design-delta`. El orquestador debe inferir por el matiz o
-   preguntar; no elegir a ciegas.
+2. **"actualiza el DESIGN.md"** → tres destinos, ambiguo a propósito: **desde cero /
+   regenerar** = `wf-design-system`; **cambio incremental dentro de la misma familia**
+   ("con estos cambios") = `wf-design-delta`; **cambio de una variable del brief**
+   (`style_family`, `clarity_vs_brand`, `voice_tone`, `autonomy_policy`,
+   `target_platforms`, `accessibility_target`) = **`wf-design-intake`**, NO `wf-design-delta`
+   — cambiar el brief no es un delta del sistema (`kb-design-governance` R4; el `analyze`
+   de delta lo marca `[BRIEF_CHANGE_REQUIRED]`, ver CU-5.p). El orquestador infiere por el
+   matiz o pregunta; no elige a ciegas.
 3. **"valida el …"** → por **tipo de artefacto**: spec → `wf-spec-validate`; plan →
    `wf-plan-validate`; DESIGN.md → `wf-design-validate`; accesibilidad →
    `wf-design-a11y-audit`.
