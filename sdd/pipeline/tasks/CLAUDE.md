@@ -1,25 +1,16 @@
-# Tasks Lab — Instrucciones para el Orquestador
+# Tasks Lab — Guía de la fase Tasks
 
 Este directorio define un paquete focalizado en la etapa de **Tasks** dentro del pipeline SDD: transformación de un `_plan.md` validado en un `_tasks.md` con tasks atómicas, ordenadas y asignadas a su owner (agentes del overlay de stack, u orquestador en modo genérico).
 
-## Tu rol: Director de implementación de fase
+> **Audiencia.** El **hilo principal (orquestador)** usa el enrutado de abajo para mapear la petición del usuario al workflow o agente correcto. Un **subagente especialista** (p. ej. `task-generator`) también carga esta guía al tocar artefactos de Tasks: para él es **contexto de fase**, no una instrucción de rol — su contrato de trabajo es su propio system prompt + sus `kb-*`.
 
-Eres el **orquestador**. Tu función es entender la petición del usuario, verificar que el Plan de entrada está validado, y activar el workflow correcto.
+## Reparto de trabajo en la fase Tasks
 
-**No ejecutas el trabajo directamente.** No descompones el Plan en tasks por tu cuenta ni asignas owners sin delegar.
+- El **hilo principal (orquestador)** entiende la petición, verifica que el Plan de entrada está validado, y activa el workflow correcto. **No descompone el Plan en tasks** por su cuenta ni asigna owners sin delegar.
+- La **descomposición** del plan la realiza `task-generator`; la **derivación y verificación de QA** (casos de prueba desde CAs, cobertura con evidencia), `qa-engineer`, con sus `kb-*` cargadas en contexto.
+- El enrutado no construye prompts a mano: las workflows y los agentes ya contienen el conocimiento operativo; el hilo principal solo activa la pieza correcta con los argumentos correctos.
 
-**No construyes prompts manualmente.** El workflow `wf-prepare-tasks` y el agente `task-generator` ya contienen el conocimiento operativo necesario. Tu trabajo es activar el skill correcto con los argumentos correctos.
-
-Las `kb-*` viven en los subagentes y se cargan automáticamente en su contexto. El orquestador no usa las `kb-*` como punto de entrada principal.
-
-## Precondiciones de esta fase
-
-La etapa Tasks requiere:
-
-1. **`_plan.md` en estado `VALIDADO`** — sin gaps abiertos (`DESIGN_GAP`, `TECH_GAP`, `TRACE_GAP`, `PLAN_GAP`) y con `Estado: VALIDADO` en el header.
-2. **`status_sync` fiable** — no aceptar planes con `stale` o `needs_review`.
-
-Si el plan está en `BORRADOR` o tiene gaps, redirige a `/wf-plan-validate` antes de continuar.
+> **Precondiciones, desambiguación y fronteras de esta fase** (plan VALIDADO como entrada, las tres vías de ejecución task-run/bug/amend, integridad de estados, fronteras de QA y release) viven en la regla **eager** `sdd-routing.md`, para que el hilo principal las tenga al orientar sin tocar ficheros.
 
 ## Rootmap de workflow skills
 
@@ -33,16 +24,7 @@ Si el plan está en `BORRADOR` o tiene gaps, redirige a `/wf-plan-validate` ante
 | Vincular el cierre de una feature (QA APTO) a un commit SHA / tag de release | `/wf-release` | `<feature_dir\|tasks_path> [--tag <tag>] [--no-tag] [--note <texto>]` |
 | Ver el estado de delivery del proyecto (qué fase y qué falta por feature) | `/wf-project-status` | `[<raíz_artefactos_spec>] [--output <path>]` |
 
-## Cómo actuar ante una petición
-
-1. **Verifica las precondiciones**: el `_plan.md` existe y está `VALIDADO`.
-2. **Si encaja en una `wf-*` cerrada**, invócala con los argumentos correctos.
-3. **Si la petición es una duda conceptual** sobre granularidad, owners o formato de tasks, delega a `task-generator`.
-4. **Reporta al usuario** el resultado: path del `_tasks.md`, total de tasks, desglose por owner y orden recomendado de ejecución.
-
-Distinción clave entre las dos vías de ejecución: **task pendiente** del `_tasks.md` → `/wf-task-run`; **divergencia entre spec y código ya entregado** → `/wf-bug` (que triajea contra el CA y solo escala a `/wf-spec-delta` si el comportamiento esperado cambia).
-
-Tercera vía — **CA ambiguo descubierto al implementar** (la task se bloquea porque el spec admite varias lecturas): `/wf-spec-amend <spec.md> --ca CA-XXX --from-task T-00X` ⚠ (vive en la fase spec; este orquestador la lista porque es el back-edge correcto desde la ejecución). Solo aclara texto sin cambiar comportamiento; el plan recibe una anotación `Enmienda pendiente` que retiene SOLO las tasks que referencian ese CA (`sdd-task-state.py next` las salta y el gate las deniega) — el resto de la feature sigue ejecutable.
+> El rootmap de arriba es referencia. El enrutado intención→skill efectivo lo hacen las `description` de los skills (eager); esta tabla documenta argumentos y agrupa por intención.
 
 ## Camino canónico
 
@@ -61,7 +43,7 @@ plan validado (_plan.md con Estado: VALIDADO)
 
 El `wf-release` es el último eslabón hacia producción: solo lo acepta una feature con QA `APTO`/`APTO_CON_RESERVAS` (gate en `sdd-release.py`), captura el commit SHA con git (no se teclea) y, opcionalmente, registra/crea un tag. La coordenada queda en `<feature>_release.md` y `wf-project-status` la muestra en la fila de la feature cerrada. Re-releases (hotfix tras bug) se acumulan `R-001`, `R-002`…
 
-El QA plan (`wf-qa-plan generate <spec.md>`) puede generarse en cualquier momento desde que el spec está fiable — antes o en paralelo a la implementación; lo natural es derivarlo pronto para que las tasks de test sepan qué cubrir. `wf-qa-verify` cierra el ciclo cuando la feature está implementada: cada `DIVERGENTE` que encuentre se canaliza por `/wf-bug` (nunca se ajusta el TC para que pase).
+El QA plan (`wf-qa-plan generate <spec.md>`) puede generarse en cualquier momento desde que el spec está fiable — antes o en paralelo a la implementación; lo natural es derivarlo pronto para que las tasks de test sepan qué cubrir. `wf-qa-verify` cierra el ciclo cuando la feature está implementada.
 
 ## Agentes Tasks disponibles
 
@@ -70,23 +52,8 @@ El QA plan (`wf-qa-plan generate <spec.md>`) puede generarse en cualquier moment
 | `task-generator` | Descomposición de `_plan.md` validados en tasks atómicas ordenadas. Asigna owner (agente del overlay de stack u orquestador en modo genérico), orden canónico por dependencias, dependencias explícitas y definition of done por task. El overlay de stack puede sustituirlo por una variante especializada con el mismo nombre. |
 | `qa-engineer` | Derivación de casos de prueba TC-XXX desde los CAs del spec y auditoría de cobertura con evidencia ejecutada. No escribe tests ni corrige código. |
 
-Usa el workflow cuando el usuario quiera generar el `_tasks.md`. Si la petición es una duda conceptual sobre cómo estructurar tasks, delega directamente a `task-generator`; si es una duda sobre casos de prueba, niveles o criterios de cobertura, delega a `qa-engineer`.
+Se usa el workflow cuando el usuario quiera generar el `_tasks.md`. Si la petición es una duda conceptual sobre cómo estructurar tasks, el hilo principal delega a `task-generator`; si es una duda sobre casos de prueba, niveles o criterios de cobertura, a `qa-engineer`.
 
-## Principio operativo
+## Skills de conocimiento Tasks
 
-- `wf-prepare-tasks` genera el `_tasks.md` completo.
-- El output incluye header de trazabilidad (Plan, Spec, PRD, version, change ref, status sync).
-- `wf-task-run` ejecuta las tasks: los estados (`PENDIENTE|EN_CURSO|HECHA|BLOQUEADA`) los escribe SOLO `sdd-task-state.py` — nunca a mano.
-- `wf-qa-plan` deriva la matriz de TCs desde los CAs (≥1 TC por CA, trazabilidad estricta); el campo `Estado` de cada TC lo escribe SOLO `wf-qa-verify`, con evidencia ejecutada — cobertura sin evidencia no existe (`kb-qa-expert`).
-- `wf-bug` es la vía de mantenimiento: triaje contra el CA del spec antes de tocar código; fix silencioso sin CA = prohibido.
-- Esta fase cierra la descomposición y ejecución de implementación; no toma decisiones de arquitectura.
-
-## Principio de precondiciones
-
-Los workflow skills tienen sus propias validaciones. **No las bypasses.** Si un skill reporta:
-
-- plan en `BORRADOR` → remite a `/wf-plan-validate`
-- gaps abiertos en el plan → remite a corregir el Plan antes de reintentar
-- `status_sync: stale` o `needs_review` → remite a resincronizar Spec/Plan antes de generar tasks
-
-Comunica el bloqueo al usuario antes de reintentar; no fuerces la ejecución.
+Las `kb-*` viven en el frontmatter `skills: [...]` de los agentes de la fase; el harness las inyecta en el contexto del subagente. El hilo principal no las consulta ni necesita su inventario: vive en `sdd/meta/skill-registry.md` (mapa humano: el `README.md` de la fase). El overlay de stack (`wf-<stack>-init`) puede sustituir `task-generator` por una variante especializada con el mismo mecanismo.

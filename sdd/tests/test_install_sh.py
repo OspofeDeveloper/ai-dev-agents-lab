@@ -107,9 +107,9 @@ class InstallAllTest(InstallBase):
                         "la regla de fase debe empezar con frontmatter paths:")
         self.assertIn('"**/*_spec.md"', spec_rule)
 
-    # Fases con framing dual-audience ya migrado (D-018 piloto PRD + D-022 spec,
-    # prd, design, plan; tasks se suma al cerrar el roll-out de D-022).
-    DUAL_AUDIENCE_PHASES = ("prd", "spec", "design", "plan")
+    # Las 5 fases con framing dual-audience (D-018 piloto PRD + roll-out D-022
+    # completo: spec, prd, design, plan, tasks).
+    DUAL_AUDIENCE_PHASES = ("prd", "spec", "design", "plan", "tasks")
 
     def test_phase_rules_are_dual_audience(self):
         # Las reglas de fase se heredan en los subagentes escritores (Claude Code
@@ -209,20 +209,12 @@ class InstallAllTest(InstallBase):
         self.assertNotIn("Eres el **orquestador**", routing)
         self.assertIn("Audiencia.", routing)
 
-    def test_routing_rule_topology_gated(self):
-        # Solo las fases instaladas con routing.md contribuyen. tasks aún no
-        # aporta routing.md, así que una instalación de solo tasks no deja el
-        # fichero. (Al cerrarse el roll-out de D-022 —tasks incluida— este caso
-        # se sustituye por el de scoping: el fichero existe pero acotado.)
-        with tempfile.TemporaryDirectory() as other:
-            r = run_bash(INSTALL, "tasks", cwd=Path(other))
-            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
-            self.assertFalse((Path(other) / ".claude" / "rules" / "sdd-routing.md").exists(),
-                             "sdd-routing.md no debe existir sin fases que aporten routing.md")
-
     def test_routing_rule_is_scoped(self):
         # Topology-gating por fase: la desambiguación de una fase solo aparece si
-        # esa fase está instalada; no se filtra la de otras. Ver D-022.
+        # esa fase está instalada; no se filtra la de otras. Ver D-022. (Sustituye
+        # al antiguo topology_gated: cerrado el roll-out, las 5 fases aportan
+        # routing.md, así que la "ausencia total" ya no es alcanzable por install;
+        # el invariante que queda es el scoping.)
         self.install("plan")
         routing = (self.claude / "rules" / "sdd-routing.md").read_text(encoding="utf-8")
         self.assertIn("BORRADOR", routing)              # marcador de plan presente
@@ -260,6 +252,15 @@ class InstallAllTest(InstallBase):
         routing = (self.claude / "rules" / "sdd-routing.md").read_text(encoding="utf-8")
         self.assertIn("BORRADOR", routing)
         self.assertIn("VALIDADO", routing)
+        self.assertIn("Audiencia.", routing)
+
+    def test_routing_rule_has_tasks_border(self):
+        # La fase tasks aporta su desambiguación eager (precondición plan VALIDADO,
+        # las 3 vías task-run/bug/amend) a sdd-routing.md. Ver D-022 (roll-out).
+        self.install("tasks")
+        routing = (self.claude / "rules" / "sdd-routing.md").read_text(encoding="utf-8")
+        self.assertIn("wf-task-run", routing)
+        self.assertIn("wf-spec-amend", routing)   # back-edge desde ejecución
         self.assertIn("Audiencia.", routing)
 
     def test_default_arg_is_all(self):

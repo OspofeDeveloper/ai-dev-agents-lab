@@ -2,6 +2,16 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.58.0 — 2026-07-09
+
+**Roll-out D-022 (fase Tasks): cierre del roll-out — las 5 fases con desambiguación eager** — [[DECISIONS D-022]]. Último eslabón: prd+spec+design+plan+tasks completan `routing.md` y dual-audience.
+
+- ⚠ **`pipeline/tasks/routing.md`** (nuevo) → contribuye a la regla eager `sdd-routing.md`: precondición de entrada (`_plan.md` VALIDADO + `status_sync` fiable), **las tres vías de ejecución** (task pendiente → `wf-task-run`; divergencia spec/código → `wf-bug`; CA ambiguo al implementar → `wf-spec-amend` back-edge), integridad de estados (los escriben solo los scripts, nunca a mano) y fronteras de QA/release (DIVERGENTE → `wf-bug` no se ajusta el TC; `wf-release` solo con QA APTO).
+- ⚠ **`pipeline/tasks/CLAUDE.md` adelgazado** (regla lazy `sdd-tasks.md`): **dual-audience** (fuera "Eres el orquestador"), dedup de la disciplina D ya-eager, desambiguación relocalizada. Se conservan como referencia el rootmap, el camino canónico, los agentes y kb.
+- **Tests:** `test_routing_rule_has_tasks_border`; dual-audience en las **5 fases**; se retira `test_routing_rule_topology_gated` (su premisa —una fase sin `routing.md`— ya no existe) y queda `test_routing_rule_is_scoped` como invariante duradero.
+- **Conformance:** `CU-1.u` caso 2 pasa de "ausencia total" a **scoping** (ya no alcanzable la ausencia con las 5 fases); `CU-13.d` cubre Plan+Tasks/entrega.
+- **Estado D-022:** roll-out **completo**. Queda pendiente lo irreversible (borrar el rootmap plano), gated en que pasen `CU-13.a–g` en la campaña de conformance por fase.
+
 ## 0.57.0 — 2026-07-09
 
 **Roll-out D-022 (fase Plan): desambiguación eager de Plan + higiene** — [[DECISIONS D-022]]. Mismo patrón aditivo.
