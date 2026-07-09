@@ -542,7 +542,7 @@ Proyecto gestionado con Spec Driven Development. Topología: **<authoring|consum
 ## Cómo operar
 
 - Toda la infraestructura (skills, agentes, reglas) vive en este `.claude/`. Las instrucciones de cada fase son reglas de carga perezosa (`.claude/rules/sdd-<fase>.md`): el harness las carga al tocar los artefactos de esa fase. Además, `.claude/rules/sdd-orchestration.md` (sin `paths:`) carga **eager** con la disciplina transversal (readiness mecánica, orden del pipeline, no bypasear gates). No improvises workflows.
-- **Abre la sesión de Claude en la raíz del proyecto**, no en un subdirectorio de fase: lanzar en un subdirectorio des-registra la memoria de proyecto (ni el CLAUDE.md raíz ni las reglas cargan).
+- **Abre la sesión de Claude en la raíz del proyecto**, no en un subdirectorio de fase: el `CLAUDE.md` raíz y las reglas *eager* (sin `paths:`) sí cargan desde un subdirectorio (walk-up), pero las **reglas de fase lazy** (`paths:`, glob relativo a la raíz) no disparan desde un subdirectorio y la resolución de paths relativos se complica.
 - Respeta el orden del pipeline: una fase consume artefactos de la anterior.
 - Modo de pipeline por defecto: **standard** (`pipeline_mode` de `.sdd/project-init.json`). El rigor (standard/ligero) se decide **por feature** al crear el spec — no es un default de proyecto. Para forzarlo en una feature concreta: `--light`/`--standard`. Para cambiar el default del proyecto entero: edita `pipeline_mode` a mano.
 - Estado del proyecto: `.sdd/project-init.json`. Para completar la entrevista técnica o añadir fases: `/wf-project-init` → "Completar / ampliar".

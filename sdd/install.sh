@@ -343,7 +343,7 @@ install_orchestration_rule() {
       echo ""
       echo "## Frontera PRD → Spec"
       echo ""
-      echo "- Antes de recomendar o entrar en Spec con un PRD existente, comprueba la readiness mecánicamente: \`python3 .sdd/scripts/sdd-prd-ready.py <prd.md>\`. Si el veredicto no es \`READY\` (hay \`OPEN_ASSUMPTIONS\`/\`ASSUMPTION_MISMATCH\`, o está \`UNSEALED\`), el siguiente paso correcto es **revisar el PRD** (\`wf-prd-review\`), no generar specs. Nunca declares el PRD \"listo\" sin la evidencia del script."
+      echo "- Antes de recomendar o entrar en Spec con un PRD existente, comprueba la readiness mecánicamente: \`python3 .sdd/scripts/sdd-prd-ready.py <prd.md>\`. El script imprime el veredicto en **stdout** y sale con **código ≠0 cuando no está listo** (\`2\` = no listo, por diseño para gates): eso **no es un error** — lee el veredicto de stdout, no lo trates como comando fallido. Si el veredicto no es \`READY\` (hay \`OPEN_ASSUMPTIONS\`/\`ASSUMPTION_MISMATCH\`, o está \`UNSEALED\`), el siguiente paso correcto es **revisar el PRD** (\`wf-prd-review\`), no generar specs. Nunca declares el PRD \"listo\" sin la evidencia del script."
     fi
   } > "$CLAUDE_DIR/rules/sdd-orchestration.md"
   echo "  ✓ rules/sdd-orchestration.md (eager)"

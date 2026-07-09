@@ -2,6 +2,13 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.52.1 — 2026-07-09
+
+**Validación de D-021 + endurecimiento cosmético.** Validado en `myops-app-specs` (CU-1.t, CU-14.j): la regla eager `sdd-orchestration.md` se instala bien y el orquestador aplica la disciplina al orientar **sin tocar ficheros** — (a) 5/5 desde la raíz, (b) 3/3 desde el subdirectorio `prd/`.
+
+- **Hallazgo:** la regla **eager carga por walk-up también desde un subdirectorio** — refina [[DECISIONS D-018]] (lo que no dispara desde un subdir son las rules **lazy**, por el glob `paths:` relativo a la raíz; no es un "des-registro de memoria"). D-021/D-018 y la nota de `wf-project-init` corregidas en consecuencia.
+- ⚠ **Endurecido el texto de la frontera PRD→Spec en `sdd-orchestration.md`:** `sdd-prd-ready.py` sale con código `2` cuando el PRD no está listo (por diseño para gates); ejecutado pelado, la UI lo marca "fallido" y colapsa el stdout. Ahora la regla dice explícitamente que **exit≠0 es la señal esperada de "no listo", no un error — hay que leer el veredicto de stdout**. Se regenera sola en el próximo `wf-sdd-update`.
+
 ## 0.52.0 — 2026-07-08
 
 **Disciplina de orquestación en un carril *eager* nativo (`sdd-orchestration.md`)** — [[DECISIONS D-021]]. El gate de 0.51.0 corta el daño dentro del skill, pero su capa de **guía** vivía en las reglas de fase (lazy por `paths:`): al responder *"¿cuál es el siguiente paso?"* **sin tocar ficheros**, esa guía no cargaba y el orquestador aún podía declarar "PRD listo" por topología. La doc de Claude Code confirma un tercer carril que no usábamos: una regla en `.claude/rules/` **sin `paths:` carga eager** (como un `CLAUDE.md`).
