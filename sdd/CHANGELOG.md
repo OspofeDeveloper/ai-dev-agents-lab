@@ -2,6 +2,16 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.56.0 — 2026-07-09
+
+**Roll-out D-022 (fase Design): desambiguación eager de Design + higiene** — [[DECISIONS D-022]]. Mismo patrón aditivo que PRD, aplicado a la fase más grande.
+
+- ⚠ **`pipeline/design/routing.md`** (nuevo) → contribuye a la regla eager `sdd-routing.md`: precondición de entrada (spec validado + `DESIGN_BRIEF.md`; spec incompleto → fase Spec; sin brief → `wf-design-intake`), onramp brownfield (`wf-design-extract`), saltable por feature, Design no redefine lo funcional, y las **desambiguaciones críticas** (cambio de `style_family`/`clarity_vs_brand` → brief no delta; "que decida menos la IA" → intake antes de system; explorar sin tocar main → branch no delta; branch sistema-completo vs variant por-feature).
+- ⚠ **`pipeline/design/CLAUDE.md` adelgazado** (regla lazy `sdd-design.md`): pasa a **dual-audience** (se retira "Eres el orquestador", nota "Audiencia." + reparto en 3ª persona), se **deduplica** la disciplina D ya-eager (rol, principio operativo, principio de precondiciones genérico, autonomía por 7 capas) y se **relocaliza** la desambiguación a `routing.md`. Se conservan como **referencia** el Fit de fase, el rootmap, la tabla de precondiciones-por-workflow, el camino canónico, el modo enseñanza junior y la nota sobre `DESIGN.md`.
+- **Tests:** `test_routing_rule_has_design_border`; dual-audience extendido a design (prd+spec+design). Módulo install OK.
+- **Conformance:** framing de `CU-13.c` (Fase Design) alineado a D-022.
+- **Pendiente:** mismas ediciones para plan/tasks (una por commit).
+
 ## 0.55.0 — 2026-07-09
 
 **Roll-out D-022 (fase PRD): desambiguación eager de PRD + higiene** — [[DECISIONS D-022]]. Se aplica a la fase PRD el patrón validado como determinista en el piloto de spec. **Cambio de estrategia** frente a la 0.54.0: el roll-out es **aditivo** (mantiene el rootmap lazy como referencia) y se respalda con la suite unit + `CU-1.u` on-disk; la **validación conductual** de cada fase se hace en orden de fase vía `CU-13.a–g` (no se bloquea el roll-out en el piloto). Lo único que sigue gated en esa validación es **borrar el rootmap** (paso irreversible).

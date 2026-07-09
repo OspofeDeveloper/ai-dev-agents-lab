@@ -100,7 +100,7 @@ cualquier confusión (sobre todo "crea las specs" → discover).
 
 ## CU-13.c — Fase Design
 
-**Mecanismo:** orquestador + `when_to_use`.
+**Mecanismo:** orquestador enrutando por las **`description`** de los skills (eager) + la desambiguación *eager* de `sdd-routing.md` (precondición spec+brief, trampas intake/delta/branch/variant; [[D-022]]); el rootmap de `sdd-design.md` es referencia.
 
 | Dices | Debe disparar | No confundir con |
 |---|---|---|

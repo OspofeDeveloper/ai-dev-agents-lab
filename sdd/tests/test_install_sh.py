@@ -107,9 +107,9 @@ class InstallAllTest(InstallBase):
                         "la regla de fase debe empezar con frontmatter paths:")
         self.assertIn('"**/*_spec.md"', spec_rule)
 
-    # Fases con framing dual-audience ya migrado (D-018 piloto PRD + D-022 spec;
-    # design/plan/tasks se suman en el roll-out de D-022).
-    DUAL_AUDIENCE_PHASES = ("prd", "spec")
+    # Fases con framing dual-audience ya migrado (D-018 piloto PRD + D-022 spec,
+    # prd, design; plan/tasks se suman al cerrar el roll-out de D-022).
+    DUAL_AUDIENCE_PHASES = ("prd", "spec", "design")
 
     def test_phase_rules_are_dual_audience(self):
         # Las reglas de fase se heredan en los subagentes escritores (Claude Code
@@ -229,6 +229,18 @@ class InstallAllTest(InstallBase):
         self.assertIn("create → review", routing)
         self.assertIn("wf-prd-review", routing)
         # dual-audience también en la contribución de prd
+        self.assertIn("Audiencia.", routing)
+
+    def test_routing_rule_has_design_border(self):
+        # La fase design aporta su desambiguación eager (precondición spec+brief,
+        # trampas intake/delta/branch/variant) a sdd-routing.md. Ver D-022 (roll-out).
+        self.install("design")
+        routing_path = self.claude / "rules" / "sdd-routing.md"
+        self.assertTrue(routing_path.exists(), "falta rules/sdd-routing.md con design instalado")
+        routing = routing_path.read_text(encoding="utf-8")
+        # desambiguaciones críticas que las descriptions no cubren
+        self.assertIn("style_family", routing)
+        self.assertIn("wf-design-intake", routing)
         self.assertIn("Audiencia.", routing)
 
     def test_default_arg_is_all(self):
