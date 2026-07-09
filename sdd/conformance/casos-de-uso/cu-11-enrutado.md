@@ -30,7 +30,7 @@ happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es
 **transpuesta** para leer/ejecutar el CU.
 
 ### Orquestador — enrutado por lenguaje natural (matching semántico + delegación a agente) (2)
-- [ ] CU-11.a — Hablar, no teclear comandos
+- [ ] CU-11.a — Hablar, no teclear comandos · **sub-caso 2 (narración: no surfacear `wf-*`/comandos, [[D-019]] capa 1) ✓ 2026-07-09** (`myops-app-specs` 0.53.0, 2/2 raíz+subdir: recomienda "revisar el PRD contigo" sin nombrar el skill; la excepción "¿qué comando por dentro?" también PASS — da el nombre y avisa de no teclearlo a mano). Sub-caso 1 (routing NL→skill correcto, features-first vs discover) pendiente
 - [ ] CU-11.e — Delegación a agente cuando no hay workflow exacto
 
 ### Orquestador — construcción y paso de argumentos (4)
