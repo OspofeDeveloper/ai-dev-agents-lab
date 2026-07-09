@@ -350,6 +350,40 @@ install_orchestration_rule() {
 }
 install_orchestration_rule
 
+# Regla de ENRUTADO EAGER (`sdd-routing.md`, sin `paths:`): desambiguación y
+# precondiciones/fronteras que el orquestador necesita al orientar y que las
+# `description` de los skills NO cubren (p. ej. "crea specs" → features-first, no
+# discover; elección de rigor; guardrails). El rootmap-tabla plano NO va aquí: es
+# redundante con las descriptions (eager) y se queda en la regla de fase lazy como
+# referencia. Se ensambla topology-gated: solo las fases instaladas con `routing.md`
+# contribuyen. Ver DECISIONS D-022. Prune-safe (no es sdd-<fase>.md ni sdd-<stack>.md).
+install_routing_rule() {
+  local any=0
+  {
+    echo "---"
+    echo "description: Enrutado SDD — desambiguación y fronteras de fase (carga eager — no declara globs)"
+    echo "---"
+    echo ""
+    echo "# Enrutado de fase (desambiguación y fronteras)"
+    echo ""
+    echo "El enrutado intención→skill lo hacen las \`description\` de los skills (eager). Aquí va solo la desambiguación y las precondiciones/fronteras que las descriptions no cubren, para las fases instaladas."
+    for p in prd spec design plan tasks; do
+      if has_phase "$p" && [ -f "$PIPELINE_DIR/$p/routing.md" ]; then
+        echo ""
+        cat "$PIPELINE_DIR/$p/routing.md"
+        any=1
+      fi
+    done
+  } > "$CLAUDE_DIR/rules/sdd-routing.md"
+  if [ "$any" = "1" ]; then
+    echo "  ✓ rules/sdd-routing.md (eager)"
+  else
+    # Ninguna fase instalada aporta routing.md → no dejar un fichero casi vacío.
+    rm -f "$CLAUDE_DIR/rules/sdd-routing.md"
+  fi
+}
+install_routing_rule
+
 # CLAUDE.md raíz: SOLO se siembra si no existe ya uno. wf-project-init lo regenera
 # después (Paso 7) con la plantilla específica del proyecto; wf-sdd-update reinstala
 # fases SIN pisar ese CLAUDE.md con el genérico del ecosistema (191 líneas). Por eso,

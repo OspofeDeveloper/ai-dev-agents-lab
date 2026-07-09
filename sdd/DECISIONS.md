@@ -6,6 +6,25 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-022 — Las `description` ya enrutan: el rootmap de las reglas es redundante; a eager va solo la desambiguación
+
+- **Fecha:** 2026-07-09 · **Estado:** Adoptada (piloto en spec; roll-out a prd/design/plan/tasks pendiente) · **Relacionada:** [[D-021]] (carril eager), [[D-018]] (dual-audience + herencia en subagentes), [[D-019]] (capa 2 fuera de alcance).
+
+**Contexto.** Las reglas de fase `.claude/rules/sdd-<fase>.md` son mayormente **enrutado de orquestador** pero cargan **lazy** (`paths:`), así que el orquestador —que rara vez toca ficheros al orientar— no las tiene cuando las necesita. Auditoría (3 Explore): (1) las **`description` de los skills ya cargan eager** y hacen el enrutado intención→skill — el rootmap-tabla de las reglas es **redundante** (prueba empírica: es lazy, no estaba cargado en las corridas de orientación de CU-14.j, y el enrutado funcionó igual → no es load-bearing); (2) lo que las descriptions **no** cubren es la **desambiguación** ("crea specs → features-first, no discover"; patrón "fase X"; elección de rigor) y las **precondiciones/fronteras de entrada**; (3) la **disciplina D** (autonomía por capas, "no bypasees", readiness mecánica) ya está **duplicada** en `orchestration.md`; (4) el framing **dual-audience** era inconsistente (solo `prd`/`orchestration` tenían nota "Audiencia."; `spec/design/plan/tasks` usaban "Eres el orquestador", contradicción de rol de [[D-018]] heredada por los subagentes escritores).
+
+**Decisión.** El enrutado intención→skill lo hacen las **`description`** (eager); **no se replica el rootmap-tabla en eager**. A una regla eager dedicada **`sdd-routing.md`** (sin `paths:`, ensamblada topology-gated por `install_routing_rule` desde `pipeline/<fase>/routing.md`) va **solo la desambiguación + precondiciones/fronteras** que las descriptions no cubren. Se **deduplica** la disciplina D de las reglas de fase (ya vive en `orchestration.md`) y se completa el **dual-audience** de [[D-018]] en las reglas restantes. El **rootmap-tabla plano se queda lazy** en la regla de fase como referencia (inofensivo); su adelgazamiento hacia `skill-registry.md` queda **pendiente de validar** que el enrutado por descriptions aguanta (CU-11.a sub-caso 1) — no se borra a ciegas. **Piloto en spec**; roll-out a las demás fases tras validar.
+
+**Alternativas descartadas.**
+- *Mover todo el rootmap a eager* → paga coste de herencia en subagentes (toda regla eager la heredan los ~13 escritores sin opt-out) por información **duplicada** con las descriptions. Poco justificado una vez visto que las descriptions ya enrutan.
+- *Borrar ya los rootmaps de las reglas lazy* → apuesta de calidad de enrutado tomada a ciegas en 5 ficheros; se difiere hasta validar CU-11.a sub-caso 1.
+- *Dejar el enrutado lazy tal cual* → el orquestador sigue sin la desambiguación al orientar (el hueco que abrió [[D-021]]).
+
+**Consecuencias / aprendizaje.** El coste fijo del catálogo son las `description` (eager); una `description` precisa **es** el enrutado, y duplicarlo en una regla es redundante. Lo que merece un carril eager propio es lo que la `description` no puede expresar: desambiguación entre skills de la misma fase y precondiciones de frontera. Backstops en `test_install_sh.py`: dual-audience en las reglas migradas; `sdd-routing.md` eager (sin `paths:`), dual-audience y topology-gated; la precondición de spec se movió fuera de `sdd-spec.md` al carril eager. Validación de que descriptions bastan: **CU-11.a sub-caso 1** (routing "crea specs" → features-first, no discover) — habilita el roll-out y el futuro adelgazamiento del rootmap. Fuera de alcance: capa 2 de [[D-019]] (~150 emisiones `/wf-X` user-facing).
+
+**Referencias.** `sdd/pipeline/spec/CLAUDE.md` (regla lazy adelgazada), `sdd/pipeline/spec/routing.md` (nuevo, carril eager), `sdd/install.sh` (`install_routing_rule`), `sdd/tests/test_install_sh.py`, `sdd/conformance/casos-de-uso/cu-11-enrutado.md` (CU-11.a), `sdd/docs/entender/tecnico.md`.
+
+---
+
 ## D-019 — Handoff agnóstico a comandos: el orquestador no surfacea nombres de skill al usuario
 
 - **Fecha:** 2026-07-09 · **Estado:** Adoptada (capa 1; capa 2 en roll-out) · **Relacionada:** [[D-021]] (vive en la regla eager), CU-11.a. *(Reservada desde [[D-020]]; se ubica arriba por orden de recencia aunque su número sea anterior.)*

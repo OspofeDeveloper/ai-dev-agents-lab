@@ -107,26 +107,36 @@ class InstallAllTest(InstallBase):
                         "la regla de fase debe empezar con frontmatter paths:")
         self.assertIn('"**/*_spec.md"', spec_rule)
 
-    def test_prd_rule_is_dual_audience(self):
-        # La regla de fase se hereda en los subagentes escritores (Claude Code
+    # Fases con framing dual-audience ya migrado (D-018 piloto PRD + D-022 spec;
+    # design/plan/tasks se suman en el roll-out de D-022).
+    DUAL_AUDIENCE_PHASES = ("prd", "spec")
+
+    def test_phase_rules_are_dual_audience(self):
+        # Las reglas de fase se heredan en los subagentes escritores (Claude Code
         # inyecta project rules en subagentes, sin opt-out). Su contenido no puede
         # afirmar un rol de orquestador exclusivo, o contradice al agente que sí
-        # redacta el PRD (`prd-expert`). Ver DECISIONS D-018.
+        # redacta el artefacto. Ver DECISIONS D-018 / D-022.
         self.install("all")
-        prd_rule = (self.claude / "rules" / "sdd-prd.md").read_text(encoding="utf-8")
-        self.assertNotIn("Instrucciones para el Orquestador", prd_rule)
-        self.assertNotIn("No redactas el documento final por tu cuenta", prd_rule)
-        # marca positiva del framing dual-audience
-        self.assertIn("Audiencia.", prd_rule)
+        for p in self.DUAL_AUDIENCE_PHASES:
+            rule = (self.claude / "rules" / f"sdd-{p}.md").read_text(encoding="utf-8")
+            self.assertNotIn("Instrucciones para el Orquestador", rule,
+                             f"sdd-{p}.md conserva título de orquestador")
+            self.assertNotIn("Eres el **orquestador**", rule,
+                             f"sdd-{p}.md conserva rol en 2a persona")
+            self.assertIn("Audiencia.", rule, f"sdd-{p}.md sin nota de Audiencia")
 
-    def test_spec_rule_has_readiness_precondition(self):
-        # La precondicion de la fase spec no es solo "PRD existente": exige un PRD
-        # en estado revisable (sin [ASUNCION] abiertas / sellado), verificado
-        # mecanicamente con sdd-prd-ready.py. Ver DECISIONS D-020.
+    def test_routing_rule_has_spec_precondition(self):
+        # La readiness/precondición de spec ya NO vive en la regla de fase lazy
+        # (sdd-spec.md): se relocalizó al carril eager (sdd-routing.md, y la frontera
+        # mecánica en sdd-orchestration.md). Ver DECISIONS D-022.
         self.install("all")
         spec_rule = (self.claude / "rules" / "sdd-spec.md").read_text(encoding="utf-8")
-        self.assertIn("en estado revisable", spec_rule)
-        self.assertIn("sdd-prd-ready.py", spec_rule)
+        self.assertNotIn("en estado revisable", spec_rule,
+                         "la precondición de spec debe haberse movido a sdd-routing.md")
+        routing = (self.claude / "rules" / "sdd-routing.md").read_text(encoding="utf-8")
+        self.assertIn("revisable", routing)
+        # la frontera mecánica (sdd-prd-ready.py) vive en la regla de orquestación
+        self.assertIn("sdd-prd-ready.py", self._orch_rule())
 
     def _orch_rule(self):
         return (self.claude / "rules" / "sdd-orchestration.md").read_text(encoding="utf-8")
@@ -180,6 +190,33 @@ class InstallAllTest(InstallBase):
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
             rule = (Path(other) / ".claude" / "rules" / "sdd-orchestration.md").read_text(encoding="utf-8")
             self.assertNotIn("sdd-prd-ready.py", rule)
+
+    def test_routing_rule_is_eager_and_dual_audience(self):
+        # sdd-routing.md: desambiguación/fronteras de fase, carga eager (sin paths:),
+        # dual-audience (la heredan los subagentes). Ver DECISIONS D-022.
+        self.install("spec")
+        routing_path = self.claude / "rules" / "sdd-routing.md"
+        self.assertTrue(routing_path.exists(), "falta rules/sdd-routing.md con spec instalado")
+        routing = routing_path.read_text(encoding="utf-8")
+        self.assertTrue(routing.startswith("---\n"), "sdd-routing.md sin frontmatter")
+        header = routing.split("---", 2)[1]
+        self.assertFalse(any(ln.strip().startswith("paths:") for ln in header.splitlines()),
+                         "sdd-routing.md NO debe declarar paths: (o seria lazy)")
+        # desambiguación que las descriptions no cubren
+        self.assertIn("features-first", routing)
+        self.assertIn("rigor", routing.lower())
+        # dual-audience
+        self.assertNotIn("Eres el **orquestador**", routing)
+        self.assertIn("Audiencia.", routing)
+
+    def test_routing_rule_topology_gated(self):
+        # Solo las fases instaladas con routing.md contribuyen. En el piloto solo
+        # spec tiene routing.md, así que una instalación sin spec no deja el fichero.
+        with tempfile.TemporaryDirectory() as other:
+            r = run_bash(INSTALL, "plan", cwd=Path(other))
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            self.assertFalse((Path(other) / ".claude" / "rules" / "sdd-routing.md").exists(),
+                             "sdd-routing.md no debe existir sin fases que aporten routing.md")
 
     def test_default_arg_is_all(self):
         # sin argumento equivale a 'all'

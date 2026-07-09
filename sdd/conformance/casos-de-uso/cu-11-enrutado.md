@@ -50,13 +50,17 @@ happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es
 ## CU-11.a — Hablar, no teclear comandos
 
 **Precondición:** un proyecto SDD inicializado.
-**Mecanismo:** orquestador (CLAUDE.md raíz) → matching semántico con el rootmap.
+**Mecanismo:** orquestador → matching semántico por las `description` de los skills (eager) + desambiguación de la regla eager `sdd-routing.md` ([[D-022]]); el rootmap-tabla de la regla de fase es solo referencia.
 
 1. Pides algo en lenguaje natural sin nombrar ningún skill ("quiero crear las specs de
    este PRD").
    → **Esperado:** el orquestador mapea la intención al skill correcto
      (`wf-spec-features-first <prd.md>`, no `wf-spec-discover`) y lo invoca; nunca te
-     exige teclear `/wf-*`.
+     exige teclear `/wf-*`. Variante subset: "solo la fase 1 / estas features" → discover
+     primero, pregunta qué IDs, luego features-first `--features`.
+   → **De-risk de [[D-022]]:** este sub-caso valida que el enrutado por `description` +
+     desambiguación eager basta (habilita el roll-out y el futuro adelgazamiento del
+     rootmap). PASS aquí = no hace falta el rootmap-tabla eager.
 2. **Narración de salida (handoff agnóstico a comandos, [[D-019]]).** En cualquier
    respuesta al usuario —recomendar el siguiente paso, ofrecer una acción, reportar un
    resultado—, el orquestador **no surfacea proactivamente nombres de skill (`wf-*`) ni

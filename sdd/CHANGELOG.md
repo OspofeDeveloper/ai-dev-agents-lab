@@ -2,6 +2,16 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.54.0 — 2026-07-09
+
+**Las `description` ya enrutan; a eager va solo la desambiguación (piloto en spec)** — [[DECISIONS D-022]]. Las reglas de fase eran ~90% enrutado de orquestador pero cargaban lazy. La auditoría confirmó que las `description` de los skills ya hacen el enrutado intención→skill (eager): el rootmap-tabla es redundante. Lo que falta al orientar es la **desambiguación** que las descriptions no cubren.
+
+- ⚠ **Nueva regla eager `.claude/rules/sdd-routing.md`** (sin `paths:`, ensamblada topology-gated por `install_routing_rule` desde `pipeline/<fase>/routing.md`): desambiguación + precondiciones/fronteras de fase. **Piloto: solo spec** (`pipeline/spec/routing.md`) — "crea specs → features-first, no discover", patrón fase X, guardrails, elección de rigor, precondición "PRD revisable".
+- ⚠ **`pipeline/spec/CLAUDE.md` adelgazado** (regla lazy `sdd-spec.md`): pasa a framing **dual-audience** (nota "Audiencia.", reparto en 3ª persona; se retira "Eres el orquestador"), se **deduplica** la disciplina D ya-eager (autonomía por capas, "no bypasees", readiness mecánica) y se **relocaliza** la desambiguación a `routing.md`. El rootmap-tabla se queda como referencia.
+- **Rootmap redundante, no borrado:** se deja lazy hasta validar (CU-11.a sub-caso 1) que el enrutado por descriptions aguanta; entonces se adelgaza hacia `skill-registry.md`.
+- **Tests:** dual-audience (prd+spec), `sdd-routing.md` eager/dual-audience/topology-gated, precondición de spec movida al carril eager.
+- **Pendiente:** roll-out de `routing.md` + dual-audience a prd/design/plan/tasks (tras validar el piloto); capa 2 de [[DECISIONS D-019]] aparte.
+
 ## 0.53.0 — 2026-07-09
 
 **Handoff agnóstico a comandos: el orquestador no surfacea nombres de skill al usuario (capa 1)** — [[DECISIONS D-019]]. En las corridas de CU-14.j el orquestador narraba nombres técnicos ("¿lanzo `wf-prd-review`?"), lo que invita al usuario a teclear `/wf-x` con argumentos a mano y saltarse la construcción de argumentos del hilo principal.

@@ -22,6 +22,7 @@ se necesita y **cuánto cuesta tenerlo cargado**.
 | **`CLAUDE.md`** (raíz + fase) | Rootmap intención→workflow, principios del orquestador | *Eager*: siempre en sesión | Su cuerpo completo |
 | **Rules de fase** (`.claude/rules/sdd-<fase>.md`) | El `CLAUDE.md` de la fase, activado por archivo | *Lazy por `paths:`*: al tocar un archivo que matchea | Solo el frontmatter |
 | **Rule de orquestación** (`.claude/rules/sdd-orchestration.md`) | Disciplina transversal (readiness mecánica, orden del pipeline, no bypasear gates) | *Eager* — una rule **sin `paths:`** carga al arrancar, como un `CLAUDE.md` | Su cuerpo completo (deliberadamente fino) |
+| **Rule de enrutado** (`.claude/rules/sdd-routing.md`) | Desambiguación y precondiciones/fronteras de fase que las `description` no cubren (p. ej. "crea specs → features-first, no discover") | *Eager* (sin `paths:`); ensamblada topology-gated de las fases instaladas | Su cuerpo (solo desambiguación, no el rootmap) |
 | **kb-\*** (knowledge bases) | Reglas SSoT y referencias de una fase | *Lazy*: cuando un agente las declara | Solo su `description` |
 | **wf-\*** (workflows) | Procedimiento: parsea, valida, delega | *Lazy*: al invocar la skill | Solo su `description` |
 | **Agentes** | El worker que ejecuta, con sus kb-\* inyectadas | *Lazy*: al delegar en él | Su frontmatter |
@@ -30,6 +31,12 @@ La regla de reparto es: **conocimiento de enrutado → CLAUDE.md (eager); conoci
 de dominio → kb (lazy en el agente que lo usa); procedimiento → wf**. El coste fijo
 que paga el sistema en cada sesión es solo el conjunto de `description`s — todo lo
 pesado se trae bajo demanda.
+
+> **Matiz (D-022):** el enrutado intención→skill lo hacen de hecho las `description`
+> (eager por diseño). El rootmap-tabla de las reglas de fase es **referencia**, no la
+> fuente efectiva de enrutado. Lo que sí necesita carril eager propio es la
+> **desambiguación** que la `description` no puede expresar (skills de la misma fase,
+> precondiciones de frontera): eso vive en `sdd-routing.md`.
 
 !!! info "Por qué el orquestador no usa las kb-* directamente"
     El `CLAUDE.md` raíz es deliberadamente fino: solo mapea intención a workflow.
