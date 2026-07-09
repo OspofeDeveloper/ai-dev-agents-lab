@@ -8,7 +8,7 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ## D-022 — Las `description` ya enrutan: el rootmap de las reglas es redundante; a eager va solo la desambiguación
 
-- **Fecha:** 2026-07-09 · **Estado:** Adoptada (spec + prd + design; roll-out a plan/tasks en curso) · **Relacionada:** [[D-021]] (carril eager), [[D-018]] (dual-audience + herencia en subagentes), [[D-019]] (capa 2 fuera de alcance).
+- **Fecha:** 2026-07-09 · **Estado:** Adoptada (spec + prd + design + plan; falta solo tasks) · **Relacionada:** [[D-021]] (carril eager), [[D-018]] (dual-audience + herencia en subagentes), [[D-019]] (capa 2 fuera de alcance).
 
 **Contexto.** Las reglas de fase `.claude/rules/sdd-<fase>.md` son mayormente **enrutado de orquestador** pero cargan **lazy** (`paths:`), así que el orquestador —que rara vez toca ficheros al orientar— no las tiene cuando las necesita. Auditoría (3 Explore): (1) las **`description` de los skills ya cargan eager** y hacen el enrutado intención→skill — el rootmap-tabla de las reglas es **redundante** (prueba empírica: es lazy, no estaba cargado en las corridas de orientación de CU-14.j, y el enrutado funcionó igual → no es load-bearing); (2) lo que las descriptions **no** cubren es la **desambiguación** ("crea specs → features-first, no discover"; patrón "fase X"; elección de rigor) y las **precondiciones/fronteras de entrada**; (3) la **disciplina D** (autonomía por capas, "no bypasees", readiness mecánica) ya está **duplicada** en `orchestration.md`; (4) el framing **dual-audience** era inconsistente (solo `prd`/`orchestration` tenían nota "Audiencia."; `spec/design/plan/tasks` usaban "Eres el orquestador", contradicción de rol de [[D-018]] heredada por los subagentes escritores).
 

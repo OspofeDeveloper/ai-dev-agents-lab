@@ -1,28 +1,16 @@
-# Plan Lab — Instrucciones para el Orquestador
+# Plan Lab — Guía de la fase Plan
 
 Este directorio define un paquete focalizado en la etapa de **Plan** dentro del pipeline SDD: traducción de un `*_spec.md` validado y su handoff de Design a un `_plan.md` técnico (especializado por el overlay de stack si existe; genérico si el stack es agnóstico), seguido de una validación formal antes de pasar a Tasks.
 
-## Tu rol: Director técnico de fase
+> **Audiencia.** El **hilo principal (orquestador)** usa el enrutado de abajo para mapear la petición del usuario al workflow o agente correcto. Un **subagente especialista** (p. ej. `plan-architect`) también carga esta guía al tocar artefactos de Plan: para él es **contexto de fase**, no una instrucción de rol — su contrato de trabajo es su propio system prompt + sus `kb-*`.
 
-Eres el **orquestador**. Tu función es entender la petición del usuario, decidir si necesita generar un Plan, validarlo o resolver una duda conceptual sobre la fase `plan`, y activar el workflow o agente correcto.
+## Reparto de trabajo en la fase Plan
 
-**No ejecutas el trabajo directamente.** No diseñas la arquitectura por tu cuenta, no escribes código y no generas tasks de implementación.
+- El **hilo principal (orquestador)** entiende la petición, decide si hay que generar un plan, validarlo o resolver una duda conceptual, y activa el workflow o agente correcto. **No diseña la arquitectura**, no escribe código ni genera tasks de implementación.
+- La **traducción de Spec + Design a arquitectura** la realiza `plan-architect`; la **auditoría formal** del plan, `plan-auditor`, con sus `kb-*` cargadas en contexto.
+- El enrutado no construye prompts a mano: las workflows y los agentes ya contienen el conocimiento operativo; el hilo principal solo activa la pieza correcta con los argumentos correctos.
 
-**No construyes prompts manualmente.** Las workflows y el agente `plan-architect` ya contienen el conocimiento operativo necesario. Tu trabajo es activar el skill o agente correcto con los argumentos correctos.
-
-Las `kb-*` viven en los subagentes y se cargan automáticamente en su contexto. El orquestador no usa las `kb-*` como punto de entrada principal.
-
-## Precondiciones de esta fase
-
-La etapa Plan requiere:
-
-1. **`*_spec.md` validado** y sin HUs `[INCOMPLETO]`, gaps `[CRÍTICO]` pendientes ni `status_sync` no fiable.
-2. **Handoff de Design completo** cuando la regla canónica de `kb-plan-expert` determine que `Design` es obligatorio.
-3. **Shared models claros** si existe `_features.md`.
-
-Si falta cualquiera de estas condiciones, la fase debe bloquearse.
-
-La regla exacta de cuándo `Design` es obligatorio y la taxonomía de gaps viven en `kb-plan-expert`. Este archivo solo las resume.
+> **Precondiciones, desambiguación y fronteras de esta fase** (spec validado + handoff de Design como entrada, gate BORRADOR → VALIDADO antes de Tasks, gaps del handoff) viven en la regla **eager** `sdd-routing.md`, para que el hilo principal las tenga al orientar sin tocar ficheros.
 
 ## Rootmap de workflow skills
 
@@ -31,13 +19,7 @@ La regla exacta de cuándo `Design` es obligatorio y la taxonomía de gaps viven
 | Generar el plan técnico desde un spec listo | `/wf-prepare-plan` | `generate <feature_spec.md>` |
 | Validar si un `_plan.md` está listo para Tasks | `/wf-plan-validate` | `<feature_plan.md>` |
 
-## Cómo actuar ante una petición
-
-1. **Verifica las precondiciones** de Spec y, si aplica, de Design.
-2. **Identifica la intención** usando el rootmap.
-3. **Si encaja en una `wf-*` cerrada**, invócala.
-4. **Si no encaja en una `wf-*` pero la petición es de ayuda conceptual sobre qué debe contener el Plan o cómo resolver ownership técnico**, delega a `plan-architect`.
-5. **Reporta al usuario** el resultado y el siguiente paso.
+> El rootmap de arriba es referencia. El enrutado intención→skill efectivo lo hacen las `description` de los skills (eager); esta tabla documenta argumentos y agrupa por intención.
 
 ## Camino canónico
 
@@ -58,26 +40,8 @@ spec validado
 
 > El overlay de stack (p. ej. KMM) puede sustituir `plan-architect` y `plan-auditor` por variantes especializadas con el mismo nombre, que añaden las KBs de arquitectura del stack. En modo genérico (stack agnóstico) operan fundamentando las decisiones en la exploración real del repositorio.
 
-Usa workflows cuando exista una pipeline clara y cerrada. Si la petición no requiere una workflow exacta pero sí ayuda experta para estructurar la fase `plan`, delega a `plan-architect`.
+Se usan workflows cuando exista una pipeline clara y cerrada. Si la petición no requiere una workflow exacta pero sí ayuda experta para estructurar la fase `plan` (duda conceptual sobre qué debe contener el Plan o cómo resolver ownership técnico), el hilo principal delega a `plan-architect`.
 
 ## Skills de conocimiento Plan
 
-Las `kb-*` viven en el frontmatter `skills: [...]` de los agentes de la fase; el harness las inyecta en el contexto del subagente. El orquestador no las consulta ni necesita su inventario: vive en `sdd/meta/skill-registry.md` (mapa humano: el `README.md` de la fase). El overlay de stack (`wf-<stack>-init`) sustituye y amplía las KBs genéricas por variantes especializadas con el mismo mecanismo — en modo agnóstico no está presente.
-
-## Principio operativo
-
-- `wf-prepare-plan` genera un `_plan.md` en estado `BORRADOR`.
-- `wf-plan-validate` sella el estado operativo del plan: `VALIDADO` si pasa, `BORRADOR` si falla.
-- `wf-prepare-tasks` solo consume planes validados.
-- La fase `plan` cierra decisiones arquitectónicas; no trocea implementación.
-
-## Principio de precondiciones
-
-Los workflow skills tienen sus propias validaciones. **No las bypasses.** Si un skill reporta:
-
-- bloqueos en el spec → remite a la fase Spec
-- falta de `DESIGN.md`, `*_flows.md` o `*_views.md` → remite a la fase Design
-- `DESIGN_GAP`, `TECH_GAP`, `TRACE_GAP` o `PLAN_GAP` → remite a corregir el handoff, el spec o el propio plan antes de reintentar
-- plan aún en `BORRADOR` → remite a `/wf-plan-validate` antes de Tasks
-
-Comunica el bloqueo al usuario antes de reintentar; no fuerces la ejecución.
+Las `kb-*` viven en el frontmatter `skills: [...]` de los agentes de la fase; el harness las inyecta en el contexto del subagente. El hilo principal no las consulta ni necesita su inventario: vive en `sdd/meta/skill-registry.md` (mapa humano: el `README.md` de la fase). El overlay de stack (`wf-<stack>-init`) sustituye y amplía las KBs genéricas por variantes especializadas con el mismo mecanismo — en modo agnóstico no está presente.

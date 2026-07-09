@@ -2,6 +2,16 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.57.0 — 2026-07-09
+
+**Roll-out D-022 (fase Plan): desambiguación eager de Plan + higiene** — [[DECISIONS D-022]]. Mismo patrón aditivo.
+
+- ⚠ **`pipeline/plan/routing.md`** (nuevo) → contribuye a la regla eager `sdd-routing.md`: precondición de entrada (spec validado + handoff de Design cuando `kb-plan-expert` lo exija + shared models), **gate BORRADOR → VALIDADO** (frontera Plan → Tasks: `wf-prepare-tasks` solo consume planes VALIDADO), y gaps del handoff (DESIGN/TECH/TRACE/PLAN_GAP).
+- ⚠ **`pipeline/plan/CLAUDE.md` adelgazado** (regla lazy `sdd-plan.md`): **dual-audience** (fuera "Eres el orquestador"), dedup de la disciplina D ya-eager (rol, precondiciones prosa, principio operativo, principio de precondiciones), desambiguación relocalizada. Se conservan como referencia el rootmap, el camino canónico, los agentes (con la nota de overlay de stack) y las skills kb.
+- **Tests:** `test_routing_rule_has_plan_border`; nuevo `test_routing_rule_is_scoped` (la desambiguación de una fase no se filtra a otra); `test_routing_rule_topology_gated` pasa a instalar `tasks` (la única fase que aún no aporta `routing.md`); dual-audience prd+spec+design+plan.
+- **Conformance:** framing de `CU-13.d` alineado a D-022.
+- **Pendiente:** fase tasks (último commit del roll-out); ahí `topology_gated` se sustituye por el caso de scoping y se actualiza `CU-1.u` caso 2.
+
 ## 0.56.0 — 2026-07-09
 
 **Roll-out D-022 (fase Design): desambiguación eager de Design + higiene** — [[DECISIONS D-022]]. Mismo patrón aditivo que PRD, aplicado a la fase más grande.

@@ -125,7 +125,7 @@ sobre todo en "actualiza el DESIGN.md" (system vs delta) o validate vs a11y.
 
 ## CU-13.d — Plan, Tasks y entrega
 
-**Mecanismo:** orquestador + `when_to_use`.
+**Mecanismo:** orquestador enrutando por las **`description`** de los skills (eager) + la desambiguación *eager* de `sdd-routing.md` (gate BORRADOR → VALIDADO, precondición spec+handoff; [[D-022]]); el rootmap de `sdd-plan.md` es referencia. (La desambiguación de tasks/entrega entra al cerrar el roll-out.)
 
 | Dices | Debe disparar | No confundir con |
 |---|---|---|
