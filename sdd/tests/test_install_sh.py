@@ -160,6 +160,15 @@ class InstallAllTest(InstallBase):
         self.assertNotIn("No redactas", rule)
         self.assertIn("Audiencia.", rule)
 
+    def test_orchestration_rule_has_communication_discipline(self):
+        # El orquestador no surfacea nombres de skill (wf-*) ni slash-commands al
+        # usuario; narra en lenguaje natural. Handoff agnostico a comandos (D-019).
+        self.install("all")
+        rule = self._orch_rule()
+        self.assertIn("Comunicación con el usuario", rule)
+        self.assertIn("lenguaje natural", rule)
+        self.assertIn("agnóstico a comandos", rule)
+
     def test_orchestration_rule_readiness_line_is_topology_gated(self):
         # La linea de la frontera PRD->Spec solo aparece si se instalan ambas
         # fases; en una topologia sin ese par no se cuela (D-021).

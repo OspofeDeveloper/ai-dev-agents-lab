@@ -2,6 +2,14 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.53.0 — 2026-07-09
+
+**Handoff agnóstico a comandos: el orquestador no surfacea nombres de skill al usuario (capa 1)** — [[DECISIONS D-019]]. En las corridas de CU-14.j el orquestador narraba nombres técnicos ("¿lanzo `wf-prd-review`?"), lo que invita al usuario a teclear `/wf-x` con argumentos a mano y saltarse la construcción de argumentos del hilo principal.
+
+- ⚠ **Nueva sección "Comunicación con el usuario" en `sdd-orchestration.md`** (regla eager): los nombres `wf-*` y slash-commands son **internos** (para invocar), no para mostrar; lo que se comunica al usuario se describe en **lenguaje natural**. Excepción: si el usuario pide el comando explícitamente, se le da. Se regenera sola en el próximo `wf-sdd-update`.
+- **Capa 2 pendiente (roll-out D-019):** las plantillas de salida de los propios `wf-*` (~25 sitios que emiten "ejecuta /wf-X") y la presentación del rootmap — se pliega con la auditoría de la capa de reglas (línea D-022).
+- **Conformance:** CU-11.a suma el sub-caso de narración de salida (no surfacear `wf-*`/comandos). Backstop en `test_install_sh.py`.
+
 ## 0.52.1 — 2026-07-09
 
 **Validación de D-021 + endurecimiento cosmético.** Validado en `myops-app-specs` (CU-1.t, CU-14.j): la regla eager `sdd-orchestration.md` se instala bien y el orquestador aplica la disciplina al orientar **sin tocar ficheros** — (a) 5/5 desde la raíz, (b) 3/3 desde el subdirectorio `prd/`.

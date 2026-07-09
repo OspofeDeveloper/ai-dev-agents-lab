@@ -6,6 +6,25 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-019 — Handoff agnóstico a comandos: el orquestador no surfacea nombres de skill al usuario
+
+- **Fecha:** 2026-07-09 · **Estado:** Adoptada (capa 1; capa 2 en roll-out) · **Relacionada:** [[D-021]] (vive en la regla eager), CU-11.a. *(Reservada desde [[D-020]]; se ubica arriba por orden de recencia aunque su número sea anterior.)*
+
+**Contexto.** El ecosistema se concibe **agnóstico a comandos**: el usuario conduce por conversación y el hilo principal mapea intención → workflow/agente y lo invoca, construyendo los argumentos (ahí viven CU-11.b/c/g/h). Pero en la práctica el orquestador **narra** los nombres técnicos —"¿lanzo `wf-prd-review <archivo_prd.md>`?", "lo natural es `wf-spec-features-first`"— (visto en las corridas de CU-14.j). Eso invita al usuario a **teclear `/wf-x` con argumentos a mano**, saltándose la construcción de argumentos del hilo principal y comprometiendo las validaciones. El nombre de skill es necesario **internamente** (para invocar), no para mostrarlo.
+
+**Decisión.** El hilo principal **no surfacea proactivamente nombres de skill (`wf-*`) ni slash-commands al usuario**; describe la acción en **lenguaje natural** ("reviso el PRD contigo", "genero las specs por feature"). Los nombres son internos para invocar. Excepción: si el usuario pide explícitamente el comando o el nombre técnico, se le da. Implementación en **dos capas**: **(1)** disciplina de narración del orquestador → va en la **regla eager** `sdd-orchestration.md` (misma casa que [[D-021]]: aplica en toda interacción, antes de tocar ficheros) — **adoptada ahora**; **(2)** las plantillas de salida user-facing de los propios `wf-*` (~25 sitios que emiten "ejecuta /wf-X") y la presentación del rootmap → **roll-out pendiente**, plegado con la auditoría de la capa de reglas (línea D-022).
+
+**Alternativas descartadas.**
+- *Prohibir del todo pronunciar un nombre de skill* → hostil si el usuario pregunta explícitamente por el comando; la regla es "no surfacear proactivamente", no "callar bajo orden directa".
+- *Solo hacer el roll-out de las plantillas (capa 2) sin la disciplina eager (capa 1)* → deja el hueco principal (lo que el orquestador improvisa al narrar) sin cubrir; la capa 1 ataca el 80% del riesgo de inmediato.
+- *Renombrar/ocultar los skills* → rompe la invocación y el mapa humano; el problema no es el nombre, es surfacearlo.
+
+**Consecuencias / aprendizaje.** El nombre de una pieza puede ser **necesario para el sistema y ruido (o trampa) para el usuario**: la interfaz conversacional debe traducir intención↔acción sin exponer el andamiaje. Backstop en `test_install_sh.py` (la regla eager contiene la disciplina de comunicación). Cobertura de conformance: CU-11.a (sub-caso de narración: el orquestador no surfacea `wf-*`/comandos). El roll-out de la capa 2 cerrará los sitios donde los propios workflows emiten comandos.
+
+**Referencias.** `sdd/pipeline/orchestration.md` (sección "Comunicación con el usuario"), `sdd/install.sh` (`install_orchestration_rule`), `sdd/tests/test_install_sh.py`, `sdd/conformance/casos-de-uso/cu-11-enrutado.md` (CU-11.a).
+
+---
+
 ## D-021 — Disciplina de orquestación en una regla *eager* dedicada (`sdd-orchestration.md`)
 
 - **Fecha:** 2026-07-08 · **Estado:** Adoptada · **Relacionada:** [[D-020]] (el gate mecánico que esta regla complementa), [[D-018]] (dual-audience + límite del subdirectorio).

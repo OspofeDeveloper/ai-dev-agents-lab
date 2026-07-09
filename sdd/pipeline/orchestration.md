@@ -16,3 +16,9 @@ Principios que gobiernan **cómo se avanza entre fases** del pipeline SDD, indep
 ## Los gates son de su fase; no se bypasean
 
 - Los workflow skills tienen sus propias validaciones de precondición. **No se bypasean.** Si un skill reporta bloqueos o pendientes, el hilo principal los comunica al usuario y espera a que los resuelva antes de reintentar.
+
+## Comunicación con el usuario
+
+- Los nombres de skill (`wf-*`) y los slash-commands (`/wf-…`) son **internos**: sirven para invocar, no para mostrárselos al usuario. Lo que se comunica al usuario se describe en **lenguaje natural** —"reviso el PRD contigo", "genero las specs por feature", "audito el diseño"—, no con nombres de workflow ni comandos con argumentos.
+- El motivo: si se surfacea `/wf-x <args>`, el usuario cree que debe teclear comandos y puede pasar argumentos a mano, saltándose la construcción de argumentos que hace el hilo principal (donde viven las validaciones). El ecosistema es **agnóstico a comandos**: se conduce por conversación.
+- Excepción: si el usuario pide explícitamente el nombre técnico o el comando ("¿qué workflow es?", "dame el comando"), se le da sin problema.

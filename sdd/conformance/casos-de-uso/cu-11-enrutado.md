@@ -57,9 +57,21 @@ happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es
    → **Esperado:** el orquestador mapea la intención al skill correcto
      (`wf-spec-features-first <prd.md>`, no `wf-spec-discover`) y lo invoca; nunca te
      exige teclear `/wf-*`.
+2. **Narración de salida (handoff agnóstico a comandos, [[D-019]]).** En cualquier
+   respuesta al usuario —recomendar el siguiente paso, ofrecer una acción, reportar un
+   resultado—, el orquestador **no surfacea proactivamente nombres de skill (`wf-*`) ni
+   slash-commands con argumentos**; describe la acción en lenguaje natural ("reviso el
+   PRD contigo", "genero las specs por feature").
+   → **Esperado:** no aparecen `wf-…`/`/wf-…` en la prosa dirigida al usuario. La
+     disciplina vive en la regla eager `sdd-orchestration.md`. Excepción legítima: si el
+     usuario pide explícitamente el comando o el nombre técnico, dárselo no es FALLO.
 
-**Resultado:** PASS si acierta el skill desde lenguaje natural · FALLO si te pide el
-comando, o enruta a un skill equivocado de la misma fase.
+**Resultado:** PASS si (1) acierta el skill desde lenguaje natural y (2) narra sin
+surfacear nombres de skill/comando · FALLO si te pide el comando, enruta a un skill
+equivocado de la misma fase, o menciona `wf-*`/`/wf-*` al ofrecer/recomendar acciones sin
+que se lo hayas pedido.
+**Nota:** (2) es capa 1 de D-019 (narración del orquestador); las plantillas de salida de
+los propios `wf-*` que aún emiten comandos son la capa 2 (roll-out pendiente).
 **Desviación → reportar:** issue citando `CU-11.a`.
 
 ## CU-11.b — Construcción correcta de argumentos
