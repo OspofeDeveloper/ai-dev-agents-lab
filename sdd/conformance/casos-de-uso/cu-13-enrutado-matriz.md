@@ -46,7 +46,7 @@ happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es
 **transpuesta** para leer/ejecutar el CU.
 
 ### Orquestador — matriz frase→skill (rootmap de `CLAUDE.md` + `when_to_use`) (7)
-- [ ] CU-13.a — Fase PRD
+- [x] CU-13.a — Fase PRD · ✓ 2026-07-10 (`myops-app-specs` 0.58.1, **3/3**): "crea un PRD"→`wf-prd-create`, "revisa mi PRD"→`wf-prd-review` (no lo confunde con crear), duda conceptual→agente `prd-expert` (no teoriza a pelo ni se va a review pese a existir PRD). Narración **sin surfacear `wf-*`** en las 3 ([[D-019]] ✓). **Bonus D-022**: el carril eager `sdd-routing.md` de PRD cargó y se aplicó — tras crear con `[ASUNCIÓN]` no las resolvió y ofreció review (frontera create→review); en review corrió `sdd-prd-ready.py` (`OPEN_ASSUMPTIONS`) por iniciativa propia. Valida la fila nueva de duda conceptual→`prd-expert` (hueco B2 de la auditoría D-022)
 - [ ] CU-13.b — Fase Spec
 - [ ] CU-13.c — Fase Design
 - [ ] CU-13.d — Plan, Tasks y entrega
