@@ -155,6 +155,29 @@ el PRD con invención silenciosa.
 >   autochequeo con un `grep` que compone él), no **verificado por máquina** — y una de las corridas
 >   muestra que ese autochequeo, además de improvisado, se satisface **editando el documento**. Sello
 >   definitivo del todo cuando aterrice el backstop de `wf-prd-review` Paso 5.5.
+>
+> **Re-validación (2026-07-11, consumer real `myops-app-specs`).** PASS reconfirmado cubriendo las
+> **tres** sub-conductas en dos corridas independientes, todas con la capa determinista **verificada por
+> máquina sobre el `prd.md` real** (no sobre la prosa del agente):
+> - **(b) brief rico de golpe.** Brief detallado en el primer mensaje → el orquestador creó **directo**
+>   (no pide brief cuando ya se lo das), marcó 10 `[ASUNCIÓN]`, 1:1 limpio (10=10, 0 verbosa, **sin** la
+>   falsa-positiva de prosa del 07-08) y enrutó a `/wf-prd-review` sin tocar el gate.
+> - **(a) petición seca.** "Arranca un proyecto nuevo, genérame el PRD" sin describir producto → el
+>   orquestador **paró** y pidió base mínima (5 preguntas nombre/problema/actores/capacidades/fuera-de-alcance),
+>   dijo *"sin ella, cualquier cosa que escriba sería inventada"*; **no continuó sin input** ni escribió PRD.
+> - **(c) anti-fabricación por procedencia.** Brief de 3 frases + *"actores y fuera-de-alcance… decídelo tú"*
+>   → 18 `[ASUNCIÓN]`, 1:1 (18=18). El nombre `MyOps` se **infirió del repo pero se marcó**
+>   (`# PRD: MyOps [ASUNCIÓN]`), **no** se afirmó; la **plataforma no se asumió** (el acceso móvil quedó en
+>   *Fuera del Alcance* marcado, no como hecho, pese al nombre `myops-app`); el actor y todo el fuera-de-alcance
+>   delegados van **marcados**, con cada `[ASN-XXX]` documentando qué hueco rellena. Sin contaminación técnica.
+> - **El conteo sube cuando se delegan secciones enteras.** 18 (esta) > 13 (brief mínimo 07-08) > 10 (brief
+>   rico): la corrida con la fuente **más pobre** dio **más** asunciones porque el usuario delegó *dos
+>   secciones completas* (actores + fuera-de-alcance) que el agente rellenó íntegras con inferencia marcada.
+>   Matiza el hallazgo del 07-08 ("el conteo no escala con la pobreza de la fuente"): no es la pobreza en sí,
+>   es **cuántas secciones exigen inferencia pura**. Reconfirma —otra vez— que el conteo **no es criterio de sello**.
+> - **Reserva sin cambios.** El 1:1 lo verifiqué por máquina en las dos corridas, pero en producción sigue
+>   siendo **autoimpuesto por el agente**; el backstop determinista de `wf-prd-review` Paso 5.5 continúa
+>   **pendiente** (CHANGELOG 0.50.0).
 
 ## CU-2.c — Apuntar a un directorio o fuente inexistente
 
