@@ -6,9 +6,28 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-023 — Rootmap plano eliminado del cuerpo lazy; el pre-gate CU-13 se releva por reversibilidad + validación rodada
+
+- **Fecha:** 2026-07-11 · **Estado:** Adoptada. Completa y supersede el paso pendiente de [[D-022]] (borrado del rootmap plano). · **Relacionada:** [[D-022]] (dejó este paso gated), [[D-021]] (carril eager), [[D-018]] (dual-audience).
+
+**Contexto.** [[D-022]] dejó pendiente lo único irreversible —borrar el rootmap-tabla plano de las reglas de fase lazy— **gated en `CU-13.a–g` + `CU-11.a` sub-caso 1**. Al revisar ese gate: (1) el rootmap vive en ficheros **trackeados** (`pipeline/<fase>/CLAUDE.md`), así que revertir el borrado es **un `git revert`** — coste casi nulo; (2) [[D-022]] ya probó **empíricamente** que el rootmap lazy **no es load-bearing** (en CU-14.j el enrutado funcionó sin él cargado); el enrutado corre sobre las `description` (eager) + `sdd-routing.md` (eager); (3) correr `CU-13` **ahora** es prematuro: la campaña de conformance en curso (CU-2…) puede **reconfigurar el set de skills** (añadir/quitar/modificar), lo que invalidaría una corrida de CU-13 y, peor, obligaría a **re-mantener el rootmap en 5 ficheros** o dejarlo **derivar a stale** (ya se observó una copia pre-D-022 stale en una instalación de consumidor). Mantener el rootmap durante ese periodo de cambio es **coste y riesgo de deriva, no seguridad**.
+
+**Decisión.** Se **releva** el pre-gate `CU-13.a–g` para este borrado (no se salta en silencio: se supera por esta decisión registrada) y se **ejecuta** el borrado. De las 5 `pipeline/<fase>/CLAUDE.md` se quita el rootmap-tabla plano + la sección "Reparto de trabajo" + la tabla "Agentes disponibles" (todo redundante con `orchestration.md`/`sdd-routing.md`/`description`). La regla de fase queda como **marcador fino**: frontmatter `paths:` (funcional — lazy-scope + validado por el check `rule-globs`) + intro + nota **"Audiencia"** (dual-audience) + puntero a `sdd-routing.md` y a `skill-registry.md`. Se **conserva** su función de marcador de instalación (existencia del fichero + `paths:`; comprobada por el hook y `sdd-init-detect.py`). La validación del enrutado pasa a **cobertura rodada**: cada CU conversacional ejercita intención→skill; ante una regresión, `git revert` o parchear la `description` del skill implicado. **`CU-13.a–g` queda como confirmación final opcional** cuando el set de skills se estabilice, ya no como pre-gate.
+
+**Alternativas descartadas.**
+- *Correr CU-13 ahora y luego borrar* → prematuro: el set de skills es inestable durante la campaña de conformance; la corrida sería invalidable y bloquearía la limpieza sin aportar seguridad real (el rootmap no es load-bearing).
+- *Mantener el rootmap como referencia inofensiva* → durante la campaña hay que reeditarlo en 5 ficheros a cada cambio de skill o deja de reflejar la realidad (stale, peor que ausente). Sin upside: no lo usa el enrutado.
+- *Borrarlo sin registrar la decisión* → sentaría el precedente de saltarse gates autoimpuestos cuando molestan; se supera por escrito para mantener honesto el rastro.
+
+**Consecuencias / aprendizaje.** Un gate autoimpuesto no es sagrado si su premisa cambia; lo correcto no es ignorarlo sino **superarlo por decisión registrada**. La **reversibilidad barata** (ficheros trackeados) convierte "borra y observa con validación rodada" en estrategia legítima frente a "valida exhaustivo y luego borra", cuando lo que se borra no es load-bearing. Backstop nuevo determinista: `test_phase_rules_have_no_rootmap_table` en `test_install_sh.py` (la tabla no reaparece en ninguna fase).
+
+**Referencias.** `sdd/pipeline/{prd,spec,design,plan,tasks}/CLAUDE.md` (cuerpos recortados), `sdd/tests/test_install_sh.py` (backstop anti-regresión), `sdd/CHANGELOG.md`, `sdd/conformance/casos-de-uso/cu-13-enrutado-matriz.md` y `cu-11-enrutado.md` (recalificados a confirmación final opcional).
+
+---
+
 ## D-022 — Las `description` ya enrutan: el rootmap de las reglas es redundante; a eager va solo la desambiguación
 
-- **Fecha:** 2026-07-09 · **Estado:** Adoptada; roll-out **completo** en las 5 fases (spec+prd+design+plan+tasks). Pendiente solo lo irreversible: borrar el rootmap plano lazy, gated en `CU-13.a–g`. · **Relacionada:** [[D-021]] (carril eager), [[D-018]] (dual-audience + herencia en subagentes), [[D-019]] (capa 2 fuera de alcance).
+- **Fecha:** 2026-07-09 · **Estado:** Adoptada; roll-out **completo** en las 5 fases (spec+prd+design+plan+tasks). El paso irreversible pendiente (borrar el rootmap plano lazy) se **completó vía [[D-023]]** (gate `CU-13.a–g` relevado por reversibilidad + validación rodada). · **Relacionada:** [[D-023]] (completa el borrado), [[D-021]] (carril eager), [[D-018]] (dual-audience + herencia en subagentes), [[D-019]] (capa 2 fuera de alcance).
 
 **Contexto.** Las reglas de fase `.claude/rules/sdd-<fase>.md` son mayormente **enrutado de orquestador** pero cargan **lazy** (`paths:`), así que el orquestador —que rara vez toca ficheros al orientar— no las tiene cuando las necesita. Auditoría (3 Explore): (1) las **`description` de los skills ya cargan eager** y hacen el enrutado intención→skill — el rootmap-tabla de las reglas es **redundante** (prueba empírica: es lazy, no estaba cargado en las corridas de orientación de CU-14.j, y el enrutado funcionó igual → no es load-bearing); (2) lo que las descriptions **no** cubren es la **desambiguación** ("crea specs → features-first, no discover"; patrón "fase X"; elección de rigor) y las **precondiciones/fronteras de entrada**; (3) la **disciplina D** (autonomía por capas, "no bypasees", readiness mecánica) ya está **duplicada** en `orchestration.md`; (4) el framing **dual-audience** era inconsistente (solo `prd`/`orchestration` tenían nota "Audiencia."; `spec/design/plan/tasks` usaban "Eres el orquestador", contradicción de rol de [[D-018]] heredada por los subagentes escritores).
 

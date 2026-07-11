@@ -15,8 +15,9 @@ y su documentación local:
 | `tasks/` | Plan → Tasks + ejecución + QA + release | `skills/` · `agents/` · `CLAUDE.md` |
 
 Cada fase aplica las **3 capas fijas** (orquestador `CLAUDE.md` → `wf-*` → agente → `kb-*`),
-cuya definición canónica vive en `kb-sdd-skill-architecture` (Regla 1). El `CLAUDE.md` de fase
-hace el routing local; el `README.md` de fase es su mapa humano.
+cuya definición canónica vive en `kb-sdd-skill-architecture` (Regla 1). El enrutado efectivo lo
+hacen las `description` de los skills (eager) + `sdd-routing.md`; el `CLAUDE.md` de fase quedó como
+**marcador fino** tras D-023 (sin rootmap). El `README.md` de fase es su mapa humano.
 
 **Layout por feature (en el proyecto consumidor).** Cada feature usa subcarpetas por fase
 (`spec/`, `design/`, `plan/`, `tasks/`); el layout plano legacy (`features/<n>/<n>_spec.md`)

@@ -2,6 +2,14 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.59.0 — 2026-07-11
+
+**Rootmap plano eliminado del cuerpo de las reglas de fase (cierre de D-022 vía D-023)** — [[DECISIONS D-023]]. Completa el paso irreversible que D-022 dejó pendiente. El pre-gate `CU-13.a–g` se **releva por decisión registrada**: el rootmap vive en ficheros trackeados (revert = un `git revert`), empíricamente no es load-bearing (D-022), y correr CU-13 ahora es prematuro (el set de skills puede cambiar durante la campaña de conformance en curso). La validación del enrutado pasa a cobertura rodada de los CU; `CU-13` queda como confirmación final opcional.
+
+- ⚠ **Las 5 `pipeline/<fase>/CLAUDE.md` recortadas** (reglas lazy `sdd-<fase>.md`): fuera el rootmap-tabla de skills, la sección "Reparto de trabajo" y la tabla "Agentes disponibles" (redundantes con `sdd-orchestration.md`/`sdd-routing.md`/`description`). La regla de fase queda como **marcador fino**: frontmatter `paths:` (funcional) + intro + nota "Audiencia" (dual-audience) + puntero a `sdd-routing.md`/`skill-registry.md`. Se conservan las secciones útiles no-redundantes (design: Fit, Precondiciones por workflow, Camino canónico, Modo enseñanza; plan/tasks: Camino canónico).
+- **Invariante preservado**: `sdd-<fase>.md` sigue existiendo con su `paths:` → marcador de instalación intacto (el hook y `sdd-init-detect.py` comprueban existencia; `rule-globs` lee solo el frontmatter).
+- **Test:** nuevo `test_phase_rules_have_no_rootmap_table` (anti-regresión); dual-audience y `paths:` frontmatter siguen verdes.
+
 ## 0.58.1 — 2026-07-09
 
 **Auditoría de cobertura del roll-out D-022: cierre de contradicciones y huecos de conformance** — [[DECISIONS D-022]]. Auditoría exhaustiva (6 agentes, una por fase + transversal) cruzando cada `routing.md` contra toda la suite de conformance. Resultado: la gran mayoría cubierta; se corrigen 3 contradicciones y se cierran 5 huecos.

@@ -19,8 +19,9 @@ es **referencia** (podría lint-earse contra drift; el acierto en sí es **manua
 > para enrutar bien **sin** el rootmap-tabla lazy. Como estas filas se validan **en orden
 > de fase** durante la campaña de conformance (`CU-13.a` PRD primero, luego `.b` Spec, …),
 > un PASS de `CU-13.x` confirma además que el enrutado de esa fase aguanta con el carril
-> eager. Cuando todas las fases con `routing.md` pasen, se habilita **borrar el rootmap
-> plano** de las reglas lazy (el único paso irreversible de D-022, hoy gated). El
+> eager. El **borrado del rootmap plano** de las reglas lazy **ya se ejecutó** ([[D-023]]):
+> el pre-gate se relevó por reversibilidad (ficheros trackeados) + validación rodada, así que
+> estas filas quedan como **confirmación final** del enrutado sin rootmap, no como pre-gate. El
 > *mecanismo* transversal (hablar, no teclear; narración sin surfacear `wf-*`) es `CU-11.a`.
 
 > [!IMPORTANT]
@@ -61,7 +62,7 @@ happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es
 
 ## CU-13.a — Fase PRD
 
-**Mecanismo:** orquestador enrutando por las **`description`** de los skills (eager) + la desambiguación *eager* de `sdd-routing.md` (frontera create → review, crear vs revisar; [[D-022]]); el rootmap de `sdd-prd.md` es referencia.
+**Mecanismo:** orquestador enrutando por las **`description`** de los skills (eager) + la desambiguación *eager* de `sdd-routing.md` (frontera create → review, crear vs revisar; [[D-022]]); el rootmap de `sdd-prd.md` se eliminó ([[D-023]]).
 
 | Dices | Debe disparar | No confundir con |
 |---|---|---|
@@ -102,7 +103,7 @@ cualquier confusión (sobre todo "crea las specs" → discover).
 
 ## CU-13.c — Fase Design
 
-**Mecanismo:** orquestador enrutando por las **`description`** de los skills (eager) + la desambiguación *eager* de `sdd-routing.md` (precondición spec+brief, trampas intake/delta/branch/variant; [[D-022]]); el rootmap de `sdd-design.md` es referencia.
+**Mecanismo:** orquestador enrutando por las **`description`** de los skills (eager) + la desambiguación *eager* de `sdd-routing.md` (precondición spec+brief, trampas intake/delta/branch/variant; [[D-022]]); el rootmap de `sdd-design.md` se eliminó ([[D-023]]).
 
 | Dices | Debe disparar | No confundir con |
 |---|---|---|
@@ -130,7 +131,7 @@ sobre todo en "actualiza el DESIGN.md"/"cambia el style_family" (delta vs **inta
 
 ## CU-13.d — Plan, Tasks y entrega
 
-**Mecanismo:** orquestador enrutando por las **`description`** de los skills (eager) + la desambiguación *eager* de `sdd-routing.md` (Plan: gate BORRADOR → VALIDADO; Tasks/entrega: precondición plan VALIDADO y las 3 vías task-run/bug/amend; [[D-022]]); los rootmaps de `sdd-plan.md`/`sdd-tasks.md` son referencia.
+**Mecanismo:** orquestador enrutando por las **`description`** de los skills (eager) + la desambiguación *eager* de `sdd-routing.md` (Plan: gate BORRADOR → VALIDADO; Tasks/entrega: precondición plan VALIDADO y las 3 vías task-run/bug/amend; [[D-022]]); los rootmaps de `sdd-plan.md`/`sdd-tasks.md` se eliminaron ([[D-023]]).
 
 | Dices | Debe disparar | No confundir con |
 |---|---|---|

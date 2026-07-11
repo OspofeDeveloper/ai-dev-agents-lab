@@ -20,7 +20,7 @@ se necesita y **cuánto cuesta tenerlo cargado**.
 | Soporte | Qué contiene | Cuándo se carga | Coste fijo |
 |---|---|---|---|
 | **`CLAUDE.md`** (raíz + fase) | Rootmap intención→workflow, principios del orquestador | *Eager*: siempre en sesión | Su cuerpo completo |
-| **Rules de fase** (`.claude/rules/sdd-<fase>.md`) | El `CLAUDE.md` de la fase, activado por archivo | *Lazy por `paths:`*: al tocar un archivo que matchea | Solo el frontmatter |
+| **Rules de fase** (`.claude/rules/sdd-<fase>.md`) | Marcador de fase de cuerpo fino: intro + nota "Audiencia" + puntero a `sdd-routing.md`/registry (sin rootmap — D-023); activado por archivo | *Lazy por `paths:`*: al tocar un archivo que matchea | Solo el frontmatter |
 | **Rule de orquestación** (`.claude/rules/sdd-orchestration.md`) | Disciplina transversal (readiness mecánica, orden del pipeline, no bypasear gates) | *Eager* — una rule **sin `paths:`** carga al arrancar, como un `CLAUDE.md` | Su cuerpo completo (deliberadamente fino) |
 | **Rule de enrutado** (`.claude/rules/sdd-routing.md`) | Desambiguación y precondiciones/fronteras de fase que las `description` no cubren (p. ej. "crea specs → features-first, no discover") | *Eager* (sin `paths:`); ensamblada topology-gated de las fases instaladas | Su cuerpo (solo desambiguación, no el rootmap) |
 | **kb-\*** (knowledge bases) | Reglas SSoT y referencias de una fase | *Lazy*: cuando un agente las declara | Solo su `description` |
@@ -32,9 +32,10 @@ de dominio → kb (lazy en el agente que lo usa); procedimiento → wf**. El cos
 que paga el sistema en cada sesión es solo el conjunto de `description`s — todo lo
 pesado se trae bajo demanda.
 
-> **Matiz (D-022):** el enrutado intención→skill lo hacen de hecho las `description`
-> (eager por diseño). El rootmap-tabla de las reglas de fase es **referencia**, no la
-> fuente efectiva de enrutado. Lo que sí necesita carril eager propio es la
+> **Matiz (D-022 / D-023):** el enrutado intención→skill lo hacen de hecho las
+> `description` (eager por diseño). El rootmap-tabla llegó a vivir en las reglas de
+> fase como referencia y **se eliminó** (D-023) por redundante y no load-bearing: la
+> regla de fase queda como marcador fino. Lo que sí necesita carril eager propio es la
 > **desambiguación** que la `description` no puede expresar (skills de la misma fase,
 > precondiciones de frontera): eso vive en `sdd-routing.md`.
 

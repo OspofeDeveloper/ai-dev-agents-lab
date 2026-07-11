@@ -50,7 +50,7 @@ happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es
 ## CU-11.a — Hablar, no teclear comandos
 
 **Precondición:** un proyecto SDD inicializado.
-**Mecanismo:** orquestador → matching semántico por las `description` de los skills (eager) + desambiguación de la regla eager `sdd-routing.md` ([[D-022]]); el rootmap-tabla de la regla de fase es solo referencia.
+**Mecanismo:** orquestador → matching semántico por las `description` de los skills (eager) + desambiguación de la regla eager `sdd-routing.md` ([[D-022]]); el rootmap-tabla de la regla de fase se eliminó ([[D-023]]).
 
 1. Pides algo en lenguaje natural sin nombrar ningún skill ("quiero crear las specs de
    este PRD").

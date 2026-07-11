@@ -2,13 +2,7 @@
 
 Este directorio define un paquete focalizado en la etapa de **Design** dentro del pipeline SDD: cierre del brief visual del producto, sistema visual persistente, derivacion de flows y views por feature, y preparacion del handoff al generador de UI (Stitch en mobile, generadores web en web/desktop) antes de entrar en Plan.
 
-> **Audiencia.** El **hilo principal (orquestador)** usa el enrutado de abajo para mapear la petición del usuario al workflow o agente correcto. Un **subagente especialista** (p. ej. `design-system-architect`) también carga esta guía al tocar artefactos de Design: para él es **contexto de fase**, no una instrucción de rol — su contrato de trabajo es su propio system prompt + sus `kb-*`.
-
-## Reparto de trabajo en la fase Design
-
-- El **hilo principal (orquestador)** entiende la petición, decide si hay que cerrar el `DESIGN_BRIEF.md`, crear o actualizar el `DESIGN.md`, generar el bundle de prototipado de una feature o resolver una duda conceptual, y activa el workflow o agente correcto. **No diseña pantallas finales**, no modifica el Spec funcional y no genera implementación técnica.
-- La **autoría** la realizan los agentes de diseño (`design-system-architect`, `design-feature-architect`), con sus `kb-*` cargadas en contexto.
-- El enrutado no construye prompts a mano: las workflows y los agentes ya contienen el conocimiento operativo; el hilo principal solo activa la pieza correcta con los argumentos correctos.
+> **Audiencia.** El **hilo principal (orquestador)** enruta la petición del usuario al workflow o agente correcto — el enrutado efectivo lo hacen las `description` de los skills (eager) y la regla eager `sdd-routing.md`. Un **subagente especialista** (p. ej. `design-system-architect`) también carga esta guía al tocar artefactos de Design: para él es **contexto de fase**, no una instrucción de rol — su contrato de trabajo es su propio system prompt + sus `kb-*`.
 
 > **Precondiciones, desambiguación y fronteras de esta fase** (spec validado + brief como entrada, onramp brownfield, saltable por feature, y las desambiguaciones críticas intake/delta/branch/variant) viven en la regla **eager** `sdd-routing.md`, para que el hilo principal las tenga al orientar sin tocar ficheros.
 
@@ -21,29 +15,6 @@ Esta fase esta disenada para un encaje concreto. Declararlo evita falsas expecta
 - **Onramp brownfield**: si la UI **ya existe en produccion** y no se va a rediseñar, el `DESIGN.md` se deriva por ingenieria inversa con `/wf-design-extract` (CSS/tokens/componentes/capturas → `DESIGN.md` con `origin: extracted` y evidencia por token). Es la entrada ALTERNATIVA a la fase (no exige spec ni brief), espejo de `/wf-spec-from-code` en Spec. El `DESIGN.md` extraido fluye como cualquier otro: auditable (`wf-design-validate`), evolucionable (`wf-design-delta`), exportable (`wf-design-export`).
 - **Lo que NO cubre**: integracion con Figma (ni import de variables ni export de Figma Tokens) sigue **fuera de alcance** (decision ROADMAP 7.6, 2026-06-10); sus destinos son Stitch (mobile) y `web-generic` (web/desktop). **Actualizacion [[D-011]] (2026-06-18):** el fit ya **se expandio** a equipos con diseno dedicado / escala multi-repo, asi que la condicion que 7.6 puso para reconsiderar Figma («que el fit se expandiera a equipos con disenador propio») **queda satisfecha** — pero reabrir Figma es una decision de producto **separada y aun no tomada**; hasta entonces, fuera. Un equipo con disenador que ya produce sus propios specs visuales puede ademas escribir el `DESIGN.md` a mano respetando el contrato (`kb-design-system-contract`) y auditarlo con `/wf-design-validate`.
 - **Es saltable**: por proyecto (la fase es opcional en el init) y **por feature** — una feature sin superficie de UI visible pasa de Spec a Plan directamente. La regla canonica de cuando Design es obligatorio vive en `kb-plan-expert` y la aplica `wf-prepare-plan`; esta fase no fuerza su propio uso.
-
-## Rootmap de workflow skills
-
-| Intencion del usuario | Skill | Argumentos |
-|---|---|---|
-| Capturar inspiracion visual antes del intake (moodboard) | `/wf-design-moodboard` | `<feature_spec.md> [--prd <prd.md>] [--output <path>] [--mode interactive\|auto]` |
-| Cerrar o actualizar el brief visual y la policy de autonomia del producto | `/wf-design-intake` | `generate <feature_spec.md> [--prd <prd.md>] [--output DESIGN_BRIEF.md] [--mode guided\|hybrid\|auto] [--preset <name>] [--learn]` |
-| Descubrir apps de referencia con research validado por el usuario | `/wf-design-discover` | `<feature_spec.md> [--prd <prd.md>] [--brief <DESIGN_BRIEF.md>] [--output <path>] [--mode interactive\|auto]` |
-| Crear o actualizar el sistema visual persistente del producto | `/wf-design-system` | `generate <feature_spec.md> [--prd <prd.md>] [--brief <DESIGN_BRIEF.md>] [--design-file DESIGN.md] [--no-brief]` |
-| Derivar el DESIGN.md por ingenieria inversa de una UI ya en produccion (brownfield) | `/wf-design-extract` | `discover <path_ui> [--scope <subdir>] \| generate <path_ui> [--from <extraction.md>] [--scope <subdir>] [--design-file DESIGN.md]` |
-| Auditar un DESIGN.md existente sin regenerarlo | `/wf-design-validate` | `<DESIGN.md> [--brief <DESIGN_BRIEF.md>] [--views <views.md>] [--lenient] [--pedagogical]` |
-| Analizar cambios sobre un DESIGN.md existente | `/wf-design-delta` | `analyze <DESIGN.md> --new-reqs <cambios.md> [--brief <DESIGN_BRIEF.md>]` |
-| Aplicar un delta analysis a un DESIGN.md | `/wf-design-delta` | `apply <DESIGN.md> <design_delta_analysis.md>` |
-| Medir qué artefactos derivados (flows/views/ui_prompt/tokens) quedaron stale tras un cambio | `/wf-design-sync` | `<DESIGN.md>` |
-| Explorar una variante paralela del DESIGN.md sin comprometer main | `/wf-design-branch` | `create <branch-name> \| list \| compare <a> <b> \| merge <branch> --into <target> \| discard <branch>` |
-| A/B testing visual de una feature concreta | `/wf-design-variant` | `create <feature_spec.md> --variants A,B [--hypothesis 'texto'] \| compare <feature_variants.md>` |
-| Exportar tokens del DESIGN.md a CSS, Style Dictionary, Compose, SwiftUI o Tailwind | `/wf-design-export` | `<DESIGN.md> --platforms <css,style-dictionary,compose,swiftui,tailwind> [--output-dir <path>] [--dry-run]` |
-| Auditoria ejecutiva de accesibilidad (contraste, touch targets, focus order) | `/wf-design-a11y-audit` | `<DESIGN.md> [--views <feature_views.md>] [--brief <DESIGN_BRIEF.md>] [--target AA\|AAA] [--lenient]` |
-| Capturar feedback no estructurado de stakeholders | `/wf-design-feedback` | `capture <feedback.md\|texto> [--source ...] [--feature ...]` |
-| Triajear un feedback capturado en categorias accionables | `/wf-design-feedback` | `triage <feedback_capture.md>` |
-| Generar flows, views y prompt de ensamblaje tool-agnostic (Stitch mobile / web-generic) desde una feature | `/wf-design-feature-prototype` | `generate <feature_spec.md> [--design-file DESIGN.md] [--brief <DESIGN_BRIEF.md>] [--no-brief]` |
-
-> El rootmap de arriba es referencia. El enrutado intención→skill efectivo lo hacen las `description` de los skills (eager); esta tabla documenta argumentos y agrupa por intención.
 
 ## Precondiciones por workflow (referencia)
 
@@ -100,15 +71,6 @@ Si la persona que pide tiene poca experiencia, o pide explicitamente acompanamie
 - `wf-design-validate --pedagogical`: hallazgos con explicacion extendida y referencia a regla concreta.
 
 Cargado por defecto si el hilo principal detecta dudas conceptuales repetidas en una misma sesion.
-
-## Agente Design disponible
-
-| Agente | Dominio |
-|---|---|
-| `design-system-architect` | Autoría del **sistema visual del producto** (`DESIGN.md`, agnóstico de superficie). Cubre cierre de brief (`wf-design-intake`), articulacion de moodboard (`wf-design-moodboard`), generacion y evolucion del `DESIGN.md` (`wf-design-system`, `wf-design-delta`, `wf-design-extract`), validacion (`wf-design-validate`, `wf-design-a11y-audit`), exportacion de tokens (`wf-design-export`), exploracion (`wf-design-branch`) y analisis de impacto (`wf-design-sync`). |
-| `design-feature-architect` | Autoría de **artefactos por feature** (`flows`, `views`, `ui_prompt` — uno por superficie cuando aplica) consumiendo el `DESIGN.md` como contrato de solo-lectura. Cubre `wf-design-feature-prototype`, A/B por feature (`wf-design-variant`) y triage de feedback (`wf-design-feedback`). |
-
-Cada agente declara sus KBs en su frontmatter `skills: [...]` (SSoT del wiring); el contrato del sistema (`kb-design-system-contract`, `kb-design-brief`, `kb-design-governance`) lo cargan **ambos** — el feature-architect como referencia de solo-lectura. Se usan workflows cuando exista una pipeline clara y cerrada. Si la peticion no requiere una workflow exacta pero si ayuda experta para estructurar la fase `design`, el hilo principal delega al agente del dominio que toque (sistema visual → `design-system-architect`; artefactos por feature → `design-feature-architect`). Una **duda conceptual** sobre qué debe contener `DESIGN.md` o cómo descomponer vistas se resuelve delegando al agente, no respondiéndola el hilo principal a pelo.
 
 ## Skills de conocimiento Design
 

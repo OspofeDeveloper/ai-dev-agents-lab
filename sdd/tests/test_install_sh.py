@@ -125,6 +125,17 @@ class InstallAllTest(InstallBase):
                              f"sdd-{p}.md conserva rol en 2a persona")
             self.assertIn("Audiencia.", rule, f"sdd-{p}.md sin nota de Audiencia")
 
+    def test_phase_rules_have_no_rootmap_table(self):
+        # D-023: el rootmap plano de skills se eliminó del cuerpo lazy (era
+        # redundante con las `description` de los skills (eager) + sdd-routing.md,
+        # y empíricamente no load-bearing — D-022). Backstop anti-regresión: la
+        # tabla no debe reaparecer en ninguna fase. El enrutado NO depende de ella.
+        self.install("all")
+        for p in self.DUAL_AUDIENCE_PHASES:
+            rule = (self.claude / "rules" / f"sdd-{p}.md").read_text(encoding="utf-8")
+            self.assertNotIn("## Rootmap de workflow skills", rule,
+                             f"sdd-{p}.md reintroduce la tabla rootmap (ver D-023)")
+
     def test_routing_rule_has_spec_precondition(self):
         # La readiness/precondición de spec ya NO vive en la regla de fase lazy
         # (sdd-spec.md): se relocalizó al carril eager (sdd-routing.md, y la frontera
