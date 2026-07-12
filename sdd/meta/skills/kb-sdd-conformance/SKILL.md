@@ -1,6 +1,6 @@
 ---
 name: kb-sdd-conformance
-description: "SSoT del metodo de conformidad del ecosistema SDD: como derivar y escribir escenarios de Caso de Uso (CU-N.x) para una skill, el template verbatim del escenario, los 4 ejes de cobertura (happy/edge/harness/args), el formato de la matriz del ROADMAP y su ciclo de estados. No cubre el catalogo de CU en si (vive en conformance/casos-de-uso) ni la arquitectura de skills (kb-sdd-skill-architecture)."
+description: "SSoT del metodo de conformidad del ecosistema SDD: como derivar y escribir escenarios de Caso de Uso (CU-N.x) para una skill, el template verbatim del escenario, los 4 ejes de cobertura (happy/edge/harness/args), el formato de la matriz del ROADMAP y su ciclo de estados, y el protocolo de validacion de conducta no determinista (>=3 corridas, determinista vs conductual, recalibracion del contrato). No cubre el catalogo de CU en si (vive en conformance/casos-de-uso) ni la arquitectura de skills (kb-sdd-skill-architecture)."
 effort: high
 allowed-tools: [Read, Bash]
 user-invocable: false
@@ -133,6 +133,24 @@ Un escenario va al `cu-NN` cuyo **journey/tema** coincide, no al de la fase de l
 - Skills **meta** (autoría del ecosistema) → **CU-17**, con su routing en CU-13.h.
 
 Si un escenario no encaja en ningún CU existente y es un journey nuevo, ese es un CU nuevo (Regla 1): asigna el siguiente `CU-N` libre y créalo con la cabecera estándar del catálogo (objetivo · proyecto a usar · cobertura automática).
+
+## Regla 9: Protocolo de validación de conducta no determinista
+
+Las Reglas 1-8 dicen **cómo escribir** los escenarios. Esta dice **cómo ejecutarlos y cuándo confiar en el veredicto** — porque el "producto bajo prueba" es software gobernado por IA: buena parte de los CU los juzga un agente, y **su veredicto no es repetible**. Aplica al **validar** un CU (ejecutarlo y marcar PASS/FALLO), no al escribirlo.
+
+1. **Determinista vs conductual — decláralo.** Separa lo que verifica una **máquina** (script, `grep`, la suite `run-tests.sh` → repetible, lo cubre CI) de lo que juzga el **agente** (→ no repetible, CI **no** lo cubre). En la nota de validación di cuál es cuál. La capa determinista de un CU es su ancla; la conductual es la que exige el resto de esta regla.
+
+2. **≥3 corridas para todo veredicto conductual.** Un PASS único puede ser suerte del muestreo, y un FALLO único, un despiste. Ejecuta el CU **al menos 3 veces** —variando la frase, no repitiéndola literal, para descartar caché conversacional— antes de sellar PASS. Excepción: un **FALLO reproducible** con 1-2 corridas ya basta para parar y reportar (no necesitas 3 para documentar algo que falla siempre). *Aprendido: CU-2.d se saltó un gate 2/2 de forma razonada; CU-2.c prueba 2 colapsó en un gate adyacente y no aisló lo que creía probar — una sola corrida habría engañado en cualquier dirección.*
+
+3. **Registra la procedencia** en la nota de validación del `cu-NN`: **fecha**, **modelo** usado, **proyecto consumidor** real y **versión del ecosistema** instalada. La conducta deriva entre versiones de modelo y de ecosistema → una validación sin esos datos **caduca en silencio** (no se sabe si sigue vigente).
+
+4. **Recalibración, no maquillaje.** Si un CU marca **FALLO** una conducta que, mirada de cerca, es **razonable**, el defecto suele estar en el **contrato del CU**, no en el agente. Entonces: corrige el CU **y** registra la decisión (`D-NNN` en `DECISIONS.md`) que lo justifica — **nunca** relajes el criterio en silencio para forzar el verde. Es el análogo de la regla `DIVERGENTE` de QA (un test que falla contra un CA no se ajusta, se investiga). *Aprendido: D-024 recalibró CU-2.d de "siempre pregunta" a ponderado-por-riesgo tras ver que la conducta del agente era correcta.*
+
+5. **Congela la frase que falló.** Cuando un bug conductual motiva un cambio, el **prompt exacto** que lo destapó se convierte en un sub-caso permanente (Regla 1/2) → esa regresión no vuelve en silencio. Cada bug encontrado es cobertura nueva.
+
+6. **Valida la rama protectora, no solo el happy.** Cuando el comportamiento correcto es *bloquear/avisar/parar*, no basta ver que el gate salta: verifica también que **la vía de escape hace lo que promete** (declinar deja el artefacto intacto, cancelar no escribe, etc.). *Aprendido: en D-024 había que ver que "Conservar el actual" dejaba el PRD sellado intacto, no solo que el aviso aparecía.*
+
+> Esta regla es la SSoT que referencia la plantilla de PR (`docs/MEJORAS_FUTURAS.md` O-6): la sección "Impacto conductual" de un PR se rellena aplicando los puntos 1-3 y 6.
 
 ## Regla de oro
 

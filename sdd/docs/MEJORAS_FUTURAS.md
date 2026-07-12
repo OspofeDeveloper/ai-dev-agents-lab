@@ -58,6 +58,63 @@
 
 ---
 
+## Gobernanza del repo / CI (infra del ecosistema)
+
+- [ ] 🔴 **O-5 — Adoptar GitFlow + CI de tests como gate de merge (cuando el repo se abra al equipo).** Hoy se commitea **directo a `develop`** y la suite se corre **a mano** antes de commitear (disciplina manual, sin red de seguridad). Cuando el repo esté disponible para todo el equipo, formalizar el flujo para que **nadie pueda integrar cambios sin pasar los tests** ni tocar `develop`/`main` directamente.
+  - *Mejora posible (componentes):*
+    - **CI (GitHub Actions):** workflow que corra `bash sdd/tests/run-tests.sh` en cada push/PR. Los tests son `unittest` puro + bash, **sin dependencias externas** → un runner `ubuntu-latest` con Python 3 los ejecuta tal cual (~15 min hoy, 417 tests). El hook de sesión SDD ya se **auto-silencia en CI** (`CI=true` / `SDD_NON_INTERACTIVE=1`), así que no interfiere.
+    - **Branch protection en `develop` y `main`:** prohibir push directo; exigir PR + status check verde (el job de CI) + ≥1 review.
+    - **PR-per-change:** cada cambio en su rama (`feature/*`, `fix/*`), PR contra `develop`, merge solo con CI en verde.
+    - **GitFlow completo:** `main` (releases estables) ← `develop` (integración) ← `feature/*`/`fix/*`; `release/*` para congelar versión; `hotfix/*` desde `main`.
+  - *Enganche natural:* el bump de `VERSION` + `CHANGELOG` —que ya se olvida (ver el rezago de D-023, que dejó `VERSION` sin bumpear y por eso no propagaba vía `wf-sdd-update`)— encaja como **paso obligatorio de la rama `release/*`**, y CI podría **chequear que todo cambio sobre artefactos instalables toca `VERSION`** (guardarraíl determinista contra ese rezago).
+  - *Por qué no es crítico ahora:* con un solo desarrollador la disciplina manual (correr la suite antes de commitear, que es lo que se hace) basta; el gate automático aporta valor cuando hay **varias manos** que pueden saltárselo.
+  - *Coste:* medio-alto — el YAML de Actions es pequeño y directo, pero **establecer y hacer cumplir GitFlow en el equipo** es cambio de proceso (branch protection, plantillas de PR, convención de ramas, formación).
+  - *Origen:* conversación 2026-07-12, tras commitear D-024 directo a `develop`: deseo de que a futuro los tests sean **gate de merge** y no se pueda actuar directamente sobre `develop`.
+
+- [ ] 🔴 **O-6 — Plantilla de PR obligatoria, con foco en conducta no determinista (complementa O-5).** Al ser software gobernado por IA, hay **dos capas de test con garantías distintas**: la **determinista** (`run-tests.sh`, que CI puede exigir) y la **conductual** (los CU de conformance, juicio del agente → **no deterministas**, un solo run no prueba nada y CI **no** los cubre). Un PR debe hacer explícita **qué capa toca y cómo se validó**, para que el reviewer vea que no se rompe nada que CI no vigila. La **SSoT de estas normas** (≥3 corridas, determinista vs conductual, procedencia, recalibración, rama protectora) es **`kb-sdd-conformance` Regla 9** — la plantilla solo la operativiza en el PR. Plantilla propuesta (→ futuro `.github/PULL_REQUEST_TEMPLATE.md`):
+
+  ```markdown
+  ## Qué cambia
+  <qué se ha modificado, 1-2 frases>
+
+  ## Por qué
+  <motivación / problema de diseño o negocio>
+
+  ## Qué fallaba antes
+  <el comportamiento incorrecto previo — el fallo concreto que este cambio corrige>
+
+  ## Cobertura determinista (la vigila CI)
+  - [ ] Test(s) añadido(s): `<nombre_test>` — qué asegura
+  - [ ] Suite completa en verde (`run-tests.sh`): <N>/<N> OK
+
+  ## Impacto conductual (NO lo cubre CI — re-validación manual)
+  - CUs afectados: `CU-X.y`, ...
+  - [ ] ¿Validados junto con este cambio? <sí/no + por qué>
+  - Evidencia (no determinista → ≥3 corridas por CU): <resumen PASS/FALLO, o enlace a logs>
+  - Consumidor + versión del ecosistema usados: <p. ej. myops-app-specs @ 0.60.0>
+  - Modelo usado para validar: <modelo + fecha> (la conducta puede derivar entre versiones de modelo)
+
+  ## Gobernanza
+  - [ ] Decisión registrada si cambia un contrato: `D-NNN`
+  - [ ] `CHANGELOG.md` actualizado; `VERSION` bumpeado si toca artefacto instalable
+  - [ ] Marcado ⚠ si afecta a proyectos ya inicializados
+  - Reversibilidad: <git revert basta / requiere re-install en consumidores>
+  ```
+
+  - *Extras de safety incluidos (más allá de los 5 campos pedidos):*
+    - **Capa determinista vs conductual separadas**: hace visible que un cambio conductual con CI verde **no** está probado — la evidencia manual es obligatoria, no opcional.
+    - **≥3 corridas por CU afectado**: un PASS único puede ser suerte del muestreo (lo vivimos: CU-2.d rama draft se saltó el gate 2/2 de forma *razonada*; una sola corrida habría engañado en cualquier dirección).
+    - **Modelo + fecha de validación**: la conducta del agente puede cambiar al cambiar de modelo; una validación caduca si el modelo cambia.
+    - **No debilitar un CU para que pase**: si el cambio haría fallar un CU existente, eso es **señal**, no se relaja el CU para forzar el verde (salvo que el CU esté mal calibrado, y entonces se justifica por escrito — como D-024 recalibró CU-2.d). Análogo a la regla `DIVERGENTE` de QA (un test que falla contra un CA no se ajusta, se investiga).
+    - **Validar la rama protectora, no solo el happy path**: p. ej. en D-024 no bastaba ver que salta el gate; había que ver que **declinar deja el fichero intacto**.
+    - **Alcance en consumidores + reversibilidad**: si toca artefacto instalable, decir que requiere `wf-sdd-update`/re-install y cómo se revierte.
+  - *Mejora posible:* materializar la plantilla en `.github/PULL_REQUEST_TEMPLATE.md` cuando se abra O-5; opcionalmente un check de CI que **falle el PR si la sección "Impacto conductual" está vacía** cuando el diff toca `pipeline/**/skills/**`, `**/agents/**` o `**/routing.md` (heurística de "esto es conductual").
+  - *Por qué no es crítico ahora:* con un dev la disciplina ya se aplica de facto (cada cambio conductual se valida en consumidor real y se anota en el CU); la plantilla la vuelve **obligatoria y auditable** cuando entra más gente.
+  - *Coste:* bajo el fichero de plantilla; medio el check de CI heurístico; el grueso es **cultura de PR** (que se rellene de verdad).
+  - *Origen:* conversación 2026-07-12 — al ser software de IA, los tests no deterministas deben re-probarse antes de integrar; el PR debe dar visibilidad de qué se validó y qué no.
+
+---
+
 ## Completado
 
 _(vacío)_
