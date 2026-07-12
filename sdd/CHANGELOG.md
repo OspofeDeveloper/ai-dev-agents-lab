@@ -2,6 +2,15 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.60.0 — 2026-07-12
+
+**Gate de sobreescritura de `wf-prd-create` ponderado por riesgo** — [[DECISIONS D-024]]. CU-2.d destapó que el Paso 4 ("siempre pregunta antes de regenerar") estaba mal calibrado: re-preguntar tras un "regenérame `prd/prd.md`" explícito es *nagging* redundante, y a la vez el gate era ciego a lo único que importa (si el PRD está sellado). Se reescribe a tres ramas.
+
+- ⚠ **`wf-prd-create` Paso 4** (skill instalable): la confirmación se pondera por el sello `Aprobado por:`. **PRD sellado** → siempre confirma avisando del descarte de la review (aunque la orden sea explícita); **draft + orden explícita de regenerar** → procede sin re-preguntar; **draft + petición ambigua** → gate ligero anti-pisado accidental. Detección con `grep "Aprobado por:" | grep -qv pendiente`.
+- **Principio general**: cualquier `wf-*` que regenere un artefacto con estado de aprobación (spec validado, DESIGN.md, plan VALIDADO) debe seguir la misma ponderación cuando se toque su flujo — se hereda al mantenerlas, no se propaga en este cambio.
+- **CU-2.d** reescrito a las 3 ramas; corridas draft-explícito validadas PASS (2026-07-12); pendiente la rama decisiva (regenerar PRD **sellado**).
+- **Test:** nuevo `test_prd_create_overwrite_gate_is_risk_weighted` (las 3 ramas siguen en el skill instalado).
+
 ## 0.59.0 — 2026-07-11
 
 **Rootmap plano eliminado del cuerpo de las reglas de fase (cierre de D-022 vía D-023)** — [[DECISIONS D-023]]. Completa el paso irreversible que D-022 dejó pendiente. El pre-gate `CU-13.a–g` se **releva por decisión registrada**: el rootmap vive en ficheros trackeados (revert = un `git revert`), empíricamente no es load-bearing (D-022), y correr CU-13 ahora es prematuro (el set de skills puede cambiar durante la campaña de conformance en curso). La validación del enrutado pasa a cobertura rodada de los CU; `CU-13` queda como confirmación final opcional.

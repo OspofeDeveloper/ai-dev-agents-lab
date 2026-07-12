@@ -12,7 +12,7 @@ user-invocable: true
 
 Tu objetivo es ayudar al usuario a crear un `prd.md` usable por el pipeline SDD. Delegas la redacción del contenido al agente `prd-expert`.
 
-Este workflow corre en el **hilo principal** (igual que `wf-prd-review`, y **no** en `context: fork`): necesita `AskUserQuestion` para dos gates —pedir un brief mínimo si no hay `--source` (Paso 3) y confirmar la sobreescritura si el PRD ya existe (Paso 4)—, una tool que no existe dentro de un subagente. La **redacción** del PRD la hace el agente `prd-expert` (carga `kb-prd-expert`), al que invocas **una sola vez** vía la tool `Agent`, en **foreground** (`run_in_background: false`, Paso 5), y de quien **esperas** el resultado.
+Este workflow corre en el **hilo principal** (igual que `wf-prd-review`, y **no** en `context: fork`): necesita `AskUserQuestion` para dos gates —pedir un brief mínimo si no hay `--source` (Paso 3) y confirmar la sobreescritura —de forma ponderada por riesgo— si el PRD ya existe (Paso 4)—, una tool que no existe dentro de un subagente. La **redacción** del PRD la hace el agente `prd-expert` (carga `kb-prd-expert`), al que invocas **una sola vez** vía la tool `Agent`, en **foreground** (`run_in_background: false`, Paso 5), y de quien **esperas** el resultado.
 
 **Regla de oro:** generas un PRD, no un Spec. Mantén el nivel en negocio, actores, alcance y reglas transversales.
 
@@ -68,20 +68,33 @@ No continúes sin esa base: si el usuario no aporta nada, no inventes el PRD. Si
 
 ---
 
-## Paso 4: Determinar el path de salida y confirmar sobreescritura
+## Paso 4: Determinar el path de salida y confirmar sobreescritura (ponderada por riesgo)
 
 Resuelve el path **antes** de delegar la escritura:
 - Si el usuario proporcionó `--output`, úsalo.
 - Si no (regla de layout): si `.sdd/project-init.json` (en `<directorio_proyecto>` o un ancestro) declara `artifacts.prd`, el path es `<raíz>/<artifacts.prd>/prd.md`; si no, por defecto `<directorio_proyecto>/prd.md`.
 
-Verifica si ya existe:
+Verifica si ya existe y, si existe, si está **sellado** (tiene un `Aprobado por:` relleno — señal de que pasó por `wf-prd-review`):
 ```bash
-!test -f "<path_calculado>" && echo "EXISTE" || echo "NO_EXISTE"
+!if [ ! -f "<path_calculado>" ]; then echo NO_EXISTE; elif grep -iq "Aprobado por:" "<path_calculado>" && ! grep -i "Aprobado por:" "<path_calculado>" | grep -qi pendiente; then echo EXISTE_SELLADO; else echo EXISTE_DRAFT; fi
 ```
-Si ya existe → confirma con `AskUserQuestion`:
-> "Ya existe `<path>`. ¿Deseas regenerarlo?"
-- **No** → informa el path del artefacto existente y **detén** (no delegues ni escribas).
-- **Sí** → continúa al Paso 5.
+> Sellado ⇔ existe una línea `Aprobado por:` **y** no contiene `pendiente`. (No uses `grep -v` en pipe: en BSD/macOS `<vacío> | grep -qv` devuelve 0, y clasificaría como sellado un PRD sin línea de sello.)
+
+La confirmación **no es un "¿seguro?" plano**: se pondera por lo que hay que perder. Actúa según el resultado:
+
+- **`NO_EXISTE`** → continúa al Paso 5.
+- **`EXISTE_SELLADO`** → **siempre** confirma con `AskUserQuestion`, avisando del descarte:
+  > "Ya existe un PRD **aprobado** en `<path>` (`Aprobado por: <rol>`). Regenerarlo **descarta el trabajo de review** (asunciones confirmadas y sello). ¿Regenerar de todas formas?"
+  - **No** → informa el path del PRD aprobado y **detén** (no delegues ni escribas). **Da igual lo explícito que fuera el comando**: un PRD sellado no se pisa sin confirmación.
+  - **Sí** → continúa al Paso 5.
+- **`EXISTE_DRAFT`** (draft sin sellar):
+  - Si la petición del usuario es una **intención explícita de regenerar/sobreescribir** ese PRD ("regenera", "rehaz", "vuélveme a generar", "sobreescribe" apuntando al artefacto) → el consentimiento **ya está dado**: continúa al Paso 5 **sin re-preguntar** (re-confirmar aquí es fricción redundante).
+  - Si la petición es **ambigua** (p. ej. "créame el PRD" y el usuario quizá no sabe que ya existe uno) → confirma con `AskUserQuestion`:
+    > "Ya existe `<path>` (draft). ¿Lo regenero (se sobreescribe) o prefieres conservarlo?"
+    - **Conservar / No** → informa el path y **detén**.
+    - **Regenerar / Sí** → continúa al Paso 5.
+
+> **Por qué ponderada** (ver `DECISIONS.md` D-024): el valor del gate no es "¿te refieres a este fichero?" —eso ya lo dice un comando explícito— sino **avisar de que se descarta un PRD revisado/sellado**. Confirmar siempre es *nagging* en el caso común (regenerar un draft que el usuario acaba de pedir regenerar); no confirmar nunca deja pisar en silencio trabajo aprobado. El sello `Aprobado por:` es la línea objetiva (canon: `kb-traceability-rules` Regla 10).
 
 ---
 

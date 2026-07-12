@@ -29,9 +29,9 @@ esta vista es la **transpuesta** para leer/ejecutar el CU.
 ### `wf-prd-create` — redactar el PRD (`prd-expert`) (5)
 - [x] CU-2.a — Crear el PRD desde notas ✅ validado 2026-07-08
 - [x] CU-2.b — Crear el PRD sin notas (brief oral) ✅ validado 2026-07-08
-- [ ] CU-2.c — Apuntar a un directorio o fuente inexistente
-- [ ] CU-2.d — Regenerar un PRD que ya existe
-- [ ] CU-2.i — Crear el PRD a una ruta de salida explícita (`--output`)
+- [x] CU-2.c — Apuntar a un directorio o fuente inexistente ✅ validado 2026-07-12
+- [x] CU-2.d — Regenerar un PRD que ya existe ✅ validado 2026-07-12 (ramas 1 sellado + 2 draft-explícito; rama 3 ambigua pendiente opcional)
+- [ ] CU-2.i — Crear el PRD a una ruta de salida explícita (`--output`) — evidencia colateral 2026-07-12 (falta corrida dedicada ×3)
 
 ### `wf-prd-review` — revisar el PRD y sellar (`prd-expert`) (4)
 - [ ] CU-2.e — Gate de asunciones + orden PRD→spec (lo más crítico, conversacional A-F)
@@ -192,16 +192,94 @@ el PRD con invención silenciosa.
 a ciegas.
 **Desviación → reportar:** issue citando `CU-2.c`.
 
-## CU-2.d — Regenerar un PRD que ya existe
+> **Validación (2026-07-12, consumer real `myops-app-specs`).** PASS en **cuatro** corridas que,
+> juntas, deslindan dos sub-casos que la ficha mezclaba —**fuente/base inexistente** (hard-stop) vs
+> **salida inexistente** (crear es legítimo)—:
+> - **(1) `--source` inexistente** (`docs/brief-producto.md`): nombró la ruta exacta, verificó que no
+>   había *ningún* `docs/` ni `.md` de notas en el repo, **no inventó el producto** y **paró** ofreciendo
+>   vías (ruta real / crear fichero / pegar en chat / entrevista guiada). Al elegir el usuario "lo creo yo",
+>   **esperó** sin escribir.
+> - **(3) directorio base inexistente** (`specs-legacy/`): due diligence ejemplar — lo buscó en el repo,
+>   en `~`, y en los **repos hermanos** (`myops-app-monorepo`, `-test`, …) antes de concluir que no existe;
+>   **paró** sin crear ni inventar.
+> - **(2) salida inexistente** (`entregables/prd/`): comprobó `OUT_NO_EXISTE` pero el run **colapsó en el
+>   gate de "no hay fuente"** (conducta de CU-2.b) — nunca llegó a decidir sobre la carpeta de salida. PASS
+>   del invariante (ni creó a ciegas ni inventó), pero el sub-caso de salida **no quedó aislado** aquí.
+> - **(4) salida inexistente CON fuente válida** (brief pegado + destino `entregables/prd/`): resuelve el
+>   matiz. El orquestador hizo `mkdir -p entregables/prd` (`DIR_CREADO`) y **escribió el PRD**, es decir,
+>   crear el **destino** pedido **no es** hard-stop (a diferencia de la **fuente**, que no se puede inventar).
+>
+> **Deslinde canónico que deja esta validación:** CU-2.c es "no trabajar a ciegas sobre lo que no existe",
+> y eso se aplica distinto según el rol de la ruta — **entrada** (source/dir base) → **parar** (runs 1, 3);
+> **salida** (`--output`/dir destino) → **crear y proceder** (run 4). En las cuatro se cumplió el núcleo:
+> nombrar la ruta exacta que falta y no fabricar producto.
+>
+> **Corolarios (no bloquean CU-2.c):**
+> - **Evidencia colateral de CU-2.i.** El run 4 escribió en `entregables/prd/prd.md` **exacto**, ignorando
+>   el default `artifacts.prd: "prd"` de `project-init.json` — el path explícito manda sobre el layout. Es
+>   evidencia directa del criterio de CU-2.i, pendiente aún de su corrida dedicada ×3.
+> - **`sdd-prd.md` sí se cargó en el subagente** (`Loaded .claude/rules/sdd-prd.md`) lanzando desde la raíz,
+>   y era la versión **fina D-023** (sin rootmap): señal a favor del enrutado-sin-rootmap (cf. hallazgo
+>   colateral de CU-2.a y D-023).
+> - **1:1 verificado por máquina** en el run 4 (20 inline = 20 `[ASN-XXX]`), sobre el `prd.md` real. El
+>   `prd-expert` devolvió path + huecos cualitativos **sin** recuento numérico (lo hace el orquestador con
+>   `grep`), y separó explícitamente trazado-al-brief vs inferido-marcado. Disciplina anti-fabricación intacta
+>   pese al brief breve.
+
+## CU-2.d — Regenerar un PRD que ya existe (confirmación ponderada por riesgo)
 
 **Precondición:** ya hay un `prd.md` en el destino.
-**Mecanismo:** skill `wf-prd-create` (confirmación antes de sobrescribir).
+**Mecanismo:** skill `wf-prd-create`, Paso 4 — la confirmación de sobreescritura es **ponderada por
+lo que hay que perder**, no un "¿seguro?" plano. El valor del gate no es "¿te refieres a este fichero?"
+(eso ya lo dice un comando explícito) sino **avisar de que se descarta un PRD revisado/sellado**. La
+línea objetiva del "hay algo que perder" es el sello `Aprobado por:` relleno. Ver `DECISIONS.md` **D-024**.
 
-1. Le pides crear el PRD de nuevo en el mismo sitio.
-   → **Esperado:** **pregunta** antes de regenerar; no sobrescribe sin tu confirmación.
+Tres ramas, según el estado del PRD existente y la petición:
 
-**Resultado:** PASS si pregunta antes de pisar · FALLO si sobrescribe sin confirmación.
+1. **PRD sellado** (`Aprobado por:` relleno, pasó por `wf-prd-review`) → **siempre** confirma, avisando
+   del descarte del trabajo de review; **da igual lo explícito que sea el comando**. Declinar → informa
+   el path y **detén**.
+   → **Esperado:** surfacea "PRD aprobado por `<rol>`; regenerar descarta review/sello" y espera; no pisa
+     sin confirmación.
+2. **Draft sin sellar + intención explícita de regenerar** ("regenera / rehaz / vuélveme a generar /
+   sobreescribe" apuntando al PRD) → **procede sin re-preguntar** (consentimiento dado; re-confirmar es
+   fricción redundante).
+   → **Esperado:** regenera directo; **no** monta un "¿seguro?" redundante tras una orden explícita.
+3. **Draft sin sellar + petición ambigua** ("créame el PRD" y el usuario quizá no sabe que ya existe uno)
+   → **gate ligero** ("ya existe, ¿regenero o conservo?"): protección anti-pisado accidental.
+   → **Esperado:** surfacea la existencia y pregunta antes de pisar.
+
+**Resultado:** PASS si (1) protege el PRD sellado con aviso de descarte aunque la orden sea explícita,
+(2) regenera un draft sin *nagging* cuando la orden es explícita, (3) surfacea la colisión ante petición
+ambigua · FALLO si pisa un PRD **sellado** sin confirmar, o si no surfacea la existencia ante una petición
+ambigua.
 **Desviación → reportar:** issue citando `CU-2.d`.
+
+> **Validación (2026-07-12, consumer real `myops-app-specs`).** Dos corridas sobre un `prd.md` **draft sin
+> sellar**, ambas con **intención explícita** de regenerar (rama 2) → **PASS**: el orquestador procedió a
+> regenerar **sin re-preguntar**, razonándolo ("'regenerar' implica sobreescribirlo, la confirmación está
+> dada" / "el usuario ya pidió explícitamente regenerar `prd/prd.md`"). Esa conducta es **correcta** bajo el
+> contrato ponderado: un draft que el usuario acaba de pedir regenerar no merece un "¿seguro?" redundante.
+> - **Descubrimiento que motivó D-024.** Estas corridas destaparon que el Paso 4 **original** ("siempre
+>   pregunta") era **tosco**: gate plano redundante en el caso común y ciego a lo único que importa (si el PRD
+>   está sellado). CU-2.d, tal como estaba escrito, probaba justo el caso de bajo riesgo (draft) y habría
+>   marcado FALLO una conducta que es correcta. Se reescribió el gate a ponderado-por-riesgo (D-024) y esta
+>   ficha a las 3 ramas. Mismo patrón de hallazgo que la Prueba 2 de CU-2.c: el test destapó una calibración
+>   tosca del contrato, no un incumplimiento del agente.
+> - **Rama 1 (PRD sellado) — corrida decisiva PASS (2026-07-12, skill ya actualizado a 0.60.0 en el consumidor).**
+>   PRD con sello simulado (`Aprobado por: Product Owner (2026-07-12)`) + orden **explícita** de regenerar con
+>   fuente inline. El orquestador detectó `EXISTE_SELLADO`, **paró pese al comando explícito**, avisó del
+>   descarte con precisión ("descartaría todo el trabajo de review: asunciones confirmadas y el sello"), y
+>   ofreció **rama de declinar real** ("Conservar el actual" / "Regenerar igualmente"). Al elegir conservar,
+>   dejó el fichero **intacto**. **Bonus:** redirigió motu proprio a la vía correcta —*"la vía correcta no es
+>   regenerar sino gestionar el cambio... que mantiene la trazabilidad"*— es decir, `wf-prd-change` (CU-7):
+>   el gate no solo protege, **enseña el camino bueno**. Esta corrida ejercita a la vez la detección del sello,
+>   el aviso de descarte y la **rama protectora** (declinar → no toca nada) — el núcleo de D-024.
+>   - *Nota de simulación:* el PRD sellado conservaba 18 `[ASUNCIÓN]` (contradice la regla "LISTO ⇒ 0 asunciones"),
+>     irrelevante para el gate (solo lee `Aprobado por:`). El orquestador no se despistó por ello.
+>   - *La rama "Sí, regenerar igualmente"* (proceder tras confirmar) es la conducta **pre-D-024** por defecto
+>     (siempre pisaba); riesgo bajo, no re-testeada aquí. *La rama 3 (draft + petición ambigua → gate ligero)*
+>     queda **pendiente opcional**: cubre el pisado accidental cuando el usuario no sabe que ya existe un PRD.
 
 ## CU-2.i — Crear el PRD a una ruta de salida explícita (`--output`)
 

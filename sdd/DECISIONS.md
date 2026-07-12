@@ -6,6 +6,30 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-024 — La confirmación de sobreescritura de artefactos se pondera por riesgo (sellado ≠ draft), no es un "¿seguro?" plano
+
+- **Fecha:** 2026-07-12 · **Estado:** Adoptada (implementada en `wf-prd-create` Paso 4; **principio general** para regeneración de artefactos en todas las fases). · **Relacionada:** [[D-020]] (readiness/sello mecánico del PRD), CU-2.d.
+
+**Contexto.** Al probar **CU-2.d** (regenerar un PRD que ya existe) sobre un consumidor real, el orquestador **no re-preguntó** antes de regenerar: razonó *"'regenerar' implica sobreescribirlo, la confirmación está dada"*. El Paso 4 de `wf-prd-create` **mandaba** un gate incondicional ("Ya existe `<path>`. ¿Deseas regenerarlo?" → No detiene). O sea: el agente **se saltó una instrucción escrita**. Pero al analizarlo, su conducta era **defensible**: tras un *"regenérame `prd/prd.md` con estas notas"* —consentimiento explícito y dirigido—, re-preguntar es *nagging* redundante (justo lo que un buen agente evita). El fallo de fondo no era del agente: era que el gate estaba **mal calibrado**. Un "¿seguro?" plano (a) es redundante cuando el comando ya es explícito y (b) es **ciego a lo único que de verdad importa**: si el PRD existente está **sellado/revisado** (asunciones confirmadas + `Aprobado por:`), regenerarlo desde un brief nuevo **destruye ese trabajo en silencio**. CU-2.d, tal como estaba, probaba solo el caso de bajo riesgo (draft) y habría marcado FALLO una conducta correcta.
+
+**Decisión.** La confirmación de sobreescritura al **regenerar un artefacto existente** se **pondera por riesgo**, con el estado de aprobación como línea objetiva:
+- **Artefacto sellado/aprobado** (para el PRD: `Aprobado por:` relleno, no `[pendiente]`) → **siempre** confirma, y el mensaje **avisa del descarte** del trabajo de review, **con independencia de lo explícito que sea el comando**. Declinar → detén sin escribir.
+- **Draft sin sellar + intención explícita de regenerar** → **procede sin re-preguntar** (el consentimiento ya está dado).
+- **Draft sin sellar + petición ambigua** (el usuario puede no saber que ya existe) → **gate ligero** que surfacea la colisión (protección anti-pisado accidental).
+
+Implementado ahora en `wf-prd-create` Paso 4 (detección con `grep "Aprobado por:" | grep -qv pendiente`). Se declara **principio general**: cualquier `wf-*` que regenere un artefacto con estado de aprobación/sellado (spec validado, DESIGN.md, plan VALIDADO, …) debe seguir la misma ponderación cuando se toque su flujo de regeneración — no se propaga a las otras fases en este cambio, se hereda al mantenerlas.
+
+**Alternativas descartadas.**
+- *"Siempre preguntar" (mantener el Paso 4 plano)* → convierte en FALLO una conducta correcta (regenerar un draft recién pedido); *nagging* redundante en el caso común. Máxima protección nominal, peor UX real.
+- *"Confiar en el comando explícito" (formalizar el salto del agente)* → cero fricción pero **cero red de seguridad**: deja pisar en silencio un PRD aprobado. Descarta justo el caso caro.
+- *Detectar "trabajo invertido" por heurística más rica (nº de ediciones, longitud, etc.)* → no hay señal objetiva y estable; el sello `Aprobado por:` es binario, canónico ([[D-020]] / `kb-traceability-rules` Regla 10) y ya existe. Un draft muy editado a mano pero sin sellar no se protege — trade-off asumido: es coherente con su `status: draft`.
+
+**Consecuencias / aprendizaje.** Un gate de confirmación no vale por interrumpir, sino por **la información que carga**: "¿te refieres a este fichero?" ya lo responde un comando explícito; lo que merece interrumpir es "vas a **descartar trabajo aprobado**". Cuando un test de conformance (CU-2.d) marca como desviación una conducta que resulta razonable, la lección suele ser que **el contrato está mal calibrado, no el agente** — mismo patrón que la Prueba 2 de CU-2.c (gate adyacente enmascarando el propio). Backstop determinista: `test_prd_create_overwrite_gate_is_risk_weighted` en `test_install_sh.py` (las 3 ramas siguen en el skill instalado).
+
+**Referencias.** `sdd/pipeline/prd/skills/wf-prd-create/SKILL.md` (Paso 4), `sdd/conformance/casos-de-uso/cu-02-prd.md` (CU-2.d reescrito a 3 ramas + validación 2026-07-12), `sdd/tests/test_install_sh.py` (backstop), `sdd/CHANGELOG.md`.
+
+---
+
 ## D-023 — Rootmap plano eliminado del cuerpo lazy; el pre-gate CU-13 se releva por reversibilidad + validación rodada
 
 - **Fecha:** 2026-07-11 · **Estado:** Adoptada. Completa y supersede el paso pendiente de [[D-022]] (borrado del rootmap plano). · **Relacionada:** [[D-022]] (dejó este paso gated), [[D-021]] (carril eager), [[D-018]] (dual-audience).

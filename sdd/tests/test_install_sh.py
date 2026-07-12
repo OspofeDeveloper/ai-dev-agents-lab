@@ -136,6 +136,20 @@ class InstallAllTest(InstallBase):
             self.assertNotIn("## Rootmap de workflow skills", rule,
                              f"sdd-{p}.md reintroduce la tabla rootmap (ver D-023)")
 
+    def test_prd_create_overwrite_gate_is_risk_weighted(self):
+        # D-024: el gate de sobreescritura de wf-prd-create es ponderado por
+        # riesgo, no un "¿seguro?" plano. Debe distinguir PRD sellado (siempre
+        # confirma, avisa del descarte) de draft (regenera sin nagging si la
+        # orden es explícita). Backstop: las 3 ramas siguen en el skill instalado.
+        self.install("all")
+        skill = (self.skill_dir("wf-prd-create") / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("EXISTE_SELLADO", skill,
+                      "wf-prd-create pierde la rama de PRD sellado (ver D-024)")
+        self.assertIn("EXISTE_DRAFT", skill,
+                      "wf-prd-create pierde la rama de draft (ver D-024)")
+        self.assertIn("Aprobado por:", skill,
+                      "wf-prd-create pierde la detección de sello (ver D-024)")
+
     def test_routing_rule_has_spec_precondition(self):
         # La readiness/precondición de spec ya NO vive en la regla de fase lazy
         # (sdd-spec.md): se relocalizó al carril eager (sdd-routing.md, y la frontera
