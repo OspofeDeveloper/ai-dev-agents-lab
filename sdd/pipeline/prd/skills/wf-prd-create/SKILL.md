@@ -12,7 +12,7 @@ user-invocable: true
 
 Tu objetivo es ayudar al usuario a crear un `prd.md` usable por el pipeline SDD. Delegas la redacción del contenido al agente `prd-expert`.
 
-Este workflow corre en el **hilo principal** (igual que `wf-prd-review`, y **no** en `context: fork`): necesita `AskUserQuestion` para dos gates —pedir un brief mínimo si no hay `--source` (Paso 3) y confirmar la sobreescritura —de forma ponderada por riesgo— si el PRD ya existe (Paso 4)—, una tool que no existe dentro de un subagente. La **redacción** del PRD la hace el agente `prd-expert` (carga `kb-prd-expert`), al que invocas **una sola vez** vía la tool `Agent`, en **foreground** (`run_in_background: false`, Paso 5), y de quien **esperas** el resultado.
+Este workflow corre en el **hilo principal** (igual que `wf-prd-review`, y **no** en `context: fork`): necesita `AskUserQuestion` para dos gates —pedir un brief mínimo si no hay `--source` (Paso 3), preguntar si la ruta de salida explícita diverge del layout del proyecto (Paso 4a) y confirmar la sobreescritura —de forma ponderada por riesgo— si el PRD ya existe (Paso 4b)—, una tool que no existe dentro de un subagente. La **redacción** del PRD la hace el agente `prd-expert` (carga `kb-prd-expert`), al que invocas **una sola vez** vía la tool `Agent`, en **foreground** (`run_in_background: false`, Paso 5), y de quien **esperas** el resultado.
 
 **Regla de oro:** generas un PRD, no un Spec. Mantén el nivel en negocio, actores, alcance y reglas transversales.
 
@@ -70,11 +70,23 @@ No continúes sin esa base: si el usuario no aporta nada, no inventes el PRD. Si
 
 ## Paso 4: Determinar el path de salida y confirmar sobreescritura (ponderada por riesgo)
 
-Resuelve el path **antes** de delegar la escritura:
-- Si el usuario proporcionó `--output`, úsalo.
-- Si no (regla de layout): si `.sdd/project-init.json` (en `<directorio_proyecto>` o un ancestro) declara `artifacts.prd`, el path es `<raíz>/<artifacts.prd>/prd.md`; si no, por defecto `<directorio_proyecto>/prd.md`.
+### 4a — Resolver el path de salida (la ruta explícita del usuario es autoritativa)
 
-Verifica si ya existe y, si existe, si está **sellado** (tiene un `Aprobado por:` relleno — señal de que pasó por `wf-prd-review`):
+Determina el path **antes** de delegar, respetando lo que pidió el usuario:
+- **Path estándar del proyecto**: si `.sdd/project-init.json` (en `<directorio_proyecto>` o un ancestro) declara `artifacts.prd`, es `<raíz>/<artifacts.prd>/prd.md`; si no, por defecto `<directorio_proyecto>/prd.md`.
+- **Si el usuario NO dio ruta** → usa el path estándar directamente (sin preguntar).
+- **Si el usuario dio una ruta explícita** —flag `--output` **o** en lenguaje natural ("déjalo en X", "guárdalo en Y", "escríbelo en Z")— es **autoritativa**, no la ignores:
+  - Si **coincide** con el path estándar → úsala.
+  - Si **diverge** del estándar → **NO decidas por tu cuenta** (ni redirigir en silencio al estándar, ni honrar en silencio sin avisar). Pregunta con `AskUserQuestion`:
+    > "El flujo estándar deja el PRD en `<estándar>` (donde `wf-prd-review` y `wf-spec-analyze` lo buscan). Pediste `<ruta_dada>`. ¿Dónde lo genero?"
+    - **Usar `<estándar>` (recomendado)** → path = estándar.
+    - **Dejarlo en `<ruta_dada>`** → path = la ruta dada; avisa en una línea de que el pipeline no lo encontrará ahí automáticamente.
+
+> **Por qué preguntar y no redirigir** (ver `DECISIONS.md` D-025): la ruta explícita manda, pero el usuario probablemente **no sabe** que el pipeline espera `artifacts.prd`. Interrumpir para **informarle de lo que no sabe** (y dejarle elegir) **no es** *nagging*; redirigir en silencio a `prd/` **sí** pisa su intención, y un mensaje pasivo se ignora → el fallo aparece tarde (review/specs no encuentran el PRD). Es el reverso de D-024: allí no se pregunta porque el usuario ya lo sabe todo; aquí sí, porque le falta el dato.
+
+### 4b — Verificar existencia y sello del path resuelto (ponderado por riesgo)
+
+Sobre el path resuelto en 4a, verifica si ya existe y, si existe, si está **sellado** (tiene un `Aprobado por:` relleno — señal de que pasó por `wf-prd-review`):
 ```bash
 !if [ ! -f "<path_calculado>" ]; then echo NO_EXISTE; elif grep -iq "Aprobado por:" "<path_calculado>" && ! grep -i "Aprobado por:" "<path_calculado>" | grep -qi pendiente; then echo EXISTE_SELLADO; else echo EXISTE_DRAFT; fi
 ```
@@ -118,9 +130,15 @@ Indícale explícitamente:
 
 ---
 
-## Paso 6: Informar al usuario
+## Paso 6: Asegurar el frontmatter e informar al usuario
 
-El `prd-expert` ya escribió el PRD en el path (Paso 5). Tras recibir su resultado, informa:
+El `prd-expert` ya escribió el PRD en el path (Paso 5). **Antes de informar**, asegura el frontmatter obligatorio de forma **determinista** — el agente transcribe los 5 campos (`type`, `product`, `version`, `created`, `status`) del template pero omite alguno de forma intermitente, sobre todo `status` (`kb-sdd-conformance` Regla 9: lo verificable por máquina no se deja al juicio del agente):
+```bash
+!python3 .sdd/scripts/sdd-prd-frontmatter.py "<path>" --fix
+```
+`--fix` repone con su valor canónico los campos mecánicos que falten (`type: product-requirements`, `version: 1.0`, `created: <hoy>`, `status: draft`). Si sale con exit ≠0 porque falta **`product`** (hueco de contenido real, no auto-completable), pídeselo al usuario o re-delega la redacción — **no lo inventes**.
+
+Tras recibir su resultado, informa:
 - path del PRD generado
 - si se usó o no archivo fuente
 - **número de `[ASUNCIÓN]` marcadas**, obtenido de forma determinista con `grep -c "\[ASUNCIÓN" <path>` (**nunca** de la narración del agente: cuenta mal sobre su propio texto), y aviso de que el PRD **no está listo** hasta confirmarlas: son afirmaciones que la generación infirió, no datos que el usuario haya dado. Cuantas más, más débil era la fuente.

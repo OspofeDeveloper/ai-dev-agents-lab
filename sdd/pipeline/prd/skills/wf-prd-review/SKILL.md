@@ -91,6 +91,11 @@ A diferencia del resto de `wf-prd-review` (que solo diagnostica), aquí **sí** 
 
 Si el veredicto es `LISTO` (y por tanto no quedan `[ASUNCIÓN]` pendientes tras el Paso 5.5), registra la **atribución de aprobación humana** del gate antes de emitir el veredicto, según `kb-traceability-rules` Regla 10:
 
+0. **Frontmatter completo antes de sellar.** Un PRD que se va a aprobar no debe tener campos obligatorios ausentes (`kb-prd-expert` Regla 3). Asegúralo de forma determinista:
+   ```bash
+   !python3 .sdd/scripts/sdd-prd-frontmatter.py "<path>" --fix
+   ```
+   Repone los campos mecánicos que falten (`type`, `version`, `created`, `status`). Si sale con exit ≠0 por falta de `product`, no selles: es un hueco de contenido que hay que resolver antes.
 1. Captura el rol aprobador con `AskUserQuestion` (default `PM` / `Product Owner`), permitiendo confirmar el rol o dar nombre.
 2. Si el usuario responde, escribe en el header/metadata del PRD (junto a versión/fecha del documento) la línea `Aprobado por: <rol> (<fecha real de tu contexto>)`. En re-revisión, sobrescribe la línea previa. **No autoapruebes**: si no hay respuesta, no escribas la línea.
 

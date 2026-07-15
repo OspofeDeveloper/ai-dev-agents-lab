@@ -31,7 +31,7 @@ esta vista es la **transpuesta** para leer/ejecutar el CU.
 - [x] CU-2.b — Crear el PRD sin notas (brief oral) ✅ validado 2026-07-08
 - [x] CU-2.c — Apuntar a un directorio o fuente inexistente ✅ validado 2026-07-12
 - [x] CU-2.d — Regenerar un PRD que ya existe ✅ validado 2026-07-12 (ramas 1 sellado + 2 draft-explícito; rama 3 ambigua pendiente opcional)
-- [ ] CU-2.i — Crear el PRD a una ruta de salida explícita (`--output`) — evidencia colateral 2026-07-12 (falta corrida dedicada ×3)
+- [x] CU-2.i — Crear el PRD a una ruta de salida explícita (`--output`) ✅ validado 2026-07-15 (gate D-025, ×3, ambas ramas)
 
 ### `wf-prd-review` — revisar el PRD y sellar (`prd-expert`) (4)
 - [ ] CU-2.e — Gate de asunciones + orden PRD→spec (lo más crítico, conversacional A-F)
@@ -285,15 +285,57 @@ ambigua.
 
 **Precondición:** pides el PRD indicando un destino concreto distinto del layout por defecto
 (ni `artifacts.prd` ni `<dir>/prd.md`).
-**Mecanismo:** skill `wf-prd-create` (Paso 5: la rama `--output` tiene prioridad sobre
-`artifacts.prd` y sobre el default `<dir>/prd.md`).
+**Mecanismo:** skill `wf-prd-create`, **Paso 4a** — la ruta explícita (flag `--output` **o**
+lenguaje natural, "déjalo en X") es **autoritativa**. Si **coincide** con el estándar, se usa; si
+**diverge**, el orquestador **pregunta** (`AskUserQuestion`: estándar recomendado / ruta dada),
+nunca redirige en silencio ni honra en silencio sin avisar. Ver `DECISIONS.md` **D-025**.
 
-1. Le pides crear el PRD con una ruta de salida explícita.
-   → **Esperado:** escribe el PRD **exactamente en esa ruta** y reporta ese path; no usa
-     `artifacts.prd` ni `<dir>/prd.md`.
+1. Le pides crear el PRD con una ruta de salida explícita **que diverge** del layout del proyecto.
+   → **Esperado:** **surfacea la divergencia** con `AskUserQuestion` (el pipeline espera
+     `artifacts.prd`; ¿estándar o la ruta dada?). Si eliges la ruta dada, escribe **exactamente
+     ahí** (creando el dir) y reporta ese path, avisando de que el pipeline no lo encontrará
+     automáticamente. Si eliges el estándar, usa `artifacts.prd/prd.md`.
+2. Le pides crear el PRD con una ruta explícita que **coincide** con el estándar.
+   → **Esperado:** la usa directamente, sin preguntar.
 
-**Resultado:** PASS si respeta la ruta dada · FALLO si la ignora y cae al layout por defecto.
+**Resultado:** PASS si ante divergencia **pregunta** y respeta la elección (honra la ruta dada si la
+confirmas) · FALLO si **redirige en silencio** al default (el bug de la corrida 3) o si decide
+unilateralmente por el usuario.
 **Desviación → reportar:** issue citando `CU-2.i`.
+
+> **Validación (2026-07-12/13, consumer real `myops-app-specs`, skill 0.60.0).** ×3 corridas con rutas
+> no-default — y aquí la Regla 9 (≥3 corridas) **se ganó el sueldo**:
+> - **Corrida 1** (`docs/prd-finanzad.md`) y **corrida 2** (`entregables/v2/documento-producto.md`) → el
+>   orquestador **honró la ruta exacta** (creó el dir, escribió ahí, reportó el path; no cayó al default).
+>   La corrida 1 cubrió de paso la variante "nombre de fichero custom". **Bajo el contrato viejo eran PASS;
+>   bajo D-025 son *parciales*** (honraron pero **no surfacearon** la divergencia de coherencia).
+> - **Corrida 3** (`salidas/prd-app.md`) → **FALLO**: el orquestador **ignoró la ruta y redirigió en
+>   silencio a `prd/prd.md`**, razonando *"para mantener el pipeline coherente"*. Decisión **unilateral**
+>   (la anunció, pero no dio elección). Es el FALLO literal del caso y contradice el Paso 4.
+> - **Diagnóstico → D-025.** Comportamiento **no determinista** (2 honra / 1 redirige, misma clase de
+>   petición). El arreglo (Paso 4a): la ruta explícita es autoritativa; en divergencia se **pregunta**,
+>   nunca se redirige en silencio. **Re-validación ×3 pendiente** con el skill parcheado.
+> - **Colaterales anotados:**
+>   - *Frontmatter `status` omitido* en corridas 2 y 3 (reincidente) — desvío determinista de estructura
+>     (`kb-prd-expert` Regla 3 pide los 5 campos). Paliado con un tweak del template (valor concreto +
+>     "los 5 son obligatorios"); el cierre real es el backstop determinista pendiente (`wf-prd-review`
+>     Paso 5.5, CHANGELOG 0.50.0). Evidencia adicional para CU-2.a.
+>   - *Nombre de producto "Finanzad"* fabricado del typo del fichero en la corrida 1 **no reincidió**
+>     (corridas 2/3 usaron descriptor genérico o marcaron) → one-off, no deriva sistemática.
+>   - *Recuperación grácil* tras corte por límite de sesión en la corrida 2 (relanzó sin doble escritura).
+>
+> **Re-validación con el gate D-025 (2026-07-15, skill 0.61.0→0.62.0). ×3 → PASS, CU-2.i SELLADO.**
+> - **Run 1** (`informes/prd-x.md`, resp. "ruta dada") y **Run 2** (`output/mi-prd.md`, resp. "ruta dada") → el gate
+>   **disparó el `AskUserQuestion`** (estándar recomendado / ruta dada) y **honró la ruta dada exacta** (creó el dir)
+>   **+ avisó** de que el pipeline no la encuentra sola. Cero redirección silenciosa.
+> - **Run 3** (`docs/v3/prd-final.md`, resp. "estándar", con `prd/prd.md` borrado antes) → gate disparó y, al elegir
+>   estándar, **enrutó a `prd/prd.md`** (no a la ruta dada) sin encadenar el gate D-024. Cubre la otra rama.
+> - **3/3, ambas ramas** (ruta dada ×2, estándar ×1). El FALLO de la corrida 3 original (redirección **unilateral** al
+>   default) **no reapareció** — D-025 lo cierra.
+> - **Frontmatter (0.62.0) validado de paso:** en runs 2 y 3 el orquestador corrió `sdd-prd-frontmatter.py --fix` en el
+>   Paso 6 → `COMPLETO`. En ambos el `--fix` fue no-op (el agente incluyó `status`; en el run 3 el prompt de delegación
+>   ya listaba los 5 campos), así que quedó confirmada la **integración**; la **reparación** (agente omite → script
+>   repone) la prueban los unit tests de `test_sdd_prd_frontmatter.py`. Cierra el colateral de `status` de CU-2.a/2.i.
 
 ---
 

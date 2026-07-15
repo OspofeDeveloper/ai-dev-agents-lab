@@ -2,6 +2,25 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.62.0 — 2026-07-15
+
+**Validador determinista del frontmatter del PRD** — cierra el desliz intermitente del `prd-expert` que omite campos del frontmatter (sobre todo `status`), observado en CU-2.i. Aplicación de `kb-sdd-conformance` Regla 9 (lo verificable por máquina no se deja al juicio del agente); no es contrato nuevo, así que sin D-NNN.
+
+- ⚠ **`sdd-prd-frontmatter.py`** (nuevo enforcement script): valida los 5 campos obligatorios (`type`, `product`, `version`, `created`, `status`); `--fix` repone los 4 mecánicos con su valor canónico (`status: draft`, etc.), nunca inventa `product` (contenido). Exit 0 completo / 1 uso-IO / 2 incompleto.
+- ⚠ **`wf-prd-create` Paso 6**: corre `sdd-prd-frontmatter.py --fix` tras escribir el PRD → el frontmatter nunca queda incompleto por un desliz del agente.
+- ⚠ **`wf-prd-review` Paso 6**: valida frontmatter completo (`--fix`) antes de sellar.
+- **Tests:** `test_sdd_prd_frontmatter.py` (unit, 9 casos) + `sdd-prd-frontmatter.py` añadido a `ENFORCEMENT_SCRIPTS`.
+- Nota: el tweak del template (0.61.0) no bastó (el agente siguió omitiendo `status` con la guía parcheada) — este validador es el cierre real.
+
+## 0.61.0 — 2026-07-13
+
+**Ruta de salida explícita autoritativa en `wf-prd-create` (gate de divergencia)** — [[DECISIONS D-025]]. CU-2.i (×3) destapó que el orquestador honraba rutas no-default 2 de 3 veces pero en la 3ª **redirigía en silencio** `salidas/prd-app.md` → `prd/prd.md` "por coherencia del pipeline". No determinista → bug.
+
+- ⚠ **`wf-prd-create` Paso 4a** (skill instalable): la ruta explícita (flag `--output` o lenguaje natural) es **autoritativa**. Si coincide con el estándar (`artifacts.prd`), se usa; si **diverge**, `AskUserQuestion` (estándar recomendado / ruta dada) — **nunca** redirigir en silencio ni honrar sin avisar. Principio unificador con D-024: interrumpir para informar lo que el usuario no sabe, no para re-confirmar lo que ya dijo.
+- ⚠ **`kb-prd-expert` `prd_structure_guide.md`** (tweak paliativo): frontmatter con valor concreto `status: draft` + nota "los 5 campos son obligatorios" — reduce el desliz de omitir `status` (reincidente en CU-2.i corridas 2/3). El cierre real sigue siendo el backstop determinista pendiente (Paso 5.5, CHANGELOG 0.50.0).
+- **Test:** nuevo `test_prd_create_honors_explicit_output_path`.
+- **CU-2.i** reescrito a la conducta D-025; corrida 3 FALLO registrada, re-validación ×3 pendiente con el skill parcheado.
+
 ## 0.60.0 — 2026-07-12
 
 **Gate de sobreescritura de `wf-prd-create` ponderado por riesgo** — [[DECISIONS D-024]]. CU-2.d destapó que el Paso 4 ("siempre pregunta antes de regenerar") estaba mal calibrado: re-preguntar tras un "regenérame `prd/prd.md`" explícito es *nagging* redundante, y a la vez el gate era ciego a lo único que importa (si el PRD está sellado). Se reescribe a tres ramas.

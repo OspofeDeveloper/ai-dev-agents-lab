@@ -8,13 +8,15 @@ El pipeline acepta varias organizaciones internas del alcance. Este documento mu
 
 ## Estructura completa
 
+> **Frontmatter: los cinco campos son obligatorios** (`type`, `product`, `version`, `created`, `status`) — no omitas ninguno. `status` arranca en `draft`; lo sube `wf-prd-review`.
+
 ```markdown
 ---
 type: product-requirements
 product: [nombre del producto]
 version: 1.0
 created: [YYYY-MM-DD]
-status: draft | in-review | approved
+status: draft   # valores posibles: draft | in-review | approved
 ---
 
 # PRD: [Nombre del Producto]

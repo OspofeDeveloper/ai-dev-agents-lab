@@ -6,6 +6,25 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-025 — Una ruta de salida explícita es autoritativa; en divergencia con el layout se pregunta, nunca se redirige en silencio
+
+- **Fecha:** 2026-07-13 · **Estado:** Adoptada (implementada en `wf-prd-create` Paso 4a). · **Relacionada:** [[D-024]] (gate de sobreescritura del mismo Paso 4; reverso de su principio), CU-2.i.
+
+**Contexto.** Validando **CU-2.i** (`--output` explícito) con ≥3 corridas (Regla 9 de `kb-sdd-conformance`), 2 corridas honraron rutas no-default (`docs/…`, `entregables/v2/…`) pero la 3ª —misma clase de petición, "déjalo en `salidas/prd-app.md`"— el orquestador **la ignoró y redirigió en silencio a `prd/prd.md`**, razonando *"para mantener el pipeline coherente"* (`artifacts.prd` = `prd/`). Eso es el FALLO literal de CU-2.i y contradice el Paso 4 (*"si `--output`, úsalo"*). Comportamiento **no determinista** (2 PASS / 1 FALLO) — de no haber corrido las 3, se sella con un bug dentro. La tensión es real: si el PRD acaba en `salidas/`, `wf-prd-review`/`wf-spec-analyze` (que miran `artifacts.prd`) no lo encuentran. Pero **redirigir en silencio la intención explícita del usuario es peor** que el riesgo de coherencia, y un mensaje pasivo se ignora → el fallo aparece tarde.
+
+**Decisión.** La ruta de salida que da el usuario —flag `--output` **o** en lenguaje natural ("déjalo en X")— es **autoritativa**. Si **coincide** con el path estándar (`artifacts.prd/prd.md` o el default), se usa sin más. Si **diverge**, el orquestador **no decide por su cuenta**: `AskUserQuestion` con dos opciones —**usar el estándar (recomendado)**, explicando que el pipeline lo espera ahí; o **dejarlo en la ruta dada**, avisando de que el pipeline no lo encontrará automáticamente—. **Prohibido** redirigir en silencio al estándar y **prohibido** honrar en silencio sin surfacear la divergencia.
+
+**Alternativas descartadas.**
+- *Redirigir al estándar (lo que hizo la corrida 3)* → pisa la intención explícita del usuario y contradice el contrato; además fue unilateral (lo anunció pero no dio elección).
+- *Honrar en silencio + mensaje pasivo* → respeta la ruta pero el aviso de coherencia **se ignora** en el muro de salida; el usuario descubre tarde que review/specs no encuentran el PRD. Sin la interacción, el dato que le falta (el pipeline espera `prd/`) no aterriza a tiempo.
+- *Honrar siempre sin avisar* → mismo problema de coherencia sin ninguna señal.
+
+**Consecuencias / aprendizaje.** Complementa a [[D-024]] y cierra el **principio unificador de cuándo interrumpir**: *interrumpe para informar lo que el usuario **no sabe** y cambia su decisión; no interrumpas para re-confirmar lo que ya te dijo.* En D-024 (draft + "regenera") no se pregunta porque el usuario lo sabe todo; aquí sí, porque le falta el dato del layout. Regla 9 vindicada: la 3ª corrida cazó lo que 1-2 habrían sellado como PASS. Backstop: `test_prd_create_honors_explicit_output_path` en `test_install_sh.py` (el gate de divergencia sigue en el skill instalado).
+
+**Referencias.** `sdd/pipeline/prd/skills/wf-prd-create/SKILL.md` (Paso 4a), `sdd/conformance/casos-de-uso/cu-02-prd.md` (CU-2.i reescrito + corrida 3 FALLO), `sdd/tests/test_install_sh.py` (backstop), `sdd/CHANGELOG.md`.
+
+---
+
 ## D-024 — La confirmación de sobreescritura de artefactos se pondera por riesgo (sellado ≠ draft), no es un "¿seguro?" plano
 
 - **Fecha:** 2026-07-12 · **Estado:** Adoptada (implementada en `wf-prd-create` Paso 4; **principio general** para regeneración de artefactos en todas las fases). · **Relacionada:** [[D-020]] (readiness/sello mecánico del PRD), CU-2.d.

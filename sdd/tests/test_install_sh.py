@@ -32,7 +32,7 @@ ENFORCEMENT_SCRIPTS = [
     "sdd-skill-allow.py", "sdd-amend.py", "sdd-features-index.py",
     "sdd-project-status.py", "sdd-kb-check.py", "sdd-release.py", "sdd-next-id.py",
     "sdd-resolve-path.py", "sdd-design-resolve.py", "sdd-source-drift.py",
-    "sdd-prd-ready.py",
+    "sdd-prd-ready.py", "sdd-prd-frontmatter.py",
 ]
 
 
@@ -149,6 +149,20 @@ class InstallAllTest(InstallBase):
                       "wf-prd-create pierde la rama de draft (ver D-024)")
         self.assertIn("Aprobado por:", skill,
                       "wf-prd-create pierde la detección de sello (ver D-024)")
+
+    def test_prd_create_honors_explicit_output_path(self):
+        # D-025: la ruta de salida explícita es autoritativa; si diverge del
+        # layout del proyecto, wf-prd-create pregunta (AskUserQuestion), nunca
+        # redirige en silencio al default. Backstop: el gate de divergencia
+        # (Paso 4a) sigue en el skill instalado.
+        self.install("all")
+        skill = (self.skill_dir("wf-prd-create") / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("autoritativa", skill,
+                      "wf-prd-create pierde que la ruta explícita es autoritativa (ver D-025)")
+        self.assertIn("diverge", skill,
+                      "wf-prd-create pierde el gate de divergencia de ruta (ver D-025)")
+        self.assertIn("D-025", skill,
+                      "wf-prd-create pierde la referencia a D-025")
 
     def test_routing_rule_has_spec_precondition(self):
         # La readiness/precondición de spec ya NO vive en la regla de fase lazy
