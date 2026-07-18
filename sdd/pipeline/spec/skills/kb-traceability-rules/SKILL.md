@@ -108,13 +108,13 @@ Cuando una **aclaración** de un CA (la intención no cambia; solo se precisa te
 Los tres gates donde el pipeline sella el avance de fase —`wf-prd-review` (PRD), `wf-plan-validate` (Plan), `wf-qa-verify` (QA)— registran **quién aprobó el gate** en el header del artefacto. Esto da trazabilidad de autoría en proyectos multi-desarrollador. Esta regla es la SSoT del convenio; las KBs de fase (`kb-prd-expert`, `kb-plan-expert`, `kb-qa-expert`) la referencian, no la redefinen.
 
 ```
-Aprobado por: <rol> (<YYYY-MM-DD>)
+Aprobado por: <nombre> [(<rol>)] (<YYYY-MM-DD>)
 ```
 
-- **Qué es**: registro del checkpoint humano del gate. El `<rol>` puede llevar nombre si el usuario lo da (`Tech Lead — Ana (2026-06-09)`).
+- **Qué es**: registro del checkpoint humano del gate — **quién** aprobó. El valor prioritario es la **identidad de la persona** (nombre); el rol es **opcional** y complementario (`Oscar Pozo (Product Owner) (2026-06-09)`). Un rol pelado (`PM`) no identifica a nadie en un equipo con varios: por eso el nombre es lo que da la trazabilidad de autoría que persigue esta regla ([[D-027]]).
 - **Dato humano, no verificable**: a diferencia del `derived_from_prd_hash` (Regla 1) o del `Estado:` del plan, `Aprobado por` **no es mecánicamente verificable** — ningún script lo escribe ni lo valida. Es el mismo tipo de anotación de header que escribe el orquestador que la `Aprobada por` per-TD de la deuda técnica del plan (`kb-plan-expert`), distinta del sello operativo.
 - **Único escritor**: el **orquestador/workflow del gate**, en el momento de aprobar, con la fecha real de su contexto. `sdd-seal.py` y los gates **no lo tocan** (no es verificable). Esto invierte el reparto autor≠sellador de las Reglas 1 y 9: aquí no hay verificador mecánico porque no hay nada mecánico que verificar.
-- **Captura del rol**: el workflow lo pregunta con `AskUserQuestion` (default por fase), permitiendo confirmar el rol o dar nombre. **No autoaprobar**: si el usuario no responde, no se escribe la línea.
+- **Captura de la identidad**: el workflow la pregunta con `AskUserQuestion` **precargando el nombre con `git config user.name`** como default (misma filosofía que capturar el SHA en `sdd-release.py`: no teclear lo que git ya sabe), con el **rol por fase como opcional**. El usuario confirma el nombre, lo cambia o añade rol; si git no da nombre, cae al rol por defecto. **No autoaprobar**: si el usuario no responde, no se escribe la línea.
 - **Solo cuando el gate PASA**: se escribe únicamente con resultado positivo del gate. Si el gate no pasa, la línea **no** se escribe.
 
 | Gate | Workflow | Default rol | Se escribe cuando | NO se escribe cuando |

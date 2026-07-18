@@ -16,6 +16,7 @@ Principios que gobiernan **cómo se avanza entre fases** del pipeline SDD, indep
 ## Los gates son de su fase; no se bypasean
 
 - Los workflow skills tienen sus propias validaciones de precondición. **No se bypasean.** Si un skill reporta bloqueos o pendientes, el hilo principal los comunica al usuario y espera a que los resuelva antes de reintentar.
+- **Los overrides `--allow-*` los arma el usuario, nunca el hilo principal ([[D-026]]).** Los flags de escape (`--allow-unreviewed-prd`, `--allow-open-critical-gaps`, `--allow-derived-scope-from-analysis`, …) desactivan un gate de seguridad; **no** se auto-suministran ni se infieren de una petición impaciente ("genérame ya las specs" **no** es "asumo alcance no revisado"). Ante una precondición que un `--allow-*` cruzaría: invoca el skill **sin** el override → el gate se detiene y **devuelve el bloqueo al hilo principal** → surfacéalo y **presenta la elección explícita con `AskUserQuestion`** (p. ej. *revisar/cerrar primero* vs. *continuar asumiendo el riesgo*) → **solo** re-invoca con el `--allow-*` si el usuario elige forzar. Auto-armar el flag es un bypass en espíritu: el gate nunca llega a reportar el bloqueo. Mismo principio que [[D-024]]/[[D-025]]: interrumpir para que el usuario decida conscientemente lo de alto impacto, sin re-confirmar lo que ya dijo.
 
 ## Comunicación con el usuario
 

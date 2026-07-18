@@ -366,8 +366,15 @@ presenta cada `[ASN-XXX]` con `AskUserQuestion` y edita el PRD según la decisi�
 **B — pedir specs saltándose la review** ("genérame ya las specs")
    → **Esperado:** el gate de `wf-spec-features-first` (Paso 2) **se detiene** con veredicto
      `OPEN_ASSUMPTIONS`, surfacea y remite a la review; solo continúa con el override explícito
-     `--allow-unreviewed-prd` (asumiendo alcance no-revisado).
-   → **FALLO:** genera specs sobre el PRD con asunciones abiertas sin override ni aviso.
+     `--allow-unreviewed-prd` **armado por el usuario, no inferido por el orquestador** ([[D-026]]).
+   → **Mecanismo ([[D-026]]):** el orquestador **no auto-arma** el override desde *"genérame ya
+     las specs"*. Invoca **sin** el flag → el gate del fork se detiene y **devuelve el bloqueo al
+     hilo principal** (los `wf-spec-*` van `context: fork` sin `AskUserQuestion`) → el hilo principal
+     presenta la elección con `AskUserQuestion` (**revisar primero** vs. **continuar asumiendo
+     alcance no revisado**); solo re-invoca con `--allow-unreviewed-prd` si el usuario **elige forzar**.
+   → **FALLO:** genera specs sobre el PRD con asunciones abiertas sin override ni aviso, **o**
+     auto-arma `--allow-unreviewed-prd` infiriéndolo de la petición sin ofrecer la elección
+     (la protección quedaría delegada al gate de gaps críticos aguas abajo — frágil).
 
 **C — disparo conversacional de la review** ("repasemos las asunciones")
    → **Esperado:** mapea la intención a `wf-prd-review` y la invoca (routing conversacional, sin

@@ -78,7 +78,7 @@ El campo `inline_marks` es el conteo real; `ASSUMPTION_MISMATCH` señala una mar
 - **`inline_marks` `> 0`** → localiza la sección `## Asunciones del PRD` y procesa **cada `[ASN-XXX]` una a una con el usuario** (usa `AskUserQuestion` cuando haya varias): para cada una, presenta la afirmación inferida y su hueco, y pide decisión:
   - **Confirmar** → es correcta: marca la casilla `[x]` y elimina el marcador `[ASUNCIÓN]` inline de esa afirmación (pasa a ser hecho de negocio).
   - **Rechazar** → no es lo que el negocio quiere: elimina del PRD la afirmación y su marcador (y el contenido que dependía de ella).
-  - **Editar** → el usuario da el dato real: sustituye la afirmación por el texto confirmado y quita el marcador.
+  - **Editar** → el usuario da el dato real, **en el momento**: en la descripción de la opción "Editar" del `AskUserQuestion`, indícale que **para editar escriba el texto nuevo en el campo libre** ("Otro"/texto) de esa asunción en vez de seleccionar "Editar". Un valor de texto libre sobre una asunción se interpreta como su edición: sustituye la afirmación por ese texto y quita el marcador — **sin diferirlo al final**.
   - Cuando una sección queda sin asunciones pendientes, elimina la entrada de `## Asunciones del PRD`; si no queda ninguna, elimina la sección entera.
 
 A diferencia del resto de `wf-prd-review` (que solo diagnostica), aquí **sí** editas el PRD, pero solo lo que el usuario decide explícitamente sobre cada asunción — no reescrituras de tu cosecha.
@@ -96,8 +96,8 @@ Si el veredicto es `LISTO` (y por tanto no quedan `[ASUNCIÓN]` pendientes tras 
    !python3 .sdd/scripts/sdd-prd-frontmatter.py "<path>" --fix
    ```
    Repone los campos mecánicos que falten (`type`, `version`, `created`, `status`). Si sale con exit ≠0 por falta de `product`, no selles: es un hueco de contenido que hay que resolver antes.
-1. Captura el rol aprobador con `AskUserQuestion` (default `PM` / `Product Owner`), permitiendo confirmar el rol o dar nombre.
-2. Si el usuario responde, escribe en el header/metadata del PRD (junto a versión/fecha del documento) la línea `Aprobado por: <rol> (<fecha real de tu contexto>)`. En re-revisión, sobrescribe la línea previa. **No autoapruebes**: si no hay respuesta, no escribas la línea.
+1. Captura la **identidad del aprobador** con `AskUserQuestion` ([[D-027]]): **precarga el nombre** con `!git config user.name` como opción por defecto (lo que sella es *quién* aprobó, no un rol genérico), y ofrece **rol opcional** (PM / Product Owner). El usuario confirma el nombre precargado, lo cambia, o añade rol. Si `git config user.name` está vacío, cae al rol como default.
+2. Si el usuario responde, escribe en el header/metadata del PRD (junto a versión/fecha del documento) la línea `Aprobado por: <nombre> [(<rol>)] (<fecha real de tu contexto>)` — p. ej. `Aprobado por: Oscar Pozo (Product Owner) (2026-07-17)`. En re-revisión, sobrescribe la línea previa. **No autoapruebes**: si no hay respuesta, no escribas la línea.
 
 Si el veredicto es `LISTO_CON_AJUSTES` o `NO_LISTO`, **no** escribas la atribución.
 

@@ -6,6 +6,44 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-027 — El sello de aprobación registra la identidad (nombre, precargado de git), no un rol genérico; el rol es opcional
+
+- **Fecha:** 2026-07-15 · **Estado:** Adoptada (implementada en los 3 gates de sellado + `kb-traceability-rules` Regla 10). · **Relacionada:** [[D-020]] (readiness/sello), Regla 10 (SSoT del convenio `Aprobado por`), Regla 11 (release captura el SHA de git sin teclear — misma filosofía), CU-2.e/CU-2.f.
+
+**Contexto.** Sellando el PRD en CU-2.e, el `AskUserQuestion` de aprobación ofrecía solo dos **roles** (`PM` / `Product Owner`) y el sello quedó `Aprobado por: PM (2026-07-17)`. El propósito declarado de Regla 10 es *"trazabilidad de autoría — **quién aprobó** — en proyectos multi-desarrollador"*, y un **rol pelado no identifica a nadie** (con 3 PMs, `PM` no dice quién). Además Regla 10 remarca que `Aprobado por` es un **dato humano no verificable** (ningún script lo escribe ni valida): su único valor es la rendición de cuentas, lo que hace un rol anónimo casi inútil. La capacidad de dar nombre ya existía (Regla 10 lo permitía, "Tech Lead — Ana"), pero el framing del `AskUserQuestion` empujaba al rol.
+
+**Decisión.** El sello registra la **identidad del aprobador** como valor prioritario: el `AskUserQuestion` **precarga el nombre con `git config user.name`** como default (misma filosofía que `sdd-release.py` capturando el SHA: no se teclea lo que git ya sabe), con el **rol por fase como opcional/complementario**. Formato: `Aprobado por: <nombre> [(<rol>)] (<fecha>)`. Si git no da nombre, cae al rol por defecto. Aplica a los **tres** gates (PRD `wf-prd-review`, Plan `wf-plan-validate`, QA `wf-qa-verify`) porque Regla 10 es SSoT compartida. Se mantiene **No autoaprobar**.
+
+**Alternativas descartadas.**
+- *Seguir con rol pelado* → no cumple el propósito de Regla 10 (quién aprobó); un rol anónimo no es trazabilidad de autoría.
+- *Pedir el nombre a mano cada vez sin default* → fricción innecesaria cuando `git config user.name` ya identifica al dev que corre el gate; el default precargado es override-able.
+- *Escribirlo con un script determinista* → Regla 10 dice explícitamente que `Aprobado por` **no** es mecánicamente verificable (es un checkpoint humano); no se automatiza el sello, solo se **precarga** el default de la pregunta.
+
+**Consecuencias / aprendizaje.** Un gate de atribución vale por **identificar a la persona responsable**, no por dejar una etiqueta de función. Alinea el sello de aprobación con la filosofía de la coordenada de release (Regla 11): el dato de trazabilidad que git ya conoce se precarga, no se teclea. Backstop: `test_seal_gates_prefill_approver_from_git` en `test_install_sh.py` (los 3 skills instalados citan `git config user.name`).
+
+**Referencias.** `sdd/pipeline/prd/skills/wf-prd-review/SKILL.md` (Paso 6), `sdd/pipeline/plan/skills/wf-plan-validate/SKILL.md`, `sdd/pipeline/tasks/skills/wf-qa-verify/SKILL.md`, `sdd/pipeline/spec/skills/kb-traceability-rules/SKILL.md` (Regla 10), `sdd/tests/test_install_sh.py`, `sdd/CHANGELOG.md`.
+
+---
+
+## D-026 — Los overrides `--allow-*` los arma el usuario, nunca el orquestador; ante precondición bloqueante se presenta la elección explícita
+
+- **Fecha:** 2026-07-15 · **Estado:** Adoptada (implementada en el carril eager `sdd-orchestration.md`). · **Relacionada:** [[D-020]] (gate de readiness PRD→spec que se auto-bypaseó), [[D-024]]/[[D-025]] (misma filosofía de cuándo interrumpir), CU-2.e (probe B).
+
+**Contexto.** Validando **CU-2.e** (probe B: "pedir specs saltándose la review") sobre un consumidor real, con un PRD de 17 asunciones abiertas, al decir *"genérame directamente las specs"* el **orquestador (hilo principal) auto-armó `--allow-unreviewed-prd`** —infiriéndolo de la frase— y forkeó `wf-spec-features-first` con el flag ya puesto. El gate `OPEN_ASSUMPTIONS` de su Paso 2 ([[D-020]]) **nunca disparó** porque el override ya venía dado; la protección recayó, por suerte, en el gate *siguiente* (gaps críticos). Frágil: un PRD **sin** gaps críticos pero **con** asunciones abiertas se colaría a specs con solo un aviso, horneando 17 inferencias no validadas. La investigación de forks confirmó dónde vive el fallo: los skills de generación (`wf-spec-*`) van `context: fork` **sin** `AskUserQuestion`, así que la elección **no puede** presentarse desde el fork — el único punto de decisión es el hilo principal, al **construir los argumentos**. El carril eager ya decía "los gates no se bypasean", pero daba por hecho que el gate *dispara*; auto-armar el flag es un bypass que hace que **nunca reporte** el bloqueo.
+
+**Decisión.** El orquestador **nunca auto-suministra un flag `--allow-*`** (`--allow-unreviewed-prd`, `--allow-open-critical-gaps`, `--allow-derived-scope-from-analysis`, …): son **escotillas de seguridad que arma el usuario**, no atajos inferibles de una petición impaciente. Ante una precondición que un `--allow-*` cruzaría: invocar el skill **sin** el override → el gate se detiene y **devuelve el bloqueo al hilo principal** → surfacearlo y presentar la elección explícita **con `AskUserQuestion`** (cerrar/revisar primero vs. continuar asumiendo el riesgo) → **solo** re-invocar con el flag si el usuario elige forzar. Se codifica en el carril eager `sdd-orchestration.md` (sección "Los gates son de su fase; no se bypasean").
+
+**Alternativas descartadas.**
+- *Formalizar el auto-armado (aceptar que "genérame las specs" implica el override)* → defendible por el aviso previo del probe A, pero **vacía [[D-020]]**: convierte una escotilla deliberada en el camino por defecto y la protección pasa a depender de que exista *otro* gate aguas abajo.
+- *Mensaje pasivo + continuar* → el aviso se ignora; los derivados salen sobre alcance no revisado igualmente (mismo problema que descartó [[D-025]]).
+- *Presentar la elección desde dentro del fork* → imposible con la arquitectura actual: `wf-spec-features-first` es fork sin `AskUserQuestion`. La decisión es del hilo principal por diseño.
+
+**Consecuencias / aprendizaje.** Extiende el principio unificador de [[D-024]]/[[D-025]] a los flags de override: *interrumpir para que el usuario elija conscientemente lo de alto impacto, no decidirlo por él.* Confirma la convención de forks del ecosistema: **skill que necesita preguntar → no forkeado (hilo principal, con `AskUserQuestion`); skill de generación pesada → forkeado, sin preguntar, devuelve el bloqueo al principal.** El gate D-020 del skill se conserva intacto como backstop determinista (se detiene bien si se le invoca sin flag). Backstop: `test_orchestration_rule_forbids_auto_arming_overrides` en `test_install_sh.py`.
+
+**Referencias.** `sdd/pipeline/orchestration.md` (sección de gates), `sdd/conformance/casos-de-uso/cu-02-prd.md` (CU-2.e probe B), `sdd/tests/test_install_sh.py` (backstop), `sdd/CHANGELOG.md`.
+
+---
+
 ## D-025 — Una ruta de salida explícita es autoritativa; en divergencia con el layout se pregunta, nunca se redirige en silencio
 
 - **Fecha:** 2026-07-13 · **Estado:** Adoptada (implementada en `wf-prd-create` Paso 4a). · **Relacionada:** [[D-024]] (gate de sobreescritura del mismo Paso 4; reverso de su principio), CU-2.i.

@@ -65,7 +65,7 @@ No marques nunca un TC manual como CUBIERTO sin confirmación explícita del hum
    - `NO_APTO` — algún CA SIN_COBERTURA o DIVERGENTE
    Si la verificación fue parcial (Paso 2) o sin ejecución disponible (Paso 3), el header lo declara.
 
-3. **Si el veredicto es `APTO` o `APTO_CON_RESERVAS`**, registra la **atribución de aprobación humana** del gate (`kb-traceability-rules` Regla 10): captura el rol con `AskUserQuestion` (default `QA`, permitiendo confirmar o dar nombre) y escribe en el header del `_qa_report.md` la línea `Aprobado por: <rol> (<fecha real de tu contexto>)`. **No autoapruebes**: si no hay respuesta, no escribas la línea. Si el veredicto es `NO_APTO`, **no** la escribas.
+3. **Si el veredicto es `APTO` o `APTO_CON_RESERVAS`**, registra la **atribución de aprobación humana** del gate (`kb-traceability-rules` Regla 10): captura la **identidad del aprobador** con `AskUserQuestion` ([[D-027]]) — **precarga el nombre** con `!git config user.name` como default, rol opcional (`QA`); si git no da nombre, cae al rol — y escribe en el header del `_qa_report.md` la línea `Aprobado por: <nombre> [(<rol>)] (<fecha real de tu contexto>)`. **No autoapruebes**: si no hay respuesta, no escribas la línea. Si el veredicto es `NO_APTO`, **no** la escribas.
 
 Si el report ya existe de una verificación anterior, sobreescríbelo (el qa_plan conserva el estado vigente; el report es la foto de esta verificación).
 

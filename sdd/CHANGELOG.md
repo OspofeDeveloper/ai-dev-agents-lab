@@ -2,6 +2,22 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.64.0 — 2026-07-15
+
+**Gate de asunciones editable en el momento + sello por identidad** — dos mejoras de UX/trazabilidad surgidas de CU-2.e.
+
+- ⚠ **`wf-prd-review` Paso 5.5 (Q1):** al editar una asunción, el usuario escribe el texto nuevo **en el campo libre** del `AskUserQuestion` en vez de elegir "Editar" y diferir el texto al final; un texto libre sobre una asunción se aplica como su edición en el momento. Elimina la fricción de "no puedo dar el texto al elegir Editar".
+- ⚠ **Sello de aprobación por identidad — [[DECISIONS D-027]] (Q2):** los 3 gates de sellado (`wf-prd-review`, `wf-plan-validate`, `wf-qa-verify`) registran **quién** aprobó: el `AskUserQuestion` **precarga el nombre con `git config user.name`** (rol opcional), en vez de ofrecer solo un rol genérico. `Aprobado por: <nombre> [(<rol>)] (<fecha>)`. Regla 10 de `kb-traceability-rules` (SSoT) actualizada.
+- **Tests:** `test_prd_review_edit_assumption_is_inline_free_text`, `test_seal_gates_prefill_approver_from_git`.
+
+## 0.63.0 — 2026-07-15
+
+**El orquestador nunca auto-arma un override `--allow-*`** — [[DECISIONS D-026]]. CU-2.e (probe B) destapó que, ante *"genérame directamente las specs"* sobre un PRD con asunciones abiertas, el orquestador **auto-armaba `--allow-unreviewed-prd`** infiriéndolo de la frase y forkeaba `wf-spec-features-first` con el flag ya puesto: el gate `OPEN_ASSUMPTIONS` ([[D-020]]) nunca disparaba y la protección recaía en el gate de gaps críticos aguas abajo (frágil — un PRD sin gaps críticos pero con asunciones abiertas se colaría).
+
+- ⚠ **`sdd-orchestration.md`** (carril eager, sección "Los gates son de su fase; no se bypasean"): los flags `--allow-*` (`--allow-unreviewed-prd`, `--allow-open-critical-gaps`, `--allow-derived-scope-from-analysis`, …) **los arma el usuario, nunca el orquestador**. Ante una precondición bloqueante: invocar **sin** el override → el gate se detiene y devuelve el bloqueo al hilo principal → presentar la elección con `AskUserQuestion` (revisar/cerrar primero vs. forzar) → solo re-invocar con el flag si el usuario elige forzar. Extiende D-024/D-025 a los overrides. La capa de forks y el gate D-020 del skill no se tocan.
+- **Test:** nuevo `test_orchestration_rule_forbids_auto_arming_overrides`.
+- **CU-2.e** probe B afinado (override armado por el usuario, no inferido) + mecanismo fork→hilo principal.
+
 ## 0.62.0 — 2026-07-15
 
 **Validador determinista del frontmatter del PRD** — cierra el desliz intermitente del `prd-expert` que omite campos del frontmatter (sobre todo `status`), observado en CU-2.i. Aplicación de `kb-sdd-conformance` Regla 9 (lo verificable por máquina no se deja al juicio del agente); no es contrato nuevo, así que sin D-NNN.

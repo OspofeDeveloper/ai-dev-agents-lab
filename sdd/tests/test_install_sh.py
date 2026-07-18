@@ -218,6 +218,35 @@ class InstallAllTest(InstallBase):
         self.assertIn("lenguaje natural", rule)
         self.assertIn("agnóstico a comandos", rule)
 
+    def test_orchestration_rule_forbids_auto_arming_overrides(self):
+        # El orquestador nunca auto-arma un flag --allow-* de override: lo arma el
+        # usuario. Ante una precondicion bloqueante invoca sin el flag, deja que el
+        # gate se detenga y devuelva el bloqueo, y presenta la eleccion con
+        # AskUserQuestion; solo re-invoca con --allow-* si el usuario fuerza (D-026).
+        self.install("all")
+        rule = self._orch_rule()
+        self.assertIn("--allow-", rule)
+        self.assertIn("arma el usuario", rule)
+        self.assertIn("AskUserQuestion", rule)
+        self.assertIn("D-026", rule)
+
+    def test_prd_review_edit_assumption_is_inline_free_text(self):
+        # El gate de asunciones permite editar en el momento: el usuario escribe el
+        # texto nuevo en el campo libre en vez de elegir "Editar" y diferirlo (Q1).
+        self.install("all")
+        skill = (self.skill_dir("wf-prd-review") / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("campo libre", skill,
+                      "wf-prd-review pierde la edicion inline por texto libre (Q1)")
+
+    def test_seal_gates_prefill_approver_from_git(self):
+        # D-027: los 3 gates de sellado registran la identidad del aprobador,
+        # precargando el nombre con `git config user.name` (rol opcional).
+        self.install("all")
+        for skill_name in ("wf-prd-review", "wf-plan-validate", "wf-qa-verify"):
+            skill = (self.skill_dir(skill_name) / "SKILL.md").read_text(encoding="utf-8")
+            self.assertIn("git config user.name", skill,
+                          f"{skill_name} no precarga el aprobador de git (ver D-027)")
+
     def test_orchestration_rule_readiness_line_is_topology_gated(self):
         # La linea de la frontera PRD->Spec solo aparece si se instalan ambas
         # fases; en una topologia sin ese par no se cuela (D-021).
