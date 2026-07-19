@@ -6,6 +6,25 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-028 — Un cambio de PRD reabre el sello: el sello solo lo establece el gate de review, nunca sobrevive a un cambio de contenido
+
+- **Fecha:** 2026-07-18 · **Estado:** Adoptada (implementada en `wf-prd-change` Paso 5). · **Relacionada:** [[D-027]] (identidad del aprobador), [[D-024]] (regenerar un artefacto sellado), Regla 10 (SSoT del sello), CU-2.e (pregunta 4) / CU-7.
+
+**Contexto.** Revisando el proceso PRD completo (CU-2.e, pregunta del usuario sobre cambios post-sello) se detectó que `wf-prd-change` actualizaba versión/fecha y reescribía las secciones afectadas, pero **no tocaba el sello** (`Aprobado por:` / `status: approved`). Tras un cambio, el PRD quedaba `approved` con una línea `Aprobado por:` que **atestiguaba un contenido que ya no existía** — un agujero de trazabilidad: el sello es un checkpoint humano (Regla 10) y certificaba algo distinto de lo que el documento decía. Hermano del hueco que cerró D-027 (rol anónimo): aquí el sello es directamente **stale**.
+
+**Decisión.** Un cambio de contenido sobre un PRD sellado **reabre el sello**. `wf-prd-change` (Paso 5), si el PRD estaba sellado, baja `status:` a `in-review` y **resetea `Aprobado por:` al placeholder pendiente**, y remite a `wf-prd-review` para re-aprobar. El sello se establece **exclusivamente** por el gate de review (que re-verifica asunciones con `sdd-prd-ready.py` y re-captura la identidad, D-027): `wf-prd-change` **no re-sella por su cuenta**. Invariante que se preserva: *"sellado" ⇒ un humano aprobó **este** contenido a través del gate de review* — nunca un contenido anterior.
+
+**Alternativas descartadas.**
+- *Dejar el sello intacto tras el cambio (estado previo)* → el sello certifica contenido inexistente; rompe el propósito de Regla 10.
+- *Re-sellar dentro de `wf-prd-change` con la fecha nueva* → duplica la lógica de sellado fuera del único gate que la posee, y saltaría la re-verificación de asunciones (un cambio puede introducir nuevas `[ASUNCIÓN]`). Un solo escritor del sello (el review) es más simple y seguro.
+- *Bajar a `draft` en vez de `in-review`* → `draft` sugiere "sin revisar nunca"; `in-review` refleja mejor "revisado antes, pendiente de re-aprobar el cambio".
+
+**Consecuencias / aprendizaje.** Cierra el ciclo de coherencia del sello junto a D-027: el sello **identifica a quién** aprobó (D-027) **el contenido vigente** (D-028). La fricción (re-review tras cada cambio) es proporcionada: un cambio de producto es significativo, y con 0 asunciones abiertas el re-sello es un solo paso. Backstop: `test_prd_change_reopens_seal` en `test_install_sh.py`.
+
+**Referencias.** `sdd/pipeline/prd/skills/wf-prd-change/SKILL.md` (Paso 5), `sdd/pipeline/prd/skills/wf-prd-review/SKILL.md` (único sellador), `sdd/pipeline/spec/skills/kb-traceability-rules/SKILL.md` (Regla 10), `sdd/tests/test_install_sh.py`, `sdd/CHANGELOG.md`.
+
+---
+
 ## D-027 — El sello de aprobación registra la identidad (nombre, precargado de git), no un rol genérico; el rol es opcional
 
 - **Fecha:** 2026-07-15 · **Estado:** Adoptada (implementada en los 3 gates de sellado + `kb-traceability-rules` Regla 10). · **Relacionada:** [[D-020]] (readiness/sello), Regla 10 (SSoT del convenio `Aprobado por`), Regla 11 (release captura el SHA de git sin teclear — misma filosofía), CU-2.e/CU-2.f.

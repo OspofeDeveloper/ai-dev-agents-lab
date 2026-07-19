@@ -2,6 +2,14 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.65.0 — 2026-07-18
+
+**Gate de review secuencial + reapertura del sello al cambiar el PRD** — dos hallazgos de CU-2.e (preguntas 1 y 4).
+
+- ⚠ **`wf-prd-review` Paso 4→5.5 (Q1):** el gate de asunciones **espera** el diagnóstico del `prd-expert` (foreground) y **no se paraleliza** — el gate usa los flags de gobernanza del experto. Lanzar el experto en background y abrir el gate en paralelo lo presentaba sin contexto y forzaba re-presentarlo (carrera observada en la run 2).
+- ⚠ **`wf-prd-change` Paso 5 — [[DECISIONS D-028]]:** un cambio sobre un PRD sellado **reabre el sello** (`status: in-review`, `Aprobado por:` → pendiente) y remite a `wf-prd-review` para re-aprobar. Antes el sello sobrevivía al cambio y certificaba contenido que ya no existía. El sello lo establece **solo** el gate de review.
+- **Tests:** `test_prd_review_gate_waits_for_diagnosis`, `test_prd_change_reopens_seal`.
+
 ## 0.64.0 — 2026-07-15
 
 **Gate de asunciones editable en el momento + sello por identidad** — dos mejoras de UX/trazabilidad surgidas de CU-2.e.

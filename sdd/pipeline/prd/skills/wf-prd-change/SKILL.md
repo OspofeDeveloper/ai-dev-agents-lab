@@ -73,6 +73,7 @@ Si el cambio exige editar el PRD:
 2. reescribe únicamente las secciones afectadas
 3. conserva el resto intacto
 4. si una exclusión de fase futura pasa a MVP, elimina o corrige esa exclusión
+5. **reabre el sello ([[D-028]]).** Si el PRD estaba sellado (`Aprobado por:` relleno, `status: approved`), el cambio de contenido invalida esa aprobación —atestiguaba un contenido que ya no existe—. Baja `status:` a `in-review` y **resetea la línea `Aprobado por:` al placeholder pendiente**, para que el sello nunca certifique contenido no revisado. Indica al usuario que **re-apruebe con `wf-prd-review`** (que re-verifica asunciones vía `sdd-prd-ready.py` y re-captura la identidad del aprobador, [[D-027]]). No re-selles tú aquí: el sello se establece **solo** por el gate de review, para que "sellado" siga significando "un humano aprobó *este* contenido".
 
 Nunca metas detalles técnicos.
 

@@ -247,6 +247,23 @@ class InstallAllTest(InstallBase):
             self.assertIn("git config user.name", skill,
                           f"{skill_name} no precarga el aprobador de git (ver D-027)")
 
+    def test_prd_review_gate_waits_for_diagnosis(self):
+        # Q1: el gate de asunciones (Paso 5.5) espera el diagnostico del prd-expert
+        # (Paso 4) y no se paraleliza — el gate usa los flags de gobernanza.
+        self.install("all")
+        skill = (self.skill_dir("wf-prd-review") / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("no lo paralelices", skill.lower(),
+                      "wf-prd-review pierde que el gate espera al diagnostico (Q1)")
+
+    def test_prd_change_reopens_seal(self):
+        # D-028: un cambio de PRD reabre el sello (status in-review + Aprobado por
+        # a pendiente); el sello solo lo re-establece wf-prd-review.
+        self.install("all")
+        skill = (self.skill_dir("wf-prd-change") / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("reabre el sello", skill,
+                      "wf-prd-change pierde la reapertura del sello (ver D-028)")
+        self.assertIn("in-review", skill)
+
     def test_orchestration_rule_readiness_line_is_topology_gated(self):
         # La linea de la frontera PRD->Spec solo aparece si se instalan ambas
         # fases; en una topologia sin ese par no se cuela (D-021).
