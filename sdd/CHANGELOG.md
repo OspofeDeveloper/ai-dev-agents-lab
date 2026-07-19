@@ -2,6 +2,17 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.66.0 — 2026-07-19
+
+**Dependencias deterministas entre asunciones (Q2a)** — [[DECISIONS D-029]]. En CU-2.e la cascada al rechazar una asunción (p. ej. rechazar "cuentas gestionables" deja huérfano "saldo por cuenta") la notaba **solo la LLM**, de forma no determinista entre runs. Ahora se registra en la creación y se hace cumplir con un script.
+
+- ⚠ **`sdd-prd-deps.py`** (nuevo enforcement script): parsea las aristas `Depende de: ASN-XXX` de las entradas `[ASN]`, valida el grafo (sin colgantes ni ciclos) y, en `--check --rejected`, reporta huérfanas (dependiente de una rechazada sin rechazar). Exit 0/1/2.
+- ⚠ **`kb-prd-expert` / `wf-prd-create`**: la creación registra `· **Depende de:** ASN-XXX` (ID pelado, sin corchetes para no romper el 1:1) cuando una asunción no tiene sentido sin otra.
+- ⚠ **`wf-prd-review` Paso 5.5**: carga el grafo para arrastrar los dependientes al gate al rechazar la asunción padre, y corre `sdd-prd-deps.py --check` como backstop pre-sello.
+- **Alcance:** solo dependencia asunción↔asunción; asunción→contenido-de-brief queda como follow-up (nivel b).
+- **Tests:** `test_sdd_prd_deps.py` (nuevo), regresión en `test_sdd_prd_ready.py` (la arista pelada no infla el 1:1), `test_prd_review_uses_dependency_graph` + `sdd-prd-deps.py` en `ENFORCEMENT_SCRIPTS`.
+- **CU:** nueva **CU-2.j** (cascada determinista) + probe D de CU-2.e actualizado.
+
 ## 0.65.0 — 2026-07-18
 
 **Gate de review secuencial + reapertura del sello al cambiar el PRD** — dos hallazgos de CU-2.e (preguntas 1 y 4).

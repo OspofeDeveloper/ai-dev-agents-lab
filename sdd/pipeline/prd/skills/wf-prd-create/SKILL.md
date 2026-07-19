@@ -121,7 +121,7 @@ Pásale:
 
 Indícale explícitamente:
 - que use `kb-prd-expert` como SSoT (estructura + frontmatter en Regla 3 + `references/prd_structure_guide.md`)
-- **que aplique la Regla 12 (anti-fabricación)**: toda afirmación de negocio (actor, capacidad, exclusión, regla, objetivo) traza al material fuente / al brief del usuario, o se marca `[ASUNCIÓN]` inline y se recopila en `## Asunciones del PRD` con un `[ASN-XXX]` por entrada. Prohibido inventar contenido de negocio sin marcarlo: ante la duda, se marca.
+- **que aplique la Regla 12 (anti-fabricación)**: toda afirmación de negocio (actor, capacidad, exclusión, regla, objetivo) traza al material fuente / al brief del usuario, o se marca `[ASUNCIÓN]` inline y se recopila en `## Asunciones del PRD` con un `[ASN-XXX]` por entrada. Prohibido inventar contenido de negocio sin marcarlo: ante la duda, se marca. **Si una asunción no tiene sentido sin otra**, registra la arista `· **Depende de:** ASN-XXX` (ID pelado) en la entrada dependiente ([[D-029]], formato en `kb-prd-expert`) — hace determinista la cascada del review.
 - que convierta detalles técnicos en observaciones a excluir, no en contenido del PRD
 - que mantenga una estructura compatible con `wf-spec-analyze`
 - que en su mensaje final te devuelva el **path** y los **huecos cualitativos** (qué trazó a la fuente vs qué infirió, qué asunciones son las más sensibles), **no un recuento numérico**: el número de `[ASUNCIÓN]` lo obtienes tú de forma determinista con grep (Paso 6), nunca de su narración — un agente cuenta mal sobre su propio texto

@@ -108,6 +108,23 @@ class PrdReadyTest(unittest.TestCase):
         for key in ("verdict", "inline_marks", "asn_entries", "one_to_one", "sealed", "path"):
             self.assertIn(key, data)
 
+    def test_depends_on_edge_does_not_inflate_count(self):
+        # Regresión Q2a (D-029): la arista pelada `Depende de: ASN-001` en una
+        # entrada NO debe contar como una entrada `[ASN-XXX]` extra ni como marca
+        # inline — el 1:1 se mantiene (2 marcas, 2 entradas).
+        body = (
+            "## Alcance\n- El usuario puede A [ASUNCIÓN].\n- El usuario puede B [ASUNCIÓN].\n\n"
+            "## Asunciones del PRD\n"
+            '- [ ] **[ASN-001]** — "El usuario puede A."\n'
+            '- [ ] **[ASN-002]** — "El usuario puede B." · **Depende de:** ASN-001\n'
+        )
+        r = self._run(prd(PENDING, body), "--json")
+        data = json.loads(r.stdout)
+        self.assertEqual(data["inline_marks"], 2)
+        self.assertEqual(data["asn_entries"], 2)
+        self.assertTrue(data["one_to_one"])
+        self.assertEqual(data["verdict"], "OPEN_ASSUMPTIONS")
+
     def test_bad_args(self):
         self.assertEqual(run_script("sdd-prd-ready.py").returncode, 1)
         self.assertEqual(run_script("sdd-prd-ready.py", "a.md", "b.md").returncode, 1)

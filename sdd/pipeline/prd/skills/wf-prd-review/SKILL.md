@@ -76,12 +76,24 @@ El diagnóstico que devuelve `prd-expert` alimenta el veredicto del Paso 6. Las 
 ```
 El campo `inline_marks` es el conteo real; `ASSUMPTION_MISMATCH` señala una marca huérfana o una entrada sin marca — corrígela antes de seguir. Esto **cierra la verificación mecánica del 1:1** que antes dependía de un `grep` improvisado por el agente (reserva de CU-2.a/b). Si falta el script, cae al `grep -c "\[ASUNCIÓN"` como degradación.
 
+**Grafo de dependencias entre asunciones ([[D-029]]).** Antes de abrir el gate, carga el grafo determinista — así conoces qué asunciones dependen de cuáles **sin inferirlo a ojo** (la cascada era no determinista en CU-2.e):
+```
+!python3 .sdd/scripts/sdd-prd-deps.py "<path>" --json
+```
+El campo `graph` (`{"ASN-007": ["ASN-006"], …}`) te dice, por cada asunción, de qué otras depende. Úsalo en el gate (abajo). Si `sdd-prd-deps.py` sale con `MALFORMED` (arista a un `ASN` inexistente o ciclo), avisa y corrígelo antes de procesar.
+
 - **`inline_marks` es `0`** → no hay asunciones pendientes; sigue al veredicto.
 - **`inline_marks` `> 0`** → localiza la sección `## Asunciones del PRD` y procesa **cada `[ASN-XXX]` una a una con el usuario** (usa `AskUserQuestion` cuando haya varias): para cada una, presenta la afirmación inferida y su hueco, y pide decisión:
   - **Confirmar** → es correcta: marca la casilla `[x]` y elimina el marcador `[ASUNCIÓN]` inline de esa afirmación (pasa a ser hecho de negocio).
-  - **Rechazar** → no es lo que el negocio quiere: elimina del PRD la afirmación y su marcador (y el contenido que dependía de ella).
+  - **Rechazar** → no es lo que el negocio quiere: elimina del PRD la afirmación y su marcador (y el contenido que dependía de ella). **Cascada determinista ([[D-029]]):** si el `graph` indica que otras asunciones **dependen** de la que se rechaza, arrástralas al flujo de decisión —preséntalas con `AskUserQuestion`— en vez de dejarlas confirmar en silencio; una dependiente de una rechazada normalmente se rechaza también (o se edita para no depender de ella).
   - **Editar** → el usuario da el dato real, **en el momento**: en la descripción de la opción "Editar" del `AskUserQuestion`, indícale que **para editar escriba el texto nuevo en el campo libre** ("Otro"/texto) de esa asunción en vez de seleccionar "Editar". Un valor de texto libre sobre una asunción se interpreta como su edición: sustituye la afirmación por ese texto y quita el marcador — **sin diferirlo al final**.
   - Cuando una sección queda sin asunciones pendientes, elimina la entrada de `## Asunciones del PRD`; si no queda ninguna, elimina la sección entera.
+
+**Backstop pre-sello ([[D-029]]).** Antes de aplicar/sellar, verifica que ninguna dependiente de una rechazada quedó viva:
+```
+!python3 .sdd/scripts/sdd-prd-deps.py "<path>" --check --rejected ASN-006,ASN-0XX
+```
+(pasa la lista de las que el usuario **rechazó**). Si sale `ORPHANS` (exit 2), **re-presenta** esos dependientes al usuario para decidir antes de continuar — no selles con una huérfana. Exit 0 → coherente.
 
 A diferencia del resto de `wf-prd-review` (que solo diagnostica), aquí **sí** editas el PRD, pero solo lo que el usuario decide explícitamente sobre cada asunción — no reescrituras de tu cosecha.
 

@@ -33,11 +33,12 @@ esta vista es la **transpuesta** para leer/ejecutar el CU.
 - [x] CU-2.d — Regenerar un PRD que ya existe ✅ validado 2026-07-12 (ramas 1 sellado + 2 draft-explícito; rama 3 ambigua pendiente opcional)
 - [x] CU-2.i — Crear el PRD a una ruta de salida explícita (`--output`) ✅ validado 2026-07-15 (gate D-025, ×3, ambas ramas)
 
-### `wf-prd-review` — revisar el PRD y sellar (`prd-expert`) (4)
+### `wf-prd-review` — revisar el PRD y sellar (`prd-expert`) (5)
 - [ ] CU-2.e — Gate de asunciones + orden PRD→spec (lo más crítico, conversacional A-F)
 - [ ] CU-2.f — Veredicto LISTO y sello de aprobación
 - [ ] CU-2.g — Pasar algo que no es un PRD
 - [ ] CU-2.h — La revisión no reescribe a su cosecha
+- [ ] CU-2.j — Cascada determinista de dependencias entre asunciones (D-029)
 
 > **Capa determinista** (no es un escenario manual): el conteo de asunciones
 > (`grep "[ASUNCIÓN"`, Paso 5.5 de `wf-prd-review`) es el único check automático de la fase.
@@ -386,6 +387,11 @@ presenta cada `[ASN-XXX]` con `AskUserQuestion` y edita el PRD según la decisi�
      (p. ej. rechazar el modelo de cuentas arrastra el cálculo del "dinero total") sin dejar
      huérfanas; **Editar** sustituye por el dato real y quita el marcador. Edita **solo** lo que
      el usuario decide.
+   → **Cascada determinista ([[D-029]], detalle en CU-2.j):** cuando la asunción rechazada tiene
+     dependientes declarados (`Depende de:` en el PRD), el arrastre lo dirige el grafo de
+     `sdd-prd-deps.py` —no la inferencia de la LLM— y un `--check` pre-sello caza huérfanas. Si el
+     par en juego no tiene arista `Depende de:` registrada, la cascada recae en el juicio del
+     agente (fuera del contrato determinista).
 
 **E — intentar sellar con asunciones abiertas** ("dalo por aprobado ya")
    → **Esperado:** el veredicto **no puede ser `LISTO`** mientras quede una abierta; **no
@@ -450,3 +456,41 @@ dos únicas ediciones —asunciones (5.5) y sello (6)— las hace el **orquestad
 **Resultado:** PASS si solo diagnostica · FALLO si reescribe secciones sin que se lo
 pidas.
 **Desviación → reportar:** issue citando `CU-2.h`.
+
+## CU-2.j — Cascada determinista de dependencias entre asunciones
+
+**Precondición:** un `prd.md` con `[ASUNCIÓN]` abiertas donde **al menos una entrada `[ASN-XXX]`
+declara `· Depende de: ASN-YYY`** (arista sembrada en la creación). Todo por conversación, sin
+teclear `/wf-*`.
+**Mecanismo ([[D-029]]):** la dependencia entre asunciones deja de resolverse "a ojo" (era no
+determinista — CU-2.e runs 1/2 la trataron distinto cada vez). `sdd-prd-deps.py` da el grafo desde
+las aristas `Depende de:`; `wf-prd-review` (Paso 5.5) lo carga para **arrastrar** los dependientes
+al gate al rechazar la asunción padre, y corre `--check --rejected` como **backstop pre-sello**.
+
+> **Origen de la arista:** su *identificación* la hace la creación (juicio, una vez); su
+> *cumplimiento* es determinista. Si la creación **omite** la arista, el check no la inventa — eso
+> recae en el juicio del agente (probe D de CU-2.e), no en este contrato. Alcance: **solo
+> asunción↔asunción**; la dependencia asunción→contenido-de-brief queda fuera (nivel b).
+
+**A — la arista existe y se emite en la creación**
+   → **Esperado:** `sdd-prd-deps.py <prd> --json` devuelve el grafo (`{"ASN-YYY":["ASN-XXX"]}`),
+     sin `dangling_edges` ni `cycles`. El 1:1 de `sdd-prd-ready.py` **no** se ve inflado por la
+     arista pelada.
+
+**B — rechazar la asunción padre arrastra la dependiente (determinista)**
+   → **Esperado:** al **Rechazar** `ASN-XXX`, el review presenta `ASN-YYY` (su dependiente) con
+     `AskUserQuestion` para decidir —guiado por el `graph`, no por inferencia— en vez de dejarla
+     confirmar en silencio.
+   → **FALLO:** confirma/mantiene una dependiente de una rechazada sin surfacearla.
+
+**C — backstop pre-sello caza la huérfana**
+   → **Esperado:** si tras las decisiones una dependiente de una rechazada quedó viva,
+     `sdd-prd-deps.py --check --rejected <set>` sale `ORPHANS` (exit 2) y el review **no sella**:
+     re-presenta el dependiente. Con el par resuelto (ambas rechazadas, o la dependiente editada
+     para no depender), `--check` da exit 0 y el sello procede.
+
+**Resultado:** PASS si (A) la creación emite la arista y el grafo es válido sin romper el 1:1,
+(B) el rechazo del padre arrastra la dependiente vía grafo, y (C) el `--check` pre-sello bloquea
+el sello ante una huérfana · FALLO ante cascada silenciosa, sello con huérfana, o arista que
+infla el conteo de asunciones. Conductual → validar ×3 (Regla 9).
+**Desviación → reportar:** issue citando `CU-2.j`.

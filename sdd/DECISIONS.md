@@ -6,6 +6,25 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-029 — Las dependencias entre asunciones se registran en la creación y se hacen cumplir deterministamente en el review
+
+- **Fecha:** 2026-07-19 · **Estado:** Adoptada (implementada en `sdd-prd-deps.py` + `kb-prd-expert`/`wf-prd-create`/`wf-prd-review`). · **Relacionada:** [[D-020]] (invariante 1:1 de `sdd-prd-ready.py`), Regla 9 de `kb-sdd-conformance` (lo mecanizable no se deja al agente), Regla 12 de `kb-prd-expert`, CU-2.e (probe D) / CU-2.j.
+
+**Contexto.** En CU-2.e (runs 1 y 2) el gate de asunciones detectó la tensión ASN-006↔ASN-007 (rechazar "cuentas gestionables" deja huérfano "saldo por cuenta") **solo por razonamiento de la LLM** — la cazó las dos veces, pero por suerte, no por garantía, y trató la dependencia **distinto cada run** (nota pasiva vs. exclusión explícita). El formato `[ASN-XXX]` no registraba dependencias; el único invariante mecánico era el 1:1 (`sdd-prd-ready.py`). Dejar la cascada al juicio del agente en cada review es justo lo que la Regla 9 pide mecanizar.
+
+**Decisión.** La dependencia **entre asunciones** se registra en la **creación** con un sufijo `· **Depende de:** ASN-XXX` (ID **pelado**, sin corchetes, para no colisionar con `ASN_ENTRY_RE` del 1:1) en la entrada dependiente, y se hace cumplir **deterministamente** en el review: `sdd-prd-deps.py` parsea el grafo, valida que no haya aristas colgantes ni ciclos, y en modo `--check --rejected` reporta **huérfanas** (dependiente de una rechazada que no se rechazó). `wf-prd-review` (Paso 5.5) carga el grafo para arrastrar los dependientes al gate al rechazar la asunción padre, y corre `--check` como backstop **pre-sello**. Alcance: **solo asunción↔asunción**; la dependencia asunción→contenido-de-brief (líneas sin marca) queda fuera (nivel b, futuro).
+
+**Alternativas descartadas.**
+- *Dejar la cascada al juicio de la LLM (estado previo)* → no determinista (comportamiento distinto entre runs de CU-2.e); una dependencia no detectada deja el PRD sellado con una huérfana.
+- *Marcar también el contenido de brief dependiente* → requiere anotar líneas no-asunción; más invasivo. Aplazado a nivel b.
+- *Verificar la dependencia sin registrarla en la creación* → imposible deterministamente (la relación es semántica); por eso se **recuerda** en la creación (juicio una vez) y se **cumple** después (mecánico).
+
+**Consecuencias / aprendizaje.** La *identificación* de la arista sigue siendo juicio de la creación (recordado una vez), pero su *cumplimiento* pasa a ser determinista y auditable — estrictamente mejor que re-inferirla en cada review. Refuerza CU-2.h: la cascada es explícita y decidida por el usuario, no cosecha de la LLM. Límite honesto: si la creación **omite** una arista, el check no la inventa. Backstops: `test_sdd_prd_deps.py` (script), regresión en `test_sdd_prd_ready.py` (la arista pelada no infla el 1:1), `test_prd_review_uses_dependency_graph` en `test_install_sh.py`.
+
+**Referencias.** `sdd/scripts/sdd-prd-deps.py`, `sdd/pipeline/prd/skills/kb-prd-expert/SKILL.md` (formato `Depende de:`), `sdd/pipeline/prd/skills/wf-prd-create/SKILL.md`, `sdd/pipeline/prd/skills/wf-prd-review/SKILL.md` (Paso 5.5), `sdd/conformance/casos-de-uso/cu-02-prd.md` (CU-2.j), `sdd/tests/`, `sdd/CHANGELOG.md`.
+
+---
+
 ## D-028 — Un cambio de PRD reabre el sello: el sello solo lo establece el gate de review, nunca sobrevive a un cambio de contenido
 
 - **Fecha:** 2026-07-18 · **Estado:** Adoptada (implementada en `wf-prd-change` Paso 5). · **Relacionada:** [[D-027]] (identidad del aprobador), [[D-024]] (regenerar un artefacto sellado), Regla 10 (SSoT del sello), CU-2.e (pregunta 4) / CU-7.

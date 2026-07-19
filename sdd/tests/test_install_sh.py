@@ -32,7 +32,7 @@ ENFORCEMENT_SCRIPTS = [
     "sdd-skill-allow.py", "sdd-amend.py", "sdd-features-index.py",
     "sdd-project-status.py", "sdd-kb-check.py", "sdd-release.py", "sdd-next-id.py",
     "sdd-resolve-path.py", "sdd-design-resolve.py", "sdd-source-drift.py",
-    "sdd-prd-ready.py", "sdd-prd-frontmatter.py",
+    "sdd-prd-ready.py", "sdd-prd-frontmatter.py", "sdd-prd-deps.py",
 ]
 
 
@@ -263,6 +263,16 @@ class InstallAllTest(InstallBase):
         self.assertIn("reabre el sello", skill,
                       "wf-prd-change pierde la reapertura del sello (ver D-028)")
         self.assertIn("in-review", skill)
+
+    def test_prd_review_uses_dependency_graph(self):
+        # D-029/Q2a: el gate de asunciones carga el grafo determinista de
+        # dependencias (sdd-prd-deps.py) y corre el backstop --check pre-sello.
+        self.install("all")
+        skill = (self.skill_dir("wf-prd-review") / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("sdd-prd-deps.py", skill,
+                      "wf-prd-review no usa el grafo de dependencias (ver D-029)")
+        self.assertIn("--check", skill,
+                      "wf-prd-review pierde el backstop pre-sello de huérfanas (D-029)")
 
     def test_orchestration_rule_readiness_line_is_topology_gated(self):
         # La linea de la frontera PRD->Spec solo aparece si se instalan ambas

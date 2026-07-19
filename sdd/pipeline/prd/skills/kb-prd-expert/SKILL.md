@@ -252,10 +252,12 @@ El riesgo es máximo cuando la fuente es pobre: sin `--source`, o con un brief d
 > ⚠ Estas afirmaciones NO provienen del material fuente — las infirió la generación para completar el PRD. Cada una requiere **confirmación humana explícita** (en `/wf-prd-review`) antes de pasar a `/wf-spec-analyze`. Confirmada → se integra y pierde el marcador; rechazada → se elimina del PRD junto con el contenido que la asumía.
 
 - [ ] **[ASN-001]** — [afirmación inferida, citada] · *Hueco que rellena: [qué faltaba en la fuente y por qué se asumió esto].*
-- [ ] **[ASN-002]** — ...
+- [ ] **[ASN-002]** — [afirmación que no tiene sentido sin otra] · *Hueco que rellena: …* · **Depende de:** ASN-001
 ```
 
 IDs `[ASN-XXX]` secuenciales desde `001`, propios del PRD (no se confunden con los `[P-XXX]` de gaps ni con los `[A-XXX]` de asunciones aplicadas del spec).
+
+**Dependencias entre asunciones (`Depende de:`, [[D-029]]).** Si una asunción **no tiene sentido sin otra** (p. ej. "consultar el saldo *por cuenta*" depende de "las cuentas son entidades gestionables"), regístralo con un sufijo `· **Depende de:** ASN-XXX` en la entrada dependiente (admite lista: `Depende de: ASN-006, ASN-009`). Esto hace la cascada **determinista**: al rechazar la asunción padre en el review, `wf-prd-review` obliga a decidir también las dependientes (antes lo notaba la LLM a ojo, de forma no fiable). **Regla de formato crítica:** el ID en `Depende de:` va **pelado** (`ASN-006`), **nunca** entre corchetes (`[ASN-006]`) — un corchete casaría con el conteo `[ASN-\d+]` del invariante 1:1 (`sdd-prd-ready.py`) e inflaría el número de entradas. Solo se declara la dependencia **entre asunciones**; el contenido de brief que dependa de una asunción no se marca (fuera de alcance de este mecanismo). El grafo lo valida y explota `sdd-prd-deps.py`.
 
 ### Correspondencia 1:1 — cada marca inline tiene su propia entrada `[ASN-XXX]`
 
