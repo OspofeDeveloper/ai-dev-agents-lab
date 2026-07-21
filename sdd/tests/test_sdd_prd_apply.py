@@ -1,7 +1,8 @@
 """Black-box tests para scripts/sdd-prd-apply.py.
 
 Aplica deterministamente las decisiones de review de un PRD (Q3, DECISIONS D-030).
-Ligadura inline↔entrada POSICIONAL (marcador anónimo). Verifica:
+Ligadura inline↔entrada por TEXTO exacto + SOLAPAMIENTO de contenido (marcador
+anónimo; ni orden ni texto exacto garantizados por la creación). Verifica:
   - confirm quita el marcador inline + elimina la entrada (1:1 preservado).
   - edit sustituye la afirmación inline + quita marcador + elimina la entrada.
   - reject borra la línea inline + elimina la entrada.
@@ -103,9 +104,9 @@ class PrdApplyTest(unittest.TestCase):
         self.assertEqual(out.count("[ASUNCIÓN]"), 2)
 
     # --- posicional: la N-ésima marca ↔ la N-ésima entrada ---------------
-    def test_positional_mapping_targets_right_line(self):
+    def test_mapping_targets_right_line(self):
         p = self._write()
-        # ASN-003 es la 3ª entrada → debe tocar la 3ª marca (saldo por cuenta)
+        # ASN-003 (saldo por cuenta) debe tocar su propia marca, no otra
         r = self._apply(p, "--reject", "ASN-003")
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         out = self._read(p)
@@ -113,6 +114,35 @@ class PrdApplyTest(unittest.TestCase):
         # las otras dos afirmaciones inline siguen intactas
         self.assertIn("editar o eliminar un movimiento ya registrado. [ASUNCIÓN]", out)
         self.assertIn("registrar y mantener sus cuentas y tarjetas. [ASUNCIÓN]", out)
+
+    # --- orden divergente cuerpo≠sección: gana el texto, no la posición ---
+    def test_text_match_beats_positional_on_divergent_order(self):
+        # Regresión de una PRD real: el cuerpo lista la exclusión ANTES que la
+        # regla transversal, pero las entradas numeran la regla ANTES que la
+        # exclusión → el mapeo posicional emparejaría al revés. El match por texto
+        # (las entradas citan la afirmación, aquí entre comillas) debe corregirlo.
+        divergent = (
+            FRONT
+            + "## Alcance\n\n"
+            + "- El usuario puede registrar un gasto.\n"
+            + "- El usuario puede editar un movimiento. [ASUNCIÓN]\n\n"
+            + "### Fuera del Alcance\n"
+            + "- La conversión multidivisa queda fuera del alcance. [ASUNCIÓN]\n\n"
+            + "### Reglas transversales\n"
+            + "- La aplicación opera con una única moneda. [ASUNCIÓN]\n\n"
+            + "---\n\n## Asunciones del PRD\n\n"
+            + '- [ ] **[ASN-001]** — "El usuario puede editar un movimiento." · *Hueco: …*\n'
+            + '- [ ] **[ASN-002]** — "La aplicación opera con una única moneda." · *Hueco: …*\n'
+            + '- [ ] **[ASN-003]** — "La conversión multidivisa queda fuera del alcance." · *Hueco: …* · **Depende de:** ASN-002\n'
+        )
+        p = write(self.dir / "prd.md", divergent)
+        # Rechazar ASN-002 (la regla de moneda, 2ª entrada) debe borrar la línea de
+        # moneda, NO la de multidivisa (que es la 2ª marca en orden de documento).
+        r = self._apply(p, "--reject", "ASN-002")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        out = self._read(p)
+        self.assertNotIn("una única moneda", out)
+        self.assertIn("multidivisa queda fuera del alcance. [ASUNCIÓN]", out)
 
     # --- combinación + vaciado de sección --------------------------------
     def test_resolving_all_removes_section(self):

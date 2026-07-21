@@ -9,15 +9,18 @@ del hilo principal el documento que el Paso 3 pide NO cargar. Este script hace e
 edición MECÁNICA (Regla 9 de `kb-sdd-conformance`: lo mecanizable no se deja al
 juicio de un agente) para que main la invoque por `Bash` sin cargar el PRD.
 
-Ligadura inline↔entrada = POSICIONAL. El marcador inline es anónimo (`[ASUNCIÓN]`,
-sin ID, por diseño de `kb-prd-expert`) y su texto no coincide literalmente con el
-de la entrada, así que la única correspondencia fiable es el orden: el N-ésimo
-marcador inline (en orden de documento) ↔ la N-ésima entrada `[ASN-XXX]` (en orden
-de sección). La creación las emite en ese mismo orden y `sdd-prd-ready.py` ya
-garantiza que los conteos igualan (invariante 1:1). Guardas:
+Ligadura inline↔entrada. El marcador inline es anónimo (`[ASUNCIÓN]`, sin ID, por
+diseño de `kb-prd-expert`), así que cada entrada `[ASN-XXX]` se empareja con su marca
+en dos pasadas: (1) por TEXTO exacto normalizado cuando la entrada cita la afirmación
+literal y es único; (2) para las residuales (la creación a veces parafrasea o abrevia
+la entrada), por MÁXIMO SOLAPAMIENTO de palabras de contenido, asignación golosa por
+puntuación descendente y determinista. Ni el orden ni el texto exacto están garantizados
+por la creación por separado —una PRD real emitió el cuerpo (exclusiones) y la sección
+(numeración) en órdenes distintos y con paráfrasis—, pero texto+solapamiento sí es robusto.
+Guardas:
   - precondición dura: si al entrar el 1:1 no cuadra, exit 2 (resuélvelo antes).
-  - fail-safe: cada par que se va a tocar debe compartir ≥1 palabra de contenido
-    entre entrada e inline; si no, exit 2 (desalineación) en vez de editar a ciegas.
+  - fail-safe: una entrada a tocar que no case por texto ni comparta ninguna palabra de
+    contenido con marca alguna no se asigna → exit 2 en vez de editar a ciegas.
 
 Fuera de alcance (límite honesto, heredado de Q2a/D-029): borrar prosa de brief que
 dependía de una asunción rechazada (líneas sin marca). La cascada asunción↔asunción
@@ -40,6 +43,7 @@ Exit codes:
 import json
 import re
 import sys
+from collections import Counter
 from pathlib import Path
 
 ASSUMPTION_RE = re.compile(r"\[ASUNCIÓN")
@@ -67,10 +71,24 @@ def _content_words(text: str) -> set:
 
 
 def _entry_assertion(line: str) -> str:
-    """Texto de la afirmación de una entrada `[ASN-XXX]` (entre `—` y ` · `)."""
-    after = line.split("]", 1)[-1]  # tras `**[ASN-XXX]**`
-    after = after.lstrip(" *—-·")
-    return after.split(" · ")[0].strip()
+    """Texto de la afirmación de una entrada `[ASN-XXX]` (tras el ID, hasta ` · `)."""
+    m = ASN_ENTRY_RE.search(line)
+    after = line[m.end():] if m else line
+    after = after.lstrip(" *—-·:").strip()
+    return after.split(" · ")[0].strip().strip('"“”').strip()
+
+
+def _inline_assertion(line: str) -> str:
+    """Texto de una línea inline sin su prefijo de lista/heading ni el marcador."""
+    body = ASSUMPTION_MARK_RE.sub("", line)
+    prefix = PREFIX_RE.match(body).group(1)
+    return body[len(prefix):].strip().strip('"“”').strip()
+
+
+def _normalize(text: str) -> str:
+    """Forma canónica para comparar afirmación de entrada vs línea inline."""
+    t = re.sub(r"[^0-9a-záéíóúüñ ]+", " ", text.lower())
+    return re.sub(r"\s+", " ", t).strip()
 
 
 def parse_structure(text: str) -> dict:
@@ -152,8 +170,8 @@ def apply_decisions(text: str, confirm: set, edit: dict, reject: set) -> tuple:
         )
 
     targeted = confirm | set(edit) | reject
-    id_to_pos = {asn: k for k, (asn, _) in enumerate(entries)}
-    unknown = sorted(a for a in targeted if a not in id_to_pos)
+    entry_line_by_id = {asn: eidx for asn, eidx in entries}
+    unknown = sorted(a for a in targeted if a not in entry_line_by_id)
     if unknown:
         raise ApplyError(f"asunción(es) inexistente(s): {', '.join(unknown)}")
     overlap = (confirm & set(edit)) | (confirm & reject) | (set(edit) & reject)
@@ -163,25 +181,68 @@ def apply_decisions(text: str, confirm: set, edit: dict, reject: set) -> tuple:
             code=1,
         )
 
+    # --- Ligadura marca-inline ↔ entrada --------------------------------
+    # El marcador inline es anónimo, así que se empareja por TEXTO (las entradas
+    # citan la afirmación casi literal) y, para las que no casan por texto único,
+    # por POSICIÓN entre las residuales. Ni el orden ni el texto están garantizados
+    # por la creación por separado (una PRD real emitió cuerpo y sección en órdenes
+    # distintos — regresión en test_sdd_prd_apply), pero su combinación es robusta.
+    body = [(idx, _normalize(_inline_assertion(lines[idx]))) for idx in inline_lines]
+    ent = [(asn, _normalize(_entry_assertion(lines[eidx]))) for asn, eidx in entries]
+    body_text_count = Counter(t for _, t in body)
+    body_by_text: dict = {}
+    for idx, t in body:
+        body_by_text.setdefault(t, []).append(idx)
+
+    pair: dict = {}     # asn -> índice de línea inline
+    used: set = set()
+    residual_entries = []
+    for asn, t in ent:
+        cands = [i for i in body_by_text.get(t, []) if i not in used]
+        if t and body_text_count[t] == 1 and cands:
+            pair[asn] = cands[0]
+            used.add(cands[0])
+        else:
+            residual_entries.append(asn)
+
+    # Residuales (la creación parafrasea algunas entradas: ni texto exacto ni
+    # posición sirven). Se asignan por MÁXIMO SOLAPAMIENTO de palabras de
+    # contenido, de forma golosa por puntuación descendente (los pares fuertes
+    # primero), y determinista. Un residual sin ninguna palabra en común no se
+    # asigna → desalineación (exit 2), nunca se edita a ciegas.
+    residual_body = [idx for idx, _ in body if idx not in used]
+    entry_words = {asn: _content_words(_entry_assertion(lines[entry_line_by_id[asn]]))
+                   for asn in residual_entries}
+    body_words = {idx: _content_words(_inline_assertion(lines[idx])) for idx in residual_body}
+    scored = sorted(
+        (
+            (-len(entry_words[asn] & body_words[idx]), asn, idx)
+            for asn in residual_entries for idx in residual_body
+        ),
+        key=lambda s: (s[0], s[1], s[2]),
+    )
+    asn_done: set = set()
+    body_done: set = set()
+    for neg, asn, idx in scored:
+        if neg == 0 or asn in asn_done or idx in body_done:
+            continue
+        pair[asn] = idx
+        asn_done.add(asn)
+        body_done.add(idx)
+    missing = sorted(a for a in residual_entries if a in targeted and a not in asn_done)
+    if missing:
+        raise ApplyError(
+            f"desalineación en {', '.join(missing)}: ninguna marca inline comparte "
+            "contenido con la entrada (¿1:1 correcto? ¿PRD editado a mano?) — no edito a ciegas."
+        )
+
     to_delete: set = set()
     to_modify: dict = {}
 
     for asn in targeted:
-        pos = id_to_pos[asn]
-        entry_idx = entries[pos][1]
-        inline_idx = inline_lines[pos]
-        entry_line = lines[entry_idx]
+        entry_idx = entry_line_by_id[asn]
+        inline_idx = pair[asn]
         inline_line = lines[inline_idx]
-
-        # Guarda fail-safe: la entrada y su inline mapeado deben compartir contenido.
-        shared = _content_words(_entry_assertion(entry_line)) & _content_words(
-            ASSUMPTION_MARK_RE.sub("", inline_line)
-        )
-        if not shared:
-            raise ApplyError(
-                f"desalineación en {asn}: la entrada y la marca inline mapeada "
-                f"(línea {inline_idx + 1}) no comparten contenido — no edito a ciegas."
-            )
 
         # La entrada de la sección se elimina en los tres casos.
         to_delete.add(entry_idx)

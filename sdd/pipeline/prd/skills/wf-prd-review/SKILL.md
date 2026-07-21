@@ -90,7 +90,7 @@ El campo `graph` (`{"ASN-007": ["ASN-006"], …}`) te dice, por cada asunción, 
   - **Rechazar** → no es lo que el negocio quiere: `--reject ASN-XXX` — elimina del PRD la afirmación y su marcador. **Cascada determinista ([[D-029]]):** si el `graph` indica que otras asunciones **dependen** de la que se rechaza, arrástralas al flujo de decisión —preséntalas con `AskUserQuestion`— en vez de dejarlas confirmar en silencio; una dependiente de una rechazada normalmente se rechaza también (o se edita para no depender de ella). *(La prosa de brief que dependía de una rechazada —líneas sin marca, nivel b— no la toca el script: si el diagnóstico del `prd-expert` la señaló, resuélvela con el usuario en el gate; queda fuera del automatismo.)*
   - **Editar** → el usuario da el dato real, **en el momento**: en la descripción de la opción "Editar" del `AskUserQuestion`, indícale que **para editar escriba el texto nuevo en el campo libre** ("Otro"/texto) de esa asunción en vez de seleccionar "Editar". Un valor de texto libre sobre una asunción se interpreta como su edición → `--edit ASN-XXX="<texto nuevo>"`: sustituye la afirmación por ese texto y quita el marcador — **sin diferirlo al final**.
 
-Aplica todas las decisiones acumuladas en una pasada (el script mapea cada `ASN-XXX` a su marca inline por posición, preserva el 1:1 y, si la sección de asunciones queda vacía, la elimina entera):
+Aplica todas las decisiones acumuladas en una pasada (el script empareja cada `ASN-XXX` con su marca inline por texto/contenido, preserva el 1:1 y, si la sección de asunciones queda vacía, la elimina entera):
 ```
 !python3 .sdd/scripts/sdd-prd-apply.py "<path>" --confirm ASN-001,ASN-003 --edit ASN-004="<texto>" --reject ASN-006,ASN-007
 ```
