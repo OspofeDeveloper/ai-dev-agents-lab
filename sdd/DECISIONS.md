@@ -6,6 +6,25 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-030 — La edición del PRD en el review se aplica por script determinista, no releyendo/reescribiendo el documento en el hilo principal
+
+- **Fecha:** 2026-07-21 · **Estado:** Adoptada (implementada en `sdd-prd-apply.py` + `wf-prd-review`). · **Relacionada:** [[D-020]] (invariante 1:1 de `sdd-prd-ready.py`), [[D-029]] (grafo de dependencias / cascada), Regla 9 de `kb-sdd-conformance` (lo mecanizable no se deja al agente), convención `fork ⊥ AskUserQuestion` ([[D-015]]/[[D-016]]), CU-2.e (probe D) / CU-2.f / CU-2.h.
+
+**Contexto.** `wf-prd-review` ya delega el *análisis* del PRD al `prd-expert` (Paso 4, read-only) y el Paso 3 declara "no cargues el PRD en el hilo principal". Pero las dos ediciones del fichero —decisiones de asunciones (Paso 5.5) y sello (Paso 6)— seguían en el hilo principal **sin mecanismo especificado**: la forma natural de aplicarlas con un LLM (`Read` del documento entero + `Write`) reintroduce en el contexto del orquestador justo el PRD que el Paso 3 pide no cargar. Y esas ediciones son **mecánicas** (marcar/quitar el marcador `[ASUNCIÓN]`, sustituir/borrar una afirmación, retirar la entrada `[ASN-XXX]`, escribir `Aprobado por:`), justo lo que la Regla 9 pide mecanizar.
+
+**Decisión.** Un script determinista, `sdd-prd-apply.py`, aplica las decisiones que el gate recoge: `--confirm`/`--edit`/`--reject` sobre las asunciones y `--seal "<valor>"` para el sello. El orquestador lo invoca por `Bash` desde las decisiones acumuladas en el gate — nunca releyendo el fichero. `wf-prd-review` pierde `Read` y `Write` de `allowed-tools`: es **estructuralmente imposible** que el hilo principal cargue o reescriba el PRD. **"Quién edita" no cambia** (lo ejecuta el orquestador, no un agente); solo cambia el mecanismo. La ligadura marca-inline↔entrada es **posicional** (el marcador inline es anónimo por diseño y su texto no coincide con el de la entrada): N-ésima marca en orden de documento ↔ N-ésima entrada en orden de sección, con precondición dura de 1:1 (exit 2 si no cuadra) y una guarda fail-safe que exige contenido compartido en cada par que se toca (exit 2 ante desalineación, en vez de editar a ciegas).
+
+**Alternativas descartadas.**
+- *Delegar la escritura a un writer-agente vía la tool `Agent`* (espejo de `wf-prd-create`→`prd-expert`) → cambia mecánica por juicio de LLM (contra Regla 9, menos fiable para operaciones deterministas), obliga a reformular CU-2.e/2.f/2.h ("las ediciones las hace el orquestador, no el agente") y **debilita** la garantía de CU-2.h. `wf-prd-review` además no puede forkearse (usa `AskUserQuestion`).
+- *Dejar el mecanismo sin especificar (estado previo)* → el LLM aplica con `Read`+`Write` del documento entero: el bloat que el Paso 3 quería evitar, reintroducido.
+- *Ligadura por ID o por texto idéntico* → imposible: el marcador inline es anónimo (sin ID) y su texto no coincide literalmente con el de la entrada (`[ASN-004]`); solo el orden es fiable.
+
+**Consecuencias / aprendizaje.** El hilo principal deja de cargar el PRD para editarlo; las ediciones son deterministas y auditables por test black-box. Refuerza CU-2.h: el script solo aplica decisiones explícitas del usuario, sin margen para "cosecha" del LLM. Límite honesto (heredado de Q2a/[[D-029]]): la prosa de brief que dependía de una asunción rechazada (nivel b, líneas sin marca) no la toca el script — se resuelve en el gate con el usuario. La fragilidad del mapeo posicional (si una edición manual desordena cuerpo y sección) queda acotada por la precondición 1:1 y la guarda de contenido compartido, que fallan seguro (exit 2). Backstops: `test_sdd_prd_apply.py` (script, incl. integración con `sdd-prd-ready.py`), `test_prd_review_applies_edits_via_script` en `test_install_sh.py` (cita el script y verifica que `allowed-tools` no tiene `Read`/`Write`).
+
+**Referencias.** `sdd/scripts/sdd-prd-apply.py`, `sdd/pipeline/prd/skills/wf-prd-review/SKILL.md` (frontmatter + Pasos 3/5.5/6), `sdd/conformance/casos-de-uso/cu-02-prd.md` (probe D de CU-2.e, CU-2.f), `sdd/tests/test_sdd_prd_apply.py`, `sdd/tests/test_install_sh.py`, `sdd/CHANGELOG.md`.
+
+---
+
 ## D-029 — Las dependencias entre asunciones se registran en la creación y se hacen cumplir deterministamente en el review
 
 - **Fecha:** 2026-07-19 · **Estado:** Adoptada (implementada en `sdd-prd-deps.py` + `kb-prd-expert`/`wf-prd-create`/`wf-prd-review`). · **Relacionada:** [[D-020]] (invariante 1:1 de `sdd-prd-ready.py`), Regla 9 de `kb-sdd-conformance` (lo mecanizable no se deja al agente), Regla 12 de `kb-prd-expert`, CU-2.e (probe D) / CU-2.j.

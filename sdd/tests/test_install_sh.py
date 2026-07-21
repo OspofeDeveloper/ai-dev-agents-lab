@@ -33,6 +33,7 @@ ENFORCEMENT_SCRIPTS = [
     "sdd-project-status.py", "sdd-kb-check.py", "sdd-release.py", "sdd-next-id.py",
     "sdd-resolve-path.py", "sdd-design-resolve.py", "sdd-source-drift.py",
     "sdd-prd-ready.py", "sdd-prd-frontmatter.py", "sdd-prd-deps.py",
+    "sdd-prd-apply.py",
 ]
 
 
@@ -273,6 +274,23 @@ class InstallAllTest(InstallBase):
                       "wf-prd-review no usa el grafo de dependencias (ver D-029)")
         self.assertIn("--check", skill,
                       "wf-prd-review pierde el backstop pre-sello de huérfanas (D-029)")
+
+    def test_prd_review_applies_edits_via_script(self):
+        # D-030/Q3: las ediciones del review (asunciones + sello) se aplican con
+        # sdd-prd-apply.py, y el hilo principal NO tiene Read/Write sobre el PRD
+        # (imposible cargar el documento entero en contexto).
+        self.install("all")
+        skill = (self.skill_dir("wf-prd-review") / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("sdd-prd-apply.py", skill,
+                      "wf-prd-review no aplica las ediciones por script (ver D-030)")
+        self.assertIn("--seal", skill,
+                      "wf-prd-review pierde el sellado por script (D-030)")
+        fm = skill.split("---", 2)[1]
+        at = [ln for ln in fm.splitlines() if ln.startswith("allowed-tools:")][0]
+        self.assertNotIn("Read", at,
+                         "wf-prd-review no debe declarar Read: main no carga el PRD (D-030)")
+        self.assertNotIn("Write", at,
+                         "wf-prd-review no debe declarar Write: edita por script (D-030)")
 
     def test_orchestration_rule_readiness_line_is_topology_gated(self):
         # La linea de la frontera PRD->Spec solo aparece si se instalan ambas

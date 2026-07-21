@@ -350,7 +350,8 @@ la Skill tool. Se verifican **dos gates encadenados**: el **orden PRD→spec** (
 spec con el PRD sin revisar — probes A/B/F) y el **gate de asunciones** de la review
 (confirmar/rechazar/editar — probes C/D/E). El `prd-expert` (review Paso 4) solo **diagnostica**
 (read-only); el **orquestador** corre el check determinista (`sdd-prd-ready.py`, Paso 5.5),
-presenta cada `[ASN-XXX]` con `AskUserQuestion` y edita el PRD según la decisión del usuario.
+presenta cada `[ASN-XXX]` con `AskUserQuestion` y **aplica** las decisiones con `sdd-prd-apply.py`
+—el hilo principal no relee ni reescribe el PRD ([[D-030]]).
 
 > **Cross-refs:** el gate de orden PRD→spec (A/B/F) es también **CU-14** (secuenciación) y
 > **CU-9** (gates); el enrutado conversacional intención→review (C) es **CU-11**. El probe **A
@@ -387,6 +388,11 @@ presenta cada `[ASN-XXX]` con `AskUserQuestion` y edita el PRD según la decisi�
      (p. ej. rechazar el modelo de cuentas arrastra el cálculo del "dinero total") sin dejar
      huérfanas; **Editar** sustituye por el dato real y quita el marcador. Edita **solo** lo que
      el usuario decide.
+   → **Mecanismo ([[D-030]]):** las decisiones se **aplican** con `sdd-prd-apply.py`
+     (`--confirm`/`--edit`/`--reject`), no releyendo/reescribiendo el PRD en el hilo principal
+     (`wf-prd-review` ya no tiene `Read`/`Write`). "Quién edita" no cambia: lo corre el orquestador,
+     no un agente. La prosa de brief que dependía de una rechazada (nivel b, sin marca) se resuelve
+     en el gate con el usuario, no la mecaniza el script.
    → **Cascada determinista ([[D-029]], detalle en CU-2.j):** cuando la asunción rechazada tiene
      dependientes declarados (`Depende de:` en el PRD), el arrastre lo dirige el grafo de
      `sdd-prd-deps.py` —no la inferencia de la LLM— y un `--check` pre-sello caza huérfanas. Si el
@@ -412,13 +418,13 @@ de "listo" sin evidencia del script, o gate de asunciones mal aplicado.
 
 **Precondición:** PRD limpio, sin asunciones pendientes.
 **Mecanismo:** skill `wf-prd-review`, Paso 6 — el **orquestador** (hilo principal) captura
-el rol aprobador con `AskUserQuestion` y estampa el sello `Aprobado por:`. El `prd-expert`
-**no interviene** en el sello.
+la identidad del aprobador con `AskUserQuestion` y estampa el sello con `sdd-prd-apply.py --seal`
+([[D-030]]); no reescribe el PRD con `Write`. El `prd-expert` **no interviene** en el sello.
 
 1. Le pides revisar el PRD ya limpio.
-   → **Esperado:** te pide el rol aprobador con `AskUserQuestion` (default PM/PO).
-2. Respondes con un rol.
-   → **Esperado:** escribe `Aprobado por: <rol> (<fecha>)` en el PRD.
+   → **Esperado:** te pide el aprobador con `AskUserQuestion` (nombre precargado de git, rol opcional).
+2. Respondes con un nombre/rol.
+   → **Esperado:** estampa `Aprobado por: <nombre> [(<rol>)] (<fecha>)` vía `sdd-prd-apply.py --seal`.
 3. **No** respondes.
    → **Esperado:** **no autoaprueba** (no escribe la línea).
 4. Re-ejecutas la revisión sobre el PRD ya sellado y respondes con un rol.
@@ -445,7 +451,9 @@ FALLO si estampa `Aprobado por:` sin que respondas, o si acumula sellos duplicad
 **Precondición:** PRD con problemas de estructura o contaminación técnica.
 **Mecanismo:** skill `wf-prd-review`. El `prd-expert` **solo diagnostica** (read-only): cita
 el fragmento, la regla del catálogo y propone reescritura, pero **nunca edita** el PRD. Las
-dos únicas ediciones —asunciones (5.5) y sello (6)— las hace el **orquestador**, no el agente.
+dos únicas ediciones —asunciones (5.5) y sello (6)— las hace el **orquestador** (aplicándolas
+con `sdd-prd-apply.py`, [[D-030]]), no el agente; el script solo ejecuta decisiones explícitas
+del usuario, así que no hay margen para "cosecha" del LLM.
 
 1. Le pides revisar un PRD con secciones mal planteadas o con tecnología metida.
    → **Esperado:** el `prd-expert` **diagnostica** (cita el fragmento, la regla del catálogo

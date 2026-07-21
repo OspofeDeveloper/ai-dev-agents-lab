@@ -4,15 +4,17 @@ description: "Revision rapida de un PRD o documento de requisitos antes de entra
 when_to_use: "Activa en frases como 'revisa mi PRD', '¿este PRD esta bien para empezar?', 'haz preflight del PRD', 'valida el documento de requisitos antes del spec'."
 argument-hint: "<archivo_prd.md>"
 effort: medium
-allowed-tools: [Read, Write, Bash, Agent, AskUserQuestion]
+allowed-tools: [Bash, Agent, AskUserQuestion]
 user-invocable: true
 ---
 
 # Workflow: PRD Review
 
-Tu objetivo es revisar si un PRD está preparado para entrar en el pipeline SDD. No generas Spec, no generas features y no corriges el documento por tu cuenta: emites un diagnóstico claro y accionable. **Dos excepciones acotadas** en las que sí editas el PRD: (1) la confirmación de asunciones del Paso 5.5 — solo lo que el usuario decide explícitamente sobre cada `[ASUNCIÓN]`, nunca de tu cosecha; (2) el sello de aprobación del review cuando el veredicto es `LISTO` (Paso 6) — solo la línea `Aprobado por:` en el header. Ninguna otra reescritura.
+Tu objetivo es revisar si un PRD está preparado para entrar en el pipeline SDD. No generas Spec, no generas features y no corriges el documento por tu cuenta: emites un diagnóstico claro y accionable. **Dos excepciones acotadas** en las que sí se edita el PRD: (1) la confirmación de asunciones del Paso 5.5 — solo lo que el usuario decide explícitamente sobre cada `[ASUNCIÓN]`, nunca de tu cosecha; (2) el sello de aprobación del review cuando el veredicto es `LISTO` (Paso 6) — solo la línea `Aprobado por:` en el header. Ninguna otra reescritura.
 
-Este workflow corre en el **hilo principal** (necesita confirmar las asunciones contigo en el Paso 5.5, vía `AskUserQuestion` — una tool que no existe dentro de un subagente). El **análisis experto** del PRD lo hace el agente `prd-expert`, que carga `kb-prd-expert` como fuente autoritativa; tú lo invocas vía la tool `Agent` (Paso 4) y gestionas los gates humanos y las ediciones del PRD aquí, en el hilo principal.
+Este workflow corre en el **hilo principal** (necesita confirmar las asunciones contigo en el Paso 5.5, vía `AskUserQuestion` — una tool que no existe dentro de un subagente). El **análisis experto** del PRD lo hace el agente `prd-expert`, que carga `kb-prd-expert` como fuente autoritativa; tú lo invocas vía la tool `Agent` (Paso 4) y gestionas los gates humanos aquí, en el hilo principal.
+
+**El hilo principal no carga ni reescribe el PRD.** No tienes `Read` ni `Write` sobre el documento: las dos ediciones (asunciones, sello) se aplican **deterministamente** con `sdd-prd-apply.py` vía `Bash`, desde las decisiones que recoges en el gate — nunca releyendo el fichero entero en contexto ([[D-030]]). "Quién edita" no cambia: lo ejecuta el orquestador, no un agente; solo cambia el mecanismo (script en vez de `Read`+`Write`).
 
 ---
 
@@ -41,7 +43,7 @@ Si el nombre termina en `_spec.md`, `_plan.md` o `_tasks.md`, informa y **detén
 
 ## Paso 3: No cargues el PRD en el hilo principal
 
-No leas el PRD completo aquí: su lectura y análisis se delegan al `prd-expert` (Paso 4), que recibe el **path** y lo lee con su propia `Read` + `kb-prd-expert`. El orquestador solo vuelve a tocar el fichero —de forma puntual y acotada— cuando tiene que **editarlo**: el gate de asunciones (Paso 5.5, solo si `grep -c` > 0) y el sello (Paso 6, solo si el veredicto es `LISTO`). Así el contexto del orquestador no carga el documento entero (que además se duplicaría en el prompt del agente).
+No leas el PRD completo aquí: su lectura y análisis se delegan al `prd-expert` (Paso 4), que recibe el **path** y lo lee con su propia `Read` + `kb-prd-expert`. El orquestador solo vuelve a tocar el fichero —de forma puntual y acotada, **siempre por script `Bash`, nunca con `Read`+`Write`**— cuando tiene que **editarlo**: el gate de asunciones (Paso 5.5, `sdd-prd-apply.py`, solo si quedan marcas > 0) y el sello (Paso 6, `sdd-prd-apply.py --seal`, solo si el veredicto es `LISTO`). Así el contexto del orquestador no carga el documento entero (que además se duplicaría en el prompt del agente).
 
 ---
 
@@ -83,11 +85,16 @@ El campo `inline_marks` es el conteo real; `ASSUMPTION_MISMATCH` señala una mar
 El campo `graph` (`{"ASN-007": ["ASN-006"], …}`) te dice, por cada asunción, de qué otras depende. Úsalo en el gate (abajo). Si `sdd-prd-deps.py` sale con `MALFORMED` (arista a un `ASN` inexistente o ciclo), avisa y corrígelo antes de procesar.
 
 - **`inline_marks` es `0`** → no hay asunciones pendientes; sigue al veredicto.
-- **`inline_marks` `> 0`** → localiza la sección `## Asunciones del PRD` y procesa **cada `[ASN-XXX]` una a una con el usuario** (usa `AskUserQuestion` cuando haya varias): para cada una, presenta la afirmación inferida y su hueco, y pide decisión:
-  - **Confirmar** → es correcta: marca la casilla `[x]` y elimina el marcador `[ASUNCIÓN]` inline de esa afirmación (pasa a ser hecho de negocio).
-  - **Rechazar** → no es lo que el negocio quiere: elimina del PRD la afirmación y su marcador (y el contenido que dependía de ella). **Cascada determinista ([[D-029]]):** si el `graph` indica que otras asunciones **dependen** de la que se rechaza, arrástralas al flujo de decisión —preséntalas con `AskUserQuestion`— en vez de dejarlas confirmar en silencio; una dependiente de una rechazada normalmente se rechaza también (o se edita para no depender de ella).
-  - **Editar** → el usuario da el dato real, **en el momento**: en la descripción de la opción "Editar" del `AskUserQuestion`, indícale que **para editar escriba el texto nuevo en el campo libre** ("Otro"/texto) de esa asunción en vez de seleccionar "Editar". Un valor de texto libre sobre una asunción se interpreta como su edición: sustituye la afirmación por ese texto y quita el marcador — **sin diferirlo al final**.
-  - Cuando una sección queda sin asunciones pendientes, elimina la entrada de `## Asunciones del PRD`; si no queda ninguna, elimina la sección entera.
+- **`inline_marks` `> 0`** → recorre **cada `[ASN-XXX]` una a una con el usuario** (usa `AskUserQuestion` cuando haya varias): para cada una, presenta la afirmación inferida y su hueco (con los flags de gobernanza del experto), y **recoge** la decisión. No edites el PRD entrada a entrada: **acumula** las decisiones y aplícalas al final en **una sola** llamada a `sdd-prd-apply.py`. Las tres decisiones y su flag:
+  - **Confirmar** → es correcta (pasa a hecho de negocio): `--confirm ASN-XXX` — quita el marcador `[ASUNCIÓN]` inline de esa afirmación y retira su entrada de la sección.
+  - **Rechazar** → no es lo que el negocio quiere: `--reject ASN-XXX` — elimina del PRD la afirmación y su marcador. **Cascada determinista ([[D-029]]):** si el `graph` indica que otras asunciones **dependen** de la que se rechaza, arrástralas al flujo de decisión —preséntalas con `AskUserQuestion`— en vez de dejarlas confirmar en silencio; una dependiente de una rechazada normalmente se rechaza también (o se edita para no depender de ella). *(La prosa de brief que dependía de una rechazada —líneas sin marca, nivel b— no la toca el script: si el diagnóstico del `prd-expert` la señaló, resuélvela con el usuario en el gate; queda fuera del automatismo.)*
+  - **Editar** → el usuario da el dato real, **en el momento**: en la descripción de la opción "Editar" del `AskUserQuestion`, indícale que **para editar escriba el texto nuevo en el campo libre** ("Otro"/texto) de esa asunción en vez de seleccionar "Editar". Un valor de texto libre sobre una asunción se interpreta como su edición → `--edit ASN-XXX="<texto nuevo>"`: sustituye la afirmación por ese texto y quita el marcador — **sin diferirlo al final**.
+
+Aplica todas las decisiones acumuladas en una pasada (el script mapea cada `ASN-XXX` a su marca inline por posición, preserva el 1:1 y, si la sección de asunciones queda vacía, la elimina entera):
+```
+!python3 .sdd/scripts/sdd-prd-apply.py "<path>" --confirm ASN-001,ASN-003 --edit ASN-004="<texto>" --reject ASN-006,ASN-007
+```
+Si sale exit 2 (1:1 roto o desalineación), **no continúes**: resuélvelo (`sdd-prd-ready.py`) antes de reintentar — el script no edita a ciegas.
 
 **Backstop pre-sello ([[D-029]]).** Antes de aplicar/sellar, verifica que ninguna dependiente de una rechazada quedó viva:
 ```
@@ -95,7 +102,7 @@ El campo `graph` (`{"ASN-007": ["ASN-006"], …}`) te dice, por cada asunción, 
 ```
 (pasa la lista de las que el usuario **rechazó**). Si sale `ORPHANS` (exit 2), **re-presenta** esos dependientes al usuario para decidir antes de continuar — no selles con una huérfana. Exit 0 → coherente.
 
-A diferencia del resto de `wf-prd-review` (que solo diagnostica), aquí **sí** editas el PRD, pero solo lo que el usuario decide explícitamente sobre cada asunción — no reescrituras de tu cosecha.
+A diferencia del resto de `wf-prd-review` (que solo diagnostica), aquí **sí** se edita el PRD, pero solo lo que el usuario decide explícitamente sobre cada asunción (aplicado por `sdd-prd-apply.py`) — no reescrituras de tu cosecha.
 
 **Efecto en el veredicto:** mientras queden marcadores `[ASUNCIÓN]` sin confirmar, el PRD **no puede ser `LISTO`** (es contenido fabricado sin validar). Si el usuario no quiere resolverlas ahora, el veredicto es `NO_LISTO` con las asunciones pendientes listadas.
 
@@ -111,7 +118,11 @@ Si el veredicto es `LISTO` (y por tanto no quedan `[ASUNCIÓN]` pendientes tras 
    ```
    Repone los campos mecánicos que falten (`type`, `version`, `created`, `status`). Si sale con exit ≠0 por falta de `product`, no selles: es un hueco de contenido que hay que resolver antes.
 1. Captura la **identidad del aprobador** con `AskUserQuestion` ([[D-027]]): **precarga el nombre** con `!git config user.name` como opción por defecto (lo que sella es *quién* aprobó, no un rol genérico), y ofrece **rol opcional** (PM / Product Owner). El usuario confirma el nombre precargado, lo cambia, o añade rol. Si `git config user.name` está vacío, cae al rol como default.
-2. Si el usuario responde, escribe en el header/metadata del PRD (junto a versión/fecha del documento) la línea `Aprobado por: <nombre> [(<rol>)] (<fecha real de tu contexto>)` — p. ej. `Aprobado por: Oscar Pozo (Product Owner) (2026-07-17)`. En re-revisión, sobrescribe la línea previa. **No autoapruebes**: si no hay respuesta, no escribas la línea.
+2. Si el usuario responde, estampa el sello con el script (no con `Write`) — sobrescribe la línea `Aprobado por:` del header con el valor `<nombre> [(<rol>)] (<fecha real de tu contexto>)`:
+   ```bash
+   !python3 .sdd/scripts/sdd-prd-apply.py "<path>" --seal "Oscar Pozo (Product Owner) (2026-07-17)"
+   ```
+   En re-revisión sobrescribe la línea previa. **No autoapruebes**: si no hay respuesta, no llames a `--seal`.
 
 Si el veredicto es `LISTO_CON_AJUSTES` o `NO_LISTO`, **no** escribas la atribución.
 
