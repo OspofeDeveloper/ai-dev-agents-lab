@@ -2,6 +2,16 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.69.0 — 2026-07-22
+
+**"Sellado" es `status: approved` + `Aprobado por:` a la vez (sello coherente + reapertura determinista)** — [[DECISIONS D-032]]. En un run real de CU-2.e el PRD quedó `Aprobado por: <nombre>` pero `status: draft`: el sello escribía la línea pero no subía el status. Incoherente, y desactivaba D-028 (`wf-prd-change` reabre si `status: approved`, que nunca se alcanzaba) → Q4 estaba latente-muerto.
+
+- ⚠ **`sdd-prd-apply.py --seal`**: además de escribir `Aprobado por:`, sube `status:` a `approved` (falla si no hay `status:` en el frontmatter).
+- ⚠ **`sdd-prd-apply.py --reopen`** (nuevo): baja `status:` a `in-review` y resetea `Aprobado por:` al placeholder pendiente.
+- ⚠ **`wf-prd-change` Paso 5**: reabre el sello llamando a `--reopen` (determinista, no editando el frontmatter a mano). El sello lo restablece solo `wf-prd-review`.
+- **CU:** CU-2.f (el sello deja `status: approved`) y CU-7.b (reapertura determinista) actualizados; esto **desbloquea** el probe de D-028/Q4.
+- **Tests:** `test_sdd_prd_apply.py` (seal→approved, reopen→in-review+placeholder), `test_prd_change_reopens_seal`.
+
 ## 0.68.0 — 2026-07-22
 
 **El orquestador no lee ni diagnostica el artefacto en el hilo principal al orientar** — [[DECISIONS D-031]]. En un run de CU-2.e (probe A), ante "¿cómo lo ves?" el orquestador corría el check mecánico (bien) **pero además** hacía `Read` del PRD completo y emitía su propio diagnóstico cualitativo — trabajo del `prd-expert` dentro de la review, y con el documento entero cargado en el hilo principal (el bloat que D-030 evita).

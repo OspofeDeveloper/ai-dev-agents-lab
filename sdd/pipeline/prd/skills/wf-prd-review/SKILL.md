@@ -118,7 +118,7 @@ Si el veredicto es `LISTO` (y por tanto no quedan `[ASUNCIÓN]` pendientes tras 
    ```
    Repone los campos mecánicos que falten (`type`, `version`, `created`, `status`). Si sale con exit ≠0 por falta de `product`, no selles: es un hueco de contenido que hay que resolver antes.
 1. Captura la **identidad del aprobador** con `AskUserQuestion` ([[D-027]]): **precarga el nombre** con `!git config user.name` como opción por defecto (lo que sella es *quién* aprobó, no un rol genérico), y ofrece **rol opcional** (PM / Product Owner). El usuario confirma el nombre precargado, lo cambia, o añade rol. Si `git config user.name` está vacío, cae al rol como default.
-2. Si el usuario responde, estampa el sello con el script (no con `Write`) — sobrescribe la línea `Aprobado por:` del header con el valor `<nombre> [(<rol>)] (<fecha real de tu contexto>)`:
+2. Si el usuario responde, estampa el sello con el script (no con `Write`) — sobrescribe la línea `Aprobado por:` del header con el valor `<nombre> [(<rol>)] (<fecha real de tu contexto>)` **y sube `status:` a `approved`** ([[D-032]]: "sellado" son las dos cosas juntas — si `status` no llega a `approved`, `wf-prd-change` no reconocería el PRD como sellado y su reapertura no dispararía):
    ```bash
    !python3 .sdd/scripts/sdd-prd-apply.py "<path>" --seal "Oscar Pozo (Product Owner) (2026-07-17)"
    ```

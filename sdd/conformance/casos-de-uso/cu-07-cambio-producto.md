@@ -85,12 +85,13 @@ estado natural tras pasar la review) y un cambio que altera alcance, reglas o pr
    grupo con otras personas").
    → **Esperado:** actualiza versión/fecha y **solo** las secciones afectadas del PRD;
      registra `product-changelog.md` + `changes/CR-XXX/`; recomienda `wf-prd-sync-impact`.
-2. **Reapertura del sello ([[D-028]]):** como el PRD estaba sellado, tras aplicar el cambio
-   baja `status:` a `in-review` y **resetea `Aprobado por:` al placeholder pendiente** (el
-   sello no puede certificar un contenido que ya cambió), y remite a `wf-prd-review`.
+2. **Reapertura del sello ([[D-028]]/[[D-032]]):** como el PRD estaba sellado (`status: approved`),
+   tras aplicar el cambio `wf-prd-change` llama a `sdd-prd-apply.py --reopen` — baja `status:` a
+   `in-review` y **resetea `Aprobado por:` al placeholder pendiente** (el sello no puede certificar
+   un contenido que ya cambió), y remite a `wf-prd-review`.
    → **Esperado (verificable):** `sdd-prd-ready.py` sobre el PRD cambiado da `UNSEALED`
      (o `OPEN_ASSUMPTIONS` si el cambio introdujo nuevas `[ASUNCIÓN]`), **nunca `READY`**;
-     `wf-prd-change` **no** escribe un `Aprobado por:` nuevo.
+     `status: in-review` y `wf-prd-change` **no** escribe un `Aprobado por:` nuevo.
 3. Vuelves a pasar `wf-prd-review` sobre el PRD cambiado y lo apruebas.
    → **Esperado:** el sello se restablece **solo aquí**, re-capturando la identidad (D-027)
      y con la fecha del cambio; el `Aprobado por:` vuelve a estar relleno.

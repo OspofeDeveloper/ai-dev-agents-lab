@@ -273,6 +273,8 @@ class InstallAllTest(InstallBase):
         self.assertIn("reabre el sello", skill,
                       "wf-prd-change pierde la reapertura del sello (ver D-028)")
         self.assertIn("in-review", skill)
+        self.assertIn("--reopen", skill,
+                      "wf-prd-change no reabre el sello por script determinista (D-032)")
 
     def test_prd_review_uses_dependency_graph(self):
         # D-029/Q2a: el gate de asunciones carga el grafo determinista de

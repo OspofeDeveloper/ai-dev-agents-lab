@@ -32,13 +32,18 @@ Uso:
     sdd-prd-apply.py <prd.md> [--confirm ASN-001,ASN-002] \\
         [--edit ASN-004="texto nuevo"] [--reject ASN-006,ASN-007] [--json]
 
-    # Sellar la aprobación (Paso 6, ortogonal — no combinar con lo anterior):
+    # Sellar la aprobación (Paso 6, ortogonal): escribe `Aprobado por:` Y sube
+    # `status:` a `approved` — "sellado" son las dos cosas juntas ([[D-032]]):
     sdd-prd-apply.py <prd.md> --seal "Nombre (Rol) (YYYY-MM-DD)" [--json]
+
+    # Reabrir el sello (lo llama wf-prd-change tras un cambio, [[D-028]]/[[D-032]]):
+    # status → in-review y `Aprobado por:` → placeholder pendiente.
+    sdd-prd-apply.py <prd.md> --reopen [--json]
 
 Exit codes:
     0 = aplicado
     1 = error de uso o IO
-    2 = precondición 1:1 rota / desalineación / ASN inexistente / sello no hallado
+    2 = precondición 1:1 rota / desalineación / ASN inexistente / sello|status no hallado
 """
 import json
 import re
@@ -56,6 +61,10 @@ HEADING_RE = re.compile(r"^\s*#{1,6}\s+")
 PREFIX_RE = re.compile(r"^(\s*(?:[-*+]\s+|#{1,6}\s+)?)")
 # valor del sello: conserva todo hasta `Aprobado por:` (con negrita opcional)
 SEAL_LINE_RE = re.compile(r"^(?P<prefix>.*?Aprobado por:\**)\s*.*$")
+# línea `status:` del frontmatter (conserva prefijo y comentario final)
+STATUS_RE = re.compile(r"^(status:[ \t]*)(\S+)(.*)$", re.MULTILINE)
+# placeholder al reabrir el sello (contiene "pendiente" → sdd-prd-ready lo ve UNSEALED)
+PENDING_SEAL = "[pendiente de review — lo escribe wf-prd-review]"
 # palabras de contenido (≥4, admite acentos/ñ) para la guarda de desalineación
 WORD_RE = re.compile(r"[0-9a-záéíóúüñ]{4,}", re.IGNORECASE)
 
@@ -279,20 +288,57 @@ def apply_decisions(text: str, confirm: set, edit: dict, reject: set) -> tuple:
     return "\n".join(out), result
 
 
-def apply_seal(text: str, value: str) -> tuple:
-    """Sustituye el valor de la línea `Aprobado por:` (sobrescribe en re-revisión)."""
-    lines = text.split("\n")
+def _set_seal_line(lines: list, value: str) -> bool:
+    """Sustituye el valor de la línea `Aprobado por:` in-place. Devuelve si la halló."""
     for i, line in enumerate(lines):
         m = SEAL_LINE_RE.match(line)
         if m:
-            lines[i] = f"{m.group('prefix')} {value.strip()}"
-            return "\n".join(lines), {"sealed": value.strip()}
-    raise ApplyError("no se encontró la línea `Aprobado por:` para sellar.")
+            lines[i] = f"{m.group('prefix')} {value}"
+            return True
+    return False
+
+
+def _set_status(text: str, value: str) -> tuple:
+    """Fija el valor de `status:` en el frontmatter (conserva comentario). Devuelve (texto, hallado)."""
+    new, n = STATUS_RE.subn(lambda m: f"{m.group(1)}{value}{m.group(3)}", text, count=1)
+    return new, n > 0
+
+
+def apply_seal(text: str, value: str) -> tuple:
+    """Sella: escribe `Aprobado por:` y sube `status:` a `approved` ([[D-032]]).
+
+    "Sellado" = las dos cosas a la vez (aprobador + status approved); si solo se
+    escribe la línea, `wf-prd-change` no reconocería el PRD como sellado y la
+    reapertura de D-028 nunca dispararía.
+    """
+    lines = text.split("\n")
+    if not _set_seal_line(lines, value.strip()):
+        raise ApplyError("no se encontró la línea `Aprobado por:` para sellar.")
+    new_text, status_ok = _set_status("\n".join(lines), "approved")
+    if not status_ok:
+        raise ApplyError("no se encontró `status:` en el frontmatter (corre sdd-prd-frontmatter.py --fix antes).")
+    return new_text, {"sealed": value.strip(), "status": "approved"}
+
+
+def apply_reopen(text: str) -> tuple:
+    """Reabre el sello ([[D-028]]/[[D-032]]): status → in-review y `Aprobado por:` → placeholder.
+
+    Lo llama `wf-prd-change` cuando un cambio de contenido invalida una aprobación
+    previa. Determinista: el sello solo lo restablece luego `wf-prd-review`.
+    """
+    lines = text.split("\n")
+    _set_seal_line(lines, PENDING_SEAL)  # si no hay línea de sello, no es fatal
+    new_text, status_ok = _set_status("\n".join(lines), "in-review")
+    if not status_ok:
+        raise ApplyError("no se encontró `status:` en el frontmatter para reabrir el sello.")
+    return new_text, {"reopened": True, "status": "in-review"}
 
 
 def _parse_args(argv):
     as_json = "--json" in argv
     args = [a for a in argv if a != "--json"]
+    reopen = "--reopen" in args
+    args = [a for a in args if a != "--reopen"]
     confirm: set = set()
     reject: set = set()
     edit: dict = {}
@@ -316,12 +362,12 @@ def _parse_args(argv):
                 raise ApplyError('--seal requiere un valor "Nombre (Rol) (fecha)"', code=1)
         else:
             rest.append(a)
-    return as_json, rest, confirm, reject, edit, seal
+    return as_json, rest, confirm, reject, edit, seal, reopen
 
 
 def main() -> int:
     try:
-        as_json, rest, confirm, reject, edit, seal = _parse_args(sys.argv[1:])
+        as_json, rest, confirm, reject, edit, seal, reopen = _parse_args(sys.argv[1:])
     except ApplyError as e:
         print(f"ERROR: {e}", file=sys.stderr)
         return e.code
@@ -329,18 +375,19 @@ def main() -> int:
     if len(rest) != 1:
         print(
             'ERROR: uso: sdd-prd-apply.py <prd.md> [--confirm A,B] '
-            '[--edit ASN-XXX="texto"] [--reject C,D] | --seal "valor" [--json]',
+            '[--edit ASN-XXX="texto"] [--reject C,D] | --seal "valor" | --reopen [--json]',
             file=sys.stderr,
         )
         return 1
 
     has_decisions = bool(confirm or reject or edit)
-    if seal is not None and has_decisions:
-        print("ERROR: --seal es ortogonal; no lo combines con --confirm/--edit/--reject.",
+    modes = sum([has_decisions, seal is not None, reopen])
+    if modes > 1:
+        print("ERROR: modos exclusivos; usa uno de --confirm/--edit/--reject | --seal | --reopen.",
               file=sys.stderr)
         return 1
-    if seal is None and not has_decisions:
-        print("ERROR: nada que aplicar (indica --confirm/--edit/--reject o --seal).",
+    if modes == 0:
+        print("ERROR: nada que aplicar (indica --confirm/--edit/--reject, --seal o --reopen).",
               file=sys.stderr)
         return 1
 
@@ -354,6 +401,8 @@ def main() -> int:
     try:
         if seal is not None:
             new_text, result = apply_seal(text, seal)
+        elif reopen:
+            new_text, result = apply_reopen(text)
         else:
             new_text, result = apply_decisions(text, confirm, edit, reject)
     except ApplyError as e:
@@ -370,7 +419,9 @@ def main() -> int:
     if as_json:
         print(json.dumps(result, ensure_ascii=False))
     elif seal is not None:
-        print(f"OK: {path} — sellado: {result['sealed']}")
+        print(f"OK: {path} — sellado: {result['sealed']} · status: approved")
+    elif reopen:
+        print(f"OK: {path} — sello reabierto · status: in-review · Aprobado por: pendiente")
     else:
         det = []
         if result["confirmed"]:

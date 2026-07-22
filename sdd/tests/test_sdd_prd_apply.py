@@ -169,13 +169,43 @@ class PrdApplyTest(unittest.TestCase):
         self.assertTrue(data["section_removed"])
 
     # --- seal ------------------------------------------------------------
-    def test_seal_writes_value(self):
+    def test_seal_writes_value_and_bumps_status(self):
+        # D-032: sellar escribe Aprobado por Y sube status a approved (las dos juntas).
         p = self._write()
         r = self._apply(p, "--seal", "Oscar Pozo (Product Owner) (2026-07-21)")
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         out = self._read(p)
         self.assertIn("**Aprobado por:** Oscar Pozo (Product Owner) (2026-07-21)", out)
         self.assertNotIn("[pendiente", out)
+        self.assertIn("status: approved", out)
+        self.assertNotIn("status: draft", out)
+
+    def test_seal_missing_status_fails(self):
+        # Línea de sello presente pero sin `status:` en frontmatter → exit 2.
+        no_status = "---\ntype: product-requirements\nproduct: X\n---\n\n# PRD\n> **Aprobado por:** [pendiente]\n"
+        p = write(self.dir / "prd.md", no_status)
+        r = self._apply(p, "--seal", "X (2026-01-01)")
+        self.assertEqual(r.returncode, 2)
+
+    def test_reopen_resets_status_and_seal(self):
+        # D-028/D-032: reabrir baja status a in-review y resetea Aprobado por a
+        # placeholder; sdd-prd-ready vuelve a ver el PRD UNSEALED.
+        p = self._write()
+        self._apply(p, "--seal", "Oscar Pozo (2026-07-21)")
+        r = self._apply(p, "--reopen")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        out = self._read(p)
+        self.assertIn("status: in-review", out)
+        self.assertNotIn("status: approved", out)
+        self.assertIn("pendiente", out.lower())
+        self.assertNotIn("Oscar Pozo (2026-07-21)", out)
+        ready = run_script("sdd-prd-ready.py", p, "--json")
+        self.assertEqual(json.loads(ready.stdout)["sealed"], False)
+
+    def test_reopen_and_seal_are_exclusive(self):
+        p = self._write()
+        r = self._apply(p, "--reopen", "--seal", "X (2026-01-01)")
+        self.assertEqual(r.returncode, 1)
 
     def test_seal_overwrites_previous(self):
         p = self._write()
@@ -256,6 +286,7 @@ class PrdApplyTest(unittest.TestCase):
         self.assertEqual(r1.returncode, 0, r1.stdout + r1.stderr)
         r2 = self._apply(p, "--seal", "Oscar Pozo (Product Owner) (2026-07-21)")
         self.assertEqual(r2.returncode, 0, r2.stdout + r2.stderr)
+        self.assertIn("status: approved", self._read(p))
         ready = run_script("sdd-prd-ready.py", p, "--json")
         data = json.loads(ready.stdout)
         self.assertEqual(data["verdict"], "READY", ready.stdout)

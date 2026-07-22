@@ -6,6 +6,25 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-032 — "Sellado" es `status: approved` + `Aprobado por:` a la vez: el sello sube el status y la reapertura lo baja, deterministamente
+
+- **Fecha:** 2026-07-22 · **Estado:** Adoptada (implementada en `sdd-prd-apply.py` + `wf-prd-review`/`wf-prd-change`). · **Relacionada:** [[D-027]] (identidad del aprobador), [[D-028]] (un cambio reabre el sello), [[D-030]] (edición del review por script), Regla 10 (SSoT del sello), CU-2.f / CU-7.b.
+
+**Contexto.** En un run de conformance de CU-2.e (Tanda A, run 1) el PRD quedó tras el review con `Aprobado por: <nombre>` **pero `status: draft`**. El sello (`sdd-prd-apply.py --seal`) solo escribía la línea `Aprobado por:`; `sdd-prd-frontmatter.py --fix` únicamente rellena `status` si **falta** (y por defecto `draft`), así que nunca subía a `approved`. Estado incoherente (aprobado por alguien, pero en `draft`), y —lo grave— **desactivaba D-028**: `wf-prd-change` decide reabrir el sello si el PRD estaba sellado (`status: approved`); como el review nunca ponía `approved`, la reapertura **nunca podía dispararse** y CU-7.b habría fallado.
+
+**Decisión.** "Sellado" es un estado de **dos campos a la vez**: `status: approved` **y** `Aprobado por:` relleno. `sdd-prd-apply.py --seal` sube `status:` a `approved` además de escribir el aprobador (falla si no hay `status:` en el frontmatter). Simétricamente, la reapertura se mecaniza: `sdd-prd-apply.py --reopen` baja `status:` a `in-review` y resetea `Aprobado por:` al placeholder pendiente; `wf-prd-change` (Paso 5) la invoca en vez de editar el frontmatter a mano. Invariante: un PRD `approved` ⟺ un humano aprobó su contenido vigente vía el gate de review; cualquier cambio posterior lo devuelve a `in-review` hasta re-aprobar.
+
+**Alternativas descartadas.**
+- *Dejar `status` como estaba y que D-028 detecte "sellado" solo por `Aprobado por:`* → deja el enum `status` (draft|in-review|approved) sin usar y el frontmatter incoherente; `status` es la señal natural del ciclo de aprobación.
+- *Reabrir editando el frontmatter a mano en `wf-prd-change`* → frágil (edición de YAML por el agente); mismo motivo por el que la edición del review pasó a script (D-030). `--reopen` lo hace determinista y testeable.
+- *Subir el status en `sdd-prd-frontmatter.py --fix`* → ese script repone campos **ausentes**, no cambia el ciclo de vida; mezclar responsabilidades. El sello es quien conoce la transición.
+
+**Consecuencias / aprendizaje.** Cierra el ciclo del sello (D-027 quién · D-028 contenido vigente · D-032 estado coherente y reapertura determinista) y **hace realmente vivo D-028/Q4**, que estaba latente-muerto. Hallazgo destapado por conformance (run real), como D-026/D-031: un hueco pre-existente invisible en verde de tests hasta ejercitar el flujo. Backstops: `test_sdd_prd_apply.py` (seal sube approved, reopen resetea status+sello), `test_prd_change_reopens_seal` en `test_install_sh.py`.
+
+**Referencias.** `sdd/scripts/sdd-prd-apply.py` (`--seal`/`--reopen`), `sdd/pipeline/prd/skills/wf-prd-review/SKILL.md` (Paso 6), `sdd/pipeline/prd/skills/wf-prd-change/SKILL.md` (Paso 5), `sdd/conformance/casos-de-uso/cu-02-prd.md` (CU-2.f) / `cu-07-cambio-producto.md` (CU-7.b), `sdd/tests/`, `sdd/CHANGELOG.md`.
+
+---
+
 ## D-031 — Al orientar sobre readiness, el orquestador cita el veredicto mecánico y enruta; la lectura cualitativa del artefacto es del experto dentro de su skill
 
 - **Fecha:** 2026-07-22 · **Estado:** Adoptada (implementada en `orchestration.md`). · **Relacionada:** [[D-030]] (el hilo principal no carga el PRD en el review), [[D-020]] (readiness mecánica), [[D-026]] (el orquestador no auto-arma overrides), principio del orquestador en `CLAUDE.md` ("no analizas, no ejecutas el trabajo directamente"), CU-2.e (probe A) / CU-2.h.
