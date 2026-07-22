@@ -6,6 +6,25 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-031 — Al orientar sobre readiness, el orquestador cita el veredicto mecánico y enruta; la lectura cualitativa del artefacto es del experto dentro de su skill
+
+- **Fecha:** 2026-07-22 · **Estado:** Adoptada (implementada en `orchestration.md`). · **Relacionada:** [[D-030]] (el hilo principal no carga el PRD en el review), [[D-020]] (readiness mecánica), [[D-026]] (el orquestador no auto-arma overrides), principio del orquestador en `CLAUDE.md` ("no analizas, no ejecutas el trabajo directamente"), CU-2.e (probe A) / CU-2.h.
+
+**Contexto.** En un run de conformance de CU-2.e (probe A), ante "¿cómo lo ves? ¿cuál es el siguiente paso?" el orquestador corrió `sdd-prd-ready.py` (correcto) **pero además** hizo `Read` del PRD completo en el hilo principal y emitió un diagnóstico cualitativo ("está bien planteado", "no veo contaminación técnica", "granularidad adecuada"). Eso es trabajo del `prd-expert` (con `kb-prd-expert` como autoridad) dentro de `wf-prd-review`: el orquestador (1) cargó el documento entero en su contexto —lo que D-030 evita en el review— y (2) opinó sobre estructura/contaminación **sin** la KB, pudiendo contradecir luego al gate (CU-2.h reserva el diagnóstico de contaminación al experto). La disciplina "no cargues/analices el artefacto en el hilo principal" existía **solo dentro** de `wf-prd-review` (Paso 3); a nivel de **enrutado** —antes de invocar skill alguna— la regla eager pedía el check mecánico pero no prohibía leer y opinar.
+
+**Decisión.** Se generaliza D-030 al nivel de enrutado, transversal a fases: al orientar sobre readiness o el siguiente paso, el orquestador **cita el veredicto del verificador mecánico y enruta** a la skill de la fase para cualquier valoración de contenido; **no** hace `Read` del artefacto completo en el hilo principal ni emite su propio diagnóstico cualitativo (estructura, contaminación, calidad, alcance). Esa lectura, con la `kb-*` autoritativa, es del agente experto **dentro de su skill**. "¿Cómo lo ves?" se responde con el veredicto mecánico + "lo vemos en detalle en la revisión/análisis".
+
+**Alternativas descartadas.**
+- *Dejar que el orquestador lea y opine (estado previo)* → mete el documento entero en el contexto del hilo principal (el bloat que D-030 combate) y produce un diagnóstico sin KB que puede contradecir al gate; rompe el principio "el orquestador no analiza".
+- *Restringirlo solo al PRD* → el hueco es transversal (cualquier "¿está listo mi X?"); se fija en la disciplina de orquestación, no en una fase.
+- *Prohibir todo `Read` del orquestador* → demasiado: leer un veredicto de script o un fichero de estado pequeño es legítimo; lo que se veta es cargar el **artefacto de contenido** para diagnosticarlo a pelo.
+
+**Consecuencias / aprendizaje.** El orquestador se mantiene como director (enruta con la evidencia mecánica) y la valoración de contenido queda donde tiene la autoridad (`kb-*`) y el aislamiento de contexto (la skill/su agente). Hermano de D-026 a nivel de enrutado: el mismo patrón de "el orquestador hace trabajo que debe delegar", cazado por conformance. Backstop: `test_orchestration_rule_delegates_qualitative_read` en `test_install_sh.py`; conductual en CU-2.e probe A.
+
+**Referencias.** `sdd/pipeline/orchestration.md` ("Readiness antes de avanzar"), `sdd/pipeline/prd/skills/wf-prd-review/SKILL.md` (Paso 3, D-030), `sdd/conformance/casos-de-uso/cu-02-prd.md` (CU-2.e probe A), `sdd/tests/test_install_sh.py`, `sdd/CHANGELOG.md`.
+
+---
+
 ## D-030 — La edición del PRD en el review se aplica por script determinista, no releyendo/reescribiendo el documento en el hilo principal
 
 - **Fecha:** 2026-07-21 · **Estado:** Adoptada (implementada en `sdd-prd-apply.py` + `wf-prd-review`). · **Relacionada:** [[D-020]] (invariante 1:1 de `sdd-prd-ready.py`), [[D-029]] (grafo de dependencias / cascada), Regla 9 de `kb-sdd-conformance` (lo mecanizable no se deja al agente), convención `fork ⊥ AskUserQuestion` ([[D-015]]/[[D-016]]), CU-2.e (probe D) / CU-2.f / CU-2.h.

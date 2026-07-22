@@ -231,6 +231,15 @@ class InstallAllTest(InstallBase):
         self.assertIn("AskUserQuestion", rule)
         self.assertIn("D-026", rule)
 
+    def test_orchestration_rule_delegates_qualitative_read(self):
+        # D-031: al orientar sobre readiness, el orquestador cita el veredicto
+        # mecanico y enruta; NO hace Read del artefacto completo ni emite su propio
+        # diagnostico cualitativo en el hilo principal (eso es del experto en su skill).
+        self.install("all")
+        rule = self._orch_rule()
+        self.assertIn("lectura cualitativa", rule)
+        self.assertIn("D-031", rule)
+
     def test_prd_review_edit_assumption_is_inline_free_text(self):
         # El gate de asunciones permite editar en el momento: el usuario escribe el
         # texto nuevo en el campo libre en vez de elegir "Editar" y diferirlo (Q1).

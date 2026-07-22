@@ -8,6 +8,7 @@ Principios que gobiernan **cómo se avanza entre fases** del pipeline SDD, indep
 
 - El estado de una fase **no se decide a ojo ni por la topología de ficheros**: que una carpeta de la siguiente fase esté vacía **no** significa "toca esa fase", y "he terminado de mirarlo" **no** es "está aprobado".
 - **No se declara una fase "lista" ni se avanza a la siguiente sin la evidencia del verificador mecánico** de esa frontera (autor≠verificador). Si existe un script de readiness para la frontera, se ejecuta y se cita su veredicto; si no está en estado listo, se surfacea el motivo y se remite al paso que lo cierra —no se avanza en silencio.
+- **La lectura cualitativa del artefacto no la hace el hilo principal ([[D-031]]).** Al orientar sobre readiness o "¿cuál es el siguiente paso?", el orquestador **cita el veredicto del verificador mecánico y enruta** a la skill de la fase para cualquier valoración de contenido (estructura, contaminación técnica, calidad, alcance): **no** hace `Read` del artefacto completo en el hilo principal ni emite su propio diagnóstico. Esa lectura —con la `kb-*` autoritativa— es del agente experto **dentro de su skill** ([[D-030]] lo fija para el PRD en `wf-prd-review`; aquí se generaliza al enrutado de cualquier fase). "¿Cómo lo ves?" se responde con el veredicto mecánico y "lo vemos en detalle en la revisión/análisis", no cargando el documento para opinar (opinar sin la `kb-*` puede además contradecir luego al experto — p. ej. declarar "sin contaminación técnica" lo que el review marca).
 
 ## Orden del pipeline
 

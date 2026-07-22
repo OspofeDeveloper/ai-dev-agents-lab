@@ -28,7 +28,7 @@ happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es
 
 ### `wf-prd-change` — gestionar un cambio de producto (3)
 - [ ] CU-7.a — Un cambio que es solo aclaración (CLARIFICATION)
-- [ ] CU-7.b — Un cambio de producto real
+- [ ] CU-7.b — Un cambio de producto real + reapertura del sello (D-028)
 - [ ] CU-7.c — Expansión de capacidad disfrazada de aclaración (Regla 4.1)
 
 ### `wf-prd-sync-impact` — medir impacto aguas abajo (2)
@@ -74,18 +74,31 @@ happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es
 `changes/CR-XXX/` para una aclaración.
 **Desviación → reportar:** issue citando `CU-7.a`.
 
-### CU-7.b — Un cambio de producto real
+### CU-7.b — Un cambio de producto real (y la reapertura del sello, D-028)
 
-**Precondición:** el cambio altera alcance, reglas o prioridades.
-**Mecanismo:** `wf-prd-change` → `prd-expert`.
+**Precondición:** un PRD ya **sellado** (`status: approved`, `Aprobado por:` relleno — el
+estado natural tras pasar la review) y un cambio que altera alcance, reglas o prioridades.
+**Mecanismo:** `wf-prd-change` → `prd-expert`. La **reapertura del sello** la hace
+`wf-prd-change` (Paso 5), pero **no re-sella**: el sello solo lo restablece `wf-prd-review`.
 
-1. Le describes un cambio que mueve el alcance ("ahora también soportamos pagos en
-   grupo").
+1. Le describes un cambio que mueve el alcance ("ahora también quiero compartir gastos en
+   grupo con otras personas").
    → **Esperado:** actualiza versión/fecha y **solo** las secciones afectadas del PRD;
      registra `product-changelog.md` + `changes/CR-XXX/`; recomienda `wf-prd-sync-impact`.
+2. **Reapertura del sello ([[D-028]]):** como el PRD estaba sellado, tras aplicar el cambio
+   baja `status:` a `in-review` y **resetea `Aprobado por:` al placeholder pendiente** (el
+   sello no puede certificar un contenido que ya cambió), y remite a `wf-prd-review`.
+   → **Esperado (verificable):** `sdd-prd-ready.py` sobre el PRD cambiado da `UNSEALED`
+     (o `OPEN_ASSUMPTIONS` si el cambio introdujo nuevas `[ASUNCIÓN]`), **nunca `READY`**;
+     `wf-prd-change` **no** escribe un `Aprobado por:` nuevo.
+3. Vuelves a pasar `wf-prd-review` sobre el PRD cambiado y lo apruebas.
+   → **Esperado:** el sello se restablece **solo aquí**, re-capturando la identidad (D-027)
+     y con la fecha del cambio; el `Aprobado por:` vuelve a estar relleno.
 
-**Resultado:** PASS si toca solo lo afectado y deja traza completa · FALLO si reescribe
-secciones intactas, mete tecnología, o no deja traza.
+**Resultado:** PASS si toca solo lo afectado, deja traza completa, **reabre el sello** al
+cambiar (queda `in-review` / `UNSEALED`) y solo `wf-prd-review` lo re-sella · FALLO si
+reescribe secciones intactas, mete tecnología, no deja traza, **o deja el PRD `approved`
+con un `Aprobado por:` que certifica el contenido viejo** (el agujero que cierra D-028).
 **Desviación → reportar:** issue citando `CU-7.b`.
 
 ### CU-7.c — Expansión de capacidad disfrazada de aclaración (Regla 4.1)

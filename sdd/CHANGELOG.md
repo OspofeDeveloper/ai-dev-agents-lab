@@ -2,6 +2,14 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.68.0 — 2026-07-22
+
+**El orquestador no lee ni diagnostica el artefacto en el hilo principal al orientar** — [[DECISIONS D-031]]. En un run de CU-2.e (probe A), ante "¿cómo lo ves?" el orquestador corría el check mecánico (bien) **pero además** hacía `Read` del PRD completo y emitía su propio diagnóstico cualitativo — trabajo del `prd-expert` dentro de la review, y con el documento entero cargado en el hilo principal (el bloat que D-030 evita).
+
+- ⚠ **`orchestration.md` (regla eager, "Readiness antes de avanzar")**: al orientar sobre readiness / siguiente paso, el orquestador **cita el veredicto del verificador mecánico y enruta** a la skill de la fase para cualquier valoración de contenido; **no** hace `Read` del artefacto completo ni emite su propio diagnóstico. Generaliza D-030 al enrutado, transversal a fases.
+- **CU:** CU-2.e probe A afinado (FALLO si el orquestador carga el PRD y opina de estructura/contaminación en el hilo principal).
+- **Test:** `test_orchestration_rule_delegates_qualitative_read`.
+
 ## 0.67.0 — 2026-07-21
 
 **La edición del PRD en el review se aplica por script determinista (Q3)** — [[DECISIONS D-030]]. `wf-prd-review` ya delegaba el *análisis* al `prd-expert`, pero las dos ediciones del fichero (decisiones de asunciones y sello) se aplicaban en el hilo principal sin mecanismo definido → un `Read`+`Write` del documento entero reintroduce en contexto justo lo que el Paso 3 pide no cargar. Ahora esas ediciones —mecánicas— las aplica un script (Regla 9).

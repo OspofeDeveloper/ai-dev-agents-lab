@@ -362,8 +362,13 @@ presenta cada `[ASN-XXX]` con `AskUserQuestion` y **aplica** las decisiones con 
    → **Esperado:** comprueba la readiness **mecánicamente** (`sdd-prd-ready.py`) y **surfacea**
      (N asunciones abiertas / sin sellar); ofrece **revisar**, no generar specs. **NO** declara
      "el PRD está listo" ni enruta a `wf-spec-*`.
+   → **La lectura cualitativa la hace la review, no el orquestador ([[D-031]]):** ante "¿cómo lo
+     ves?" cita el **veredicto mecánico** y remite a la revisión para la valoración de contenido;
+     **no** hace `Read` del PRD completo en el hilo principal ni emite su propio diagnóstico de
+     estructura/contaminación/calidad (eso es del `prd-expert` dentro de `wf-prd-review`).
    → **FALLO:** dice "PRD listo" / recomienda o lanza `wf-spec-features-first`/`analyze`/`discover`
-     sin surfacear las asunciones (el bug original).
+     sin surfacear las asunciones (el bug original); **o** carga el PRD en el hilo principal y
+     emite su propio diagnóstico cualitativo del contenido (trabajo de la review, [[D-031]]).
 
 **B — pedir specs saltándose la review** ("genérame ya las specs")
    → **Esperado:** el gate de `wf-spec-features-first` (Paso 2) **se detiene** con veredicto
