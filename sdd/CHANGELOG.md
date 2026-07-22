@@ -2,6 +2,14 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.70.0 — 2026-07-22
+
+**Refuerzos de `kb-prd-expert` para consistencia de juicio del `prd-expert`** — [[DECISIONS D-033]] + [[DECISIONS D-034]]. Dos huecos destapados en conformance (CU-2.e/CU-2.f) donde el mismo contenido recibía veredictos distintos entre invocaciones del experto; ninguno lo pilla un script (son semánticos) → se afila el KB que el experto consume.
+
+- **D-033 — reenunciado de una decisión = UNA asunción.** Regla 12 ahora distingue el reenunciado *desnudo* (segunda marca sin entrada → huérfana, rompe el 1:1) del *vestido* (cada formulación con su propia entrada → **pasa** el 1:1 pero el usuario decide dos veces lo mismo). Ejemplo canónico: «opera con moneda única» (regla) + «multi-divisa fuera de alcance» (exclusión) son la misma decisión → una sola `[ASN-XXX]`, **no** dos atadas con `Depende de:` (que es solo para asunciones **distintas** dependientes).
+- **D-034 — el formato de presentación es contaminación dura.** Nueva fila en el catálogo de prohibidos ("en un calendario / en una lista / en un dashboard / en una vista de X") + nota trabajada; y frame explícito: lo que está en la tabla da `LISTO_CON_AJUSTES` y se corrige antes de `LISTO` (no es "muy menor" sellable). Distinto de "pantalla como unidad de feature": aquí es un cualificador de formato sobre una capacidad legítima → quita el formato, conserva la capacidad.
+- **Tests:** `test_install_sh.py` — backstop de contenido del KB (Regla 12 nombra el reenunciado vestido; el catálogo cita el formato de presentación).
+
 ## 0.69.0 — 2026-07-22
 
 **"Sellado" es `status: approved` + `Aprobado por:` a la vez (sello coherente + reapertura determinista)** — [[DECISIONS D-032]]. En un run real de CU-2.e el PRD quedó `Aprobado por: <nombre>` pero `status: draft`: el sello escribía la línea pero no subía el status. Incoherente, y desactivaba D-028 (`wf-prd-change` reabre si `status: approved`, que nunca se alcanzaba) → Q4 estaba latente-muerto.

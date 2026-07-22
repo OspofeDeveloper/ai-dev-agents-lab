@@ -6,6 +6,42 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-034 — El formato de presentación de una capacidad es contaminación dura del PRD (fila de catálogo), no un matiz "muy menor" sellable
+
+- **Fecha:** 2026-07-22 · **Estado:** Adoptada (refuerzo de `kb-prd-expert/references/prd_prohibited_items.md`). · **Relacionada:** Regla 6 (Prueba de Negocio), [[D-033]] (hermana: consistencia de juicio cualitativo del `prd-expert`), CU-2.e / CU-2.f / CU-2.h.
+
+**Contexto.** En conformance (CU-2.f Caso 1 vs CU-2.e Prueba 3) el `prd-expert` clasificó **la misma** frase —«ver los pagos previstos… **en un calendario o vista de próximos gastos**» (L71 del PRD del consumidor)— de forma **opuesta** en dos invocaciones: en un run la llamó "muy menor, **no** viola 'pantalla como unidad de feature', no bloqueante" → el orquestador **selló con la contaminación dentro**; en otro la llamó "**viola** 'pantallas como unidad de feature', bloquea el sello (`LISTO_CON_AJUSTES`)" → la limpió antes de sellar. Mismo texto, misma entrada de catálogo, veredicto contradictorio y acción downstream distinta. Raíz: el catálogo no cubría con nitidez el patrón "formato de presentación como **cualificador** de una capacidad" (distinto de "pantalla como **unidad** de feature"), dejando el umbral bloqueante/no-bloqueante al juicio variable del agente.
+
+**Decisión.** Añadir el patrón como **fila propia** del catálogo de prohibidos ("Formato de presentación de una capacidad: en un calendario / en una lista / en un dashboard / en una vista de X → Spec/Diseño") con nota trabajada (permitido «consultar los pagos previstos» vs prohibido «…en un calendario o vista»), y anclar el frame general: **lo que está en la tabla es contaminación dura** → veredicto `LISTO_CON_AJUSTES` y corrección antes de `LISTO`, no un matiz opcional. Un fraseo genuinamente de negocio que solo *roce* la frontera (p. ej. "bloqueo local en el dispositivo") se documenta como *borderline* en notas y puede dejarse; la tabla, no. La corrección canónica: **quita el formato, conserva la capacidad**.
+
+**Alternativas descartadas.**
+- *Mecanizar la detección con un script* → es semántico ("¿este sufijo es formato de presentación o negocio?"); no lo captura un regex como el 1:1. El lever correcto es la nitidez del KB que consume el `prd-expert`, no un nuevo verificador.
+- *Hacer TODA contaminación bloqueante sin matiz* → borraría la categoría legítima *borderline* (business-meaningful) y forzaría reescrituras que restan significado. La distinción tabla-dura / nota-borderline se mantiene explícita.
+
+**Consecuencias / aprendizaje.** Convergen los veredictos del experto para esta clase de frase → menos no-determinismo en el gate de contaminación. Aprendizaje transversal con [[D-033]]: los huecos de **consistencia de juicio cualitativo** del `prd-expert` se cierran afilando su KB (catálogo/reglas), no con scripts. Backstop de contenido: `test_install_sh.py` (KB cita el patrón de formato de presentación).
+
+**Referencias.** `sdd/pipeline/prd/skills/kb-prd-expert/references/prd_prohibited_items.md`, `sdd/conformance/casos-de-uso/cu-02-prd.md` (nota de CU-2.e/2.f), `sdd/tests/test_install_sh.py`, `sdd/CHANGELOG.md`.
+
+---
+
+## D-033 — Reenunciado de una decisión (misma decisión en regla transversal + su exclusión-complemento) es UNA asunción, no dos atadas con `Depende de:`
+
+- **Fecha:** 2026-07-22 · **Estado:** Adoptada (refuerzo de `kb-prd-expert` Regla 12). · **Relacionada:** Regla 12 (anti-fabricación, 1:1), [[D-029]] (`Depende de:` entre asunciones), [[D-034]] (hermana), CU-2.e / CU-2.j.
+
+**Contexto.** En conformance (CU-2.e Prueba 3) el `prd-expert` señaló que «moneda única» aparecía **dos veces**: ASN-010 (regla transversal «opera con una única moneda») y ASN-012 (exclusión «multi-divisa fuera de alcance»), **atadas con `Depende de: ASN-010`**. Son dos caras de **la misma** decisión de producto, y Regla 12 usa literalmente "moneda única" como ejemplo del anti-patrón de reenunciado. Pero la Regla 12 vigente solo describía el reenunciado *desnudo* (segunda marca **sin** entrada → huérfana, que rompe el 1:1); el caso observado era un reenunciado *vestido* (cada formulación con **su propia** entrada), que **pasa** el invariante 1:1 de `sdd-prd-ready.py` y por eso ningún script lo detecta. El daño: el usuario decide dos veces lo mismo y puede quedar incoherente (confirmar la regla, rechazar la exclusión).
+
+**Decisión.** Afinar Regla 12: (1) el `Depende de:` ([[D-029]]) es para asunciones **distintas** donde una necesita a la otra (p. ej. «presupuesto por categoría» ← «categorías gestionables»); **no** para atar dos formulaciones de la misma decisión — usarlo así es la señal de que sobra una. (2) La deriva de "no repitas" ahora nombra **las dos formas**: reenunciado desnudo (huérfana, rompe 1:1) y reenunciado vestido (pasa el 1:1, sutil). (3) Ejemplo canónico explícito: regla positiva + su exclusión-complemento = **una** `[ASN-XXX]` en su forma más informativa (la regla/capacidad positiva subsume a la exclusión).
+
+**Alternativas descartadas.**
+- *Detectar el reenunciado vestido con un script (extender `sdd-prd-deps.py`/`sdd-prd-ready.py`)* → requiere juzgar equivalencia semántica entre "opera con moneda única" y "multi-divisa fuera de alcance"; no es sintáctico. Recae en el juicio del `prd-expert` en creación → refuerzo de KB, no verificador.
+- *Prohibir toda exclusión que tenga una regla relacionada* → demasiado amplio; una exclusión puede ser una decisión inferida **distinta** (no complemento) y entonces sí es su propia asunción. La regla distingue complemento (reenunciado) de decisión distinta.
+
+**Consecuencias / aprendizaje.** Cierra un hueco que el 1:1 mecánico no ve, del lado **creación** (`wf-prd-create`). Es un defecto de creación surfaceado por el review, no de CU-2.e (el review lo manejó bien). Con [[D-034]] forma el par "consistencia de juicio cualitativo del `prd-expert` → se afila el KB". Backstop de contenido: `test_install_sh.py` (Regla 12 nombra el reenunciado vestido y el ejemplo canónico).
+
+**Referencias.** `sdd/pipeline/prd/skills/kb-prd-expert/SKILL.md` (Regla 12), `sdd/conformance/casos-de-uso/cu-02-prd.md` (nota de CU-2.e), `sdd/tests/test_install_sh.py`, `sdd/CHANGELOG.md`.
+
+---
+
 ## D-032 — "Sellado" es `status: approved` + `Aprobado por:` a la vez: el sello sube el status y la reapertura lo baja, deterministamente
 
 - **Fecha:** 2026-07-22 · **Estado:** Adoptada (implementada en `sdd-prd-apply.py` + `wf-prd-review`/`wf-prd-change`). · **Relacionada:** [[D-027]] (identidad del aprobador), [[D-028]] (un cambio reabre el sello), [[D-030]] (edición del review por script), Regla 10 (SSoT del sello), CU-2.f / CU-7.b.

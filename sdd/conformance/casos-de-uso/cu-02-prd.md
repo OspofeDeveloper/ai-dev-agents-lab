@@ -438,11 +438,19 @@ de "listo" sin evidencia del script, o gate de asunciones mal aplicado.
 > instruyendo omitir `Depende de: ASN-010` para no dejar arista colgante. **Reabrir-asunción-confirmada NO es op
 > del pipeline** (post-sello → `wf-prd-change`); el fallback por juicio fue correcto, no es hueco a mecanizar.
 >
-> **Hallazgo de creación (fuera de CU-2.e, para el bloque `wf-prd-create`):** el `prd-expert` señaló que
-> "moneda única" está **duplicada semánticamente** — ASN-010 (regla transversal) y ASN-012 (exclusión) —, que es
-> el **ejemplo canónico del anti-patrón de reenunciado de Regla 12** de `kb-prd-expert`. El 1:1 mecánico pasa
-> (cada una con su entrada), luego `sdd-prd-ready.py` no lo detecta: es semántico. Candidato a D-033 en creación
-> (consolidar en una sola `[ASN-XXX]` en su lugar canónico). No mecanizable por script trivial → refuerzo de KB/creación.
+> **Hallazgo de creación (fuera de CU-2.e, para el bloque `wf-prd-create`) → resuelto en [[D-033]] (v0.70.0):** el
+> `prd-expert` señaló que "moneda única" estaba **duplicada semánticamente** — ASN-010 (regla transversal) y ASN-012
+> (exclusión), atadas con `Depende de:` —, el **ejemplo canónico del anti-patrón de reenunciado de Regla 12**. El 1:1
+> mecánico pasa (cada una con su entrada), luego `sdd-prd-ready.py` no lo detecta: es un reenunciado *vestido*, semántico.
+> Regla 12 afinada para nombrarlo y colapsarlo a una sola `[ASN-XXX]`; `Depende de:` queda reservado a asunciones
+> **distintas** dependientes. No mecanizable por script → refuerzo de KB.
+>
+> **Hallazgo del contaminación-gate (destapado en CU-2.f Caso 1) → resuelto en [[D-034]] (v0.70.0):** el `prd-expert`
+> clasificó la MISMA frase (L71, "…pagos previstos **en un calendario o vista**") como no-bloqueante en Prueba 3 (se
+> selló sucia) y como bloqueante en CU-2.f Caso 1 (se limpió). No-determinismo del umbral de contaminación para el
+> patrón "formato de presentación como cualificador de una capacidad". Añadido como fila dura del catálogo de prohibidos
+> + frame "tabla = `LISTO_CON_AJUSTES`, no matiz sellable". (Nota: por esto, Prueba 3 selló con L71 sucia — no invalida
+> el sello de CU-2.e: A–F pasaron, la contaminación es periférica al gate de asunciones.)
 
 ## CU-2.f — Veredicto LISTO y sello de aprobación
 

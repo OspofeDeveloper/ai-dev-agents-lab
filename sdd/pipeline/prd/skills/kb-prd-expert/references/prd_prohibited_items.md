@@ -2,6 +2,8 @@
 
 Estos elementos contaminan el PRD y rompen el flujo SDD. Cada uno pertenece a una capa posterior del pipeline.
 
+> **La tabla es contaminación dura, no matices opcionales.** Si una frase encaja en una fila de la tabla, su presencia da veredicto `LISTO_CON_AJUSTES` y **debe corregirse antes de sellar el PRD como `LISTO`** — no se sella "por ser menor". Un fraseo genuinamente de negocio que solo *roce* la frontera (p. ej. "bloqueo local en el dispositivo", que carga significado real local-vs-nube) se documenta aparte como *borderline* en las notas de abajo y puede dejarse; la tabla, no.
+
 > **Relación con `kb-spec-expert/references/prohibited_items.md`:** Este catálogo es **estricto-superset** del catálogo del Spec. Todo lo prohibido en el Spec también lo está en el PRD, y además el PRD prohíbe elementos que el Spec sí admite (pantallas como unidades, flujos de navegación con nombres de pantallas, timelines, estructura de módulos, criterios técnicos de QA). Si una frase sería inválida en el Spec, automáticamente lo es en el PRD.
 
 ## Tabla de prohibidos
@@ -21,6 +23,7 @@ Estos elementos contaminan el PRD y rompen el flujo SDD. Cada uno pertenece a un
 | Integraciones técnicas de bajo nivel (webhooks, colas de mensajes, eventos) | Detalle de arquitectura | Plan |
 | Pantallas o vistas como unidades de feature | Las pantallas son implementación, las capacidades son negocio | Spec / Plan |
 | Flujos de navegación con nombres de pantallas específicas | Detalle de UX de implementación | Spec |
+| Formato de presentación de una capacidad ("en un calendario", "en una lista", "en un dashboard", "en una vista de X") | El *cómo se muestra* una capacidad lo decide el Spec/Diseño; la capacidad es "ver/consultar X", no su formato de visualización | Spec / Diseño |
 | Especificaciones visuales (colores, tipografías, espaciados, tokens de diseño) | Diseño visual — no son requisitos funcionales | Fuera del pipeline SDD |
 | Timelines de implementación o estimaciones de esfuerzo | Gestión de proyecto, no requisitos | Fuera del PRD |
 | Criterios de aceptación técnicos (tiempo de respuesta, % de cobertura de tests) | QA técnico | Plan / Tasks |
@@ -50,6 +53,20 @@ La primera informa al lector del tipo de producto. La segunda prescribe la tecno
 > "Alertas enviadas via WebSockets sobre el endpoint `/ws/services`"
 
 La capacidad de negocio describe **qué** puede hacer el usuario. El detalle técnico describe **cómo** se implementa — eso es Plan.
+
+---
+
+## Nota sobre el formato de presentación de una capacidad
+
+**Capacidad permitida** (qué puede ver/hacer el usuario):
+> "El Usuario puede consultar los pagos previstos para las próximas semanas"
+
+**Formato de presentación prohibido** (cómo se muestra):
+> "El Usuario puede ver los pagos previstos para las próximas semanas **en un calendario o vista de próximos gastos**"
+
+La capacidad es "consultar los pagos previstos"; "en un calendario o vista" prescribe la **forma de presentarlos**, que decide el Spec/Diseño (cambiaría si cambia la UI → falla la segunda Prueba de Negocio). No confundir con "pantallas como unidad de feature" (una vista usada como la *unidad* que se especifica): aquí es un **cualificador de formato** pegado a una capacidad legítima. La corrección es la misma en ambos casos: **quita el formato, conserva la capacidad**.
+
+Este patrón **no es "muy menor" opcional**: es una fila de la tabla → se corrige antes de `LISTO`, no se sella tal cual.
 
 ---
 

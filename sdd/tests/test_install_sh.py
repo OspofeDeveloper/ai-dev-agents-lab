@@ -594,5 +594,34 @@ class ProjectRootTest(InstallBase):
         self.assertTrue((subdir / ".claude" / "skills" / "kb-tasks-expert").exists())
 
 
+class KbPrdExpertContentTest(unittest.TestCase):
+    """Backstop de contenido del kb-prd-expert (D-033/D-034): afila el juicio del
+    prd-expert; no hay script que lo mecanice, así que fijamos las cadenas clave."""
+
+    KB = SDD_ROOT / "pipeline" / "prd" / "skills" / "kb-prd-expert"
+
+    def _skill(self):
+        return (self.KB / "SKILL.md").read_text(encoding="utf-8")
+
+    def _prohibited(self):
+        return (self.KB / "references" / "prd_prohibited_items.md").read_text(encoding="utf-8")
+
+    def test_regla12_names_dressed_restatement(self):
+        # D-033: la Regla 12 distingue reenunciado desnudo vs vestido y da el ejemplo canónico
+        s = self._skill()
+        self.assertIn("Reenunciado vestido", s)
+        self.assertIn("multi-divisa fuera de alcance", s)
+        # y aclara que Depende de: no es para reenunciados
+        self.assertIn("no es para reenunciados", s.lower())
+
+    def test_prohibited_lists_presentation_format(self):
+        # D-034: el catálogo cita el formato de presentación como contaminación dura
+        p = self._prohibited()
+        self.assertIn("Formato de presentación de una capacidad", p)
+        self.assertIn("en un calendario", p)
+        # y el frame de "tabla = dura, no matiz opcional"
+        self.assertIn("contaminación dura", p)
+
+
 if __name__ == "__main__":
     unittest.main()
