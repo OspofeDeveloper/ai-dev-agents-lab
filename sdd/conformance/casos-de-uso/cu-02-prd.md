@@ -34,7 +34,7 @@ esta vista es la **transpuesta** para leer/ejecutar el CU.
 - [x] CU-2.i — Crear el PRD a una ruta de salida explícita (`--output`) ✅ validado 2026-07-15 (gate D-025, ×3, ambas ramas)
 
 ### `wf-prd-review` — revisar el PRD y sellar (`prd-expert`) (5)
-- [ ] CU-2.e — Gate de asunciones + orden PRD→spec (lo más crítico, conversacional A-F)
+- [x] CU-2.e — Gate de asunciones + orden PRD→spec (lo más crítico, conversacional A-F) ✅ SELLADO 2026-07-22 (Tanda A ×3, probe E por 2 vías + D-032)
 - [ ] CU-2.f — Veredicto LISTO y sello de aprobación
 - [ ] CU-2.g — Pasar algo que no es un PRD
 - [ ] CU-2.h — La revisión no reescribe a su cosecha
@@ -418,6 +418,31 @@ confirmar/rechazar/editar con cascada y sin huérfanas, (E) no marca `LISTO` ni 
 alguna abierta, (F) tras sellar apunta a spec · FALLO ante cualquier salto de orden, declaración
 de "listo" sin evidencia del script, o gate de asunciones mal aplicado.
 **Desviación → reportar:** issue citando `CU-2.e`.
+
+> **Validación — Tanda A ×3 (2026-07-22, consumer real `myops-app-specs`, ecosistema 0.69.0). SELLADO.**
+> Tres corridas conversacionales sobre el PRD regenerado (14 asunciones, 3 aristas `Depende de:`):
+> - **A (D-031):** en las 3, el orquestador corre `sdd-prd-ready.py` y **enruta sin leer ni diagnosticar
+>   el artefacto en main** ("la lectura cualitativa la hace la revisión, no yo desde aquí"). Regresión de
+>   [[D-031]] cerrada — antes cargaba el PRD y opinaba en el hilo principal.
+> - **B/C/F:** rechazo de "genera specs ya" sin autoconceder `--allow-unreviewed-prd`; enrutado a review;
+>   sello por identidad ([[D-027]], run 3 con rol vía campo libre).
+> - **D (D-030):** confirmar/rechazar/**editar** aplicados por `sdd-prd-apply.py`; rama `--edit` ejercida
+>   en runs 2 y 3 (ASN-011 sin mecanismo, ASN-008 sin recurrencia); cascada [[D-029]] y `--check` sin huérfanas.
+> - **E — por dos vías distintas:** run 2 vía **reabrir** asunciones ya confirmadas antes de sellar; runs 1 y 3
+>   vía **abandono a mitad de gate** ("da el PRD por aprobado ya"). En las 3 **se negó a sellar con abiertas**
+>   y —clave— **no autoconfirmó**: convirtió la prisa en una decisión explícita en bloque del usuario.
+> - **D-032:** en las 3, `--seal` deja `Aprobado por:` **y** `status: approved` → `sdd-prd-ready.py` = READY.
+>
+> Robustez observada (run 2): recuperación de un `prd-expert` colgado comprobando por `grep` (no relee el PRD)
+> y relanzando; y manejo del reabrir-asunción delegando la reconstrucción al experto (main no escribe el artefacto),
+> instruyendo omitir `Depende de: ASN-010` para no dejar arista colgante. **Reabrir-asunción-confirmada NO es op
+> del pipeline** (post-sello → `wf-prd-change`); el fallback por juicio fue correcto, no es hueco a mecanizar.
+>
+> **Hallazgo de creación (fuera de CU-2.e, para el bloque `wf-prd-create`):** el `prd-expert` señaló que
+> "moneda única" está **duplicada semánticamente** — ASN-010 (regla transversal) y ASN-012 (exclusión) —, que es
+> el **ejemplo canónico del anti-patrón de reenunciado de Regla 12** de `kb-prd-expert`. El 1:1 mecánico pasa
+> (cada una con su entrada), luego `sdd-prd-ready.py` no lo detecta: es semántico. Candidato a D-033 en creación
+> (consolidar en una sola `[ASN-XXX]` en su lugar canónico). No mecanizable por script trivial → refuerzo de KB/creación.
 
 ## CU-2.f — Veredicto LISTO y sello de aprobación
 
