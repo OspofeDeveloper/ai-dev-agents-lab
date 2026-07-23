@@ -126,6 +126,8 @@ Si el veredicto es `LISTO` (y por tanto no quedan `[ASUNCIÓN]` pendientes tras 
 
 Si el veredicto es `LISTO_CON_AJUSTES` o `NO_LISTO`, **no** escribas la atribución.
 
+**Cómo decidir el veredicto (determinista — SSoT `kb-prd-expert` Regla 14):** `NO_LISTO` si quedan `[ASUNCIÓN]` sin confirmar o falta un elemento obligatorio / estructura; `LISTO_CON_AJUSTES` si hay contaminación **dura** (una fila de la tabla de `prd_prohibited_items.md`) que corregir; `LISTO` en cualquier otro caso. **No degrades `LISTO`** por notas *borderline* aceptables (p. ej. "bloqueo local en el dispositivo") ni por **huecos de negocio que resolverá `wf-spec-analyze`** — esos se **reportan** como notas, no bajan el veredicto. Solo lo bloqueante degrada. (Cierra el titubeo `LISTO` ↔ `LISTO_CON_AJUSTES` sobre un mismo estado limpio.)
+
 Responde con este formato:
 
 ```markdown
@@ -146,8 +148,11 @@ LISTO / LISTO_CON_AJUSTES / NO_LISTO
 - `[ASN-XXX]` confirmadas: N · rechazadas: M · pendientes: K
 - (si quedan pendientes) listarlas — el PRD no está listo hasta resolverlas
 
-### Problemas a corregir antes del Spec
-1. ...
+### Ajustes bloqueantes (degradan el veredicto)
+1. ... (solo asunciones/estructura → `NO_LISTO`, o contaminación **dura** → `LISTO_CON_AJUSTES`; si no hay, "ninguno")
+
+### Notas no bloqueantes (no cambian `LISTO`)
+- Borderline aceptable (p. ej. "bloqueo local") · huecos de negocio que resolverá `wf-spec-analyze`
 
 ### Siguiente paso
 - Si está listo: `/wf-spec-analyze <archivo_prd.md>`

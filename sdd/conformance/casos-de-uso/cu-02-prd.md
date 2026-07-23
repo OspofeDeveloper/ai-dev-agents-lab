@@ -462,7 +462,7 @@ la identidad del aprobador con `AskUserQuestion` y estampa el sello con `sdd-prd
 1. Le pides revisar el PRD ya limpio.
    → **Esperado:** te pide el aprobador con `AskUserQuestion` (nombre precargado de git, rol opcional).
 2. Respondes con un nombre/rol.
-   → **Esperado:** estampa `Aprobado por: <nombre> [(<rol>)] (<fecha>)` **y sube `status:` a `approved`** vía `sdd-prd-apply.py --seal` ([[D-032]]: sellado = las dos cosas; si `status` se queda en `draft`, `wf-prd-change` no reconocería el sello). `sdd-prd-ready.py` da `READY`.
+   → **Esperado:** estampa `Aprobado por: <nombre> [(<rol>)] (<fecha>)` **y sube `status:` a `approved`** vía `sdd-prd-apply.py --seal` ([[D-032]]: sellado = las dos cosas; si `status` se queda en `draft`, `wf-prd-change` no reconocería el sello). `sdd-prd-ready.py` da `READY`. El **rol por texto libre** se sella **verbatim** ([[D-027]]); los presets sellan su valor definido (nombre de git + rol). El **veredicto** que precede al sello sigue el umbral determinista de [[D-035]] (`kb-prd-expert` Regla 14): un PRD limpio con solo notas *borderline* aceptables o huecos-de-Spec es `LISTO` — no `LISTO_CON_AJUSTES` (eso solo lo degrada la contaminación **dura**).
 3. **No** respondes.
    → **Esperado:** **no autoaprueba** (no escribe la línea).
 4. Re-ejecutas la revisión sobre el PRD ya sellado y respondes con un rol.

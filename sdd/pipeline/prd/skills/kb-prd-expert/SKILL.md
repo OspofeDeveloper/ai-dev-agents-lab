@@ -300,3 +300,20 @@ Un PRD con marcadores `[ASUNCIÓN]` sin resolver **no está `LISTO`**: `wf-prd-r
 Cuando `wf-prd-review` cierra con veredicto `LISTO` (y por tanto sin `[ASUNCIÓN]` pendientes), el header/metadata del PRD recibe una línea `Aprobado por: <rol> (<YYYY-MM-DD>)` (default de fase: `PM` / `Product Owner`) que registra **quién aprobó** que el PRD está listo para entrar en el pipeline. La escribe el orquestador (`wf-prd-review`); es un dato humano, no mecánicamente verificable, y ningún script lo valida. Con veredicto `LISTO_CON_AJUSTES` o `NO_LISTO` no se escribe.
 
 El convenio completo del campo (formato, captura del rol, cuándo se escribe en cada gate) es SSoT de `kb-traceability-rules` Regla 10; aquí solo se aterriza en el header del PRD.
+
+---
+
+## Regla 14: Umbral del veredicto del review — qué degrada `LISTO` y qué no
+
+El review (`wf-prd-review`) cierra con uno de tres veredictos. El mapeo hallazgo → veredicto es **determinista**, no un juicio de "gravedad" caso a caso — para que el **mismo PRD produzca el mismo veredicto** entre revisiones (evita el titubeo `LISTO` ↔ `LISTO_CON_AJUSTES` sobre un estado idéntico):
+
+- **`NO_LISTO`** — hay al menos una de: `[ASUNCIÓN]` sin confirmar (contenido fabricado sin validar, Regla 12), un elemento obligatorio ausente (Regla 3), o un defecto estructural que impide procesar el PRD (partición artificial de un mismo producto, actor ausente, alcance-fuera ausente). No se puede sellar hasta resolverlo.
+- **`LISTO_CON_AJUSTES`** — sin asunciones abiertas ni defecto estructural, pero existe **al menos un ajuste bloqueante**: **contaminación dura** (una frase que encaja en una fila de la tabla de `references/prd_prohibited_items.md`). Se corrige (quita/reescribe) antes de sellar.
+- **`LISTO`** — sin asunciones abiertas, sin defecto estructural y sin contaminación dura. Se sella.
+
+**Qué NO degrada `LISTO`** (error frecuente — no lo subas a `LISTO_CON_AJUSTES`):
+
+1. **Borderline documentado como aceptable.** Un fraseo que solo *roza* la frontera pero carga significado de negocio real (p. ej. "bloqueo local en el dispositivo", local-vs-nube), explícitamente contemplado como aceptable en `prd_prohibited_items.md`. Se **menciona** como nota; no baja el veredicto.
+2. **Huecos de negocio que son materia de Spec.** Ambigüedades que `wf-spec-analyze` convertirá en gaps (una capacidad amplia, una relación entre entidades sin cerrar). Un PRD **no** necesita resolverlas (Reglas 7 y 9): no son defectos del PRD. Se **señalan** como notas de entrada; no bajan el veredicto.
+
+**Regla de oro:** solo lo **bloqueante** degrada — asunción/estructura → `NO_LISTO`; contaminación **dura** → `LISTO_CON_AJUSTES`. Borderline aceptable y huecos-de-Spec se **reportan** sin cambiar `LISTO`. Ante la duda "¿dura o borderline?", la SSoT es la tabla de `prd_prohibited_items.md` (fila = dura; nota = borderline).

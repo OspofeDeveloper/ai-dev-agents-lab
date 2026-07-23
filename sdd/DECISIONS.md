@@ -6,6 +6,25 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-035 — El umbral del veredicto del review es determinista: solo lo bloqueante degrada `LISTO`; borderline aceptable y huecos-de-Spec se reportan sin bajar el veredicto
+
+- **Fecha:** 2026-07-23 · **Estado:** Adoptada (nueva Regla 14 en `kb-prd-expert` + Paso 6 de `wf-prd-review`). · **Relacionada:** [[D-034]] (contaminación dura vs borderline), [[D-033]] (consistencia de juicio), Regla 13 (sello atado al veredicto), CU-2.f.
+
+**Contexto.** En conformance (CU-2.f, 2ª pasada) el `prd-expert` etiquetó **`LISTO_CON_AJUSTES` leves** sobre un PRD que su propio cuerpo describía como sin nada bloqueante (borderline L95 aceptable + huecos que son materia de Spec); para **el mismo** estado limpio, en otros runs dijo `LISTO`. El titubeo no era de clasificación de hallazgos (eso lo fijó D-034: L95 = borderline, no dura) sino del **mapeo hallazgo → etiqueta de veredicto**, que no estaba definido. Agravante: Regla 13 **ata la etiqueta al sello** ("con `LISTO_CON_AJUSTES` no se escribe el sello"), así que un orquestador que honrase la etiqueta al pie de la letra **se negaría a sellar** un PRD sellable → fricción falsa. Aquí el orquestador leyó la sustancia y selló bien, pero anulando de facto la etiqueta: contrato ambiguo.
+
+**Decisión.** Definir el umbral de forma **determinista** (nueva Regla 14, SSoT en `kb-prd-expert`; restatement en `wf-prd-review` Paso 6): `NO_LISTO` = asunciones sin confirmar o defecto de estructura/elemento obligatorio; `LISTO_CON_AJUSTES` = existe contaminación **dura** (fila de la tabla de `prd_prohibited_items.md`) que corregir; `LISTO` = ninguno de los anteriores. **Solo lo bloqueante degrada.** Explícitamente, **no** bajan `LISTO`: (1) notas *borderline* documentadas como aceptables, (2) huecos de negocio que `wf-spec-analyze` resolverá (materia de Spec, no defectos del PRD — Reglas 7 y 9). El template del Paso 6 separa "Ajustes bloqueantes (degradan)" de "Notas no bloqueantes (no cambian `LISTO`)".
+
+**Alternativas descartadas.**
+- *Dejarlo al juicio del experto (statu quo)* → es justo la fuente del titubeo; el veredicto gobierna el sello (Regla 13), no puede ser no-determinista.
+- *Que el orquestador siga interpretando la sustancia por encima de la etiqueta* → funcionó por suerte, pero deja el contrato etiqueta↔sello contradictorio y frágil ante un orquestador estricto.
+- *Mecanizar el veredicto con un script* → parte del insumo (contaminación dura, huecos de negocio) es cualitativo; el lever correcto es definir el umbral en el KB, no un verificador nuevo. El gate mecánico duro (`sdd-prd-ready.py`: asunciones + sello) ya existe y es ortogonal.
+
+**Consecuencias / aprendizaje.** Cierra el trío "consistencia de juicio del `prd-expert` → se afila el KB" (D-033 dedup · D-034 contaminación · D-035 umbral de veredicto). Impacto acotado: sin el fix el techo del daño era fricción (falso `LISTO_CON_AJUSTES`), nunca falso-sello (el gate mecánico protege). Backstop de contenido: `test_install_sh.py` (Regla 14 define el umbral y el "no degrada").
+
+**Referencias.** `sdd/pipeline/prd/skills/kb-prd-expert/SKILL.md` (Regla 14), `sdd/pipeline/prd/skills/wf-prd-review/SKILL.md` (Paso 6), `sdd/conformance/casos-de-uso/cu-02-prd.md` (CU-2.f), `sdd/tests/test_install_sh.py`, `sdd/CHANGELOG.md`.
+
+---
+
 ## D-034 — El formato de presentación de una capacidad es contaminación dura del PRD (fila de catálogo), no un matiz "muy menor" sellable
 
 - **Fecha:** 2026-07-22 · **Estado:** Adoptada (refuerzo de `kb-prd-expert/references/prd_prohibited_items.md`). · **Relacionada:** Regla 6 (Prueba de Negocio), [[D-033]] (hermana: consistencia de juicio cualitativo del `prd-expert`), CU-2.e / CU-2.f / CU-2.h.

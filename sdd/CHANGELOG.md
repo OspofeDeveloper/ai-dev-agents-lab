@@ -2,6 +2,14 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.71.0 — 2026-07-23
+
+**Umbral del veredicto del review, determinista** — [[DECISIONS D-035]]. En conformance (CU-2.f) el `prd-expert` etiquetó `LISTO_CON_AJUSTES` sobre un PRD sin nada bloqueante (borderline aceptable + huecos de Spec); para el mismo estado limpio otras veces dijo `LISTO`. Como Regla 13 ata la etiqueta al sello, un orquestador estricto se negaría a sellar un PRD sellable (fricción falsa).
+
+- **`kb-prd-expert` Regla 14 (nueva, SSoT):** `NO_LISTO` = asunciones sin confirmar o defecto de estructura; `LISTO_CON_AJUSTES` = contaminación **dura** (fila de la tabla de prohibidos) que corregir; `LISTO` = ninguno. **Solo lo bloqueante degrada**: notas *borderline* aceptables y huecos-de-Spec se reportan sin bajar el veredicto.
+- **`wf-prd-review` Paso 6:** restatement del umbral + el template separa "Ajustes bloqueantes (degradan)" de "Notas no bloqueantes (no cambian `LISTO`)".
+- **Tests:** `test_install_sh.py` — backstop de contenido (Regla 14 define umbral y "no degrada").
+
 ## 0.70.0 — 2026-07-22
 
 **Refuerzos de `kb-prd-expert` para consistencia de juicio del `prd-expert`** — [[DECISIONS D-033]] + [[DECISIONS D-034]]. Dos huecos destapados en conformance (CU-2.e/CU-2.f) donde el mismo contenido recibía veredictos distintos entre invocaciones del experto; ninguno lo pilla un script (son semánticos) → se afila el KB que el experto consume.

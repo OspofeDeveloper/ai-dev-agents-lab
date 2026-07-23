@@ -622,6 +622,16 @@ class KbPrdExpertContentTest(unittest.TestCase):
         # y el frame de "tabla = dura, no matiz opcional"
         self.assertIn("contaminación dura", p)
 
+    def test_regla14_defines_verdict_threshold(self):
+        # D-035: la Regla 14 define el umbral del veredicto (solo lo bloqueante degrada)
+        s = self._skill()
+        self.assertIn("Regla 14", s)
+        self.assertIn("Umbral del veredicto", s)
+        self.assertIn("solo lo **bloqueante** degrada", s)
+        # y nombra explícitamente lo que NO degrada LISTO
+        self.assertIn("Qué NO degrada", s)
+        self.assertIn("materia de Spec", s)
+
 
 if __name__ == "__main__":
     unittest.main()
