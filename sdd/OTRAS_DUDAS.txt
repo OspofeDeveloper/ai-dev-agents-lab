@@ -1,0 +1,53 @@
+Al final necesito que me explique a parte de todo el ecosistema bien para que yo pueda entenderlo y explicarlo, que ha hecho de testing, que cosas ha podido probar a través de scripts python, y que me tiene que definir como escenarios de QA para que yo vaya haciendo pruebas y vaya comprobando que cada uno se cumple como deberia
+
+Con el tema de los tests sobre el ecosistema, necesitaria poner en algun sitio que cada vez que se hace algun cambio sobre el ecosistema, que se lancen los tests para ver que no se ha roto nada.
+
+Se están haciendo los casos de uso sobre los wf, en un futuro hay que hacer algun tipo de auditoria sobre cada uno de los kb, creo que ya de alguna forma nos indica que kb ha usado (Hay que probarlo, y sino al menos revisar que se lean los templates de las skills, como forma de saber si la usa). Tampoco está probando las skills de kmm, por lo que tendremos que hacer lo mismo con kmm.
+
+También quiero que se creen casos de uso que comprueben que el orquestrador, cuando ejecuta las skills que tienen args, que se lo pasa de forma correcta.
+
+
+--------------
+
+Hay algun caso de prueba que testee que pasa si tenemos un repo de design o unos specs con diseño que son para web, y en el repo de consumer vamos a hacer una app, ese escenario está controlado?
+
+Se puede llegar a inicializar un proyecto de mobile por ejemplo, sin diseño? No es algo urgente sino, porque creo que casi nunca pasará. 
+
+El ecosistema está preparado para 3 casos?
+	1. Flujo de implementación de nueva feature grande.
+	2. Flujo de implementación de nueva feature pequeña.
+	3. Flujo de corrección de bug
+	4. Flujo de implementación de cambio mínimo (Cambio string, añadir String, cambio Color...)
+
+Como se distingue entre que es una corrección de un bug, una implentación pequeña y un cambio mínimo? Como actuan en cada caso?
+
+Si quiero inicializar un proyecto que no sea ni App movil, ni Web, ni Desktop, en que punto me lo deberia dejar indicar? Eso está controlado? Hay test para comprobarlo? 
+
+Más a futuro, crees que mejoraria mucho el crear mcp's para comunicar los repositorio spec, design y consumer?
+
+--------------
+
+En un proyecto donde a lo mejor tenemos repo de specs, repo de app, repo de server y repo de backoffice, al igual que todos consumen las specs de server, entiendo que el sistema está preparado para que desde algun canvio que se tenga que meter en codigo (backoffice p.ej), el ecosistema genere el spec y se pueda crear una PullRequest o algo al repo de specs, para que el PM lo valide y decida si ese spec va también hacia app o server, o si tiene que hablar con cliente, etc
+
+----------------------------------
+
+
+
+Está contemplado algun flujo de si el usuario quiere añadir algo al prd? Aunque lo quiera añadir en cualquier parte del flujo? Si enmedio del wf-prd-review se cancela la acción, después al querer volver continua donde se quedó? Tiene que hacer ese flujo 100% o hay alguna opción que sea correcta?
+
+----------------------------------
+
+Para la fase de testing en el sdd, tendremos por una banda los test unitarios, de integración, etc... Pero también tendremos tests manuales. Como estos no se pueden lanzar en un pipeline de forma automática, lo que tendremos que poner en el flujo de trabajo es que la IA sea capaz de crear tests manuales con sentido a pasar por el usuario, al igual que ser capaz de identificar si el cambio que se ha realizado requiere de volver a pasar algun test manual que ya se habia dado por cerrado y comprobado. Así no tenemos que ejecutar todos siempre y tampoco damos por hecho que una vez pasados los tests, ya no hace falta que se pruebe mas.
+
+----------------------------------
+
+No se si ahora mismo ya tenemos algo similar, pero cuando cambiamos el PRD, a parte de cambiar el sellado, se pueden ver los cambios que se han hecho explícitamente por esa persona, o con git y teniendo los cambios commiteados ya es suficiente?
+
+----------------------------------
+Al iniciar una nueva sesión, deberiamos tener un hook que detecte que tipo de modelo se está usando, y si se ve que no es el opus, parar la ejecución y avisar al usuario que el sistema está testeado sobre el orquestrador con opus.
+
+----------------------------------
+En el flujo del prd se contempla el flujo en el que se le da un prd contaminado? Y se contempla el flujo donde trabajamos sobre un prd muy grande? Con diferentes features que también son muy grandes?
+
+---------------------------------- 
+ 

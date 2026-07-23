@@ -35,7 +35,7 @@ esta vista es la **transpuesta** para leer/ejecutar el CU.
 
 ### `wf-prd-review` — revisar el PRD y sellar (`prd-expert`) (5)
 - [x] CU-2.e — Gate de asunciones + orden PRD→spec (lo más crítico, conversacional A-F) ✅ SELLADO 2026-07-22 (Tanda A ×3, probe E por 2 vías + D-032)
-- [ ] CU-2.f — Veredicto LISTO y sello de aprobación
+- [x] CU-2.f — Veredicto LISTO y sello de aprobación ✅ SELLADO 2026-07-23 (2 pasadas; sello-feliz ×3, decline por 2 vías, overwrite ×2, probe 5/D-035 ×3)
 - [ ] CU-2.g — Pasar algo que no es un PRD
 - [ ] CU-2.h — La revisión no reescribe a su cosecha
 - [ ] CU-2.j — Cascada determinista de dependencias entre asunciones (D-029)
@@ -480,6 +480,12 @@ la identidad del aprobador con `AskUserQuestion` y estampa el sello con `sdd-prd
 FALLO si estampa `Aprobado por:` sin que respondas, si acumula sellos duplicados, o si marca
 `LISTO_CON_AJUSTES` sobre un PRD limpio cuyos únicos "hallazgos" son borderline aceptable o materia de Spec.
 **Desviación → reportar:** issue citando `CU-2.f`.
+
+> **Validación — 2 pasadas (2026-07-22/23, consumer real `myops-app-specs`, ecosistema 0.71.0). SELLADO.**
+> - **Sello feliz (1+2):** ×3 — pide aprobador con `AskUserQuestion`, sella con `sdd-prd-apply.py --seal` (`status: approved`, READY); el `prd-expert` no interviene en el sello. **Rol por texto libre verbatim** ([[D-027]]): "Oscar Pozo (PM)" se selló tal cual (sin expandir); los presets sellan su valor definido.
+> - **No autoaprueba (3):** ×2 por **dos vías** — elegir opción "No lo selles" y **declinar duro** (descartar el `AskUserQuestion`). En ambas no escribió `Aprobado por:` (verificado en fichero: `sealed:false`, `status:in-review`, placeholder intacto).
+> - **Sobrescritura (4):** ×2 — re-review sobre PRD sellado por "Sello Previo" → reemplaza la **única** línea `Aprobado por:` (verificado `grep -c` = 1), sin acumular; `status: approved`.
+> - **Probe 5 — umbral de veredicto ([[D-035]]):** ×3 — el mismo PRD limpio (borderline L95 + huecos-de-Spec) da **`LISTO`**, no `LISTO_CON_AJUSTES`; el orquestador usa el template "Ajustes bloqueantes / Notas no bloqueantes". Cierra el titubeo de la 1ª pasada. Confirmado en logs del `prd-expert`: veredicto `LISTO` citando Regla 14 (y nota de reenunciado [[D-033]] "moneda única", y frame de contaminación dura [[D-034]]) — **Reglas 1–14 loaded**. Los tres refuerzos vivos en el consumidor.
 
 ## CU-2.g — Pasar algo que no es un PRD
 
