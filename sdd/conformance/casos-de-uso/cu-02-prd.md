@@ -36,7 +36,7 @@ esta vista es la **transpuesta** para leer/ejecutar el CU.
 ### `wf-prd-review` — revisar el PRD y sellar (`prd-expert`) (5)
 - [x] CU-2.e — Gate de asunciones + orden PRD→spec (lo más crítico, conversacional A-F) ✅ SELLADO 2026-07-22 (Tanda A ×3, probe E por 2 vías + D-032)
 - [x] CU-2.f — Veredicto LISTO y sello de aprobación ✅ SELLADO 2026-07-23 (2 pasadas; sello-feliz ×3, decline por 2 vías, overwrite ×2, probe 5/D-035 ×3)
-- [ ] CU-2.g — Un artefacto de otra fase no se revisa como PRD (Capa 1 enrutado ✅ 2026-07-23; Capa 2 guard forzado pendiente)
+- [x] CU-2.g — Un artefacto de otra fase no se revisa como PRD ✅ SELLADO 2026-07-23 (3/3: `_spec`/`_tasks`/`_plan`, Capa 1 enrutado + Capa 2 guard)
 - [ ] CU-2.h — La revisión no reescribe a su cosecha
 - [ ] CU-2.j — Cascada determinista de dependencias entre asunciones (D-029)
 
@@ -519,10 +519,17 @@ y (2) al forzar `wf-prd-review` el guard del Paso 2 lo detiene · FALLO si el or
 como PRD (lo delega al `prd-expert` de PRD, abre gate de asunciones o intenta sellarlo).
 **Desviación → reportar:** issue citando `CU-2.g`.
 
-> **Validación (2026-07-23, consumer real `myops-app-specs`, ecosistema 0.71.0). Capa 1 PASS.**
-> Ante "revisa este documento y déjalo listo: `…/ejemplo_spec.md`", el orquestador **enrutó a `wf-spec-validate`**
-> (no a `wf-prd-review`) → veredicto `REQUIERE_REVISIÓN` (stub 0/8). Nunca lo trató como PRD. La Capa 2 (guard
-> forzado del Paso 2) queda pendiente de un probe explícito con `/wf-prd-review` sobre un `_spec.md`.
+> **Validación (2026-07-23, consumer real `myops-app-specs`, ecosistema 0.71.0). SELLADO — 3/3 (Regla 9).**
+> Tres pasadas, una por sufijo, cada una con ambas capas:
+> - **Pasada 1 (`_spec.md`) — Capa 1:** "revisa este documento…" enrutó a `wf-spec-validate` (no a `wf-prd-review`)
+>   → `REQUIERE_REVISIÓN` (stub 0/8). **Capa 2:** `/wf-prd-review …_spec.md` → Paso 2 detecta sufijo, informa y se detiene.
+> - **Pasada 2 (`_tasks.md`) — Capa 1:** el orquestador **no lo trató como PRD**; razonó por **topología** (repo `authoring`
+>   con fases prd+spec: `tasks` no vive aquí, va en el consumer) e identificó el fichero como fixture. **Capa 2:** guard del Paso 2 se detiene.
+> - **Pasada 3 (`_plan.md`) — Capa 1:** ídem, razonamiento topológico (`plan` no es fase de este repo), no lo trató como PRD.
+>   **Capa 2:** guard del Paso 2 se detiene.
+> Nota de rigor: Capa 2 es un chequeo de sufijo (determinista); Capa 1 es enrutado LLM, validado ×3 sobre los tres sufijos.
+> Aprendizaje de valor: en `authoring` el orquestador enruta por **topología de fase**, no solo por sufijo — un artefacto de
+> una fase no instalada no tiene destino de "avanzar" aquí, y así lo comunica sin tratarlo como PRD.
 
 ## CU-2.h — La revisión no reescribe a su cosecha
 
