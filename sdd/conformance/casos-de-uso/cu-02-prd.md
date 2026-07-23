@@ -36,7 +36,7 @@ esta vista es la **transpuesta** para leer/ejecutar el CU.
 ### `wf-prd-review` — revisar el PRD y sellar (`prd-expert`) (5)
 - [x] CU-2.e — Gate de asunciones + orden PRD→spec (lo más crítico, conversacional A-F) ✅ SELLADO 2026-07-22 (Tanda A ×3, probe E por 2 vías + D-032)
 - [x] CU-2.f — Veredicto LISTO y sello de aprobación ✅ SELLADO 2026-07-23 (2 pasadas; sello-feliz ×3, decline por 2 vías, overwrite ×2, probe 5/D-035 ×3)
-- [ ] CU-2.g — Pasar algo que no es un PRD
+- [ ] CU-2.g — Un artefacto de otra fase no se revisa como PRD (Capa 1 enrutado ✅ 2026-07-23; Capa 2 guard forzado pendiente)
 - [ ] CU-2.h — La revisión no reescribe a su cosecha
 - [ ] CU-2.j — Cascada determinista de dependencias entre asunciones (D-029)
 
@@ -487,16 +487,42 @@ FALLO si estampa `Aprobado por:` sin que respondas, si acumula sellos duplicados
 > - **Sobrescritura (4):** ×2 — re-review sobre PRD sellado por "Sello Previo" → reemplaza la **única** línea `Aprobado por:` (verificado `grep -c` = 1), sin acumular; `status: approved`.
 > - **Probe 5 — umbral de veredicto ([[D-035]]):** ×3 — el mismo PRD limpio (borderline L95 + huecos-de-Spec) da **`LISTO`**, no `LISTO_CON_AJUSTES`; el orquestador usa el template "Ajustes bloqueantes / Notas no bloqueantes". Cierra el titubeo de la 1ª pasada. Confirmado en logs del `prd-expert`: veredicto `LISTO` citando Regla 14 (y nota de reenunciado [[D-033]] "moneda única", y frame de contaminación dura [[D-034]]) — **Reglas 1–14 loaded**. Los tres refuerzos vivos en el consumidor.
 
-## CU-2.g — Pasar algo que no es un PRD
+## CU-2.g — Un artefacto de otra fase no se revisa como PRD
 
-**Precondición:** le pasas un `_spec.md` / `_plan.md` / `_tasks.md`.
-**Mecanismo:** skill `wf-prd-review` (checkpoint de tipo de artefacto).
+**Precondición:** existe un artefacto de fase posterior (`_spec.md` / `_plan.md` / `_tasks.md`),
+p. ej. un stub `features/<f>/spec/<f>_spec.md`.
+**Mecanismo (dos capas de defensa, se prueban por separado):**
+- **Capa 1 — enrutado por tipo de artefacto (la garantía conversacional real).** Ante "revisa este
+  documento" sobre un `_spec.md`, el **orquestador enruta por la fase del artefacto**: lo manda al
+  workflow de esa fase (`wf-spec-validate` para un spec), **nunca** a `wf-prd-review`. Es lo que ocurre
+  conversacionalmente: la petición no llega a `wf-prd-review`.
+- **Capa 2 — guard del Paso 2 de `wf-prd-review` (defensa en profundidad).** Si se **fuerza**
+  `wf-prd-review` sobre un `_spec.md`/`_plan.md`/`_tasks.md` (p. ej. tecleando `/wf-prd-review <_spec.md>`),
+  su Paso 2 detecta el sufijo, informa que es un artefacto posterior y **se detiene** sin delegar al `prd-expert`.
 
-1. Le pides revisar como PRD un artefacto de otra fase.
-   → **Esperado:** informa que no es un PRD y **se detiene**.
+**Nota de diseño (2026-07-23):** la 1ª versión de este CU asumía que "revisa este `_spec.md`" llegaba a
+`wf-prd-review` y se rechazaba en el Paso 2. En conformance se vio que **no**: el enrutado (correctamente)
+lo manda a `wf-spec-validate` antes. El anti-objetivo ("no tratar un no-PRD como PRD") se cumple por la
+**Capa 1**; la Capa 2 solo se alcanza forzando la skill. Re-scopeado para separar ambas.
 
-**Resultado:** PASS si lo rechaza · FALLO si intenta revisarlo como PRD.
+**Probe conversacional (Capa 1):**
+1. Con un `<f>_spec.md` presente, le pides en lenguaje natural "revisa este documento y déjalo listo": `<f>_spec.md`.
+   → **Esperado:** enruta a `wf-spec-validate` (o al workflow de la fase del artefacto), **no** a `wf-prd-review`;
+     **no** lo trata como PRD (no delega al `prd-expert` de PRD, no abre gate de asunciones, no ofrece sellar PRD).
+
+**Probe forzado (Capa 2, opcional):**
+2. Fuerzas `wf-prd-review` sobre el mismo `_spec.md`.
+   → **Esperado:** Paso 2 informa "parece un artefacto posterior del pipeline" y **se detiene**.
+
+**Resultado:** PASS si (1) el enrutado conversacional manda el artefacto a su fase y nunca lo revisa como PRD,
+y (2) al forzar `wf-prd-review` el guard del Paso 2 lo detiene · FALLO si el orquestador trata el artefacto
+como PRD (lo delega al `prd-expert` de PRD, abre gate de asunciones o intenta sellarlo).
 **Desviación → reportar:** issue citando `CU-2.g`.
+
+> **Validación (2026-07-23, consumer real `myops-app-specs`, ecosistema 0.71.0). Capa 1 PASS.**
+> Ante "revisa este documento y déjalo listo: `…/ejemplo_spec.md`", el orquestador **enrutó a `wf-spec-validate`**
+> (no a `wf-prd-review`) → veredicto `REQUIERE_REVISIÓN` (stub 0/8). Nunca lo trató como PRD. La Capa 2 (guard
+> forzado del Paso 2) queda pendiente de un probe explícito con `/wf-prd-review` sobre un `_spec.md`.
 
 ## CU-2.h — La revisión no reescribe a su cosecha
 
