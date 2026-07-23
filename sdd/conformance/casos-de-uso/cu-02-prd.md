@@ -468,9 +468,17 @@ la identidad del aprobador con `AskUserQuestion` y estampa el sello con `sdd-prd
 4. Re-ejecutas la revisión sobre el PRD ya sellado y respondes con un rol.
    → **Esperado:** **sobrescribe** la línea `Aprobado por:` previa (no añade una segunda);
      no acumula sellos duplicados.
+5. **Umbral de veredicto ([[D-035]]).** El PRD está limpio y sellable pero contiene solo una nota
+   *borderline* documentada como aceptable (p. ej. L95 "bloqueo local en el dispositivo") y/o huecos
+   de negocio que son materia de Spec.
+   → **Esperado:** el veredicto es **`LISTO`** (no `LISTO_CON_AJUSTES`) y procede al sello **sin** pedir
+     "corregir" lo no bloqueante. Solo la contaminación **dura** (fila de la tabla de prohibidos) degrada
+     a `LISTO_CON_AJUSTES`; las asunciones abiertas / defecto de estructura dan `NO_LISTO`.
 
-**Resultado:** PASS si solo sella con respuesta humana y la re-revisión sobrescribe el sello ·
-FALLO si estampa `Aprobado por:` sin que respondas, o si acumula sellos duplicados.
+**Resultado:** PASS si (1) solo sella con respuesta humana, (2) la re-revisión sobrescribe el sello, y
+(3) no degrada `LISTO` por notas no bloqueantes (borderline aceptable / huecos-de-Spec) ·
+FALLO si estampa `Aprobado por:` sin que respondas, si acumula sellos duplicados, o si marca
+`LISTO_CON_AJUSTES` sobre un PRD limpio cuyos únicos "hallazgos" son borderline aceptable o materia de Spec.
 **Desviación → reportar:** issue citando `CU-2.f`.
 
 ## CU-2.g — Pasar algo que no es un PRD
