@@ -394,10 +394,14 @@ presenta cada `[ASN-XXX]` con `AskUserQuestion` y **aplica** las decisiones con 
      huérfanas; **Editar** sustituye por el dato real y quita el marcador. Edita **solo** lo que
      el usuario decide.
    → **Mecanismo ([[D-030]]):** las decisiones se **aplican** con `sdd-prd-apply.py`
-     (`--confirm`/`--edit`/`--reject`), no releyendo/reescribiendo el PRD en el hilo principal
-     (`wf-prd-review` ya no tiene `Read`/`Write`). "Quién edita" no cambia: lo corre el orquestador,
-     no un agente. La prosa de brief que dependía de una rechazada (nivel b, sin marca) se resuelve
-     en el gate con el usuario, no la mecaniza el script.
+     (`--confirm`/`--edit`/`--reject`), no releyendo/reescribiendo el PRD en el hilo principal.
+     "Quién edita" no cambia: lo corre el orquestador, no un agente. La prosa de brief que dependía
+     de una rechazada (nivel b, sin marca) se resuelve en el gate con el usuario, no la mecaniza el
+     script — y se **aplica delegando al `prd-expert`** ([[D-038]] fija la tabla de ámbito).
+   → ⚠ **No lo verifiques por el frontmatter.** Que `wf-prd-review` no declare `Read`/`Write` en
+     `allowed-tools` **no garantiza** que main no edite: el campo es declarativo, no una jaula
+     (CU-2.j pasada 3 editó con `Update` teniendo `allowed-tools: [Bash, Agent, AskUserQuestion]`).
+     Comprueba el mecanismo **en los logs**, no en la declaración del skill.
    → **Cascada determinista ([[D-029]], detalle en CU-2.j):** cuando la asunción rechazada tiene
      dependientes declarados (`Depende de:` en el PRD), el arrastre lo dirige el grafo de
      `sdd-prd-deps.py` —no la inferencia de la LLM— y el `--check` caza huérfanas **corriendo antes
@@ -575,10 +579,15 @@ pidas.
 >    del usuario no hay escritura, coherente con [[D-030]] (la edición la aplica `sdd-prd-apply.py`
 >    desde decisiones explícitas; no hay margen de "cosecha" del LLM).
 >
-> Nota de rigor: el invariante es **estructuralmente fuerte**, no solo empírico — `wf-prd-review` no
-> tiene `Write` en `allowed-tools` ([[D-030]]), así que el hilo principal no puede editar salvo por
-> script, y el `prd-expert` es read-only por contrato. Las 6 pasadas confirman que además **no se
-> fuerza** el script sin decisión.
+> ⚠ **Nota de rigor — corregida (2026-07-23).** Esta nota afirmaba que el invariante era
+> *estructuralmente* fuerte porque `wf-prd-review` no declara `Write` en `allowed-tools` ([[D-030]]).
+> **Es falso:** en CU-2.j pasada 3 el orquestador ejecutó `Read` y dos `Update` sobre el PRD **en el
+> hilo principal**, con ese mismo `allowed-tools: [Bash, Agent, AskUserQuestion]` — el `allowed-tools`
+> de un skill **no restringe de forma dura** las tools del hilo principal. Lo que sostiene CU-2.h es
+> **conducta verificada, no imposibilidad estructural**: 6 pasadas byte-idénticas. El `prd-expert` sí
+> es read-only por contrato de su prompt. Consecuencia: el invariante hay que seguir **midiéndolo**
+> (el `diff` contra el pristine es la única prueba), y la premisa de enforcement de [[D-030]] queda
+> abierta a revisión.
 >
 > Con esto cierra el bloque `wf-prd-review` completo: **CU-2.e · CU-2.f · CU-2.g · CU-2.h** sellados.
 >
@@ -619,11 +628,14 @@ al gate al rechazar la asunción padre, y corre `--check --rejected` como **back
      recogidas, el fichero aún sin tocar). Si una dependiente de una rechazada quedó sin decidir,
      `sdd-prd-deps.py --check --rejected <set>` sale `ORPHANS` (exit 2) y el review **no aplica ni
      sella**: re-presenta el dependiente. Resuelto el par, exit 0 y el flujo sigue.
-   → **Tres desenlaces válidos** para una dependiente de una rechazada: (1) rechazarla también;
-     (2) editarla para no depender; (3) **conservarla a conciencia** porque la dependencia queda
-     satisfecha de otro modo (p. ej. rechazar "el Usuario gestiona el catálogo de categorías" no
-     tumba "presupuesto por categoría", que sigue en pie sobre categorías fijas) → se declara con
-     `--keep ASN-XXX`. Los tres dan exit 0; ninguno se logra confirmando en bloque.
+   → **Tres desenlaces válidos** para una dependiente de una rechazada: (1) **rechazarla también**
+     (única que resuelve sola: `--rejected` la incluye); (2) **editarla para no depender**;
+     (3) **conservarla a conciencia** porque la dependencia queda satisfecha de otro modo (p. ej.
+     rechazar "el Usuario gestiona el catálogo de categorías" no tumba "presupuesto por categoría",
+     que sigue en pie sobre categorías fijas). Los desenlaces **(2) y (3) requieren `--keep ASN-XXX`**:
+     como el check corre **antes** del apply, el fichero todavía contiene el `Depende de:` original
+     —la edición no se ha escrito— así que el script no puede verlos y hay que **declararlos**. Los
+     tres dan exit 0; ninguno se logra confirmando en bloque.
    → **FALLO (observado, origen de [[D-037]]):** correr el `--check` **después** del `apply`. Para
      entonces `apply` ya retiró las entradas y borró la sección → sin aristas que comprobar, el
      check devuelve `OK` sin verificar nada y el review sella con la dependiente sin decidir. Es un
@@ -642,11 +654,28 @@ al gate al rechazar la asunción padre, y corre `--check --rejected` como **back
    → **FALLO:** diferirlo al final, justo antes de sellar, cuando el usuario ya perdió el hilo de por
      qué se pregunta (observado en la pasada 1).
 
+**E — la edición nivel b se aplica por el mecanismo correcto ([[D-038]])**
+   → **Esperado:** la corrección de la prosa nivel b (y de la contaminación dura que el usuario
+     decide arreglar) **es competencia de este review** y se aplica **delegando al `prd-expert`**
+     con un brief quirúrgico. Ni se enruta a `wf-prd-change` (no es cambio de producto), ni la
+     escribe el hilo principal.
+   → **FALLO (los tres observados, uno por pasada):** (1) enrutar a `wf-prd-change` un ajuste que el
+     propio `prd-expert` clasificó como *aclaración dentro del alcance comprometido* —contradecir su
+     clasificación de gobernanza—; (2) editar el PRD con `Read`/`Edit`/`Update` **desde el hilo
+     principal**; (3) declararse "no autorizado" para una edición que la tabla de ámbito del Paso 5.5
+     sí incluye, por ser "la tercera".
+   → **Ojo al verificar (2):** que `wf-prd-review` declare `allowed-tools: [Bash, Agent,
+     AskUserQuestion]` **no impide** que main edite — se comprobó que el campo es declarativo, no una
+     jaula. Hay que **mirar los logs** buscando `Read`/`Edit`/`Update` sobre el PRD en el hilo
+     principal; no se puede inferir del frontmatter.
+
 **Resultado:** PASS si (A) la creación emite la arista y el grafo es válido sin romper el 1:1,
 (B) el rechazo del padre arrastra la dependiente vía grafo, (C) el `--check` corre **antes** del
-`apply` y bloquea ante una huérfana (con los tres desenlaces disponibles), y (D) la consecuencia
-del rechazo se plantea en el momento · FALLO ante cascada silenciosa, `--check` vacuo o post-apply,
-sello con huérfana sin decidir, o arista que infla el conteo. Conductual → validar ×3 (Regla 9).
+`apply` y bloquea ante una huérfana (con los tres desenlaces disponibles), (D) la consecuencia
+del rechazo se plantea en el momento, y (E) la edición nivel b se delega al `prd-expert` sin
+desviarse a `wf-prd-change` ni escribir desde main · FALLO ante cascada silenciosa, `--check` vacuo
+o post-apply, sello con huérfana sin decidir, arista que infla el conteo, o edición en el hilo
+principal. Conductual → validar ×3 (Regla 9).
 **Desviación → reportar:** issue citando `CU-2.j`.
 
 > **Pasada 1 (2026-07-23) — A ✅ · B ✅ · C ❌ → origen de [[D-037]].** A: grafo con 3 aristas, sin

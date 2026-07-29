@@ -94,7 +94,7 @@ El campo `graph` (`{"ASN-007": ["ASN-006"], …}`) te dice, por cada asunción, 
 ```
 !python3 .sdd/scripts/sdd-prd-deps.py "<path>" --check --rejected ASN-006,ASN-0XX [--keep ASN-00Y]
 ```
-- `--rejected` = las que el usuario **rechazó**. `--keep` = dependientes que, tras presentárselas, decidió **conservar** conscientemente (la dependencia queda satisfecha de otro modo — p. ej. se rechaza "el Usuario gestiona el catálogo de categorías" pero "presupuesto por categoría" sigue en pie sobre categorías fijas). `--keep` es una declaración **deliberada**: no basta con confirmarlas, hay que nombrarlas.
+- `--rejected` = las que el usuario **rechazó**. `--keep` = dependientes que **sobreviven por decisión explícita**, en cualquiera de sus dos formas: (a) **conservada** a conciencia porque la dependencia queda satisfecha de otro modo (se rechaza "el Usuario gestiona el catálogo de categorías" pero "presupuesto por categoría" sigue en pie sobre categorías fijas), o (b) **editada** para no depender. **Las dos necesitan `--keep`**: como el check corre antes del apply, el fichero aún tiene el `Depende de:` original —la edición no está escrita— y el script no puede verla; sin `--keep` reportaría huérfana una asunción ya resuelta. El único desenlace que se resuelve solo es rechazarla también (entra por `--rejected`). `--keep` es una declaración **deliberada**: no basta con confirmarlas, hay que nombrarlas.
 - `ORPHANS` (exit 2) → **re-presenta** esos dependientes al usuario para decidir antes de continuar; luego re-corre el check con la decisión reflejada (`--reject`… o `--keep`…). No apliques ni selles con una huérfana.
 - Exit 0 → coherente, sigue al apply.
 
@@ -108,7 +108,25 @@ Aplica todas las decisiones acumuladas en una pasada (el script empareja cada `A
 ```
 Si sale exit 2 (1:1 roto o desalineación), **no continúes**: resuélvelo (`sdd-prd-ready.py`) antes de reintentar — el script no edita a ciegas.
 
-A diferencia del resto de `wf-prd-review` (que solo diagnostica), aquí **sí** se edita el PRD, pero solo lo que el usuario decide explícitamente sobre cada asunción (aplicado por `sdd-prd-apply.py`) — no reescrituras de tu cosecha.
+A diferencia del resto de `wf-prd-review` (que solo diagnostica), aquí **sí** se edita el PRD, pero solo lo que el usuario decide explícitamente (aplicado por script o delegado al `prd-expert`, ver abajo) — no reescrituras de tu cosecha.
+
+### Qué ediciones son de este review, y por qué mecanismo ([[D-038]])
+
+Sin esto explícito, la misma clase de edición se resolvió de **tres formas distintas** en tres runs de conformance (delegar al experto · enrutar a `wf-prd-change` · editar en el hilo principal). El ámbito es cerrado:
+
+| Edición | ¿Es del review? | Mecanismo |
+|---|---|---|
+| Decisión de asunción (confirmar / editar / rechazar) | **Sí** | `sdd-prd-apply.py --confirm/--edit/--reject` |
+| Sello de aprobación | **Sí** | `sdd-prd-apply.py --seal` (Paso 6) |
+| Contaminación **dura** que el usuario decide corregir | **Sí** | delega al `prd-expert` (brief quirúrgico) |
+| Prosa nivel b **consecuencia de un rechazo** (líneas sin marca que quedan falsas o mudas) | **Sí** | delega al `prd-expert` (brief quirúrgico) |
+| Capacidad nueva, expansión de alcance, retirar algo comprometido | **No** | `wf-prd-change` |
+
+Reglas que cierran el hueco:
+
+1. **El hilo principal nunca escribe el artefacto, ni lo lee entero.** Aplica por `Bash`+script, o **delega al `prd-expert`** con un brief que diga *qué* cambiar (localizando **por texto**, no por número de línea: el `apply` los ha movido), *qué no tocar* (frontmatter, `Aprobado por:`, resto del documento) y que **no reintroduzca** marcadores `[ASUNCIÓN]`. Esto vale **aunque tengas `Read`/`Edit`/`Write` disponibles**: el `allowed-tools` de un skill **no es enforcement duro** (comprobado en conformance — un run editó con `Update` desde main con `allowed-tools: [Bash, Agent, AskUserQuestion]`), así que la restricción es **normativa**, no mecánica. Si te descubres a punto de hacer `Read`/`Edit` del PRD aquí, para y delega.
+2. **La clasificación de gobernanza la decide el `prd-expert`, no tú.** Si su diagnóstico dice que un ajuste es *aclaración dentro del alcance comprometido* y no cambio de producto, **no lo enrutes a `wf-prd-change`**: resuélvelo aquí. Enrutar por tu cuenta contra su clasificación es fricción falsa y le hace al usuario dar un rodeo por otro workflow para un cambio de redacción.
+3. **Una edición de contenido no es un cambio de producto solo por ser la tercera.** El ámbito lo fija la tabla de arriba, no el número de ediciones ya aplicadas.
 
 **Efecto en el veredicto:** mientras queden marcadores `[ASUNCIÓN]` sin confirmar, el PRD **no puede ser `LISTO`** (es contenido fabricado sin validar). Si el usuario no quiere resolverlas ahora, el veredicto es `NO_LISTO` con las asunciones pendientes listadas.
 

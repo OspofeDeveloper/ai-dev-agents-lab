@@ -22,14 +22,24 @@ falso OK (observado en conformance CU-2.j) es peor que no correrlo, porque se le
 como garantía. Por eso, si se pide `--check --rejected <no vacío>` sobre un documento
 sin entradas, el script sale VACUOUS (exit 2) en vez de OK.
 
-TERCER DESENLACE: --keep ([[D-037]]). Un dependiente de una rechazada no siempre debe
-caer: la dependencia puede quedar satisfecha de otra forma (p. ej. se rechaza "el
-Usuario gestiona el catálogo de categorías" pero "presupuesto por categoría" sigue en
-pie sobre categorías fijas). `--keep ASN-XXX` declara que ese dependiente se
-**conserva conscientemente** tras haberlo presentado al usuario, y deja de contar
-como huérfano. Es una declaración deliberada y separada de `--confirm`: no se puede
-silenciar el check confirmándolo todo, hay que **nombrar** el dependiente — lo que
-exige haber visto la cascada.
+DECLARACIÓN DE DEPENDIENTE RESUELTO: --keep ([[D-037]]). Un dependiente de una
+rechazada no siempre debe caer. Sobrevive de dos formas legítimas:
+
+  (a) CONSERVADO a conciencia porque la dependencia queda satisfecha de otro modo
+      (se rechaza "el Usuario gestiona el catálogo de categorías" pero "presupuesto
+      por categoría" sigue en pie sobre categorías fijas);
+  (b) EDITADO para no depender (se sustituye su texto por uno que ya no necesita al
+      padre).
+
+`--keep ASN-XXX` declara **ambos** casos. Ojo con (b): como este check corre ANTES
+del apply, el fichero todavía contiene el `Depende de:` original —la edición no se ha
+escrito aún— así que el script **no puede verla**; sin `--keep` reportaría huérfana
+una asunción que el usuario ya resolvió. El único desenlace que se resuelve solo es
+rechazarla también (entra por `--rejected`).
+
+Es una declaración deliberada y separada de `--confirm`: no se puede silenciar el
+check confirmándolo todo, hay que **nombrar** el dependiente — lo que exige haber
+visto la cascada.
 
 La *identificación* de la arista es juicio de la creación (se recuerda una vez);
 su *cumplimiento* aquí es determinista. `sdd-prd-ready.py` (invariante 1:1) no se

@@ -304,6 +304,24 @@ class InstallAllTest(InstallBase):
         self.assertIn("VACUOUS", skill,
                       "wf-prd-review no advierte del check vacuo por orden invertido (D-037)")
 
+    def test_prd_review_declares_editing_remit(self):
+        # D-038: el ámbito de edición del review es cerrado y explícito (tres runs de
+        # conformance resolvieron la misma edición de tres formas distintas), el hilo
+        # principal no escribe el artefacto aunque tenga la tool, y la clasificación de
+        # gobernanza la decide el prd-expert (no se enruta a wf-prd-change contra él).
+        self.install("all")
+        skill = (self.skill_dir("wf-prd-review") / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("Qué ediciones son de este review", skill,
+                      "wf-prd-review pierde la tabla de ámbito de edición (D-038)")
+        self.assertIn("nunca escribe el artefacto", skill,
+                      "wf-prd-review pierde la regla de que main no escribe (D-038)")
+        self.assertIn("no es enforcement duro", skill,
+                      "wf-prd-review debe advertir que allowed-tools no es enforcement (D-038)")
+        self.assertIn("prd-expert", skill,
+                      "wf-prd-review pierde la delegación al prd-expert (D-038)")
+        self.assertIn("wf-prd-change", skill,
+                      "wf-prd-review pierde la frontera con wf-prd-change (D-038)")
+
     def test_prd_review_applies_edits_via_script(self):
         # D-030/Q3: las ediciones del review (asunciones + sello) se aplican con
         # sdd-prd-apply.py, y el hilo principal NO tiene Read/Write sobre el PRD

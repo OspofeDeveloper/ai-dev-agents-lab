@@ -2,6 +2,16 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.74.0 — 2026-07-23
+
+**El ámbito de edición del review es cerrado y explícito** — [[DECISIONS D-038]]. En tres runs de CU-2.j la **misma** clase de edición (limpiar contaminación dura decidida y realinear prosa nivel b que un rechazo dejó falsa) se resolvió de tres formas: delegar al `prd-expert` · enrutar a `wf-prd-change` · **editar en el hilo principal con `Update`**. En el segundo caso el orquestador contradijo a su propio experto, que ya había clasificado el ajuste como aclaración y no cambio de producto.
+
+- ⚠ **`wf-prd-review` Paso 5.5:** nueva tabla cerrada de **qué edición es del review y por qué mecanismo** — asunciones y sello por `sdd-prd-apply.py`; contaminación dura decidida y prosa nivel b por **delegación al `prd-expert`** (brief quirúrgico, localizar por texto); capacidad nueva / expansión / retirada por `wf-prd-change`.
+- ⚠ **El hilo principal nunca escribe ni lee entero el artefacto**, y la regla vale **aunque las tools estén disponibles**: se documenta que `allowed-tools` de un skill **no es enforcement duro** (comprobado: un run editó con `Update` teniendo `allowed-tools: [Bash, Agent, AskUserQuestion]`).
+- ⚠ **La clasificación de gobernanza es del `prd-expert`**: si dice "aclaración, no cambio de producto", el orquestador no enruta a `wf-prd-change` contra él.
+- **Corrección de premisa:** [[DECISIONS D-030]] afirmaba que quitar `Read`/`Write` hacía el bloat "estructuralmente imposible" — queda rebajado a norma **medida**. La nota de sello de CU-2.h se corrige de "estructuralmente fuerte" a "conducta verificada en 6 pasadas". Aprendizaje: **una garantía vale lo que su medición**, no lo que su declaración.
+- **Docs de `--keep` ([[DECISIONS D-037]]) afinados:** cubre **conservada** *y* **editada-para-no-depender** — como el check corre antes del apply, la edición aún no está escrita y el script no puede verla; solo "rechazarla también" se resuelve sin declarar.
+
 ## 0.73.0 — 2026-07-23
 
 **El backstop de dependencias vuelve a tener dientes** — [[DECISIONS D-037]]. En CU-2.j el review **selló con una dependiente sin decidir** y el check dijo `OK`: se corría **después** de `sdd-prd-apply.py`, que ya había borrado la sección de asunciones → sin aristas que comprobar, un no-op que se lee como garantía. El SKILL decía "antes de aplicar" pero colocaba el bloque después.
