@@ -6,6 +6,25 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-036 — La dimensión temporal de una capacidad no lava su cualificador de formato: "en un calendario" sigue siendo contaminación dura
+
+- **Fecha:** 2026-07-23 · **Estado:** Adoptada (refuerzo de la nota de `kb-prd-expert/references/prd_prohibited_items.md`). · **Relacionada:** [[D-034]] (formato de presentación = dura), Regla 6 (Prueba de Negocio), CU-2.h.
+
+**Contexto.** Residual de [[D-034]] destapado en conformance (CU-2.h, 3 pasadas sobre el mismo PRD pristine): el `prd-expert` clasificó **la misma** frase —«ver los pagos previstos… **en un calendario o vista de próximos gastos**» (L71)— como *borderline aceptable* (no degrada) en las pasadas 1 y 2, y como **contaminación dura** (citando la fila exacta del catálogo) en la pasada 3. D-034 la fijó como el ejemplo canónico de fila dura → la clasificación correcta es dura y las pasadas 1-2 fueron inconsistentes con el KB. Raíz del titubeo: el experto racionalizaba que *"la organización temporal (próximos gastos / próximas semanas) es negocio"* para bajar la severidad, y la nota de D-034 ("quita el formato, conserva la capacidad") **no cubría ese razonamiento** — no ataja que la dimensión temporal de la capacidad no lava el cualificador de presentación pegado a ella. Impacto acotado: en las 3 pasadas el experto **igualmente** señaló L71 y propuso la misma reescritura; lo único que bailaba era la *etiqueta de severidad* (dura → `LISTO_CON_AJUSTES` vs borderline → `LISTO`+nota). No afectó a CU-2.h (las 3 pasadas byte-idénticas: el review nunca reescribió).
+
+**Decisión.** Ampliar la nota "sobre el formato de presentación de una capacidad" con el frame **"la dimensión temporal no lava el formato"**: la parte temporal de la capacidad ("de las próximas semanas", "del último mes") es negocio y se conserva; que la capacidad organice datos en el tiempo **no** convierte en negocio el widget que los presenta ("en un calendario / línea de tiempo / agenda / vista de X" siguen siendo dura). Se explicita el mal razonamiento a evitar ("como organiza datos temporales, el calendario es negocio") separando el *qué se consulta* (temporal, se queda) del *cómo se muestra* (calendario, se va).
+
+**Alternativas descartadas.**
+- *Dejarlo como está (D-034 ya lo cubre)* → el residual demuestra que no: el escape temporal no estaba atajado y producía 2/3 de misclasificación.
+- *Mecanizar la clasificación con un script* → sigue siendo semántico (¿es este sufijo formato o negocio?), no sintáctico; el lever correcto es la nitidez del KB, no un verificador. Es la misma naturaleza que D-034.
+- *Aceptar la varianza como no-determinismo inherente del LLM* → cierto que afinar el KB **reduce** la varianza sin anularla (es juicio, no script), pero el escape era **concreto y nombrado** por el propio experto → barato de preemptar; no cerrarlo sería dejar un hueco identificado.
+
+**Consecuencias / aprendizaje.** Cierra el escape observado del par temporal; se asume explícitamente que baja la varianza, no la elimina (juicio de LLM). Aprendizaje: cuando un residual de un refuerzo de KB reaparece, mirar **qué razonamiento concreto usó el agente para escaparse** y atajarlo por su nombre en la nota, en vez de repetir el frame general. Backstop de contenido: `test_install_sh.py` (la nota menciona la dimensión temporal).
+
+**Referencias.** `sdd/pipeline/prd/skills/kb-prd-expert/references/prd_prohibited_items.md`, `sdd/conformance/casos-de-uso/cu-02-prd.md` (CU-2.h), `sdd/tests/test_install_sh.py`, `sdd/CHANGELOG.md`.
+
+---
+
 ## D-035 — El umbral del veredicto del review es determinista: solo lo bloqueante degrada `LISTO`; borderline aceptable y huecos-de-Spec se reportan sin bajar el veredicto
 
 - **Fecha:** 2026-07-23 · **Estado:** Adoptada (nueva Regla 14 en `kb-prd-expert` + Paso 6 de `wf-prd-review`). · **Relacionada:** [[D-034]] (contaminación dura vs borderline), [[D-033]] (consistencia de juicio), Regla 13 (sello atado al veredicto), CU-2.f.

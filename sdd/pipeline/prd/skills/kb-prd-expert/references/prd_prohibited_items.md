@@ -66,6 +66,8 @@ La capacidad de negocio describe **qué** puede hacer el usuario. El detalle té
 
 La capacidad es "consultar los pagos previstos"; "en un calendario o vista" prescribe la **forma de presentarlos**, que decide el Spec/Diseño (cambiaría si cambia la UI → falla la segunda Prueba de Negocio). No confundir con "pantallas como unidad de feature" (una vista usada como la *unidad* que se especifica): aquí es un **cualificador de formato** pegado a una capacidad legítima. La corrección es la misma en ambos casos: **quita el formato, conserva la capacidad**.
 
+**La dimensión temporal no lava el formato.** Una capacidad puede tener una dimensión temporal legítima de negocio —"ver los pagos previstos de las **próximas semanas**", "los movimientos del **último mes**"— y esa parte se conserva tal cual. Pero que la capacidad organice datos en el tiempo **no convierte en negocio** el widget que los presenta: "en un calendario", "en una línea de tiempo", "en una agenda", "en una vista de X" siguen siendo formato → **dura**. No razones "como organiza datos temporales, el calendario es negocio": la organización temporal está en el *qué se consulta* (se queda); el *calendario* está en el *cómo se muestra* (se va). Conserva "consultar los pagos previstos de las próximas semanas", quita "en un calendario o vista".
+
 Este patrón **no es "muy menor" opcional**: es una fila de la tabla → se corrige antes de `LISTO`, no se sella tal cual.
 
 ---

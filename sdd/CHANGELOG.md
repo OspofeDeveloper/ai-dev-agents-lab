@@ -2,6 +2,14 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.72.0 — 2026-07-23
+
+**La dimensión temporal de una capacidad no lava su formato de presentación** — [[DECISIONS D-036]]. Residual de D-034 destapado en CU-2.h: sobre el mismo PRD el `prd-expert` clasificó «ver los pagos previstos… **en un calendario o vista**» como *borderline* (pasadas 1-2) y como **dura** (pasada 3), racionalizando que "la organización temporal es negocio" para bajar la severidad. La nota de D-034 no atajaba ese razonamiento.
+
+- **`kb-prd-expert/references/prd_prohibited_items.md`:** la nota "sobre el formato de presentación" gana el frame **"la dimensión temporal no lava el formato"** — la parte temporal ("de las próximas semanas") se conserva; el widget que la presenta ("en un calendario / línea de tiempo / agenda / vista de X") sigue siendo dura. Se nombra el mal razonamiento a evitar para preemptarlo.
+- **Alcance honesto:** afinar el KB **reduce** la varianza de clasificación, no la elimina (es juicio del experto, no script). No afecta a CU-2.h (las 3 pasadas fueron byte-idénticas: el review nunca reescribe).
+- **Tests:** `test_install_sh.py` — backstop de contenido (la nota menciona la dimensión temporal).
+
 ## 0.71.0 — 2026-07-23
 
 **Umbral del veredicto del review, determinista** — [[DECISIONS D-035]]. En conformance (CU-2.f) el `prd-expert` etiquetó `LISTO_CON_AJUSTES` sobre un PRD sin nada bloqueante (borderline aceptable + huecos de Spec); para el mismo estado limpio otras veces dijo `LISTO`. Como Regla 13 ata la etiqueta al sello, un orquestador estricto se negaría a sellar un PRD sellable (fricción falsa).

@@ -622,6 +622,12 @@ class KbPrdExpertContentTest(unittest.TestCase):
         # y el frame de "tabla = dura, no matiz opcional"
         self.assertIn("contaminación dura", p)
 
+    def test_prohibited_temporal_does_not_launder_format(self):
+        # D-036: la nota ataja el escape "la dimensión temporal es negocio" para bajar la severidad
+        p = self._prohibited()
+        self.assertIn("dimensión temporal no lava el formato", p)
+        self.assertIn("próximas semanas", p)
+
     def test_regla14_defines_verdict_threshold(self):
         # D-035: la Regla 14 define el umbral del veredicto (solo lo bloqueante degrada)
         s = self._skill()
