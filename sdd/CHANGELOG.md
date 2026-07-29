@@ -2,6 +2,15 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.73.0 — 2026-07-23
+
+**El backstop de dependencias vuelve a tener dientes** — [[DECISIONS D-037]]. En CU-2.j el review **selló con una dependiente sin decidir** y el check dijo `OK`: se corría **después** de `sdd-prd-apply.py`, que ya había borrado la sección de asunciones → sin aristas que comprobar, un no-op que se lee como garantía. El SKILL decía "antes de aplicar" pero colocaba el bloque después.
+
+- ⚠ **`wf-prd-review` Paso 5.5:** el bloque del backstop se mueve **delante** del `apply` (orden normativo, con el porqué explícito). Y se prescribe plantear la **consecuencia de un rechazo** (el PRD queda mudo sobre algo que otra confirmada presupone) **al recoger esa decisión**, no al final antes de sellar.
+- ⚠ **`sdd-prd-deps.py --check`:** nueva guarda **`VACUOUS`** (exit 2) si se pasan rechazos sobre un documento sin entradas `[ASN-XXX]` — el fallo por orden invertido pasa de silencioso a ruidoso y autodiagnosticado. Sin rechazos no hay vacuidad.
+- ⚠ **`sdd-prd-deps.py --keep ASN-XXX`** (nuevo): tercer desenlace de la cascada — dependiente **conservada conscientemente** porque la dependencia queda satisfecha de otro modo (p. ej. rechazar "el Usuario gestiona las categorías" no tumba "presupuesto por categoría" sobre categorías fijas). Deliberadamente separado de `--confirm`: hay que **nombrar** el dependiente, así que confirmar en bloque no silencia el check.
+- **Tests:** `test_sdd_prd_deps.py` (17 OK — `--keep` resuelve/no-silencia-lo-ajeno, `VACUOUS`, no-vacuo sin rechazos, `--keep` sin `--check`); `test_install_sh.py` — backstop que compara **posiciones** (`--check` antes de `--confirm`), no solo presencia.
+
 ## 0.72.0 — 2026-07-23
 
 **La dimensión temporal de una capacidad no lava su formato de presentación** — [[DECISIONS D-036]]. Residual de D-034 destapado en CU-2.h: sobre el mismo PRD el `prd-expert` clasificó «ver los pagos previstos… **en un calendario o vista**» como *borderline* (pasadas 1-2) y como **dura** (pasada 3), racionalizando que "la organización temporal es negocio" para bajar la severidad. La nota de D-034 no atajaba ese razonamiento.

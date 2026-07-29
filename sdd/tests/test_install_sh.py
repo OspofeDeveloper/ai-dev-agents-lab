@@ -286,6 +286,24 @@ class InstallAllTest(InstallBase):
         self.assertIn("--check", skill,
                       "wf-prd-review pierde el backstop pre-sello de huérfanas (D-029)")
 
+    def test_prd_review_backstop_runs_before_apply(self):
+        # D-037: el backstop de dependencias LEE las entradas [ASN-XXX]; si corre
+        # después de sdd-prd-apply.py la sección ya no existe y el check es un no-op
+        # que se lee como garantía (fallo real en CU-2.j). El orden es normativo.
+        self.install("all")
+        skill = (self.skill_dir("wf-prd-review") / "SKILL.md").read_text(encoding="utf-8")
+        check_at = skill.find("--check --rejected")
+        apply_at = skill.find("sdd-prd-apply.py \"<path>\" --confirm")
+        self.assertNotEqual(check_at, -1, "falta el backstop --check --rejected (D-029)")
+        self.assertNotEqual(apply_at, -1, "falta la aplicación por sdd-prd-apply.py (D-030)")
+        self.assertLess(check_at, apply_at,
+                        "el backstop de dependencias debe ir ANTES del apply (D-037): "
+                        "después, la sección de asunciones ya no existe y el check es vacuo")
+        self.assertIn("--keep", skill,
+                      "wf-prd-review pierde el tercer desenlace --keep del backstop (D-037)")
+        self.assertIn("VACUOUS", skill,
+                      "wf-prd-review no advierte del check vacuo por orden invertido (D-037)")
+
     def test_prd_review_applies_edits_via_script(self):
         # D-030/Q3: las ediciones del review (asunciones + sello) se aplican con
         # sdd-prd-apply.py, y el hilo principal NO tiene Read/Write sobre el PRD

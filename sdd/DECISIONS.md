@@ -6,6 +6,26 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-037 — El backstop de dependencias corre ANTES de aplicar, falla ruidosamente si es vacuo, y admite el tercer desenlace (`--keep`)
+
+- **Fecha:** 2026-07-23 · **Estado:** Adoptada (`sdd-prd-deps.py` + orden normativo en `wf-prd-review` Paso 5.5). · **Relacionada:** [[D-029]] (grafo de dependencias, al que corrige), [[D-030]] (la edición la aplica `sdd-prd-apply.py`), CU-2.j.
+
+**Contexto.** En conformance (CU-2.j pasada 1) el review **selló un PRD con una dependiente sin decidir** y el backstop dijo `OK`. Reproducido: con ASN-002 rechazada y ASN-003 (su dependiente) viva, `sdd-prd-deps.py --check --rejected ASN-002` da `ORPHANS` (exit 2) **antes** de aplicar y `OK` (exit 0) **después**. La razón es estructural: el check lee las entradas `[ASN-XXX]` y sus aristas, y `sdd-prd-apply.py` retira las decididas y **elimina la sección** si queda vacía — después del apply no hay aristas que comprobar. El SKILL decía "**antes** de aplicar/sellar" pero **colocaba el bloque después** del de `apply`; el orquestador siguió el orden visual, razonablemente. Un no-op silencioso es peor que no correrlo: se lee como garantía verificada. Segundo hueco descubierto en el mismo run: el modelo de "resuelto" del check era binario (rechazada o editada-para-no-depender) y no contemplaba el desenlace legítimo que ocurrió —el usuario **conservó** ASN-003 a conciencia porque "presupuesto por categoría" sigue en pie sobre categorías fijas—, así que en el orden correcto el review habría quedado atascado en `ORPHANS` perpetuo o forzado a rechazar contra la decisión del usuario.
+
+**Decisión.** Tres cambios acoplados: (1) **Orden normativo** — el bloque del backstop se mueve **delante** del `apply` en el Paso 5.5, con una nota de por qué el orden no es cosmético. (2) **Guarda de vacuidad** — si se pasan rechazos sobre un documento sin entradas `[ASN-XXX]`, el script sale `VACUOUS` (exit 2) en vez de `OK`: el fallo por orden invertido se vuelve **ruidoso y autodiagnosticado** ("si ves VACUOUS, lo corriste tarde"). Sin rechazos no hay vacuidad (nada podía quedar huérfano). (3) **`--keep ASN-XXX`** — declara un dependiente **conservado conscientemente** tras presentárselo al usuario; deja de contar como huérfano. Es deliberadamente **separado de `--confirm`**: hay que **nombrar** el dependiente, lo que exige haber visto la cascada — confirmar todo en bloque no silencia el check. Además el Paso 5.5 ahora prescribe **cuándo** plantear la consecuencia de un rechazo (el PRD queda mudo sobre algo que otra confirmada presupone): **al recoger esa decisión**, no al final antes de sellar.
+
+**Alternativas descartadas.**
+- *Solo mover el bloque de orden* → deja el modo de fallo silencioso: cualquier futuro orquestador que lo corra tarde vuelve a obtener un falso `OK`. La guarda de vacuidad es lo que convierte el contrato en verificable.
+- *Que `--check` acepte el set completo de decididas (`--confirmed`)* → lo haría inútil: el gate decide **todas** las asunciones, así que "decidida" no distingue "presentada por cascada" de "confirmada en silencio" — el check pasaría siempre. `--keep` conserva los dientes porque es una declaración extra y nominal.
+- *Correr el check también después, como doble red* → no hay nada que comprobar después; sería teatro. La red posterior real es `sdd-prd-ready.py` (1:1 + sello), que es ortogonal.
+- *Hacer que `apply` no borre la sección* → rompería la condición de `READY` (inline==0 && entries==0) y el diseño de [[D-030]]; el problema es el orden del check, no el borrado.
+
+**Consecuencias / aprendizaje.** El backstop de [[D-029]] pasa de garantía nominal a garantía real. Aprendizaje transversal: **un verificador cuyo insumo lo destruye un paso anterior es un no-op silencioso, y el orden entre pasos deterministas es parte del contrato, no presentación** — cuando el texto de un SKILL y la posición del bloque se contradicen, gana la posición (es lo que el agente ejecuta), así que hay que alinearlas y, mejor, hacer que el script detecte el orden equivocado por sí mismo. Backstop de contenido: `test_install_sh.py` compara **posiciones** (`--check` antes de `--confirm`), no solo presencia de cadenas.
+
+**Referencias.** `sdd/scripts/sdd-prd-deps.py`, `sdd/pipeline/prd/skills/wf-prd-review/SKILL.md` (Paso 5.5), `sdd/tests/test_sdd_prd_deps.py`, `sdd/tests/test_install_sh.py`, `sdd/conformance/casos-de-uso/cu-02-prd.md` (CU-2.j), `sdd/CHANGELOG.md`.
+
+---
+
 ## D-036 — La dimensión temporal de una capacidad no lava su cualificador de formato: "en un calendario" sigue siendo contaminación dura
 
 - **Fecha:** 2026-07-23 · **Estado:** Adoptada (refuerzo de la nota de `kb-prd-expert/references/prd_prohibited_items.md`). · **Relacionada:** [[D-034]] (formato de presentación = dura), Regla 6 (Prueba de Negocio), CU-2.h.

@@ -12,7 +12,24 @@ cada review (cascada no determinista observada en CU-2.e)— de dos formas:
   - --check --rejected: dado el conjunto de asunciones RECHAZADAS en el review,
     reporta HUÉRFANAS — un dependiente de una rechazada que no esté también
     rechazado (quedaría en el PRD apoyado en algo que se eliminó). Es el backstop
-    pre-sello que `wf-prd-review` corre antes de aplicar/sellar.
+    pre-sello que `wf-prd-review` corre ANTES de `sdd-prd-apply.py`.
+
+ORDEN DEL BACKSTOP ([[D-037]]). El check se apoya en las entradas `[ASN-XXX]` y sus
+aristas, así que **solo tiene sentido antes de aplicar**: `sdd-prd-apply.py` retira
+las entradas decididas y, si la sección queda vacía, la elimina entera — entonces no
+hay aristas que comprobar y el check saldría "OK" sin haber verificado nada. Ese
+falso OK (observado en conformance CU-2.j) es peor que no correrlo, porque se lee
+como garantía. Por eso, si se pide `--check --rejected <no vacío>` sobre un documento
+sin entradas, el script sale VACUOUS (exit 2) en vez de OK.
+
+TERCER DESENLACE: --keep ([[D-037]]). Un dependiente de una rechazada no siempre debe
+caer: la dependencia puede quedar satisfecha de otra forma (p. ej. se rechaza "el
+Usuario gestiona el catálogo de categorías" pero "presupuesto por categoría" sigue en
+pie sobre categorías fijas). `--keep ASN-XXX` declara que ese dependiente se
+**conserva conscientemente** tras haberlo presentado al usuario, y deja de contar
+como huérfano. Es una declaración deliberada y separada de `--confirm`: no se puede
+silenciar el check confirmándolo todo, hay que **nombrar** el dependiente — lo que
+exige haber visto la cascada.
 
 La *identificación* de la arista es juicio de la creación (se recuerda una vez);
 su *cumplimiento* aquí es determinista. `sdd-prd-ready.py` (invariante 1:1) no se
@@ -20,12 +37,13 @@ toca: la arista pelada `ASN-006` no casa con su `ASN_ENTRY_RE` (`\\[ASN-\\d+\\]`
 
 Uso:
     sdd-prd-deps.py <prd.md> [--json]
-    sdd-prd-deps.py <prd.md> --check --rejected ASN-006,ASN-007 [--json]
+    sdd-prd-deps.py <prd.md> --check --rejected ASN-006,ASN-007 [--keep ASN-008] [--json]
 
 Exit codes:
     0 = OK (grafo válido; y en --check, sin huérfanas)
     1 = error de uso o IO
     2 = grafo malformado (arista a ASN inexistente / ciclo) o, en --check, huérfanas
+        o check vacuo (VACUOUS: no quedan entradas que comprobar)
 """
 import json
 import re
@@ -97,7 +115,7 @@ def _find_cycles(graph: dict[str, list[str]]):
     return cycles
 
 
-def analyze(text: str, rejected=None) -> dict:
+def analyze(text: str, rejected=None, keep=None) -> dict:
     nodes, graph = parse_graph(text)
     nodeset = set(nodes)
     dangling = sorted(
@@ -112,12 +130,18 @@ def analyze(text: str, rejected=None) -> dict:
     }
     if rejected is not None:
         R = set(rejected)
+        K = set(keep or [])
         orphans = sorted(
             n for n in nodes
-            if n not in R and any(d in R for d in graph[n])
+            if n not in R and n not in K and any(d in R for d in graph[n])
         )
         result["rejected"] = sorted(R)
+        result["kept"] = sorted(K)
         result["orphans"] = orphans
+        # Vacuidad ([[D-037]]): se pide comprobar rechazos sobre un documento que ya
+        # no tiene entradas `[ASN-XXX]` — típicamente porque el backstop se corrió
+        # DESPUÉS de `sdd-prd-apply.py`. No hay nada que comprobar: no es un OK.
+        result["vacuous"] = bool(R) and not nodes
     return result
 
 
@@ -125,27 +149,34 @@ def main() -> int:
     args = sys.argv[1:]
     as_json = "--json" in args
     do_check = "--check" in args
-    rest, rejected = [], None
+    rest, rejected, keep = [], None, None
     it = iter([a for a in args if a not in ("--json", "--check")])
     for a in it:
-        if a == "--rejected":
+        if a in ("--rejected", "--keep"):
             val = next(it, None)
             if val is None:
-                print("ERROR: --rejected requiere una lista ASN-001,ASN-002", file=sys.stderr)
+                print(f"ERROR: {a} requiere una lista ASN-001,ASN-002", file=sys.stderr)
                 return 1
-            rejected = [x.strip() for x in val.split(",") if x.strip()]
+            ids = [x.strip() for x in val.split(",") if x.strip()]
+            if a == "--rejected":
+                rejected = ids
+            else:
+                keep = ids
         else:
             rest.append(a)
 
     if len(rest) != 1:
         print(
             "ERROR: uso: sdd-prd-deps.py <prd.md> [--json] "
-            "[--check --rejected ASN-001,ASN-002]",
+            "[--check --rejected ASN-001,ASN-002 [--keep ASN-003]]",
             file=sys.stderr,
         )
         return 1
     if do_check and rejected is None:
         print("ERROR: --check requiere --rejected ASN-...", file=sys.stderr)
+        return 1
+    if keep is not None and not do_check:
+        print("ERROR: --keep solo aplica con --check --rejected", file=sys.stderr)
         return 1
 
     path = Path(rest[0])
@@ -155,23 +186,41 @@ def main() -> int:
         print(f"ERROR: no se puede leer el PRD: {e}", file=sys.stderr)
         return 1
 
-    result = analyze(text, rejected=rejected if do_check else None)
+    result = analyze(
+        text,
+        rejected=rejected if do_check else None,
+        keep=keep if do_check else None,
+    )
     result["path"] = str(path)
     malformed = bool(result["dangling_edges"]) or bool(result["cycles"])
-    bad = malformed or (do_check and bool(result["orphans"]))
+    vacuous = bool(do_check and result.get("vacuous"))
+    bad = malformed or vacuous or (do_check and bool(result["orphans"]))
 
     if as_json:
         print(json.dumps(result, ensure_ascii=False))
     elif do_check:
-        if result["orphans"]:
+        if vacuous:
+            print(
+                f"VACUOUS: {path} — no quedan entradas `[ASN-XXX]` que comprobar, pero se "
+                f"pasaron rechazos ({', '.join(result['rejected'])}). El backstop de "
+                f"dependencias va ANTES de `sdd-prd-apply.py`: después, la sección de "
+                f"asunciones ya no existe y este check no verificaría nada."
+            )
+        elif result["orphans"]:
+            kept = f" · conservadas conscientemente: {', '.join(result['kept'])}" if result["kept"] else ""
             print(
                 f"ORPHANS: {path} — dependiente(s) de una asunción rechazada sin "
-                f"rechazar/decidir: {', '.join(result['orphans'])}"
+                f"rechazar/decidir: {', '.join(result['orphans'])}{kept}"
+                f" (si el usuario decidió conservar alguna, pásala con --keep)"
             )
         elif malformed:
             print(f"MALFORMED: {path} — grafo inválido (dangling/ciclos), revísalo.")
         else:
-            print(f"OK: {path} — sin huérfanas: toda dependencia de una rechazada está resuelta.")
+            kept = f" (conservadas conscientemente: {', '.join(result['kept'])})" if result["kept"] else ""
+            print(
+                f"OK: {path} — sin huérfanas: toda dependencia de una rechazada está "
+                f"resuelta{kept}."
+            )
     else:
         if malformed:
             det = []

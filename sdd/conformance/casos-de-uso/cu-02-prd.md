@@ -400,9 +400,15 @@ presenta cada `[ASN-XXX]` con `AskUserQuestion` y **aplica** las decisiones con 
      en el gate con el usuario, no la mecaniza el script.
    → **Cascada determinista ([[D-029]], detalle en CU-2.j):** cuando la asunción rechazada tiene
      dependientes declarados (`Depende de:` en el PRD), el arrastre lo dirige el grafo de
-     `sdd-prd-deps.py` —no la inferencia de la LLM— y un `--check` pre-sello caza huérfanas. Si el
-     par en juego no tiene arista `Depende de:` registrada, la cascada recae en el juicio del
-     agente (fuera del contrato determinista).
+     `sdd-prd-deps.py` —no la inferencia de la LLM— y el `--check` caza huérfanas **corriendo antes
+     del `apply`** ([[D-037]]; después es vacuo). Si el par en juego no tiene arista `Depende de:`
+     registrada, la cascada recae en el juicio del agente (fuera del contrato determinista).
+   → **Alcance de lo validado aquí (honestidad de cobertura):** las pasadas que sellaron esta CU
+     rechazaron asunciones **sin dependientes** (p. ej. `ASN-012`, que es la *punta* de su arista,
+     no el padre), así que el `--check` **no se ejercitó** con una huérfana real — de ahí que el
+     fallo de orden sobreviviera hasta CU-2.j. La cascada padre→dependiente y el orden del backstop
+     los cubre **CU-2.j** (probes B/C); este probe se limita a que el gate recoja y aplique las tres
+     decisiones. No requiere re-validación por [[D-037]]: lo que aquí se probó no cambia.
 
 **E — intentar sellar con asunciones abiertas** ("dalo por aprobado ya")
    → **Esperado:** el veredicto **no puede ser `LISTO`** mientras quede una abierta; **no
@@ -608,14 +614,45 @@ al gate al rechazar la asunción padre, y corre `--check --rejected` como **back
      confirmar en silencio.
    → **FALLO:** confirma/mantiene una dependiente de una rechazada sin surfacearla.
 
-**C — backstop pre-sello caza la huérfana**
-   → **Esperado:** si tras las decisiones una dependiente de una rechazada quedó viva,
-     `sdd-prd-deps.py --check --rejected <set>` sale `ORPHANS` (exit 2) y el review **no sella**:
-     re-presenta el dependiente. Con el par resuelto (ambas rechazadas, o la dependiente editada
-     para no depender), `--check` da exit 0 y el sello procede.
+**C — backstop caza la huérfana, y corre en el orden correcto ([[D-037]])**
+   → **Esperado:** el `--check` se ejecuta **ANTES** de `sdd-prd-apply.py` (con las decisiones ya
+     recogidas, el fichero aún sin tocar). Si una dependiente de una rechazada quedó sin decidir,
+     `sdd-prd-deps.py --check --rejected <set>` sale `ORPHANS` (exit 2) y el review **no aplica ni
+     sella**: re-presenta el dependiente. Resuelto el par, exit 0 y el flujo sigue.
+   → **Tres desenlaces válidos** para una dependiente de una rechazada: (1) rechazarla también;
+     (2) editarla para no depender; (3) **conservarla a conciencia** porque la dependencia queda
+     satisfecha de otro modo (p. ej. rechazar "el Usuario gestiona el catálogo de categorías" no
+     tumba "presupuesto por categoría", que sigue en pie sobre categorías fijas) → se declara con
+     `--keep ASN-XXX`. Los tres dan exit 0; ninguno se logra confirmando en bloque.
+   → **FALLO (observado, origen de [[D-037]]):** correr el `--check` **después** del `apply`. Para
+     entonces `apply` ya retiró las entradas y borró la sección → sin aristas que comprobar, el
+     check devuelve `OK` sin verificar nada y el review sella con la dependiente sin decidir. Es un
+     no-op que se lee como garantía. Desde [[D-037]] el script lo delata: sale **`VACUOUS`**
+     (exit 2) si recibe rechazos sobre un documento sin entradas.
+   → **Cómo se verifica sin ambigüedad:** en los logs, el `--check --rejected` debe aparecer **antes**
+     de la llamada a `sdd-prd-apply.py`, y su salida no puede ser `VACUOUS`.
+
+**D — la consecuencia de un rechazo se plantea en el momento ([[D-037]])**
+   → **Contexto:** rechazar **borra** la afirmación pero no añade el hecho contrario, así que el PRD
+     puede quedar **mudo** sobre algo que otra asunción confirmada presupone (nivel b, prosa sin
+     marca: el script no lo toca).
+   → **Esperado:** cuando el rechazo deja ese hueco, el review lo plantea **al recoger esa decisión**
+     (contexto fresco), ofreciendo registrar la decisión contraria como regla transversal o dejarlo
+     para `wf-spec-analyze`.
+   → **FALLO:** diferirlo al final, justo antes de sellar, cuando el usuario ya perdió el hilo de por
+     qué se pregunta (observado en la pasada 1).
 
 **Resultado:** PASS si (A) la creación emite la arista y el grafo es válido sin romper el 1:1,
-(B) el rechazo del padre arrastra la dependiente vía grafo, y (C) el `--check` pre-sello bloquea
-el sello ante una huérfana · FALLO ante cascada silenciosa, sello con huérfana, o arista que
-infla el conteo de asunciones. Conductual → validar ×3 (Regla 9).
+(B) el rechazo del padre arrastra la dependiente vía grafo, (C) el `--check` corre **antes** del
+`apply` y bloquea ante una huérfana (con los tres desenlaces disponibles), y (D) la consecuencia
+del rechazo se plantea en el momento · FALLO ante cascada silenciosa, `--check` vacuo o post-apply,
+sello con huérfana sin decidir, o arista que infla el conteo. Conductual → validar ×3 (Regla 9).
 **Desviación → reportar:** issue citando `CU-2.j`.
+
+> **Pasada 1 (2026-07-23) — A ✅ · B ✅ · C ❌ → origen de [[D-037]].** A: grafo con 3 aristas, sin
+> dangling ni ciclos, 1:1 = 14=14 (la arista pelada no infla). B: rechazada ASN-002, el review
+> presentó ASN-003 como "(cascada de ASN-002 rechazada)" citando el grafo, y con ASN-005 razonó al
+> revés ("dependía de ASN-004, que has confirmado → dependencia satisfecha"). C: FALLO — el
+> `--check` corrió tras el `apply` y dio `OK` vacuo; se selló con ASN-003 (dependiente de una
+> rechazada) viva. La conservación de ASN-003 era **semánticamente correcta**, pero el sistema no
+> tenía forma de expresarla → de ahí `--keep`. Re-validar A–D ×3 con v0.73.0 instalada.

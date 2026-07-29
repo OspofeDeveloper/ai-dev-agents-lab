@@ -9,6 +9,14 @@ entrada `[ASN-XXX]` puede declarar `Depende de: ASN-YYY` (ID pelado). Verifica:
   - --check --rejected: dependiente de una rechazada NO rechazado → huérfana, exit 2.
   - --check --rejected: dependiente también rechazado → consistente, exit 0.
   - --check sin --rejected → error de uso (exit 1); args inválidos (exit 1).
+
+D-037 (backstop con dientes):
+  - --keep <dependiente>: tercer desenlace (conservada conscientemente) → exit 0.
+  - --keep de otra cosa NO silencia la huérfana real → sigue exit 2.
+  - VACUOUS: rechazos sobre un documento sin entradas `[ASN-XXX]` (el backstop se
+    corrió DESPUÉS de sdd-prd-apply.py) → exit 2, no OK. Es el fallo real de CU-2.j.
+  - sin rechazos sobre documento sin entradas → NO es vacuo (exit 0).
+  - --keep sin --check → error de uso (exit 1).
 """
 from __future__ import annotations
 
@@ -108,6 +116,61 @@ class PrdDepsTest(unittest.TestCase):
 
     def test_check_requires_rejected(self):
         r = self._run(GRAPH_OK, "--check")
+        self.assertEqual(r.returncode, 1)
+
+    # --- D-037: tercer desenlace (--keep) y guarda de vacuidad ---
+
+    def test_keep_resolves_orphan(self):
+        # 006 rechazada, 007 depende de ella pero el usuario la CONSERVA a
+        # conciencia (la dependencia queda satisfecha de otro modo) → coherente.
+        r = self._run(GRAPH_OK, "--check", "--rejected", "ASN-006", "--keep", "ASN-007")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("ASN-007", r.stdout)
+
+    def test_keep_json_reports_kept(self):
+        r = self._run(
+            GRAPH_OK, "--check", "--rejected", "ASN-006", "--keep", "ASN-007", "--json"
+        )
+        data = json.loads(r.stdout)
+        self.assertEqual(data["orphans"], [])
+        self.assertEqual(data["kept"], ["ASN-007"])
+
+    def test_keep_of_unrelated_does_not_silence_orphan(self):
+        # --keep debe NOMBRAR al dependiente; nombrar otra cosa no lo silencia.
+        r = self._run(GRAPH_OK, "--check", "--rejected", "ASN-006", "--keep", "ASN-099")
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        self.assertIn("ASN-007", r.stdout)
+
+    def test_check_after_apply_is_vacuous_not_ok(self):
+        # Documento SIN entradas `[ASN-XXX]` (ya aplicadas y sección eliminada) pero
+        # con rechazos: no hay nada que comprobar → VACUOUS, nunca OK. (CU-2.j)
+        applied = (
+            "---\ntype: product-requirements\nproduct: X\n---\n\n# PRD: X\n\n"
+            "## Alcance\n- El usuario puede A.\n"
+        )
+        r = self._run(applied, "--check", "--rejected", "ASN-006")
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        self.assertIn("VACUOUS", r.stdout)
+
+    def test_vacuous_json_flag(self):
+        applied = (
+            "---\ntype: product-requirements\nproduct: X\n---\n\n# PRD: X\n\n"
+            "## Alcance\n- El usuario puede A.\n"
+        )
+        r = self._run(applied, "--check", "--rejected", "ASN-006", "--json")
+        self.assertTrue(json.loads(r.stdout)["vacuous"])
+
+    def test_no_rejections_on_empty_doc_is_not_vacuous(self):
+        # Sin rechazos no hay nada que pueda quedar huérfano: no es un fallo.
+        applied = (
+            "---\ntype: product-requirements\nproduct: X\n---\n\n# PRD: X\n\n"
+            "## Alcance\n- El usuario puede A.\n"
+        )
+        r = self._run(applied, "--check", "--rejected", "")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+    def test_keep_requires_check(self):
+        r = self._run(GRAPH_OK, "--keep", "ASN-007")
         self.assertEqual(r.returncode, 1)
 
     def test_invalid_args(self):
