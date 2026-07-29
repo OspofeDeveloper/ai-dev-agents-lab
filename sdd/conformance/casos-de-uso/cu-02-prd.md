@@ -37,7 +37,7 @@ esta vista es la **transpuesta** para leer/ejecutar el CU.
 - [x] CU-2.e — Gate de asunciones + orden PRD→spec (lo más crítico, conversacional A-F) ✅ SELLADO 2026-07-22 (Tanda A ×3, probe E por 2 vías + D-032)
 - [x] CU-2.f — Veredicto LISTO y sello de aprobación ✅ SELLADO 2026-07-23 (2 pasadas; sello-feliz ×3, decline por 2 vías, overwrite ×2, probe 5/D-035 ×3)
 - [x] CU-2.g — Un artefacto de otra fase no se revisa como PRD ✅ SELLADO 2026-07-23 (3/3: `_spec`/`_tasks`/`_plan`, Capa 1 enrutado + Capa 2 guard)
-- [ ] CU-2.h — La revisión no reescribe a su cosecha
+- [x] CU-2.h — La revisión no reescribe a su cosecha
 - [ ] CU-2.j — Cascada determinista de dependencias entre asunciones (D-029)
 
 > **Capa determinista** (no es un escenario manual): el conteo de asunciones
@@ -549,6 +549,38 @@ del usuario, así que no hay margen para "cosecha" del LLM.
 **Resultado:** PASS si solo diagnostica · FALLO si reescribe secciones sin que se lo
 pidas.
 **Desviación → reportar:** issue citando `CU-2.h`.
+
+> **Verificación determinista del invariante.** No se juzga "a ojo" si reescribió: se guarda una copia
+> pristine del PRD (`prd/.prd-pristine.bak`) y tras cada pasada se exige `diff -q <bak> <prd.md>` →
+> **byte-idéntico**. Cualquier byte cambiado sin decisión del usuario es FALLO, por pequeño que sea.
+
+> ✅ **SELLADO (v0.72.0, 2026-07-23) — 6 pasadas, todas byte-idénticas.** Prosas variadas y, en
+> **ninguna**, la instrucción "no toques / no edites" (se buscaba el comportamiento por defecto, no
+> uno inducido). Cobertura de las tres vías por las que la petición entra:
+> 1. **Review completa** (×4, prosas distintas: "qué tiene y qué le falta", "cómo está / qué corregir",
+>    "diagnóstico", "algo que no debería estar ahí"): el `prd-expert` diagnostica read-only (cita
+>    fragmento + fila del catálogo + reescritura propuesta) y lo declara (*"No he editado el PRD ni
+>    inventado requisitos"*); el orquestador cierra con `AskUserQuestion` ofreciendo explícitamente
+>    "Solo el diagnóstico — no toco el PRD". **Diagnose-then-ask sin edición.**
+> 2. **Pregunta de readiness** ("dime si está listo o no") → el orquestador cita el veredicto de
+>    `sdd-prd-ready.py`, **no** hace `Read` del PRD ni emite diagnóstico propio, y ofrece lanzar la
+>    review ([[D-031]] en acción). Ni abre el fichero → invariante trivialmente cumplido.
+> 3. En todas: el gate de asunciones (5.5) y el sello (6) **no se dispararon solos** — sin decisión
+>    del usuario no hay escritura, coherente con [[D-030]] (la edición la aplica `sdd-prd-apply.py`
+>    desde decisiones explícitas; no hay margen de "cosecha" del LLM).
+>
+> Nota de rigor: el invariante es **estructuralmente fuerte**, no solo empírico — `wf-prd-review` no
+> tiene `Write` en `allowed-tools` ([[D-030]]), así que el hilo principal no puede editar salvo por
+> script, y el `prd-expert` es read-only por contrato. Las 6 pasadas confirman que además **no se
+> fuerza** el script sin decisión.
+>
+> Con esto cierra el bloque `wf-prd-review` completo: **CU-2.e · CU-2.f · CU-2.g · CU-2.h** sellados.
+>
+> Hallazgo colateral de esta tanda ([[D-036]], v0.72.0): en las 3 primeras pasadas el experto
+> clasificó L71 ("…en un calendario o vista") como *borderline* 2 veces y como **dura** 1, escapándose
+> por "la organización temporal es negocio". Se afiló la nota del catálogo ("la dimensión temporal no
+> lava el formato") y en las 2 pasadas posteriores la clasificó **dura** citando la nota nueva. No
+> afecta a este CU (las 6 fueron byte-idénticas); su confirmación conductual vive en CU-2.f.
 
 ## CU-2.j — Cascada determinista de dependencias entre asunciones
 
