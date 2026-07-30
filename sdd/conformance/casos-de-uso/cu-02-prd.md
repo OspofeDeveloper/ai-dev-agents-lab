@@ -37,8 +37,8 @@ esta vista es la **transpuesta** para leer/ejecutar el CU.
 - [x] CU-2.e — Gate de asunciones + orden PRD→spec (lo más crítico, conversacional A-F) ✅ SELLADO 2026-07-22 (Tanda A ×3, probe E por 2 vías + D-032)
 - [x] CU-2.f — Veredicto LISTO y sello de aprobación ✅ SELLADO 2026-07-23 (2 pasadas; sello-feliz ×3, decline por 2 vías, overwrite ×2, probe 5/D-035 ×3)
 - [x] CU-2.g — Un artefacto de otra fase no se revisa como PRD ✅ SELLADO 2026-07-23 (3/3: `_spec`/`_tasks`/`_plan`, Capa 1 enrutado + Capa 2 guard)
-- [x] CU-2.h — La revisión no reescribe a su cosecha
-- [ ] CU-2.j — Cascada determinista de dependencias entre asunciones (D-029)
+- [x] CU-2.h — La revisión no reescribe a su cosecha ✅ SELLADO 2026-07-23 (6 pasadas byte-idénticas, 3 vías de entrada)
+- [x] CU-2.j — Cascada determinista de dependencias entre asunciones (D-029) ✅ SELLADO 2026-07-30 (6 pasadas; A 6/6 · B 5/5 · C 5/5 ambas ramas · D 5/5 · E 3/3 post-D-038)
 
 > **Capa determinista** (no es un escenario manual): el conteo de asunciones
 > (`grep "[ASUNCIÓN"`, Paso 5.5 de `wf-prd-review`) es el único check automático de la fase.
@@ -685,3 +685,93 @@ principal. Conductual → validar ×3 (Regla 9).
 > `--check` corrió tras el `apply` y dio `OK` vacuo; se selló con ASN-003 (dependiente de una
 > rechazada) viva. La conservación de ASN-003 era **semánticamente correcta**, pero el sistema no
 > tenía forma de expresarla → de ahí `--keep`. Re-validar A–D ×3 con v0.73.0 instalada.
+
+> **Pasadas 2–3 (2026-07-29, v0.73.0) — A ✅✅ · B ✅✅ · C ✅✅ · D ✅✅ · E ❌.** C queda cubierto
+> por las dos ramas: la pasada 2 preguntó por el dependiente **por delante**, así que llegó al
+> `--check` con `--keep` ya resuelto y `ORPHANS` nunca disparó (verifica el **orden**, no la rama de
+> bloqueo); la pasada 3 sí la ejercitó completa — `ORPHANS: ASN-005` (exit 2) → `--keep ASN-005` →
+> `OK` → `apply`, y el orquestador verbalizó el porqué (*"el orden importa: después de aplicar ya no
+> habría entradas que comprobar"*). E: FALLO — tres pasadas, tres mecanismos para la misma clase de
+> edición (los tres listados arriba), lo que hizo evidente que el ámbito no estaba cerrado en ninguna
+> parte → [[D-038]] (v0.74.0). **La pasada 3 solo terminó bien porque se corrigió al orquestador a
+> mano, así que no cuenta como evidencia.**
+
+> ✅ **A · B · C · D SELLADOS (2026-07-30, v0.74.0+`c7ff537`) — pasada 4, la primera 5/5 limpia y
+> sin intervención.** Recuento por Regla 9: **A 4/4 · B 4/4 · C 3/3 · D 3/3**. En esta pasada:
+> rechazada ASN-004 → arrastre de ASN-005 citando el grafo (B) y hueco de las cuentas planteado en el
+> mismo gate, "*en caliente*" (D); `--check --rejected ASN-004 --keep ASN-005` → `OK` **y luego**
+> `sdd-prd-apply.py`, sin `VACUOUS` (C); grafo íntegro 3 aristas / 14=14 (A).
+>
+> **Probe E: 1/3 — no sellado.** [[D-038]] arregló una conducta que ya había fallado, así que su
+> cuenta arranca de cero: esta es la primera pasada post-fix y hacen falta **2 más**. Lo observado
+> aquí es exactamente el contrato: *"Ahora delego al experto las dos ediciones de prosa que quedan"* →
+> `prd-expert` con brief quirúrgico, sin `wf-prd-change` y sin `Read`/`Edit`/`Update` en el hilo
+> principal, cubriendo **las dos** filas de la tabla de ámbito (contaminación dura que el usuario
+> decide corregir + prosa nivel b consecuencia del rechazo).
+>
+> Confirmación colateral de [[D-036]], ahora también en el orquestador: el gate ofreció la reescritura
+> de L71 con el razonamiento correcto (*"conserva la dimensión temporal y suelta el formato de
+> presentación"*), no solo el experto.
+>
+> ⚠ **Hallazgo de la fase de creación, destapado por esta pasada (no afecta a CU-2.j).** El fixture
+> viola el **ejemplo canónico** de la Regla 12 de su propio KB: `ASN-010` ("opera con una única
+> moneda", regla transversal) y `ASN-012` ("multi-divisa fuera de alcance", exclusión) son la misma
+> decisión reenunciada, **y atadas con `· Depende de: ASN-010`** — literalmente el patrón que
+> `kb-prd-expert` (SKILL.md L262 y L276) marca como prohibido. Lo generó `wf-prd-create` y llevaba
+> latente desde CU-2.a. El review lo detectó y lo **neutralizó** (presentó la decisión una sola vez y
+> la aplicó coherente a ambas) pese a que el KB afirma que "el review no puede resolverlo": evitó el
+> daño —resolverlas en sentidos opuestos— pero no arregló el documento; al confirmarse ambas, las dos
+> entradas desaparecen y el artefacto acaba limpio. Pendiente: probe en la CU de creación y candidato
+> a *warning* determinista en `sdd-prd-deps.py` (una arista cuyo origen vive en `## Fuera del Alcance`
+> y cuyo destino en `## Reglas de Negocio Transversales` es casi siempre un reenunciado-complemento).
+
+> **Pasada 5 (2026-07-30, v0.74.0) — probe E ✅ 2/3, por otro camino.** Receta variada a propósito
+> (repetir la 4 tres veces mediría una coincidencia, no una garantía): rechazada **ASN-002**
+> (categorías gestionables) en vez de ASN-004, con la prosa nivel b en otra sección. E: *"Las delego
+> al experto con un brief quirúrgico"* → `prd-expert`, sin `wf-prd-change` ni escritura desde main; el
+> brief además le prohíbe localizar por número de línea (la trampa real después de un `apply`).
+> **Desenlace (3) en estado puro** —el que faltaba aislado—: `--check --rejected ASN-002 --keep
+> ASN-003` → `OK` antes del apply, con ASN-003 **conservada por decisión razonada** ("presupuestar
+> sobre categorías fijas", el propio ejemplo de la Regla 12), no editada; aquí el mensaje del script
+> ("conservadas conscientemente") sí describe el caso real. D con vuelta de tuerca: el gate ofreció
+> como tercera opción *"Retirar también ASN-003 — cambia mi respuesta anterior"*, dejando revisar una
+> respuesta ya dada cuando aparece su consecuencia.
+>
+> **El reenunciado ASN-010/ASN-012 se neutralizó de nuevo, y por el otro framing.** El experto ofrece
+> dos correcciones (eliminar ASN-012 + su marca, **o** conservar la exclusión como texto derivado
+> no-marcado); la pasada 5 tomó la segunda —confirmar ambas, con lo que las dos entradas desaparecen y
+> la L84 queda como prosa de negocio— y su informe lo describe con precisión. Dos pasadas, dos
+> framings, el mismo resultado correcto: el review lo **previene** de forma fiable (lo que el KB dice
+> que no puede resolver es la *incoherencia*, y eso sigue siendo cierto). Confirma que el arreglo va
+> en la creación, no aquí.
+>
+> Nit cosmético: al glosar el grafo, main **invirtió la tercera arista** ("ASN-012 → ASN-010: moneda
+> única depende de la exclusión multi-divisa"; es al revés). Las otras dos correctas y la decisión la
+> tomó el script, no la glosa — pero en un camino de rechazo esa lectura invertida sí produciría una
+> cascada equivocada.
+
+> ✅ **Probe E SELLADO (2026-07-30, pasada 6) — 3/3 post-[[D-038]], tres contenidos distintos**
+> (rechazos de ASN-004 · ASN-002 · ASN-007). Las tres delegaron al `prd-expert` con brief quirúrgico,
+> ninguna enrutó a `wf-prd-change`, ninguna escribió desde el hilo principal. **Límite de la medición:**
+> la variante diseñada para la pasada 6 —dejar la contaminación de L71 sin corregir para que la prosa
+> nivel b fuese la **única** edición del review— no llegó a ejecutarse (en el gate se eligió
+> *Corregir*, que iba marcada como recomendada), así que el caso "una sola edición" **sigue sin medir**.
+> No bloquea el sello (la garantía es la vía de aplicación, y va 3/3), pero conviene provocarlo si
+> vuelve a tocarse este flujo.
+
+> ✅ **CU-2.j SELLADO — A · B · C · D · E (2026-07-30, v0.74.0+`c7ff537`).** La pasada 6 cerró el probe
+> **C por la rama que faltaba**: rechazada **ASN-007**, que **no tiene dependientes** en el grafo, y el
+> backstop **corrió igual** —`--check --rejected ASN-007` → `OK` (exit 0)— **antes** de
+> `sdd-prd-apply.py`. Esa es la comprobación que de verdad importaba: el check **no** se ejecuta según
+> la lectura que main haga del grafo, sino siempre que hay un rechazo, aunque su resultado vaya a ser
+> trivial. Con esto C queda medido en **las dos ramas**: rechazo *con* dependiente (pasadas 1–5,
+> incluida la de `ORPHANS` → `--keep` de la 3) y rechazo *sin* dependientes (pasada 6).
+>
+> **Recuento final: A 6/6 · B 5/5 · C 5/5 · D 5/5 · E 3/3 post-[[D-038]].** Con CU-2.j cierra el bloque
+> `wf-prd-review` **completo**: CU-2.e · CU-2.f · CU-2.g · CU-2.h · CU-2.j.
+>
+> Nit: la taxonomía de impacto de gobernanza **deriva entre pasadas** porque main improvisa el brief
+> del experto cada vez — la 5 pidió "alta/media/baja" y las exclusiones salieron *Baja*; la 6 pidió un
+> flag binario con "define alcance" como criterio de alto y las mismas exclusiones salieron *Alto*.
+> No es violación de contrato (el eje no es taxonomía cerrada), pero desestabiliza la priorización del
+> gate. Candidato: fijar la plantilla del brief en el SKILL.
