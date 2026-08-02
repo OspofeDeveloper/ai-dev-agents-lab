@@ -97,6 +97,13 @@ class AgentScaffoldTest(ScaffoldBase):
         self.assertNotIn("effort: high", fm)
         self.assertIn("color: orange", fm)      # plan -> orange
 
+    def test_agent_scaffold_declares_no_memory(self):
+        # D-041: el scaffold es el propagador real del frontmatter de agente.
+        # Si vuelve a emitir `memory:`, vuelve a todo agente que se cree.
+        self.scaffold("agent", "mem-helper", "--phase", "spec", "--skills", "kb-a")
+        fm = self.read("pipeline/spec/agents/mem-helper.md")
+        self.assertNotIn("memory:", fm)
+
     def test_agent_tech_phase_is_red(self):
         self.scaffold("agent", "kmm-thing", "--phase", "tech/kmm", "--skills", "kb-a")
         fm = self.read("tech/kmm/agents/kmm-thing.md")

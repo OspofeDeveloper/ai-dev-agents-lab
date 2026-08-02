@@ -2,7 +2,6 @@
 name: plan-auditor
 description: Agente especializado en auditar _plan.md contra su Spec, el handoff de Design y las reglas de kb-plan-expert. Certifica si el Plan está listo para Tasks (VALIDADO) o debe corregirse (BORRADOR). Invócalo desde wf-plan-validate.
 skills: [kb-spec-expert, kb-plan-method, kb-plan-expert, kb-a11y-expert, kb-kmm-navigation-contracts, kb-kmm-app-errors, kb-plan-koin]
-memory: project
 permissionMode: acceptEdits
 model: claude-sonnet-4-6
 disallowedTools: Write, Edit

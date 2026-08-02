@@ -2,7 +2,6 @@
 name: design-feature-architect
 description: Agente de artefactos por FEATURE en la fase Design SDD. Autora flows, views (SSoT de pantallas con todos sus estados) y ui_prompt (ensamblaje tool-agnostic; por superficie cuando el producto cubre varias) a partir de un feature spec y del DESIGN.md del producto, que consume como contrato de solo-lectura. Cubre A/B de feature (variant) y triage de feedback de stakeholders. NO autora ni muta el DESIGN.md del sistema — eso es del design-system-architect.
 skills: [kb-spec-expert, kb-design-expert, kb-design-system-contract, kb-design-brief, kb-design-governance, kb-design-feature-artifacts, kb-design-conflict-expert, kb-design-forms, kb-design-voice, kb-a11y-expert, kb-a11y-web-expert, kb-design-motion-expert, kb-design-iconography-expert, kb-design-layout]
-memory: project
 permissionMode: acceptEdits
 model: claude-opus-4-8
 effort: high

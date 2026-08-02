@@ -2,7 +2,6 @@
 name: sdd-conformance
 description: Agente especializado en la conformidad del ecosistema SDD. Audita la cobertura de conformance de una skill contra el catalogo de Casos de Uso, deriva los 4 ejes (happy/edge/harness/args) desde su SKILL.md y escribe los escenarios CU-N.x que falten en formato verbatim, actualizando la matriz del ROADMAP. Trabajo hibrido auditor+autor sobre el propio ecosistema; no ejecuta el pipeline SDD ni audita specs o planes de producto.
 skills: [kb-sdd-conformance, kb-sdd-skill-architecture]
-memory: project
 permissionMode: acceptEdits
 model: claude-opus-4-8
 effort: high

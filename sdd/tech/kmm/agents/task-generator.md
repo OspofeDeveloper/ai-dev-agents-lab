@@ -2,7 +2,6 @@
 name: task-generator
 description: Agente especializado en descomponer Planes técnicos KMM en Tasks atómicas y ordenadas. Transforma un _plan.md en un _tasks.md con tasks numeradas, dependencias explícitas y cada una asignada a un owner agent KMM. Invócalo desde wf-prepare-tasks.
 skills: [kb-tasks-method, kb-plan-expert, kb-tasks-expert, kb-kmm-navigation-compose, kb-kmm-testing-strategy]
-memory: project
 permissionMode: acceptEdits
 model: claude-sonnet-4-6
 effort: high

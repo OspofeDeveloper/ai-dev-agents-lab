@@ -134,9 +134,14 @@ Invoca el agente `sdd-author`. Su trabajo es **editar** el archivo ya
 scaffoldeado: reemplazar el cuerpo-esqueleto `TODO` por el system prompt real
 del agente y afinar la `description` del frontmatter si procede. NO debe alterar
 los campos estructurales del frontmatter (`name`, `skills`, `model`, `color`,
-`memory`, `permissionMode`, `effort`/`disallowedTools`) salvo necesidad
-justificada — los puso el scaffold segun los criterios derivados y el gate del
-Paso 8 verifica `name`.
+`permissionMode`, `effort`/`disallowedTools`) salvo necesidad justificada — los
+puso el scaffold segun los criterios derivados y el gate del Paso 8 verifica `name`.
+
+**Ni anadir `memory:`** ([[D-041]]): ningun agente SDD lo declara. El estado del
+proyecto vive en sus artefactos, y la memoria de agente es estado que sobrevive
+fuera de ellos —ningun gate, script ni check la ve ni la invalida—. Si el agente
+parece necesitarla, lo que necesita es leer su artefacto o recibirlo en el brief.
+La regla `AGENT-MEMORY-DECLARED` del Paso 8 lo bloquea.
 
 ---
 

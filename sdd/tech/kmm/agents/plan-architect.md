@@ -2,7 +2,6 @@
 name: plan-architect
 description: Agente especializado en crear Planes técnicos KMM desde Specs SDD validados y handoff de Design. Traduce el "qué funcional" del Spec al "cómo técnico" KMM con Clean Architecture. Invócalo desde wf-prepare-plan.
 skills: [kb-spec-expert, kb-plan-method, kb-plan-expert, kb-a11y-expert, kb-kmm-navigation-contracts, kb-plan-kmm-navigation-viewmodel-events, kb-kmm-app-errors, kb-plan-koin, kb-plan-cmp-ui, kb-cmp-resources]
-memory: project
 permissionMode: acceptEdits
 model: claude-opus-4-8
 effort: high

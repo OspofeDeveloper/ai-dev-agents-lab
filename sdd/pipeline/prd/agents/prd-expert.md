@@ -2,7 +2,6 @@
 name: prd-expert
 description: Agente especializado en redactar, estructurar y revisar Product Requirements Documents para el pipeline SDD. Ayuda a convertir ideas, notas o requisitos dispersos en un PRD limpio, orientado a negocio y procesable por el pipeline. Invócalo cuando necesites crear un PRD desde cero, reorganizar uno existente, o revisar si el documento está bien planteado antes de entrar en Spec.
 skills: [kb-prd-expert, kb-product-change-governance]
-memory: project
 permissionMode: acceptEdits
 model: claude-opus-4-8
 effort: high

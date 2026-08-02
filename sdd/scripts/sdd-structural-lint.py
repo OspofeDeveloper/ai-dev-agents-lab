@@ -22,6 +22,8 @@ Checks (cada finding: severidad, tipo, archivo:linea, mensaje):
   ALLOWED-TOOLS-MISMATCH [blocking/warning] frontmatter allowed-tools no cubre el body.
   FORK-ASKUSER-CONFLICT  [blocking]  wf con context: fork que declara/usa AskUserQuestion (un fork no puede preguntar).
   FORK-INTERVIEW         [warning]   wf con context: fork que entrevista o presenta gate de confirmacion en prosa (sin declarar AskUserQuestion): mismo bug latente.
+  AGENT-MEMORY-DECLARED  [blocking]  Agente (o la plantilla de agente) que declara `memory:`: el estado vive en los artefactos, no en la memoria del agente.
+  AGENT-DISPATCH-UNSYNCED [blocking] wf que delega por la tool `Agent` sin `run_in_background: false`: los subagentes corren en background por defecto y el orquestador acaba sondeando el disco.
   DESCRIPTION-TOO-LONG   [warning]   description del frontmatter > 220 chars.
   USER-INVOCABLE-MISSING [warning]   wf sin user-invocable; kb sin user-invocable: false.
 
@@ -108,6 +110,11 @@ INTERVIEW_RE = re.compile(
     re.IGNORECASE)
 AGENT_RE = re.compile(r"^agent:\s*\S+", re.MULTILINE)
 USER_INVOCABLE_RE = re.compile(r"^user-invocable:\s*(true|false)\b", re.MULTILINE)
+# --- Delegacion por la tool `Agent` (D-043) ---------------------------------
+# Las tres formas con que una wf-* prescribe delegar en un subagente. El flag que
+# la hace sincrona es literal: es lo que el agente teclea en la invocacion.
+AGENT_DISPATCH_RE = re.compile(r"Agent\(|tool `Agent`|`Agent` tool")
+SYNC_FLAG = "run_in_background: false"
 
 
 class Finding:
@@ -558,6 +565,98 @@ def check_name_mismatch(findings):
                 f"El name de un agente debe ser el basename del .md sin extension."))
 
 
+def check_agent_memory(findings):
+    """AGENT-MEMORY-DECLARED — ningun agente del ecosistema declara `memory:` (D-041).
+
+       El estado del proyecto vive en sus ARTEFACTOS: es la premisa de SDD. La memoria
+       de agente es estado que sobrevive fuera de ellos — ningun gate, script ni check
+       la ve, ninguna regeneracion del artefacto la invalida, y nada garantiza que el
+       agente prefiera el fichero a lo que recuerda. Medido en conformance (CU-3.a):
+       `sdd-spec-explorer` se escribio los 11 gaps con sus IDs, los defaults propuestos
+       y un `How to apply:` que instruia a las pasadas futuras.
+
+       Cubre tambien la plantilla de `kb-sdd-creation-guide`, porque es de donde cada
+       agente nuevo hereda su frontmatter: si vuelve ahi, vuelve a todo el ecosistema.
+    """
+    for agent_md in sorted(SDD_ROOT.rglob("*.md")):
+        if is_excluded(agent_md):
+            continue
+        if "agents" not in agent_md.relative_to(SDD_ROOT).parts:
+            continue
+        try:
+            text = agent_md.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        fm, _, _ = split_frontmatter(text)
+        if fm is None:
+            continue
+        value = frontmatter_value(fm, "memory")
+        if value is None:
+            continue
+        line = next((i for i, ln in enumerate(fm.splitlines(), start=2)
+                     if ln.startswith("memory:")), 1)
+        findings.append(Finding(
+            "blocking", "AGENT-MEMORY-DECLARED", relpath(agent_md), line,
+            f"El agente declara `memory: {value.strip()}`. Ningun agente SDD declara "
+            f"`memory:` (D-041): el estado vive en los artefactos, no en la memoria del "
+            f"agente, que ningun gate ni check puede ver ni invalidar. Si el agente "
+            f"necesita ese dato, que lea su artefacto o que venga en el brief."))
+
+    template = (SDD_ROOT / "meta" / "skills" / "kb-sdd-creation-guide" /
+                "references" / "frontmatter-templates.md")
+    if template.is_file():
+        try:
+            lines = template.read_text(encoding="utf-8").splitlines()
+        except OSError:
+            lines = []
+        for i, ln in enumerate(lines, start=1):
+            if ln.startswith("memory:"):
+                findings.append(Finding(
+                    "blocking", "AGENT-MEMORY-DECLARED", relpath(template), i,
+                    "La plantilla de agente vuelve a declarar `memory:` (D-041). Es de "
+                    "donde hereda su frontmatter cada agente nuevo: si vuelve aqui, "
+                    "vuelve a todo el ecosistema."))
+
+
+def check_agent_dispatch(findings):
+    """AGENT-DISPATCH-UNSYNCED — una `wf-*` que delega por la tool `Agent` sin
+       declarar `run_in_background: false` (D-043).
+
+       Desde Claude Code v2.1.198 los subagentes corren en BACKGROUND por defecto.
+       Un orquestador que delega y no pasa el flag no recibe el resultado: se queda
+       sin handle sincrono y acaba deduciendo si el delegado termino mirando el
+       disco (`ls` en bucle, `Monitor` sobre el artefacto) o relanzando un segundo
+       agente — race de doble escritura, no una espera. Medido en conformance
+       (CU-3.a pasada 1): `wf-spec-features-first` sondeo `prd/` dos veces y emitio
+       el reporte final duplicado.
+
+       Solo `wf-*`: una `kb-*` que DESCRIBA el patron (kb-sdd-creation-guide) no es
+       una prescripcion de delegacion y no debe tripear.
+    """
+    for skill_md in sorted(SDD_ROOT.rglob("SKILL.md")):
+        if is_excluded(skill_md):
+            continue
+        if not skill_md.parent.name.startswith("wf-"):
+            continue
+        try:
+            text = skill_md.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        _, body, body_start = split_frontmatter(text)
+        m = AGENT_DISPATCH_RE.search(body)
+        if m is None or SYNC_FLAG in body:
+            continue
+        line = body_start + body[:m.start()].count("\n")
+        findings.append(Finding(
+            "blocking", "AGENT-DISPATCH-UNSYNCED", relpath(skill_md), line,
+            f"Prescribe delegar en un subagente por la tool `Agent` pero no dice "
+            f"`{SYNC_FLAG}`. Los subagentes corren en background por defecto "
+            f"(Claude Code >= v2.1.198): sin el flag el orquestador no recibe el "
+            f"resultado y acaba sondeando el filesystem o relanzando el agente "
+            f"(D-043). Anade el flag a la invocacion y di explicitamente que espere "
+            f"su resultado."))
+
+
 def check_reference_paths(findings):
     """REFERENCE-PATH-MISSING — toda ruta a references/<f> citada en un SKILL.md
        que no resuelve en disco. Resuelve relativo al directorio del SKILL.md.
@@ -620,6 +719,8 @@ def run_all():
     check_allowed_tools(findings)
     check_frontmatter_fields(findings)
     check_name_mismatch(findings)
+    check_agent_memory(findings)
+    check_agent_dispatch(findings)
     check_reference_paths(findings)
     # Orden estable: severidad (blocking primero), tipo, path, linea.
     sev_order = {"blocking": 0, "warning": 1}

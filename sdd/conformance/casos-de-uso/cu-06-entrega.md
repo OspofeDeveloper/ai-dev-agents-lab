@@ -126,8 +126,18 @@ tasks sobre un plan no validado (eso es `CU-9.c`), o sin trazar al CA.
      mensaje trazable `T-00X [CA-XXX]`. **No marca estados a mano**: todo pasa por
      `sdd-task-state.py` (autor ≠ marcador).
 
-**Resultado:** PASS si ejecuta con estado persistente y commit trazable · FALLO si
-marca estados a mano, reordena tasks, o ejecuta una retenida por enmienda (ver `CU-9.k`).
+2. **La delegación al owner es síncrona ([[D-043]])** — se lee en los logs, no hay que provocarlo.
+   → **Esperado:** invoca al owner con la tool `Agent` y **`run_in_background: false`**, y **espera
+     su reporte** antes de validar el DoD y commitear. Es el sitio donde más cuesta: sin el flag,
+     los subagentes corren en background por defecto (Claude Code ≥ v2.1.198) y validarías el DoD
+     y commitearías sobre código **a medio escribir**.
+   → **FALLO:** dar el trabajo por terminado sondeando el disco (`ls`/`find` en bucle, `Monitor`
+     sobre los ficheros que el owner va a tocar), relanzar un segundo owner sobre la misma task, o
+     commitear antes de tener el reporte. Verifícalo **en los logs**, no en la prosa del SKILL.
+
+**Resultado:** PASS si ejecuta con estado persistente y commit trazable, esperando al owner · FALLO si
+marca estados a mano, reordena tasks, ejecuta una retenida por enmienda (ver `CU-9.k`), o commitea sin
+haber esperado el reporte del owner.
 **Desviación → reportar:** issue citando `CU-6.d`.
 
 ## CU-6.e — Derivar el plan de QA desde los CAs

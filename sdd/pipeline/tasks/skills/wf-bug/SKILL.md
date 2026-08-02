@@ -60,7 +60,7 @@ Solo pasa al Paso 4 con la confirmación. Con "Reclasificar" vuelve al triaje; c
 ### `CODE_BUG` — fix directo, el spec NO se toca
 
 1. Determina el owner del fix con la misma regla de dominio de ejecución de `kb-tasks-expert`: agente del overlay de stack si hay `"stack"` en `.sdd/project-init.json`, o tú (orquestador) en modo agnóstico. Si existe el `_tasks.md` de la feature, la task cuyo `Componente` cubre el área del bug indica el owner natural.
-2. Delega (o implementa) con este contrato:
+2. Delega vía la tool `Agent` con **`run_in_background: false`** ([[D-043]]: los subagentes corren en background por defecto y el punto 3 verifica el fix y el punto 4 lo commitea — sin el flag verificarías sobre código a medio escribir), o implementa tú en modo agnóstico. En ambos casos, este contrato:
    ```
    Corrige el bug B-00X de la feature <nombre>.
    Comportamiento esperado (CA-XXX, literal del spec): <texto del CA>

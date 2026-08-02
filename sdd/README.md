@@ -173,7 +173,7 @@ TASKS      Reglas Tasks          Plan → Tasks         /wf-prepare-tasks
 
 **Capa 1 — Skill Workflow (`wf-`)**: punto de entrada para el usuario. Parsea argumentos, verifica archivos, delega al agente. Contiene las instrucciones del workflow que el agente ejecuta.
 
-**Capa 2 — Agente Worker**: subagente con su propio contexto. Tiene `memory: project` para acumular aprendizaje del proyecto. Tiene `permissionMode: acceptEdits` para escribir artefactos sin interrupciones. Usa los knowledge bases de Capa 3 inyectados vía `skills: [...]`.
+**Capa 2 — Agente Worker**: subagente con su propio contexto. Tiene `permissionMode: acceptEdits` para escribir artefactos sin interrupciones. Usa los knowledge bases de Capa 3 inyectados vía `skills: [...]`. **No declara `memory:`**: su estado de proyecto lo lee de los artefactos, no lo recuerda (ver [D-041](DECISIONS.md)).
 
 **Capa 3 — Skill de Knowledge (`kb-`)**: solo conocimiento y reglas. No realiza acciones, define estándares. Se inyecta en el agente para que cada decisión esté basada en criterios explícitos.
 
@@ -380,7 +380,7 @@ El `task-generator` conoce los dominios de implementación KMM y asigna cada tas
 - `task-generator` → `claude-sonnet-4-6` (formateo estructurado)
 - agentes Spec → modelo por defecto, con responsabilidad separada por tipo de trabajo
 
-**Memoria acumulativa**: cada agente worker tiene `memory: project`. Con el tiempo, los agentes de Spec y el `plan-architect` recuerdan decisiones previas y mantienen consistencia entre artefactos.
+**Estado en los artefactos, no en la memoria del agente**: ningún agente declara `memory:` ([D-041](DECISIONS.md)). La consistencia entre artefactos no se sostiene en lo que un agente recuerde —estado que ningún gate, script ni check puede ver ni invalidar— sino en que cada agente **lee** los artefactos vigentes y en los verificadores deterministas que los cruzan.
 
 **Checkpoints humanos**: el pipeline nunca es fully-automatic. El humano valida artefactos estructurados en cuatro puntos clave:
 1. Tras `wf-spec-analyze` → responder gaps de negocio _(pendiente)_ en el `_analysis.md` o, si cambió el producto comprometido, abrir `wf-prd-change`

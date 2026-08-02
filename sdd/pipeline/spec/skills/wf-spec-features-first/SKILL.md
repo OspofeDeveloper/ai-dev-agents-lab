@@ -15,7 +15,20 @@ Este workflow pertenece a la fase Spec y **requiere un PRD o documento de requis
 
 Tu objetivo es ejecutar el flujo features-first: identificar features de un PRD y generar un spec por cada una en paralelo. Puede operar sobre **todo el PRD** o sobre un **subset de features** (iteración / fase) cuando se proporciona `--features`. Este skill **no realiza el análisis ni la escritura por sí mismo** — orquesta otros workflow skills.
 
-**Regla de oro:** Eres un orquestador. No analizas contenido, no generas specs, no tomas decisiones funcionales. Invocas skills en el orden correcto y consolidas resultados.
+**Regla de oro:** Eres un orquestador. No analizas contenido, no generas specs, no tomas decisiones funcionales. Invocas skills en el orden correcto y consolidas resultados. **No hagas `Read`/`cat` del PRD ni del `_analysis.md`**: lo que necesitas saber sale del script determinista o del reporte de quien delegaste ([[D-031]]/[[D-042]]).
+
+> **Cómo delegas — un solo mecanismo, síncrono, sin sondeo ([[D-043]]).** Los cinco puntos de
+> delegación de este workflow (analyze, discover, fast-track, conflict, readiness) se invocan
+> **siempre** con la tool `Agent`, pasando el `subagent_type` que se indica en cada paso y
+> **`run_in_background: false`**. El flag es obligatorio: desde Claude Code v2.1.198 los subagentes
+> corren en **background por defecto** y aquí necesitas su resultado en el acto — el paso siguiente
+> lo consume. **No uses el `Skill` tool** para ninguno de los cinco (no paraleliza y su despacho no
+> te devuelve un handle síncrono).
+>
+> Y **espera el resultado de la tool**: no averigües si un delegado terminó **sondeando el disco**
+> (`ls`/`find` en bucle sobre el directorio de artefactos, `Monitor` sobre el fichero que va a
+> escribir) ni relances un segundo agente "por si acaso" — eso no es esperar, es un race de doble
+> escritura sobre el mismo artefacto. Si crees que no terminó, no lo compruebes: no ha terminado.
 
 **Sobre el flujo iterativo por subset:** las "fases" o "iteraciones" no se definen en el PRD ni en el discovery — son una decisión humana de delivery sobre qué features procesar en cada pasada. El usuario decide el subset **después** de ver el discovery; cada ejecución con `--features` actualiza `_features.md` de forma incremental, sin borrar las features ya generadas en pasadas anteriores ni las pendientes para futuras.
 
@@ -51,21 +64,36 @@ Verifica que el archivo PRD existe; si no → informa con ruta exacta y detén.
 ## Paso 2.5: Análisis de gaps (obligatorio)
 
 1. Busca si existe un `*_analysis.md` para este PRD (convención: `<basename>_analysis.md`). Búscalo en el directorio de artefactos prd (`artifacts.prd` de `.sdd/project-init.json`, si está declarado) y en el mismo directorio del PRD.
-2. **Si NO existe** → invocar `/wf-spec-analyze <prd.md>`. Tras la ejecución, **DETENERSE** e informar al usuario:
-   > "Se ha generado el análisis de gaps en `<path>_analysis.md`. Edita el archivo, responde las preguntas marcadas como _(pendiente)_ (las `[CRÍTICO]` son obligatorias para specs completos) y vuelve a ejecutar `/wf-spec-features-first <prd.md>`."
-3. **Si existe** → léelo y determina: veredicto (`LISTO_PARA_SPECS`, `LISTO_PARA_SPECS_CON_PREGUNTAS`, `REQUIERE_LIMPIEZA_PRD`), gaps `[CRÍTICO]` pendientes, presencia de `[PUEDE_REQUERIR_CR]`, y si hay respuestas resueltas que introducen expansión funcional no comprometida.
-4. Si el veredicto es `REQUIERE_LIMPIEZA_PRD` → **DETENERSE** e informar al usuario:
+2. **Si NO existe** → genera el análisis delegando con la tool `Agent` ([[D-043]]), y **espera su resultado**:
+   ```
+   Agent(
+     subagent_type: "sdd-spec-explorer",
+     run_in_background: false,
+     prompt: "Ejecuta el skill /wf-spec-analyze con los siguientes argumentos: <prd.md>"
+   )
+   ```
+   Tras la ejecución, **DETENERSE** e informar al usuario. El mensaje **no puede ser genérico**: quien tiene que responder no debería bucear en el informe para saber qué le toca. Saca los IDs críticos del script (punto 3) y da path, lista de `[P-XXX]` `[CRÍTICO]` con su pregunta en una línea, y qué se sustituye:
+   > "Se ha generado el análisis de gaps en `<path>_analysis.md`. Quedan [N] gap(s) `[CRÍTICO]`: [P-XXX] — <pregunta>; … En el bloque de cada uno, sustituye `- **Respuesta**: _(pendiente)_` por tu respuesta y vuelve a ejecutar `/wf-spec-features-first <prd.md>`. Si prefieres dictármelas, las aplico yo con el script."
+3. **Estado mecánico de los gaps — antes de decidir nada** ([[D-042]]):
+   ```
+   !python3 .sdd/scripts/sdd-analysis-gaps.py "<path>_analysis.md" --check --json
+   ```
+   Da `verdict` (`CRITICAL_OPEN` / `CRITICAL_ANSWERED` / `VACUOUS`), `critical_open` y `critical_open_ids`. **Este conteo no se hace leyendo el informe**: contar marcadores `_(pendiente)_` no es juicio, y de él cuelgan las dos ramas duras de los puntos 5 y 6. Si el veredicto es `VACUOUS`, el documento no se ha podido parsear — **detente** y dilo, no lo trates como "sin gaps".
+4. **Si existe** → léelo para lo que **sí** es juicio: veredicto del análisis (`LISTO_PARA_SPECS`, `LISTO_PARA_SPECS_CON_PREGUNTAS`, `REQUIERE_LIMPIEZA_PRD`), presencia de `[PUEDE_REQUERIR_CR]`, y si las respuestas ya escritas introducen expansión funcional no comprometida.
+5. Si el veredicto del análisis es `REQUIERE_LIMPIEZA_PRD` → **DETENERSE** e informar al usuario:
    > "El análisis previo marca `REQUIERE_LIMPIEZA_PRD`. Corrige la contaminación técnica del PRD antes de continuar y vuelve a ejecutar el flujo."
-5. Si hay gaps `[CRÍTICO]` pendientes y **no** se ha pasado `--allow-open-critical-gaps` → **DETENERSE** e informar al usuario:
-   > "El análisis previo sigue teniendo [N] gap(s) `[CRÍTICO]` pendiente(s). Decide una de estas dos vías antes de generar specs: (a) responderlos en `<path>_analysis.md` y re-ejecutar; (b) re-ejecutar añadiendo `--allow-open-critical-gaps` para aceptar HUs `[INCOMPLETO]`."
-6. Si hay gaps `[CRÍTICO]` pendientes y **sí** se ha pasado `--allow-open-critical-gaps` → continuar al Paso 3 dejando constancia explícita de que las HUs afectadas podrán salir `[INCOMPLETO]`.
-7. Si no hay gaps `[CRÍTICO]` pendientes, inspecciona las respuestas ya resueltas. Si alguna introduce señales de cambio de producto según `kb-product-change-governance`:
+6. Si el script dio `CRITICAL_OPEN` y **no** se ha pasado `--allow-open-critical-gaps` → **DETENERSE** e informar al usuario, citando los IDs que devolvió:
+   > "El análisis previo sigue teniendo [N] gap(s) `[CRÍTICO]` pendiente(s) ([IDs]). Decide una de estas dos vías antes de generar specs: (a) responderlos en `<path>_analysis.md` y re-ejecutar; (b) re-ejecutar añadiendo `--allow-open-critical-gaps` para aceptar HUs `[INCOMPLETO]`."
+7. Si el script dio `CRITICAL_OPEN` y **sí** se ha pasado `--allow-open-critical-gaps` → continuar al Paso 3 dejando constancia explícita de que las HUs afectadas podrán salir `[INCOMPLETO]`.
+8. Si el script dio `CRITICAL_ANSWERED`, inspecciona las respuestas ya resueltas. Si alguna introduce señales de cambio de producto según `kb-product-change-governance`:
    - si **NO** se ha pasado `--allow-derived-scope-from-analysis` → **DETENERSE** e informar al usuario:
      > "Las respuestas del análisis parecen introducir cambio de producto (por ejemplo: nueva entidad persistente, catálogo reutilizable, nueva granularidad funcional o flujo adicional no comprometido en el PRD). Formaliza primero el cambio con `wf-prd-change <prd.md> --new-reqs <cambio.md>` o re-ejecuta añadiendo `--allow-derived-scope-from-analysis` si quieres continuar dejando el scope marcado como derivado."
    - si **SÍ** se ha pasado `--allow-derived-scope-from-analysis` → continuar dejando constancia explícita de que el discovery, `_features.md` y los specs deberán marcar ese alcance como **scope derivado** y no como PRD puro.
-8. Si no hay gaps `[CRÍTICO]` pendientes y no se detectan señales de cambio → continuar al Paso 3 usando el `_analysis.md` como contexto.
+9. Si el script dio `CRITICAL_ANSWERED` y no se detectan señales de cambio → continuar al Paso 3 usando el `_analysis.md` como contexto.
 
-**Importante:** `[INFORMATIVO]` nunca bloquea; `[CRÍTICO]` abiertos requieren `--allow-open-critical-gaps`. Para señales de expansión consulta `kb-product-change-governance`. Si el PRD cambió después de generar specs previos, puede ser necesario `wf-prd-sync-impact` antes de mezclar pasadas.
+**Importante:** `[INFORMATIVO]` nunca bloquea (el script los reporta aparte: cada uno aplicará su asunción por defecto); `[CRÍTICO]` abiertos requieren `--allow-open-critical-gaps`. Para señales de expansión consulta `kb-product-change-governance`. Si el PRD cambió después de generar specs previos, puede ser necesario `wf-prd-sync-impact` antes de mezclar pasadas.
+
+> **Las respuestas de los gaps no las escribes tú** ([[D-042]]; tabla de ámbito en `kb-gap-conventions`). Las escribe el usuario en el `_analysis.md`; si te las dicta, las aplicas con `sdd-analysis-gaps.py --answer P-XXX "texto"`. Nunca edites el informe a mano ni completes una respuesta que el usuario no ha dado.
 
 ---
 
@@ -78,7 +106,15 @@ El `_discovery.md` **debe existir previamente** (los IDs `F-XXX` solo tienen sen
   > "Has indicado `--features <IDs>`, pero no existe `<path>_discovery.md`. Las features se identifican en el discovery — ejecuta primero `/wf-spec-discover <prd.md>`, revisa el mapa generado y vuelve a ejecutar con los IDs que correspondan."
 
 **Caso B — `--features` no está presente**:
-Invoca `/wf-spec-discover <prd.md> [--analysis <analysis.md>] [--allow-derived-scope-from-analysis si aplica]`. Espera que termine y obtén el path del `_discovery.md`. Si el discover se detuvo por shared models ambiguos → transmite el mensaje al usuario y espera resolución.
+Delega el discovery con la tool `Agent` ([[D-043]]):
+```
+Agent(
+  subagent_type: "sdd-spec-explorer",
+  run_in_background: false,
+  prompt: "Ejecuta el skill /wf-spec-discover con los siguientes argumentos: <prd.md> [--analysis <analysis.md>] [--allow-derived-scope-from-analysis si aplica]"
+)
+```
+Espera su resultado (el de la tool, no el del disco) y obtén de él el path del `_discovery.md`. Si el discover se detuvo por shared models ambiguos → transmite el mensaje al usuario y espera resolución.
 
 ---
 
@@ -118,15 +154,18 @@ Para cada feature F-00X a generar, lanza un subagente con el `Agent` tool usando
 ```
 Agent(
   subagent_type: "sdd-spec-writer",
+  run_in_background: false,
   prompt: "Ejecuta el skill /wf-spec-fast-track con los siguientes argumentos: <prd.md> --scope-from <discovery.md> --feature F-00X [--light|--standard si se pasó o si project-init declara pipeline_mode] [--analysis <analysis.md> si disponible]"
 )
 ```
 
 **CRÍTICO: emite TODOS los `Agent` tool calls en un único mensaje** — no esperes entre ellos. Cada subagente es completamente independiente. Si hay 6 features a generar, tu respuesta debe contener 6 llamadas al `Agent` tool simultáneas, todas con `subagent_type: sdd-spec-writer`.
 
+`run_in_background: false` **no** rompe el paralelismo ([[D-043]]): las N llamadas emitidas en un único mensaje siguen corriendo a la vez; el flag solo garantiza que el mensaje no vuelve hasta que **todas** han terminado — que es justo lo que el Paso 6 asume al regenerar el índice leyendo los specs del disco.
+
 No uses el `Skill` tool para esto — no soporta ejecución paralela.
 
-Espera a que **todas** terminen. Para cada una, registra:
+Espera a que **todas** terminen (esperando el resultado de las tools; **no** listando `features/` en bucle para ver si ya aparecieron los ficheros). Para cada una, registra:
 - Feature ID y nombre
 - Si se completó con éxito o falló
 - Path del spec generado
@@ -154,13 +193,13 @@ python3 .sdd/scripts/sdd-features-index.py <raíz_spec>
 
 ## Paso 7: Conflict check (si no `--skip-conflict`)
 
-Opera sobre **todas las features con spec en `features/`**, incluyendo preexistentes de iteraciones anteriores. Con ≥2 specs: por cada spec recién generado invoca `/wf-spec-conflict <spec.md> --features-dir <features_dir>` (solo los nuevos se chequean contra todos). Escribe `_conflict_report.md` si hay conflictos. Sin specs nuevos → omitir.
+Opera sobre **todas las features con spec en `features/`**, incluyendo preexistentes de iteraciones anteriores. Con ≥2 specs: por cada spec recién generado delega con la tool `Agent` ([[D-043]]), `subagent_type: "sdd-spec-auditor"` y `run_in_background: false`, con el prompt `"Ejecuta el skill /wf-spec-conflict con los siguientes argumentos: <spec.md> --features-dir <features_dir>"` (solo los nuevos se chequean contra todos; puedes emitir las N llamadas en un único mensaje). Escribe `_conflict_report.md` si hay conflictos. Sin specs nuevos → omitir.
 
 ---
 
 ## Paso 8: Readiness check (si no `--skip-readiness`)
 
-Invoca `/wf-spec-readiness <features_dir>/`. Genera `_readiness_report.md` en el directorio raíz de artefactos spec (junto a `_features.md`) y actualiza `_features.md` con el estado de cada feature (incluyendo `PENDIENTE_GENERACIÓN` para las no procesadas aún).
+Delega con la tool `Agent` ([[D-043]]), `subagent_type: "sdd-spec-auditor"` y `run_in_background: false`, con el prompt `"Ejecuta el skill /wf-spec-readiness con los siguientes argumentos: <features_dir>/"`. Genera `_readiness_report.md` en el directorio raíz de artefactos spec (junto a `_features.md`) y actualiza `_features.md` con el estado de cada feature (incluyendo `PENDIENTE_GENERACIÓN` para las no procesadas aún).
 
 ---
 

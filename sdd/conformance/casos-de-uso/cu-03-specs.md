@@ -78,10 +78,74 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 2. El analysis deja gaps `[CRÍTICO]` abiertos y pides seguir igualmente.
    → **Esperado:** el orquestador pide decisión explícita: responder los críticos
      primero, o continuar con `--allow-open-critical-gaps`. No avanza en silencio.
+     El conteo de críticos abiertos sale de `sdd-analysis-gaps.py --check`
+     ([[D-042]]), **no** de la lectura del informe — y ese check corre **antes** de la
+     rama que gobierna.
+   → **FALLO:** decidir la rama citando una lectura propia del `_analysis.md`; o
+     tratar un veredicto `VACUOUS` (documento no parseado) como "sin gaps críticos".
+3. **El mensaje de cierre te dice qué responder, sin que abras el fichero** ([[D-042]]).
+   → **Esperado:** path exacto del `_analysis.md`, los IDs `[CRÍTICO]` **cada uno con su
+     pregunta en una línea**, y qué se sustituye (`- **Respuesta**: _(pendiente)_`).
+   → **FALLO:** un "responde las preguntas marcadas como `_(pendiente)_`" genérico que
+     te obliga a bucear entre todos los gaps para saber cuáles bloquean.
+4. **Quién escribe las respuestas** ([[D-042]]). Dicta una respuesta en la conversación
+   en vez de editar el fichero.
+   → **Esperado:** el hilo principal la aplica con
+     `sdd-analysis-gaps.py --answer P-XXX "texto"` por `Bash`, y el fichero cambia
+     **solo** en esa línea.
+   → **FALLO (tres formas):** que main haga `Read`/`Edit`/`Write` del `_analysis.md`;
+     que **rehúse** ayudar remitiéndote al editor cuando existe vía sancionada; o —el
+     grave— que **complete o reinterprete** una respuesta que no diste.
+   → **Ojo al verificar:** que el frontmatter no declare `Write` **no lo impide**
+     (`allowed-tools` no es enforcement, [[D-038]]). Hay que mirar los logs.
 
-**Resultado:** PASS si genera el analysis y para en los críticos · FALLO si salta el
-analyze, o avanza con críticos sin override explícito.
+5. **Cómo delega el orquestador** ([[D-043]]) — se lee en los logs de
+   `wf-spec-features-first`, no hay que provocarlo.
+   → **Esperado:** invoca el analyze con la tool `Agent`, `subagent_type:
+     sdd-spec-explorer` y **`run_in_background: false`**, y **espera su retorno**. Un
+     solo reporte final.
+   → **FALLO (cuatro señales, cualquiera basta):** `Monitor` sobre el artefacto que el
+     delegado va a escribir; `ls`/`find` repetido sobre el directorio de artefactos
+     esperando a que aparezca; un segundo agente relanzado sobre el mismo trabajo; o
+     el reporte final **emitido dos veces** (delata que el stream asíncrono cerró
+     después). Sondear el disco no es esperar: es un race de doble escritura.
+   → **FALLO adicional (Regla de oro):** que el orquestador haga `cat`/`Read` del PRD o
+     del `_analysis.md` — lo que necesita sale del script o del reporte del delegado.
+
+**Resultado:** PASS si genera el analysis, para en los críticos por veredicto de script,
+te dice cuáles son sin abrir el fichero, ni escribe ni inventa las respuestas, y delega
+en síncrono sin sondear el disco · FALLO si salta el analyze, avanza con críticos sin
+override explícito, decide por lectura propia, toca el informe a mano, o se queda en
+busy-wait.
 **Desviación → reportar:** issue citando `CU-3.a`.
+
+> **Pasada 1 (2026-08-02, v0.76.0) — PASS en el paso 1; origen de [[D-042]].** El analyze
+> corrió primero y el flujo **se detuvo** con `spec/features/` intacto; pureza `APROBADO`
+> con la línea borderline de L95 reconocida como patrón válido (no sobre-disparó
+> `REQUIERE_LIMPIEZA_PRD`); 5 `[CRÍTICO]` + 6 `[INFORMATIVO]`, con P-001 y P-009 marcados
+> `[PUEDE_REQUERIR_CR]` y redactados en **neutro**. El paso 2 **no se ejercitó**: el
+> orquestador se adelantó ofreciendo él mismo la bifurcación antes de que el usuario
+> empujara — conducta correcta y más fuerte que la pedida, pero el probe no llegó a correrse.
+>
+> **El hallazgo:** main ofreció *"me los dictas y **yo los anoto** en el análisis"*, una vía
+> que **el contrato no contemplaba** — los tres sitios que hablan del tema (SKILL de analyze,
+> Paso 2.5 de features-first y la cabecera del propio artefacto) dicen siempre que escribe el
+> usuario. Vacío de la misma forma que cerró [[D-038]] en la fase PRD. Al investigarlo apareció
+> el defecto mayor: la detección de "¿quedan `[CRÍTICO]` sin responder?" era **juicio de agente
+> sobre prosa** gobernando dos ramas duras. Ambos cerrados en [[D-042]]; los pasos 2, 3 y 4 de
+> arriba son nuevos y **no tienen aún ninguna pasada**.
+>
+> **El segundo hallazgo — busy-wait ([[D-043]]).** El log de `wf-spec-features-first` es literal:
+> `Skill(wf-spec-analyze)` → `Monitor(wait for prd_analysis.md)` → `cat …/prd.md` (el orquestador
+> cargándose el PRD entero) → `ls -la prd/` → *"I'll wait for the analysis skill to finish"* →
+> `ls -la prd/` otra vez → reporte final **duplicado**. Causa: el Paso 5 prescribía la tool exacta
+> y los otros cuatro puntos de delegación decían solo *"invoca `/wf-spec-analyze`"*; el fork
+> rellenó el hueco con `Skill` (que ni estaba en su `allowed-tools` — tercera confirmación de
+> [[D-038]]) y sin handle síncrono se puso a sondear. Al contarlo: **7 skills delegaban por
+> `Agent` y solo `wf-prd-create` pasaba `run_in_background: false`**. Cerrado en [[D-043]] con
+> barrido de las 7 + regla blocking `AGENT-DISPATCH-UNSYNCED`. El paso 5 de arriba es nuevo y
+> **no tiene aún ninguna pasada**: el linter garantiza que el flag está escrito, no que el
+> orquestador lo teclee.
 
 ## CU-3.b — Expansión de alcance desde las respuestas del analysis
 

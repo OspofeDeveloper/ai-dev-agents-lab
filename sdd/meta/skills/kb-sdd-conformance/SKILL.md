@@ -148,9 +148,11 @@ Las Reglas 1-8 dicen **cómo escribir** los escenarios. Esta dice **cómo ejecut
 
 5. **Congela la frase que falló.** Cuando un bug conductual motiva un cambio, el **prompt exacto** que lo destapó se convierte en un sub-caso permanente (Regla 1/2) → esa regresión no vuelve en silencio. Cada bug encontrado es cobertura nueva.
 
-6. **Valida la rama protectora, no solo el happy.** Cuando el comportamiento correcto es *bloquear/avisar/parar*, no basta ver que el gate salta: verifica también que **la vía de escape hace lo que promete** (declinar deja el artefacto intacto, cancelar no escribe, etc.). *Aprendido: en D-024 había que ver que "Conservar el actual" dejaba el PRD sellado intacto, no solo que el aviso aparecía.*
+6. **Aísla cada pasada: el banco se resetea, no solo la frase.** Las ≥3 corridas solo son independientes si la **N+1 arranca del mismo estado** que la N. Antes de repetir: restaura los artefactos de entrada a su versión pristina (una copia de referencia fuera del directorio de trabajo, p. ej. `.conformance-attic/`, no junto al artefacto — un agente la lee y te la reporta como andamiaje), borra los **derivados** que la pasada anterior generó, y limpia los **residuos que el agente dejó fuera del artefacto**. *Aprendido: en CU-3.a pasada 1 el `sdd-spec-explorer` se escribió los 11 gaps con sus IDs y un `How to apply:` que instruía a las pasadas futuras — un segundo contrato, invisible para el reset "normal", que habría hecho la pasada 2 no independiente. La superficie concreta se retiró en [[D-041]], pero la regla es general: pregúntate siempre **qué escribió el agente que no es el artefacto**.*
 
-> Esta regla es la SSoT que referencia la plantilla de PR (`docs/MEJORAS_FUTURAS.md` O-6): la sección "Impacto conductual" de un PR se rellena aplicando los puntos 1-3 y 6.
+7. **Valida la rama protectora, no solo el happy.** Cuando el comportamiento correcto es *bloquear/avisar/parar*, no basta ver que el gate salta: verifica también que **la vía de escape hace lo que promete** (declinar deja el artefacto intacto, cancelar no escribe, etc.). *Aprendido: en D-024 había que ver que "Conservar el actual" dejaba el PRD sellado intacto, no solo que el aviso aparecía.*
+
+> Esta regla es la SSoT que referencia la plantilla de PR (`docs/MEJORAS_FUTURAS.md` O-6): la sección "Impacto conductual" de un PR se rellena aplicando los puntos 1-3 y 7.
 
 ## Regla de oro
 

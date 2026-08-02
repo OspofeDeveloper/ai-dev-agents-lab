@@ -195,6 +195,12 @@ con un `Aprobado por:` que certifica el contenido viejo** (el agujero que cierra
 > correcta. Sí queda como hueco: **ningún caso de conformance cubre ese mecanismo** — los agentes
 > escriben en el repo del consumidor y el `ROADMAP.md` no les da fila (su alcance es solo `wf-*`).
 >
+> **Superado por [[D-041]] (2026-08-02):** la capacidad ya no existe — ningún agente declara
+> `memory:`. Lo que aquí se anotó como "higiene correcta" resultó ser, medido en CU-3.a, un
+> **segundo contrato invisible**: la memoria del `sdd-spec-explorer` llegó a instruir a las pasadas
+> futuras. El hueco de cobertura que este párrafo señalaba se cierra por retirada del mecanismo, no
+> por añadirle un caso.
+>
 > **Pasada 2 (2026-07-30, v0.74.0) — FALLO en 2bis → origen de [[D-039]].** Cambio pedido:
 > *"quiero poder marcar algunos gastos como deducibles para cuando toque hacer la declaración"* —
 > elegido **deliberadamente incompleto** (no dice quién define qué es deducible, ni si implica un
@@ -231,6 +237,10 @@ con un `Aprobado por:` que certifica el contenido viejo** (el agujero que cierra
 > Movidos a `.conformance-attic/`. Igual la memoria del agente (`memory: project`), que recordaba un
 > CR-001 ya revertido. **Probe no diseñado que sale de aquí:** ¿confía un agente en su memoria por
 > encima del artefacto? Nada lo mide hoy; va junto al hueco de cobertura de `agent-memory`.
+> — **Cerrado por retirada ([[D-041]], 2026-08-02):** ningún agente declara ya `memory:`, así que
+> no hay memoria en la que confiar y el probe queda sin objeto. La lección **sí** sobrevive, y es
+> más general: lo que un agente escribe **fuera del artefacto** contamina las pasadas siguientes.
+> Está recogida como punto 6 de la Regla 9 de `kb-sdd-conformance` (aislar cada pasada).
 >
 > **Refinamiento de un candidato abierto:** el brief que main improvisa para el `prd-expert` incluyó
 > aquí *"Contexto adicional: este PRD acaba de ser modificado por CR-001… presta atención especial a

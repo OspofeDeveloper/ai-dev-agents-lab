@@ -51,9 +51,14 @@ comportamiento esperado.
 2. Confirmas.
    → **Esperado:** arregla el código (owner según `stack`), **no toca el spec**, y
      registra `B-00X` trazado al CA.
+   → **Delegación síncrona ([[D-043]]):** si delega el fix, lo hace con la tool `Agent` y
+     **`run_in_background: false`**, y **espera el reporte** antes de verificar y commitear —
+     los subagentes corren en background por defecto. **FALLO:** verificar o commitear sin
+     el reporte, sondear el disco para saber si el owner acabó, o relanzarlo. En los logs.
 
 **Resultado:** PASS si triajea contra el CA y arregla sin tocar el spec · FALLO si
-parchea sin triaje, o edita el spec para un defecto de código.
+parchea sin triaje, edita el spec para un defecto de código, o verifica el fix sin haber
+esperado al owner.
 **Desviación → reportar:** issue citando `CU-8.a`.
 
 ## CU-8.b — Lo reportado es un cambio de comportamiento (`SPEC_CHANGE`)

@@ -97,6 +97,23 @@ El marcador `_(pendiente)_` se inserta en el campo **"Respuesta"** de cada gap h
 
 ---
 
+## Quién escribe las respuestas — ámbito cerrado ([[D-042]])
+
+Las respuestas de los `[P-XXX]` son **decisiones de negocio del usuario**. Quién puede escribirlas, y con qué mecanismo, es una tabla cerrada — no una zona a improvisar:
+
+| Qué | Quién | Mecanismo |
+|---|---|---|
+| Responder un `[P-XXX]` | **el usuario** | edita el `_analysis.md` y sustituye `_(pendiente)_` — **vía normativa** |
+| El usuario **dicta** la respuesta en la conversación | el hilo principal | `sdd-analysis-gaps.py <analysis.md> --answer P-XXX "texto"` por `Bash` |
+| El **contenido** de una respuesta | nadie más | ni el hilo principal ni un agente la inventan, completan ni interpretan |
+| Saber si quedan gaps abiertos | cualquiera | `sdd-analysis-gaps.py <analysis.md> --check` |
+
+**El hilo principal nunca hace `Read`/`Edit`/`Write` del `_analysis.md`.** Vale **aunque tenga esas tools disponibles**: el `allowed-tools` de un skill no es enforcement duro ([[D-038]]), así que la restricción es normativa. Lo único que main ejecuta sobre el fichero es el script — mismo reparto que `wf-prd-review` con `sdd-prd-apply.py`.
+
+El motivo de que el dictado vaya por script y no por edición del agente: sustituir `_(pendiente)_` por un texto dado es una **operación mecánica sin juicio**, y una operación sin juicio no se delega a un modelo ([[D-030]]). Además deja precondiciones fail-safe que una edición libre no da: no se sobrescribe en silencio una respuesta ya escrita por una persona, y un `P-XXX` inexistente se rechaza listando los válidos.
+
+---
+
 ## Reglas de bloqueo para orquestadores
 
 Los orquestadores verifican la presencia de marcadores pendientes antes de avanzar al siguiente paso del pipeline:

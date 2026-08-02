@@ -39,6 +39,14 @@ user-invocable: true
 
 `context: fork` es obligatorio en todas las `wf-*` que generan artefactos o delegan a un agente.
 
+> [!IMPORTANT]
+> **Toda delegación por la tool `Agent` lleva `run_in_background: false`** ([[D-043]]). Los
+> subagentes corren en **background por defecto** (Claude Code ≥ v2.1.198): sin el flag el
+> orquestador no recibe el resultado y acaba sondeando el disco o relanzando el agente. Nombra
+> además la tool exacta en **cada** punto de delegación del cuerpo —no "invoca `/wf-x`"— y usa
+> el mismo mecanismo en todos. Lo verifica `sdd-structural-lint.py` (regla
+> `AGENT-DISPATCH-UNSYNCED`).
+
 Separación `description` / `when_to_use` (regla canónica en el `SKILL.md` de `kb-sdd-creation-guide`):
 - `description`: el QUÉ — funcionalidad, modos soportados, agente al que delega. Caso clave primero, conciso, **sin triggers**. Objetivo ≤ ~220 caracteres.
 - `when_to_use` (**solo `wf-*`**): el CUÁNDO — frases de activación naturales **+ exclusiones explícitas** con la alternativa ("No activa para X, usa `wf-Y`"). Si una `description` arrastra triggers, muévelos aquí.
@@ -53,7 +61,6 @@ Separación `description` / `when_to_use` (regla canónica en el `SKILL.md` de `
 name: <nombre>
 description: "<Razonamiento especializado. Artefactos que produce. Que NO cubre.>"
 skills: [kb-<1>, kb-<2>, ...]
-memory: project
 permissionMode: acceptEdits
 model: claude-opus-4-8 | claude-sonnet-4-6
 effort: high                    # solo en agentes escritores/implementadores
@@ -61,6 +68,15 @@ disallowedTools: Write, Edit    # solo en auditores/planificadores puros
 color: <color-por-fase>
 ---
 ```
+
+> [!IMPORTANT]
+> **Ningún agente SDD declara `memory:`** ([[D-041]]). El estado del proyecto vive en sus
+> **artefactos** —que es la premisa entera de SDD— y la memoria de agente es estado que
+> sobrevive **fuera** de ellos: ningún gate, script ni check la ve, ninguna regeneración
+> del artefacto la invalida, y nada garantiza que el agente prefiera el fichero a lo que
+> recuerda. Si tu agente parece necesitar memoria, lo que necesita es **leer su artefacto**
+> o recibir el dato en el brief. Lo verifica `sdd-structural-lint.py` (regla
+> `AGENT-MEMORY-DECLARED`).
 
 Tabla de colores por fase/dominio:
 

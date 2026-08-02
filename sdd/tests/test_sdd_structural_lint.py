@@ -109,6 +109,81 @@ class StructuralLintTest(unittest.TestCase):
         _, types = types_in(self.root)
         self.assertNotIn("NAME-MISMATCH", types)
 
+    # === AGENT-MEMORY-DECLARED (D-041) ====================================
+    def _agent_md(self, name, extra_fm=""):
+        return (f"---\nname: {name}\ndescription: un agente.\n"
+                f"skills: [kb-x]\n{extra_fm}color: green\n---\n\n# {name}\n\nCuerpo.\n")
+
+    def test_agent_memory_declared_flagged(self):
+        # Un agente que declara memory: el estado debe vivir en los artefactos.
+        write(self.root / "spec" / "agents" / "mi-agente.md",
+              self._agent_md("mi-agente", "memory: project\n"))
+        r, types = types_in(self.root)
+        self.assertIn("AGENT-MEMORY-DECLARED", types)
+        self.assertIn("blocking", r.stdout)
+
+    def test_agent_without_memory_not_flagged(self):
+        write(self.root / "spec" / "agents" / "mi-agente.md",
+              self._agent_md("mi-agente"))
+        _, types = types_in(self.root)
+        self.assertNotIn("AGENT-MEMORY-DECLARED", types)
+
+    def test_agent_memory_in_creation_template_flagged(self):
+        # La plantilla de kb-sdd-creation-guide es de donde hereda cada agente
+        # nuevo: si memory: vuelve ahi, vuelve a todo el ecosistema.
+        write(self.root / "meta" / "skills" / "kb-sdd-creation-guide" /
+              "references" / "frontmatter-templates.md",
+              "# Plantillas\n\n```yaml\n---\nname: <nombre>\nmemory: project\n---\n```\n")
+        _, types = types_in(self.root)
+        self.assertIn("AGENT-MEMORY-DECLARED", types)
+
+    def test_non_agent_with_memory_not_flagged(self):
+        # Solo aplica a */agents/ y a la plantilla: una skill que mencione
+        # memory: en su cuerpo no es una declaracion de agente.
+        write(self.root / "spec" / "skills" / "kb-mem" / "SKILL.md",
+              skill_md("kb-mem", "El campo `memory:` del frontmatter de un agente."))
+        _, types = types_in(self.root)
+        self.assertNotIn("AGENT-MEMORY-DECLARED", types)
+
+    # === AGENT-DISPATCH-UNSYNCED (D-043) ==================================
+    def test_agent_dispatch_without_sync_flag_flagged(self):
+        # Un wf que delega por la tool Agent sin run_in_background: false se
+        # queda sin handle sincrono y acaba sondeando el disco.
+        write(self.root / "spec" / "skills" / "wf-orq" / "SKILL.md",
+              skill_md("wf-orq",
+                       'Lanza el trabajo con:\n\n```\nAgent(\n'
+                       '  subagent_type: "sdd-spec-writer",\n'
+                       '  prompt: "Ejecuta el skill /wf-x"\n)\n```\n'))
+        r, types = types_in(self.root)
+        self.assertIn("AGENT-DISPATCH-UNSYNCED", types)
+        self.assertIn("blocking", r.stdout)
+
+    def test_agent_dispatch_with_sync_flag_not_flagged(self):
+        write(self.root / "spec" / "skills" / "wf-orq" / "SKILL.md",
+              skill_md("wf-orq",
+                       'Lanza el trabajo con:\n\n```\nAgent(\n'
+                       '  subagent_type: "sdd-spec-writer",\n'
+                       '  run_in_background: false,\n'
+                       '  prompt: "Ejecuta el skill /wf-x"\n)\n```\n'))
+        _, types = types_in(self.root)
+        self.assertNotIn("AGENT-DISPATCH-UNSYNCED", types)
+
+    def test_kb_describing_agent_dispatch_not_flagged(self):
+        # La regla es sobre PRESCRIPCIONES de delegacion: una kb- que DESCRIBE
+        # el patron (kb-sdd-creation-guide) no delega y no debe tripear.
+        write(self.root / "meta" / "skills" / "kb-guia" / "SKILL.md",
+              skill_md("kb-guia",
+                       "Una wf que delega invoca la tool `Agent` con su "
+                       "subagent_type."))
+        _, types = types_in(self.root)
+        self.assertNotIn("AGENT-DISPATCH-UNSYNCED", types)
+
+    def test_wf_without_delegation_not_flagged(self):
+        write(self.root / "spec" / "skills" / "wf-simple" / "SKILL.md",
+              skill_md("wf-simple", "Corre un script y reporta el veredicto."))
+        _, types = types_in(self.root)
+        self.assertNotIn("AGENT-DISPATCH-UNSYNCED", types)
+
     # === REFERENCE-PATH-MISSING ===========================================
     def test_reference_path_missing_flagged(self):
         write(self.root / "spec" / "skills" / "kb-ref" / "SKILL.md",

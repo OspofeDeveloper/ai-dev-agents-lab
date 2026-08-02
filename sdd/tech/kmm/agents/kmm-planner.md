@@ -2,7 +2,6 @@
 name: kmm-planner
 description: Agente especializado en planificar trabajo KMM usando las skills del ecosistema para separar dimensiones de verdad, elegir workflows y ordenar precondiciones antes de implementar.
 skills: [kb-kmm-project-state-protocol, kb-kmm-clean-architecture, kb-kmm-core-layer, kb-kmm-feature-clean-architecture, kb-kmm-app-layer, kb-kmm-app-errors, kb-kmm-gradle-modules, kb-plan-koin, kb-plan-kmm-datastore-preferences, kb-plan-kmm-room, kb-kmm-offline-strategy, kb-kmm-secrets-cicd, kb-kmm-navigation-contracts, kb-plan-kmm-navigation-viewmodel-events, kb-kmm-navigation-platform-behaviors, kb-kmm-network-contracts, kb-kmm-auth-contracts, kb-kmm-brands, kb-kmm-environments, kb-plan-kmm-ui-text, kb-plan-expert, kb-cmp-resources, kb-plan-cmp-ui, kb-kmm-testing-strategy]
-memory: project
 permissionMode: acceptEdits
 model: claude-sonnet-4-6
 disallowedTools: Write, Edit

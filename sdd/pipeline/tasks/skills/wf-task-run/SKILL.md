@@ -63,7 +63,7 @@ Lee el bloque completo de la task (Spec CA, Plan ref, Componente, Layer, Input, 
 
 Si la task declara `- **Deuda asumida:** TD-00X`, inclúyela en el prompt del owner como **restricción a respetar**: implementa conforme a la decisión documentada en la sección `## Deuda técnica asumida` del plan, asumiendo la limitación descrita. El owner NO debe "resolver" la limitación por su cuenta ni cambiar de enfoque para evitarla — si cree que la deuda ya no aplica o que hay una salida mejor, lo reporta, no lo decide.
 
-**Modo overlay** (owner = agente del stack): invoca el `Agent` tool con `subagent_type` = el `Owner agent` de la task y este prompt:
+**Modo overlay** (owner = agente del stack): invoca el `Agent` tool con `subagent_type` = el `Owner agent` de la task, **`run_in_background: false`** y este prompt:
 
 ```
 Implementa la task T-00X de <tasks.md>.
@@ -79,6 +79,8 @@ INSTRUCCIONES:
 - Si el bloqueo es que un CA del spec es AMBIGUO (admite más de una implementación y el texto no determina cuál), repórtalo identificando el CA-XXX y las interpretaciones posibles — no elijas una por tu cuenta.
 - Reporta honestamente: si algo falla, di qué y por qué. Un reporte de fallo es un resultado válido; uno falsamente verde no.
 ```
+
+> **`run_in_background: false` es obligatorio ([[D-043]]).** Desde Claude Code v2.1.198 los subagentes corren en **background por defecto**, y el Paso 6 valida el DoD contra el **reporte del owner** y el Paso 7 commitea lo que escribió: sin el flag validarías y commitearías **antes** de que el owner termine de escribir. **Espera su resultado**; no deduzcas que acabó listando ficheros ni relances un segundo owner sobre la misma task.
 
 **Modo agnóstico** (owner = `orquestador`): implementa tú la task directamente con las mismas reglas (alcance exacto, DoD como contrato, honestidad en el reporte).
 

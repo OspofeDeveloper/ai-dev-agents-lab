@@ -47,7 +47,7 @@ No cargues el PRD aquí.
 
 ## Paso 4: Analizar y clasificar el cambio (delegado, read-only)
 
-Invoca al `prd-expert` vía la tool `Agent`. Recibe el **path** del PRD y el texto del cambio; devuelve un diagnóstico estructurado y **no escribe nada todavía**:
+Invoca al `prd-expert` vía la tool `Agent`, en **foreground**: pásale explícitamente **`run_in_background: false`** ([[D-043]] — los subagentes corren en background por defecto y el gate del Paso 5 **consume** este diagnóstico; sin el flag abrirías el gate sin él). **Espera su resultado**: no sondees el disco ni relances un segundo agente. Recibe el **path** del PRD y el texto del cambio; devuelve un diagnóstico estructurado y **no escribe nada todavía**:
 
 - **clasificación** siguiendo `kb-product-change-governance`: `CLARIFICATION` · `BEHAVIOR_CHANGE` · `SCOPE_CHANGE` · `PRIORITY_CHANGE` · `DEPRECATION`, con **severidad** (`BAJA|MEDIA|ALTA`), si **exige editar el PRD** (`sí/no`) y **por qué**
 - **secciones que tocaría** y qué quedaría falso o contradictorio si no se tocan
@@ -75,7 +75,7 @@ Si la clasificación confirmada es **`CLARIFICATION` que no contradice el PRD**:
 
 ## Paso 6: Aplicar el cambio y registrar la traza (delegado)
 
-Invoca de nuevo al `prd-expert` vía `Agent` con un brief quirúrgico que lleve **las decisiones del Paso 5**, no la petición cruda. El experto:
+Invoca de nuevo al `prd-expert` vía `Agent` (otra vez con **`run_in_background: false`**, y esperando su resultado: el Paso 7 reabre el sello sobre lo que este agente escribe) con un brief quirúrgico que lleve **las decisiones del Paso 5**, no la petición cruda. El experto:
 
 **A. Edita el PRD** (solo si la clasificación confirmada lo exige):
 

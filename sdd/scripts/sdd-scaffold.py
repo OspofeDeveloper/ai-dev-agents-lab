@@ -177,7 +177,10 @@ def gen_agent(name, description, skills, model, read_only, phase):
         f"name: {name}",
         f'description: "{desc}"',
         f"skills: [{skills_list}]",
-        "memory: project",
+        # Sin `memory:` a proposito (D-041): el estado del proyecto vive en sus
+        # artefactos. La memoria de agente sobrevive fuera de ellos y ningun gate,
+        # script ni check la ve ni la invalida. Lo vigila la regla
+        # AGENT-MEMORY-DECLARED de sdd-structural-lint.py.
         "permissionMode: acceptEdits",
         f"model: {model or 'claude-opus-4-8'}",
     ]

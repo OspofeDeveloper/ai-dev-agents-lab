@@ -93,7 +93,8 @@
 > que debe ser definida por el cliente antes de generar el `.spec` final.
 >
 > **Las respuestas se escriben en este archivo, no en el PRD**, salvo que la propia respuesta cambie el producto comprometido. En ese caso, usa `wf-prd-change`.
-> Escribe la respuesta de cada cliente en el campo "Respuesta" del gap correspondiente.
+> Escribe la respuesta de cada cliente en el campo "Respuesta" del gap correspondiente, sustituyendo `_(pendiente)_`.
+> Si prefieres dictárselas a Claude en la conversación, él las aplicará con `sdd-analysis-gaps.py --answer` — no editará este archivo a mano ni completará una respuesta que no hayas dado.
 >
 > - `[CRÍTICO]`: afecta directamente a las HUs indicadas en "Afecta". Si se deja sin responder, esas HUs se marcarán como `[INCOMPLETO]` en el spec — se generarán con la información disponible pero no podrán avanzar a plan/tasks hasta completarse.
 > - `[INFORMATIVO]`: si no se responde, se aplicará la "Asunción por defecto" indicada.

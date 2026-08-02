@@ -6,6 +6,98 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-043 — La delegación de una `wf-*` es síncrona y por un mecanismo nombrado; nadie deduce del disco si un delegado terminó
+
+- **Fecha:** 2026-08-02 · **Estado:** Adoptada (regla canónica en `kb-sdd-creation-guide` + regla blocking del linter; conducta pendiente de medir en CU-3.a). · **Relacionada:** [[D-038]] (`allowed-tools` no es enforcement — tercera confirmación), [[D-042]] (mismo origen: la pasada 1 de CU-3.a), [[D-037]] (el check nuevo se mide por su delta, no por su existencia), [[D-041]] (mismo carril de propagación: la plantilla de `kb-sdd-creation-guide`), CU-2.e (la carrera hermana, en `wf-prd-review`).
+
+**Contexto.** Observación 3 de CU-3.a pasada 1. `wf-spec-features-first` invocó su primer sub-workflow y se quedó en **busy-wait**: `Skill(wf-spec-analyze)` → `Monitor(wait for prd_analysis.md)` → `cat prd.md` (el orquestador cargándose el PRD entero, contra su propia Regla de oro) → `ls -la prd/` → *"I'll wait for the analysis skill to finish"* → `ls -la prd/` otra vez → y el reporte final **duplicado**, porque el stream del `Monitor` cerró después.
+
+Tres defectos encadenados con una sola raíz — **el SKILL no decía con qué tool se invoca ni que había que esperar**:
+
+1. **Mecanismo no uniforme dentro de la misma skill.** El Paso 5 prescribía la tool exacta (`Agent` + `subagent_type: sdd-spec-writer`) y hasta prohibía la alternativa ("No uses el `Skill` tool"). Los otros cuatro puntos de delegación —analyze, discover, conflict, readiness— decían solo *"invoca `/wf-spec-analyze`"*. Ante el hueco, el agente eligió `Skill`, que ni siquiera estaba en su `allowed-tools`.
+2. **Sincronicidad no declarada.** Desde Claude Code v2.1.198 los subagentes corren en **background por defecto**. Medido en el árbol: **7 skills prescribían delegación por `Agent` y solo `wf-prd-create` pasaba `run_in_background: false`** — el único sitio donde la lección estaba escrita, porque ahí se había pagado antes.
+3. **Sondeo del filesystem como sustituto de la espera.** Sin handle síncrono, el fork improvisó `Monitor` + `ls` en bucle. Es el mismo fallo que CU-2.e observó en `wf-prd-review` (gate abierto en paralelo al diagnóstico), pero la lección vivía en dos skills, no como invariante del ecosistema.
+
+**Decisión.** Una `wf-*` que delega lo hace por **un** mecanismo, **nombrado en cada punto de delegación**, **síncrono**, y **espera el retorno de la tool** — nunca deduce del disco. Concretamente: si delega por `Agent`, pasa **siempre `run_in_background: false`**; nada de averiguar si el delegado terminó con `ls`/`find` en bucle o `Monitor` sobre el fichero que va a escribir, ni de relanzar un segundo agente "por si acaso" (eso no es esperar: es un race de doble escritura sobre el mismo artefacto).
+
+Los cinco puntos de `wf-spec-features-first` pasan a la forma canónica del Paso 5, con el `subagent_type` = el `agent:` que **el propio sub-workflow ya declara** en su frontmatter (analyze/discover → `sdd-spec-explorer`, fast-track → `sdd-spec-writer`, conflict/readiness → `sdd-spec-auditor`), para que el destino no se invente. El flag **no** rompe el fan-out del Paso 5: las N llamadas emitidas en un único mensaje siguen corriendo a la vez; solo garantiza que el mensaje no vuelve hasta que todas terminan — que es lo que el Paso 6 ya asumía al regenerar el índice leyendo los specs del disco.
+
+**Barrido de la clase completa**, no solo del sitio observado: `wf-task-run` (el más grave — delega la implementación y acto seguido valida el DoD y commitea), `wf-bug`, `wf-prd-change` (Pasos 4 y 6), `wf-prd-review` (que decía "en **foreground** (síncrono)" en prosa; la prosa no es lo que el agente teclea) y `wf-kmm-init`. Y regla nueva del linter, **`AGENT-DISPATCH-UNSYNCED` [blocking]**, que solo mira `wf-*` (una `kb-*` que *describa* el patrón no es una prescripción) y exige el flag literal cuando el cuerpo prescribe `Agent`.
+
+**Alternativas descartadas.**
+- *Unificar todo el ecosistema en el `Skill` tool* → `Skill` no paraleliza (el fan-out del Paso 5 lo necesita) y **no tiene knob de sincronicidad**: si el harness lo despacha async, no hay nada que prescribir. `Agent` sí lo tiene, y ya era el mecanismo del punto más caliente.
+- *Cambiar `wf-prd-change-cascade` a `Agent` por uniformidad global* → delega por `Skill` **declarado** y está SELLADO en CU-2.j 6/6 sin sondeo observado. La regla es **por skill** (un mecanismo, síncrono), no "todo el mundo a `Agent`": tocar una skill sellada por simetría estética habría reabierto una conformance cara sin defecto medido.
+- *Confiar en `allowed-tools` para impedir el `Skill`* → ya sabíamos que no es enforcement ([[D-038]]); esta pasada es la tercera confirmación, y la primera en la que el daño no es de ámbito de edición sino de despacho.
+- *Arreglar solo `wf-spec-features-first`* → es donde se midió, pero el conteo dijo 6 skills más con la misma firma. Dejarlas habría sido esperar a que cada una se manifestara en su propia campaña.
+- *Regla del linter que exija además el `subagent_type` correcto contra el `agent:` del sub-workflow* → requiere resolver qué skill invoca el prompt en prosa: no es mecanizable con fiabilidad. Se cubre con el backstop posicional de `test_install_sh.py`.
+
+**Consecuencias / aprendizaje.** Tres. (a) **Un default del harness que cambia es deuda silenciosa repartida por todo el árbol**: `wf-prd-create` documentó el cambio de v2.1.198 en su propio cuerpo y ahí se quedó — la lección no viajó porque no tenía dónde vivir (ni regla de autoría, ni linter). Cuando una lección solo existe en la skill que la sufrió, la siguiente skill la vuelve a pagar. (b) **La prosa no es el mecanismo.** `wf-prd-review` decía "en foreground (síncrono)" desde CU-2.e y aun así no pasaba el flag: describir la propiedad deseada no la produce; hay que escribir lo que el agente teclea. (c) **Especificar el mecanismo en un punto y omitirlo en el de al lado es peor que omitirlo en todos**: el contraste hace que el hueco parezca deliberado ("aquí sí importaba la tool, aquí no"), y el agente lo rellena con la alternativa más obvia. El delta del linter lo confirma sin discusión: **6 findings antes del fix, 0 después** — la medida que [[D-037]] exige para no aceptar un check vacuo.
+
+**Pendiente de medir.** D-043 es hoy **declarado, no medido**: el linter garantiza que el flag está escrito, no que el orquestador lo teclee. Se cierra en la campaña, repitiendo el turno 1 de CU-3.a con 0.79.0 propagado y comprobando **en los logs** que aparece `Agent(subagent_type: sdd-spec-explorer, run_in_background: false)` y **cero** `Monitor`, cero `ls` repetido sobre `prd/`, un solo reporte final.
+
+**Referencias.** `sdd/meta/skills/kb-sdd-creation-guide/SKILL.md` + `references/frontmatter-templates.md` (regla canónica), `sdd/pipeline/spec/skills/wf-spec-features-first/SKILL.md` (5 puntos), `wf-task-run`, `wf-bug`, `wf-prd-change`, `wf-prd-review`, `wf-kmm-init` (barrido), `sdd/scripts/sdd-structural-lint.py` (`check_agent_dispatch`), `sdd/tests/test_sdd_structural_lint.py`, `sdd/tests/test_install_sh.py` (`test_installed_wf_delegate_synchronously`, `test_features_first_delegates_by_agent_not_bare_slash`), `sdd/conformance/casos-de-uso/cu-03-specs.md` (CU-3.a paso 5), `sdd/CHANGELOG.md`.
+
+---
+
+## D-042 — Las respuestas del `_analysis.md` las escribe el usuario (o un script), y "¿quedan críticos?" deja de ser juicio
+
+- **Fecha:** 2026-08-02 · **Estado:** Adoptada (bloque normativo en `kb-gap-conventions`). · **Relacionada:** [[D-038]] (ámbito de edición cerrado; `allowed-tools` no es enforcement), [[D-030]] (lo mecánico va por script, no por agente escritor), [[D-031]] (main no lee ni diagnostica el artefacto), [[D-037]] (orden entre pasos deterministas + guarda `VACUOUS`), CU-3.a.
+
+**Contexto.** Dos defectos, encontrados juntos en CU-3.a pasada 1.
+
+(a) **Vacío de ámbito.** Tras generar `prd_analysis.md`, el hilo principal ofreció: *"Puedes contestármelas aquí **y yo las anoto en el análisis**, o escribirlas tú directamente"*. Esa segunda mano **no existía en el contrato**: `wf-spec-analyze` decía *"Anota las respuestas…"*, `wf-spec-features-first` Paso 2.5 *"**Edita el archivo**…"* y la cabecera del propio artefacto *"Escribe la respuesta… en el campo Respuesta"* — siempre en segunda persona, siempre el usuario. Nadie decía qué pasa cuando el usuario **dicta**, que es lo que ocurre a diario. Main improvisó una vía que implica escribir un artefacto. Misma forma exacta que el vacío que cerró [[D-038]] en la fase PRD.
+
+(b) **Juicio donde cabía un conteo.** `wf-spec-features-first` Paso 2.5 pedía *"léelo y determina… gaps `[CRÍTICO]` pendientes"*, y de esa lectura colgaban **dos ramas duras**: detenerse, o continuar aceptando HUs `[INCOMPLETO]` con `--allow-open-critical-gaps`. `wf-spec-gap-resolve` repetía la misma lectura al cerrar. Contar marcadores `_(pendiente)_` en bloques `[P-XXX]` no es juicio semántico: es un conteo, y estaba sin verificador.
+
+**Decisión.** Tabla **cerrada** de ámbito + mecanismo en `kb-gap-conventions` (SSoT del sistema de gaps): responder un `[P-XXX]` es del **usuario**, editando el `_analysis.md` — vía normativa y de coste cero; si lo **dicta**, lo aplica el hilo principal con `sdd-analysis-gaps.py --answer P-XXX "texto"` por `Bash`; el **contenido** de una respuesta no lo pone nadie más (ni main ni un agente lo inventan, completan o reinterpretan); y saber si quedan gaps abiertos es `--check`. **Main nunca hace `Read`/`Edit`/`Write` del `_analysis.md`**, aunque tenga las tools ([[D-038]]).
+
+Nuevo script `sdd-analysis-gaps.py` con las dos caras. `--check` devuelve veredicto (`CRITICAL_OPEN` / `CRITICAL_ANSWERED` / `VACUOUS`), conteos e IDs, y **corre antes** de la rama que gobierna — con backstop que compara **posiciones**, no presencia, porque la lección de [[D-037]] es que cuando el texto y la posición se contradicen gana la posición. `--answer` es sustitución quirúrgica con precondiciones fail-safe: no pisa una respuesta ya escrita por una persona salvo `--force`, y un `P-XXX` inexistente se rechaza listando los válidos. La guarda `VACUOUS` (exit 2 si no se parseó ningún bloque) evita el no-op silencioso: un verificador que responde "0 críticos abiertos" sobre un documento que no ha entendido es peor que no tenerlo.
+
+**Y el mensaje de cierre deja de ser genérico.** *"Responde las preguntas marcadas como `_(pendiente)_`"* obliga a bucear entre 11 gaps para descubrir cuáles bloquean. Pasa a llevar path exacto, los IDs `[CRÍTICO]` **cada uno con su pregunta en una línea**, y qué se sustituye literalmente. En la pasada 1 el orquestador improvisó justamente eso y funcionó: se convierte en contrato en vez de depender de que vuelva a ocurrírsele.
+
+**Alternativas descartadas.**
+- *Recoger las respuestas con `AskUserQuestion`* → **estructuralmente inadecuado**, antes que caro: son respuestas en **prosa libre** sobre 11 gaps, y la tool admite 4 preguntas por llamada con 2–4 **opciones**; harían falta ~3 llamadas y todas las respuestas reales irían por el campo libre. Es la fricción que el usuario ya reportó en el gate de asunciones del PRD, multiplicada.
+- *Que main transcriba con `Read` + `Edit`* → carga el informe entero en el hilo principal y es exactamente lo que [[D-031]]/[[D-038]] cerraron. Por script, main no carga nada.
+- *Delegar la escritura al `sdd-spec-explorer`* → sustituir `_(pendiente)_` por un texto dado es mecánico y sin juicio; delegar lo mecánico a un modelo es lo que [[D-030]] descartó.
+- *Prohibir el dictado y remitir siempre al editor* → cerrado y barato, pero el usuario **va a pedirlo**; sin mecanismo sancionado, main vuelve a improvisar o genera fricción negándose. Nombrar el mecanismo del caso que ocurrirá es justo la lección de [[D-038]].
+- *Backstop semántico que detecte respuestas fabricadas* → no mecanizable. Lo que sí lo era —el conteo— es lo que se mecaniza aquí.
+
+**Consecuencias / aprendizaje.** Dos. (a) **Un contrato escrito solo en segunda persona deja fuera al tercero que aparecerá**: decir "tú editas el fichero" describe el caso feliz y no dice nada del caso "hazlo tú por mí", que es donde se improvisa. Al cerrar un ámbito, enumerar **quién más podría querer hacerlo**, no solo quién debe. (b) **Antes de pedirle juicio a un agente, comprobar si lo que se le pide es contable.** "¿Quedan críticos sin responder?" parecía lectura del informe y era `grep` con estructura; el coste de haberlo dejado como juicio no fue un error observado, sino un gate sin verificador durante toda la vida de la fase spec.
+
+**Referencias.** `sdd/scripts/sdd-analysis-gaps.py` (nuevo), `sdd/install.sh` (lista de scripts instalados), `sdd/pipeline/spec/skills/kb-gap-conventions/SKILL.md` (tabla de ámbito, SSoT), `wf-spec-analyze/SKILL.md` (Paso 8), `wf-spec-features-first/SKILL.md` (Paso 2.5), `wf-spec-gap-resolve/SKILL.md` (Paso 7), `sdd/tests/test_sdd_analysis_gaps.py`, `sdd/tests/test_install_sh.py` (`test_gap_conventions_declares_answer_remit`, `test_features_first_checks_gaps_before_deciding`), `sdd/conformance/casos-de-uso/cu-03-specs.md` (CU-3.a pasos 2–4), `sdd/CHANGELOG.md`.
+
+---
+
+## D-041 — Ningún agente del ecosistema declara `memory:`: el estado vive en los artefactos
+
+- **Fecha:** 2026-08-02 · **Estado:** Adoptada (conducta pendiente de medir, ver más abajo). · **Relacionada:** [[D-018]]/[[D-021]] (qué memoria carga un subagente y cuándo), [[D-031]]/[[D-038]] (main no lee ni escribe el artefacto), CU-3.a, CU-15 (deriva y trazabilidad).
+
+**Contexto.** **24 agentes** del ecosistema declaraban `memory: project` —los 11 del pipeline, los 3 de meta y los 10 del overlay KMM—, heredado de la plantilla de `kb-sdd-creation-guide/references/frontmatter-templates.md`: cada agente nuevo nacía con memoria. **Ninguna decisión lo justificó nunca** y ninguna regla de lint lo exigía. Era un default copiado, no una elección.
+
+Medido en conformance (CU-3.a, pasada 1). Tras generar el análisis de gaps, `sdd-spec-explorer` se escribió `.claude/agent-memory/sdd-spec-explorer/{MEMORY.md,project_myops_context.md}` con **los 11 gaps por ID**, los defaults propuestos para los informativos, la predicción de que *"8 features emergerán del discovery"* y —lo relevante— un bloque `How to apply:` que **instruye a las pasadas futuras**: *"antes de recomendar generar specs o ejecutar discover, verificar si el usuario ha respondido los P-001 a P-005"*. Eso no es un resumen: es un **segundo contrato**, no versionado, que compite con el SKILL.
+
+**Decisión.** Ningún agente SDD declara `memory:`. Se quita de los 24 agentes y **de la plantilla**, que es la pieza que importa: es de donde hereda su frontmatter cada agente que se cree a partir de ahora.
+
+El motivo no es la higiene del banco de pruebas —eso fue solo el primer sitio donde se vio—, es la premisa del ecosistema: **el artefacto es la SSoT**. La memoria de agente es estado que sobrevive **fuera** del artefacto, y por tanto: ningún gate la comprueba, ningún script determinista la ve, ninguna regeneración del artefacto la invalida, y nada garantiza que el agente prefiera el fichero a lo que recuerda. Un pipeline cuya trazabilidad se construye sobre ficheros versionados no puede tener a sus agentes decidiendo desde un estado paralelo e invisible. Si un agente parece necesitar memoria, lo que necesita es **leer su artefacto** o recibir el dato en el brief.
+
+Efecto secundario buscado: las pasadas de conformance vuelven a ser **independientes entre sí**. Con memoria, la pasada 2 de cualquier CU llega sabiendo el resultado de la 1 y deja de medir lo que dice medir.
+
+**Por qué el frontmatter y no `autoMemoryEnabled`.** Claude Code ofrece apagarlo por proyecto (`autoMemoryEnabled: false` en `.claude/settings.json`) o por entorno (`CLAUDE_CODE_DISABLE_AUTO_MEMORY=1`). Ninguna de las dos sirve como contrato del ecosistema: la primera apagaría también la memoria del **hilo principal del usuario en su propio repo** —el ecosistema se instala en repos ajenos y no le corresponde desactivarle una función de su herramienta—, y la segunda es una variable de entorno por desarrollador, que **no viaja en git** (el mismo motivo por el que el opt-out de SDD es `.claude/sdd-mode.json` y no una env var). El campo `memory:` del agente es exactamente la superficie que sí es nuestra.
+
+**Alternativas descartadas.**
+- *Quitarlo solo a `sdd-spec-explorer`* (el que se pilló) → deja el defecto en los otros 23 y en la plantilla, que lo reintroduce al primer agente nuevo. El problema no es un agente, es un default.
+- *`autoMemoryEnabled: false` en el `settings.json` instalado* → radio de explosión sobre el proyecto del usuario; ver arriba.
+- *Dejar la memoria y prohibir en prosa que contradiga al artefacto* → una garantía que depende de que el agente prefiera el fichero a su memoria es exactamente la clase de garantía no medible que esta campaña lleva descartando desde [[D-040]].
+- *Borrar los `.claude/agent-memory/` existentes en `wf-sdd-update`* → son datos en el repo del usuario. Se **avisa** (línea `⚠` del CHANGELOG, que el update muestra), no se borra en silencio.
+
+**Consecuencias / aprendizaje.** Dos. (a) **Un default heredado de una plantilla no es una decisión, pero se comporta como si lo fuera**: 24 agentes con memoria porque el primer `frontmatter-templates.md` la traía. Al auditar el ecosistema, mirar qué campos vienen de plantilla y preguntar quién los eligió. (b) **Enumerar los estados que sobreviven al artefacto**, igual que [[D-039]] obligó a enumerar quién lo escribe: memoria de agente, caché, notas fuera de repo. Todo lo que persiste y ningún check ve es un contrato en la sombra.
+
+**Pendiente de medir.** Que el frontmatter apagara la escritura está **declarado, no medido** — y esta campaña ya aprendió con [[D-038]] que `allowed-tools` declaraba sin encerrar. Se verifica re-corriendo una pasada de CU-3.a con los agentes limpios y comprobando que `.claude/agent-memory/` no reaparece. Hasta entonces, la garantía vale lo que su medición.
+
+**Referencias.** Los 24 `*/agents/*.md` de `pipeline/`, `meta/` y `tech/kmm/`; `sdd/meta/skills/kb-sdd-creation-guide/references/frontmatter-templates.md`; `sdd/scripts/sdd-structural-lint.py` (regla `AGENT-MEMORY-DECLARED`, que cubre agentes **y** plantilla); `sdd/tests/test_sdd_structural_lint.py`, `sdd/tests/test_install_sh.py` (`test_installed_agents_declare_no_memory`); `sdd/CHANGELOG.md`.
+
+---
+
 ## D-040 — `wf-prd-change` corre en el hilo principal con gate obligatorio; sin humano, la ambigüedad se marca en vez de decidirse
 
 - **Fecha:** 2026-07-30 · **Estado:** Adoptada (pieza 2 de 2 de [[D-039]]). · **Relacionada:** [[D-039]] (pieza 1, la válvula que hace posible el modo sin gate), [[D-038]] (main no escribe ni lee el artefacto; la clasificación de gobernanza es del `prd-expert`), [[D-031]], [[D-028]]/[[D-032]] (reapertura del sello), CU-7.a/b/c/n, CU-7.f–k, CU-11.g, CU-13.a.

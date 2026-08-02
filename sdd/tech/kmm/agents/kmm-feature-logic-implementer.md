@@ -2,7 +2,6 @@
 name: kmm-feature-logic-implementer
 description: Agente especializado en implementar la lógica de una feature KMM — capa domain (models, repository interfaces, use cases) y capa data (DTOs+mappers, datasources locales y borde remoto propio de feature, repository impls). No implementa presentation.
 skills: [kb-kmm-project-state-protocol, kb-kmm-clean-architecture, kb-kmm-core-layer, kb-kmm-feature-clean-architecture, kb-kmm-app-errors, kb-kmm-network-contracts, kb-kmm-http-ktor, kb-tasks-kmm-room, kb-tasks-koin, kb-tasks-kmm-unit-testing]
-memory: project
 permissionMode: acceptEdits
 model: claude-opus-4-8
 effort: high

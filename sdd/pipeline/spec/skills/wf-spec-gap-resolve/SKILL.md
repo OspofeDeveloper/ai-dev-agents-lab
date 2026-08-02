@@ -87,8 +87,15 @@ Incrementa versión menor del spec y registra en changelog:
 Si ya no quedan HUs `[INCOMPLETO]` ni CAs `[INFERIDO]`:
 > "El spec quedó completo. Puedes validarlo con `/wf-spec-validate <spec.md>` y después avanzar a `/wf-prepare-plan generate <spec.md>`."
 
-Si quedan gaps sin respuesta:
-> "Quedan gaps pendientes en el `_analysis.md`. Responde esos items antes de volver a ejecutar `wf-spec-gap-resolve`."
+Si quedan gaps sin respuesta — **cuáles quedan lo dice el script, no tu lectura** ([[D-042]]):
+
+```
+!python3 .sdd/scripts/sdd-analysis-gaps.py "<analysis.md>" --check --json
+```
+
+> "Quedan [N] gap(s) `[CRÍTICO]` pendiente(s) en el `_analysis.md` ([IDs]). Responde esos items —sustituyendo `- **Respuesta**: _(pendiente)_` en el bloque de cada uno— antes de volver a ejecutar `wf-spec-gap-resolve`."
+
+Las respuestas las escribe el usuario; si te las dicta, se aplican con `sdd-analysis-gaps.py --answer P-XXX "texto"`. Nunca las completes tú (tabla de ámbito en `kb-gap-conventions`).
 
 Si quedan `[INFERIDO]` sin confirmar:
 > "Quedan N CAs [INFERIDO] sin confirmar — siguen bloqueando `/wf-prepare-plan`. Confirma o corrige esos comportamientos cuando tengas la evidencia."

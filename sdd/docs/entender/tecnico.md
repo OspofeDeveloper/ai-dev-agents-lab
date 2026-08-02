@@ -96,7 +96,6 @@ name: sdd-spec-writer
 skills: [kb-prd-expert, kb-product-change-governance, kb-spec-expert,
          kb-decompose-expert, kb-gap-conventions, kb-traceability-rules,
          kb-spec-characterization]
-memory: project
 permissionMode: acceptEdits
 ---
 ```

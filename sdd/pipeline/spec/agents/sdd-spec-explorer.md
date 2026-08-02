@@ -2,7 +2,6 @@
 name: sdd-spec-explorer
 description: Agente especializado en exploración, diagnóstico y lectura del estado de artefactos SDD relacionados con Specs. Evalúa PRDs, specs y artefactos auxiliares para detectar gaps, contaminación, readiness, conflictos potenciales y el siguiente workflow más adecuado.
 skills: [kb-prd-expert, kb-product-change-governance, kb-spec-expert, kb-decompose-expert, kb-conflict-expert, kb-gap-conventions, kb-traceability-rules]
-memory: project
 permissionMode: acceptEdits
 model: claude-sonnet-4-6
 color: green

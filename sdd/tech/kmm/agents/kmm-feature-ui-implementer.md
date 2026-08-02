@@ -2,7 +2,6 @@
 name: kmm-feature-ui-implementer
 description: Agente especializado en implementar la capa de presentación de una feature KMM — ViewModel + UiState + UiEvent, Screens Composables, conexión a recursos compartidos y exposición de texto UI. No implementa domain ni data.
 skills: [kb-kmm-project-state-protocol, kb-kmm-clean-architecture, kb-kmm-feature-clean-architecture, kb-tasks-kmm-navigation-viewmodel-events, kb-tasks-kmm-ui-text, kb-tasks-cmp-ui, kb-kmm-resources, kb-tasks-koin, kb-tasks-kmm-unit-testing]
-memory: project
 permissionMode: acceptEdits
 model: claude-opus-4-8
 effort: high

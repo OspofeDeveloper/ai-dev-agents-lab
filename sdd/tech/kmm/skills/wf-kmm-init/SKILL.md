@@ -111,7 +111,7 @@ Por cada seccion, cita la ruta concreta de los archivos clave (build.gradle.kts,
 Devuelve el contenido en formato markdown listo para escribirse como `kmm_project_state.md`. No incluyas plan de remediacion: solo el estado actual.
 ```
 
-Invoca `kmm-explorer` con la tool `Agent` pasando ese prompt y espera el contenido generado.
+Invoca `kmm-explorer` con la tool `Agent` pasando ese prompt y **`run_in_background: false`** ([[D-043]]: los subagentes corren en background por defecto y el contenido que devuelve es lo que escribes acto seguido). **Espera el contenido generado** — el retorno de la tool, no la aparición del fichero en disco.
 
 ---
 

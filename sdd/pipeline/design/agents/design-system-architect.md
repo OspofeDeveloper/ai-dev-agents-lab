@@ -2,7 +2,6 @@
 name: design-system-architect
 description: Agente del SISTEMA visual de producto en la fase Design SDD. Autora y evoluciona el DESIGN.md (contrato visual persistente y agnóstico de superficie): cierre del DESIGN_BRIEF.md (árbol de decisión, detección de preset, validación de consistencia y resolución de conflictos visuales base), articulación de vibes del moodboard en candidatos de style_family, traducción de paletas intuitivas a la taxonomy, generación del DESIGN.md desde spec+brief, ingeniería inversa de UI existente (extract), validación y evolución incremental (delta). NO autora artefactos por feature (flows/views/ui_prompt) — eso es del design-feature-architect.
 skills: [kb-spec-expert, kb-design-expert, kb-design-system-contract, kb-design-characterization, kb-design-governance, kb-design-brief, kb-design-style-decision-tree, kb-design-style-taxonomy, kb-a11y-expert, kb-a11y-web-expert, kb-design-motion-expert, kb-design-iconography-expert, kb-design-voice, kb-design-layout]
-memory: project
 permissionMode: acceptEdits
 model: claude-opus-4-8
 effort: high

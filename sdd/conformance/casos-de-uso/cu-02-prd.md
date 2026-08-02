@@ -422,11 +422,24 @@ presenta cada `[ASN-XXX]` con `AskUserQuestion` y **aplica** las decisiones con 
    → **Esperado:** una vez `sdd-prd-ready.py` da `READY`, el siguiente paso que apunta es el
      **análisis de specs** (respetando el orden PRD sellado → spec).
 
+**G — el gate espera al diagnóstico: delegación síncrona ([[D-043]])** — se lee en los logs del
+Paso 4, no hay que provocarlo.
+   → **Esperado:** invoca al `prd-expert` con la tool `Agent` y **`run_in_background: false`**, y
+     **espera su retorno** antes de abrir el gate del Paso 5.5. Las asunciones se presentan **con**
+     el contexto de gobernanza del experto (qué `[ASN-XXX]` son de alto impacto y por qué).
+   → **FALLO:** abrir el gate en paralelo al diagnóstico y tener que **re-presentar** las asunciones
+     cuando el experto termina (la carrera observada en la campaña de CU-2.e, v0.65.0); sondear el
+     disco (`ls`/`find` en bucle, `Monitor`) para saber si el experto acabó; relanzar un segundo
+     `prd-expert`; o emitir el reporte **dos veces** (delata que el stream asíncrono cerró después).
+   → ⚠ **No lo verifiques por la prosa del SKILL.** Decir "en foreground (síncrono)" no lo produce:
+     lo que lo hace síncrono es el flag literal en la invocación. Míralo **en los logs**.
+
 **Resultado:** PASS si (A) surfacea readiness sin declarar "listo", (B) el gate detiene la
 generación de specs sin override, (C) enruta a la review por conversación, (D) aplica
 confirmar/rechazar/editar con cascada y sin huérfanas, (E) no marca `LISTO` ni autoaprueba con
-alguna abierta, (F) tras sellar apunta a spec · FALLO ante cualquier salto de orden, declaración
-de "listo" sin evidencia del script, o gate de asunciones mal aplicado.
+alguna abierta, (F) tras sellar apunta a spec, (G) delega en síncrono y el gate consume el
+diagnóstico · FALLO ante cualquier salto de orden, declaración de "listo" sin evidencia del
+script, gate de asunciones mal aplicado, o busy-wait sobre el experto.
 **Desviación → reportar:** issue citando `CU-2.e`.
 
 > **Validación — Tanda A ×3 (2026-07-22, consumer real `myops-app-specs`, ecosistema 0.69.0). SELLADO.**
@@ -461,6 +474,14 @@ de "listo" sin evidencia del script, o gate de asunciones mal aplicado.
 > patrón "formato de presentación como cualificador de una capacidad". Añadido como fila dura del catálogo de prohibidos
 > + frame "tabla = `LISTO_CON_AJUSTES`, no matiz sellable". (Nota: por esto, Prueba 3 selló con L71 sucia — no invalida
 > el sello de CU-2.e: A–F pasaron, la contaminación es periférica al gate de asunciones.)
+>
+> **Probe G añadido después del sello (2026-08-02, [[D-043]]) — SIN pasadas.** El sello de esta CU
+> cubre A–F; **G no estaba escrito cuando se selló**. La propiedad se implementó en v0.65.0 tras una
+> carrera observada aquí mismo (el gate se abría en paralelo al diagnóstico), pero **nunca llegó a ser
+> criterio de PASS**: en todo el catálogo la sincronicidad solo aparecía como *descripción de mecanismo*
+> en CU-2.a, sin FALLO asociado. Ese hueco es el que se manifestó en CU-3.a pasada 1 con un busy-wait
+> completo. **El sello A–F sigue vigente** —mide lo que dice medir y nada de [[D-043]] cambia su
+> resultado esperado—, pero G arranca su propio recuento desde cero (Regla 9: ≥3 pasadas).
 
 ## CU-2.f — Veredicto LISTO y sello de aprobación
 

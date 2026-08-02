@@ -2,7 +2,6 @@
 name: kmm-tester
 description: Agente especializado en diseñar, escribir y auditar tests en proyectos KMM con Compose Multiplatform. Cubre tests unitarios (commonTest), tests de integración y UI (androidTest) y screenshot regression con Roborazzi. No implementa código de producción.
 skills: [kb-kmm-project-state-protocol, kb-kmm-testing-strategy, kb-tasks-kmm-unit-testing, kb-tasks-kmm-integration-testing]
-memory: project
 permissionMode: acceptEdits
 model: claude-sonnet-4-6
 effort: high

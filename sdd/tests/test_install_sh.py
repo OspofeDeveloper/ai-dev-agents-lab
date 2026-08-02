@@ -265,6 +265,97 @@ class InstallAllTest(InstallBase):
         self.assertIn("no lo paralelices", skill.lower(),
                       "wf-prd-review pierde que el gate espera al diagnostico (Q1)")
 
+    def test_gap_conventions_declares_answer_remit(self):
+        # D-042: quién escribe las respuestas de los [P-XXX] es una tabla cerrada
+        # en kb-gap-conventions (SSoT del sistema de gaps), no una zona a improvisar.
+        self.install("all")
+        kb = (self.skill_dir("kb-gap-conventions") / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("sdd-analysis-gaps.py", kb,
+                      "kb-gap-conventions no nombra el mecanismo de aplicación (D-042)")
+        self.assertIn("--answer", kb, "falta la vía sancionada para el dictado (D-042)")
+        self.assertIn("--check", kb, "falta la detección determinista de gaps abiertos (D-042)")
+        for token in ("Read", "Edit", "Write"):
+            self.assertIn(token, kb,
+                          f"kb-gap-conventions no prohíbe `{token}` del analysis en main (D-042)")
+        # El script tiene que estar instalado, o el SKILL apunta a algo que no existe.
+        self.assertTrue((self.proj / ".sdd" / "scripts" / "sdd-analysis-gaps.py").exists(),
+                        "sdd-analysis-gaps.py no se instala en .sdd/scripts/")
+
+    def test_features_first_checks_gaps_before_deciding(self):
+        # D-042 + lección de D-037: el conteo de [CRÍTICO] abiertos gobierna dos ramas
+        # duras (detenerse / --allow-open-critical-gaps). Si el script corre DESPUÉS de
+        # decidir, la decisión sigue siendo la lectura del fork y el check es decorativo.
+        self.install("all")
+        skill = (self.skill_dir("wf-spec-features-first") / "SKILL.md").read_text(encoding="utf-8")
+        # Acotar al Paso 2.5: `--allow-open-critical-gaps` tambien aparece en el
+        # argument-hint del frontmatter, que no es la rama que gobierna.
+        start = skill.find("## Paso 2.5")
+        self.assertNotEqual(start, -1, "falta el Paso 2.5 (gate de gaps)")
+        end = skill.find("## Paso 3", start)
+        gate = skill[start:end if end != -1 else len(skill)]
+        check_at = gate.find("sdd-analysis-gaps.py")
+        branch_at = gate.find("--allow-open-critical-gaps")
+        self.assertNotEqual(check_at, -1, "wf-spec-features-first no consulta el script (D-042)")
+        self.assertNotEqual(branch_at, -1, "falta la rama --allow-open-critical-gaps")
+        self.assertLess(check_at, branch_at,
+                        "el --check debe correr ANTES de la rama que gobierna (D-042): "
+                        "si no, la decisión vuelve a ser la lectura del informe")
+        self.assertIn("VACUOUS", gate,
+                      "no advierte del veredicto VACUOUS del check (D-042)")
+
+    def test_installed_agents_declare_no_memory(self):
+        # D-041: ningun agente instalado declara `memory:`. El estado del proyecto
+        # vive en sus artefactos; la memoria de agente sobrevive fuera de ellos y
+        # ningun gate, script ni check la ve ni la invalida.
+        self.install("all")
+        agents = sorted((self.claude / "agents").glob("*.md"))
+        self.assertTrue(agents, "no se instalo ningun agente")
+        for agent in agents:
+            fm = agent.read_text(encoding="utf-8").split("---")[1]
+            for line in fm.splitlines():
+                self.assertFalse(line.startswith("memory:"),
+                                 f"{agent.name} declara `{line.strip()}` (ver D-041)")
+
+    def test_installed_wf_delegate_synchronously(self):
+        # D-043: toda wf- instalada que prescriba delegar por la tool `Agent` pasa
+        # `run_in_background: false`. Los subagentes corren en background por
+        # defecto (Claude Code >= v2.1.198): sin el flag el orquestador no recibe
+        # el resultado y acaba sondeando el disco (busy-wait medido en CU-3.a).
+        self.install("all")
+        offenders = []
+        for skill in sorted(self.claude.glob("skills/wf-*/SKILL.md")):
+            body = skill.read_text(encoding="utf-8")
+            delegates = ("Agent(" in body or "tool `Agent`" in body
+                         or "`Agent` tool" in body)
+            if delegates and "run_in_background: false" not in body:
+                offenders.append(skill.parent.name)
+        self.assertEqual(offenders, [],
+                         f"delegan por `Agent` sin `run_in_background: false` (D-043): "
+                         f"{offenders}")
+
+    def test_features_first_delegates_by_agent_not_bare_slash(self):
+        # D-043: los cinco puntos de delegacion de features-first usan el MISMO
+        # mecanismo, nombrado. Dejar "invoca /wf-spec-analyze" al lado de un
+        # Agent(...) explicito es el hueco que el fork rellenó con `Skill` y un
+        # busy-wait de `Monitor` + `ls`.
+        self.install("all")
+        skill = (self.skill_dir("wf-spec-features-first") / "SKILL.md").read_text(encoding="utf-8")
+        for sub, agent in (("wf-spec-analyze", "sdd-spec-explorer"),
+                           ("wf-spec-discover", "sdd-spec-explorer"),
+                           ("wf-spec-fast-track", "sdd-spec-writer"),
+                           ("wf-spec-conflict", "sdd-spec-auditor"),
+                           ("wf-spec-readiness", "sdd-spec-auditor")):
+            at = skill.find(sub)
+            self.assertNotEqual(at, -1, f"features-first ya no delega en {sub}")
+            # El subagent_type correcto aparece en el entorno del punto de delegacion.
+            near = skill[max(0, at - 700):at + 700]
+            self.assertIn(agent, near,
+                          f"la delegacion de {sub} no nombra `subagent_type: {agent}` (D-043)")
+        for bare in ("invoca `/wf-spec-analyze", "Invoca `/wf-spec-discover",
+                     "Invoca `/wf-spec-readiness", "invoca `/wf-spec-conflict"):
+            self.assertNotIn(bare, skill,
+                             f"queda una delegacion sin tool nombrada: «{bare}» (D-043)")
+
     def test_prd_change_reopens_seal(self):
         # D-028: un cambio de PRD reabre el sello (status in-review + Aprobado por
         # a pendiente); el sello solo lo re-establece wf-prd-review.

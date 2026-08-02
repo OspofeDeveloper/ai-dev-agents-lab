@@ -120,6 +120,13 @@ El frontmatter no cuenta. El contador parte desde la primera línea del body (`#
 
 El linter aplica esto como blocking: `FORK-ASKUSER-CONFLICT`.
 
+**Delegación: un solo mecanismo, síncrono, sin sondeo ([[D-043]]).** Una `wf-*` que delega **nombra la tool exacta en cada punto de delegación**, no "invoca `/wf-x`": un hueco lo rellena el agente en ejecución y elige mal — y `allowed-tools` no lo impide, porque **no es enforcement duro** ([[D-038]]). Si dentro de una misma skill hay varios puntos de delegación, todos usan **el mismo** mecanismo; prescribir la tool en uno y dejar "invoca" en los de al lado es la forma exacta del hueco.
+
+- **Si delega por la tool `Agent`, pasa siempre `run_in_background: false`.** Desde Claude Code v2.1.198 los subagentes corren en **background por defecto**: sin el flag, el orquestador no recibe el resultado y el paso siguiente opera sobre un artefacto a medio escribir. El flag **no** rompe el paralelismo: N llamadas emitidas en un único mensaje siguen corriendo a la vez, solo que el mensaje no vuelve hasta que todas terminan.
+- **Espera el resultado de la tool.** No deduzcas que un delegado terminó **sondeando el filesystem** (`ls`/`find` en bucle sobre el directorio de artefactos, `Monitor` sobre el fichero que va a escribir) ni relances un segundo agente: eso no es esperar, es un race de doble escritura sobre el mismo artefacto.
+
+El linter aplica esto como blocking: `AGENT-DISPATCH-UNSYNCED`.
+
 **Separación `description` / `when_to_use` (convención oficial de metadata de skills — SSoT):**
 
 Esta es la regla canónica para los campos `description` y `when_to_use` del frontmatter de cualquier `SKILL.md` del ecosistema. Aplica el mismo contrato que Claude Code usa para enrutar skills.

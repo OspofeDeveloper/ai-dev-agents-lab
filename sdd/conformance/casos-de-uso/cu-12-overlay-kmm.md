@@ -73,9 +73,14 @@ happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es
      con el estado técnico real (targets, arquitectura, DI, networking, auth, storage,
      recursos, navegación, testing, build commands) — fundamentado en el código, no
      inventado.
+   → **Delegación síncrona ([[D-043]]):** invoca a `kmm-explorer` con la tool `Agent` y
+     **`run_in_background: false`**, y **espera el contenido que devuelve** — es lo que se
+     escribe acto seguido. **FALLO:** escribir el `kmm_project_state.md` antes de tener el
+     retorno, o averiguar si el explorer acabó sondeando el disco. En los logs.
 
-**Resultado:** PASS si genera el estado técnico trazado al repo real · FALLO si fabrica
-piezas que el proyecto no tiene, o no produce el `kmm_project_state.md`.
+**Resultado:** PASS si genera el estado técnico trazado al repo real esperando al explorer ·
+FALLO si fabrica piezas que el proyecto no tiene, no produce el `kmm_project_state.md`, o lo
+escribe sin haber esperado el retorno del agente.
 **Desviación → reportar:** issue citando `CU-12.a`.
 
 ## CU-12.b — Init en modo configure y guarda de re-ejecución
