@@ -22,7 +22,7 @@ para garantizar que ningún skill se queda sin casos en los cuatro ejes de prueb
 
 ## Progreso
 
-**Revisadas: 48 / 48** ✅ · Completadas: 47 · Revisadas sin huecos: 1 · Con huecos: 0 · Pendientes: 0
+**Revisadas: 48 / 48** ✅ · Completadas: 48 · Revisadas sin huecos: 0 · Con huecos: 0 · Pendientes: 0
 
 > **Auditoría completa.** Todas las fases del core revisadas: bootstrap (2) · prd (4) · spec (13) ·
 > design (14) · plan (2) · tasks (7) · meta (6). Las skills meta entran en la batería vía
@@ -50,9 +50,9 @@ para garantizar que ningún skill se queda sin casos en los cuatro ejes de prueb
 
 | Skill | Args | Mecanismo (agente/script/hook) | CU que lo ejercitan | Happy | Edge | Harness | Args OK | Estado | Huecos detectados |
 |---|---|---|---|---|---|---|---|---|---|
-| wf-prd-create | `<dir_proyecto>` `[--source <notas.md>]` `[--output <prd.md>]` | prd-expert; grep `[ASUNCIÓN]`; Regla 12 | CU-2.a/b/c/d · CU-13.a · CU-11.b/g | ✅ | ✅ | ✅ | 🟡 | COMPLETADO | `--output` a ruta custom no tiene caso concreto (CU-11.b/g cubren `--source`/oral) |
-| wf-prd-review | `<prd.md>` | prd-expert; grep `[ASUNCIÓN]`; sello `Aprobado por:` | CU-2.e/f/g/h · CU-13.a | ✅ | ✅ | ✅ | — | REVISADO | Arg único posicional; gates de asunciones y autoaprobación cubiertos |
-| wf-prd-change | `<prd.md> --new-reqs <cambio.md>` | prd-expert; kb-product-change-governance; `changes/CR-XXX/` | CU-7.a/b/c · CU-13.a · CU-11.g | ✅ | ✅ | ✅ | ✅ | COMPLETADO | precondición de fichero inexistente sin caso propio (patrón ya en CU-2.c) |
+| wf-prd-create | `<dir_proyecto>` `[--source <notas.md>]` `[--output <prd.md>]` | prd-expert; grep `[ASUNCIÓN]`; Regla 12 | CU-2.a/b/c/d/i · CU-13.a · CU-11.b/g | ✅ | ✅ | ✅ | ✅ | COMPLETADO | `--output` a ruta custom cubierto por **CU-2.i** (gate [[D-025]], sellada 2026-07-15); `--source`/oral por CU-11.b/g |
+| wf-prd-review | `<prd.md>` | prd-expert; `sdd-prd-ready.py` (1:1 + veredicto), `sdd-prd-deps.py` (grafo + backstop `--check`), `sdd-prd-apply.py` (`--confirm/--edit/--reject/--seal/--reopen`), `sdd-prd-frontmatter.py` | CU-2.e/f/g/h/j · CU-13.a | ✅ | ✅ | ✅ | — | COMPLETADO | Arg único posicional. Bloque cerrado 2026-07-30: gate de asunciones y no-autoaprobación (2.e/2.f), enrutado por tipo de artefacto (2.g), no-reescritura byte-idéntica (2.h) y cascada determinista de dependencias (2.j: orden del backstop, 3 desenlaces, consecuencia en el momento, ámbito de edición) |
+| wf-prd-change | `<prd.md> --new-reqs <cambio.md\|texto> [--defer-decisions]` | **hilo principal** + gate (`AskUserQuestion`); prd-expert (analiza read-only, escribe por delegación); kb-product-change-governance; `sdd-prd-apply.py --reopen`; `changes/CR-XXX/` | CU-7.a/b/c/**n** · CU-13.a · CU-11.g | ✅ | ✅ | ✅ | ✅ | COMPLETADO | Re-arquitecturada por [[D-040]]: gate obligatorio de clasificación + bifurcaciones (**CU-7.n**, nueva) y modo `--defer-decisions` para la cascada. `--new-reqs` admite texto inline → **CU-11.g obsoleto** en su ejemplo canónico de "exige fichero". Precondición de fichero inexistente sin caso propio (patrón ya en CU-2.c) |
 | wf-prd-change-cascade | `<prd.md> [--new-reqs] [--features F-…] [--review-before-apply] [--skip-design] [--dry-run]` | orquestador cascade (sin agente); invoca change→sync-impact→spec-sync→conflict/readiness→design-sync | CU-7.f/g/h/i/j/k · CU-13.a · CU-11.f | ✅ | ✅ | ✅ | ✅ | COMPLETADO | — |
 
 ---

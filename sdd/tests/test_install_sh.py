@@ -270,11 +270,78 @@ class InstallAllTest(InstallBase):
         # a pendiente); el sello solo lo re-establece wf-prd-review.
         self.install("all")
         skill = (self.skill_dir("wf-prd-change") / "SKILL.md").read_text(encoding="utf-8")
-        self.assertIn("reabre el sello", skill,
+        self.assertIn("reabre el sello", skill.lower(),
                       "wf-prd-change pierde la reapertura del sello (ver D-028)")
         self.assertIn("in-review", skill)
         self.assertIn("--reopen", skill,
                       "wf-prd-change no reabre el sello por script determinista (D-032)")
+
+    def test_prd_change_marks_its_inferences(self):
+        # D-039: la anti-fabricacion (Regla 12) rige cada escritura sobre el PRD, no
+        # solo la creacion. wf-prd-change marca [ASUNCION] lo que no traza a la
+        # peticion; en conformance CU-7.b pasada 2 escribio una capacidad inferida y
+        # estrecho una exclusion existente sin marca alguna -> el PRD quedaba 0=0 y el
+        # review lo declaraba LISTO sobre contenido fabricado.
+        self.install("all")
+        skill = (self.skill_dir("wf-prd-change") / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("[ASUNCIÓN]", skill,
+                      "wf-prd-change no obliga a marcar sus inferencias (D-039)")
+        self.assertIn("[ASN-XXX]", skill,
+                      "wf-prd-change no exige la entrada de la seccion de asunciones (D-039)")
+        # La escapatoria concreta observada: estrechar una exclusion se siente como
+        # higiene y no lo es. Debe estar nombrada, no solo implicada por la regla general.
+        self.assertIn("Estrechar o reinterpretar una exclusión", skill,
+                      "wf-prd-change debe nombrar el estrechamiento de exclusiones (D-039)")
+        # La otra escapatoria: diferir a Spec una decision de alcance.
+        self.assertIn("materia de Spec", skill,
+                      "wf-prd-change debe atajar el 'esto es materia de Spec' (D-039)")
+        # No puede resolverlas: corre en fork, asi que no puede preguntar. Redactado
+        # SIN nombrar la tool: sdd-structural-lint marca FORK-ASKUSER-CONFLICT
+        # (blocking) en cuanto un skill `context: fork` menciona ese token, aunque sea
+        # para negarlo. Si esto se reescribe, mantener la formulacion negativa sin token.
+        self.assertIn("no puedes presentar preguntas al usuario", skill,
+                      "wf-prd-change debe declarar que no puede resolver las asunciones (D-039)")
+        self.assertIn("OPEN_ASSUMPTIONS", skill,
+                      "wf-prd-change debe remitir el estado abierto al gate del review (D-039)")
+
+    def test_prd_change_runs_in_main_with_gate(self):
+        # D-040: wf-prd-change deja de ser `context: fork` y se re-arquitectura al
+        # modelo de wf-prd-review (main orquesta y sostiene el gate, el prd-expert
+        # analiza y escribe). Un fork no puede preguntar, asi que la clasificacion y
+        # las bifurcaciones de alcance se decidian sin humano.
+        self.install("all")
+        skill = (self.skill_dir("wf-prd-change") / "SKILL.md").read_text(encoding="utf-8")
+        head = skill.split("---")[1]
+        self.assertNotIn("context: fork", head,
+                         "wf-prd-change no puede seguir siendo un fork: no podria preguntar (D-040)")
+        self.assertIn("AskUserQuestion", head,
+                      "wf-prd-change necesita AskUserQuestion para su gate (D-040)")
+        self.assertIn("Agent", head,
+                      "wf-prd-change delega el analisis y la escritura via Agent (D-040)")
+        # Simetria con wf-prd-review: main no lee ni escribe el artefacto.
+        self.assertNotIn("Read", head.split("allowed-tools:")[1].split("\n")[0],
+                         "main no debe declarar Read: la lectura es del prd-expert (D-031/D-038)")
+        self.assertNotIn("Write", head.split("allowed-tools:")[1].split("\n")[0],
+                         "main no debe declarar Write: la escritura es del prd-expert (D-038)")
+        self.assertIn("Siempre, sin excepción por trivialidad", skill,
+                      "el gate no puede saltar segun el criterio del agente (D-040)")
+        self.assertIn("--defer-decisions", skill,
+                      "wf-prd-change pierde el modo sin gate para la cascada (D-040)")
+        self.assertIn("la ambigüedad se marca", skill,
+                      "el modo sin gate pierde su invariante: marcar en vez de decidir (D-040)")
+
+    def test_prd_change_cascade_defers_decisions(self):
+        # D-040: la cascada es un fork y no puede heredar el gate de wf-prd-change,
+        # asi que la invoca con --defer-decisions. Su "checkpoint humano (1) aprobar el
+        # cambio de producto" nunca fue un checkpoint: era un fork invocando a un fork.
+        self.install("all")
+        skill = (self.skill_dir("wf-prd-change-cascade") / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("--defer-decisions", skill,
+                      "la cascada debe invocar wf-prd-change con --defer-decisions (D-040)")
+        self.assertIn("decisión aplazada", skill,
+                      "la cascada debe dejar de llamar checkpoint humano al paso 3 (D-040)")
+        self.assertIn("wf-prd-review", skill,
+                      "la cascada debe remitir la decision aplazada al gate del review (D-040)")
 
     def test_prd_review_uses_dependency_graph(self):
         # D-029/Q2a: el gate de asunciones carga el grafo determinista de

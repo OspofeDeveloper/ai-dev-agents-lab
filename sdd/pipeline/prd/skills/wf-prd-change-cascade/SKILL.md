@@ -15,7 +15,7 @@ Tu objetivo es ejecutar de principio a fin la cadena de propagación de un cambi
 
 **Regla de oro:** eres un orquestador puro. No clasificas el cambio, no analizas impacto, no editas specs ni mides deriva tú mismo. Invocas los workflows existentes en el orden correcto, consolidas sus salidas y **paras solo en los checkpoints humanos reales**. Cada workflow invocado ya delega a su agente y carga sus KBs; tú no duplicas ese conocimiento.
 
-**Filosofía de paradas:** corre sin fricción todo lo mecánico y read-only (medición de impacto, conflict, readiness, design-sync, reporte de stale) **Y aplica automáticamente los deltas de spec inequívocos** (severidad `minor` + acción `delta`). Detente únicamente donde una persona debe decidir: (1) aprobar el cambio de producto (`wf-prd-change`), (2) features con cambio no trivial (`major` / `manual_review` / `rediscover`), que NO se resincronizan solas, (3) decisiones visuales de Design (diagnóstico de `wf-design-sync` → el usuario decide), (4) revalidación de plan y aprobación de deuda. El checkpoint de features no triviales **no aborta el cascade**: se presentan al usuario y se continúa aplicando los deltas inequívocos. `--review-before-apply` restaura la parada conservadora antes de cualquier apply (incluso los `minor`).
+**Filosofía de paradas:** corre sin fricción todo lo mecánico y read-only (medición de impacto, conflict, readiness, design-sync, reporte de stale) **Y aplica automáticamente los deltas de spec inequívocos** (severidad `minor` + acción `delta`). Detente únicamente donde una persona debe decidir: (1) ~~aprobar el cambio de producto~~ — **corregido por [[D-040]]:** este paso **no** es un checkpoint humano y nunca lo fue (eras un fork invocando a otro fork, sin nadie a quien preguntar). El cambio se aplica con `--defer-decisions` y su decisión queda **aplazada** al gate de `wf-prd-review`, fuera de este cascade; (2) features con cambio no trivial (`major` / `manual_review` / `rediscover`), que NO se resincronizan solas, (3) decisiones visuales de Design (diagnóstico de `wf-design-sync` → el usuario decide), (4) revalidación de plan y aprobación de deuda. El checkpoint de features no triviales **no aborta el cascade**: se presentan al usuario y se continúa aplicando los deltas inequívocos. `--review-before-apply` restaura la parada conservadora antes de cualquier apply (incluso los `minor`).
 
 ---
 
@@ -45,14 +45,18 @@ Esta resolución gobierna la **profundidad adaptativa**: una fase no instalada n
 
 ---
 
-## Paso 3 (checkpoint humano): Gestionar el cambio de producto
+## Paso 3 (decisión aplazada): Gestionar el cambio de producto
 
-**Solo si se pasó `--new-reqs`.** Invoca con el Skill tool:
-> `wf-prd-change <prd.md> --new-reqs <cambio.md>`
+**Solo si se pasó `--new-reqs`.** Invoca con el Skill tool, **siempre con `--defer-decisions`**:
+> `wf-prd-change <prd.md> --new-reqs <cambio.md> --defer-decisions`
+
+**Por qué el flag ([[D-040]]).** `wf-prd-change` corre en el hilo principal y tiene un **gate obligatorio**: confirmar la clasificación y resolver las bifurcaciones de alcance preguntando al usuario. Tú eres un subagente y **no puedes presentar preguntas al usuario**, así que **tampoco puedes heredar su gate**. `--defer-decisions` omite ese gate bajo un invariante duro: **sin humano, la ambigüedad se marca, nunca se decide** — cada bifurcación se resuelve por la lectura más conservadora y queda marcada `[ASUNCIÓN]`, con las alternativas anotadas en `change-request.md`.
+
+**La decisión humana no desaparece: se aplaza.** El PRD sale `OPEN_ASSUMPTIONS` y quien la resuelve, una a una, es el gate de `wf-prd-review` — que **no** forma parte de este cascade. Por eso este paso ya no se llama "checkpoint humano": aquí no hay humano, y llamarlo así era falso desde el principio (un fork invocando a un fork, sin nadie a quien preguntar).
 
 Espera a que termine y lee su veredicto:
-- Si clasificó el cambio como **solo `CLARIFICATION`** (no reescribió el PRD) → **DETENTE** e informa: el cambio no altera el producto comprometido; el cascade de sync no aplica. Recomienda `wf-spec-gap-resolve` o `wf-spec-delta` según el artefacto afectado, y termina.
-- Si hubo **cambio de producto** (PRD actualizado, `changes/CR-XXX/` registrado) → continúa al Paso 4.
+- Si clasificó el cambio como **solo `CLARIFICATION`** (no reescribió el PRD) → **DETENTE** e informa: el cambio no altera el producto comprometido; el cascade de sync no aplica. Recomienda `wf-spec-gap-resolve` o `wf-spec-delta` según el artefacto afectado, y termina. Añade que la clasificación **no la confirmó un humano**, así que si no está de acuerdo puede rehacer el cambio con `wf-prd-change` a solas (que sí abre el gate).
+- Si hubo **cambio de producto** (PRD actualizado, `changes/CR-XXX/` registrado) → continúa al Paso 4. **Informa en el reporte final** cuántas asunciones quedaron abiertas y que el PRD **no puede volver a sellarse** hasta pasar por `wf-prd-review`.
 
 Si NO se pasó `--new-reqs`: verifica que existe `product-changelog.md` o `changes/` junto al PRD. Si no existe ninguno → **DETENTE** e informa: no hay constancia de un cambio gestionado; arranca con `--new-reqs <cambio.md>` o ejecuta `wf-prd-change` primero. Si existe → continúa.
 

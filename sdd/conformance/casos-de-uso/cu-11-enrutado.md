@@ -169,14 +169,25 @@ o salta un gate por su cuenta añadiendo el override.
 de viva voz sin pasar fichero.
 **Mecanismo:** orquestador → resolución del argumento. Algunos skills aceptan texto inline
 (`wf-bug <descripcion.md|texto>`, `wf-design-feedback capture <feedback.md|texto>`); otros
-exigen un fichero (`wf-prd-change --new-reqs <cambio.md>`).
+exigen un fichero.
+
+> ⚠ **El ejemplo canónico de "exige fichero" quedó obsoleto ([[D-040]], 2026-07-30).**
+> `wf-prd-change --new-reqs` **ya admite texto inline**. No es una concesión: la skill pasó al hilo
+> principal y **main no escribe ficheros**, así que exigir un `.md` obligaría a main a materializarlo,
+> contra [[D-031]]/[[D-038]]. Lo que importa no es la forma de entrada sino que el **texto literal**
+> quede recogido en `changes/CR-XXX/change-request.md`. Esto además cierra un fallo real medido en
+> CU-7.b pasada 1: el `--new-reqs` estaba declarado **obligatorio** en el `argument-hint` y en las
+> precondiciones, el orquestador pasó texto inline, el `prd-expert` lo detectó y continuó igual — un
+> "obligatorio" que no ataba, la misma familia que `allowed-tools` no siendo una jaula. **Si se busca
+> un skill que sí exija fichero, hay que elegir otro** antes de ejecutar este caso.
 
 1. Describes un bug o un feedback de viva voz ("la app crashea al pagar en grupo").
    → **Esperado:** usa la forma de **texto inline** que el skill admite, sin exigirte un `.md`.
-2. Describes un cambio de producto de viva voz y el skill exige `--new-reqs <fichero>`.
-   → **Esperado:** captura tu descripción a un documento de cambio (o te pide el fichero)
-     y lo pasa como `--new-reqs`; **no** falla silenciosamente por falta de argumento ni
-     inventa una ruta inexistente.
+2. Describes un cambio de producto de viva voz **a un skill que sí exija fichero**.
+   → **Esperado:** captura tu descripción a un documento (o te pide el fichero) y lo pasa como
+     argumento; **no** falla silenciosamente por falta de argumento ni inventa una ruta inexistente.
+   → **Ojo:** un `argument-hint` que diga "obligatorio" **no es enforcement**. Si el skill continúa
+     con texto inline pese a declararlo obligatorio, es FALLO del skill (o su declaración sobra).
 
 **Resultado:** PASS si usa texto inline donde se admite y materializa/pide el fichero donde
 se exige · FALLO si exige un `.md` que el skill no necesita, o invoca con un `--new-reqs`

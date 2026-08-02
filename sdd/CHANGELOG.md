@@ -2,6 +2,29 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.76.0 — 2026-07-30
+
+**`wf-prd-change` sale del fork: gate humano obligatorio, y sin humano la ambigüedad se marca** — [[DECISIONS D-040]] (pieza 2 de [[DECISIONS D-039]]). La skill era `context: fork`: un subagente que clasificaba el cambio, decidía su alcance y escribía el PRD **sin ningún punto donde un humano pudiera intervenir** — el gate no era opcional, era imposible por construcción. En CU-7.b la pasada 1 pareció correcta solo porque el agente se salió del guion y el orquestador improvisó la pregunta; la pasada 2, ante una bifurcación equivalente, la resolvió sola y estrechó una exclusión del PRD. 1 de 2.
+
+- ⚠ **Re-arquitecturada al modelo de `wf-prd-review`:** fuera `context: fork` y `agent:`; `allowed-tools: [Bash, Agent, AskUserQuestion]` — **sin `Read` ni `Write`**. Main orquesta y sostiene el gate; el `prd-expert` **analiza read-only** (Paso 4) y **después** escribe PRD y traza por delegación (Paso 6). Que el análisis no escriba es lo que hace posible el gate: no se pide permiso sobre algo ya escrito.
+- ⚠ **Gate (Paso 5): clasificación + bifurcaciones de alcance, siempre y en un solo `AskUserQuestion`.** Sin excepción por trivialidad — decidir *cuándo* preguntar es el juicio que falló. El humano puede corregir la clasificación; main no enruta contra el experto ([[DECISIONS D-038]] intacto).
+- ⚠ **Nuevo `--defer-decisions`** para invocaciones desde un subagente, bajo invariante duro: **sin humano, la ambigüedad se marca — nunca se decide.** Cada bifurcación va por la lectura más conservadora **y marcada `[ASUNCIÓN]`**; la clasificación se reporta como *no confirmada por humano*; el PRD sale `OPEN_ASSUMPTIONS`. La decisión no se pierde: se **aplaza** al gate del review.
+- ⚠ **`wf-prd-change-cascade` la invoca con `--defer-decisions`.** Su "checkpoint humano (1) aprobar el cambio de producto" **nunca fue un checkpoint**: era un fork invocando a otro fork, sin nadie a quien preguntar. Corregido en su filosofía de paradas y en el Paso 3.
+- ⚠ **`--new-reqs` admite texto inline**, no solo fichero: exigir fichero obligaría a **main a escribirlo**, y main ya no escribe. Lo que importa es que el **texto literal** quede recogido en `change-request.md`. Cierra el hallazgo de CU-7.b pasada 1 y **deja obsoleto el ejemplo canónico de CU-11.g**.
+- **Aprendizaje:** un checkpoint humano declarado en prosa no es un checkpoint si la arquitectura no puede sostenerlo — al auditar paradas, comprobar **quién puede preguntar**, no qué dice el documento. Y el propio `sdd-structural-lint` ya prescribía este arreglo en el mensaje de su regla `FORK-ASKUSER-CONFLICT`: una regla de lint cuyo mensaje contiene una decisión de arquitectura pendiente es una decisión que se paga en intereses.
+
+## 0.75.0 — 2026-07-30
+
+**La anti-fabricación rige cada escritura sobre el PRD, no solo la creación** — [[DECISIONS D-039]]. `wf-prd-change` escribe en el mismo documento que `wf-prd-create` y su SKILL **no mencionaba `[ASUNCIÓN]` en ningún sitio**: el invariante "toda afirmación de negocio traza al origen o va marcada" se sostenía en la creación y **moría en el primer cambio**. Medido en CU-7.b pasada 2: con cero marcas escribió una capacidad inferida (*"consultar el conjunto de deducibles"* cuando solo se pidió *marcar*) y **estrechó una exclusión explícita** del PRD, decidiendo por su cuenta dónde queda la frontera fiscal. Y el check mecánico lo confirmaba: sin marcas, `sdd-prd-ready.py` da `0 = 0` y el review declara **`LISTO` sobre contenido fabricado**.
+
+- ⚠ **`wf-prd-change` Paso 5:** obligación de marcar `[ASUNCIÓN]` + entrada `[ASN-XXX]` (formato e invariante 1:1 de `kb-prd-expert`) todo lo que escriba y no trace al `--new-reqs` o a lo que dijo el usuario.
+- ⚠ **Las dos escapatorias, nombradas:** (1) **estrechar o reinterpretar una exclusión o regla transversal existente es decisión de producto y va marcada** — se cuela porque se siente como higiene; (2) **no vale diferir a `wf-spec-analyze` una decisión de alcance** — materia de Spec es el *cómo*, la frontera del producto es materia de PRD.
+- ⚠ **No puede resolverlas él:** corre en `context: fork` **sin `AskUserQuestion`**, así que no pregunta y por tanto no decide. El PRD queda `OPEN_ASSUMPTIONS` y las resuelve el gate de `wf-prd-review` — maquinaria ya sellada en 6 pasadas, sin añadir gate nuevo.
+- **Numeración e IDs:** continúa desde el `[ASN-XXX]` más alto presente; si el review ya vació y eliminó la sección, **la recrea** arrancando en `ASN-001`. Como los IDs se reciclan entre ciclos, `change-request.md` recoge el **texto** de cada asunción introducida.
+- **Pasos 7 y 8:** el `change-request.md` lista las asunciones introducidas; el mensaje de cierre distingue si quedaron abiertas (→ `wf-prd-review` primero) o no.
+- **Aprendizaje:** un invariante mantenido por *un* workflow no es un invariante del artefacto — hay que enumerar **quién más escribe ese fichero**. Aquí el verificador mecánico *confirmaba* el invariante precisamente porque lo fabricado no se había marcado: **un check de consistencia entre marcas y entradas no detecta la ausencia de ambas**.
+- Pieza 2 pendiente y decidida aparte: re-arquitecturar `wf-prd-change` al modelo de `wf-prd-review` (main orquesta, el experto analiza en fork, el gate vive en main).
+
 ## 0.74.0 — 2026-07-23
 
 **El ámbito de edición del review es cerrado y explícito** — [[DECISIONS D-038]]. En tres runs de CU-2.j la **misma** clase de edición (limpiar contaminación dura decidida y realinear prosa nivel b que un rechazo dejó falsa) se resolvió de tres formas: delegar al `prd-expert` · enrutar a `wf-prd-change` · **editar en el hilo principal con `Update`**. En el segundo caso el orquestador contradijo a su propio experto, que ya había clasificado el ajuste como aclaración y no cambio de producto.
