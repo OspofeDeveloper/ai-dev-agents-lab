@@ -356,6 +356,22 @@ class InstallAllTest(InstallBase):
             self.assertNotIn(bare, skill,
                              f"queda una delegacion sin tool nombrada: «{bare}» (D-043)")
 
+    def test_features_first_delegates_execute_not_redispatch(self):
+        # D-044: el prompt del delegado le pide ejecutar la skill EL MISMO. Decirle
+        # "Ejecuta el skill /wf-X" le hace usar el Skill tool, que forkea otro
+        # subagente (un clon suyo) y reintroduce la asincronia un nivel mas abajo.
+        self.install("all")
+        skill = (self.skill_dir("wf-spec-features-first") / "SKILL.md").read_text(encoding="utf-8")
+        self.assertNotIn("Ejecuta el skill /wf-", skill,
+                         "el prompt del delegado le hace re-despachar con `Skill` (D-044)")
+        for sub in ("wf-spec-analyze", "wf-spec-discover", "wf-spec-fast-track",
+                    "wf-spec-conflict", "wf-spec-readiness"):
+            self.assertIn(f".claude/skills/{sub}/SKILL.md", skill,
+                          f"la delegacion de {sub} no le dice qué SKILL.md leer (D-044)")
+        self.assertGreaterEqual(skill.count("NO uses el `Skill` tool")
+                                + skill.count("NO uses el Skill tool"), 5,
+                                "faltan prohibiciones del `Skill` tool en los 5 prompts (D-044)")
+
     def test_prd_change_reopens_seal(self):
         # D-028: un cambio de PRD reabre el sello (status in-review + Aprobado por
         # a pendiente); el sello solo lo re-establece wf-prd-review.

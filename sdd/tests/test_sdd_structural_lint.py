@@ -184,6 +184,40 @@ class StructuralLintTest(unittest.TestCase):
         _, types = types_in(self.root)
         self.assertNotIn("AGENT-DISPATCH-UNSYNCED", types)
 
+    # === AGENT-PROMPT-REDISPATCH (D-044) ==================================
+    def test_agent_prompt_redispatch_flagged(self):
+        # "Ejecuta el skill /wf-X" hace que el delegado use el Skill tool, que
+        # forkea otro subagente (un clon suyo si la sub-skill declara ese agent:).
+        write(self.root / "spec" / "skills" / "wf-orq" / "SKILL.md",
+              skill_md("wf-orq",
+                       'Delega con `Agent`:\n\n```\nAgent(\n'
+                       '  subagent_type: "sdd-spec-explorer",\n'
+                       '  run_in_background: false,\n'
+                       '  prompt: "Ejecuta el skill /wf-spec-analyze con: <prd.md>"\n)\n```\n'))
+        r, types = types_in(self.root)
+        self.assertIn("AGENT-PROMPT-REDISPATCH", types)
+        self.assertIn("blocking", r.stdout)
+
+    def test_agent_prompt_self_execution_not_flagged(self):
+        write(self.root / "spec" / "skills" / "wf-orq" / "SKILL.md",
+              skill_md("wf-orq",
+                       'Delega con `Agent`:\n\n```\nAgent(\n'
+                       '  subagent_type: "sdd-spec-explorer",\n'
+                       '  run_in_background: false,\n'
+                       '  prompt: "Lee .claude/skills/wf-spec-analyze/SKILL.md y ejecuta '
+                       'sus pasos TU MISMO sobre: <prd.md>. NO uses el Skill tool."\n)\n```\n'))
+        _, types = types_in(self.root)
+        self.assertNotIn("AGENT-PROMPT-REDISPATCH", types)
+
+    def test_kb_describing_redispatch_not_flagged(self):
+        # La kb que PROHIBE el anti-patron tiene que poder nombrarlo.
+        write(self.root / "meta" / "skills" / "kb-guia" / "SKILL.md",
+              skill_md("kb-guia",
+                       "Nunca escribas un prompt que diga «Ejecuta el skill /wf-X»: "
+                       "el delegado re-despacha con el `Skill` tool."))
+        _, types = types_in(self.root)
+        self.assertNotIn("AGENT-PROMPT-REDISPATCH", types)
+
     # === REFERENCE-PATH-MISSING ===========================================
     def test_reference_path_missing_flagged(self):
         write(self.root / "spec" / "skills" / "kb-ref" / "SKILL.md",

@@ -125,7 +125,9 @@ El linter aplica esto como blocking: `FORK-ASKUSER-CONFLICT`.
 - **Si delega por la tool `Agent`, pasa siempre `run_in_background: false`.** Desde Claude Code v2.1.198 los subagentes corren en **background por defecto**: sin el flag, el orquestador no recibe el resultado y el paso siguiente opera sobre un artefacto a medio escribir. El flag **no** rompe el paralelismo: N llamadas emitidas en un único mensaje siguen corriendo a la vez, solo que el mensaje no vuelve hasta que todas terminan.
 - **Espera el resultado de la tool.** No deduzcas que un delegado terminó **sondeando el filesystem** (`ls`/`find` en bucle sobre el directorio de artefactos, `Monitor` sobre el fichero que va a escribir) ni relances un segundo agente: eso no es esperar, es un race de doble escritura sobre el mismo artefacto.
 
-El linter aplica esto como blocking: `AGENT-DISPATCH-UNSYNCED`.
+- **El delegado ejecuta la sub-skill; no la re-despacha ([[D-044]]).** Si el prompt dice *"Ejecuta el skill `/wf-X`"*, el delegado usará el `Skill` tool — y como toda `wf-*` que hace trabajo lleva `context: fork`, eso **forkea un subagente más**. Cuando la sub-skill declara `agent:` y ese agente es el `subagent_type` que acabas de lanzar, el fork es un **clon del delegado**: un envoltorio que solo recibe el reporte del de abajo y lo re-emite. Medido: ~210 KB de contexto duplicado **por delegación**, y el salto extra vuelve a ser asíncrono (el `Skill` tool no tiene `run_in_background`), con el delegado respondiendo *"lo he lanzado, te aviso"* antes de tener nada. El prompt correcto le dice que **lea el `SKILL.md` y ejecute sus pasos él mismo**, le prohíbe el `Skill` tool, le resuelve `${CLAUDE_SKILL_DIR}` a `.claude/skills/<skill>/` y le pide qué informar al terminar.
+
+El linter aplica esto como blocking: `AGENT-DISPATCH-UNSYNCED` y `AGENT-PROMPT-REDISPATCH`.
 
 **Separación `description` / `when_to_use` (convención oficial de metadata de skills — SSoT):**
 

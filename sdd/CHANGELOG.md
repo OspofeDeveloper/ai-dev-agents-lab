@@ -2,6 +2,16 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.80.0 — 2026-08-02
+
+**El delegado ejecuta la sub-skill; pedirle que la invoque forkea un clon suyo** — [[DECISIONS D-044]]. La pasada 2 de CU-3.a validó [[DECISIONS D-043]] (delegación con `Agent`, sin `Monitor`, sin sondeo, un solo reporte) y destapó lo que quedaba un nivel más abajo: el prompt decía *"Ejecuta el skill `/wf-spec-analyze`"*, el delegado usó el `Skill` tool y —como esa skill es `context: fork` con `agent: sdd-spec-explorer`, el **mismo** que se acababa de lanzar— forkeó un **clon**. Medido en los transcripts: el envoltorio intermedio pesó **210 KB**, casi tanto como el que hacía el trabajo.
+
+- ⚠ **Los 5 prompts de delegación de `wf-spec-features-first` cambian de forma:** de *"Ejecuta el skill `/wf-X`"* a *"lee `.claude/skills/wf-X/SKILL.md` y ejecuta sus pasos **tú mismo**; **no** uses el `Skill` tool"*, con `${CLAUDE_SKILL_DIR}` resuelto y lo que debe informar al terminar. Colapsa el salto sobrante: una delegación, síncrona de punta a punta.
+- ⚠ **Efecto en el fan-out del Paso 5:** el envoltorio se pagaba **por feature**. Con 8 features eran ~1,6 MB de contexto duplicado por pasada.
+- ⚠ **Acoplamiento explícito:** el `subagent_type` de cada delegación es el `agent:` que declara la sub-skill. Si ese `agent:` cambia, hay que cambiar el `subagent_type` con él — el prompt lo dice para que se vea.
+- **Regla nueva de lint `AGENT-PROMPT-REDISPATCH` (blocking)**, que caza el imperativo `Ejecuta el skill /wf-` en cualquier `wf-*`. Delta medido: **5 findings antes del fix, 0 después**.
+- **Corrección a [[DECISIONS D-043]]:** el problema nunca fue que `Skill` no estuviera en `allowed-tools`. **`Skill` desde un subagente es asíncrono, punto** — no tiene `run_in_background`. Por eso el arreglo no es volver a `Skill`, sino que no haya un segundo despacho.
+
 ## 0.79.0 — 2026-08-02
 
 **Una `wf-*` delega por un mecanismo nombrado y síncrono; nadie deduce del disco si un delegado terminó** — [[DECISIONS D-043]]. Medido en CU-3.a: `wf-spec-features-first` invocó su sub-workflow y se quedó en **busy-wait** — `Skill(wf-spec-analyze)` → `Monitor` sobre el artefacto → `cat` del PRD entero → `ls prd/` → *"I'll wait…"* → `ls prd/` otra vez → y el reporte final **duplicado**. Causa: el Paso 5 prescribía la tool exacta y los otros cuatro puntos de delegación decían solo *"invoca `/wf-spec-analyze`"*. Al contarlo, **7 skills delegaban por `Agent` y solo 1 pasaba `run_in_background: false`**.

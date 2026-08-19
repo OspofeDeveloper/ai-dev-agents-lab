@@ -29,6 +29,16 @@ Tu objetivo es ejecutar el flujo features-first: identificar features de un PRD 
 > (`ls`/`find` en bucle sobre el directorio de artefactos, `Monitor` sobre el fichero que va a
 > escribir) ni relances un segundo agente "por si acaso" — eso no es esperar, es un race de doble
 > escritura sobre el mismo artefacto. Si crees que no terminó, no lo compruebes: no ha terminado.
+>
+> **El delegado ejecuta la skill, no la re-despacha ([[D-044]]).** El prompt le dice que **lea el
+> `SKILL.md` y ejecute sus pasos él mismo**, y le **prohíbe** usar el `Skill` tool. El motivo es
+> estructural: las sub-skills llevan `context: fork`, así que invocarlas con `Skill` **forkea otro
+> subagente** — y como su `agent:` es el mismo que acabas de lanzar, ese fork es un **clon** del
+> delegado. Medido en CU-3.a pasada 2: el envoltorio intermedio costó **~210 KB por delegación**
+> (casi tanto como el que hacía el trabajo, porque recibe su reporte entero y lo re-emite), y ese
+> salto extra vuelve a ser **asíncrono** — el `Skill` tool no tiene `run_in_background`, así que el
+> delegado llegó a responder *"lo he lanzado en segundo plano, te aviso"* **antes de tener nada**.
+> En el fan-out del Paso 5 esto se multiplica por feature.
 
 **Sobre el flujo iterativo por subset:** las "fases" o "iteraciones" no se definen en el PRD ni en el discovery — son una decisión humana de delivery sobre qué features procesar en cada pasada. El usuario decide el subset **después** de ver el discovery; cada ejecución con `--features` actualiza `_features.md` de forma incremental, sin borrar las features ya generadas en pasadas anteriores ni las pendientes para futuras.
 
@@ -69,7 +79,7 @@ Verifica que el archivo PRD existe; si no → informa con ruta exacta y detén.
    Agent(
      subagent_type: "sdd-spec-explorer",
      run_in_background: false,
-     prompt: "Ejecuta el skill /wf-spec-analyze con los siguientes argumentos: <prd.md>"
+     prompt: "Lee `.claude/skills/wf-spec-analyze/SKILL.md` y ejecuta sus pasos TÚ MISMO sobre estos argumentos: <prd.md>. NO uses el `Skill` tool: ya eres el agente al que esa skill delega (`agent: sdd-spec-explorer`), así que invocarla te forkearía en un clon tuyo. Dentro de ese SKILL.md, `${CLAUDE_SKILL_DIR}` es `.claude/skills/wf-spec-analyze/`. Al terminar, informa del path exacto del `_analysis.md` generado, su veredicto y el nº de gaps por severidad."
    )
    ```
    Tras la ejecución, **DETENERSE** e informar al usuario. El mensaje **no puede ser genérico**: quien tiene que responder no debería bucear en el informe para saber qué le toca. Saca los IDs críticos del script (punto 3) y da path, lista de `[P-XXX]` `[CRÍTICO]` con su pregunta en una línea, y qué se sustituye:
@@ -111,7 +121,7 @@ Delega el discovery con la tool `Agent` ([[D-043]]):
 Agent(
   subagent_type: "sdd-spec-explorer",
   run_in_background: false,
-  prompt: "Ejecuta el skill /wf-spec-discover con los siguientes argumentos: <prd.md> [--analysis <analysis.md>] [--allow-derived-scope-from-analysis si aplica]"
+  prompt: "Lee `.claude/skills/wf-spec-discover/SKILL.md` y ejecuta sus pasos TÚ MISMO sobre estos argumentos: <prd.md> [--analysis <analysis.md>] [--allow-derived-scope-from-analysis si aplica]. NO uses el `Skill` tool: ya eres el agente al que esa skill delega (`agent: sdd-spec-explorer`), así que invocarla te forkearía en un clon tuyo. Dentro de ese SKILL.md, `${CLAUDE_SKILL_DIR}` es `.claude/skills/wf-spec-discover/`. Al terminar, informa del path exacto del `_discovery.md`, la lista de features (ID + nombre + actor), los shared models y si te detuviste por ambigüedad."
 )
 ```
 Espera su resultado (el de la tool, no el del disco) y obtén de él el path del `_discovery.md`. Si el discover se detuvo por shared models ambiguos → transmite el mensaje al usuario y espera resolución.
@@ -155,7 +165,7 @@ Para cada feature F-00X a generar, lanza un subagente con el `Agent` tool usando
 Agent(
   subagent_type: "sdd-spec-writer",
   run_in_background: false,
-  prompt: "Ejecuta el skill /wf-spec-fast-track con los siguientes argumentos: <prd.md> --scope-from <discovery.md> --feature F-00X [--light|--standard si se pasó o si project-init declara pipeline_mode] [--analysis <analysis.md> si disponible]"
+  prompt: "Lee `.claude/skills/wf-spec-fast-track/SKILL.md` y ejecuta sus pasos TÚ MISMO sobre estos argumentos: <prd.md> --scope-from <discovery.md> --feature F-00X [--light|--standard si se pasó o si project-init declara pipeline_mode] [--analysis <analysis.md> si disponible]. NO uses el `Skill` tool: esa skill es `context: fork` y invocarla te forkearía otro subagente en cascada. Dentro de ese SKILL.md, `${CLAUDE_SKILL_DIR}` es `.claude/skills/wf-spec-fast-track/`. Al terminar, informa del path del spec generado, nº de gaps `[CRÍTICO]` y nº de asunciones aplicadas."
 )
 ```
 
@@ -193,13 +203,13 @@ python3 .sdd/scripts/sdd-features-index.py <raíz_spec>
 
 ## Paso 7: Conflict check (si no `--skip-conflict`)
 
-Opera sobre **todas las features con spec en `features/`**, incluyendo preexistentes de iteraciones anteriores. Con ≥2 specs: por cada spec recién generado delega con la tool `Agent` ([[D-043]]), `subagent_type: "sdd-spec-auditor"` y `run_in_background: false`, con el prompt `"Ejecuta el skill /wf-spec-conflict con los siguientes argumentos: <spec.md> --features-dir <features_dir>"` (solo los nuevos se chequean contra todos; puedes emitir las N llamadas en un único mensaje). Escribe `_conflict_report.md` si hay conflictos. Sin specs nuevos → omitir.
+Opera sobre **todas las features con spec en `features/`**, incluyendo preexistentes de iteraciones anteriores. Con ≥2 specs: por cada spec recién generado delega con la tool `Agent` ([[D-043]]), `subagent_type: "sdd-spec-auditor"` y `run_in_background: false`, con el prompt `"Lee .claude/skills/wf-spec-conflict/SKILL.md y ejecuta sus pasos TÚ MISMO sobre: <spec.md> --features-dir <features_dir>. NO uses el Skill tool ([[D-044]]): ya eres su agente y te forkearía en un clon."` (solo los nuevos se chequean contra todos; puedes emitir las N llamadas en un único mensaje). Escribe `_conflict_report.md` si hay conflictos. Sin specs nuevos → omitir.
 
 ---
 
 ## Paso 8: Readiness check (si no `--skip-readiness`)
 
-Delega con la tool `Agent` ([[D-043]]), `subagent_type: "sdd-spec-auditor"` y `run_in_background: false`, con el prompt `"Ejecuta el skill /wf-spec-readiness con los siguientes argumentos: <features_dir>/"`. Genera `_readiness_report.md` en el directorio raíz de artefactos spec (junto a `_features.md`) y actualiza `_features.md` con el estado de cada feature (incluyendo `PENDIENTE_GENERACIÓN` para las no procesadas aún).
+Delega con la tool `Agent` ([[D-043]]), `subagent_type: "sdd-spec-auditor"` y `run_in_background: false`, con el prompt `"Lee .claude/skills/wf-spec-readiness/SKILL.md y ejecuta sus pasos TÚ MISMO sobre: <features_dir>/. NO uses el Skill tool ([[D-044]]): ya eres su agente y te forkearía en un clon."`. Genera `_readiness_report.md` en el directorio raíz de artefactos spec (junto a `_features.md`) y actualiza `_features.md` con el estado de cada feature (incluyendo `PENDIENTE_GENERACIÓN` para las no procesadas aún).
 
 ---
 

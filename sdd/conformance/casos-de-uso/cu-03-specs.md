@@ -111,6 +111,16 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
      después). Sondear el disco no es esperar: es un race de doble escritura.
    → **FALLO adicional (Regla de oro):** que el orquestador haga `cat`/`Read` del PRD o
      del `_analysis.md` — lo que necesita sale del script o del reporte del delegado.
+   → **Sin salto sobrante ([[D-044]]):** el delegado **ejecuta** la sub-skill (lee su
+     `SKILL.md`), **no** la invoca con el `Skill` tool. **FALLO:** que aparezca un agente con
+     `spawnDepth: 3` — sería el clon que el re-despacho forkea —, o que el delegado responda
+     *"lo he lanzado en segundo plano, te aviso"* antes de tener el resultado.
+   → **Cómo se verifica (instrumento de la campaña):** en
+     `~/.claude/projects/<proyecto>/<sesión>/subagents/` hay un `.jsonl` y un `.meta.json` por
+     subagente, con `spawnDepth`, `parentAgentId` y **los parámetros exactos de cada tool call**
+     (ahí se lee si `run_in_background: false` viajó de verdad). **No hace falta poner los
+     agentes en background para capturar sus logs — y hacerlo contamina esta medición**, porque
+     un padre backgroundeado hace indistinguible el estado de sus hijos.
 
 **Resultado:** PASS si genera el analysis, para en los críticos por veredicto de script,
 te dice cuáles son sin abrir el fichero, ni escribe ni inventa las respuestas, y delega
@@ -146,6 +156,45 @@ busy-wait.
 > barrido de las 7 + regla blocking `AGENT-DISPATCH-UNSYNCED`. El paso 5 de arriba es nuevo y
 > **no tiene aún ninguna pasada**: el linter garantiza que el flag está escrito, no que el
 > orquestador lo teclee.
+
+> **Pasada 2 (2026-08-02, v0.79.0, `myops-app-specs`, turnos 1–2) — pasos 1, 2, 3 y 5 PASS;
+> origen de [[D-044]].** Los cinco síntomas de la pasada 1 desaparecieron: delegó con
+> `Agent(subagent_type: sdd-spec-explorer)` en vez de `Skill`, **cero `Monitor`**, cero `ls`
+> repetido sobre `prd/`, **un solo** reporte final, y **no hizo `cat` del PRD**. El **paso 2**,
+> que la pasada 1 no llegó a ejercitar, corrió por fin: gate explícito con `AskUserQuestion` y
+> conteo tomado de `sdd-analysis-gaps.py --check --json` (`CRITICAL_OPEN`, 7 IDs). El paso 3
+> también: el mensaje de cierre llevó path, los 7 `[P-XXX]` **cada uno con su pregunta** y qué
+> sustituir. El **paso 4 no se ejercitó** (se eligió dictar y luego se cambió de rumbo).
+> **[[D-041]] queda MEDIDO por primera vez, 1/3:** `.claude/agent-memory/` **no reapareció**.
+>
+> **Hallazgo → [[D-044]].** Los transcripts de subagente probaron que `run_in_background: false`
+> **sí viajaba**, y que el defecto estaba un nivel más abajo: el prompt *"Ejecuta el skill
+> `/wf-spec-analyze`"* hacía que el delegado re-despachara con `Skill`, forkeando un **clon**
+> (`spawnDepth: 3`, mismo `agentType`). Coste medido: **210 KB** de envoltorio por delegación, y
+> el salto extra otra vez asíncrono, con un *"lo he lanzado, te aviso"* emitido antes de tener
+> nada.
+>
+> **Observación A — el análisis no es reproducible.** Mismo PRD byte-idéntico: pasada 1 dio
+> **11 gaps / 5 críticos**; pasada 2, **12 gaps / 7 críticos**. Los conjuntos se solapan (el
+> contenido de la visión general aparece en ambas con ID distinto), pero la partición
+> crítico/informativo se mueve. **Consecuencia metodológica: ningún probe puede citar `P-XXX`
+> concretos** — se cita el veredicto y el conteo, no los IDs. Y como candidato de contrato: que
+> el nº de **bloqueantes** oscile 5→7 sugiere que el umbral crítico/informativo de
+> `kb-gap-conventions` está menos definido de lo que se creía (familia [[D-033]]/[[D-034]]/[[D-035]]:
+> consistencia de juicio → se afila el KB).
+>
+> **Observación B — el `grep` que D-042 debía haber hecho innecesario.** Main ejecutó
+> `grep -n "CRÍTICO" -A 12 prd_analysis.md | head -150` **después** de que el delegado le
+> hubiera entregado los 7 IDs con sus preguntas. No viola la regla (que nombra
+> `Read`/`Edit`/`Write`), pero mete ~150 líneas del informe en el hilo principal: el mismo coste
+> que [[D-042]] evitaba, entrando por otra puerta. Candidato.
+>
+> **Pregunta de contrato abierta.** Ante *"Los gaps ya los miraré luego. Genérame ya las specs"*,
+> main auto-armó `--allow-open-critical-gaps` sin abrir un gate nuevo — pero el menú de 3 opciones
+> estaba en pantalla **un turno antes**, con la opción 3 descrita como *"requiere el override
+> explícito que solo puedes autorizar tú"*. ¿Autoriza un menú del turno N un override en el N+1?
+> [[D-026]] dice que la impaciencia no es autorización; aquí hubo elección informada previa. Se
+> deja como pregunta, no como FALLO.
 
 ## CU-3.b — Expansión de alcance desde las respuestas del analysis
 

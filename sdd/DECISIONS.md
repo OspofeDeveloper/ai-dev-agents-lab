@@ -6,6 +6,42 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-044 — El delegado **ejecuta** la sub-skill; pedirle que la invoque forkea un clon suyo y devuelve la asincronía
+
+- **Fecha:** 2026-08-02 · **Estado:** Adoptada (pendiente de medir en CU-3.a). · **Relacionada:** [[D-043]] (arregló el salto de arriba; este arregla el de abajo), [[D-002]]/[[D-015]] (qué implica `context: fork`), CU-3.a pasada 2.
+
+**Contexto.** La pasada 2 de CU-3.a midió [[D-043]] y salió **PASS**: `wf-spec-features-first` delegó con `Agent`, sin `Monitor`, sin sondeo del disco, sin reporte duplicado. Los transcripts de subagente (`~/.claude/projects/<proyecto>/<sesión>/subagents/agent-*.jsonl`) confirman que el flag **sí viajó**, literal, en las dos delegaciones: `{"subagent_type": "sdd-spec-explorer", "run_in_background": false, …}`.
+
+Pero los metadatos de esos mismos transcripts destaparon lo que faltaba, con `spawnDepth` y `parentAgentId` explícitos:
+
+```
+depth 1  wf-spec-features-first        (fork de skill)
+depth 2  sdd-spec-explorer  ← Agent(run_in_background: false)          síncrono ✅
+depth 3  wf-spec-analyze    ← Skill(…) forkea a OTRO sdd-spec-explorer  asíncrono ⚠
+```
+
+El prompt decía *"Ejecuta el skill `/wf-spec-analyze`"*, así que el delegado hizo lo único que ese imperativo permite: usar el `Skill` tool. Y como `wf-spec-analyze` declara `context: fork` **y** `agent: sdd-spec-explorer` —el mismo `subagent_type` que se acababa de lanzar—, ese fork es un **clon del delegado**. El de depth 2 existe solo para invocar al de depth 3, recibir su reporte entero y re-emitirlo.
+
+Dos costes, ambos medidos. **Contexto:** el envoltorio pesó **210 KB** (analyze) y **214 KB** (discover), contra 222 KB y 210 KB de los que hacían el trabajo — es decir, ~210 KB duplicados **por delegación**, y en el fan-out del Paso 5 eso se multiplica por feature. **Asincronía:** el `Skill` tool **no tiene `run_in_background`**, así que el salto de depth 3 volvió a ser async y el delegado llegó a responder *"El skill se ha lanzado en segundo plano. Te avisaré cuando termine"* — un **reporte prematuro** que, de haberlo consumido su padre como retorno, habría roto la cadena. Se recuperó solo; la propiedad no está garantizada.
+
+**Decisión.** El prompt de delegación deja de nombrar la skill como algo que *invocar* y pasa a nombrarla como algo que *leer y ejecutar*: **"lee `.claude/skills/wf-X/SKILL.md` y ejecuta sus pasos TÚ MISMO; NO uses el `Skill` tool"**, con `${CLAUDE_SKILL_DIR}` resuelto a `.claude/skills/wf-X/` y la lista de lo que debe informar al terminar. Aplicado a los cinco puntos de `wf-spec-features-first`. Eso colapsa depth 3 en depth 2: **un** salto, síncrono de punta a punta, sin envoltorio.
+
+La regla canónica se añade a `kb-sdd-creation-guide` junto a la de [[D-043]] —son la misma lección en dos capas— y se mecaniza con **`AGENT-PROMPT-REDISPATCH` [blocking]**, que caza el imperativo `Ejecuta el skill /wf-` en el cuerpo de cualquier `wf-*`. Delta medido: **5 findings antes del fix, 0 después**.
+
+**Alternativas descartadas.**
+- *Dejar el doble salto y prohibir solo el reporte prematuro* → cura el síntoma peligroso pero deja los ~210 KB por delegación y la asincronía de depth 3 intactas. El reporte prematuro no es el problema: es el aviso de que hay un salto que no debería existir.
+- *Volver a `Skill` desde `features-first` para las cuatro sub-skills que declaran `agent:`* → es **un** salto (el `Skill` tool forkea directo al agente declarado), pero sigue sin knob de sincronía. Es exactamente la pasada 1: `Skill` desde un fork es async, y de ahí salió el busy-wait. La lección que corrige a [[D-043]]: el problema **nunca fue** que `Skill` no estuviera en `allowed-tools`; es que `Skill` desde un subagente es asíncrono, punto.
+- *Que el prompt lleve el trabajo en vez del nombre de la skill* → el `SKILL.md` **es** el contrato (plantilla, checks, veredictos); parafrasearlo en un prompt lo duplica y lo deja derivar. Mejor que lo lea de disco, que es lo que los forks ya hacen con sus `references/`.
+- *Lint que además valide que el `subagent_type` coincide con el `agent:` de la sub-skill* → exige resolver qué skill nombra un prompt en prosa; no es mecanizable con fiabilidad. Lo cubre el backstop posicional de `test_install_sh.py`.
+
+**Consecuencias / aprendizaje.** Tres. (a) **Un imperativo del prompt es una elección de mecanismo, aunque no lo parezca.** "Ejecuta el skill X" suena a descripción de la tarea y es en realidad una instrucción de tool-use: el delegado no tiene otra forma de obedecerla. Al escribir un prompt de delegación hay que preguntarse qué tool va a usar quien lo lea. (b) **El acoplamiento `subagent_type` ↔ `agent:` de la sub-skill ahora es explícito y hay que mantenerlo:** si el `agent:` de una sub-skill cambia, el `subagent_type` de `features-first` debe cambiar con él (el prompt lo dice para que se vea). (c) **Los transcripts de subagente son el instrumento de medida de esta campaña.** Viven en `~/.claude/projects/<proyecto>/<sesión>/subagents/`, con `spawnDepth`, `parentAgentId` y los **parámetros exactos de cada tool call** — que es lo que permitió distinguir "el flag no llega" de "el flag llega y el problema está más abajo" **sin gastar otra pasada**. Corolario operativo: no hace falta poner los agentes en background para capturar sus logs, y hacerlo **contamina la medición** de la sincronía.
+
+**Pendiente de medir.** Que el delegado obedezca *"no uses el `Skill` tool"* es, otra vez, declarado y no medido — y esta campaña ya sabe lo que valen las declaraciones ([[D-038]]). Se cierra repitiendo el turno 1 de CU-3.a **sin backgroundear** y comprobando en `subagents/*.meta.json` que **no hay ningún agente con `spawnDepth: 3`**.
+
+**Referencias.** `sdd/pipeline/spec/skills/wf-spec-features-first/SKILL.md` (5 prompts), `sdd/meta/skills/kb-sdd-creation-guide/SKILL.md` + `references/frontmatter-templates.md`, `sdd/scripts/sdd-structural-lint.py` (`check_agent_prompt_redispatch`), `sdd/tests/test_sdd_structural_lint.py`, `sdd/tests/test_install_sh.py` (`test_features_first_delegates_execute_not_redispatch`), `sdd/conformance/casos-de-uso/cu-03-specs.md` (CU-3.a paso 5), `sdd/CHANGELOG.md`.
+
+---
+
 ## D-043 — La delegación de una `wf-*` es síncrona y por un mecanismo nombrado; nadie deduce del disco si un delegado terminó
 
 - **Fecha:** 2026-08-02 · **Estado:** Adoptada (regla canónica en `kb-sdd-creation-guide` + regla blocking del linter; conducta pendiente de medir en CU-3.a). · **Relacionada:** [[D-038]] (`allowed-tools` no es enforcement — tercera confirmación), [[D-042]] (mismo origen: la pasada 1 de CU-3.a), [[D-037]] (el check nuevo se mide por su delta, no por su existencia), [[D-041]] (mismo carril de propagación: la plantilla de `kb-sdd-creation-guide`), CU-2.e (la carrera hermana, en `wf-prd-review`).

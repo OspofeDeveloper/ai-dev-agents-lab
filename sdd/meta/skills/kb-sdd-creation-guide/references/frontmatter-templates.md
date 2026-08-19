@@ -44,8 +44,11 @@ user-invocable: true
 > subagentes corren en **background por defecto** (Claude Code ≥ v2.1.198): sin el flag el
 > orquestador no recibe el resultado y acaba sondeando el disco o relanzando el agente. Nombra
 > además la tool exacta en **cada** punto de delegación del cuerpo —no "invoca `/wf-x`"— y usa
-> el mismo mecanismo en todos. Lo verifica `sdd-structural-lint.py` (regla
-> `AGENT-DISPATCH-UNSYNCED`).
+> el mismo mecanismo en todos. Y el prompt del delegado le pide **leer el `SKILL.md` y ejecutar
+> sus pasos él mismo**, nunca *"Ejecuta el skill `/wf-X`"* ([[D-044]]): eso le hace usar el `Skill`
+> tool, que forkea **otro** subagente —un clon del delegado cuando la sub-skill declara ese mismo
+> `agent:`— y reintroduce la asincronía un nivel más abajo. Lo verifica `sdd-structural-lint.py`
+> (reglas `AGENT-DISPATCH-UNSYNCED` y `AGENT-PROMPT-REDISPATCH`).
 
 Separación `description` / `when_to_use` (regla canónica en el `SKILL.md` de `kb-sdd-creation-guide`):
 - `description`: el QUÉ — funcionalidad, modos soportados, agente al que delega. Caso clave primero, conciso, **sin triggers**. Objetivo ≤ ~220 caracteres.

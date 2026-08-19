@@ -24,6 +24,7 @@ Checks (cada finding: severidad, tipo, archivo:linea, mensaje):
   FORK-INTERVIEW         [warning]   wf con context: fork que entrevista o presenta gate de confirmacion en prosa (sin declarar AskUserQuestion): mismo bug latente.
   AGENT-MEMORY-DECLARED  [blocking]  Agente (o la plantilla de agente) que declara `memory:`: el estado vive en los artefactos, no en la memoria del agente.
   AGENT-DISPATCH-UNSYNCED [blocking] wf que delega por la tool `Agent` sin `run_in_background: false`: los subagentes corren en background por defecto y el orquestador acaba sondeando el disco.
+  AGENT-PROMPT-REDISPATCH [blocking] prompt de delegacion que pide "Ejecuta el skill /wf-X": el delegado re-despacha con `Skill`, forkea un clon de si mismo y reintroduce la asincronia.
   DESCRIPTION-TOO-LONG   [warning]   description del frontmatter > 220 chars.
   USER-INVOCABLE-MISSING [warning]   wf sin user-invocable; kb sin user-invocable: false.
 
@@ -115,6 +116,10 @@ USER_INVOCABLE_RE = re.compile(r"^user-invocable:\s*(true|false)\b", re.MULTILIN
 # la hace sincrona es literal: es lo que el agente teclea en la invocacion.
 AGENT_DISPATCH_RE = re.compile(r"Agent\(|tool `Agent`|`Agent` tool")
 SYNC_FLAG = "run_in_background: false"
+# El prompt que hace al delegado re-despachar con el `Skill` tool (D-044): forkea
+# otro subagente —un clon, si la sub-skill declara ese mismo `agent:`— y el salto
+# extra vuelve a ser asincrono. Se escribe en imperativo dirigido al delegado.
+REDISPATCH_RE = re.compile(r"[Ee]jecuta\s+el\s+skill\s+`?/wf-")
 
 
 class Finding:
@@ -657,6 +662,45 @@ def check_agent_dispatch(findings):
             f"su resultado."))
 
 
+def check_agent_prompt_redispatch(findings):
+    """AGENT-PROMPT-REDISPATCH — prompt de delegacion que le pide al delegado
+       "Ejecuta el skill /wf-X" en vez de ejecutarlo el mismo (D-044).
+
+       Toda `wf-*` que hace trabajo lleva `context: fork`, asi que el delegado que
+       obedece ese prompt usa el `Skill` tool y FORKEA otro subagente. Si la
+       sub-skill declara `agent:` y ese agente es el `subagent_type` que se acaba
+       de lanzar, el fork es un CLON del delegado: un envoltorio que solo recibe el
+       reporte del de abajo y lo re-emite. Medido en CU-3.a pasada 2: ~210 KB de
+       contexto duplicado por delegacion, y el salto extra vuelve a ser asincrono
+       (el `Skill` tool no tiene `run_in_background`) — el delegado llego a
+       responder "lo he lanzado en segundo plano, te aviso" antes de tener nada.
+
+       Solo `wf-*`: una `kb-*` que describa el anti-patron para prohibirlo no es
+       una prescripcion.
+    """
+    for skill_md in sorted(SDD_ROOT.rglob("SKILL.md")):
+        if is_excluded(skill_md):
+            continue
+        if not skill_md.parent.name.startswith("wf-"):
+            continue
+        try:
+            text = skill_md.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        _, body, body_start = split_frontmatter(text)
+        for i, ln in enumerate(body.splitlines()):
+            if REDISPATCH_RE.search(ln):
+                findings.append(Finding(
+                    "blocking", "AGENT-PROMPT-REDISPATCH", relpath(skill_md),
+                    body_start + i,
+                    "El prompt del delegado le pide \"Ejecuta el skill /wf-...\": eso "
+                    "le hace usar el `Skill` tool, que forkea otro subagente (un clon "
+                    "del delegado si la sub-skill declara ese mismo `agent:`) y "
+                    "reintroduce la asincronia un nivel mas abajo (D-044). Pidele que "
+                    "lea el `SKILL.md` y ejecute sus pasos EL MISMO, prohibiendole el "
+                    "`Skill` tool."))
+
+
 def check_reference_paths(findings):
     """REFERENCE-PATH-MISSING — toda ruta a references/<f> citada en un SKILL.md
        que no resuelve en disco. Resuelve relativo al directorio del SKILL.md.
@@ -721,6 +765,7 @@ def run_all():
     check_name_mismatch(findings)
     check_agent_memory(findings)
     check_agent_dispatch(findings)
+    check_agent_prompt_redispatch(findings)
     check_reference_paths(findings)
     # Orden estable: severidad (blocking primero), tipo, path, linea.
     sev_order = {"blocking": 0, "warning": 1}
