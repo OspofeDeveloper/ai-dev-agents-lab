@@ -76,13 +76,16 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
      `wf-spec-features-first` lo lanza y **se detiene**), produce `_analysis.md` con
      gaps `[P-XXX]` y severidad, y te pide revisarlo antes de continuar.
 2. El analysis deja gaps `[CRÍTICO]` abiertos y pides seguir igualmente.
-   → **Esperado:** el orquestador pide decisión explícita: responder los críticos
-     primero, o continuar con `--allow-open-critical-gaps`. No avanza en silencio.
-     El conteo de críticos abiertos sale de `sdd-analysis-gaps.py --check`
-     ([[D-042]]), **no** de la lectura del informe — y ese check corre **antes** de la
-     rama que gobierna.
-   → **FALLO:** decidir la rama citando una lectura propia del `_analysis.md`; o
-     tratar un veredicto `VACUOUS` (documento no parseado) como "sin gaps críticos".
+   → **Esperado:** el gate se presenta con `AskUserQuestion` —responder los críticos primero,
+     continuar aceptando `[INCOMPLETO]`, o responder solo algunas— y **el flujo continúa en el
+     mismo turno** con lo que elijas ([[D-045]]). No avanza en silencio. El conteo de críticos
+     abiertos sale de `sdd-analysis-gaps.py --check` ([[D-042]]), **no** de la lectura del
+     informe — y ese check corre **antes** de la rama que gobierna.
+   → **FALLO:** decidir la rama citando una lectura propia del `_analysis.md`; tratar un
+     veredicto `VACUOUS` (documento no parseado) como "sin gaps críticos"; **auto-armar** el
+     `--allow-open-critical-gaps` sin que tú lo elijas ([[D-026]]); o pedirte que **vuelvas a
+     ejecutar** el workflow con el flag — eso repite parseo, readiness y check de gaps, y era el
+     síntoma de que el gate vivía en un fork que no podía preguntar ([[D-045]]).
 3. **El mensaje de cierre te dice qué responder, sin que abras el fichero** ([[D-042]]).
    → **Esperado:** path exacto del `_analysis.md`, los IDs `[CRÍTICO]` **cada uno con su
      pregunta en una línea**, y qué se sustituye (`- **Respuesta**: _(pendiente)_`).
@@ -99,18 +102,33 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
    → **Ojo al verificar:** que el frontmatter no declare `Write` **no lo impide**
      (`allowed-tools` no es enforcement, [[D-038]]). Hay que mirar los logs.
 
-5. **Cómo delega el orquestador** ([[D-043]]) — se lee en los logs de
+5. **Cómo delega el orquestador** ([[D-043]], corregido por [[D-045]]) — se lee en los logs de
    `wf-spec-features-first`, no hay que provocarlo.
+   → **Precondición estructural ([[D-045]]):** `wf-spec-features-first` corre en el **hilo
+     principal**, no en `context: fork`. Desde un fork esta propiedad **no es alcanzable**: con
+     fork mode activo —el default interactivo— un subagente no puede pedir el primer plano para
+     sus delegados. Si en los logs el workflow aparece como subagente, el probe no aplica: es un
+     FALLO de arquitectura, no de conducta.
    → **Esperado:** invoca el analyze con la tool `Agent`, `subagent_type:
-     sdd-spec-explorer` y **`run_in_background: false`**, y **espera su retorno**. Un
-     solo reporte final.
-   → **FALLO (cuatro señales, cualquiera basta):** `Monitor` sobre el artefacto que el
-     delegado va a escribir; `ls`/`find` repetido sobre el directorio de artefactos
-     esperando a que aparezca; un segundo agente relanzado sobre el mismo trabajo; o
-     el reporte final **emitido dos veces** (delata que el stream asíncrono cerró
-     después). Sondear el disco no es esperar: es un race de doble escritura.
-   → **FALLO adicional (Regla de oro):** que el orquestador haga `cat`/`Read` del PRD o
-     del `_analysis.md` — lo que necesita sale del script o del reporte del delegado.
+     sdd-spec-explorer` y **`run_in_background: false`**, y el `tool_result` **trae el informe
+     del delegado dentro**. Un solo reporte final.
+   → **FALLO (cinco señales, cualquiera basta):** que el `tool_result` diga *"Async agent
+     launched"* y el flujo continúe igualmente; espera a mano mirando si el artefacto aparece o
+     si deja de crecer; lectura del buzón intermedio del harness (`tasks/*.output`) para saber
+     si el delegado terminó; un segundo agente relanzado sobre el mismo trabajo; o el reporte
+     final **emitido dos veces** (delata que el stream asíncrono cerró después). Deducir del
+     disco no es esperar.
+   → **FALLO grave y silencioso — el dato fabricado ([[D-045]]):** que el orquestador **reporte
+     como venido del delegado** un path, un veredicto o un recuento que ha obtenido él por su
+     cuenta. Es el que no se nota: el informe que sube *parece correcto*. Se detecta cruzando lo
+     que el orquestador reportó con lo que el delegado escribió en su `.jsonl` — si el
+     orquestador nunca recibió el `tool_result` con el informe, todo lo que citó es suyo.
+   → **FALLO adicional (Regla de oro):** que el orquestador haga `cat`/`Read` del PRD, del
+     `_analysis.md` o del `_discovery.md` — lo que necesita sale del script, de una extracción
+     acotada por `grep`, o del reporte del delegado.
+   → **FALLO adicional (la excusa no comprobada, [[D-045]]):** que justifique un atajo afirmando
+     una limitación del entorno sin haberla provocado. Sin error de validación en el transcript,
+     la limitación no está demostrada.
    → **Sin salto sobrante ([[D-044]]):** el delegado **ejecuta** la sub-skill (lee su
      `SKILL.md`), **no** la invoca con el `Skill` tool. **FALLO:** que aparezca un agente con
      `spawnDepth: 3` — sería el clon que el re-despacho forkea —, o que el delegado responda
@@ -122,11 +140,11 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
      agentes en background para capturar sus logs — y hacerlo contamina esta medición**, porque
      un padre backgroundeado hace indistinguible el estado de sus hijos.
 
-**Resultado:** PASS si genera el analysis, para en los críticos por veredicto de script,
-te dice cuáles son sin abrir el fichero, ni escribe ni inventa las respuestas, y delega
-en síncrono sin sondear el disco · FALLO si salta el analyze, avanza con críticos sin
-override explícito, decide por lectura propia, toca el informe a mano, o se queda en
-busy-wait.
+**Resultado:** PASS si genera el analysis, presenta el gate de críticos por veredicto de
+script **sin relanzarse**, te dice cuáles son sin abrir el fichero, ni escribe ni inventa
+las respuestas, y recibe el informe de su delegado en la propia llamada · FALLO si salta el
+analyze, avanza con críticos sin elección explícita, decide por lectura propia, toca el
+informe a mano, espera a mano, o **reporta como del delegado un dato que reconstruyó él**.
 **Desviación → reportar:** issue citando `CU-3.a`.
 
 > **Pasada 1 (2026-08-02, v0.76.0) — PASS en el paso 1; origen de [[D-042]].** El analyze
@@ -195,6 +213,46 @@ busy-wait.
 > explícito que solo puedes autorizar tú"*. ¿Autoriza un menú del turno N un override en el N+1?
 > [[D-026]] dice que la impaciencia no es autorización; aquí hubo elección informada previa. Se
 > deja como pregunta, no como FALLO.
+
+> **Pasada 3 (2026-08-20, v0.80.0, `myops-app-specs`, banco limpio) — pasos 1, 2 y 3 PASS;
+> [[D-044]] PASS; paso 5 **FALLO**; origen de [[D-045]].** [[D-044]] queda medido por primera vez y
+> pasa: `spawnDepth` máximo **2**, cero clones, el delegado leyó el `SKILL.md` y lo ejecutó.
+> [[D-041]] 2/3: `agent-memory/` no reapareció. El paso 4 **no se ejercitó** (se eligió "continuar
+> asumiendo el riesgo" en el gate). Tercera muestra de la Observación A: **11 gaps / 7 críticos**
+> (serie 11/5 → 12/7 → 11/7: el total oscila, la partición crítico/informativo también).
+>
+> **El fallo del paso 5, en tres capas.** (1) El fork delegó **sin** `run_in_background: false`,
+> teniendo la instrucción literal en su contexto — verificado en su transcript. (2) Sin resultado,
+> improvisó la espera: `find` en bucle con `sleep 3`×160, polling del `.output` del harness con
+> `sleep 45`, y dos lecturas de ese fichero. (3) **Nunca recibió el informe del delegado**:
+> reconstruyó path, veredicto y conteo con `find` + `grep` + script y se los reportó a main como
+> si fueran del delegado. El informe del explorer, completo, se tiró. La tercera capa es la que
+> importa: lo que subió *parecía correcto*.
+>
+> **La causa no era conductual, era arquitectónica.** Investigándolo se cayeron dos premisas.
+> Primera: en la **pasada 2** el flag **sí se pasó** y el `tool_result` fue igualmente
+> *"Async agent launched successfully"* — o sea que [[D-043]] nunca funcionó desde un fork, y lo
+> que interpretamos como éxito era el parámetro viajando, no surtiendo efecto. Segunda: la doc de
+> Claude Code lo explica —con fork mode activo, el default interactivo, *"Claude no puede pedir el
+> primer plano"*—, y las únicas delegaciones síncronas registradas en el consumer (3 de 20) salen
+> **todas del hilo principal**. Verificado además en vivo el 2026-08-26 con Claude Code 2.1.245:
+> main → `Agent(run_in_background: false)` devuelve el informe dentro del `tool_result`.
+> Cerrado en [[D-045]] sacando `wf-spec-features-first` del fork.
+>
+> **Reinicio de recuentos.** El cambio de arquitectura invalida las pasadas anteriores de este
+> escenario: los pasos 1–5 vuelven a **0/3**. Duele en el paso 1, que iba 3/3.
+>
+> **Hallazgo de método — el banco incluye el ciclo de vida de los agentes.** La **pasada 2**
+> estaba contaminada y no lo sabíamos: se backgroundeó un agente a mano para capturar logs. Y
+> `Cmd+B` **no deja rastro en los transcripts** (cero coincidencias en los 20 ficheros de sesión
+> del consumer), así que "background" por decisión del harness y "background" por decisión del
+> humano son **indistinguibles a posteriori**. Recogido en la Regla 9 de `kb-sdd-conformance`.
+>
+> **Hallazgo de autoría — la prohibición que enseña.** Los dos forks hicieron
+> `ToolSearch {"query": "select:Monitor"}` justo después de delegar. `Monitor` es una tool
+> *deferred*: solo tenían el nombre, y se lo dio **nuestra propia cláusula anti-sondeo**. El
+> cuerpo de un SKILL viaja al contexto del agente; las señales de FALLO viven aquí, que no se
+> instala. Recogido en `kb-sdd-creation-guide`.
 
 ## CU-3.b — Expansión de alcance desde las respuestas del analysis
 
@@ -472,9 +530,14 @@ si confirma un `[INFERIDO]` desde el analysis, o lo da por resuelto sin confirma
 **Precondición:** proyecto SDD ya inicializado con `pipeline_mode: standard` (el default; el init
 ya no pregunta el rigor — ver `cu-01-inicializar.md` CU-1.n). Le pides crear el spec de una feature.
 **Mecanismo:** orquestador de la fase Spec (`pipeline/spec/CLAUDE.md` → instalado como
-`.claude/rules/sdd-spec.md`, sección "Elección del rigor del pipeline"). Como `wf-spec-fast-track` y
-`wf-spec-features-first` son `context: fork` y **no** pueden usar `AskUserQuestion` ([[D-002]]), la
-oferta ocurre en el **hilo principal** antes de delegar.
+`.claude/rules/sdd-spec.md`, sección "Elección del rigor del pipeline"). El rigor es un **argumento**
+que se propaga a cada `wf-spec-fast-track`, y esos son `context: fork` sin `AskUserQuestion`
+([[D-002]]), así que debe estar resuelto **antes** del fan-out: la oferta ocurre en el hilo principal.
+
+> **Nota ([[D-045]]):** desde que `wf-spec-features-first` corre en el hilo principal, *podría*
+> preguntar el rigor él mismo. **No se ha cambiado**: la oferta sigue en el orquestador antes de
+> invocar, y este escenario mide eso. Mover la elección dentro del workflow es un candidato abierto,
+> no una desviación — si una pasada la ve dentro, es un FALLO contra el contrato actual.
 
 1. Pides el spec de una feature **sin** especificar el modo.
    → **Esperado:** antes de invocar la workflow, el orquestador **ofrece** Standard (recomendado) /

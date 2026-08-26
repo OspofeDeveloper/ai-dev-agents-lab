@@ -33,10 +33,11 @@ Tienes un PRD o documento de requisitos y quieres convertirlo en Specs SDD para 
   b) continuar igualmente aceptando HUs [INCOMPLETO]
 
 /wf-spec-features-first prd.md
-  → si faltaba `prd_analysis.md`, lo genera y se detiene
-  → si quedan gaps [CRÍTICO], se detiene salvo que añadas `--allow-open-critical-gaps`
-  → si las respuestas del analysis introducen expansión de capacidad, se detiene y remite a `wf-prd-change`, salvo override explícito con `--allow-derived-scope-from-analysis`
-  → si el discovery detecta más de 5 features, se detiene salvo que añadas `--all-features`
+  → si faltaba `prd_analysis.md`, lo genera y te lo presenta antes de seguir
+  → si quedan gaps [CRÍTICO], te pregunta: responderlos primero o continuar aceptando HUs [INCOMPLETO]
+  → si las respuestas del analysis introducen expansión de capacidad, te pregunta: formalizar el cambio con `wf-prd-change` o continuar con alcance derivado
+  → si el discovery detecta más de 5 features, te pregunta el alcance de la pasada (subset o todas)
+  → los gates se resuelven en el momento; no hay que relanzar el flujo con flags
   → ejecuta discover + fast-track por feature en paralelo
   → genera prd_discovery.md, prd_features.md
   → genera features/<nombre>/spec/<nombre>_spec.md por cada feature

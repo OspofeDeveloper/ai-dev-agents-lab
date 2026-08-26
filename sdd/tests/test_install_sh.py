@@ -372,6 +372,53 @@ class InstallAllTest(InstallBase):
                                 + skill.count("NO uses el Skill tool"), 5,
                                 "faltan prohibiciones del `Skill` tool en los 5 prompts (D-044)")
 
+    def test_features_first_orchestrates_from_main_thread(self):
+        # D-045: features-first delega Y sostiene cuatro gates. Un fork no puede
+        # preguntar (AskUserQuestion no existe en un subagente) ni conseguir el
+        # primer plano para sus delegados, asi que acababa relanzandose entero
+        # desde main y deduciendo del disco resultados que no habia recibido.
+        self.install("all")
+        text = (self.skill_dir("wf-spec-features-first") / "SKILL.md").read_text(encoding="utf-8")
+        fm = text.split("---", 2)[1]
+        self.assertNotIn("context: fork", fm,
+                         "features-first orquesta: no puede ser `context: fork` (D-045)")
+        self.assertIn("AskUserQuestion", fm,
+                      "features-first sostiene sus gates: necesita `AskUserQuestion` (D-045)")
+        for tool in ("Read", "Write"):
+            self.assertNotIn(tool, fm.split("allowed-tools:")[1].split("\n")[0],
+                             f"main no lee ni escribe artefactos: fuera `{tool}` "
+                             f"de allowed-tools (D-030/D-045)")
+
+    def test_features_first_gates_do_not_relaunch(self):
+        # D-045: los gates se presentan en el momento y el flujo continua en el
+        # mismo turno. "Vuelve a ejecutar añadiendo --allow-*" repetia los pasos
+        # ya hechos (parseo, readiness, check de gaps) y perdia el contexto.
+        self.install("all")
+        skill = (self.skill_dir("wf-spec-features-first") / "SKILL.md").read_text(encoding="utf-8")
+        for relaunch in ("re-ejecuta añadiendo", "re-ejecutar añadiendo",
+                         "vuelve a ejecutar `/wf-spec-features-first"):
+            self.assertNotIn(relaunch, skill,
+                             f"queda el patron de relanzado: «{relaunch}» (D-045)")
+        self.assertGreaterEqual(skill.count("presenta el gate"), 3,
+                                "los gates de features-first ya no se presentan (D-045)")
+
+    def test_features_first_defines_what_waiting_means(self):
+        # D-045: "espera el resultado" sin criterio no es verificable — el fork
+        # podia creer honestamente que habia esperado porque el fichero estaba.
+        # El criterio es el CANAL: el informe llega como resultado de la llamada.
+        self.install("all")
+        skill = (self.skill_dir("wf-spec-features-first") / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("Qué es haber esperado", skill,
+                      "falta el criterio autocomprobable de espera (D-045)")
+        self.assertIn("resultado de tu propia llamada", skill,
+                      "el criterio de espera no cita el canal (D-045)")
+        self.assertIn("no reconstruyas", skill,
+                      "falta la salida sancionada: parar en vez de reconstruir (D-045)")
+        # D-045: el cuerpo viaja al contexto del agente; nombrar la tool prohibida
+        # se la enseña. Medido: los dos forks hicieron `ToolSearch select:Monitor`.
+        self.assertNotIn("Monitor", skill,
+                         "la prohibicion nombra la tool y se la enseña al agente (D-045)")
+
     def test_prd_change_reopens_seal(self):
         # D-028: un cambio de PRD reabre el sello (status in-review + Aprobado por
         # a pendiente); el sello solo lo re-establece wf-prd-review.

@@ -6,6 +6,51 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-045 — Un fork no orquesta: `wf-spec-features-first` corre en el hilo principal, sostiene sus gates y recibe el resultado de sus delegados
+
+- **Fecha:** 2026-08-26 · **Estado:** Adoptada (pendiente de medir en CU-3.a pasada 4). · **Relacionada:** [[D-043]] (corrige su premisa), [[D-044]] (intacta), [[D-040]] (mismo movimiento en `wf-prd-change`), [[D-026]] (los `--allow-*` los arma el usuario), [[D-030]]/[[D-031]]/[[D-038]] (main no lee ni escribe artefactos), [[D-042]] (el conteo sale del script), CU-3.a pasada 3.
+
+**Contexto.** CU-3.a pasada 3, banco limpio. `wf-spec-features-first` —`context: fork`— falló el paso 5 en tres capas encadenadas, verificadas en los transcripts de subagente:
+
+1. Delegó **sin** `run_in_background: false`, teniendo la instrucción literal en su contexto.
+2. Sin resultado, improvisó la espera: `find` en bucle con `sleep 3`×160, polling del `.output` del harness con `sleep 45`, dos lecturas de ese fichero, y `ToolSearch select:Monitor` en las dos invocaciones.
+3. **Nunca recibió el informe del delegado.** Reconstruyó path, veredicto y conteo con `find` + `grep` + script y se los reportó a main **como si fueran del delegado**. El informe del explorer se tiró entero.
+
+La capa 3 es el daño real: lo que subió **parecía correcto**. Un `grep` que hubiera pillado otra línea, o un `_analysis.md` viejo de otra pasada, habrían subido con la misma apariencia de verdad.
+
+**Dos premisas caídas al investigarlo.** (a) En la **pasada 2** el flag **sí se pasó** y el `tool_result` fue igualmente `"Async agent launched successfully"`: [[D-043]] **nunca funcionó desde un fork**, y lo que leímos como éxito era el parámetro viajando, no surtiendo efecto. (b) La doc de Claude Code lo explica —con fork mode activo, el default en sesiones interactivas, *"Claude no puede pedir el primer plano"*—, y de las 20 delegaciones registradas en el consumer, las **3** que volvieron con el informe dentro salen **todas del hilo principal**. Verificado en vivo (2026-08-26, Claude Code 2.1.245): main → `Agent(run_in_background: false)` devuelve el informe en el `tool_result`.
+
+**Agravante estructural, ya conocido y nunca cerrado.** El mismo fork sostiene **cuatro gates** (readiness, gaps críticos, expansión de alcance, coste >5 features) y no puede presentar ninguno: `AskUserQuestion` no existe en un subagente. En la pasada 3 paró dos veces, main improvisó la pregunta dos veces y **relanzó el workflow entero** dos veces, repitiendo parseo, readiness y check de gaps (102 KB + 142 KB de fork). [[D-026]] ya lo había anotado como limitación aceptada; el texto de la regla `FORK-ASKUSER-CONFLICT` del linter ya prescribía el arreglo: *"quita `context: fork` — la skill interactiva corre en el hilo principal y delega el trabajo pesado vía `Agent`"*.
+
+**Decisión.** `wf-spec-features-first` sale del fork, al modelo de [[D-040]]: `allowed-tools: [Bash, Agent, AskUserQuestion]` (**sin `Read` ni `Write`**, simetría con `wf-prd-review`/`wf-prd-change`), los cuatro gates se presentan **en el momento** y el flujo continúa en el mismo turno — se acabó el "vuelve a ejecutar añadiendo `--allow-*`". [[D-026]] intacto en el fondo: quien arma el override es el usuario **eligiendo** en el gate; los flags de entrada siguen valiendo y saltan el gate correspondiente.
+
+Y el contrato de delegación gana lo que le faltaba, que es lo que provocó la improvisación:
+
+- **Qué es haber esperado, de forma autocomprobable:** el informe del delegado está en contexto **como resultado de la propia llamada `Agent`**. Que el fichero exista, que su tamaño se estabilice, que un script dé veredicto o que se lea de un buzón intermedio del entorno **no cuenta**. Sin criterio, "espera el resultado" no es verificable y el agente puede creer honestamente que esperó.
+- **La salida sancionada:** si no hay informe, **parar y decirlo**, nunca reconstruir. Y **nunca presentar como dicho por el delegado un dato obtenido por cuenta propia**.
+- **No afirmar limitaciones del entorno no comprobadas:** sin error de validación, no hay evidencia. (El fork escribió al usuario *"el `Agent` tool de este harness no expone `run_in_background`"* sin haberlo intentado nunca.)
+
+**Regla nueva de lint `FORK-ORCHESTRATOR`**, graduada porque los dos motivos son independientes: **blocking** si el fork delega **y** tiene señal de gate (`--allow-*` o interacción en prosa) — le aplican los dos; **warning** si solo delega — le aplica únicamente la asincronía. Delta medido: `wf-spec-features-first` **blocking antes, 0 después**.
+
+**Alternativas descartadas.**
+- *Reforzar la prosa de [[D-043]]* → ya falló con el texto delante del agente. Y sobre todo, pedía algo **inalcanzable** desde un fork: ninguna redacción lo arregla.
+- *`background: false` en el frontmatter (Claude Code ≥ v2.1.218)* → gobierna el fork **propio** de la skill (main esperaría al workflow), no las delegaciones que ese fork emite; y deja los cuatro gates fantasma donde están. Una línea que arregla un tercio del problema. Queda anotada en la guía de autoría como palanca conocida.
+- *`CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1` en el `settings.json` del proyecto* → funciona (es la regla 2 de la doc, por delante del fork mode), pero fuerza el primer plano de **todos** los subagentes del repo del usuario, incluidos los suyos. Mismo motivo por el que [[D-041]] descartó `autoMemoryEnabled`: el ecosistema se instala en repos ajenos y no le corresponde apagarle funciones a su herramienta. Reservado por si la pasada 4 falla.
+- *Hook `PreToolUse` sobre `Agent` que deniegue sin el flag* → es enforcement real y el carril existe (`settings.json` ya instala uno para `Skill`). Pero ataca el síntoma equivocado: con el orquestador en main el flag ya se honra, y un hook no arregla los gates. Anotado como escalada.
+- *Sacar también `wf-task-run` del fork* → mismo defecto y el caso con más consecuencias (delega la implementación y **commitea sobre el informe**), pero es otra fase, escribe código en modo agnóstico y obligaría a re-probar CU-6/9/10/13/14/15/16. Bloque aparte, como [[D-040]] hizo con `wf-prd-change-cascade`. Queda visible como **warning** del linter, no escondido.
+
+**Consecuencias / aprendizaje.** Tres, y las tres trascienden este arreglo:
+
+1. **Una garantía vale lo que su medición, y "el parámetro aparece en la llamada" no es "el parámetro surte efecto".** [[D-043]] se dio por validada viendo el flag en el `tool_use` sin mirar el `tool_result`, que decía `"Async agent launched"` al lado. Verificar el efecto, no la intención.
+2. **Prohibir sin dar salida es invitar a improvisar.** Puesto entre "prohibido sondear" y "el paso siguiente necesita el resultado", el agente violó la prohibición — racionalmente. Misma forma que [[D-038]] y [[D-042]]: el hueco lo rellena el agente y elige mal. Todo contrato que prohíba debe decir **qué hacer en su lugar**.
+3. **El cuerpo de un SKILL viaja al contexto del agente: nombrar la tool prohibida se la enseña.** Los dos forks fueron a buscar `Monitor` —una tool *deferred*, que no tenían cargada— justo después de delegar. Se lo dijo nuestra propia cláusula anti-sondeo. Las señales de FALLO pueden nombrar tools; viven en `conformance/`, que no se instala. Recogido en `kb-sdd-creation-guide`.
+
+Y un cuarto, de método, que casi cuesta el diagnóstico: **el banco de conformance incluye el ciclo de vida de los agentes**. La pasada 2 se backgroundeó a mano para capturar logs, `Cmd+B` **no deja rastro en los transcripts**, y durante semanas interpretamos como comportamiento del harness algo inducido por el operador. Recogido en la Regla 9 de `kb-sdd-conformance`, con el recordatorio de que los logs de subagente ya están en disco y no hay que provocar nada para leerlos.
+
+**Referencias.** `wf-spec-features-first/SKILL.md`, `pipeline/orchestration.md`, `kb-sdd-creation-guide` (+ `references/frontmatter-templates.md`), `kb-sdd-conformance` Regla 9 punto 7, `sdd-structural-lint.py` (`FORK-ORCHESTRATOR`), `tests/test_sdd_structural_lint.py`, `tests/test_install_sh.py`, CU-3.a, CU-2.e probe G, `ROADMAP.md`.
+
+---
+
 ## D-044 — El delegado **ejecuta** la sub-skill; pedirle que la invoque forkea un clon suyo y devuelve la asincronía
 
 - **Fecha:** 2026-08-02 · **Estado:** Adoptada (pendiente de medir en CU-3.a). · **Relacionada:** [[D-043]] (arregló el salto de arriba; este arregla el de abajo), [[D-002]]/[[D-015]] (qué implica `context: fork`), CU-3.a pasada 2.

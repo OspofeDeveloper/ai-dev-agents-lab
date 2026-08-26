@@ -2,6 +2,17 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.81.0 — 2026-08-26
+
+**Un fork no orquesta: `wf-spec-features-first` pasa al hilo principal** — [[DECISIONS D-045]]. La pasada 3 de CU-3.a lo midió en tres capas: el fork delegó sin `run_in_background: false`, se puso a esperar mirando el disco, y —lo grave— **nunca recibió el informe de su delegado**: reconstruyó path, veredicto y recuento por su cuenta y los reportó como si fueran de él. Investigándolo cayó la premisa de [[DECISIONS D-043]]: en la pasada 2 el flag **sí se pasó** y el `tool_result` fue igualmente *"Async agent launched"*. Con fork mode activo —el default interactivo— **un subagente no puede pedir el primer plano para sus delegados**; la delegación síncrona solo se obtiene desde el hilo principal.
+
+- ⚠ **`wf-spec-features-first` deja de ser `context: fork`.** Pasa a `allowed-tools: [Bash, Agent, AskUserQuestion]`, **sin `Read` ni `Write`** (simetría con `wf-prd-review` y `wf-prd-change`). Sus delegaciones ya se honran en síncrono y el orquestador recibe el informe en la propia llamada.
+- ⚠ **Sus cuatro gates se presentan en el momento y el flujo continúa en el mismo turno.** Readiness del PRD, gaps críticos, expansión de alcance y coste de PRD grande dejan de decirte *"vuelve a ejecutar añadiendo `--allow-…`"*: antes eso obligaba a relanzar el workflow entero, repitiendo parseo, readiness y check de gaps. Los flags de entrada siguen valiendo y saltan su gate. Quien arma un override sigue siendo el usuario, ahora eligiendo en la pregunta ([[DECISIONS D-026]] intacta).
+- ⚠ **El contrato de delegación define qué es haber esperado:** tener el informe del delegado como resultado de la propia llamada `Agent`. Que el fichero exista o que un script dé veredicto sobre él **no cuenta**. Y si no hay informe, se para — **nunca se reconstruye ni se reporta como del delegado un dato propio**.
+- **Regla nueva de lint `FORK-ORCHESTRATOR`**, graduada: **blocking** si un fork delega por `Agent` **y** sostiene gates; **warning** si solo delega. Delta medido: `wf-spec-features-first` blocking antes, 0 después. `wf-task-run` queda marcado como warning — mismo defecto, bloque aparte.
+- **Regla de autoría:** el cuerpo de un `SKILL.md` viaja al contexto del agente, así que **no enumera las tools prohibidas** — se las enseña. Medido: los dos forks buscaron `Monitor` (una tool *deferred*) justo después de delegar, y quien les dijo que existía fue nuestra propia cláusula anti-sondeo.
+- **Regla 9 de conformance, punto nuevo:** el banco incluye el **ciclo de vida de los agentes**. No mandes uno a segundo plano para leer sus logs: cambia lo que se mide, `Cmd+B` no deja rastro en los transcripts, y los logs de subagente ya están en disco.
+
 ## 0.80.0 — 2026-08-02
 
 **El delegado ejecuta la sub-skill; pedirle que la invoque forkea un clon suyo** — [[DECISIONS D-044]]. La pasada 2 de CU-3.a validó [[DECISIONS D-043]] (delegación con `Agent`, sin `Monitor`, sin sondeo, un solo reporte) y destapó lo que quedaba un nivel más abajo: el prompt decía *"Ejecuta el skill `/wf-spec-analyze`"*, el delegado usó el `Skill` tool y —como esa skill es `context: fork` con `agent: sdd-spec-explorer`, el **mismo** que se acababa de lanzar— forkeó un **clon**. Medido en los transcripts: el envoltorio intermedio pesó **210 KB**, casi tanto como el que hacía el trabajo.

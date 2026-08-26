@@ -184,6 +184,66 @@ class StructuralLintTest(unittest.TestCase):
         _, types = types_in(self.root)
         self.assertNotIn("AGENT-DISPATCH-UNSYNCED", types)
 
+    # === FORK-ORCHESTRATOR (D-045) ========================================
+    DELEG = ('Delega con:\n\n```\nAgent(\n'
+             '  subagent_type: "sdd-spec-writer",\n'
+             '  run_in_background: false,\n'
+             '  prompt: "Lee el SKILL.md y ejecuta sus pasos tu mismo."\n)\n```\n')
+
+    def test_fork_orchestrator_with_gate_is_blocking(self):
+        # Fork + delegacion + escotilla --allow-*: le aplican los dos motivos
+        # (no puede preguntar, no consigue el primer plano) => blocking.
+        write(self.root / "spec" / "skills" / "wf-orq" / "SKILL.md",
+              skill_md("wf-orq",
+                       self.DELEG + "\nSin `--allow-open-critical-gaps` detente.\n",
+                       extra_fm="context: fork\n"))
+        r, types = types_in(self.root)
+        self.assertIn("FORK-ORCHESTRATOR", types)
+        self.assertIn("blocking", r.stdout)
+
+    def test_fork_orchestrator_without_gate_is_warning(self):
+        # Fork + delegacion pero sin gate: solo le aplica el motivo de sincronia.
+        # Se marca (warning) sin arrastrar aqui una fase entera.
+        write(self.root / "spec" / "skills" / "wf-exec" / "SKILL.md",
+              skill_md("wf-exec", self.DELEG, extra_fm="context: fork\n"))
+        r, types = types_in(self.root)
+        self.assertIn("FORK-ORCHESTRATOR", types)
+        self.assertNotIn("blocking", r.stdout)
+
+    def test_orchestrator_in_main_thread_not_flagged(self):
+        # El arreglo: misma delegacion, sin context: fork => limpio.
+        write(self.root / "spec" / "skills" / "wf-orq" / "SKILL.md",
+              skill_md("wf-orq",
+                       self.DELEG + "\nSin `--allow-open-critical-gaps` detente.\n"))
+        _, types = types_in(self.root)
+        self.assertNotIn("FORK-ORCHESTRATOR", types)
+
+    def test_fork_worker_without_delegation_not_flagged(self):
+        # Un worker (fork + agent:, sin delegar) es la arquitectura correcta.
+        write(self.root / "spec" / "skills" / "wf-worker" / "SKILL.md",
+              skill_md("wf-worker", "Escribe el artefacto y reporta.",
+                       extra_fm="context: fork\nagent: sdd-spec-writer\n"))
+        _, types = types_in(self.root)
+        self.assertNotIn("FORK-ORCHESTRATOR", types)
+
+    def test_fork_over_declaring_agent_tool_not_flagged(self):
+        # Declarar Agent en allowed-tools sin usarlo en el cuerpo es
+        # sobre-declaracion, no orquestacion: la regla mira el CUERPO.
+        write(self.root / "spec" / "skills" / "wf-decl" / "SKILL.md",
+              skill_md("wf-decl", "Corre un script y reporta.",
+                       extra_fm="context: fork\nallowed-tools: [Read, Bash, Agent]\n"))
+        _, types = types_in(self.root)
+        self.assertNotIn("FORK-ORCHESTRATOR", types)
+
+    def test_kb_describing_fork_orchestrator_not_flagged(self):
+        write(self.root / "meta" / "skills" / "kb-guia" / "SKILL.md",
+              skill_md("kb-guia",
+                       "Una wf con `context: fork` que use la tool `Agent` no "
+                       "puede conseguir el primer plano.",
+                       extra_fm="context: fork\n"))
+        _, types = types_in(self.root)
+        self.assertNotIn("FORK-ORCHESTRATOR", types)
+
     # === AGENT-PROMPT-REDISPATCH (D-044) ==================================
     def test_agent_prompt_redispatch_flagged(self):
         # "Ejecuta el skill /wf-X" hace que el delegado use el Skill tool, que

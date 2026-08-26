@@ -4,8 +4,7 @@ description: "Orquestador del flujo features-first: ejecuta discover sobre el PR
 when_to_use: "Activa en frases como 'genera specs por feature del PRD', 'flujo features-first completo', 'specs en paralelo del PRD', 'genera todas las features del PRD', 'genera specs de la fase 1', 'genera specs de estas features', 'features-first completo'."
 argument-hint: "<prd_archivo.md> [--features F-001,F-002,...] [--light|--standard] [--allow-open-critical-gaps] [--allow-derived-scope-from-analysis] [--all-features] [--skip-conflict] [--skip-readiness]"
 effort: high
-allowed-tools: [Read, Write, Bash, Agent]
-context: fork
+allowed-tools: [Bash, Agent, AskUserQuestion]
 user-invocable: true
 ---
 
@@ -15,20 +14,30 @@ Este workflow pertenece a la fase Spec y **requiere un PRD o documento de requis
 
 Tu objetivo es ejecutar el flujo features-first: identificar features de un PRD y generar un spec por cada una en paralelo. Puede operar sobre **todo el PRD** o sobre un **subset de features** (iteración / fase) cuando se proporciona `--features`. Este skill **no realiza el análisis ni la escritura por sí mismo** — orquesta otros workflow skills.
 
-**Regla de oro:** Eres un orquestador. No analizas contenido, no generas specs, no tomas decisiones funcionales. Invocas skills en el orden correcto y consolidas resultados. **No hagas `Read`/`cat` del PRD ni del `_analysis.md`**: lo que necesitas saber sale del script determinista o del reporte de quien delegaste ([[D-031]]/[[D-042]]).
+Este workflow corre en el **hilo principal** (igual que `wf-prd-create`, `wf-prd-review` y `wf-prd-change`, y **no** en `context: fork`) por dos razones ([[D-045]]): sostiene **cuatro gates** que requieren `AskUserQuestion` —readiness del PRD, gaps críticos, expansión de alcance y coste de PRD grande—, una tool que no existe dentro de un subagente; y la delegación síncrona que necesita para consumir el resultado del paso siguiente **solo se obtiene desde el hilo principal** (con fork mode activo —el default interactivo— un subagente no puede pedir el primer plano para sus propios delegados).
 
-> **Cómo delegas — un solo mecanismo, síncrono, sin sondeo ([[D-043]]).** Los cinco puntos de
-> delegación de este workflow (analyze, discover, fast-track, conflict, readiness) se invocan
-> **siempre** con la tool `Agent`, pasando el `subagent_type` que se indica en cada paso y
-> **`run_in_background: false`**. El flag es obligatorio: desde Claude Code v2.1.198 los subagentes
-> corren en **background por defecto** y aquí necesitas su resultado en el acto — el paso siguiente
-> lo consume. **No uses el `Skill` tool** para ninguno de los cinco (no paraleliza y su despacho no
-> te devuelve un handle síncrono).
+**Regla de oro:** Eres un orquestador. No analizas contenido, no generas specs, no tomas decisiones funcionales. Invocas skills en el orden correcto y consolidas resultados. **No hagas `Read` ni `cat` del PRD, del `_analysis.md` ni de ningún spec**: lo que necesitas saber sale del script determinista o del reporte de quien delegaste ([[D-031]]/[[D-042]]). Esto vale **aunque las tools estén disponibles** — `allowed-tools` es declarativo, no una jaula ([[D-038]]), así que la restricción se sostiene por norma.
+
+> **Cómo delegas — un solo mecanismo, y el resultado se recibe, no se deduce ([[D-043]], corregida
+> por [[D-045]]).** Los cinco puntos de delegación de este workflow (analyze, discover, fast-track,
+> conflict, readiness) se invocan **siempre** con la tool `Agent`, pasando el `subagent_type` que se
+> indica en cada paso y **`run_in_background: false`**, y **no** con el `Skill` tool (no paraleliza
+> y no devuelve un handle síncrono).
 >
-> Y **espera el resultado de la tool**: no averigües si un delegado terminó **sondeando el disco**
-> (`ls`/`find` en bucle sobre el directorio de artefactos, `Monitor` sobre el fichero que va a
-> escribir) ni relances un segundo agente "por si acaso" — eso no es esperar, es un race de doble
-> escritura sobre el mismo artefacto. Si crees que no terminó, no lo compruebes: no ha terminado.
+> **Qué es haber esperado.** Has esperado cuando **el texto del informe del delegado está en tu
+> contexto como resultado de tu propia llamada `Agent`**. Ninguna otra cosa cuenta: que el fichero
+> exista, que su tamaño deje de cambiar, que un script te dé un veredicto sobre él, o que lo leas
+> de cualquier buzón intermedio del entorno. Todo eso es deducir, y deducir no es esperar.
+>
+> **Si no tienes el informe, para.** No continúes y **no reconstruyas**: di que la delegación no
+> devolvió resultado y detente. En particular, **nunca presentes como dicho por el delegado un dato
+> que has obtenido tú por tu cuenta** — un path, un veredicto o un recuento sacados del disco
+> suben con la misma apariencia de verdad que los del informe, y ahí es donde el error deja de
+> notarse.
+>
+> **No afirmes limitaciones del entorno que no has comprobado.** Si una tool rechaza un parámetro,
+> la evidencia es su error de validación; sin ese error, no se afirma. Justificar un atajo con una
+> limitación supuesta convierte una decisión tuya en un hecho del harness.
 >
 > **El delegado ejecuta la skill, no la re-despacha ([[D-044]]).** El prompt le dice que **lea el
 > `SKILL.md` y ejecute sus pasos él mismo**, y le **prohíbe** usar el `Skill` tool. El motivo es
@@ -36,9 +45,23 @@ Tu objetivo es ejecutar el flujo features-first: identificar features de un PRD 
 > subagente** — y como su `agent:` es el mismo que acabas de lanzar, ese fork es un **clon** del
 > delegado. Medido en CU-3.a pasada 2: el envoltorio intermedio costó **~210 KB por delegación**
 > (casi tanto como el que hacía el trabajo, porque recibe su reporte entero y lo re-emite), y ese
-> salto extra vuelve a ser **asíncrono** — el `Skill` tool no tiene `run_in_background`, así que el
-> delegado llegó a responder *"lo he lanzado en segundo plano, te aviso"* **antes de tener nada**.
-> En el fan-out del Paso 5 esto se multiplica por feature.
+> salto extra vuelve a ser **asíncrono**. En el fan-out del Paso 5 esto se multiplica por feature.
+
+> **Cómo presentas un gate ([[D-045]]).** Los cuatro gates de este workflow (Pasos 2, 2.5, 2.5 de
+> alcance y 4a.1) se presentan **en el momento, con `AskUserQuestion`**, y el flujo **continúa en el
+> mismo turno** con lo que el usuario elija. No le digas "vuelve a ejecutar añadiendo `--allow-…`":
+> re-invocar el workflow entero repite los pasos ya hechos (parseo, readiness, check de gaps) y
+> pierde el contexto de la parada.
+>
+> Lo que **no** cambia ([[D-026]]): **tú nunca armas un `--allow-*` por tu cuenta** ni lo infieres de
+> una petición impaciente. Son escotillas de seguridad, y quien las abre es el usuario **eligiendo
+> explícitamente** en el gate. Los flags siguen siendo válidos si vienen **de entrada** en
+> `$ARGUMENTS`: en ese caso el gate correspondiente ya está decidido y no se presenta — deja
+> constancia y sigue.
+>
+> Antes de la pregunta, da en el texto los datos que hacen falta para decidir (paths, veredicto,
+> IDs, recuentos), sacados del script o del reporte del delegado. La pregunta no sustituye a la
+> información: la acompaña.
 
 **Sobre el flujo iterativo por subset:** las "fases" o "iteraciones" no se definen en el PRD ni en el discovery — son una decisión humana de delivery sobre qué features procesar en cada pasada. El usuario decide el subset **después** de ver el discovery; cada ejecución con `--features` actualiza `_features.md` de forma incremental, sin borrar las features ya generadas en pasadas anteriores ni las pendientes para futuras.
 
@@ -63,10 +86,11 @@ Verifica que el archivo PRD existe; si no → informa con ruta exacta y detén.
 !python3 .sdd/scripts/sdd-prd-ready.py "<prd.md>"
 ```
 - Veredicto `READY` → continúa.
-- `OPEN_ASSUMPTIONS` o `ASSUMPTION_MISMATCH`, y **no** se pasó `--allow-unreviewed-prd` → **DETENTE** e informa:
-  > "El PRD no está listo para spec (`<veredicto>`): <detalle del script>. Revísalo con `/wf-prd-review <prd.md>` (confirma las asunciones y sella la aprobación) y vuelve a ejecutar. Si quieres continuar igualmente asumiendo alcance no-revisado, re-ejecuta añadiendo `--allow-unreviewed-prd`."
+- `OPEN_ASSUMPTIONS` o `ASSUMPTION_MISMATCH`, y **no** se pasó `--allow-unreviewed-prd` → **presenta el gate**: informa del veredicto y del detalle que dio el script, y pregunta con `AskUserQuestion`:
+  - *Revisar el PRD primero* (recomendada) — el flujo se detiene aquí; el usuario cierra las asunciones con `/wf-prd-review <prd.md>` y vuelve cuando esté sellado.
+  - *Continuar sobre un PRD no-revisado* — equivale a `--allow-unreviewed-prd`: sigues al Paso 2.5 dejando constancia explícita de que los derivados se generan sobre alcance **no-revisado**.
 - `UNSEALED` → **advisory**: avisa ("el PRD no está sellado; recomendable cerrar la aprobación con `/wf-prd-review`") y continúa.
-- Con `--allow-unreviewed-prd` sobre un veredicto bloqueante → continúa dejando constancia explícita de que los derivados se generan sobre un PRD **no-revisado**.
+- Con `--allow-unreviewed-prd` de entrada sobre un veredicto bloqueante → no presentes el gate; continúa dejando constancia explícita de que los derivados se generan sobre un PRD **no-revisado**.
 - Si falta el script (`.sdd/scripts/sdd-prd-ready.py` no existe) → avisa (reinstala el ecosistema con `install.sh`) y continúa (conservador: no bloquees por falta de tooling).
 
 ---
@@ -82,8 +106,7 @@ Verifica que el archivo PRD existe; si no → informa con ruta exacta y detén.
      prompt: "Lee `.claude/skills/wf-spec-analyze/SKILL.md` y ejecuta sus pasos TÚ MISMO sobre estos argumentos: <prd.md>. NO uses el `Skill` tool: ya eres el agente al que esa skill delega (`agent: sdd-spec-explorer`), así que invocarla te forkearía en un clon tuyo. Dentro de ese SKILL.md, `${CLAUDE_SKILL_DIR}` es `.claude/skills/wf-spec-analyze/`. Al terminar, informa del path exacto del `_analysis.md` generado, su veredicto y el nº de gaps por severidad."
    )
    ```
-   Tras la ejecución, **DETENERSE** e informar al usuario. El mensaje **no puede ser genérico**: quien tiene que responder no debería bucear en el informe para saber qué le toca. Saca los IDs críticos del script (punto 3) y da path, lista de `[P-XXX]` `[CRÍTICO]` con su pregunta en una línea, y qué se sustituye:
-   > "Se ha generado el análisis de gaps en `<path>_analysis.md`. Quedan [N] gap(s) `[CRÍTICO]`: [P-XXX] — <pregunta>; … En el bloque de cada uno, sustituye `- **Respuesta**: _(pendiente)_` por tu respuesta y vuelve a ejecutar `/wf-spec-features-first <prd.md>`. Si prefieres dictármelas, las aplico yo con el script."
+   El path del `_analysis.md` lo tomas **del informe del delegado**, no buscándolo en el disco. Marca este análisis como **recién generado**: el usuario aún no lo ha visto, así que el gate del punto 6 se presenta igualmente aunque el script no reporte críticos abiertos (con la opción de revisarlo antes de generar specs).
 3. **Estado mecánico de los gaps — antes de decidir nada** ([[D-042]]):
    ```
    !python3 .sdd/scripts/sdd-analysis-gaps.py "<path>_analysis.md" --check --json
@@ -92,13 +115,22 @@ Verifica que el archivo PRD existe; si no → informa con ruta exacta y detén.
 4. **Si existe** → léelo para lo que **sí** es juicio: veredicto del análisis (`LISTO_PARA_SPECS`, `LISTO_PARA_SPECS_CON_PREGUNTAS`, `REQUIERE_LIMPIEZA_PRD`), presencia de `[PUEDE_REQUERIR_CR]`, y si las respuestas ya escritas introducen expansión funcional no comprometida.
 5. Si el veredicto del análisis es `REQUIERE_LIMPIEZA_PRD` → **DETENERSE** e informar al usuario:
    > "El análisis previo marca `REQUIERE_LIMPIEZA_PRD`. Corrige la contaminación técnica del PRD antes de continuar y vuelve a ejecutar el flujo."
-6. Si el script dio `CRITICAL_OPEN` y **no** se ha pasado `--allow-open-critical-gaps` → **DETENERSE** e informar al usuario, citando los IDs que devolvió:
-   > "El análisis previo sigue teniendo [N] gap(s) `[CRÍTICO]` pendiente(s) ([IDs]). Decide una de estas dos vías antes de generar specs: (a) responderlos en `<path>_analysis.md` y re-ejecutar; (b) re-ejecutar añadiendo `--allow-open-critical-gaps` para aceptar HUs `[INCOMPLETO]`."
-7. Si el script dio `CRITICAL_OPEN` y **sí** se ha pasado `--allow-open-critical-gaps` → continuar al Paso 3 dejando constancia explícita de que las HUs afectadas podrán salir `[INCOMPLETO]`.
+6. Si el script dio `CRITICAL_OPEN` y **no** se pasó `--allow-open-critical-gaps` de entrada, o si el análisis está **recién generado** (punto 2) → **presenta el gate**.
+
+   El texto que acompaña a la pregunta **no puede ser genérico**: quien tiene que responder no debería bucear en el informe para saber qué le toca. Con los IDs que devolvió el script (punto 3), da el **path exacto**, la lista de `[P-XXX]` `[CRÍTICO]` **cada uno con su pregunta en una línea**, y qué se sustituye (`- **Respuesta**: _(pendiente)_`). Las preguntas salen del informe del delegado o de `--list`; no abras el fichero para redactarlas.
+
+   Y después pregunta con `AskUserQuestion`:
+   - *Responderlos primero* (recomendada) — el flujo se detiene aquí. El usuario los escribe en el `_analysis.md`, o **te los dicta y los aplicas tú con el script** (punto siguiente). Cuando estén cerrados, se retoma.
+   - *Continuar aceptando el riesgo* — equivale a `--allow-open-critical-gaps`: sigues al Paso 3 dejando constancia explícita de que las HUs afectadas podrán salir `[INCOMPLETO]` y quedarán bloqueadas para plan/tasks hasta completarse con `/wf-spec-gap-resolve`.
+   - *Responder solo algunas* — el usuario cierra las que tenga claras ahora; el resto quedan abiertas y se vuelve a evaluar el gate.
+
+   Si el análisis estaba recién generado pero el script **no** reporta críticos abiertos, el gate se reduce a dos vías: *revisar el análisis antes de generar* o *continuar ya*.
+7. Si el script dio `CRITICAL_OPEN` y `--allow-open-critical-gaps` vino **de entrada** en `$ARGUMENTS` → no presentes el gate; continúa al Paso 3 dejando constancia explícita de que las HUs afectadas podrán salir `[INCOMPLETO]`.
 8. Si el script dio `CRITICAL_ANSWERED`, inspecciona las respuestas ya resueltas. Si alguna introduce señales de cambio de producto según `kb-product-change-governance`:
-   - si **NO** se ha pasado `--allow-derived-scope-from-analysis` → **DETENERSE** e informar al usuario:
-     > "Las respuestas del análisis parecen introducir cambio de producto (por ejemplo: nueva entidad persistente, catálogo reutilizable, nueva granularidad funcional o flujo adicional no comprometido en el PRD). Formaliza primero el cambio con `wf-prd-change <prd.md> --new-reqs <cambio.md>` o re-ejecuta añadiendo `--allow-derived-scope-from-analysis` si quieres continuar dejando el scope marcado como derivado."
-   - si **SÍ** se ha pasado `--allow-derived-scope-from-analysis` → continuar dejando constancia explícita de que el discovery, `_features.md` y los specs deberán marcar ese alcance como **scope derivado** y no como PRD puro.
+   - si **NO** vino `--allow-derived-scope-from-analysis` de entrada → **presenta el gate**. Di qué respuesta concreta introduce qué señal (nueva entidad persistente, catálogo reutilizable, nueva granularidad funcional o flujo adicional no comprometido en el PRD) y pregunta con `AskUserQuestion`:
+     - *Formalizar el cambio en el PRD* (recomendada) — el flujo se detiene; el cambio se abre con `wf-prd-change <prd.md> --new-reqs <cambio.md>` y los derivados se generan después, sobre PRD limpio.
+     - *Continuar con alcance derivado* — equivale a `--allow-derived-scope-from-analysis`: sigues dejando constancia de que el discovery, `_features.md` y los specs marcarán ese alcance como **scope derivado** y no como PRD puro.
+   - si `--allow-derived-scope-from-analysis` vino **de entrada** → no presentes el gate; continúa dejando constancia explícita de que el discovery, `_features.md` y los specs deberán marcar ese alcance como **scope derivado** y no como PRD puro.
 9. Si el script dio `CRITICAL_ANSWERED` y no se detectan señales de cambio → continuar al Paso 3 usando el `_analysis.md` como contexto.
 
 **Importante:** `[INFORMATIVO]` nunca bloquea (el script los reporta aparte: cada uno aplicará su asunción por defecto); `[CRÍTICO]` abiertos requieren `--allow-open-critical-gaps`. Para señales de expansión consulta `kb-product-change-governance`. Si el PRD cambió después de generar specs previos, puede ser necesario `wf-prd-sync-impact` antes de mezclar pasadas.
@@ -128,13 +160,15 @@ Espera su resultado (el de la tool, no el del disco) y obtén de él el path del
 
 ---
 
-## Paso 4: Leer discovery y determinar el subset a procesar
+## Paso 4: Determinar el subset a procesar
 
-Lee el `_discovery.md` (recién generado o reutilizado).
-
-Parsea la lista completa de features identificadas:
-- Extrae cada Feature ID (F-001, F-002, ...) con su nombre kebab-case
-- Cuenta el total de features `N_total`
+Necesitas la lista de features (ID + nombre kebab-case) y su total `N_total`. **No hagas `Read` del `_discovery.md`** (Regla de oro):
+- **Discovery recién generado (Caso B)** → la lista viene en el **informe del delegado**, que la reporta explícitamente.
+- **Discovery reutilizado (Caso A)** → extráela con una consulta **acotada** por `Bash`, no cargando el documento:
+  ```
+  !grep -nE "^### F-[0-9]{3}:" "<path>_discovery.md"
+  ```
+  Una extracción determinista y delimitada no es "leer el artefacto": lo que la Regla de oro prohíbe es traerte el contenido para opinar sobre él.
 
 ### 4a — Determinar el subset
 
@@ -147,7 +181,11 @@ Parsea la lista completa de features identificadas:
 
 ### 4a.1 — Guardrail de coste para PRDs grandes
 
-Si no hay `--features` y el discovery contiene >5 features: sin `--all-features` → **DETENERSE** e informar al usuario de iterar por subset con `--features F-001,...`, o re-ejecutar con `--all-features`. Con `--all-features` → continuar.
+Si no hay `--features` y el discovery contiene >5 features, y **no** vino `--all-features` de entrada → **presenta el gate**. Muestra el mapa de features (ID, nombre, actor, RFs) tal como te lo reportó el delegado, di cuántas son, y pregunta con `AskUserQuestion` qué alcance quiere en esta pasada:
+- *Un subset de features* — el usuario nombra los IDs; equivale a `--features F-001,...`. Las no incluidas quedan `PENDIENTE_GENERACIÓN` y se generan en pasadas posteriores sin perder lo anterior. **No elijas tú el subset**: puedes agrupar por dependencia o por gaps abiertos para ayudar a decidir, pero la selección es del usuario.
+- *Todas de una pasada* — equivale a `--all-features`.
+
+Si hay gaps `[CRÍTICO]` abiertos, dilo aquí también: indica qué features quedarían con HUs `[INCOMPLETO]`, porque cambia la decisión de alcance. Con `--all-features` o `--features` **de entrada** → no presentes el gate; continúa.
 
 ### 4b — Detectar specs preexistentes
 
@@ -175,7 +213,7 @@ Agent(
 
 No uses el `Skill` tool para esto — no soporta ejecución paralela.
 
-Espera a que **todas** terminen (esperando el resultado de las tools; **no** listando `features/` en bucle para ver si ya aparecieron los ficheros). Para cada una, registra:
+Espera a que **todas** terminen según el criterio de arriba: tienes el informe de cada delegado como resultado de tu llamada. Que los ficheros hayan aparecido en `features/` no te dice que los fast-tracks terminaran, ni con qué resultado. Para cada una, registra **de su informe**:
 - Feature ID y nombre
 - Si se completó con éxito o falló
 - Path del spec generado
@@ -215,4 +253,4 @@ Delega con la tool `Agent` ([[D-043]]), `subagent_type: "sdd-spec-auditor"` y `r
 
 ## Paso 9: Informar al usuario
 
-Presenta el resumen siguiendo la plantilla de `${CLAUDE_SKILL_DIR}/references/output_template.md`. Diferencia features procesadas en esta iteración vs preexistentes de iteraciones anteriores vs pendientes de futura generación. Incluye los bloques condicionales de siguientes pasos (gaps críticos, conflictos, features listas, features PENDIENTE_GENERACIÓN).
+Presenta el resumen siguiendo la plantilla de `${CLAUDE_SKILL_DIR}/references/output_template.md` (consúltala por `Bash`; es material **del skill**, no un artefacto del proyecto — la Regla de oro habla de PRD, analysis y specs). Diferencia features procesadas en esta iteración vs preexistentes de iteraciones anteriores vs pendientes de futura generación. Incluye los bloques condicionales de siguientes pasos (gaps críticos, conflictos, features listas, features PENDIENTE_GENERACIÓN).

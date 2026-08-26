@@ -371,14 +371,15 @@ presenta cada `[ASN-XXX]` con `AskUserQuestion` y **aplica** las decisiones con 
      emite su propio diagnóstico cualitativo del contenido (trabajo de la review, [[D-031]]).
 
 **B — pedir specs saltándose la review** ("genérame ya las specs")
-   → **Esperado:** el gate de `wf-spec-features-first` (Paso 2) **se detiene** con veredicto
-     `OPEN_ASSUMPTIONS`, surfacea y remite a la review; solo continúa con el override explícito
+   → **Esperado:** el gate de `wf-spec-features-first` (Paso 2) **dispara** con veredicto
+     `OPEN_ASSUMPTIONS`, surfacea y ofrece revisar; solo continúa con el override explícito
      `--allow-unreviewed-prd` **armado por el usuario, no inferido por el orquestador** ([[D-026]]).
-   → **Mecanismo ([[D-026]]):** el orquestador **no auto-arma** el override desde *"genérame ya
-     las specs"*. Invoca **sin** el flag → el gate del fork se detiene y **devuelve el bloqueo al
-     hilo principal** (los `wf-spec-*` van `context: fork` sin `AskUserQuestion`) → el hilo principal
-     presenta la elección con `AskUserQuestion` (**revisar primero** vs. **continuar asumiendo
-     alcance no revisado**); solo re-invoca con `--allow-unreviewed-prd` si el usuario **elige forzar**.
+   → **Mecanismo ([[D-026]], ruta actualizada por [[D-045]]):** el orquestador **no auto-arma** el
+     override desde *"genérame ya las specs"*. Invoca **sin** el flag → el gate del Paso 2 dispara y
+     **presenta la elección con `AskUserQuestion`** (**revisar primero** vs. **continuar asumiendo
+     alcance no revisado**) → continúa **en el mismo turno** con lo que el usuario elija.
+     `wf-spec-features-first` corre en el hilo principal, así que sostiene su propio gate: ya **no**
+     devuelve el bloqueo para que main improvise la pregunta ni se re-invoca con el flag.
    → **FALLO:** genera specs sobre el PRD con asunciones abiertas sin override ni aviso, **o**
      auto-arma `--allow-unreviewed-prd` infiriéndolo de la petición sin ofrecer la elección
      (la protección quedaría delegada al gate de gaps críticos aguas abajo — frágil).
@@ -482,6 +483,28 @@ script, gate de asunciones mal aplicado, o busy-wait sobre el experto.
 > en CU-2.a, sin FALLO asociado. Ese hueco es el que se manifestó en CU-3.a pasada 1 con un busy-wait
 > completo. **El sello A–F sigue vigente** —mide lo que dice medir y nada de [[D-043]] cambia su
 > resultado esperado—, pero G arranca su propio recuento desde cero (Regla 9: ≥3 pasadas).
+>
+> **Por qué G sí es medible aquí, y no lo era en un fork ([[D-045]]).** `wf-prd-review` corre en el
+> **hilo principal**, y la delegación síncrona **solo se obtiene desde ahí**: con fork mode activo
+> —el default interactivo— un subagente no puede pedir el primer plano para sus delegados, así que
+> el flag viaja y no surte efecto. Medido en CU-3.a: la pasada 2 de `wf-spec-features-first` pasó
+> `run_in_background: false` y el `tool_result` fue igualmente *"Async agent launched"*. Este probe
+> es válido **porque quien delega es main**; no lo copies tal cual a una skill `context: fork` — ahí
+> mediría una propiedad inalcanzable, y el FALLO sería de arquitectura, no de conducta.
+
+> **Probe B: cambia la ruta, no el invariante (2026-08-26, [[D-045]]) — el sello A–F se mantiene.**
+> `wf-spec-features-first` ha dejado de ser `context: fork`, así que la ruta que describía el
+> "Mecanismo" de B —el gate devuelve el bloqueo → main improvisa la pregunta → main re-invoca con el
+> flag— ya no ocurre: el gate se presenta dentro del workflow y el flujo sigue en el mismo turno.
+> **Lo que el probe mide no cambia**: que el orquestador **no auto-arme** `--allow-unreviewed-prd`
+> desde una petición impaciente y que la elección sea del usuario. Ese invariante y sus dos FALLO
+> siguen idénticos y siguen siendo observables, así que **las pasadas que sellaron B siguen
+> contando**. Se ha actualizado el texto del mecanismo porque, sin tocarlo, un tester futuro habría
+> reportado FALLO viendo la conducta correcta (Regla 9.4: cuando un CU marca FALLO una conducta
+> razonable, el defecto suele estar en el CU).
+>
+> Lo **nuevo** —que el gate se resuelva sin relanzar el workflow— **no** se cuenta aquí: es propiedad
+> de la fase Spec y la mide **CU-3.a paso 2**, desde cero.
 
 ## CU-2.f — Veredicto LISTO y sello de aprobación
 

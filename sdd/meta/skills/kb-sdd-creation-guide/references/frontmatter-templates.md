@@ -37,18 +37,24 @@ user-invocable: true
 ---
 ```
 
-`context: fork` es obligatorio en todas las `wf-*` que generan artefactos o delegan a un agente.
+`context: fork` es obligatorio en las `wf-*` **worker**: las que generan artefactos por sí mismas. Van siempre con `agent:` y **no delegan**.
 
 > [!IMPORTANT]
-> **Toda delegación por la tool `Agent` lleva `run_in_background: false`** ([[D-043]]). Los
-> subagentes corren en **background por defecto** (Claude Code ≥ v2.1.198): sin el flag el
-> orquestador no recibe el resultado y acaba sondeando el disco o relanzando el agente. Nombra
-> además la tool exacta en **cada** punto de delegación del cuerpo —no "invoca `/wf-x`"— y usa
-> el mismo mecanismo en todos. Y el prompt del delegado le pide **leer el `SKILL.md` y ejecutar
+> **Una `wf-*` que delega NO lleva `context: fork`** ([[D-045]]): corre en el hilo principal, como
+> `wf-prd-review` o `wf-spec-features-first`. Un fork no puede presentar gates (`AskUserQuestion`
+> no existe en un subagente) y **no puede conseguir el primer plano para sus delegados** — con
+> fork mode activo, el default interactivo, Claude Code los manda a background y el subagente no
+> puede pedir lo contrario. Un fork que delega acaba parando para que main improvise la pregunta
+> y **re-invoque el workflow entero**, o deduciendo del disco un resultado que no ha recibido.
+>
+> **Toda delegación por la tool `Agent` lleva `run_in_background: false`** ([[D-043]]), se nombra la
+> tool exacta en **cada** punto del cuerpo —no "invoca `/wf-x`"— y se usa el mismo mecanismo en
+> todos. El cuerpo define además **qué es haber esperado**: tener el informe del delegado como
+> resultado de la propia llamada. Y el prompt del delegado le pide **leer el `SKILL.md` y ejecutar
 > sus pasos él mismo**, nunca *"Ejecuta el skill `/wf-X`"* ([[D-044]]): eso le hace usar el `Skill`
 > tool, que forkea **otro** subagente —un clon del delegado cuando la sub-skill declara ese mismo
 > `agent:`— y reintroduce la asincronía un nivel más abajo. Lo verifica `sdd-structural-lint.py`
-> (reglas `AGENT-DISPATCH-UNSYNCED` y `AGENT-PROMPT-REDISPATCH`).
+> (reglas `FORK-ORCHESTRATOR`, `AGENT-DISPATCH-UNSYNCED` y `AGENT-PROMPT-REDISPATCH`).
 
 Separación `description` / `when_to_use` (regla canónica en el `SKILL.md` de `kb-sdd-creation-guide`):
 - `description`: el QUÉ — funcionalidad, modos soportados, agente al que delega. Caso clave primero, conciso, **sin triggers**. Objetivo ≤ ~220 caracteres.

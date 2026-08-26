@@ -37,6 +37,35 @@
 
 ---
 
+## Fase PRD (`wf-prd-create` / `sdd-prd-ready.py`)
+
+- [ ] 🔴 **O-7 — Un PRD escrito fuera del ecosistema entra como `READY` sin que la anti-fabricación haya corrido nunca.** `sdd-prd-ready.py` da veredicto `READY` a un PRD que tenga la línea `Aprobado por:` y **cero** asunciones — pero "cero asunciones" tiene dos orígenes indistinguibles: un PRD que pasó por `wf-prd-create` (Regla 12) y cerró todas sus `[ASN-XXX]` en review, y un PRD que alguien escribió en Notion, pegó en el repo y selló a mano. En el segundo, `inline_marks: 0, asn_entries: 0` significa que **la anti-fabricación nunca se ejecutó**, no que no hubiera nada que marcar. El invariante 1:1 se cumple **vacuamente**, y toda la cadena de derivados se construye sobre inferencias que nadie marcó.
+  - *Mejora posible:* declarar la **procedencia** en el frontmatter del PRD (`origin: authored | imported | extracted`), con precedente directo en el `origin: extracted` que `wf-design-extract` ya escribe. `sdd-prd-ready.py` distinguiría `READY` de `READY_UNVERIFIED` según el origen. Y ofrecer la **vía de adopción**: `wf-prd-create --source <prd_externo.md>` reescribe el documento externo aplicando Regla 12, que es exactamente para lo que existe `--source`.
+  - *Por qué importa más de lo que parece:* es el camino de entrada **más probable** de un equipo real al ecosistema — casi nadie empieza escribiendo el PRD con la herramienta; empieza con el PRD que ya tiene.
+  - *Por qué no es crítico hoy:* con un PRD del propio pipeline el gate funciona; el agujero se abre solo en la adopción brownfield, que aún no hemos probado.
+  - *Coste:* medio — campo de frontmatter + rama en el script + veredicto nuevo + probes de CU-2.
+  - *Origen:* observado preparando la campaña de CU-2; nunca abierto.
+
+## Fase spec (`wf-spec-features-first`)
+
+- [ ] 🟡 **O-8 — Falta la frontera entre "extracción acotada" y "cargar el artefacto" en el hilo principal.** [[DECISIONS D-030]]/[[DECISIONS D-031]]/[[DECISIONS D-038]] prohíben que main haga `Read`/`Edit`/`Write` del artefacto, pero **no dicen nada de `Bash`**. Medido en CU-3.a pasada 2: main ejecutó `grep -n "CRÍTICO" -A 12 prd_analysis.md | head -150` **después** de que el delegado ya le hubiera dado los 7 IDs con sus preguntas — no viola ninguna regla y mete ~150 líneas del informe en el hilo principal, que es justo el coste que [[DECISIONS D-042]] evitaba.
+  - *Por qué sube de prioridad ahora:* con [[DECISIONS D-045]], `wf-spec-features-first` corre **en main**, así que main tiene muchas más ocasiones de hacerlo. El propio Paso 4 del SKILL ya autoriza un `grep` acotado sobre el `_discovery.md` para sacar los IDs de feature — legítimo, pero la línea entre eso y volcar el informe no está escrita en ninguna parte.
+  - *Mejora posible:* regla en `kb-sdd-creation-guide` (y en la Regla de oro de los orquestadores) que fije el criterio: una extracción es aceptable si es **determinista, delimitada y de metadatos** (IDs, veredicto, conteo) — no si trae prosa del artefacto para que main la interprete. Con un tope explícito, verificable en los logs.
+  - *Coste:* bajo (una regla + señal de FALLO en CU-3.a).
+  - *Origen:* CU-3.a pasada 2, Observación B.
+
+- [ ] 🟢 **O-9 — ¿Debería `wf-spec-features-first` preguntar el rigor él mismo?** Desde [[DECISIONS D-045]] corre en el hilo principal y **puede** usar `AskUserQuestion`, así que la elección de rigor podría vivir dentro del workflow en vez de en el orquestador antes de invocar. Hoy **no se ha cambiado** a propósito: `CU-3.r` mide la conducta actual, y moverla la invalidaría.
+  - *A favor:* menos contrato repartido entre la regla eager y el skill.
+  - *En contra:* el rigor se propaga como argumento a N `wf-spec-fast-track`, que **siguen siendo forks**; tiene que estar resuelto antes del fan-out igualmente.
+  - *Origen:* [[DECISIONS D-045]]; anotado también en `CU-3.r`.
+
+## Campaña de conformance (metodología)
+
+- [ ] 🟡 **O-10 — 83 warnings `DESCRIPTION-TOO-LONG` tapan las señales nuevas del linter.** `sdd-structural-lint.py` nunca sale limpio: el suelo permanente de warnings hace que un aviso nuevo se pierda. **Evidencia de que el riesgo es real:** la regla `FORK-INTERVIEW` existía, describía casi exactamente el defecto de `wf-spec-features-first` (*"fork que presenta gate de confirmación en prosa: mismo bug latente"*) y **no lo detectaba** — nadie lo notó durante meses porque nadie mira los warnings.
+  - *Mejora posible:* recortar las 83 `description` (es trabajo mecánico y acotado), o separar el suelo conocido del ruido nuevo (`--new-since`, o un baseline commiteado).
+  - *Coste:* bajo-medio, pero repetitivo.
+  - *Origen:* [[DECISIONS D-045]].
+
 ## Arquitectura cross-repo (exploratorio)
 
 - [ ] 🔴 **O-4 — ¿MCP para comunicar los repos `spec` / `design` / `consumer`? (exploratorio, gated a escala).** Hoy el acoplamiento cross-repo es **git-native y determinista**: `artifacts_source`/`design_source` (rutas relativas a checkouts locales) + `*_pin` (SHA git); `sdd-source-drift.py` = `git diff pin..HEAD`; `sdd-design-resolve.py` = merge de ficheros local. Reproducible, offline, auditable, CI-safe. La ocurrencia: exponer specs/design como un **MCP** consultable, en vez de exigir checkouts locales.

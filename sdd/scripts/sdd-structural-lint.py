@@ -23,7 +23,8 @@ Checks (cada finding: severidad, tipo, archivo:linea, mensaje):
   FORK-ASKUSER-CONFLICT  [blocking]  wf con context: fork que declara/usa AskUserQuestion (un fork no puede preguntar).
   FORK-INTERVIEW         [warning]   wf con context: fork que entrevista o presenta gate de confirmacion en prosa (sin declarar AskUserQuestion): mismo bug latente.
   AGENT-MEMORY-DECLARED  [blocking]  Agente (o la plantilla de agente) que declara `memory:`: el estado vive en los artefactos, no en la memoria del agente.
-  AGENT-DISPATCH-UNSYNCED [blocking] wf que delega por la tool `Agent` sin `run_in_background: false`: los subagentes corren en background por defecto y el orquestador acaba sondeando el disco.
+  AGENT-DISPATCH-UNSYNCED [blocking] wf que delega por la tool `Agent` sin `run_in_background: false`: los subagentes corren en background por defecto y la peticion de sincronia no se hace.
+  FORK-ORCHESTRATOR      [blocking]  wf con context: fork cuyo cuerpo delega por la tool `Agent`: un fork no puede presentar gates ni conseguir el primer plano para sus delegados.
   AGENT-PROMPT-REDISPATCH [blocking] prompt de delegacion que pide "Ejecuta el skill /wf-X": el delegado re-despacha con `Skill`, forkea un clon de si mismo y reintroduce la asincronia.
   DESCRIPTION-TOO-LONG   [warning]   description del frontmatter > 220 chars.
   USER-INVOCABLE-MISSING [warning]   wf sin user-invocable; kb sin user-invocable: false.
@@ -110,6 +111,10 @@ INTERVIEW_RE = re.compile(
     r"antes de tocar ning|espera(?:r)?\s+confirmaci[oó]n",
     re.IGNORECASE)
 AGENT_RE = re.compile(r"^agent:\s*\S+", re.MULTILINE)
+# Senal de que una skill SOSTIENE UN GATE: declara una escotilla `--allow-*`, que por
+# contrato ([[D-026]]) solo el usuario arma eligiendo — y elegir requiere preguntar.
+# Se usa junto a INTERVIEW_RE para graduar FORK-ORCHESTRATOR (D-045).
+ALLOW_OVERRIDE_RE = re.compile(r"--allow-[a-z0-9-]+")
 USER_INVOCABLE_RE = re.compile(r"^user-invocable:\s*(true|false)\b", re.MULTILINE)
 # --- Delegacion por la tool `Agent` (D-043) ---------------------------------
 # Las tres formas con que una wf-* prescribe delegar en un subagente. El flag que
@@ -625,15 +630,16 @@ def check_agent_memory(findings):
 
 def check_agent_dispatch(findings):
     """AGENT-DISPATCH-UNSYNCED — una `wf-*` que delega por la tool `Agent` sin
-       declarar `run_in_background: false` (D-043).
+       declarar `run_in_background: false` (D-043, matizada por D-045).
 
-       Desde Claude Code v2.1.198 los subagentes corren en BACKGROUND por defecto.
-       Un orquestador que delega y no pasa el flag no recibe el resultado: se queda
-       sin handle sincrono y acaba deduciendo si el delegado termino mirando el
-       disco (`ls` en bucle, `Monitor` sobre el artefacto) o relanzando un segundo
-       agente — race de doble escritura, no una espera. Medido en conformance
-       (CU-3.a pasada 1): `wf-spec-features-first` sondeo `prd/` dos veces y emitio
-       el reporte final duplicado.
+       Los subagentes corren en BACKGROUND por defecto, y el paso siguiente de un
+       orquestador consume el resultado del anterior. Sin el flag, la peticion de
+       sincronia no llega a hacerse.
+
+       Lo que esta regla NO garantiza (D-045): que la delegacion acabe siendo
+       sincrona. Eso depende de donde corre quien delega — desde un fork, con fork
+       mode activo, el primer plano no se puede pedir. Por eso la regla hermana es
+       FORK-ORCHESTRATOR: el flag es necesario, no suficiente.
 
        Solo `wf-*`: una `kb-*` que DESCRIBA el patron (kb-sdd-creation-guide) no es
        una prescripcion de delegacion y no debe tripear.
@@ -655,11 +661,86 @@ def check_agent_dispatch(findings):
         findings.append(Finding(
             "blocking", "AGENT-DISPATCH-UNSYNCED", relpath(skill_md), line,
             f"Prescribe delegar en un subagente por la tool `Agent` pero no dice "
-            f"`{SYNC_FLAG}`. Los subagentes corren en background por defecto "
-            f"(Claude Code >= v2.1.198): sin el flag el orquestador no recibe el "
-            f"resultado y acaba sondeando el filesystem o relanzando el agente "
-            f"(D-043). Anade el flag a la invocacion y di explicitamente que espere "
-            f"su resultado."))
+            f"`{SYNC_FLAG}`. Los subagentes corren en background por defecto: sin "
+            f"el flag la peticion de sincronia no se hace y el paso siguiente opera "
+            f"sobre un resultado que no ha llegado (D-043). Anade el flag y define "
+            f"en el cuerpo que se ha esperado cuando el informe del delegado esta "
+            f"en contexto como resultado de la propia llamada (D-045)."))
+
+
+def check_fork_orchestrator(findings):
+    """FORK-ORCHESTRATOR — una `wf-*` con `context: fork` cuyo cuerpo prescribe
+       delegacion por la tool `Agent` (D-045).
+
+       Un fork no debe orquestar, por dos motivos independientes:
+
+       1. NO PUEDE PREGUNTAR. Una skill que delega casi siempre tiene gates
+          (precondiciones, overrides `--allow-*`, eleccion de alcance) y
+          `AskUserQuestion` no existe en un subagente. El fork acaba parando y
+          devolviendo el bloqueo para que el hilo principal improvise la pregunta y
+          RE-INVOQUE el workflow entero. Medido en CU-3.a pasada 3:
+          `wf-spec-features-first` paro dos veces y main lo relanzo dos veces,
+          repitiendo parseo, readiness y check de gaps (102 KB + 142 KB de fork).
+       2. NO PUEDE CONSEGUIR EL PRIMER PLANO. Con fork mode activo — el default en
+          sesiones interactivas — Claude Code lanza los subagentes en background y
+          un subagente no puede pedir el primer plano para sus delegados. Sin
+          resultado sincrono, el fork deduce del disco lo que no ha recibido y lo
+          reporta como si viniera del delegado.
+
+       `context: fork` es para WORKERS: declaran `agent:`, hacen su trabajo y
+       reportan a quien los llamo. Una skill sin `agent:` que delega es un
+       orquestador y su sitio es el hilo principal.
+
+       Los dos motivos son independientes, y la severidad sigue a cual aplica:
+
+       - BLOCKING si ademas hay senal de gate — la skill declara overrides `--allow-*`
+         o entrevista/confirma en prosa. Le aplican los dos motivos, y el relanzado
+         desde main es observable hoy.
+       - WARNING si solo delega, sin gate. Le aplica el motivo 2 (no consigue el
+         primer plano), que es real pero no produce el relanzado; se marca para
+         decidirlo en su propio bloque en vez de arrastrar aqui una fase entera.
+
+       Se mira el CUERPO, no `allowed-tools`: declarar `Agent` sin usarlo es
+       sobre-declaracion (otro defecto), no orquestacion. Solo `wf-*`: una `kb-*`
+       que describa el patron no es una prescripcion.
+    """
+    for skill_md in sorted(SDD_ROOT.rglob("SKILL.md")):
+        if is_excluded(skill_md):
+            continue
+        if not skill_md.parent.name.startswith("wf-"):
+            continue
+        try:
+            text = skill_md.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        fm, body, body_start = split_frontmatter(text)
+        if CONTEXT_FORK_RE.search(fm) is None:
+            continue
+        m = AGENT_DISPATCH_RE.search(body)
+        if m is None:
+            continue
+        line = body_start + body[:m.start()].count("\n")
+        has_gate = bool(ALLOW_OVERRIDE_RE.search(fm) or ALLOW_OVERRIDE_RE.search(body)
+                        or INTERVIEW_RE.search(body))
+        if has_gate:
+            findings.append(Finding(
+                "blocking", "FORK-ORCHESTRATOR", relpath(skill_md), line,
+                "`context: fork` en una skill que delega por la tool `Agent` Y "
+                "sostiene gates: un fork no puede preguntar (`AskUserQuestion` no "
+                "existe en un subagente) ni conseguir el primer plano para sus "
+                "delegados, asi que acaba relanzandose desde main o deduciendo del "
+                "disco un resultado que no ha recibido (D-045). Quita `context: "
+                "fork` — el orquestador corre en el hilo principal. `context: fork` "
+                "es para workers: declaran `agent:` y no delegan."))
+        else:
+            findings.append(Finding(
+                "warning", "FORK-ORCHESTRATOR", relpath(skill_md), line,
+                "`context: fork` en una skill que delega por la tool `Agent`: un "
+                "subagente no puede conseguir el primer plano para sus delegados "
+                "(fork mode activo por defecto), asi que la delegacion es asincrona "
+                "y el paso siguiente puede operar sobre un resultado que no ha "
+                "llegado (D-045). Sin gates, el sintoma es mas silencioso: se marca "
+                "para decidirlo en su propio bloque, no se arrastra aqui."))
 
 
 def check_agent_prompt_redispatch(findings):
@@ -765,6 +846,7 @@ def run_all():
     check_name_mismatch(findings)
     check_agent_memory(findings)
     check_agent_dispatch(findings)
+    check_fork_orchestrator(findings)
     check_agent_prompt_redispatch(findings)
     check_reference_paths(findings)
     # Orden estable: severidad (blocking primero), tipo, path, linea.
