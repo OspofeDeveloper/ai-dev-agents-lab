@@ -28,8 +28,9 @@ INSTALL = SDD_ROOT / "install.sh"
 
 # Scripts de enforcement que install.sh distribuye a .sdd/scripts/
 ENFORCEMENT_SCRIPTS = [
-    "sdd-seal.py", "sdd-gate-check.py", "sdd-task-state.py", "sdd-sync-check.py",
-    "sdd-skill-allow.py", "sdd-amend.py", "sdd-features-index.py",
+    "sdd-seal.py", "sdd-gate-check.py", "sdd-agent-sync.py", "sdd-task-state.py",
+    "sdd-sync-check.py",
+    "sdd-skill-allow.py", "sdd-amend.py", "sdd-features-index.py", "sdd-analysis-gaps.py",
     "sdd-project-status.py", "sdd-kb-check.py", "sdd-release.py", "sdd-next-id.py",
     "sdd-resolve-path.py", "sdd-design-resolve.py", "sdd-source-drift.py",
     "sdd-prd-ready.py", "sdd-prd-frontmatter.py", "sdd-prd-deps.py",
@@ -405,19 +406,90 @@ class InstallAllTest(InstallBase):
     def test_features_first_defines_what_waiting_means(self):
         # D-045: "espera el resultado" sin criterio no es verificable — el fork
         # podia creer honestamente que habia esperado porque el fichero estaba.
-        # El criterio es el CANAL: el informe llega como resultado de la llamada.
+        # D-047: el criterio es QUIEN TRAE el informe, no en que turno llega, y
+        # nombra las DOS vias legitimas. Escrito con una sola, la conducta
+        # correcta lo incumplia 10 de 10 (CU-3.a pasada 4).
         self.install("all")
         skill = (self.skill_dir("wf-spec-features-first") / "SKILL.md").read_text(encoding="utf-8")
         self.assertIn("Qué es haber esperado", skill,
                       "falta el criterio autocomprobable de espera (D-045)")
-        self.assertIn("resultado de tu propia llamada", skill,
-                      "el criterio de espera no cita el canal (D-045)")
+        self.assertIn("tool_result", skill,
+                      "el criterio de espera no nombra la via (a) (D-047)")
+        self.assertIn("notificación de fin", skill,
+                      "el criterio de espera no nombra la via (b) (D-047)")
         self.assertIn("no reconstruyas", skill,
                       "falta la salida sancionada: parar en vez de reconstruir (D-045)")
         # D-045: el cuerpo viaja al contexto del agente; nombrar la tool prohibida
         # se la enseña. Medido: los dos forks hicieron `ToolSearch select:Monitor`.
         self.assertNotIn("Monitor", skill,
                          "la prohibicion nombra la tool y se la enseña al agente (D-045)")
+
+    def test_features_first_fanout_barrier_is_explained(self):
+        # D-047: el fan-out del Paso 5 es una BARRERA — el Paso 6 lee del disco lo
+        # que escribieron todos. Las dos piezas se sostienen juntas: N llamadas en
+        # UN mensaje + el flag. Separadas, una tapa la rotura de la otra: medido en
+        # la pasada 4, tres writers en tres mensajes, inocuo solo porque el flag no
+        # viajaba. El dia que el flag funcione, eso serializa el fan-out.
+        self.install("all")
+        skill = (self.skill_dir("wf-spec-features-first") / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("en un único mensaje", skill,
+                      "falta el requisito de fan-out en un solo mensaje (D-047)")
+        self.assertIn("barrera", skill,
+                      "el fan-out no explica por que el flag es obligatorio aqui (D-047)")
+        self.assertIn("serializa", skill,
+                      "no dice que mensajes separados serializan el fan-out (D-047)")
+
+    def test_features_first_checks_the_index_covers_the_universe(self):
+        # D-046: con artifacts.prd != artifacts.spec el discovery vive con el PRD.
+        # Medido: el indice registro 3 features de 9 y las 6 PENDIENTE_GENERACIÓN
+        # desaparecieron, mientras main narraba las 9 correctamente.
+        self.install("all")
+        skill = (self.skill_dir("wf-spec-features-first") / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("--discovery", skill,
+                      "el Paso 6 no ofrece la salida para el discovery externo (D-046)")
+        self.assertIn("PENDIENTE_GENERACIÓN", skill)
+        self.assertIn("a mano", skill,
+                      "no prohibe parchear a mano un artefacto generado (D-046)")
+
+    def test_agent_sync_hook_is_wired_in_settings(self):
+        # D-048: el script en .sdd/scripts/ no sirve de nada si el settings.json
+        # no registra el matcher. Lo cubre ENFORCEMENT_SCRIPTS por el lado del
+        # fichero; esto cubre el cableado.
+        self.install("all")
+        settings = json.loads(
+            (self.proj / ".claude" / "settings.json").read_text(encoding="utf-8"))
+        pre = settings["hooks"]["PreToolUse"]
+        matchers = {e["matcher"] for e in pre}
+        self.assertIn("Agent", matchers, "el hook de sincronia no esta cableado (D-048)")
+        self.assertIn("Skill", matchers, "el gate de skills se ha perdido en el merge")
+        agent_cmd = next(e for e in pre if e["matcher"] == "Agent")["hooks"][0]["command"]
+        self.assertIn("sdd-agent-sync.py", agent_cmd)
+        # Sin el guard de existencia, un proyecto a medio instalar peta en cada
+        # llamada Agent: el hook tiene que ser inerte si el script no esta.
+        self.assertIn("-f ", agent_cmd, "el hook no comprueba que el script exista")
+
+    def test_features_first_draws_the_bash_boundary(self):
+        # D-048 (cierra O-8): "no hagas Read del artefacto" se cumplia al pie de
+        # la letra con `cat`. La frontera va sobre el EFECTO, no sobre la tool.
+        self.install("all")
+        skill = (self.skill_dir("wf-spec-features-first") / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("_features.md", skill)
+        for criterio in ("determinista", "delimitada", "metadatos"):
+            self.assertIn(criterio, skill,
+                          f"la frontera de extraccion no nombra «{criterio}» (D-048)")
+
+    def test_readiness_reads_conflict_reports_from_both_places(self):
+        # D-046: el fan-out del Paso 7 escribe un informe JUNTO A CADA SPEC; el
+        # readiness los buscaba solo en la raiz y se declaraba "sin analisis de
+        # conflictos" con N informes en disco — advertencia no bloqueante, o sea
+        # fallo silencioso.
+        self.install("all")
+        skill = (self.skill_dir("wf-spec-readiness") / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("*/spec/*_conflict_report.md", skill,
+                      "el readiness no busca los informes por feature (D-046)")
+        # D-047: un SIN_CONFLICTOS no refuta un hallazgo; nunca cerrar por mayoria.
+        self.assertIn("no refuta un hallazgo", skill,
+                      "falta la regla de arbitraje entre auditores (D-047)")
 
     def test_prd_change_reopens_seal(self):
         # D-028: un cambio de PRD reabre el sello (status in-review + Aprobado por

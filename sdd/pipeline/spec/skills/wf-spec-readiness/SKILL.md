@@ -36,13 +36,17 @@ Si no hay argumento y no se puede inferir, informa al usuario:
 1. Busca `*_features.md` en el directorio padre del directorio de features (ej: si features/ está en `docs/features/`, busca `docs/*_features.md`).
 2. Busca todos los `*_spec.md` cubriendo ambos layouts de feature: `<features-dir>/*/spec/*_spec.md` (subcarpetas) y `<features-dir>/*/*_spec.md` (plano legacy).
 3. Busca todos los `README.md` dentro de `<features-dir>/*/README.md`.
-4. Busca `*_conflict_report.md` en el directorio padre del directorio de features (opcional — puede no existir).
+4. Busca los informes de conflictos **en los dos sitios donde se escriben** (opcional — pueden no existir):
+   - **Consolidado**: `*_conflict_report.md` en el directorio padre del directorio de features — lo escribe `/wf-spec-conflict` cuando se verifica el directorio entero de una vez.
+   - **Por feature**: `<features-dir>/*/spec/*_conflict_report.md` (subcarpetas) y `<features-dir>/*/*_conflict_report.md` (plano legacy) — es lo que produce el fan-out del Paso 7 de `wf-spec-features-first`, que lanza **un auditor por spec** y cada uno escribe junto a su spec.
+
+   Buscar solo en la raíz deja fuera **todos** los informes del fan-out, que es el camino por defecto ([[D-047]]): el readiness se declararía "sin análisis de conflictos" teniendo N informes en disco, y esa advertencia no bloquea — se pierde en silencio.
 
 Valida:
 - Si no hay `_features.md` → detén: "No se encontró `_features.md` en `<directorio_padre>`. Ejecuta `/wf-spec-features-first` o `/wf-spec-fast-track` primero."
 - Si no hay specs → detén: "No se encontraron specs de feature en `<features-dir>`. Ejecuta `/wf-spec-features-first` o `/wf-spec-fast-track` primero."
 - Si falta algún README → advertencia no bloqueante: "Falta README.md en `<feature>/`. Las dependencias de esta feature se inferirán solo del `_features.md`."
-- Si no hay `_conflict_report.md` → advertencia no bloqueante: "No se encontró `_conflict_report.md`. Ejecuta `/wf-spec-conflict` para un análisis de conflictos completo. Continuando sin análisis de conflictos."
+- Si no hay **ningún** informe de conflictos en ninguno de los dos sitios → advertencia no bloqueante: "No se encontró ningún `_conflict_report.md`. Ejecuta `/wf-spec-conflict` para un análisis de conflictos completo. Continuando sin análisis de conflictos."
 
 ---
 
@@ -52,7 +56,7 @@ Lee el contenido completo de:
 - `_features.md`
 - Cada `*_spec.md` de feature
 - Cada `README.md` de feature (los que existan)
-- `_conflict_report.md` (si existe)
+- **Todos** los informes de conflictos localizados en el Paso 2.4 (el consolidado y los de cada feature), no solo el primero que encuentres
 
 ---
 
@@ -79,13 +83,32 @@ Clasifica la feature como **BLOQUEADA** si tiene al menos una HU `[INCOMPLETO]`.
 
 ### 4c — Conflictos no resueltos
 
-Si existe `_conflict_report.md`:
-- Primero verifica el estado general del informe. Debe indicar explícitamente `SIN_CONFLICTOS` o `CONFLICTOS_DETECTADOS`.
+Para **cada** informe de conflictos localizado:
+- Primero verifica su estado general. Debe indicar explícitamente `SIN_CONFLICTOS` o `CONFLICTOS_DETECTADOS`.
 - Si el archivo existe pero no deja ese estado de forma inequívoca, trátalo como artefacto ambiguo y repórtalo en el informe de readiness.
 - Busca todos los conflictos de severidad **ALTA** que involucren esta feature.
-- Un conflicto se considera no resuelto si aparece en el informe (el informe refleja el estado en el momento de su generación; si se resolvió, el usuario debió re-ejecutar `/wf-spec-conflict`).
+- Un conflicto se considera no resuelto si aparece en algún informe (el informe refleja el estado en el momento de su generación; si se resolvió, el usuario debió re-ejecutar `/wf-spec-conflict`).
 
 Clasifica la feature como **BLOQUEADA** si tiene al menos un conflicto ALTA asociado.
+
+> **Cuando los informes se contradicen, arbitras tú ([[D-047]]).** Con el fan-out de features-first
+> hay **un auditor por feature**, y cada uno mira el mismo grafo desde su lado: es esperable que
+> sobre un mismo par uno levante un conflicto y otro declare `SIN_CONFLICTOS`. Tú eres el primer
+> lector que ve **todos** los specs y **todos** los informes a la vez, así que la contradicción se
+> resuelve aquí y no antes.
+>
+> Reglas de arbitraje:
+> - **Un `SIN_CONFLICTOS` no refuta un hallazgo.** Significa "no lo vi desde mi feature", que es
+>   justo lo que pasa cuando el conflicto está en el lado del otro. Nunca cierres un conflicto por
+>   recuento de informes.
+> - **Resuelve mirando los specs**, que sí tienes: comprueba en el texto si la contradicción existe.
+>   Un conflicto solo se descarta con la cita concreta que lo desmiente.
+> - **Deja constancia del desacuerdo** en el informe: el ID del conflicto, quién lo levantó, quién no
+>   lo vio, y tu veredicto con su evidencia. Un conflicto silenciosamente desaparecido entre dos
+>   pasadas es indistinguible de uno resuelto.
+> - **Si no puedes resolverlo con los specs**, no lo cierres: mantenlo **abierto** con la severidad
+>   más alta que le haya dado cualquier informe y marca la feature `BLOQUEADA`. El coste de un falso
+>   bloqueo lo paga una revisión; el de un falso "listo" lo paga el plan.
 
 ### 4d — Dependencias
 

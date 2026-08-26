@@ -32,19 +32,35 @@ Uso:
     sdd-features-index.py <dir>            # regenera <base>_features.md en <dir>
     sdd-features-index.py <dir> --check    # exit 2 si el de disco difiere (CI/gate)
     sdd-features-index.py <dir> --stdout   # imprime, no escribe
+    sdd-features-index.py <dir> --discovery <path>   # discovery explícito
 
 <dir> es el directorio raíz de artefactos spec: contiene `features/` y donde
-viven `_discovery.md` / `_features.md` / `_readiness_report.md`.
+viven `_features.md` / `_readiness_report.md`.
+
+Dónde se busca el discovery (en orden, primera coincidencia gana):
+  1. `--discovery <path>` explícito.
+  2. `*_discovery.md` dentro de <dir>.
+  3. Los demás directorios de `artifacts` de `.sdd/project-init.json` (buscado
+     hacia arriba desde <dir>), empezando por `prd`.
+
+El paso 3 existe porque el discovery lo genera `wf-spec-discover` a partir del
+PRD y se llama `<basename_prd>_discovery.md`: en topología `authoring`
+(`artifacts.prd` != `artifacts.spec`) vive en el directorio del PRD, no en la
+raíz spec. Sin este cruce de frontera el índice no ve el universo de features y
+registra solo las ya generadas — perdiendo en silencio las PENDIENTE_GENERACIÓN.
 
 Exit codes: 0 = OK (regenerado / en sync); 1 = error de uso o IO;
             2 = (--check) el archivo de disco está desactualizado.
 
 Política conservadora: si no hay discovery, el índice se construye solo con los
-specs presentes (caso fast-track standalone). Nunca aborta por una sección
-ausente o malformada — la omite.
+specs presentes (caso fast-track standalone) — pero lo DECLARA en un aviso
+visible dentro del propio artefacto y en stderr, porque un índice sin discovery
+no es un mapa completo del producto. Nunca aborta por una sección ausente o
+malformada — la omite.
 """
 from __future__ import annotations
 
+import json
 import os
 import re
 import sys
@@ -74,6 +90,66 @@ def read_text(path: Path) -> str:
 def first_glob(directory: Path, pattern: str) -> Path | None:
     matches = sorted(directory.glob(pattern))
     return matches[0] if matches else None
+
+
+def sibling_artifact_dirs(directory: Path) -> list[Path]:
+    """Directorios de artefactos declarados en `.sdd/project-init.json`, salvo <dir>.
+
+    Busca el `.sdd/project-init.json` hacia arriba desde <dir> (el más cercano
+    gana, como el resto del ecosistema). `prd` va primero porque el discovery se
+    deriva del PRD; el resto en orden alfabético para que la búsqueda sea
+    determinista. Ausencia o JSON inválido → lista vacía, nunca excepción: el
+    índice sigue siendo utilizable sin `.sdd/`.
+    """
+    init = None
+    for base in [directory] + list(directory.parents):
+        cand = base / ".sdd" / "project-init.json"
+        if cand.is_file():
+            init = cand
+            break
+    if init is None:
+        return []
+    try:
+        data = json.loads(read_text(init))
+    except (ValueError, TypeError):
+        return []
+    artifacts = data.get("artifacts")
+    if not isinstance(artifacts, dict):
+        return []
+    root = init.parent.parent
+    keys = sorted(artifacts, key=lambda k: (k != "prd", k))
+    dirs = []
+    for key in keys:
+        val = artifacts.get(key)
+        if not isinstance(val, str) or not val:
+            continue
+        cand = (root / val).resolve()
+        if cand != directory and cand.is_dir() and cand not in dirs:
+            dirs.append(cand)
+    return dirs
+
+
+def find_discovery(directory: Path, explicit: str | None) -> tuple[Path | None, bool]:
+    """Localiza el discovery. Devuelve (path, viene_de_fuera_de_<dir>).
+
+    `viene_de_fuera` importa para el nombre de salida: el índice se llama
+    `<base_discovery>_features.md` solo cuando ambos comparten directorio; si el
+    discovery vive en otra raíz (topología `authoring`), el índice conserva el
+    nombre derivado de <dir> y no importa el basename del PRD.
+    """
+    if explicit:
+        cand = Path(explicit).expanduser()
+        if cand.is_file():
+            return cand, cand.parent.resolve() != directory
+        return None, False
+    local = first_glob(directory, "*_discovery.md")
+    if local:
+        return local, False
+    for sib in sibling_artifact_dirs(directory):
+        cand = first_glob(sib, "*_discovery.md")
+        if cand:
+            return cand, True
+    return None, False
 
 
 def fid_sort_key(fid: str):
@@ -266,8 +342,23 @@ def derive_state(spec: dict | None, verdict: dict | None) -> tuple[str, str]:
 # ── Render (función pura) ──────────────────────────────────────────────────
 
 
+def relpath_or_name(path: Path | None, base: Path) -> str | None:
+    """Ruta del discovery relativa a <dir>, con `/` siempre (salida portable).
+
+    `os.path.relpath` no toca el disco y funciona aunque no compartan prefijo
+    (da `../…`). Si son volúmenes distintos (Windows) cae al nombre a secas.
+    """
+    if path is None:
+        return None
+    try:
+        return Path(os.path.relpath(path, base)).as_posix()
+    except ValueError:
+        return path.name
+
+
 def render(directory: Path, discovery: dict, specs: dict, verdicts: dict,
-           disc_name: str | None, ready_present: bool) -> str:
+           disc_name: str | None, ready_present: bool,
+           disc_rel: str | None = None) -> str:
     project = discovery.get("project") or directory.name
     fids = sorted(set(discovery["features"]) | set(specs), key=fid_sort_key)
 
@@ -287,8 +378,18 @@ def render(directory: Path, discovery: dict, specs: dict, verdicts: dict,
         f"readiness={'sí' if ready_present else 'no'}"
     )
     out.append(f"> Fuentes: {fuentes}")
+    if disc_rel:
+        out.append(f"> Discovery: `{disc_rel}` (fuera de esta raíz de artefactos)")
     if discovery.get("prd_origen"):
         out.append(f"> Spec origen: {discovery['prd_origen']}")
+    if not disc_name and specs:
+        out.append(
+            "> ⚠ SIN DISCOVERY: este índice solo refleja los specs presentes. "
+            "Las features identificadas y todavía NO generadas "
+            "(`PENDIENTE_GENERACIÓN`) no aparecen aquí. Regenera con "
+            "`--discovery <path>` o revisa `artifacts` en "
+            "`.sdd/project-init.json`."
+        )
     out.append("")
     out.append("---")
     out.append("")
@@ -379,8 +480,8 @@ def render(directory: Path, discovery: dict, specs: dict, verdicts: dict,
 # ── Orquestación ───────────────────────────────────────────────────────────
 
 
-def build(directory: Path) -> tuple[str, Path]:
-    disc_path = first_glob(directory, "*_discovery.md")
+def build(directory: Path, discovery_arg: str | None = None) -> tuple[str, Path]:
+    disc_path, disc_external = find_discovery(directory, discovery_arg)
     ready_path = first_glob(directory, "*_readiness_report.md")
     existing = first_glob(directory, "*_features.md")
 
@@ -400,10 +501,10 @@ def build(directory: Path) -> tuple[str, Path]:
             if parsed:
                 specs.setdefault(parsed["fid"], parsed)
 
-    # Nombre de salida: el existente, o derivado del discovery, o <dir>_features.md
+    # Nombre de salida: el existente, o derivado del discovery LOCAL, o <dir>_features.md
     if existing:
         out_path = existing
-    elif disc_path:
+    elif disc_path and not disc_external:
         out_path = directory / (disc_path.name.replace("_discovery.md", "_features.md"))
     else:
         out_path = directory / f"{directory.name}_features.md"
@@ -411,25 +512,49 @@ def build(directory: Path) -> tuple[str, Path]:
     content = render(
         directory, discovery, specs, verdicts,
         disc_name=disc_path.name if disc_path else None,
+        disc_rel=relpath_or_name(disc_path, directory) if disc_external else None,
         ready_present=ready_path is not None,
     )
     return content, out_path
 
 
 def main(argv: list[str]) -> int:
-    args = [a for a in argv if not a.startswith("--")]
-    flags = {a for a in argv if a.startswith("--")}
+    args: list[str] = []
+    flags: set[str] = set()
+    discovery_arg: str | None = None
+    skip = -1
+    for i, a in enumerate(argv):
+        if i == skip:
+            continue
+        if a.startswith("--discovery="):
+            discovery_arg = a.split("=", 1)[1]
+        elif a == "--discovery":
+            if i + 1 >= len(argv):
+                sys.stderr.write("[features-index] --discovery requiere una ruta\n")
+                return 1
+            discovery_arg = argv[i + 1]
+            skip = i + 1
+        elif a.startswith("--"):
+            flags.add(a)
+        else:
+            args.append(a)
     if len(args) != 1:
         sys.stderr.write(
-            "uso: sdd-features-index.py <dir> [--check | --stdout]\n"
+            "uso: sdd-features-index.py <dir> [--check | --stdout] "
+            "[--discovery <path>]\n"
         )
         return 1
     directory = Path(args[0]).resolve()
     if not directory.is_dir():
         sys.stderr.write(f"[features-index] no es un directorio: {directory}\n")
         return 1
+    if discovery_arg and not Path(discovery_arg).expanduser().is_file():
+        sys.stderr.write(
+            f"[features-index] --discovery no existe: {discovery_arg}\n"
+        )
+        return 1
 
-    content, out_path = build(directory)
+    content, out_path = build(directory, discovery_arg)
 
     if "--stdout" in flags:
         sys.stdout.write(content)
@@ -462,6 +587,12 @@ def main(argv: list[str]) -> int:
         raise
     n_feat = content.count("\n### F-")
     print(f"[features-index] regenerado {out_path.name} ({n_feat} features)")
+    if "> ⚠ SIN DISCOVERY" in content:
+        sys.stderr.write(
+            "[features-index] ⚠ sin discovery: el índice solo cubre los specs "
+            "presentes; las features aún no generadas no aparecen. Pasa "
+            "--discovery <path> o revisa `artifacts` en .sdd/project-init.json.\n"
+        )
     return 0
 
 

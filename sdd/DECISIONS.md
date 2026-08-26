@@ -6,9 +6,123 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-048 — La sincronía de la delegación se hace mecánica: hook `PreToolUse` sobre `Agent`. Y la frontera del orquestador no es la tool, es cargar el artefacto
+
+- **Fecha:** 2026-08-26 · **Estado:** Adoptada (pendiente de medir en CU-3.a pasada 5). · **Relacionada:** [[D-043]] (lo hace efectivo), [[D-047]] (no lo contradice: elimina la ambigüedad en el origen), [[D-045]] (lo anotó como escalada y descartó la alternativa global), [[D-030]]/[[D-031]]/[[D-038]] (la frontera de main), O-8, CU-3.a pasada 4.
+
+**Contexto — parte 1: la prosa no bastó, otra vez.** [[D-043]] prescribió `run_in_background: false`; [[D-045]] llevó `wf-spec-features-first` al hilo principal para que el flag **pudiera** surtir efecto; [[D-047]] reconoció que la vía de la notificación también es esperar bien. Todo correcto, y aun así el resultado medido en CU-3.a pasada 4 es que el flag **viajó en 0 de 10 llamadas**, con el texto delante del agente, en tres skills distintas.
+
+Eso deja la **barrera del fan-out** —el Paso 6 regenera el índice leyendo del disco lo que escribieron los N delegados— sostenida a mano por el modelo: lanzar N, contar N notificaciones, no seguir hasta tenerlas. Funcionó 10 de 10 en la pasada 4. Pero es exactamente el tipo de garantía que [[D-043]] dio por buena mirando el `tool_use` sin mirar el `tool_result`, y que resultó no serlo. La lección acumulada de [[D-038]]/[[D-042]]/[[D-043]]/[[D-045]] es la misma frase: **cuando una propiedad importa, hay que hacerla mecánica.**
+
+**Contexto — parte 2: el `Bash` que nadie prohibió.** [[D-030]]/[[D-031]]/[[D-038]] prohíben que main haga `Read`/`Write` del artefacto. No dicen nada de `Bash`, y un `cat` mete el mismo texto en el mismo contexto que un `Read`. Medido dos veces en el mismo escenario: en la pasada 2, `grep -n "CRÍTICO" -A 12 prd_analysis.md | head -150` **después** de que el delegado ya hubiera dado los IDs con sus preguntas; en la pasada 4, `cat spec/spec_features.md` entero. Ninguna de las dos viola regla alguna. Estaba abierto como `O-8` desde la pasada 2 y subió de prioridad con [[D-045]], que puso a los orquestadores en main —donde tienen `Bash` y ocasión constante—; la pasada 4 lo confirmó.
+
+**Decisión.**
+
+1. **Hook `PreToolUse` (matcher `Agent`) — `sdd-agent-sync.py`**, hermano de `sdd-gate-check.py`. Deniega una llamada `Agent` a un subagente **del ecosistema** que no pase `run_in_background: false`, con un motivo que le dice al modelo **qué hacer**: repetir la misma llamada añadiendo el flag, emitir el fan-out en un único mensaje, y **no** cambiar de estrategia ni reconstruir nada (la salida sancionada de [[D-045]], aplicada al propio mensaje del gate).
+   - **Alcance cerrado:** `SDD_AGENTS` es una lista explícita. `general-purpose`, `Explore` o un agente propio del usuario **no se tocan**. El ecosistema se instala en repos ajenos y no le corresponde forzar el modo de ejecución de los agentes de nadie — el mismo motivo por el que [[D-045]] descartó `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1`, que lo habría apagado en todo el repo.
+   - **Escotilla:** `SDD_ALLOW_ASYNC_AGENTS=1` lo desactiva. Un gate que no se puede apagar puede dejar un repo inoperable: si algún día el harness deja de aceptar el parámetro, denegar en bucle bloquearía el pipeline sin salida.
+   - **Política conservadora** heredada de `sdd-gate-check.py`: solo se deniega con evidencia positiva; stdin ilegible, tool distinta, `subagent_type` ausente o desconocido, o excepción interna → se **permite** y se sale 0. Si el payload no trae el campo esperado, el hook simplemente nunca dispara — falla hacia el comportamiento de hoy, no hacia un bloqueo.
+2. **La frontera de `Bash` queda escrita.** No se prohíbe la tool: se prohíbe **cargar el artefacto**. Una extracción es legítima si cumple las tres — **determinista** (patrón fijo), **delimitada** (`-c`, `-o`, `head` corto; nunca `-A`/`-B` generosos) y **de metadatos** (IDs, veredictos, recuentos, paths). Traer prosa para interpretarla es analizar contenido, que es el trabajo del delegado. La Regla de oro de `wf-spec-features-first` pasa a nombrar **todos** los artefactos, incluido `_features.md`, y da ejemplos de los dos lados de la línea. Cierra `O-8`.
+
+**Alternativas descartadas.**
+- *Volver a reforzar la prosa del flag* → tercera iteración del mismo intento. Ya falló con el texto literal en el contexto del agente, dos veces.
+- *Aplicar el hook a todos los `Agent`* → rompe los agentes del usuario en su propio repo. El ecosistema es un huésped.
+- *`permissionDecision: "ask"` en vez de `deny`* → mete al humano en un bucle de confirmaciones por cada delegación, y no aporta nada: la corrección es mecánica y el modelo puede aplicarla solo.
+- *Prohibir `Bash` en el `allowed-tools` del orquestador* → `allowed-tools` no es enforcement ([[D-038]]) y además main **necesita** `Bash` para los scripts deterministas, que son justo lo que sustituye a leer artefactos. La restricción tiene que ser de criterio, no de tool.
+- *Un tope numérico de líneas en la extracción* → falso rigor: `grep -c` sobre un fichero enorme está bien y `head -20` de prosa está mal. Lo que discrimina es **qué** traes, no cuánto.
+
+**Consecuencias / aprendizaje.**
+
+1. **Tres iteraciones de prosa sobre el mismo punto son la señal de que el punto no es gobernable por prosa.** [[D-043]] lo escribió, [[D-045]] lo hizo posible, [[D-047]] lo reencuadró — y seguía sin ocurrir. El coste de haber llegado aquí por prosa fueron cuatro pasadas de conformance; la señal para la próxima vez es la **proporción**: 0 de 10 con la instrucción delante no es un despiste que se arregle repitiéndola más fuerte.
+2. **Un gate debe fallar hacia lo de siempre, no hacia el bloqueo.** Todo lo raro permite. Si el campo no existe en el payload, el hook nunca dispara y el ecosistema se comporta como antes — que es exactamente lo que quieres de una red de seguridad que corre en el repo de otro.
+3. **El motivo de un `deny` es un prompt.** Se lo come el modelo, no el humano. Decir solo "prohibido" reproduce el agujero de [[D-045]]: entre la prohibición y la tarea, el agente improvisa. Por eso el mensaje trae la acción exacta, el recordatorio del fan-out y un "no cambies de estrategia".
+4. **Una prohibición formulada sobre la herramienta se evade con otra herramienta.** "No hagas `Read` del artefacto" se cumple al pie de la letra con `cat`. Las restricciones de un orquestador van sobre el **efecto** (qué acaba en su contexto), no sobre el nombre de la tool.
+
+**Referencias.** `scripts/sdd-agent-sync.py`, `tests/test_sdd_agent_sync.py` (18 casos), `settings.json`, `install.sh`, `wf-spec-features-first/SKILL.md` (Regla de oro), `kb-sdd-creation-guide`, CU-3.a paso 5, `MEJORAS_FUTURAS.md` O-8 (cerrado).
+
+---
+
+## D-047 — Esperar es que te entreguen el informe, no en qué turno llega: dos vías sancionadas, y el flag donde hay barrera
+
+- **Fecha:** 2026-08-26 · **Estado:** Adoptada (pendiente de medir en CU-3.a pasada 5). · **Relacionada:** [[D-043]] (matiza su exigencia), [[D-045]] (matiza su criterio de espera), [[D-044]] (intacta), Regla 9.4 de `kb-sdd-conformance`, CU-3.a pasada 4.
+
+**Contexto.** CU-3.a pasada 4, con [[D-045]] ya aplicado y el flag escrito en las cinco prescripciones de delegación de `wf-spec-features-first`. Medido en los transcripts: **`run_in_background: false` viajó en 0 de las 10 llamadas `Agent`** de la sesión — ni en `sdd-spec-explorer`, ni en `prd-expert`, ni en los tres `sdd-spec-writer`, ni en los cuatro `sdd-spec-auditor`. Sistemático, y en tres skills distintas.
+
+Y sin embargo **las diez esperas fueron correctas**: main cedió el turno, no sondeó el disco, no leyó ningún `.output`, no relanzó a nadie, y consumió el informe cuando llegó por notificación. Cero deducciones en 36 tool calls.
+
+Diez de diez no es un despiste. La plataforma documenta las dos rutas: con el flag el informe vuelve dentro del `tool_result`; sin él, el agente corre en segundo plano y **el padre recibe una notificación de fin** con el informe. Las dos entregan el informe; lo único que cambia es el turno en que llega. Nuestro contrato, escrito como *"has esperado cuando el informe está en tu contexto **como resultado de tu propia llamada `Agent`**… ninguna otra cosa cuenta"*, excluía por redacción la ruta que el agente eligió siempre — y encima nombraba "cualquier buzón intermedio del entorno", que un lector razonable puede leer como la notificación.
+
+Aplicando la **Regla 9.4** (cuando un CU marca FALLO una conducta razonable y repetida, el defecto suele estar en el CU): el defecto está en el contrato. Una regla que la conducta correcta incumple 10 de 10 veces no gobierna nada — solo produce FALLOS falsos que enmascaran los verdaderos.
+
+**Pero el flag no es prescindible en todas partes.** Hay un sitio donde sí decide: el **fan-out**. El Paso 5 lanza N `sdd-spec-writer` y el Paso 6 regenera el índice leyendo del disco los specs de **todas** las features; el Paso 7 lanza N auditores y el Paso 8 lee lo que escribieron todos. Ahí hace falta una **barrera**, y la barrera son dos piezas juntas: **las N llamadas en un único mensaje** + **el flag**. Con las dos, el mensaje no vuelve hasta que todas terminaron. Sin el flag, la barrera la tiene que sostener el orquestador contando notificaciones.
+
+Y aquí aparece el segundo hallazgo de la pasada: **las tres llamadas a `sdd-spec-writer` salieron en tres mensajes consecutivos** (y las tres de auditoría, en otros tres), contra el `CRÍTICO: emite TODOS los Agent tool calls en un único mensaje` del propio SKILL. Hoy es inocuo porque van asíncronas y solapan igual — pero es una **bomba de relojería**: el día que el flag surta efecto, tres mensajes separados **serializan** el fan-out (cada mensaje espera a su agente antes de emitir el siguiente). Es decir: la asincronía que incumple el flag está **enmascarando** el incumplimiento del otro requisito, y los dos se rompen a la vez.
+
+**Decisión.** El criterio de espera nombra **las dos vías legítimas** y mantiene intacta la frontera real:
+
+- **(a)** El `tool_result` de la propia llamada `Agent`, con `run_in_background: false`.
+- **(b)** La **notificación de fin** del agente, cediendo el turno sin hacer nada más mientras tanto.
+
+Lo que separa esperar de deducir **no es en qué turno llega el informe, es quién lo trae**. Sigue prohibido —y con la misma dureza— todo lo que sea ir a buscar el dato: que el fichero exista, que su tamaño se estabilice, que un script dé veredicto sobre él, o leer el `.output`/log del harness. Y sigue prohibido adelantar trabajo dependiente mientras se espera, o relanzar un segundo delegado sobre lo mismo.
+
+El flag pasa de "siempre, o es fallo" a **"siempre que se pueda, y obligatorio donde hay barrera"**, con el motivo escrito en el punto donde aplica: no es ceremonia, es lo que evita que el Paso 6 selle un índice construido sobre un fan-out a medias.
+
+**Alternativas descartadas.**
+- *Dejar el criterio como estaba y seguir contándolo FALLO* → mide una propiedad que la conducta correcta incumple. Es la trampa que Regla 9.4 describe: el CU deja de discriminar y el ruido tapa los hallazgos reales (los dos de esta misma pasada — el índice ciego y el fan-out serializable — se detectaron **a pesar** del ruido del 0/10, no gracias a él).
+- *Endurecer: hook `PreToolUse` sobre `Agent` que deniegue sin el flag* → enforcement real, y el carril existe. Pero forzaría el primer plano donde no aporta nada, y la conducta que queríamos (no deducir) ya se cumple. Herramienta guardada para si algún día se rompe la vía (b).
+- *`CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1`* → mismo motivo que en [[D-045]]: apaga una función del harness en el repo del usuario para resolver un problema nuestro.
+- *Quitar el flag de las prescripciones, ya que no se teclea* → perdería la barrera del fan-out, que es donde de verdad decide. El flag no sobra; sobraba el absolutismo.
+
+**Consecuencias / aprendizaje.**
+
+1. **Un contrato que la conducta correcta incumple sistemáticamente es un contrato mal escrito, no un agente desobediente.** 10 de 10 es una señal, no ruido. Antes de endurecer una regla que no se cumple, comprobar si lo que prohíbe es realmente lo dañino — aquí prohibía una ruta legítima de la plataforma por cómo estaba redactada.
+2. **Nombrar las vías legítimas es más barato que enumerar las prohibidas.** El criterio anterior definía por exclusión ("ninguna otra cosa cuenta") y falló en cuanto apareció un caso no previsto. Definir por **quién entrega el dato** cubre las dos rutas de hoy y las que vengan, sin abrir la puerta a deducir. Misma familia que la lección de [[D-045]] sobre no nombrar la herramienta prohibida.
+3. **Un requisito puede estar enmascarado por el incumplimiento de otro.** El fan-out en mensajes separados es inocuo *sólo mientras* el flag no surta efecto. Cuando dos requisitos se sostienen mutuamente, hay que escribirlos juntos y en el mismo punto — separados, uno tapa la rotura del otro y los dos se caen a la vez.
+
+**Referencias.** `wf-spec-features-first/SKILL.md` (contrato de espera, Pasos 5/7), `wf-spec-readiness/SKILL.md`, `kb-sdd-creation-guide`, `sdd-structural-lint.py` (`AGENT-DISPATCH-UNSYNCED`), CU-3.a pasada 4, `ROADMAP.md`.
+
+---
+
+## D-046 — Quien escribe y quien lee tienen que buscar en el mismo sitio; y no encontrarlo no puede ser una advertencia blanda
+
+- **Fecha:** 2026-08-26 · **Estado:** Adoptada. · **Relacionada:** [[D-042]] (el recuento sale del script, no del ojo), [[D-037]] (un backstop vacuo no protege), CU-3.a pasada 4, CU-3.d.
+
+**Contexto.** CU-3.a pasada 4 destapó **dos defectos con la misma forma exacta**, en dos parejas productor/consumidor distintas:
+
+1. **El índice no ve el discovery.** `sdd-features-index.py` lo buscaba con `first_glob(directory, "*_discovery.md")` **dentro de la raíz spec**. Pero el discovery lo genera `wf-spec-discover` a partir del PRD, se llama `<basename_prd>_discovery.md` y en topología `authoring` (`artifacts.prd` != `artifacts.spec`) vive con el PRD. Resultado medido en el consumer: `spec/spec_features.md` con `> Fuentes: discovery=no`, **3 features de 9**, **cero `PENDIENTE_GENERACIÓN`** y hasta el nombre del proyecto mal (`# Features Index: spec`, el nombre del directorio). Las 6 features identificadas y no generadas eran **invisibles para cualquier herramienta que lea el índice**.
+2. **El readiness no ve los informes de conflictos.** `wf-spec-readiness` los buscaba solo en el directorio padre de `features/`. Pero el fan-out del Paso 7 de `wf-spec-features-first` lanza **un auditor por spec**, y `wf-spec-conflict` los escribe **junto a cada spec** (`features/<nombre>/spec/<nombre>_conflict_report.md`). El readiness se declaraba "sin análisis de conflictos" con N informes en disco.
+
+**La contradicción de fondo, que ya estaba escrita.** `pipeline/orchestration.md` y el `CLAUDE.md` raíz dicen que el discovery vive "en el directorio de artefactos prd… o junto al PRD"; `sdd-resolve-path.py` lo declara *kind de producto* → "la raíz que contiene `features/`". En topología monodirectorio esos dos sitios coinciden y la contradicción es invisible; en `authoring` se separan y alguien se queda ciego.
+
+**Lo que hace grave a los dos:** ninguno falla. El consumidor no encuentra nada, emite una advertencia **no bloqueante** y sigue con lo que sí tiene, produciendo un artefacto **parcial con apariencia de completo**. Y ese artefacto se sella, se hereda y se lee en las pasadas siguientes. En el caso del índice, main **narró al usuario la tabla correcta de 9 features** mientras el fichero en disco tenía 3: la forma más peligrosa de todas, porque la conversación dice la verdad y el artefacto no.
+
+**Decisión.**
+
+- `sdd-features-index.py` **cruza la frontera de topología**: busca el discovery en `--discovery <path>` explícito → dentro de `<dir>` → los demás directorios de `artifacts` de `.sdd/project-init.json` (buscado hacia arriba), empezando por `prd`. Un discovery externo **no renombra el índice** (sigue siendo `<dir>_features.md`, no `<basename_prd>_features.md`): vive en otra raíz.
+- **Se acaba el silencio.** Si hay specs y no hay discovery, el aviso viaja **en el propio artefacto** (`> ⚠ SIN DISCOVERY: …`) y por `stderr`. La política conservadora se mantiene —el índice se construye con lo que hay— pero deja de ser indistinguible de un índice completo.
+- `wf-spec-readiness` busca los informes de conflictos **en los dos sitios** y en **ambos layouts**, y lee **todos**, no el primero.
+- Regla de autoría en `kb-sdd-creation-guide`: al escribir una pieza consumidora, preguntarse **quién produce esto y dónde lo deja en cada topología y en cada layout**; y cuando no aparezca lo esperado, **decirlo en voz alta**.
+
+**Alternativas descartadas.**
+- *Mover el discovery a la raíz spec para que coincida con `sdd-resolve-path.py`* → rompe el nombrado (`<basename_prd>_discovery.md`), contradice el routing ya escrito y publicado, y obligaría a migrar los consumers existentes. Además el discovery es un derivado del PRD: su sitio natural es con el PRD.
+- *Que el script aborte si no encuentra discovery* → mataría el caso legítimo de `wf-spec-fast-track` standalone, donde no hay universo de features. El problema no era continuar: era continuar **callando**.
+- *Arreglar solo el glob y dejar la advertencia como estaba* → el bug volvería en la siguiente topología no prevista, y volvería igual de silencioso.
+- *Una regla de linter que compruebe que productor y consumidor coinciden* → no es decidible estáticamente (las rutas se construyen en prosa y en tiempo de ejecución). Queda como regla de autoría y como señal de FALLO en CU-3.d.
+
+**Consecuencias / aprendizaje.**
+
+1. **Una advertencia no bloqueante sobre una fuente ausente es un fallo silencioso disfrazado.** "Continuando sin X" es aceptable cuando X es opcional de verdad; cuando X define el universo del artefacto, es un artefacto roto que se sella como bueno. El aviso tiene que viajar **dentro del artefacto**, donde lo verá quien lo lea después, no solo en la consola de quien lo generó.
+2. **Cuando la narración y el artefacto divergen, gana el artefacto** — porque es lo que sobrevive al turno. Main contó las 9 features correctamente y eso hizo *parecer* que el paso había ido bien. El chequeo útil no es "¿lo contó bien?" sino "¿qué quedó escrito?".
+3. **Dos defectos con la misma forma en la misma pasada no son coincidencia: es una regla de autoría que falta.** Por eso el arreglo no acaba en los dos parches, sino en la regla de `kb-sdd-creation-guide`.
+4. **La topología multiplica las parejas productor/consumidor.** `artifacts.prd != artifacts.spec` es una configuración soportada y declarada, pero casi todos los tests y pasadas anteriores corrían en monodirectorio, donde la divergencia no se manifiesta. Los tests nuevos de `test_sdd_features_index.py` montan `authoring` explícitamente.
+
+**Referencias.** `scripts/sdd-features-index.py`, `tests/test_sdd_features_index.py` (9 casos nuevos), `wf-spec-features-first/SKILL.md` (Paso 6), `wf-spec-readiness/SKILL.md` (Pasos 2/3/4c), `kb-sdd-creation-guide`, CU-3.d, `MEJORAS_FUTURAS.md` O-11.
+
+---
+
 ## D-045 — Un fork no orquesta: `wf-spec-features-first` corre en el hilo principal, sostiene sus gates y recibe el resultado de sus delegados
 
-- **Fecha:** 2026-08-26 · **Estado:** Adoptada (pendiente de medir en CU-3.a pasada 4). · **Relacionada:** [[D-043]] (corrige su premisa), [[D-044]] (intacta), [[D-040]] (mismo movimiento en `wf-prd-change`), [[D-026]] (los `--allow-*` los arma el usuario), [[D-030]]/[[D-031]]/[[D-038]] (main no lee ni escribe artefactos), [[D-042]] (el conteo sale del script), CU-3.a pasada 3.
+- **Fecha:** 2026-08-26 · **Estado:** **Adoptada y medida** — CU-3.a pasada 4: los 10 subagentes con `spawnDepth: 1` y sin padre (ningún fork), los cuatro gates presentados con `AskUserQuestion` sin relanzar el workflow, cero sondeo. Su criterio de espera queda matizado por [[D-047]]. · **Relacionada:** [[D-043]] (corrige su premisa), [[D-044]] (intacta), [[D-047]] (matiza el criterio de espera), [[D-040]] (mismo movimiento en `wf-prd-change`), [[D-026]] (los `--allow-*` los arma el usuario), [[D-030]]/[[D-031]]/[[D-038]] (main no lee ni escribe artefactos), [[D-042]] (el conteo sale del script), CU-3.a pasadas 3 y 4.
 
 **Contexto.** CU-3.a pasada 3, banco limpio. `wf-spec-features-first` —`context: fork`— falló el paso 5 en tres capas encadenadas, verificadas en los transcripts de subagente:
 

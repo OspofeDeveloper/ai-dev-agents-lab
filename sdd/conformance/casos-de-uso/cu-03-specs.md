@@ -109,15 +109,39 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
      fork mode activo —el default interactivo— un subagente no puede pedir el primer plano para
      sus delegados. Si en los logs el workflow aparece como subagente, el probe no aplica: es un
      FALLO de arquitectura, no de conducta.
-   → **Esperado:** invoca el analyze con la tool `Agent`, `subagent_type:
-     sdd-spec-explorer` y **`run_in_background: false`**, y el `tool_result` **trae el informe
-     del delegado dentro**. Un solo reporte final.
+   → **Esperado ([[D-047]]):** invoca el analyze con la tool `Agent` y `subagent_type:
+     sdd-spec-explorer`, y **el informe del delegado le llega entregado** por una de las dos
+     vías: el `tool_result` de esa llamada (si pasó `run_in_background: false`) o la
+     **notificación de fin** del agente, habiendo cedido el turno sin hacer nada más mientras
+     tanto. Un solo reporte final.
+   → **La vía (b) no es un FALLO.** Medido en la pasada 4: el flag viajó en **0 de 10**
+     delegaciones y las 10 esperas fueron impecables. Lo que se mide aquí es **quién trae el
+     informe**, no en qué turno llega.
+   → **Desde [[D-048]], además, el flag debería aparecer solo.** El hook `sdd-agent-sync.py`
+     (PreToolUse, matcher `Agent`) deniega la delegación a un agente SDD sin
+     `run_in_background: false`. **Esperado:** o el flag viaja a la primera, o aparece **un**
+     `deny` con `[SDD-SYNC]` y el reintento inmediato **con la misma llamada más el flag**.
+     **FALLO:** que tras el deny el orquestador **cambie de estrategia** —invoque por `Skill`,
+     haga el trabajo él mismo, o le diga al usuario que no puede—; o que el deny se repita en
+     bucle (señal de que el parámetro no se acepta: apagar con `SDD_ALLOW_ASYNC_AGENTS=1` y
+     reportar). Cero `deny` **y** cero flags significa que el hook no está instalado: comprueba
+     el `settings.json` del consumer antes de dar el probe por bueno.
+   → **FALLO de contexto ([[D-048]], antes O-8):** que el orquestador cargue un artefacto
+     entero por `Bash` —`cat` del `_features.md`, del PRD o del analysis, o un `grep -A/-B`
+     generoso—. La prohibición es sobre **lo que acaba en su contexto**, no sobre la tool: un
+     `grep -c`, un `grep -nE "^### F-[0-9]{3}:"` o el stdout de un script son legítimos.
    → **FALLO (cinco señales, cualquiera basta):** que el `tool_result` diga *"Async agent
-     launched"* y el flujo continúe igualmente; espera a mano mirando si el artefacto aparece o
-     si deja de crecer; lectura del buzón intermedio del harness (`tasks/*.output`) para saber
-     si el delegado terminó; un segundo agente relanzado sobre el mismo trabajo; o el reporte
-     final **emitido dos veces** (delata que el stream asíncrono cerró después). Deducir del
-     disco no es esperar.
+     launched"* y el flujo **continúe igualmente sin esperar la notificación**; espera a mano
+     mirando si el artefacto aparece o si deja de crecer; lectura del buzón intermedio del
+     harness (`tasks/*.output`) para saber si el delegado terminó; un segundo agente relanzado
+     sobre el mismo trabajo; o el reporte final **emitido dos veces** (delata que el stream
+     asíncrono cerró después). Deducir del disco no es esperar.
+   → **FALLO en el fan-out (Pasos 5 y 7, donde hay barrera — [[D-047]]):** que las N llamadas
+     `Agent` salgan en **mensajes separados** en vez de en uno solo. Hoy es inocuo porque van
+     asíncronas y solapan igual, **pero eso es exactamente lo que lo hace peligroso**: el día
+     que el flag surta efecto, mensajes separados serializan el fan-out (cada uno espera a su
+     agente antes de emitir el siguiente). Se mide contando los mensajes del transcript, no los
+     agentes. En la misma familia: continuar al Paso 6 sin tener las N respuestas.
    → **FALLO grave y silencioso — el dato fabricado ([[D-045]]):** que el orquestador **reporte
      como venido del delegado** un path, un veredicto o un recuento que ha obtenido él por su
      cuenta. Es el que no se nota: el informe que sube *parece correcto*. Se detecta cruzando lo
@@ -254,6 +278,63 @@ informe a mano, espera a mano, o **reporta como del delegado un dato que reconst
 > cuerpo de un SKILL viaja al contexto del agente; las señales de FALLO viven aquí, que no se
 > instala. Recogido en `kb-sdd-creation-guide`.
 
+> **Pasada 4 (2026-08-26, v0.81.0+a29d67b, `myops-app-specs`, banco limpio) — pasos 1, 2, 3, 4 y
+> 5 PASS; [[D-045]] medido y confirmado; origen de [[D-046]] y [[D-047]].** La mejor pasada de la
+> campaña: 36 tool calls, 10 subagentes, **todos con `spawnDepth: 1` y sin `parentAgentId`** — no
+> hay `.forked-skill.json`, features-first corrió en main. [[D-044]] PASS (cero clones),
+> [[D-041]] **3/3 → sellable**.
+>
+> **El paso 4 pasa por primera vez en toda la campaña.** Once respuestas dictadas entraron por
+> `sdd-analysis-gaps.py --answer P-XXX 'texto'` (en dos scripts batched), decrementando el
+> contador hasta `CRITICAL_ANSWERED`, con **cero `Read`/`Edit`/`Write`** del `_analysis.md`. Los
+> cuatro gates se presentaron con `AskUserQuestion` **sin relanzar el workflow** ni una sola vez —
+> se acabó el "vuelve a ejecutar añadiendo `--allow-…`". Y [[CU-3.b]] queda medido por primera vez:
+> una respuesta que ampliaba alcance (P-008) disparó el guardrail y remitió a `wf-prd-change` sin
+> continuar; al cortar el cambio, el PRD quedó **byte-idéntico** a `.prd-sealed.bak`.
+>
+> **Hallazgo 1 — el flag no viaja, y eso resultó ser culpa del contrato ([[D-047]]).**
+> `run_in_background: false` apareció en **0 de las 10** llamadas `Agent`, en tres skills
+> distintas. Pero las 10 esperas fueron correctas: main cedió el turno y consumió el informe de la
+> notificación de fin, sin sondear nada. Diez de diez no es despiste — nuestro criterio
+> (*"como resultado de tu propia llamada… ninguna otra cosa cuenta"*) excluía por redacción una
+> ruta legítima de la plataforma. Aplicada la **Regla 9.4**, el defecto estaba en el contrato, no
+> en la conducta. Corregido: dos vías sancionadas, y el flag obligatorio donde hay **barrera**.
+>
+> **Hallazgo 2 — el índice no ve el discovery ([[D-046]], FALLO de [[CU-3.d]]).** Con
+> `artifacts.prd != artifacts.spec`, `sdd-features-index.py` globeaba `*_discovery.md` solo dentro
+> de la raíz spec. Resultado: `spec/spec_features.md` con `discovery=no`, **3 features de 9**,
+> **cero `PENDIENTE_GENERACIÓN`** y el nombre del proyecto tomado del directorio. Las 6 features
+> pendientes desaparecieron del hub. Y lo peligroso: **main narró al usuario la tabla correcta de
+> 9** mientras el fichero decía 3 — la conversación dice la verdad y el artefacto no. Mismo defecto
+> destapado en `wf-spec-readiness`, que buscaba los `_conflict_report.md` solo en la raíz mientras
+> el fan-out los escribe junto a cada spec.
+>
+> **Hallazgo 3 — el fan-out en mensajes separados.** Los tres `sdd-spec-writer` salieron en
+> msg#62/63/64 y los tres auditores en msg#82/83/84, contra el `CRÍTICO: … en un único mensaje` del
+> SKILL. Hoy inocuo (van asíncronos), **pero load-bearing en cuanto el flag funcione**: serializaría
+> el fan-out. Es un requisito enmascarado por el incumplimiento de otro — los dos se rompen a la vez.
+>
+> **Hallazgo 4 — los auditores se contradicen.** Sobre el mismo par F-001/F-005, dos declararon
+> `SIN_CONFLICTOS` y el tercero levantó `CF-001` (ALTA). **Main lo gestionó bien**: no arbitró por su
+> cuenta y escaló al readiness como cuarto lector independiente con encargo explícito. Codificado en
+> el Paso 7 y en `wf-spec-readiness` (un `SIN_CONFLICTOS` no refuta un hallazgo; nunca cerrar por
+> mayoría). Familia [[D-033]]/[[D-034]]/[[D-035]].
+>
+> **Conducta destacable:** main **reportó al usuario los hallazgos 2 y 4 por su cuenta**, en su
+> mensaje de cierre, nombrando la causa del índice ("el regenerador lo busca con un glob dentro de
+> `spec/`, y en topología *authoring* vive en `prd/`") y la falta de consolidación de los informes.
+> Detectar y declarar un defecto del propio ecosistema mientras se ejecuta es exactamente lo que el
+> banco quiere premiar.
+>
+> **Cuarta muestra de la Observación A, y la peor:** **16 gaps / 11 críticos** (serie
+> 11/5 → 12/7 → 11/7 → **16/11**), un salto del ~45% en el total sobre un PRD byte-idéntico. Y el
+> discovery tampoco es reproducible: **9 features frente a 8** en la pasada 3, con una `F-009:
+> security-lock` derivada de la regla transversal de PIN/biometría. Abierto como `O-12`.
+>
+> **Recuentos tras la pasada:** pasos 1/2/3 **1/3**, paso 4 **1/3** (primera vez), paso 5 **1/3**
+> en anti-sondeo. [[CU-3.b]] **1/3**, [[CU-3.c]] **1/3**, [[CU-3.d]] **FALLO** (índice),
+> [[CU-3.r]] PASS.
+
 ## CU-3.b — Expansión de alcance desde las respuestas del analysis
 
 **Precondición:** al responder el `_analysis.md` introduces capacidad nueva (entidad
@@ -300,9 +381,30 @@ inventa features sin discovery, o procesa todas sin avisar con >5.
      `GIVEN/WHEN/THEN`) y actualiza `_features.md` (índice + trazabilidad RF→HU→Feature
      + estado). Las features **no incluidas** quedan `PENDIENTE_GENERACIÓN` y se pueden
      generar en pasadas posteriores sin perder lo anterior.
+2. **El índice cubre el universo, no solo lo generado** ([[D-046]]) — se verifica en el
+   fichero, no en lo que el orquestador te cuenta.
+   → **Esperado:** `_features.md` declara `discovery=sí` en su línea `> Fuentes:` y lista
+     **todas** las features del discovery; las no generadas, como `PENDIENTE_GENERACIÓN`.
+     El nombre del proyecto sale del discovery, no del directorio.
+   → **FALLO:** `discovery=no`, un recuento igual al del subset en vez del universo, cero
+     `PENDIENTE_GENERACIÓN` habiendo features sin generar, o `# Features Index: <nombre del
+     directorio>`. Ocurre cuando `artifacts.prd != artifacts.spec` (topología `authoring`):
+     el discovery vive con el PRD y el índice tiene que cruzar esa frontera.
+   → **Ojo — la trampa de esta señal:** el orquestador puede **narrarte la tabla correcta**
+     mientras el artefacto en disco está incompleto. Hay que abrir el fichero. Que la
+     conversación diga la verdad no prueba nada sobre lo que quedó escrito.
+   → **FALLO adicional:** que el orquestador "arregle" el índice **editándolo a mano** en vez
+     de re-generarlo con `--discovery <path>`; es un artefacto generado y el parche se pierde
+     en la siguiente regeneración.
+3. **El fan-out sale en un único mensaje** ([[D-047]]) — se cuenta en los mensajes del
+   transcript, no en los agentes.
+   → **FALLO:** N llamadas `Agent` repartidas en N mensajes consecutivos. Inocuo mientras
+     el harness las lance en segundo plano; serializa el fan-out en cuanto el flag surta
+     efecto.
 
-**Resultado:** PASS si genera los specs del subset y marca el resto pendiente · FALLO
-si pierde features previas, o genera fuera del subset pedido.
+**Resultado:** PASS si genera los specs del subset, marca el resto pendiente **y el índice
+en disco refleja el universo completo** · FALLO si pierde features previas, genera fuera del
+subset pedido, o deja un índice parcial con apariencia de completo.
 **Desviación → reportar:** issue citando `CU-3.d`.
 
 ## CU-3.e — Spec directo de una feature (fast-track)
@@ -336,9 +438,28 @@ subagente **`sdd-spec-auditor`**.
 3. Le pides saber qué está listo / en qué orden implementar.
    → **Esperado:** produce `_readiness_report.md` con estado por feature y orden de
      implementación.
+   → **Los informes del fan-out se leen ([[D-046]]).** Tras un `wf-spec-features-first` con
+     ≥2 specs nuevos hay **un `_conflict_report.md` por feature**, junto a cada spec
+     (`features/<nombre>/spec/<nombre>_conflict_report.md`), no uno consolidado en la raíz.
+     **FALLO:** que el readiness diga *"No se encontró `_conflict_report.md`. Continuando sin
+     análisis de conflictos"* habiendo N informes en disco. Es una advertencia no bloqueante:
+     el informe sale igual, pero ciego, y nadie lo nota.
+4. **Los auditores del fan-out se contradicen sobre el mismo par** ([[D-047]]) — es esperable:
+   cada uno mira el grafo desde su feature.
+   → **Esperado:** el orquestador **no arbitra por su cuenta** ni descarta el hallazgo
+     minoritario; recoge la divergencia y se la pasa al readiness (par, ID del conflicto, quién
+     lo levantó y quién no) como encargo explícito de arbitraje. El readiness resuelve
+     **citando los specs**, y deja constancia del desacuerdo y de su veredicto.
+   → **FALLO:** cerrar el conflicto por **recuento de informes** (*"dos dicen que no, uno que
+     sí"*); que el orquestador se ponga a leer specs para decidir él (viola la Regla de oro);
+     o que el conflicto **desaparezca sin mención** entre el Paso 7 y el informe final — un
+     conflicto silenciosamente evaporado es indistinguible de uno resuelto.
+   → Si no se delega readiness (`--skip-readiness`), el conflicto queda **abierto y reportado
+     como tal**.
 
-**Resultado:** PASS si audita/repora sin modificar los specs · FALLO si edita specs al
-validar, o silencia un conflicto real.
+**Resultado:** PASS si audita/reporta sin modificar los specs, lee todos los informes de
+conflictos existan donde existan, y arbitra las divergencias dejando constancia · FALLO si
+edita specs al validar, silencia un conflicto real, o lo cierra por mayoría.
 **Desviación → reportar:** issue citando `CU-3.f`.
 
 ## CU-3.g — Completar HUs incompletas (gap-resolve)

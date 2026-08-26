@@ -641,6 +641,13 @@ def check_agent_dispatch(findings):
        mode activo, el primer plano no se puede pedir. Por eso la regla hermana es
        FORK-ORCHESTRATOR: el flag es necesario, no suficiente.
 
+       Lo que esta regla TAMPOCO garantiza (D-047): que el agente lo teclee. Medido
+       en CU-3.a pasada 4, con el flag escrito en las 5 prescripciones, viajo en
+       0 de 10 delegaciones — y aun asi se espero bien, por la via de la
+       notificacion de fin. El flag sigue siendo obligatorio donde hay BARRERA (un
+       fan-out de N seguido de un paso que lee lo de todos): ahi las N llamadas en
+       un unico mensaje + el flag son la unica barrera de la tanda.
+
        Solo `wf-*`: una `kb-*` que DESCRIBA el patron (kb-sdd-creation-guide) no es
        una prescripcion de delegacion y no debe tripear.
     """
@@ -664,8 +671,9 @@ def check_agent_dispatch(findings):
             f"`{SYNC_FLAG}`. Los subagentes corren en background por defecto: sin "
             f"el flag la peticion de sincronia no se hace y el paso siguiente opera "
             f"sobre un resultado que no ha llegado (D-043). Anade el flag y define "
-            f"en el cuerpo que se ha esperado cuando el informe del delegado esta "
-            f"en contexto como resultado de la propia llamada (D-045)."))
+            f"en el cuerpo que se ha esperado cuando el informe del delegado esta en "
+            f"contexto porque se lo han entregado — por el `tool_result` de la propia "
+            f"llamada o por la notificacion de fin del agente (D-047)."))
 
 
 def check_fork_orchestrator(findings):

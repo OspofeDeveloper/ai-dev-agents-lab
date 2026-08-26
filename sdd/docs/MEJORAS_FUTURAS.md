@@ -48,7 +48,8 @@
 
 ## Fase spec (`wf-spec-features-first`)
 
-- [ ] 🟡 **O-8 — Falta la frontera entre "extracción acotada" y "cargar el artefacto" en el hilo principal.** [[DECISIONS D-030]]/[[DECISIONS D-031]]/[[DECISIONS D-038]] prohíben que main haga `Read`/`Edit`/`Write` del artefacto, pero **no dicen nada de `Bash`**. Medido en CU-3.a pasada 2: main ejecutó `grep -n "CRÍTICO" -A 12 prd_analysis.md | head -150` **después** de que el delegado ya le hubiera dado los 7 IDs con sus preguntas — no viola ninguna regla y mete ~150 líneas del informe en el hilo principal, que es justo el coste que [[DECISIONS D-042]] evitaba.
+- [x] ✅ **O-8 — CERRADA en [[DECISIONS D-048]] (2026-08-26).** La frontera quedó escrita: no se prohíbe `Bash`, se prohíbe **cargar el artefacto**; una extracción es legítima si es determinista + delimitada + de metadatos. Vive en la Regla de oro de `wf-spec-features-first` (con ejemplos de los dos lados) y como regla de autoría en `kb-sdd-creation-guide`. Se cerró tras verla materializarse por segunda vez: `cat spec/spec_features.md` en CU-3.a pasada 4. Texto original abajo.
+  <br>~~**Falta la frontera entre "extracción acotada" y "cargar el artefacto" en el hilo principal.**~~ [[DECISIONS D-030]]/[[DECISIONS D-031]]/[[DECISIONS D-038]] prohíben que main haga `Read`/`Edit`/`Write` del artefacto, pero **no dicen nada de `Bash`**. Medido en CU-3.a pasada 2: main ejecutó `grep -n "CRÍTICO" -A 12 prd_analysis.md | head -150` **después** de que el delegado ya le hubiera dado los 7 IDs con sus preguntas — no viola ninguna regla y mete ~150 líneas del informe en el hilo principal, que es justo el coste que [[DECISIONS D-042]] evitaba.
   - *Por qué sube de prioridad ahora:* con [[DECISIONS D-045]], `wf-spec-features-first` corre **en main**, así que main tiene muchas más ocasiones de hacerlo. El propio Paso 4 del SKILL ya autoriza un `grep` acotado sobre el `_discovery.md` para sacar los IDs de feature — legítimo, pero la línea entre eso y volcar el informe no está escrita en ninguna parte.
   - *Mejora posible:* regla en `kb-sdd-creation-guide` (y en la Regla de oro de los orquestadores) que fije el criterio: una extracción es aceptable si es **determinista, delimitada y de metadatos** (IDs, veredicto, conteo) — no si trae prosa del artefacto para que main la interprete. Con un tope explícito, verificable en los logs.
   - *Coste:* bajo (una regla + señal de FALLO en CU-3.a).
@@ -58,6 +59,19 @@
   - *A favor:* menos contrato repartido entre la regla eager y el skill.
   - *En contra:* el rigor se propaga como argumento a N `wf-spec-fast-track`, que **siguen siendo forks**; tiene que estar resuelto antes del fan-out igualmente.
   - *Origen:* [[DECISIONS D-045]]; anotado también en `CU-3.r`.
+
+- [ ] 🟡 **O-11 — `sdd-resolve-path.py` sigue diciendo que el discovery vive en la raíz spec.** [[DECISIONS D-046]] arregló a los dos consumidores ciegos (`sdd-features-index.py` y `wf-spec-readiness`), pero **no la contradicción de fondo**: `sdd-resolve-path.py` declara `discovery` como *kind de producto* → "la raíz que contiene `features/`", mientras `pipeline/orchestration.md` y el `CLAUDE.md` raíz dicen "en el directorio de artefactos prd… o junto al PRD". En topología monodirectorio coinciden; en `authoring` no. El resolutor es la SSoT de rutas del ecosistema y **hoy sigue devolviendo la ruta equivocada** para `find discovery` — lo que pasa es que nadie de la fase spec lo usa para eso todavía.
+  - *Riesgo:* la siguiente pieza que resuelva el discovery "bien" (por el resolutor, en vez de globear a mano) reintroduce el mismo bug, y esta vez con la bendición de la SSoT.
+  - *Mejora posible:* que `PRODUCT_KINDS` distinga los kinds derivados del **PRD** (`discovery`, `analysis`) de los derivados de la **fase spec** (`features-index`, `readiness`), y que los primeros se resuelvan contra `artifacts.prd` cuando `.sdd/project-init.json` lo declare. Alternativa más barata: un modo `find` que busque en todos los `artifacts` y lo diga.
+  - *Coste:* medio — toca la SSoT de rutas, con sus tests y ~20 skills que la citan.
+  - *Origen:* [[DECISIONS D-046]], destapado al arreglar el índice en CU-3.a pasada 4.
+
+- [ ] 🟢 **O-12 — El discovery no es reproducible, y nadie lo declara.** Cuatro pasadas de CU-3.a sobre un PRD **byte-idéntico** han dado: gaps 11/5 → 12/7 → 11/7 → **16/11** (un salto del ~45% en el total), y features **8 en la pasada 3 vs 9 en la 4** — la 4 derivó una `F-009: security-lock` de la regla transversal de PIN/biometría que las anteriores repartieron entre features. Ninguna de las dos variaciones es *errónea*: son troquelados defendibles del mismo PRD. El problema es que el artefacto **no declara su propia variabilidad**, así que dos devs con el mismo PRD obtienen universos de features distintos y no tienen forma de saber si eso es una mejora o una divergencia.
+  - *Por qué no es crítico:* el gate humano del subset (CU-3.c) hace que el usuario vea el mapa antes de comprometerse, y el índice es incremental — una feature nueva aparece como `PENDIENTE_GENERACIÓN` sin romper lo anterior.
+  - *Por qué importa igual:* el `_discovery.md` es la SSoT del universo de features y aguas abajo todo cuelga de sus IDs. Un `F-009` que aparece en la pasada 4 y desaparece en la 5 rompe trazabilidad silenciosamente.
+  - *Mejora posible:* que el discovery declare en su cabecera de qué se ha derivado cada feature (RFs + reglas transversales), de modo que un diff entre pasadas sea legible; y una señal en CU-3 que compare universos entre pasadas en vez de solo contar.
+  - *Coste:* bajo el campo de cabecera; medio la comparación entre pasadas.
+  - *Origen:* CU-3.a pasadas 1–4 (serie de 4 muestras sobre PRD sellado).
 
 ## Campaña de conformance (metodología)
 

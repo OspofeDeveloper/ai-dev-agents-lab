@@ -16,18 +16,45 @@ Tu objetivo es ejecutar el flujo features-first: identificar features de un PRD 
 
 Este workflow corre en el **hilo principal** (igual que `wf-prd-create`, `wf-prd-review` y `wf-prd-change`, y **no** en `context: fork`) por dos razones ([[D-045]]): sostiene **cuatro gates** que requieren `AskUserQuestion` —readiness del PRD, gaps críticos, expansión de alcance y coste de PRD grande—, una tool que no existe dentro de un subagente; y la delegación síncrona que necesita para consumir el resultado del paso siguiente **solo se obtiene desde el hilo principal** (con fork mode activo —el default interactivo— un subagente no puede pedir el primer plano para sus propios delegados).
 
-**Regla de oro:** Eres un orquestador. No analizas contenido, no generas specs, no tomas decisiones funcionales. Invocas skills en el orden correcto y consolidas resultados. **No hagas `Read` ni `cat` del PRD, del `_analysis.md` ni de ningún spec**: lo que necesitas saber sale del script determinista o del reporte de quien delegaste ([[D-031]]/[[D-042]]). Esto vale **aunque las tools estén disponibles** — `allowed-tools` es declarativo, no una jaula ([[D-038]]), así que la restricción se sostiene por norma.
+**Regla de oro:** Eres un orquestador. No analizas contenido, no generas specs, no tomas decisiones funcionales. Invocas skills en el orden correcto y consolidas resultados. **No hagas `Read` ni `cat` de ningún artefacto** —ni del PRD, ni del `_analysis.md`, ni del `_discovery.md`, ni de un spec, ni del `_features.md`—: lo que necesitas saber sale del script determinista o del reporte de quien delegaste ([[D-031]]/[[D-042]]). Esto vale **aunque las tools estén disponibles** — `allowed-tools` es declarativo, no una jaula ([[D-038]]), así que la restricción se sostiene por norma.
+
+> **Dónde está la frontera con `Bash` ([[D-048]]).** La prohibición no es sobre la tool, es sobre **cargar el artefacto en tu contexto**: un `cat` y un `grep` sin límites hacen exactamente lo mismo. Lo que sí puedes hacer es una **extracción acotada**, y solo si cumple las tres:
+> - **determinista** (un patrón fijo, no "a ver qué encuentro"),
+> - **delimitada** (con `-c`, `-o`, o un `head` de pocas líneas — nunca `-A`/`-B` generosos),
+> - **de metadatos**: IDs, veredictos, recuentos, paths. **Nunca prosa del artefacto para que la interpretes tú** — eso es analizar contenido, y es el trabajo de tu delegado.
+>
+> Ejemplos legítimos: `grep -nE "^### F-[0-9]{3}:" <discovery>` (los IDs del Paso 4), `sdd-analysis-gaps.py --check --json` (el recuento), el stdout de `sdd-features-index.py` (cuántas features indexó). Ejemplo que **no** lo es: `grep -A 12 "CRÍTICO" <analysis>` o `cat <_features.md>` — traen el contenido, y encima cuando el informe del delegado ya te lo había dado.
 
 > **Cómo delegas — un solo mecanismo, y el resultado se recibe, no se deduce ([[D-043]], corregida
-> por [[D-045]]).** Los cinco puntos de delegación de este workflow (analyze, discover, fast-track,
-> conflict, readiness) se invocan **siempre** con la tool `Agent`, pasando el `subagent_type` que se
-> indica en cada paso y **`run_in_background: false`**, y **no** con el `Skill` tool (no paraleliza
-> y no devuelve un handle síncrono).
+> por [[D-045]] y [[D-047]]).** Los cinco puntos de delegación de este workflow (analyze, discover,
+> fast-track, conflict, readiness) se invocan **siempre** con la tool `Agent`, pasando el
+> `subagent_type` que se indica en cada paso, y **no** con el `Skill` tool (no paraleliza y no
+> devuelve un handle síncrono).
 >
-> **Qué es haber esperado.** Has esperado cuando **el texto del informe del delegado está en tu
-> contexto como resultado de tu propia llamada `Agent`**. Ninguna otra cosa cuenta: que el fichero
-> exista, que su tamaño deje de cambiar, que un script te dé un veredicto sobre él, o que lo leas
-> de cualquier buzón intermedio del entorno. Todo eso es deducir, y deducir no es esperar.
+> **Si te llega un `deny` con `[SDD-SYNC]`, no es un bloqueo: te falta un parámetro ([[D-048]]).**
+> Un hook del proyecto exige que las delegaciones a agentes SDD sean síncronas. **Repite la misma
+> llamada** —mismo `subagent_type`, mismo `prompt`— añadiendo `run_in_background: false`, y sigue.
+> No cambies de mecanismo, no hagas el trabajo tú, y no le digas al usuario que el entorno no te
+> deja delegar: solo faltaba el flag. Si el deny se repite tres veces sobre la misma llamada, para
+> y díselo al usuario — puede apagarlo con `SDD_ALLOW_ASYNC_AGENTS=1`.
+>
+> **Qué es haber esperado ([[D-047]]).** Has esperado cuando **el texto del informe del delegado
+> está en tu contexto**, y ha llegado por una de estas **dos** vías:
+> - **(a) El `tool_result` de tu llamada `Agent`**, porque la hiciste con `run_in_background: false`.
+> - **(b) La notificación de fin de ese agente**, si el harness lo lanzó en segundo plano: cedes el
+>   turno sin hacer nada más y el informe te llega en un turno posterior.
+>
+> Las dos son legítimas: en ambas el informe **te lo entregan**. Lo que separa esperar de deducir no
+> es en qué turno llega, es **quién lo trae**.
+>
+> **Lo que no es esperar** — da igual lo convincente que parezca: que el fichero exista, que su
+> tamaño deje de cambiar, que un script te dé un veredicto sobre él, o que **tú vayas a leer** el
+> `.output`, el log o cualquier otro buzón del entorno donde el harness escribe el progreso. Eso es
+> ir a buscar el dato, y ese dato no es el informe: es tu reconstrucción de él.
+>
+> **Mientras esperas, no adelantes trabajo que dependa del resultado.** Ni sondear, ni "ir haciendo"
+> el paso siguiente, ni relanzar un segundo delegado sobre lo mismo (eso no es esperar: es un race
+> de doble escritura sobre el mismo artefacto).
 >
 > **Si no tienes el informe, para.** No continúes y **no reconstruyas**: di que la delegación no
 > devolvió resultado y detente. En particular, **nunca presentes como dicho por el delegado un dato
@@ -209,11 +236,22 @@ Agent(
 
 **CRÍTICO: emite TODOS los `Agent` tool calls en un único mensaje** — no esperes entre ellos. Cada subagente es completamente independiente. Si hay 6 features a generar, tu respuesta debe contener 6 llamadas al `Agent` tool simultáneas, todas con `subagent_type: sdd-spec-writer`.
 
-`run_in_background: false` **no** rompe el paralelismo ([[D-043]]): las N llamadas emitidas en un único mensaje siguen corriendo a la vez; el flag solo garantiza que el mensaje no vuelve hasta que **todas** han terminado — que es justo lo que el Paso 6 asume al regenerar el índice leyendo los specs del disco.
+> **Aquí el fan-out es una barrera, y por eso `run_in_background: false` es obligatorio en este paso
+> ([[D-047]]).** El Paso 6 regenera el índice leyendo del disco los specs de **todas** las features:
+> arrancarlo con una a medias produce un índice incompleto que además se sella como bueno. Las dos
+> piezas se sostienen juntas: **N llamadas en un único mensaje** + **el flag**. Un mensaje con las N
+> las hace correr a la vez y el flag hace que el mensaje no vuelva hasta que **todas** han acabado —
+> una sola barrera para todo el fan-out. Emitirlas en mensajes separados **serializa** el fan-out en
+> cuanto el flag surte efecto: cada mensaje espera a su agente antes de lanzar el siguiente, y seis
+> features pasan de una tanda a seis rondas.
+>
+> Si aun así el harness te los lanza en segundo plano, la vía (b) sigue siendo válida — pero
+> entonces la barrera la sostienes tú: **no sigas al Paso 6 hasta tener las N notificaciones**, y
+> cuenta cuántas te faltan en vez de mirar cuántos ficheros hay en `features/`.
 
 No uses el `Skill` tool para esto — no soporta ejecución paralela.
 
-Espera a que **todas** terminen según el criterio de arriba: tienes el informe de cada delegado como resultado de tu llamada. Que los ficheros hayan aparecido en `features/` no te dice que los fast-tracks terminaran, ni con qué resultado. Para cada una, registra **de su informe**:
+Espera a que **todas** terminen según el criterio de arriba: tienes el informe de cada delegado. Que los ficheros hayan aparecido en `features/` no te dice que los fast-tracks terminaran, ni con qué resultado. Para cada una, registra **de su informe**:
 - Feature ID y nombre
 - Si se completó con éxito o falló
 - Path del spec generado
@@ -237,17 +275,41 @@ python3 .sdd/scripts/sdd-features-index.py <raíz_spec>
 `<raíz_spec>` es el directorio raíz de artefactos spec donde viven `features/` y `_features.md` (regla de layout: `artifacts.spec` de `.sdd/project-init.json` si está declarado; si no, el directorio del PRD de entrada). El resultado cubre TODAS las features del discovery: las del subset recién generadas quedan con su estado real, las preexistentes se reflejan tal cual desde sus specs en disco, y las que aún no tienen spec aparecen como `PENDIENTE_GENERACIÓN` — sin que tú tengas que preservar estado a mano. Si el script no existe:
 > "⚠ Falta `.sdd/scripts/sdd-features-index.py`. Re-ejecuta la instalación del ecosistema (`install.sh`) para reponer los scripts de enforcement. El índice `_features.md` no se ha regenerado."
 
+> **Comprueba la salida antes de dar el paso por bueno ([[D-046]]).** El script imprime cuántas
+> features ha indexado y avisa por `stderr` si no encontró discovery. **Ese recuento tiene que
+> coincidir con el universo del discovery**, no con las features que acabas de generar: si sale
+> `discovery=no` o el número es el del subset, el índice ha perdido las `PENDIENTE_GENERACIÓN` y
+> deja de ser el mapa del producto. En topología `authoring` el discovery vive con el PRD
+> (`artifacts.prd`), no en `<raíz_spec>` — el script cruza esa frontera solo mediante
+> `.sdd/project-init.json`. Si el aviso aparece, re-ejecuta pasando el discovery explícito:
+> `python3 .sdd/scripts/sdd-features-index.py <raíz_spec> --discovery <path_discovery>`.
+>
+> No arregles esto editando `_features.md` a mano: es un artefacto generado y la siguiente
+> regeneración se lleva tu parche por delante.
+
 ---
 
 ## Paso 7: Conflict check (si no `--skip-conflict`)
 
-Opera sobre **todas las features con spec en `features/`**, incluyendo preexistentes de iteraciones anteriores. Con ≥2 specs: por cada spec recién generado delega con la tool `Agent` ([[D-043]]), `subagent_type: "sdd-spec-auditor"` y `run_in_background: false`, con el prompt `"Lee .claude/skills/wf-spec-conflict/SKILL.md y ejecuta sus pasos TÚ MISMO sobre: <spec.md> --features-dir <features_dir>. NO uses el Skill tool ([[D-044]]): ya eres su agente y te forkearía en un clon."` (solo los nuevos se chequean contra todos; puedes emitir las N llamadas en un único mensaje). Escribe `_conflict_report.md` si hay conflictos. Sin specs nuevos → omitir.
+Opera sobre **todas las features con spec en `features/`**, incluyendo preexistentes de iteraciones anteriores. Con ≥2 specs: por cada spec recién generado delega con la tool `Agent` ([[D-043]]), `subagent_type: "sdd-spec-auditor"` y `run_in_background: false`, con el prompt `"Lee .claude/skills/wf-spec-conflict/SKILL.md y ejecuta sus pasos TÚ MISMO sobre: <spec.md> --features-dir <features_dir>. NO uses el Skill tool ([[D-044]]): ya eres su agente y te forkearía en un clon."` (solo los nuevos se chequean contra todos). **Emite las N llamadas en un único mensaje**, con el flag: igual que el Paso 5, es una barrera — el Paso 8 lee lo que escriben todas ([[D-047]]). Escribe `_conflict_report.md` si hay conflictos. Sin specs nuevos → omitir.
+
+> **Los auditores pueden contradecirse, y tú no eres el árbitro ([[D-047]]).** Cada auditor mira el
+> mismo grafo desde su feature, así que sobre un mismo par es normal que uno levante un conflicto y
+> otro no. **No descartes el hallazgo minoritario ni promedies veredictos**: un `SIN_CONFLICTOS` es
+> "yo no lo veo desde aquí", no "no existe". Tampoco te pongas a leer los specs para decidir quién
+> tiene razón — eso es analizar contenido, y no es tu papel (Regla de oro).
+>
+> Lo que sí haces: **recoger la divergencia de los informes y pasársela al Paso 8 en el prompt**,
+> nombrando el par, el ID del conflicto y quién lo levantó frente a quién lo negó. El readiness es
+> un cuarto lector independiente sobre el conjunto y es **quien arbitra**; llega con encargo
+> explícito o no arbitra nada. Si no delegas readiness (`--skip-readiness`), el conflicto queda
+> **abierto y así lo reportas** — no lo cierres tú por mayoría.
 
 ---
 
 ## Paso 8: Readiness check (si no `--skip-readiness`)
 
-Delega con la tool `Agent` ([[D-043]]), `subagent_type: "sdd-spec-auditor"` y `run_in_background: false`, con el prompt `"Lee .claude/skills/wf-spec-readiness/SKILL.md y ejecuta sus pasos TÚ MISMO sobre: <features_dir>/. NO uses el Skill tool ([[D-044]]): ya eres su agente y te forkearía en un clon."`. Genera `_readiness_report.md` en el directorio raíz de artefactos spec (junto a `_features.md`) y actualiza `_features.md` con el estado de cada feature (incluyendo `PENDIENTE_GENERACIÓN` para las no procesadas aún).
+Delega con la tool `Agent` ([[D-043]]), `subagent_type: "sdd-spec-auditor"` y `run_in_background: false`, con el prompt `"Lee .claude/skills/wf-spec-readiness/SKILL.md y ejecuta sus pasos TÚ MISMO sobre: <features_dir>/. NO uses el Skill tool ([[D-044]]): ya eres su agente y te forkearía en un clon."`. Si el Paso 7 dejó veredictos divergentes, **añade al prompt el encargo de arbitrarlos**, con el par, el ID y las dos posturas. Genera `_readiness_report.md` en el directorio raíz de artefactos spec (junto a `_features.md`) y actualiza `_features.md` con el estado de cada feature (incluyendo `PENDIENTE_GENERACIÓN` para las no procesadas aún).
 
 ---
 

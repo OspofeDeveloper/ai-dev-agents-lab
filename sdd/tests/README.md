@@ -45,6 +45,7 @@ python3 -m unittest discover -s sdd/tests -p 'test_sdd_seal.py' -v
 |---|---|---|
 | `sdd-seal.py` | `test_sdd_seal.py` | sellable -> sella; no sellable (CA sin cubrir, `[INFERIDO]`/`[CRÍTICO]`/`[INCOMPLETO]`, gap abierto, spec origen no resoluble, TD pendiente); idempotencia; deteccion de tamper; `--unseal`; TD aprobada no bloquea |
 | `sdd-gate-check.py` | `test_sdd_gate_check.py` | precondicion OK -> permite; fallida -> deny con motivo; fail-open (stdin ilegible, skill sin gate, path no resoluble) |
+| `sdd-agent-sync.py` | `test_sdd_agent_sync.py` | deny si un agente SDD delega sin `run_in_background: false` (y con `true`); motivo accionable; NO toca agentes ajenos (`general-purpose`, `Explore`, propios) ni otras tools; fail-open exhaustivo (stdin ilegible/vacio, `tool_input` malformado, `subagent_type` ausente o no-string); escotilla `SDD_ALLOW_ASYNC_AGENTS=1`; siempre exit 0 y stderr vacio |
 | `sdd-task-state.py` | `test_sdd_task_state.py` | init + tabla Progreso; transiciones validas/invalidas; bloqueo por deps; persistencia; idempotencia; BLOQUEADA exige motivo; reapertura con `--force` |
 | `merge-claude-settings.py` | `test_merge_claude_settings.py` | dest inexistente -> copia; merge conserva claves del proyecto; idempotente; no duplica matchers; elimina hooks deprecated |
 | `sdd-features-index.py` | `test_sdd_features_index.py` | genera `_features.md`; idempotente byte-identico; `--check` 0/2; `--stdout`; layout subcarpeta y plano legacy; estados (PENDIENTE_GENERACIÓN, BLOQUEADA, LISTA); readiness autoritativo |
