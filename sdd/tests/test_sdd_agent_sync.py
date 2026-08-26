@@ -52,6 +52,56 @@ class AgentSyncTest(unittest.TestCase):
         r = self._run(payload("sdd-spec-writer", run_in_background=True))
         self.assertEqual(self._decision(r), "deny")
 
+    # ── El reintento tiene que producir informacion NUEVA (D-049) ─────────
+
+    def _reason(self, r):
+        return json.loads(r.stdout)["hookSpecificOutput"]["permissionDecisionReason"]
+
+    def test_string_false_is_denied(self):
+        # Regresion literal de CU-3.a pasada 5: el agente corrigio bien —anadio el
+        # parametro— pero como CADENA. No se acepta: no sabemos que hace el harness
+        # con un string donde espera booleano, y permitirlo seria sancionar una
+        # llamada asincrona creyendo lo contrario.
+        r = self._run(payload("sdd-spec-explorer", run_in_background="false"))
+        self.assertEqual(self._decision(r), "deny")
+
+    def test_string_false_gets_a_different_message_than_missing(self):
+        # EL bug de la pasada 5. Un gate sin estado que responde lo IDENTICO a un
+        # reintento corregido le ensena al modelo que el gate esta roto: tres denies
+        # iguales y concluyo que el contrato era incumplible.
+        ausente = self._reason(self._run(payload("sdd-spec-explorer")))
+        cadena = self._reason(self._run(payload("sdd-spec-explorer",
+                                                run_in_background="false")))
+        self.assertNotEqual(ausente, cadena,
+                            "el reintento corregido recibe el mismo muro (D-049)")
+        self.assertIn("booleano", cadena, "no dice que el valor debe ser booleano")
+        self.assertIn("'false'", cadena, "no le devuelve el valor que paso")
+        self.assertIn("sin comillas", cadena)
+
+    def test_wrong_type_message_echoes_the_offending_value(self):
+        # Devolverle SU valor es lo que hace el mensaje diagnostico en vez de
+        # generico: el modelo ve exactamente que envio.
+        for valor, esperado in ((0, "0"), (True, "True"), ("no", "'no'"), (None, "None")):
+            with self.subTest(valor=valor):
+                r = self._run(payload("sdd-spec-explorer", run_in_background=valor))
+                self.assertEqual(self._decision(r), "deny")
+                self.assertIn(esperado, self._reason(r))
+
+    def test_zero_is_not_false(self):
+        # `0 == False` en Python: sin `is False`, un 0 colaria como peticion de
+        # primer plano sin serlo.
+        r = self._run(payload("sdd-spec-explorer", run_in_background=0))
+        self.assertEqual(self._decision(r), "deny")
+
+    def test_both_messages_keep_the_no_workaround_clause(self):
+        # La salida sancionada tiene que viajar en LOS DOS mensajes: entre una
+        # prohibicion y una tarea, el agente improvisa (D-045).
+        for kwargs in ({}, {"run_in_background": "false"}):
+            with self.subTest(kwargs=kwargs):
+                reason = self._reason(self._run(payload("sdd-spec-explorer", **kwargs)))
+                self.assertIn("No cambies de estrategia", reason)
+                self.assertIn("un unico mensaje", reason)
+
     def test_deny_reason_is_actionable(self):
         # El motivo se lo come el modelo: tiene que decirle QUE hacer, no solo
         # que ha hecho mal. Sin la salida explicita, un agente entre "prohibido"

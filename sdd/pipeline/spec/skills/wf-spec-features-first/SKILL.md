@@ -33,10 +33,18 @@ Este workflow corre en el **hilo principal** (igual que `wf-prd-create`, `wf-prd
 >
 > **Si te llega un `deny` con `[SDD-SYNC]`, no es un bloqueo: te falta un parámetro ([[D-048]]).**
 > Un hook del proyecto exige que las delegaciones a agentes SDD sean síncronas. **Repite la misma
-> llamada** —mismo `subagent_type`, mismo `prompt`— añadiendo `run_in_background: false`, y sigue.
-> No cambies de mecanismo, no hagas el trabajo tú, y no le digas al usuario que el entorno no te
-> deja delegar: solo faltaba el flag. Si el deny se repite tres veces sobre la misma llamada, para
-> y díselo al usuario — puede apagarlo con `SDD_ALLOW_ASYNC_AGENTS=1`.
+> llamada** —mismo `subagent_type`, mismo `prompt`— añadiendo `run_in_background: false`, **el
+> booleano, sin comillas** (la cadena `"false"` no vale; si la pasas, el gate te lo dice con un
+> mensaje distinto). No cambies de mecanismo, no hagas el trabajo tú, y no le digas al usuario que
+> el entorno no te deja delegar: solo faltaba el parámetro.
+>
+> **Si el deny se repite, abre el gate antes de rendirte ([[D-049]]).** `sdd-agent-sync.py` es un
+> fichero legible en `.sdd/scripts/`: léelo y sabrás exactamente qué comprueba. Un deny repetido
+> casi nunca es "imposible" — es que tu corrección no era la que pedía. Y si aun así paras,
+> **reporta lo que observaste, no la causa que supones**: "he reintentado tres veces y el deny se
+> repite" es un hecho; "la tool no expone ese parámetro" es una hipótesis que, sin un error de
+> validación que la respalde, no puedes afirmar. Dile al usuario que puede apagarlo con
+> `SDD_ALLOW_ASYNC_AGENTS=1` y deja el diagnóstico abierto.
 >
 > **Qué es haber esperado ([[D-047]]).** Has esperado cuando **el texto del informe del delegado
 > está en tu contexto**, y ha llegado por una de estas **dos** vías:

@@ -2,6 +2,15 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.82.1 — 2026-08-26
+
+**El gate de sincronía era insatisfacible por un detalle de tipo, y su mensaje no lo decía** — [[DECISIONS D-049]]. Primera pasada con el hook de [[DECISIONS D-048]] puesto. Lo bueno: **disparó** — el payload de `PreToolUse` sí trae `tool_input` para la tool `Agent`, que era la incógnita. Lo malo: el reintento llegó con `run_in_background` como **cadena** `"false"` y el hook exigía el booleano, así que denegó otra vez… **con el mismo mensaje palabra por palabra**. Tres respuestas idénticas a tres llamadas distintas, y el orquestador concluyó —razonablemente— que el contrato era incumplible.
+
+- ⚠ **`sdd-agent-sync.py` emite dos motivos distintos:** *"falta el parámetro"* y *"está, pero el valor no es el booleano"*. El segundo **le devuelve el valor que envió** (`con el valor 'false'`) y la corrección exacta. Un gate sin estado no distingue el primer intento del reintento corregido: si su respuesta no discrimina, un reintento correcto recibe el mismo muro que uno vacío.
+- **La cadena `"false"` se sigue denegando.** No sabemos qué hace el harness con un string donde espera un booleano: si lo coacciona a *truthy*, el subagente seguiría en segundo plano y estaríamos sancionando una llamada asíncrona creyendo lo contrario.
+- ⚠ **Regla nueva: abre el gate antes de declararlo incumplible.** Los gates son ficheros legibles en `.sdd/scripts/`. Un deny repetido casi nunca significa "esto es imposible" — significa que la corrección no era la que pedía.
+- ⚠ **Y al parar, reporta lo observado, no la causa que supones.** En la pasada 5 el orquestador afirmó que la tool `Agent` no expone el parámetro y descarta propiedades extra: falso, autorrefutable, y escrito como hecho en un bug report. Es la conducta que [[DECISIONS D-045]] ya había corregido, reaparecida en cuanto volvió la presión "prohibido X y necesito X".
+
 ## 0.82.0 — 2026-08-26
 
 **El índice dejaba de ver el discovery, el readiness dejaba de ver los conflictos, y ninguno de los dos fallaba** — [[DECISIONS D-046]]. CU-3.a pasada 4 destapó dos defectos con la **misma forma exacta**: el productor escribe en un sitio, el consumidor busca en otro, no encuentra nada, emite una advertencia no bloqueante y sigue — produciendo un artefacto **parcial con apariencia de completo**. Medido en el consumer: `spec_features.md` con **3 features de 9** y cero `PENDIENTE_GENERACIÓN`, mientras el orquestador narraba al usuario las 9 correctamente. La conversación decía la verdad y el fichero no.

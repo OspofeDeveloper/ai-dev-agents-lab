@@ -6,6 +6,44 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-049 — Un gate sin estado que repite el mismo mensaje enseña que está roto: cada reintento tiene que dar información nueva
+
+- **Fecha:** 2026-08-26 · **Estado:** Adoptada (pendiente de medir en CU-3.a pasada 6). · **Relacionada:** [[D-048]] (arregla su gate), [[D-045]] (la excusa no comprobada, otra vez), [[D-037]] (un backstop que no discrimina no protege), CU-3.a pasada 5, CU-9.n.
+
+**Contexto.** Primera pasada con el hook de [[D-048]] instalado. Lo bueno primero: **el hook funciona** — el payload de `PreToolUse` trae `tool_input` para la tool `Agent`, el gate disparó, y el `deny` llegó al modelo. La única incógnita que [[D-048]] no había podido verificar en vivo queda cerrada en positivo.
+
+Y el orquestador hizo **lo correcto en el eje que se medía** (CU-9.n): no rodeó. No invocó por `Skill`, no hizo el análisis él mismo, no degradó el paso. Añadió el parámetro, reintentó la llamada idéntica, y al tercer intento **paró, lo explicó y ofreció la escotilla** `SDD_ALLOW_ASYNC_AGENTS=1` — exactamente la salida sancionada.
+
+**El defecto, en dos capas.**
+
+1. **El gate era insatisfacible por un detalle de tipo.** El reintento llegó con `"run_in_background": "false"` — la **cadena**, no el booleano — y el hook comprobaba `is False`. Nunca pasa. El agente había corregido bien: añadió el parámetro que el mensaje le pedía, y lo puso como string.
+2. **Y el gate le devolvió el mismo mensaje, palabra por palabra, las tres veces.** Esto es lo grave, y es de diseño, no de tipos. Un gate **sin estado** no puede distinguir "primer intento" de "reintento ya corregido"; si su respuesta no discrimina *qué* está mal, un reintento correcto recibe el mismo muro que uno vacío. Desde dentro del modelo, tres respuestas idénticas a tres llamadas distintas son evidencia razonable de que el gate no mira lo que dice mirar. Concluyó que el contrato era incumplible — **y era una inferencia correcta a partir de lo que podía observar**.
+
+**El daño colateral, que es un patrón conocido.** Al explicarlo, el orquestador afirmó que *"la tool `Agent` de esta sesión no declara `run_in_background` en su esquema y lo tiene cerrado a propiedades extra"*. Es falso, y se refuta solo: con `additionalProperties: false` la llamada habría muerto en validación, no habría llegado al hook — la ausencia de error de validación es evidencia **en contra**. En el chat lo marcó como "causa probable"; en un informe de bug lo escribió como hecho. Es literalmente la conducta que [[D-045]] prohíbe (*"no afirmes limitaciones del entorno que no has comprobado"*), reaparecida en cuanto la situación volvió a ser "prohibido X y necesito X". Y tenía la respuesta a un `Read` de distancia: **el hook es un fichero legible en `.sdd/scripts/`** y no lo abrió.
+
+**Decisión.**
+
+1. **Dos motivos de deny, no uno.** `sdd-agent-sync.py` distingue *"falta el parámetro"* de *"está, pero el valor no es el booleano"*, y en el segundo **le devuelve el valor que envió** (`con el valor 'false'`) más la corrección exacta (`el booleano false, sin comillas: no la cadena "false", ni 0, ni "no"`). Cada reintento produce información nueva; el modelo puede converger.
+2. **No se acepta la cadena.** Tentador, pero no sabemos qué hace el harness con un string donde espera un booleano: si lo coacciona a *truthy*, el subagente seguiría yendo a segundo plano y estaríamos **sancionando una llamada asíncrona creyendo lo contrario**. Se exige el booleano y se dice con precisión qué falta. (`is False` se mantiene a propósito: `0 == False` en Python, y un `0` no expresa la petición de primer plano.)
+3. **Regla de contrato: abre el gate antes de declararlo incumplible.** Los gates son ficheros legibles en `.sdd/scripts/`. Un deny repetido casi nunca significa "esto es imposible": significa que la corrección no era la que el gate pedía.
+4. **Y si aun así paras, reporta lo observado, no la causa que supones.** "He reintentado tres veces y el deny se repite" es un hecho. "La tool no expone el parámetro" es una hipótesis; sin error de validación que la respalde, afirmarla convierte una suposición en un hecho del harness — y escrita en un informe, en un hecho para terceros.
+
+**Alternativas descartadas.**
+- *Aceptar `"false"` además del booleano* → ver punto 2: permitiría una llamada posiblemente asíncrona con el sello de aprobada. Peor que denegar.
+- *Hacer el gate con estado (contar intentos por sesión)* → un hook `PreToolUse` es un proceso nuevo por invocación; el estado exigiría un fichero temporal, con su limpieza y sus carreras. El mensaje discriminante resuelve lo mismo sin estado.
+- *Quitar el hook y volver a la prosa* → el hook **funcionó**: disparó, se entendió y el agente corrigió. Lo que falló fue mi comprobación de tipo y mi mensaje. Retirar la pieza por un bug de la pieza sería tirar la medición que costó cinco pasadas conseguir.
+
+**Consecuencias / aprendizaje.**
+
+1. **El mensaje de un gate es una interfaz de convergencia, no un aviso.** Se diseña pensando en el **segundo** intento, no en el primero: ¿qué le dice al que ya corrigió y aun así falla? Si la respuesta es "lo mismo", el gate es un muro y el modelo hará lo racional — declararlo roto.
+2. **Un fallo de tipo en un gate no se comporta como un fallo de tipo: se comporta como una imposibilidad.** El agente no tiene forma de ver `is False` desde fuera. Todo enforcement que compare valores debe **devolver el valor recibido** en su mensaje: es la diferencia entre un diagnóstico y un muro.
+3. **Las conductas que [[D-045]] corrigió reaparecen en cuanto vuelve la situación que las causaba.** No basta con prohibir la excusa no comprobada una vez: la presión estructural —"prohibido X, necesito X"— la vuelve a generar. Lo que la desactiva no es más prohibición, es **dar una acción disponible**: aquí, leer el gate.
+4. **Una pasada de conformance que falla por un bug del ecosistema sigue siendo una pasada útil.** Esta no midió CU-3.a, pero confirmó el mecanismo de [[D-048]] en vivo, produjo dos reglas nuevas y una regresión con nombre. El coste de las pasadas está en el reset y la atención, no en que salgan verdes.
+
+**Referencias.** `scripts/sdd-agent-sync.py`, `tests/test_sdd_agent_sync.py` (6 casos nuevos, incl. la regresión literal), `pipeline/orchestration.md`, `wf-spec-features-first/SKILL.md`, CU-3.a pasada 5, CU-9.n.
+
+---
+
 ## D-048 — La sincronía de la delegación se hace mecánica: hook `PreToolUse` sobre `Agent`. Y la frontera del orquestador no es la tool, es cargar el artefacto
 
 - **Fecha:** 2026-08-26 · **Estado:** Adoptada (pendiente de medir en CU-3.a pasada 5). · **Relacionada:** [[D-043]] (lo hace efectivo), [[D-047]] (no lo contradice: elimina la ambigüedad en el origen), [[D-045]] (lo anotó como escalada y descartó la alternativa global), [[D-030]]/[[D-031]]/[[D-038]] (la frontera de main), O-8, CU-3.a pasada 4.

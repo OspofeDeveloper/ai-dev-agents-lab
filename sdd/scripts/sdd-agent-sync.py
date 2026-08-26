@@ -41,6 +41,16 @@ y no le corresponde forzarle el modo de ejecucion a los agentes de nadie — mis
 motivo por el que D-045 descarto `CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1`, que
 habria apagado el background de TODO el repo.
 
+DOS MENSAJES, NO UNO (D-049)
+----------------------------
+Un gate SIN ESTADO que responde lo mismo a un reintento corregido le esta ensenando
+al modelo que el gate esta roto. Medido en CU-3.a pasada 5: el agente corrigio bien
+—anadio el parametro— pero lo paso como la cadena "false"; el gate devolvio el
+mensaje identico las tres veces, y el agente concluyo (razonablemente) que el
+contrato era incumplible. Por eso hay dos motivos distintos: uno para "falta el
+parametro" y otro para "esta, pero el valor no es el booleano". Cada reintento tiene
+que producir informacion NUEVA, o el modelo no puede converger.
+
 ESCOTILLA
 ---------
 `SDD_ALLOW_ASYNC_AGENTS=1` desactiva el gate por completo. Existe porque un gate
@@ -77,17 +87,36 @@ SDD_AGENTS = frozenset({
     "kmm-feature-ui-implementer",
 })
 
-REASON = (
+_COMUN = (
+    "Asi el informe del delegado te llega dentro del `tool_result` de tu propia "
+    "llamada, en vez de tener que ceder el turno y sostener tu la barrera "
+    "(D-043/D-047/D-048). Si delegas a varios en paralelo, emite TODAS las llamadas "
+    "en un unico mensaje: con el flag, ese mensaje no vuelve hasta que han terminado "
+    "todas, y esa es la barrera que el paso siguiente necesita. No cambies de "
+    "estrategia ni reconstruyas el resultado por tu cuenta."
+)
+
+# Falta el parametro.
+REASON_AUSENTE = (
     "[SDD-SYNC] Delegacion asincrona a `{agent}`. Las delegaciones a agentes del "
     "ecosistema SDD son SINCRONAS: vuelve a llamar a `Agent` con exactamente los "
     "mismos `subagent_type`, `prompt` y `description`, anadiendo "
-    "`run_in_background: false`. Asi el informe del delegado te llega dentro del "
-    "`tool_result` de tu propia llamada, en vez de tener que ceder el turno y "
-    "sostener tu la barrera (D-043/D-047/D-048). Si delegas a varios en paralelo, "
-    "emite TODAS las llamadas en un unico mensaje: con el flag, ese mensaje no "
-    "vuelve hasta que han terminado todas, y esa es la barrera que el paso "
-    "siguiente necesita. No cambies de estrategia ni reconstruyas el resultado por "
-    "tu cuenta: solo faltaba el flag."
+    "`run_in_background: false` — el booleano `false`, sin comillas. " + _COMUN +
+    " Solo faltaba el parametro."
+)
+
+# El parametro esta, pero con un valor que NO es el booleano false (D-049).
+# Mensaje DISTINTO a proposito: un gate sin estado que responde lo mismo a un
+# reintento corregido le ensena al modelo que el gate esta roto. Medido en CU-3.a
+# pasada 5: el reintento llego con la cadena "false", el gate devolvio el mensaje
+# identico, y a los tres intentos el agente concluyo —razonablemente— que el
+# contrato era incumplible, y publico como causa una limitacion del entorno que
+# nunca comprobo.
+REASON_TIPO = (
+    "[SDD-SYNC] Valor incorrecto. Has pasado `run_in_background` a `{agent}` con el "
+    "valor {valor}, y tiene que ser `run_in_background: false` — el **booleano** "
+    "`false`, sin comillas: no la cadena \"false\", ni 0, ni \"no\". Es lo unico que "
+    "falta: repite la MISMA llamada cambiando solo eso. " + _COMUN
 )
 
 
@@ -111,16 +140,29 @@ def main() -> int:
         if not isinstance(agent, str) or agent.strip() not in SDD_AGENTS:
             return 0  # agente del usuario o del harness -> no es asunto nuestro
 
-        # Denegar solo con evidencia positiva: el flag no esta puesto a false.
-        # Ausente == background por defecto, que es justo lo que se corrige.
-        if tool_input.get("run_in_background") is False:
+        # Denegar solo con evidencia positiva: el flag no esta puesto al booleano
+        # false. Ausente == background por defecto, que es justo lo que se corrige.
+        #
+        # `is False` es a proposito: `0 == False` en Python, y un 0 no expresa la
+        # peticion de primer plano. Tampoco se acepta la cadena "false": no sabemos
+        # que hace el harness con un string donde espera un booleano (si lo coacciona
+        # a truthy, el subagente seguiria yendo a background) y permitirlo seria
+        # sancionar una llamada asincrona creyendo lo contrario. Se exige el booleano
+        # y se dice con precision que falta.
+        valor = tool_input.get("run_in_background")
+        if valor is False:
             return 0
+
+        if "run_in_background" in tool_input:
+            reason = REASON_TIPO.format(agent=agent.strip(), valor=repr(valor))
+        else:
+            reason = REASON_AUSENTE.format(agent=agent.strip())
 
         print(json.dumps({
             "hookSpecificOutput": {
                 "hookEventName": "PreToolUse",
                 "permissionDecision": "deny",
-                "permissionDecisionReason": REASON.format(agent=agent.strip()),
+                "permissionDecisionReason": reason,
             }
         }))
     except Exception:
