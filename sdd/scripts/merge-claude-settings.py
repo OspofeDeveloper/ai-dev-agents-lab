@@ -8,6 +8,11 @@ Uso: merge-claude-settings.py <source_settings.json> <dest_settings.json>
     * hooks: por cada evento del source, anade cada entrada cuyo "matcher" no
       este ya registrado en el dest para ese evento. Las entradas existentes
       del proyecto se preservan intactas.
+    * env: merge CLAVE A CLAVE — anade las variables del source que falten y
+      NUNCA pisa el valor del proyecto. Sin esto, un proyecto que ya tuviera su
+      propio bloque `env` (por cualquier motivo ajeno al SDD) jamas recibiria
+      una variable nueva del ecosistema: la regla de "clave de primer nivel"
+      lo daria por presente y no miraria dentro.
     * resto de claves de primer nivel del source: solo se anaden si no existen
       en el dest (el valor del proyecto siempre gana).
 - Idempotente: re-ejecutar no duplica entradas.
@@ -26,6 +31,12 @@ DEPRECATED_HOOK_COMMANDS = {
     # <=0.1.0: auto-allow universal de Skills — sustituido por sdd-skill-allow.py
     # (solo aprueba wf-*; ROADMAP 1.4)
     'echo \'{"hookSpecificOutput": {"hookEventName": "PermissionRequest", "decision": {"behavior": "allow"}}}\'',
+    # 0.82.x: gate de sincronia sobre la tool Agent — retirado en D-050. Se
+    # sustituye por CLAUDE_CODE_FORK_SUBAGENT=0 en `env`, que no depende de que
+    # el modelo teclee nada. Hay que borrarlo de los proyectos que lo recibieron.
+    'if command -v python3 >/dev/null 2>&1 && [ -f "$CLAUDE_PROJECT_DIR/.sdd/scripts/'
+    'sdd-agent-sync.py" ]; then python3 "$CLAUDE_PROJECT_DIR/.sdd/scripts/'
+    'sdd-agent-sync.py"; fi',
 }
 
 
@@ -79,9 +90,19 @@ def main() -> int:
                 dest_entries.append(entry)
                 changed = True
 
+    # env: merge clave a clave. El valor del proyecto siempre gana.
+    src_env = src.get("env")
+    if isinstance(src_env, dict) and src_env:
+        dest_env = dest.setdefault("env", {})
+        if isinstance(dest_env, dict):
+            for var, value in src_env.items():
+                if var not in dest_env:
+                    dest_env[var] = value
+                    changed = True
+
     # Resto de claves de primer nivel: solo si no existen en el dest
     for key, value in src.items():
-        if key != "hooks" and key not in dest:
+        if key not in ("hooks", "env") and key not in dest:
             dest[key] = value
             changed = True
 

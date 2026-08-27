@@ -1,4 +1,7 @@
 {
+  "env": {
+    "CLAUDE_CODE_FORK_SUBAGENT": "0"
+  },
   "hooks": {
     "PermissionRequest": [
       {
@@ -18,15 +21,6 @@
           {
             "type": "command",
             "command": "if command -v python3 >/dev/null 2>&1 && [ -f \"$CLAUDE_PROJECT_DIR/.sdd/scripts/sdd-gate-check.py\" ]; then python3 \"$CLAUDE_PROJECT_DIR/.sdd/scripts/sdd-gate-check.py\"; fi"
-          }
-        ]
-      },
-      {
-        "matcher": "Agent",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "if command -v python3 >/dev/null 2>&1 && [ -f \"$CLAUDE_PROJECT_DIR/.sdd/scripts/sdd-agent-sync.py\" ]; then python3 \"$CLAUDE_PROJECT_DIR/.sdd/scripts/sdd-agent-sync.py\"; fi"
           }
         ]
       }

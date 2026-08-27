@@ -6,8 +6,68 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-050 — El primer plano no se pide al modelo: se habilita en el proyecto. Fork mode off, y el frontmatter solo para fijar background
+
+- **Fecha:** 2026-08-27 · **Estado:** Adoptada (pendiente de medir en CU-3.a pasada 6). · **Supersede:** [[D-048]] y [[D-049]] (el hook se retira entero; sus aprendizajes de método quedan). · **Relacionada:** [[D-043]] (por fin efectiva), [[D-045]] (mismo muro visto desde dentro de un fork), [[D-047]] (intacta: sigue definiendo qué es esperar), CU-3.a pasadas 4–6.
+
+**Contexto.** Cuatro intentos de conseguir que la delegación a un agente SDD sea síncrona, y el hallazgo que los explica todos.
+
+La cadena de precedencia del harness, tal y como la documenta Claude Code:
+
+```
+1. ¿Lo lanzó un teammate?                   → primer plano
+2. ¿CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1? → primer plano
+3. ¿Fork mode ACTIVO (default interactivo)? → segundo plano, y NO se puede pedir el primer plano
+4. ¿Fork mode apagado?                      → segundo plano, SALVO run_in_background: false
+                                               o background: false en el frontmatter
+```
+
+**El punto 3 está por encima del 4.** Las dos palancas de primer plano —el flag de la llamada y el campo del agente— viven en el 4, así que en una sesión interactiva normal **nunca llegan a evaluarse**. No es que el modelo no obedeciera: es que la petición no tenía dónde aterrizar.
+
+**Tres medidas que lo confirman.**
+1. **0 de 10.** CU-3.a pasada 4, con `run_in_background: false` prescrito en cinco puntos del SKILL: no viajó ni una vez. Se leyó como desobediencia; era una petición inútil.
+2. **El frontmatter tampoco.** Se puso `background: false` en `sdd-spec-explorer`, se instaló en el consumer a las 07:53 UTC, y una sesión arrancada a las 08:03 hizo `Agent(sdd-spec-explorer)` **sin flag** → `"Async agent launched successfully"`. El campo es **asimétrico**: hay pin hacia background, no hay pin hacia foreground.
+3. **El hook fue peor que inútil.** [[D-048]] intentó forzar el flag denegando la llamada. Costó **dos pasadas de conformance** sin medir nada, y además **degradó la conducta del modelo**: siguiendo la prosa del SKILL emitía el booleano en **20 de 20** llamadas; reaccionando al texto del `deny`, emitió la cadena `"false"` en **5 de 5**. El harness descarta la clave por tipo inválido antes de que el hook la vea, así que el gate respondía *"falta el parámetro"* a un modelo que creía haberlo puesto. Un bucle perfecto.
+
+**Decisión.**
+
+1. **`CLAUDE_CODE_FORK_SUBAGENT=0` en el `env` del `settings.json`** que instala el ecosistema. Es lo único que devuelve el control: apaga el punto 3 y hace que el 4 aplique, de forma **declarativa** y sin depender de que el modelo teclee nada.
+2. **El frontmatter de agente solo se usa para fijar lo contrario.** `background: true` clava un agente en segundo plano aunque el llamante quiera el resultado. **Hoy no lo lleva ninguno, y es a propósito**: el informe de todos ellos lo consume el paso siguiente. La lista vacía es una decisión documentada en `kb-sdd-creation-guide`, no un olvido.
+3. **`run_in_background: false` se mantiene** en las prescripciones — ahora sí surte efecto.
+4. **El hook se retira entero**: script, tests, matcher y escotilla. Y se **depreca** en `merge-claude-settings.py`, para que los proyectos que lo recibieron en 0.82.x se queden sin él al actualizar.
+5. **El merge de `settings.json` pasa a fusionar `env` clave a clave.** Con la regla anterior —"clave de primer nivel solo si no existe"— un proyecto con su propio bloque `env` **jamás** habría recibido la variable: la clave existía y no se miraba dentro. El valor del proyecto sigue ganando siempre.
+
+**El coste que temíamos no existe — medido.** La reserva era que apagar fork mode quitase a Claude la capacidad de lanzar forks, con **12+ skills `context: fork`** dependiendo de ello. Comprobado con una sonda de un minuto (2026-08-27): `Skill(wf-spec-validate)` sobre un spec real **sigue forkeando** — el subagente trae su `.forked-skill.json`, `agentType: sdd-spec-auditor`, `spawnDepth: 1`, y devolvió el informe completo en 49s.
+
+La asimetría es justo la que hacía falta, y explica por qué la variable no rompe nada:
+
+| Ruta | fork mode ON (antes) | fork mode OFF (ahora) |
+|---|---|---|
+| `Skill(wf-*)` worker → fork declarado en el SKILL | forkea, asíncrono | **forkea, asíncrono — sin cambio** |
+| `Agent(<agente>)` desde el hilo principal | asíncrono, flag ignorado | **síncrono, flag honrado** |
+
+`context: fork` lo aplica el harness al invocar la skill; `CLAUDE_CODE_FORK_SUBAGENT` gobierna qué hace Claude cuando **él** decide lanzar un subagente por la tool `Agent`. Son dos mecanismos distintos, y la variable solo toca el segundo.
+
+**Alternativas descartadas.**
+- *`CLAUDE_CODE_DISABLE_BACKGROUND_TASKS=1`* (punto 2, gana a todo) → apaga el segundo plano de **todo** el repo del usuario, incluidos sus agentes. Ya descartada en [[D-045]] por el mismo motivo: el ecosistema es un huésped.
+- *Insistir con el hook* → tercera hipótesis fallida sobre el mismo mecanismo, con dos pasadas de coste y evidencia de que empeora la conducta.
+- *No hacer nada y fiarlo a la conducta* → defendible: en la pasada 4 el orquestador esperó bien 10 de 10 y sostuvo la barrera del fan-out. Pero es `n=1`, y `CLAUDE_CODE_FORK_SUBAGENT=0` es declarativo y barato de revertir. Si la sonda sale mal, este es el plan B.
+
+**Consecuencias / aprendizaje.**
+
+1. **Antes de escribir enforcement, comprueba si lo que pides es siquiera evaluable.** Cuatro decisiones y dos pasadas para descubrir que el punto 3 anulaba la petición. La señal estaba en el 0/10: una instrucción que **nadie** cumple casi nunca es un problema de obediencia.
+2. **Una nota mal tomada envejece como un hecho.** El `background` asimétrico lo tenía apuntado bien, lo contradije leyendo una doc resumida, y construí encima. Lo que zanjó la duda fue una medición de dos minutos que ya existía en los logs.
+3. **El enforcement no es neutral sobre la conducta.** El mensaje de un gate es **otro prompt** que compite con el SKILL, y puede empeorar lo que quería arreglar: 20/20 booleanos siguiendo el SKILL, 5/5 cadenas siguiendo el deny.
+4. **Un mecanismo nuevo se estrena en su propio escenario, nunca dentro del CU más grande.** Cuando falla, no falla solo: se lleva la medición entera. Dos pasadas.
+5. **Y el orden correcto es medir y luego documentar.** [[D-048]] se registró con changelog y versión antes de tener una sola pasada que la respaldara.
+
+**Referencias.** `settings.json`, `scripts/merge-claude-settings.py`, `pipeline/orchestration.md`, `kb-sdd-creation-guide`, `wf-spec-features-first/SKILL.md`, `tests/test_merge_claude_settings.py`, `tests/test_install_sh.py`, CU-3.a pasadas 4–6.
+
+---
+
 ## D-049 — Un gate sin estado que repite el mismo mensaje enseña que está roto: cada reintento tiene que dar información nueva
 
+- **⚠️ Superada por [[D-050]]** (Su gate se retira entero; sus aprendizajes de método siguen vigentes).
 - **Fecha:** 2026-08-26 · **Estado:** Adoptada (pendiente de medir en CU-3.a pasada 6). · **Relacionada:** [[D-048]] (arregla su gate), [[D-045]] (la excusa no comprobada, otra vez), [[D-037]] (un backstop que no discrimina no protege), CU-3.a pasada 5, CU-9.n.
 
 **Contexto.** Primera pasada con el hook de [[D-048]] instalado. Lo bueno primero: **el hook funciona** — el payload de `PreToolUse` trae `tool_input` para la tool `Agent`, el gate disparó, y el `deny` llegó al modelo. La única incógnita que [[D-048]] no había podido verificar en vivo queda cerrada en positivo.
@@ -46,6 +106,7 @@ Y el orquestador hizo **lo correcto en el eje que se medía** (CU-9.n): no rode�
 
 ## D-048 — La sincronía de la delegación se hace mecánica: hook `PreToolUse` sobre `Agent`. Y la frontera del orquestador no es la tool, es cargar el artefacto
 
+- **⚠️ Superada por [[D-050]]** (El hook se retira entero; sus aprendizajes de método siguen vigentes).
 - **Fecha:** 2026-08-26 · **Estado:** Adoptada (pendiente de medir en CU-3.a pasada 5). · **Relacionada:** [[D-043]] (lo hace efectivo), [[D-047]] (no lo contradice: elimina la ambigüedad en el origen), [[D-045]] (lo anotó como escalada y descartó la alternativa global), [[D-030]]/[[D-031]]/[[D-038]] (la frontera de main), O-8, CU-3.a pasada 4.
 
 **Contexto — parte 1: la prosa no bastó, otra vez.** [[D-043]] prescribió `run_in_background: false`; [[D-045]] llevó `wf-spec-features-first` al hilo principal para que el flag **pudiera** surtir efecto; [[D-047]] reconoció que la vía de la notificación también es esperar bien. Todo correcto, y aun así el resultado medido en CU-3.a pasada 4 es que el flag **viajó en 0 de 10 llamadas**, con el texto delante del agente, en tres skills distintas.

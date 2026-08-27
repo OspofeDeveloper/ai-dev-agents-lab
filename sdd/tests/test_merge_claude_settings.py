@@ -126,6 +126,67 @@ class MergeTest(unittest.TestCase):
                     for h in e.get("hooks", [])]
         self.assertNotIn(deprecated, commands, "el hook deprecated debe eliminarse")
 
+    # ── env: merge clave a clave (D-050) ──────────────────────────────────
+
+    def _merge_env(self, dest_obj, src_env=None):
+        """Mergea un source con bloque `env` sobre el dest dado."""
+        src = dict(SOURCE)
+        src["env"] = src_env if src_env is not None else {"CLAUDE_CODE_FORK_SUBAGENT": "0"}
+        self.src.write_text(json.dumps(src, indent=2), encoding="utf-8")
+        self.dest.write_text(json.dumps(dest_obj, indent=2), encoding="utf-8")
+        r = self._merge()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        return self._dest()
+
+    def test_env_added_when_dest_has_none(self):
+        out = self._merge_env({"hooks": {}})
+        self.assertEqual(out["env"]["CLAUDE_CODE_FORK_SUBAGENT"], "0")
+
+    def test_env_merges_key_by_key_into_existing_block(self):
+        # EL caso que motiva el merge fino: con la regla vieja de "clave de primer
+        # nivel", un proyecto que ya tuviera SU `env` (por cualquier motivo ajeno al
+        # SDD) no habria recibido nunca la variable — la clave existia y no se
+        # miraba dentro. La variable se habria perdido en silencio.
+        out = self._merge_env({"hooks": {}, "env": {"MI_VAR": "propia"}})
+        self.assertEqual(out["env"]["MI_VAR"], "propia", "se perdio una var del proyecto")
+        self.assertEqual(out["env"]["CLAUDE_CODE_FORK_SUBAGENT"], "0",
+                         "la var del ecosistema no entro en un env preexistente")
+
+    def test_env_never_overwrites_the_project_value(self):
+        # Si el equipo decidio otro valor a proposito, gana el suyo — igual que
+        # con el resto de claves.
+        out = self._merge_env({"hooks": {}, "env": {"CLAUDE_CODE_FORK_SUBAGENT": "1"}})
+        self.assertEqual(out["env"]["CLAUDE_CODE_FORK_SUBAGENT"], "1")
+
+    def test_env_merge_is_idempotent(self):
+        first = self._merge_env({"hooks": {}, "env": {"MI_VAR": "propia"}})
+        r = self._merge()
+        self.assertEqual(r.returncode, 0)
+        self.assertEqual(self._dest(), first)
+
+    def test_env_non_dict_in_dest_does_not_crash(self):
+        # settings.json escrito a mano puede traer cualquier cosa; el merge no es
+        # un validador y jamas debe reventar el install.
+        out = self._merge_env({"hooks": {}, "env": "no soy un dict"})
+        self.assertEqual(out["env"], "no soy un dict")
+
+    def test_agent_sync_hook_is_removed_on_update(self):
+        # D-050 retira el gate de sincronia sobre `Agent`. Los proyectos que lo
+        # recibieron en 0.82.x tienen que quedarse SIN el, o arrastrarian un hook
+        # que ya no tiene script detras.
+        cmd = ('if command -v python3 >/dev/null 2>&1 && [ -f '
+               '"$CLAUDE_PROJECT_DIR/.sdd/scripts/sdd-agent-sync.py" ]; then python3 '
+               '"$CLAUDE_PROJECT_DIR/.sdd/scripts/sdd-agent-sync.py"; fi')
+        self.dest.write_text(json.dumps({"hooks": {"PreToolUse": [
+            {"matcher": "Skill", "hooks": [{"type": "command", "command": "sdd-gate-check.py"}]},
+            {"matcher": "Agent", "hooks": [{"type": "command", "command": cmd}]},
+        ]}}, indent=2), encoding="utf-8")
+        r = self._merge()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        matchers = {e["matcher"] for e in self._dest()["hooks"]["PreToolUse"]}
+        self.assertNotIn("Agent", matchers, "el hook retirado sigue registrado (D-050)")
+        self.assertIn("Skill", matchers, "se llevo por delante el gate de skills")
+
     def test_bad_args_exit_1(self):
         r = run_script("merge-claude-settings.py", self.src)
         self.assertEqual(r.returncode, 1)

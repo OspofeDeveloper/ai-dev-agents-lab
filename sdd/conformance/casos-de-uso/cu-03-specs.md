@@ -362,6 +362,70 @@ informe a mano, espera a mano, o **reporta como del delegado un dato que reconst
 >
 > **Sin muestra de la serie de gaps:** el analyze no llegó a correr.
 
+> **Pasada 6 (2026-08-27, v0.83.0, `myops-app-specs`, banco limpio, **modelo `sonnet-5`/`opus-5`**
+> — primer cambio de modelo de la campaña, ver procedencia abajo) — la primera de la campaña que
+> llega al final con todo dentro. Pasos 1–5 PASS; [[D-050]] medido; [[D-046]] y [[D-047]]
+> confirmados en flujo real.** 21 tool calls para el flujo entero (la pasada 4 gastó 36), 9
+> subagentes, **todos `spawnDepth: 1` y sin padre**.
+>
+> **La medición que lo cambia todo: 5 de 5.** `run_in_background: false` viajó en **las cinco**
+> delegaciones —analyze, discovery, tres escritores, tres auditores, readiness— y el informe volvió
+> **dentro del `tool_result`** cada vez. Contra 0 de 10 en la pasada 4. Y viajó como **booleano**,
+> emitido por el modelo siguiendo la prosa del SKILL, sin ningún mensaje de error recordándoselo:
+> confirma que el 0/10 nunca fue desobediencia, era una petición sin sitio donde aterrizar
+> ([[D-050]]).
+>
+> **Fan-out en un único mensaje, las dos veces** ([[D-047]]). Los tres `sdd-spec-writer` salieron en
+> un solo mensaje del asistente, y los tres `sdd-spec-auditor` en otro — verificado agrupando los
+> `tool_use` por `message.id`, no contando entradas del `.jsonl`. En la pasada 4 fueron seis
+> mensajes.
+>
+> **[[D-046]], las dos mitades, en flujo real.** El índice cruzó la frontera de topología
+> (`> Discovery: ../prd/prd_discovery.md (fuera de esta raíz de artefactos)`) y registró **8 de 8**
+> features, con las 5 no generadas visibles como `PENDIENTE_GENERACIÓN`; `--check` da `EN_SYNC`. Y
+> el readiness **encontró los tres `_conflict_report.md` junto a cada spec** —los nombró con path—
+> y además **declaró en voz alta** lo que faltaba: *"fan-out por feature, sin informe consolidado en
+> `spec/`"*.
+>
+> **[[D-047]], el arbitraje, con divergencia legítima.** `expense-categories` declaró
+> `SIN_CONFLICTOS` mientras los otros dos levantaban `CF-001`. Esta vez la divergencia **era
+> correcta** —F-003 no es parte de ese par— y el readiness lo resolvió sin promediar: dejó F-003
+> `BLOQUEADA` por dependencia **transitiva**, lo distinguió explícitamente de un conflicto propio, y
+> lo justificó **citando fichero y línea** de los dos README. Exactamente la conducta que pedía la
+> regla.
+>
+> **Paso 4 PASS (2ª vez).** Dos `--answer` encadenados con los textos dictados; cero `Read`/`Edit`/
+> `Write` del analysis. **O-8 PASS:** el único `cat` de la sesión fue el `output_template.md` de la
+> propia skill — material de skill, no artefacto del proyecto. **PRD byte-idéntico** al sellado;
+> `agent-memory` ausente ([[D-041]]); cero HUs `[INCOMPLETO]`.
+>
+> **Hallazgo que cae solo, y es material de [[CU-3.o]]:** el readiness detectó y nombró un **ciclo
+> de dependencias explícito F-001 ↔ F-003**. Ese escenario estaba sin medir.
+>
+> **Ruido del harness, no del contrato:** un `AskUserQuestion` llegó malformado
+> (`__unparsedToolInput`) y se reintentó bien acto seguido.
+>
+> **⚠ Procedencia — cambió el modelo, y eso reordena la serie de gaps.** Esta pasada corrió con
+> **`claude-sonnet-5`** (verificado en el `.jsonl` del subagente); las pasadas 1–5 fueron con
+> `claude-sonnet-4-6`. Los agentes se bumpearon a `opus-5`/`sonnet-5` **una hora antes** de
+> lanzarla.
+>
+> Sexta muestra de la Observación A y la más extrema: **5 gaps / 2 críticos**, contra la serie
+> 11/5 → 12/7 → 11/7 → 16/11. Discovery: **8 features** (frente a 9 y 8). Pero **no es comparable
+> con las anteriores**: cruza una frontera de modelo, que es justo lo que la Regla 9 punto 3 avisa
+> que hace caducar una validación en silencio. El sospechoso principal del salto es el modelo, no
+> fork mode. `O-12` sigue abierta, pero su serie se parte aquí: hacen falta ≥2 muestras más en
+> `sonnet-5` antes de comparar nada.
+>
+> **Reinicio de recuentos, por partida doble.** [[D-050]] cambia el mecanismo de ejecución de las
+> delegaciones **y** el modelo de los agentes cambió a la vez — dos variables movidas en la misma
+> pasada, que es exactamente lo que el banco pide no hacer. Esta es la **1/3** del régimen nuevo, y
+> conviene que la 7 y la 8 no muevan nada más.
+>
+> **Lo que esta pasada NO midió:** fue una pasada *fácil*. Sin `[INCOMPLETO]`, sin disparar el
+> guardrail de alcance ([[CU-3.b]] no se ejercitó), y con el índice `EN_SYNC` a la primera. Falta
+> ver cómo se comporta el régimen nuevo **cuando algo falla a mitad del fan-out**.
+
 ## CU-3.b — Expansión de alcance desde las respuestas del analysis
 
 **Precondición:** al responder el `_analysis.md` introduces capacidad nueva (entidad
@@ -488,6 +552,19 @@ subagente **`sdd-spec-auditor`**.
 conflictos existan donde existan, y arbitra las divergencias dejando constancia · FALLO si
 edita specs al validar, silencia un conflicto real, o lo cierra por mayoría.
 **Desviación → reportar:** issue citando `CU-3.f`.
+
+> **Pasada 1 del punto 1 (2026-08-27, v0.83.0) — PASS.** `wf-spec-validate` sobre
+> `transaction-management`: veredicto `APROBADO` con los tres checks (completitud 8/8, pureza,
+> testabilidad CA-001..009 en GIVEN/WHEN/THEN, cobertura HU→CA completa) y **sin reescribir el
+> spec**. Distinguió bien lo no bloqueante de lo bloqueante: levantó una ambigüedad real —si el
+> tipo ingreso/gasto es editable, presente en HU-001 pero ausente de los campos editables de
+> CA-006— **fuera del veredicto**, y remitió a la vía quirúrgica (enmienda de ese CA) en vez de
+> reabrir el spec entero.
+>
+> Esta pasada valía además como **sonda de [[D-050]]**: `wf-spec-validate` es `context: fork` puro.
+> El subagente conservó su `.forked-skill.json` (`agentType: sdd-spec-auditor`, `spawnDepth: 1`,
+> 49s), así que **apagar fork mode no toca a los workers**. La reserva que [[D-050]] anunciaba —12+
+> skills fork en riesgo— queda descartada con evidencia.
 
 ## CU-3.g — Completar HUs incompletas (gap-resolve)
 

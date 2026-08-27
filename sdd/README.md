@@ -439,8 +439,8 @@ Si te importa el rendimiento del agente, instala solo las fases que necesites. L
 
 ### CI / runners headless
 
-- Los gates PreToolUse y el sellador funcionan en CI sin el ecosistema al lado: viven commiteados en `.sdd/scripts/` con su sello de versión. Son dos: `sdd-gate-check.py` (matcher `Skill`, precondiciones de fase por contenido) y `sdd-agent-sync.py` (matcher `Agent`, la delegación a un agente SDD es síncrona — [[DECISIONS D-048]]). Los dos son fail-open: cualquier entrada inesperada permite y sale 0.
-- `sdd-agent-sync.py` **solo** mira los `subagent_type` del ecosistema: tus agentes y los del harness (`general-purpose`, `Explore`) no se tocan. Se desactiva entero con `SDD_ALLOW_ASYNC_AGENTS=1`.
+- Los gates PreToolUse y el sellador funcionan en CI sin el ecosistema al lado: viven commiteados en `.sdd/scripts/` con su sello de versión. El gate de fase es `sdd-gate-check.py` (matcher `Skill`, precondiciones por contenido), y es fail-open: cualquier entrada inesperada permite y sale 0.
+- El `settings.json` instalado declara `CLAUDE_CODE_FORK_SUBAGENT=0` ([[DECISIONS D-050]]): con fork mode activo el harness lanza los subagentes en segundo plano y **no evalúa** las peticiones de primer plano, así que `run_in_background: false` no surtía efecto. Si tu proyecto ya tenía un bloque `env`, el merge añade la variable sin tocar el resto — y si tú declaras otro valor, gana el tuyo.
 - El protocolo de sesión se suprime con `SDD_NON_INTERACTIVE=1` (o automáticamente con `CI=true`). El opt-out commiteable por repo es `.claude/sdd-mode.json`.
 - `sdd-features-index.py --check <raíz_spec>` falla (exit 2) si `_features.md` está desactualizado respecto a sus fuentes: útil como check de CI para detectar índices a mano sin regenerar.
 

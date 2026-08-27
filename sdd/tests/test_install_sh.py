@@ -28,8 +28,7 @@ INSTALL = SDD_ROOT / "install.sh"
 
 # Scripts de enforcement que install.sh distribuye a .sdd/scripts/
 ENFORCEMENT_SCRIPTS = [
-    "sdd-seal.py", "sdd-gate-check.py", "sdd-agent-sync.py", "sdd-task-state.py",
-    "sdd-sync-check.py",
+    "sdd-seal.py", "sdd-gate-check.py", "sdd-task-state.py", "sdd-sync-check.py",
     "sdd-skill-allow.py", "sdd-amend.py", "sdd-features-index.py", "sdd-analysis-gaps.py",
     "sdd-project-status.py", "sdd-kb-check.py", "sdd-release.py", "sdd-next-id.py",
     "sdd-resolve-path.py", "sdd-design-resolve.py", "sdd-source-drift.py",
@@ -451,22 +450,31 @@ class InstallAllTest(InstallBase):
         self.assertIn("a mano", skill,
                       "no prohibe parchear a mano un artefacto generado (D-046)")
 
-    def test_agent_sync_hook_is_wired_in_settings(self):
-        # D-048: el script en .sdd/scripts/ no sirve de nada si el settings.json
-        # no registra el matcher. Lo cubre ENFORCEMENT_SCRIPTS por el lado del
-        # fichero; esto cubre el cableado.
+    def test_fork_mode_is_off_in_settings(self):
+        # D-050: con fork mode activo —el default interactivo— el harness lanza
+        # los subagentes en background y NO evalua peticiones de primer plano:
+        # ni `run_in_background: false` de la llamada ni `background:` del
+        # frontmatter del agente. Medido: 0/10 con el flag prescrito, y un
+        # `background: false` en el agente que tampoco forzo nada. Apagarlo es lo
+        # unico que devuelve el control, y es declarativo — no depende de que el
+        # modelo teclee nada.
         self.install("all")
         settings = json.loads(
-            (self.proj / ".claude" / "settings.json").read_text(encoding="utf-8"))
-        pre = settings["hooks"]["PreToolUse"]
-        matchers = {e["matcher"] for e in pre}
-        self.assertIn("Agent", matchers, "el hook de sincronia no esta cableado (D-048)")
-        self.assertIn("Skill", matchers, "el gate de skills se ha perdido en el merge")
-        agent_cmd = next(e for e in pre if e["matcher"] == "Agent")["hooks"][0]["command"]
-        self.assertIn("sdd-agent-sync.py", agent_cmd)
-        # Sin el guard de existencia, un proyecto a medio instalar peta en cada
-        # llamada Agent: el hook tiene que ser inerte si el script no esta.
-        self.assertIn("-f ", agent_cmd, "el hook no comprueba que el script exista")
+            (self.claude / "settings.json").read_text(encoding="utf-8"))
+        self.assertEqual(settings.get("env", {}).get("CLAUDE_CODE_FORK_SUBAGENT"), "0",
+                         "el proyecto no apaga fork mode (D-050)")
+
+    def test_agent_sync_hook_is_gone(self):
+        # D-050 retira el gate. Backstop anti-resurreccion: ni el script ni el
+        # matcher deben reaparecer.
+        self.install("all")
+        self.assertFalse((self.proj / ".sdd" / "scripts" / "sdd-agent-sync.py").exists(),
+                         "el hook retirado se sigue instalando (D-050)")
+        settings = json.loads(
+            (self.claude / "settings.json").read_text(encoding="utf-8"))
+        matchers = {e["matcher"] for e in settings["hooks"]["PreToolUse"]}
+        self.assertNotIn("Agent", matchers)
+        self.assertIn("Skill", matchers, "se perdio el gate de skills")
 
     def test_features_first_draws_the_bash_boundary(self):
         # D-048 (cierra O-8): "no hagas Read del artefacto" se cumplia al pie de

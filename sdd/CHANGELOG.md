@@ -2,6 +2,16 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.83.0 — 2026-08-27
+
+**El primer plano no se le pide al modelo: se habilita en el proyecto** — [[DECISIONS D-050]]. Cuatro intentos de conseguir delegación síncrona, y por fin la causa. La cadena de precedencia del harness pone *"¿fork mode activo? → segundo plano, y no se puede pedir el primer plano"* **por encima** de las dos palancas que lo piden (`run_in_background: false` y el `background:` del frontmatter). En una sesión interactiva normal, esas dos peticiones **nunca llegaban a evaluarse**. El 0/10 de [[DECISIONS D-047]] no era desobediencia: era una petición sin sitio donde aterrizar.
+
+- ⚠ **El `settings.json` declara `CLAUDE_CODE_FORK_SUBAGENT=0`.** Es lo único que devuelve el control, y es declarativo: no depende de que el modelo teclee nada. **Los workers `context: fork` no se ven afectados** — comprobado: `wf-spec-validate` sigue forkeando (su subagente conserva el `.forked-skill.json`). La variable gobierna qué hace Claude cuando **él** lanza un subagente por la tool `Agent`; el `context: fork` de un SKILL lo aplica el harness al invocarlo, y son mecanismos distintos.
+- **Medido en CU-3.a pasada 6**, la primera de la campaña que llega al final entera: `run_in_background: false` viajó en **5 de 5** delegaciones (booleano, sin que nadie se lo recordara) y el informe volvió **dentro del `tool_result`** las 5 veces. Antes: 0 de 10.
+- ⚠ **El merge de `settings.json` fusiona `env` clave a clave.** Con la regla anterior, un proyecto que ya tuviera su propio bloque `env` **jamás** habría recibido la variable: la clave existía y no se miraba dentro. El valor del proyecto sigue ganando siempre.
+- ⚠ **Se retira el hook `sdd-agent-sync.py`** — script, tests, matcher y escotilla ([[DECISIONS D-048]] y [[DECISIONS D-049]] quedan superadas). Costó dos pasadas de conformance sin medir nada y **degradaba la conducta del modelo**: siguiendo la prosa del SKILL emitía el booleano en 20 de 20 llamadas; reaccionando al texto del `deny`, la cadena `"false"` en 5 de 5. Se depreca en el merge, así que los proyectos que lo recibieron en 0.82.x se quedan sin él al actualizar.
+- **El `background` del frontmatter de agente es asimétrico:** hay pin hacia segundo plano, **no** hay pin hacia primer plano (medido: `background: false` en `sdd-spec-explorer` no forzó nada). Se usa **solo** para fijar `true` en agentes cuyo resultado no consume nadie. Hoy no lo lleva ninguno, y es a propósito: el informe de todos ellos lo consume el paso siguiente.
+
 ## 0.82.1 — 2026-08-26
 
 **El gate de sincronía era insatisfacible por un detalle de tipo, y su mensaje no lo decía** — [[DECISIONS D-049]]. Primera pasada con el hook de [[DECISIONS D-048]] puesto. Lo bueno: **disparó** — el payload de `PreToolUse` sí trae `tool_input` para la tool `Agent`, que era la incógnita. Lo malo: el reintento llegó con `run_in_background` como **cadena** `"false"` y el hook exigía el booleano, así que denegó otra vez… **con el mismo mensaje palabra por palabra**. Tres respuestas idénticas a tres llamadas distintas, y el orquestador concluyó —razonablemente— que el contrato era incumplible.
