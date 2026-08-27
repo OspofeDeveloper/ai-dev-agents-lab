@@ -20,6 +20,22 @@ wizard antes de nada, invocar el init, no autoaprobar el modo).
 > usa un **proyecto real en un directorio externo** y abre Claude Code ahí. Atajo para
 > iterar sin wizard: `cd <proyecto> && bash <repo>/sdd/install.sh all`.
 
+
+> [!IMPORTANT]
+> **Deuda de procedencia — este CU se selló con los modelos 4-x (2026-08-27).** Los 11 agentes
+> pasaron a `opus-5`/`sonnet-5`, y eso es una **frontera de modelo**: sus veredictos
+> **conductuales** anteriores pasan a ser históricos (Regla 9 puntos 3 y 9 de
+> `kb-sdd-conformance`). La capa **determinista** no se ve afectada — la cubre la suite y le da
+> igual el modelo.
+>
+> **Pendiente:** una pasada de humo por escenario conductual en modelo 5. Una pasada **no sella**
+> (siguen haciendo falta >=3), pero **si puede demostrar que algo se rompio**. Registrala como
+> `SELLADO (4-x) - HUMO OK (5)`, nunca como un `OK` a secas.
+>
+> **No re-probar** (deterministas, los cubre CI): `CU-1.g` (busqueda de marcadores del hook, 24 tests en `test_session_hook.py`), `CU-1.t` y `CU-1.u` (generacion de reglas eager, `test_install_sh.py`).
+>
+> **Prioridad alta** (el agente debe negarse, parar o juzgar): `CU-1.k` (verificacion bloqueante), `CU-1.j` (gate de subpaquete), `CU-1.p` (los args saltan preguntas y no se re-pregunta lo ya dicho), `CU-1.a`/`CU-1.b`/`CU-1.c` (el wizard de modo).
+
 ---
 
 ## 🧪 Qué se prueba aquí (por componente)

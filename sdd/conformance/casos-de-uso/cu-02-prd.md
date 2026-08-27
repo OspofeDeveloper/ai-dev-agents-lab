@@ -17,6 +17,22 @@ tolerar también la forma verbosa `[ASUNCIÓN: …]`) sí es determinista.
 > marca `[ASUNCIÓN]` (inline) + `[ASN-XXX]` en `## Asunciones del PRD`. Un PRD con
 > asunciones sin confirmar **no llega a `LISTO`**.
 
+
+> [!IMPORTANT]
+> **Deuda de procedencia — este CU se selló con los modelos 4-x (2026-08-27).** Los 11 agentes
+> pasaron a `opus-5`/`sonnet-5`, y eso es una **frontera de modelo**: sus veredictos
+> **conductuales** anteriores pasan a ser históricos (Regla 9 puntos 3 y 9 de
+> `kb-sdd-conformance`). La capa **determinista** no se ve afectada — la cubre la suite y le da
+> igual el modelo.
+>
+> **Pendiente:** una pasada de humo por escenario conductual en modelo 5. Una pasada **no sella**
+> (siguen haciendo falta >=3), pero **si puede demostrar que algo se rompio**. Registrala como
+> `SELLADO (4-x) - HUMO OK (5)`, nunca como un `OK` a secas.
+>
+> **No re-probar** (deterministas, los cubre CI): ninguno — los 10 escenarios tienen componente de juicio.
+>
+> **Prioridad alta** (el agente debe negarse, parar o juzgar): `CU-2.e` (gate de asunciones + orden PRD->spec, el mas critico del CU), `CU-2.d` (confirmacion ponderada por riesgo, y que declinar deje el PRD intacto), `CU-2.h` (la revision no reescribe a su cosecha), `CU-2.g` (no revisar como PRD un artefacto de otra fase), `CU-2.j` (cascada de dependencias: orden del backstop y los 3 desenlaces).
+
 ---
 
 ## 🧪 Qué se prueba aquí (por componente)
