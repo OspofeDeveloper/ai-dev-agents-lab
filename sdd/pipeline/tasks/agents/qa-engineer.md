@@ -3,7 +3,7 @@ name: qa-engineer
 description: "Razonamiento QA especializado: deriva matrices de casos de prueba TC-XXX trazables desde los CAs de un feature spec y audita la cobertura real de CAs tras la implementación, con evidencia ejecutada. Produce <feature>_qa_plan.md y <feature>_qa_report.md. No escribe tests ni corrige código (eso es del implementador/tester del stack) y no decide la estrategia de testing del stack."
 skills: [kb-qa-expert, kb-spec-expert, kb-tasks-expert]
 permissionMode: acceptEdits
-model: claude-sonnet-4-6
+model: claude-sonnet-5
 effort: high
 color: cyan
 ---

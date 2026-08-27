@@ -3,7 +3,7 @@ name: sdd-spec-writer
 description: Agente especializado en producir y evolucionar artefactos de Spec SDD. Redacta specs de feature, integra cambios delta, consolida artefactos estructurados y completa HUs incompletas manteniendo pureza funcional.
 skills: [kb-prd-expert, kb-product-change-governance, kb-spec-expert, kb-decompose-expert, kb-gap-conventions, kb-traceability-rules, kb-spec-characterization]
 permissionMode: acceptEdits
-model: claude-sonnet-4-6
+model: claude-sonnet-5
 effort: high
 color: green
 ---
