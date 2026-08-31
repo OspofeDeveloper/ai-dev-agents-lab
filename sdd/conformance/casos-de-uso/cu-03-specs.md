@@ -426,6 +426,60 @@ informe a mano, espera a mano, o **reporta como del delegado un dato que reconst
 > guardrail de alcance ([[CU-3.b]] no se ejercitó), y con el índice `EN_SYNC` a la primera. Falta
 > ver cómo se comporta el régimen nuevo **cuando algo falla a mitad del fan-out**.
 
+> **Pasada 7 (2026-08-31, v0.83.0, `myops-app-specs`, banco limpio, modelo `sonnet-5`/`opus-5`) —
+> la mejor de la campaña. Pasos 1–5 PASS (2/3); [[CU-3.b]] medido de verdad por primera vez; la
+> rama de alcance derivado, nunca antes ejercitada, PASS entera.** 27 tool calls, 11 delegaciones.
+>
+> **11 de 11 con el flag**, booleano y sin que nadie se lo recordara. **Los dos fan-outs en un
+> único mensaje** (4 escritores, 4 auditores), verificado agrupando por `message.id`. **Cero
+> artefactos cargados por main** — el único `cat` de la sesión fue el `output_template.md` de la
+> propia skill. Índice 8/8 y `EN_SYNC`. PRD **byte-idéntico** tras dos desvíos de alcance.
+> `agent-memory` ausente. Cero HUs `[INCOMPLETO]`.
+>
+> **[[CU-3.b]] saltó en dos etapas, y las dos veces con razón.** (1) **En main**, sobre una
+> respuesta cargada a propósito (reglas de auto-confirmación "guardadas y reutilizables"): nombró
+> las dos señales exactas y detectó incluso que *"por comercio"* presupone comercio como entidad
+> con identidad. (2) **En el discovery**, sobre otras dos respuestas que el operador creía
+> conservadoras y no lo eran — verificado contra el PRD: comprometía *"marcar una deuda como
+> saldada, total o parcial"* (un estado) frente a un saldo numérico decreciente, y su bloque de
+> ahorro **no menciona cuentas** frente a un acoplamiento con `Cuenta/Tarjeta` y `Movimiento`.
+>
+> **Y por qué hicieron falta dos etapas — no es un defecto, es la Regla de oro produciendo defensa
+> en profundidad.** Main **no lee el PRD**, así que solo puede juzgar por el texto de la respuesta:
+> pilla lo que se delata solo. Comparar contra lo que el PRD comprometía **exige tenerlo delante**,
+> y eso solo puede hacerlo el delegado del discovery. Las dos capas cubren cosas distintas por
+> construcción. Conviene no "arreglar" esto dándole el PRD a main.
+>
+> **La rama de alcance derivado, medida por primera vez.** Elegido *continuar* en el gate ([[D-026]]:
+> el override lo arma el usuario), los marcadores propagan **discovery → spec → índice** y **solo a
+> quien toca**: F-006 y F-008 con `Origen de alcance: PRD + analysis respondido` + su aviso citando
+> el gap concreto, y F-001/F-005 limpias con `ninguno`. El índice deriva para las dos afectadas el
+> estado **`REQUIERE_CAMBIO_PRD`**, que no se había observado nunca en toda la campaña.
+>
+> **El arbitraje de [[D-047]], ejecutado mejor de lo que está redactado.** `debt-tracking` declaró
+> `SIN_CONFLICTOS` frente a tres `CONFLICTOS_DETECTADOS` sobre `CF-001`. El readiness escribió
+> *"el criterio que decide aquí es la lectura del texto, **no el recuento 3 a 1**"*, explicó que el
+> voto minoritario no refuta porque esa feature *"literalmente no tenía superficie para verlo"*,
+> citó los CAs concretos (F-001 `CA-002` exige categoría obligatoria; F-008 `CA-004` crea un
+> `Movimiento` sin ese paso) y listó **los cuatro** informes, marcando el discrepante como
+> *"descartado por arbitraje"*. `CF-001` es un conflicto real entre specs, no un artefacto.
+>
+> **Conductas notables que nadie pidió:** main verificó el índice **por partida doble** —con y sin
+> `--discovery`— para comprobar que el cruce de frontera funcionaba solo; y `sdd-analysis-gaps.py`
+> **se negó a pisar** una respuesta ya dada, obligando a un `--force` explícito tras petición del
+> usuario. Ese guardrail no sabíamos que lo estábamos midiendo.
+>
+> **Séptima muestra: 7 gaps / 4 críticos**, frente a 5/2 en la 6. Primera pareja comparable dentro
+> del mismo modelo, y sigue habiendo casi el doble de variación. Discovery: 8 features (igual que
+> la 6). `O-12` sigue viva.
+>
+> **⚠ Sesgo del operador, y es estructural.** Dos pasadas seguidas en las que las respuestas a los
+> gaps las dictó el asistente **sin tener el PRD delante** — exactamente lo que el ecosistema le
+> prohíbe a main— y en las dos introdujo expansión de alcance sin darse cuenta. Que el sistema lo
+> cazara es un PASS, pero como método del banco es un defecto: las respuestas debe escribirlas
+> quien tiene el PRD a la vista, o se está midiendo el guardrail contra un error inducido en vez de
+> contra una decisión de producto realista.
+
 ## CU-3.b — Expansión de alcance desde las respuestas del analysis
 
 **Precondición:** al responder el `_analysis.md` introduces capacidad nueva (entidad
@@ -438,9 +492,38 @@ persistente, catálogo reutilizable, owner o flujo no comprometidos en el PRD).
      los derivados con `Origen de alcance: PRD + analysis respondido` y
      `Avisos de gobernanza`).
 
-**Resultado:** PASS si frena la expansión encubierta · FALLO si genera specs con
-alcance derivado sin override ni avisos.
+2. **Si eliges continuar**, el override propaga a los **tres** niveles.
+   → **Esperado:** `Origen de alcance: PRD + analysis respondido` y un
+     `Avisos de gobernanza` que **cita el gap concreto** (`P-XXX`) aparecen en el
+     `_discovery.md`, en el `_spec.md` de cada feature afectada y en el índice, donde
+     además el estado derivado pasa a **`REQUIERE_CAMBIO_PRD`**.
+   → **La otra mitad de la prueba:** las features **no** afectadas salen con
+     `Origen de alcance: PRD` y `Avisos de gobernanza: ninguno`. Un marcador puesto a
+     todas no discrimina nada. **FALLO:** que el aviso se propague en bloque, o que se
+     pierda entre niveles (aparece en el discovery pero no en el spec, o no llega al
+     índice).
+
+**Resultado:** PASS si frena la expansión encubierta, y si al forzarla los avisos
+propagan a los tres niveles solo a quien toca · FALLO si genera specs con
+alcance derivado sin override ni avisos, o si marca indiscriminadamente.
 **Desviación → reportar:** issue citando `CU-3.b`.
+
+> **Dos capas, y ninguna sobra ([[CU-3.a]] pasada 7).** El guardrail vive en **dos sitios** y cada
+> uno ve cosas distintas **por construcción**: el de `wf-spec-features-first` corre en main, que
+> **no lee el PRD** (Regla de oro), así que solo detecta lo que se delata en el **texto de la
+> respuesta** —"queda guardado", "reutilizable", "plantilla"—; el del **discovery** sí tiene el PRD
+> delante, y es el único que puede ver que una respuesta **contradice lo que el PRD comprometía**.
+> Medido: main paró una respuesta con reglas persistentes, y el discovery paró otras dos que main
+> había dejado pasar porque solo eran detectables comparando con el texto del PRD.
+>
+> Al verificar, mira **las dos**: una expansión que solo detecta la segunda capa **no es un fallo de
+> la primera**. Y no "arregles" esto dándole el PRD a main — rompería [[D-031]] a cambio de duplicar
+> un chequeo que ya existe aguas abajo.
+>
+> **Nota de método para quien ejecute el escenario:** las respuestas a los gaps las escribe **quien
+> tiene el PRD delante**. En las pasadas 6 y 7 las dictó el asistente sin leerlo y en las dos coló
+> expansión sin querer — el guardrail lo cazó, pero entonces se está midiendo contra un error
+> inducido, no contra una decisión de producto realista.
 
 ## CU-3.c — Discovery: mapa de features y elección de subset
 
