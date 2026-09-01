@@ -210,10 +210,85 @@ def apply_answer(text: str, gap_id: str, answer: str, force: bool):
     return new_text, result
 
 
+def _norm_title(title: str) -> str:
+    """Título normalizado para emparejar: minúsculas, espacios colapsados, sin
+    puntuación de cierre. NO se hace matching difuso a propósito (ver export_answers)."""
+    return " ".join(title.lower().split()).rstrip(" .:;,")
+
+
+def export_answers(text: str, source: str) -> dict:
+    """Extrae las respuestas ya escritas, para poder devolverlas a un análisis nuevo.
+
+    Existe porque regenerar un `_analysis.md` lo SOBRESCRIBE: las respuestas que el
+    usuario dio se pierden, y un cambio de PRD después de responder los gaps no es un
+    caso raro — es el caso normal ([[D-051]]).
+    """
+    gaps = parse_gaps(text)
+    return {
+        "action": "export-answers",
+        "source": source,
+        "exported": sum(1 for g in gaps if g["answered"]),
+        "answers": [
+            {"id": g["id"], "severity": g["severity"], "flags": g["flags"],
+             "title": g["title"], "answer": g["answer"]}
+            for g in gaps if g["answered"]
+        ],
+    }
+
+
+def import_answers(text: str, payload: dict, force: bool):
+    """Devuelve las respuestas exportadas a un análisis recién regenerado.
+
+    **Empareja por ID Y por título, y no adivina.** El análisis no es reproducible
+    (medido en conformance: mismo PRD byte-idéntico → 11/5, 12/7, 11/7, 16/11, 5/2 y
+    7/4 gaps en pasadas sucesivas), así que un mismo `P-XXX` puede ser otra pregunta
+    en el documento nuevo. Lo que no case exacto **no se escribe**: se reporta para que
+    lo reconcilie quien tiene los dos documentos delante. Un script que adivina aquí
+    daría falso rigor, y el falso rigor en una respuesta de negocio es peor que el hueco.
+    """
+    target = parse_gaps(text)
+    if not target:
+        raise GapError(
+            "el análisis destino no contiene ningún bloque de gap: no se ha podido "
+            "parsear (¿es el `_analysis.md`?)")
+    by_id = {g["id"]: g for g in target}
+    applied, needs_review = [], []
+    for item in payload.get("answers") or []:
+        gid, title, ans = item.get("id"), item.get("title") or "", item.get("answer")
+        dest = by_id.get(gid)
+        if dest is None:
+            needs_review.append({**item, "reason": "id_ausente"})
+            continue
+        if _norm_title(dest["title"]) != _norm_title(title):
+            needs_review.append({**item, "reason": "titulo_distinto",
+                                 "destino_title": dest["title"]})
+            continue
+        if dest["answered"] and not force:
+            needs_review.append({**item, "reason": "ya_respondido",
+                                 "destino_answer": dest["answer"]})
+            continue
+        text, _ = apply_answer(text, gid, ans, force=True)
+        by_id = {g["id"]: g for g in parse_gaps(text)}
+        applied.append({"id": gid, "title": title})
+
+    after = check(parse_gaps(text))
+    return text, {
+        "action": "import-answers",
+        "applied": len(applied),
+        "applied_ids": [a["id"] for a in applied],
+        "needs_review": needs_review,
+        "verdict": after["verdict"],
+        "critical_open": after["critical_open"],
+        "critical_open_ids": after["critical_open_ids"],
+    }
+
+
 def _parse_args(argv):
     as_json = False
     force = False
     do_check = False
+    do_export = False
+    import_path = None
     answer = None
     rest = []
     it = iter(argv)
@@ -224,6 +299,12 @@ def _parse_args(argv):
             force = True
         elif a == "--check":
             do_check = True
+        elif a == "--export-answers":
+            do_export = True
+        elif a == "--import-answers":
+            import_path = next(it, None)
+            if import_path is None:
+                raise GapError("--import-answers requiere <respuestas.json>", code=1)
         elif a == "--answer":
             gap_id = next(it, None)
             value = next(it, None)
@@ -232,19 +313,22 @@ def _parse_args(argv):
             answer = (gap_id, value)
         else:
             rest.append(a)
-    return as_json, force, do_check, answer, rest
+    return as_json, force, do_check, do_export, import_path, answer, rest
 
 
 def main() -> int:
     try:
-        as_json, force, do_check, answer, rest = _parse_args(sys.argv[1:])
+        (as_json, force, do_check, do_export, import_path,
+         answer, rest) = _parse_args(sys.argv[1:])
     except GapError as e:
         print(f"ERROR: {e}", file=sys.stderr)
         return e.code
 
-    if len(rest) != 1 or (do_check == (answer is not None)):
+    modes = [do_check, do_export, import_path is not None, answer is not None]
+    if len(rest) != 1 or sum(1 for m in modes if m) != 1:
         print('ERROR: uso: sdd-analysis-gaps.py <analysis.md> --check [--json] | '
-              '--answer P-XXX "texto" [--force] [--json]', file=sys.stderr)
+              '--answer P-XXX "texto" [--force] [--json] | --export-answers | '
+              '--import-answers <respuestas.json> [--force] [--json]', file=sys.stderr)
         return 1
 
     path = Path(rest[0])
@@ -253,6 +337,40 @@ def main() -> int:
     except OSError as e:
         print(f"ERROR: no se puede leer el análisis: {e}", file=sys.stderr)
         return 1
+
+    if do_export:
+        print(json.dumps(export_answers(text, str(path)), ensure_ascii=False, indent=2))
+        return 0
+
+    if import_path is not None:
+        try:
+            payload = json.loads(Path(import_path).read_text(encoding="utf-8"))
+        except (OSError, ValueError) as e:
+            print(f"ERROR: no se puede leer el export de respuestas: {e}",
+                  file=sys.stderr)
+            return 1
+        try:
+            new_text, result = import_answers(text, payload, force)
+        except GapError as e:
+            print(f"ERROR: {e}", file=sys.stderr)
+            return e.code
+        try:
+            path.write_text(new_text, encoding="utf-8")
+        except OSError as e:
+            print(f"ERROR: no se puede escribir el análisis: {e}", file=sys.stderr)
+            return 1
+        result["path"] = str(path)
+        if as_json:
+            print(json.dumps(result, ensure_ascii=False))
+        else:
+            print(f"OK: {result['applied']} respuesta(s) devueltas "
+                  f"({', '.join(result['applied_ids']) or '—'}).")
+            for nr in result["needs_review"]:
+                print(f"  SIN APLICAR {nr['id']} [{nr['reason']}]: {nr['title']}")
+            if result["needs_review"]:
+                print("  → Reconcílialas a mano: el análisis no es reproducible y un "
+                      "mismo P-XXX puede ser otra pregunta. No se adivina.")
+        return 2 if result["needs_review"] else 0
 
     if do_check:
         result = check(parse_gaps(text))

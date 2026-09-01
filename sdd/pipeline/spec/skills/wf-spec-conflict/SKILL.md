@@ -4,7 +4,7 @@ description: "Detecta conflictos entre Specs SDD de un mismo proyecto: HUs dupli
 when_to_use: "Activa en frases como 'verifica conflictos entre specs', 'hay conflictos entre features', 'comprueba si este spec choca con los existentes', 'detecta inconsistencias entre specs'."
 argument-hint: "<feature_spec.md> --features-dir <path/features/>"
 effort: high
-allowed-tools: [Read, Write, Bash]
+allowed-tools: [Read, Bash]
 context: fork
 agent: sdd-spec-auditor
 user-invocable: true
@@ -105,6 +105,16 @@ Antes de escribir, verifica si el archivo ya existe:
 - `!test -f "<path>"` — si existe, informa al usuario del path y pregunta: `[sobreescribir | cancelar]`. Continua solo si elige sobreescribir.
 
 Escribe el informe en el archivo correspondiente.
+
+> **Con qué lo escribes, y por qué no con `Write` ([[D-051]]).** El agente que ejecuta esta
+> skill tiene `Write` y `Edit` **prohibidos**: es el candado que impide que un auditor
+> reescriba lo que audita. Tu informe **sí** lo escribes tú, con redirección por `Bash`
+> (`cat > "<path>" <<'EOF' … EOF`). **No le pases la escritura al hilo principal:** el
+> informe es tu output, y main no escribe artefactos ([[D-031]]).
+>
+> Y que quede claro el alcance del candado: con `Bash` disponible, técnicamente nada te
+> impide tocar el spec auditado. **No lo haces por norma, no porque no puedas.** Auditas y
+> reportas; corregir el spec es de `wf-spec-delta` o `wf-spec-amend`.
 
 ---
 

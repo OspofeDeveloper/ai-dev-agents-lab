@@ -23,6 +23,7 @@ Checks (cada finding: severidad, tipo, archivo:linea, mensaje):
   FORK-ASKUSER-CONFLICT  [blocking]  wf con context: fork que declara/usa AskUserQuestion (un fork no puede preguntar).
   FORK-INTERVIEW         [warning]   wf con context: fork que entrevista o presenta gate de confirmacion en prosa (sin declarar AskUserQuestion): mismo bug latente.
   AGENT-MEMORY-DECLARED  [blocking]  Agente (o la plantilla de agente) que declara `memory:`: el estado vive en los artefactos, no en la memoria del agente.
+  AGENT-TOOL-CLASH       [blocking]  wf cuyo allowed-tools declara una tool que su `agent:` tiene en disallowedTools: manda el agente, la declaracion no habilita nada.
   AGENT-DISPATCH-UNSYNCED [blocking] wf que delega por la tool `Agent` sin `run_in_background: false`: los subagentes corren en background por defecto y la peticion de sincronia no se hace.
   FORK-ORCHESTRATOR      [blocking]  wf con context: fork cuyo cuerpo delega por la tool `Agent`: un fork no puede presentar gates ni conseguir el primer plano para sus delegados.
   AGENT-PROMPT-REDISPATCH [blocking] prompt de delegacion que pide "Ejecuta el skill /wf-X": el delegado re-despacha con `Skill`, forkea un clon de si mismo y reintroduce la asincronia.
@@ -628,6 +629,85 @@ def check_agent_memory(findings):
                     "vuelve a todo el ecosistema."))
 
 
+def _agent_disallowed_map():
+    """{nombre_de_agente: set(tools prohibidas)} leido de */agents/*.md."""
+    out = {}
+    for agent_md in sorted(SDD_ROOT.rglob("*.md")):
+        if is_excluded(agent_md):
+            continue
+        if "agents" not in agent_md.relative_to(SDD_ROOT).parts:
+            continue
+        try:
+            text = agent_md.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        fm, _, _ = split_frontmatter(text)
+        if fm is None:
+            continue
+        name = frontmatter_value(fm, "name") or agent_md.stem
+        raw = frontmatter_value(fm, "disallowedTools")
+        tools = {t.strip() for t in raw.split(",") if t.strip()} if raw else set()
+        out[name.strip()] = tools
+    return out
+
+
+def check_agent_tool_clash(findings):
+    """AGENT-TOOL-CLASH — una `wf-*` declara en `allowed-tools` una tool que su
+       `agent:` tiene en `disallowedTools` (D-051).
+
+       El patron fork (`context: fork` + `agent: X`) hace que la skill la EJECUTE ese
+       agente, asi que quien manda sobre las tools disponibles es el agente, no la
+       skill. Declarar `Write` sobre un agente que lo tiene prohibido no habilita nada:
+       deja un contrato que se contradice a si mismo, y el modelo resuelve la
+       contradiccion como quiera.
+
+       Medido en conformance (pasada de CU-7, 2026-09-01): con el MISMO frontmatter
+       —`allowed-tools: [Read, Write, Bash]` + `agent: sdd-spec-auditor`
+       (`disallowedTools: Write, Edit`)— los auditores de `wf-spec-conflict` y
+       `wf-spec-readiness` escribieron su informe con `cat >` por Bash, y el de
+       `wf-prd-sync-impact` concluyo que no podia y le paso la escritura al hilo
+       principal, que volco el artefacto con un heredoc. Contrato contradictorio,
+       conducta inconsistente.
+
+       Corolario que esta regla NO puede comprobar y por eso se dice aqui: quitarle
+       `Write` a un agente que conserva `Bash` NO lo hace read-only. El invariante
+       "el auditor no modifica el artefacto que audita" es una NORMA, no una jaula.
+    """
+    disallowed = _agent_disallowed_map()
+    for skill_md in sorted(SDD_ROOT.rglob("SKILL.md")):
+        if is_excluded(skill_md):
+            continue
+        try:
+            text = skill_md.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        fm, _, _ = split_frontmatter(text)
+        if fm is None:
+            continue
+        name = frontmatter_value(fm, "name") or skill_md.parent.name
+        if not name.startswith("wf-"):
+            continue
+        agent = frontmatter_value(fm, "agent")
+        at_m = ALLOWED_TOOLS_RE.search(fm)
+        if not agent or not at_m:
+            continue
+        agent = agent.strip()
+        if agent not in disallowed:
+            continue
+        declared = [t.strip() for t in at_m.group(1).split(",") if t.strip()]
+        clash = sorted(t for t in declared if t in disallowed[agent])
+        if not clash:
+            continue
+        line = next((i for i, ln in enumerate(fm.splitlines(), start=2)
+                     if ln.startswith("allowed-tools:")), 1)
+        findings.append(Finding(
+            "blocking", "AGENT-TOOL-CLASH", relpath(skill_md), line,
+            f"`allowed-tools` declara {clash} pero el agente que ejecuta esta skill "
+            f"(`{agent}`) las tiene en `disallowedTools`. Quien manda es el agente: "
+            f"la declaracion no habilita nada y deja un contrato contradictorio. "
+            f"Quitalas de allowed-tools y di en el cuerpo por que via se escribe."))
+
+
 def check_agent_dispatch(findings):
     """AGENT-DISPATCH-UNSYNCED — una `wf-*` que delega por la tool `Agent` sin
        declarar `run_in_background: false` (D-043, matizada por D-045).
@@ -853,6 +933,7 @@ def run_all():
     check_frontmatter_fields(findings)
     check_name_mismatch(findings)
     check_agent_memory(findings)
+    check_agent_tool_clash(findings)
     check_agent_dispatch(findings)
     check_fork_orchestrator(findings)
     check_agent_prompt_redispatch(findings)

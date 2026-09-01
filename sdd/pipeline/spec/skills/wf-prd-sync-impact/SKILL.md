@@ -4,7 +4,7 @@ description: "Analiza el impacto de un PRD actualizado sobre los artefactos SDD 
 when_to_use: "Activa en frases como 'que impacto tiene este cambio de PRD', 'que specs han quedado stale', 'analiza sync PRD → specs', 'que artefactos hay que revisar tras cambiar el PRD'."
 argument-hint: "<prd.md>"
 effort: high
-allowed-tools: [Read, Write, Bash]
+allowed-tools: [Read, Bash]
 context: fork
 agent: sdd-spec-auditor
 user-invocable: true
@@ -79,6 +79,19 @@ Reglas:
 ## Paso 5: Generar matriz de impacto
 
 Produce un informe `<basename>_sync_report.md` con tablas separadas para:
+
+> **Con qué lo escribes ([[D-051]]).** `sdd-spec-auditor` tiene `Write` y `Edit`
+> **prohibidos** —el candado que impide que un auditor reescriba lo que audita—, así que
+> este informe lo escribes **tú, con redirección por `Bash`** (`cat > "<path>" <<'EOF' …
+> EOF`). **No le pases la escritura al hilo principal:** main no escribe artefactos
+> ([[D-031]]), y si lo hace acaba volcando un heredoc con tu texto y firmándolo como suyo.
+>
+> **Este informe es efímero y lo dice en su cabecera.** Registra el estado de un momento:
+> en cuanto el PRD vuelva a cambiar, o el derivado que señala se regenere, deja de ser
+> cierto. Abre el documento con una línea `> Vigente para: PRD v<X.Y> — caduca al siguiente
+> cambio de PRD`, y en el mensaje de cierre ofrece **no volcarlo** cuando el único derivado
+> señalado se vaya a regenerar acto seguido: la conclusión ya está en la conversación y en
+> el `product-changelog.md`.
 
 - analysis/discovery/features index
 - specs por feature

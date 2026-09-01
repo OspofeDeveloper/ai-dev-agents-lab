@@ -187,26 +187,54 @@ No tocar `name`, `allowed-tools`, `effort`, `context`, `agent`, `user-invocable`
 
 El modelo se asigna por **tipo de trabajo**, no por si el agente genera un artefacto o no.
 
-- `claude-opus-4-8`: agentes que toman **decisiones arquitectónicas** (diseño visual, arquitectura técnica, redacción de PRDs, autoría del ecosistema) o realizan **codificación agéntica compleja** (implementadores KMM). Usar también cuando el output esperado supera los 64k tokens.
-- `claude-sonnet-4-6`: agentes que ejecutan **trabajo estructurado con template definido** (escritura de specs, descomposición de tasks), **exploración**, **auditoría** o **planificación de approach**. Sonnet 4.6 incluye extended thinking — para razonamiento en cadena con output <64k puede superar a Opus en precisión con menor coste.
+- `claude-opus-5`: agentes que toman **decisiones arquitectónicas** (diseño visual, arquitectura técnica, redacción de PRDs, autoría del ecosistema) o realizan **codificación agéntica compleja** (implementadores KMM). Usar también cuando el output esperado supera los 64k tokens.
+- `claude-sonnet-5`: agentes que ejecutan **trabajo estructurado con template definido** (escritura de specs, descomposición de tasks), **exploración**, **auditoría** o **planificación de approach**.
 - `claude-haiku-4-5`: **no usar en este ecosistema**. Su ventana de 200k tokens es insuficiente para agentes que cargan múltiples KBs + artefactos grandes simultáneamente.
 
 Tabla de referencia:
 
 | Tipo de trabajo | Modelo |
 |---|---|
-| Decisión arquitectónica (diseño, plan técnico, PRD, autoría de ecosistema) | `claude-opus-4-8` |
-| Codificación agéntica compleja (implementadores KMM) | `claude-opus-4-8` |
-| Escritura estructurada con template (specs, tasks) | `claude-sonnet-4-6` |
-| Exploración, auditoría, planificación de approach | `claude-sonnet-4-6` |
+| Decisión arquitectónica (diseño, plan técnico, PRD, autoría de ecosistema) | `claude-opus-5` |
+| Codificación agéntica compleja (implementadores KMM) | `claude-opus-5` |
+| Escritura estructurada con template (specs, tasks) | `claude-sonnet-5` |
+| Exploración, auditoría, planificación de approach | `claude-sonnet-5` |
+
+> **Un bump de modelo es del ecosistema entero, o no es.** Al subir de familia hay que barrer
+> **`pipeline/*/agents/`, `meta/agents/` y `tech/*/agents/`** — no solo el pipeline.
+> Comprobación en una línea: `grep -rn "^model:" --include="*.md" */agents/ */*/agents/`.
+> Y ojo al efecto sobre la campaña: cambiar de familia **caduca las validaciones
+> conductuales** de lo que ese agente ejecuta (`kb-sdd-conformance` Regla 9 punto 9), así que
+> un overlay con conformance propia (p. ej. `tech/kmm`) se sube **como decisión aparte**, no
+> de arrastre.
 
 **Criterio para `effort`:**
 - `effort: high`: agentes escritores/implementadores que generan artefactos complejos (specs, planes técnicos, diseño, tasks, código). Activa razonamiento extendido independientemente del nivel de la sesión principal.
 - Omitir (hereda de sesión): auditores, exploradores y planificadores de approach.
 
 **Criterio para `disallowedTools`:**
-- `disallowedTools: Write, Edit`: agentes auditores o planificadores cuyo system prompt declara explícitamente que **no modifican archivos**. Refuerza el contrato estructuralmente, no solo mediante instrucciones.
-- No aplicar si el agente produce artefactos diagnósticos intermedios.
+- `disallowedTools: Write, Edit`: agentes auditores o planificadores cuyo system prompt declara explícitamente que **no modifican archivos**.
+
+> **No es enforcement, y escribirlo como si lo fuera fue el error ([[D-051]]).** Un agente
+> con `Write` y `Edit` prohibidos **pero con `Bash`** escribe perfectamente con `cat > fichero`.
+> `disallowedTools` es una **declaración de intención** —igual que `allowed-tools`, [[D-038]]—,
+> no una jaula. Medido: los auditores de `wf-spec-conflict` y `wf-spec-readiness` escribieron
+> sus informes con `cat >`; el de `wf-prd-sync-impact`, con el mismo frontmatter, concluyó que
+> no podía y le pasó la escritura al hilo principal. Contrato contradictorio, conducta
+> inconsistente.
+>
+> Consecuencias al escribir un agente así:
+> - **El invariante va en el cuerpo, como norma**, y nombrando el hueco: *"conservas `Bash`;
+>   lo que te impide tocar lo que auditas es esta norma, no el candado"*. Si solo está en el
+>   frontmatter, no está.
+> - **Formula el invariante sobre el objeto, no sobre la acción.** No es "no escribes": es
+>   **"no modificas el artefacto que auditas"**. Su propio informe **sí** lo escribe él —
+>   pasárselo al hilo principal viola [[D-031]] y firma como de main un texto ajeno.
+> - **La skill que lo ejecute no puede declarar lo que él prohíbe.** Regla de linter
+>   `AGENT-TOOL-CLASH` [blocking]; manda el agente, y la declaración no habilita nada.
+> - **Verificarlo exige mirar el efecto, no el frontmatter**: digest del artefacto auditado
+>   antes y después. Un escenario de conformance que dé por probada la no-reescritura citando
+>   `allowed-tools` no está midiendo nada.
 
 **Criterio para `skills`:**
 - Solo cargar KBs que el agente usa en su razonamiento real

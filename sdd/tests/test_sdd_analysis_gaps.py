@@ -172,6 +172,108 @@ class AnalysisGapsTest(unittest.TestCase):
         r = run_script("sdd-analysis-gaps.py", path, "--answer", "P-001", "   ")
         self.assertEqual(r.returncode, 1)
 
+    # === --export-answers / --import-answers (D-051) =====================
+    # Regenerar un `_analysis.md` lo SOBRESCRIBE y se lleva por delante las
+    # respuestas ya dadas. El emparejamiento es por ID **y** título porque el
+    # análisis no es reproducible: el mismo P-XXX puede ser otra pregunta.
+    @staticmethod
+    def _gap_titled(gid, title, answer="_(pendiente)_", severity="CRÍTICO"):
+        return (f"### [{gid}][{severity}] {title}\n\n"
+                "- **Contexto**: dónde se detectó.\n"
+                f"- **Respuesta**: {answer}\n\n---\n\n")
+
+    def _export(self, path):
+        r = run_script("sdd-analysis-gaps.py", path, "--export-answers")
+        return r, json.loads(r.stdout)
+
+    def test_export_answers_only_takes_the_answered_ones(self):
+        path = self.make(gap("P-001", "CRÍTICO", answer="Sí, se descuenta."),
+                         gap("P-002", "CRÍTICO"),
+                         gap("P-003", "INFORMATIVO", answer="Reduce el pendiente."))
+        r, data = self._export(path)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(data["exported"], 2)
+        self.assertEqual([a["id"] for a in data["answers"]], ["P-001", "P-003"])
+        self.assertEqual(data["answers"][0]["answer"], "Sí, se descuenta.")
+
+    def test_import_returns_the_answer_when_id_and_title_match(self):
+        src = self.make(self._gap_titled("P-001", "Deuda y saldo", "Sí, se descuenta."),
+                        name="viejo.md")
+        dst = self.make(self._gap_titled("P-001", "Deuda y saldo"), name="nuevo.md")
+        payload = self.root / "ans.json"
+        write(payload, json.dumps(self._export(src)[1]))
+        r = run_script("sdd-analysis-gaps.py", dst, "--import-answers", payload)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("Sí, se descuenta.", dst.read_text(encoding="utf-8"))
+
+    def test_import_refuses_when_the_same_id_is_another_question(self):
+        # EL caso que justifica la regla: el ID coincide, la pregunta no.
+        # Escribir aquí metería una respuesta de negocio en el gap equivocado.
+        src = self.make(self._gap_titled("P-002", "Presupuesto por categoría",
+                                         "Es la suma."), name="viejo.md")
+        dst = self.make(self._gap_titled("P-002", "Traspaso de reserva"), name="nuevo.md")
+        payload = self.root / "ans.json"
+        write(payload, json.dumps(self._export(src)[1]))
+        r = run_script("sdd-analysis-gaps.py", dst, "--import-answers", payload, "--json")
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        data = json.loads(r.stdout)
+        self.assertEqual(data["applied"], 0)
+        self.assertEqual(data["needs_review"][0]["reason"], "titulo_distinto")
+        self.assertIn("_(pendiente)_", dst.read_text(encoding="utf-8"))
+
+    def test_import_reports_a_gap_that_no_longer_exists(self):
+        src = self.make(self._gap_titled("P-009", "Gap que desapareció", "Respondido."),
+                        name="viejo.md")
+        dst = self.make(self._gap_titled("P-001", "Otro gap"), name="nuevo.md")
+        payload = self.root / "ans.json"
+        write(payload, json.dumps(self._export(src)[1]))
+        r = run_script("sdd-analysis-gaps.py", dst, "--import-answers", payload, "--json")
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        self.assertEqual(json.loads(r.stdout)["needs_review"][0]["reason"], "id_ausente")
+
+    def test_import_does_not_silently_overwrite_an_existing_answer(self):
+        src = self.make(self._gap_titled("P-001", "Deuda y saldo", "Respuesta vieja."),
+                        name="viejo.md")
+        dst = self.make(self._gap_titled("P-001", "Deuda y saldo", "Respuesta nueva."),
+                        name="nuevo.md")
+        payload = self.root / "ans.json"
+        write(payload, json.dumps(self._export(src)[1]))
+        r = run_script("sdd-analysis-gaps.py", dst, "--import-answers", payload, "--json")
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        self.assertEqual(json.loads(r.stdout)["needs_review"][0]["reason"], "ya_respondido")
+        self.assertIn("Respuesta nueva.", dst.read_text(encoding="utf-8"))
+
+    def test_import_round_trip_is_idempotent(self):
+        src = self.make(self._gap_titled("P-001", "Deuda y saldo", "Sí, se descuenta."),
+                        name="viejo.md")
+        dst = self.make(self._gap_titled("P-001", "Deuda y saldo"), name="nuevo.md")
+        payload = self.root / "ans.json"
+        write(payload, json.dumps(self._export(src)[1]))
+        run_script("sdd-analysis-gaps.py", dst, "--import-answers", payload)
+        first = dst.read_text(encoding="utf-8")
+        # Segunda pasada: la respuesta ya está, así que sale por needs_review
+        # (ya_respondido) y el documento NO cambia.
+        r = run_script("sdd-analysis-gaps.py", dst, "--import-answers", payload)
+        self.assertEqual(r.returncode, 2)
+        self.assertEqual(dst.read_text(encoding="utf-8"), first)
+
+    def test_import_into_a_document_without_gaps_is_an_error(self):
+        # Guarda de D-037: no se declara "0 aplicadas, todo bien" sobre algo
+        # que no se ha sabido parsear.
+        src = self.make(self._gap_titled("P-001", "Deuda", "Sí."), name="viejo.md")
+        dst = self.root / "vacio.md"
+        write(dst, "# Documento sin bloques de gap\n")
+        payload = self.root / "ans.json"
+        write(payload, json.dumps(self._export(src)[1]))
+        r = run_script("sdd-analysis-gaps.py", dst, "--import-answers", payload)
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("ERROR", r.stderr)
+
+    def test_export_and_import_are_exclusive_modes(self):
+        path = self.make(gap("P-001", "CRÍTICO"))
+        r = run_script("sdd-analysis-gaps.py", path, "--export-answers", "--check")
+        self.assertEqual(r.returncode, 1)
+
     # === CLI =============================================================
     def test_check_and_answer_are_exclusive(self):
         path = self.make(gap("P-001", "CRÍTICO"))

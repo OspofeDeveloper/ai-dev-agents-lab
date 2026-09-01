@@ -281,6 +281,47 @@ class InstallAllTest(InstallBase):
         self.assertTrue((self.proj / ".sdd" / "scripts" / "sdd-analysis-gaps.py").exists(),
                         "sdd-analysis-gaps.py no se instala en .sdd/scripts/")
 
+    def test_auditor_skills_do_not_declare_a_tool_their_agent_forbids(self):
+        # D-051: `sdd-spec-auditor` tiene `disallowedTools: Write, Edit`. Una skill
+        # que lo declara como `agent:` y a la vez pone `Write` en allowed-tools deja
+        # un contrato que se contradice, y el modelo lo resuelve como quiera: medido,
+        # dos auditores escribieron su informe con `cat >` y un tercero le pasó la
+        # escritura al hilo principal.
+        self.install("all")
+        for name in ("wf-spec-conflict", "wf-spec-readiness", "wf-prd-sync-impact"):
+            skill = (self.skill_dir(name) / "SKILL.md").read_text(encoding="utf-8")
+            fm = skill.split("---")[1]
+            self.assertIn("agent: sdd-spec-auditor", fm, f"{name} cambió de agente")
+            self.assertNotIn("Write", fm,
+                             f"{name} declara `Write` y su agente lo tiene prohibido (D-051)")
+            self.assertIn("cat >", skill,
+                          f"{name} no dice por qué vía se escribe el informe (D-051)")
+
+    def test_auditor_agent_states_read_only_is_a_norm_not_a_cage(self):
+        # D-051: quitar Write/Edit NO hace read-only a un agente que conserva Bash.
+        # El invariante "no modifico lo que audito" tiene que estar escrito, porque
+        # ninguna lista de tools lo sostiene.
+        self.install("all")
+        agent = (self.proj / ".claude" / "agents" / "sdd-spec-auditor.md").read_text(
+            encoding="utf-8")
+        self.assertIn("Bash", agent, "el agente no reconoce que conserva Bash (D-051)")
+        self.assertIn("norma", agent.lower(),
+                      "falta la norma que sustituye al candado inexistente (D-051)")
+
+    def test_analyze_rescues_answers_before_overwriting(self):
+        # D-051: regenerar el analysis lo sobrescribe. Las respuestas son decisiones
+        # de negocio de una persona, no material regenerable: el export tiene que
+        # correr ANTES de escribir, o no hay nada que devolver.
+        self.install("all")
+        skill = (self.skill_dir("wf-spec-analyze") / "SKILL.md").read_text(encoding="utf-8")
+        exp = skill.find("--export-answers")
+        imp = skill.find("--import-answers")
+        self.assertNotEqual(exp, -1, "wf-spec-analyze no rescata las respuestas (D-051)")
+        self.assertNotEqual(imp, -1, "wf-spec-analyze no las devuelve (D-051)")
+        self.assertLess(exp, imp, "el export tiene que ir antes del import (D-051)")
+        self.assertIn("no es reproducible", skill,
+                      "falta por qué el emparejamiento no puede ser solo por ID (D-051)")
+
     def test_features_first_checks_gaps_before_deciding(self):
         # D-042 + lección de D-037: el conteo de [CRÍTICO] abiertos gobierna dos ramas
         # duras (detenerse / --allow-open-critical-gaps). Si el script corre DESPUÉS de

@@ -4,7 +4,7 @@ description: "Genera un informe de readiness desde los artefactos post-spec (spe
 when_to_use: "Activa en frases como 'que features estan listas', 'readiness de las features', 'cuales puedo planificar', 'orden de implementacion', 'verifica readiness', 'que falta para planificar'."
 argument-hint: "<path/features/>"
 effort: medium
-allowed-tools: [Read, Write, Bash]
+allowed-tools: [Read, Bash]
 context: fork
 agent: sdd-spec-auditor
 user-invocable: true
@@ -168,6 +168,15 @@ Antes de escribir, verifica si el archivo ya existe:
 - `!test -f "<path>"` — si existe, informa al usuario del path y pregunta: `[sobreescribir | cancelar]`. Continua solo si elige sobreescribir.
 
 Escribe el informe en el archivo correspondiente.
+
+> **Con qué lo escribes, y por qué no con `Write` ([[D-051]]).** El agente que ejecuta esta
+> skill tiene `Write` y `Edit` **prohibidos**: es el candado que impide que un auditor
+> reescriba lo que audita. Tu informe **sí** lo escribes tú, con redirección por `Bash`
+> (`cat > "<path>" <<'EOF' … EOF`). **No le pases la escritura al hilo principal:** el
+> informe es tu output, y main no escribe artefactos ([[D-031]]).
+>
+> Y que quede claro el alcance del candado: con `Bash` disponible, técnicamente nada te
+> impide tocar los specs que lees. **No lo haces por norma, no porque no puedas.**
 
 ---
 

@@ -49,7 +49,29 @@ Si el veredicto es `OPEN_ASSUMPTIONS`/`ASSUMPTION_MISMATCH`, avísalo en la sali
 
 Lee el archivo PRD en su totalidad.
 
-**Si se proporcionó `--analysis`**: lee también el `_analysis.md`. Extrae los gaps respondidos (donde el campo "Respuesta" no es `_(pendiente)_`). Las respuestas del cliente se usan como contexto adicional para:
+**Si se proporcionó `--analysis`**, antes de usarlo **comprueba que es de la versión vigente
+del PRD** ([[D-051]]):
+
+```bash
+!grep -nE '^version:' "<prd>"; grep -nE '^> \*\*Archivo origen\*\*' "<analysis>"
+```
+
+La cabecera del análisis declara `<path> (v<X.Y>)`. Si esa versión **no coincide** con el
+`version:` del frontmatter del PRD → **DETENTE** y dilo: el mapa de features estaría
+saliendo de un análisis que no conoce el PRD actual, y el `_discovery.md` acabaría
+declarando `Status sync: in_sync` sobre una entrada obsoleta. Remite a regenerar el
+análisis con `wf-spec-analyze`.
+
+> **Se puede parar sin coste porque regenerar ya no destruye nada ([[D-051]]).** El Paso 7.1
+> de `wf-spec-analyze` rescata las respuestas antes de sobrescribir y las devuelve después.
+> Antes de eso, avisar de un análisis obsoleto obligaba a elegir entre seguir con datos
+> viejos o perder las decisiones del usuario; ahora no hay dilema.
+>
+> Si el análisis **no declara versión** (generado antes de esta convención), no bloquees:
+> avisa de que no se ha podido verificar y continúa. Un formato antiguo no es una
+> desincronización probada.
+
+Con la versión verificada: lee el `_analysis.md`. Extrae los gaps respondidos (donde el campo "Respuesta" no es `_(pendiente)_`). Las respuestas del cliente se usan como contexto adicional para:
 - **Paso 5**: identificar features con mayor precisión (las respuestas pueden clarificar scopes ambiguos)
 - **Paso 7**: asignar shared models (las respuestas pueden aclarar ownership)
 

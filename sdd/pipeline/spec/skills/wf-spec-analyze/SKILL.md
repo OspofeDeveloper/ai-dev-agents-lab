@@ -129,6 +129,12 @@ Consulta `kb-gap-conventions` para las definiciones completas. Resumen:
 
 Consulta [output_template.md](output_template.md) para la estructura exacta del informe.
 
+> **La cabecera lleva la versión del PRD, no solo su path ([[D-051]]).** `Archivo origen`
+> se escribe como `<path> (v<X.Y>)`, tomando `<X.Y>` del `version:` del frontmatter del PRD
+> (`!grep -nE '^version:' "<prd>"`). Es lo que permite a `wf-spec-discover` comprobar que
+> no está construyendo el mapa de features sobre un análisis de una versión que ya no
+> existe. Sin ese dato, un análisis viejo y uno vigente son indistinguibles.
+
 ---
 
 ## Paso 7: Escribir el resultado
@@ -144,7 +150,41 @@ Antes de escribir, verifica si el archivo ya existe:
 Si ya existe → pregunta al usuario:
 > "Ya existe `<path>`. ¿Deseas regenerarlo?"
 - Si responde **no** → informa el path del artefacto existente y detén.
-- Si responde **sí** → continúa.
+- Si responde **sí** → **rescata sus respuestas antes de pisarlo** (ver abajo) y continúa.
+
+### 7.1 Rescatar las respuestas antes de sobrescribir ([[D-051]])
+
+Regenerar **sobrescribe**. Si el análisis que vas a pisar tiene respuestas escritas, se
+pierden — y ese no es un caso raro: es el caso normal. Un PRD cambia **después** de que
+alguien haya respondido sus gaps (un `wf-prd-change` de por medio), y esas respuestas son
+decisiones de negocio de una persona, no material regenerable.
+
+**Antes** de escribir nada:
+
+```bash
+!python3 .sdd/scripts/sdd-analysis-gaps.py "<path>" --export-answers > "<path>.answers.json"
+```
+
+Escribe el informe nuevo en `<path>`, y **después**:
+
+```bash
+!python3 .sdd/scripts/sdd-analysis-gaps.py "<path>" --import-answers "<path>.answers.json"
+```
+
+- **exit 0** → todas volvieron a su sitio. Borra el `.answers.json` y sigue.
+- **exit 2** → alguna **no** se pudo devolver. **Conserva el fichero**, y en el Paso 8 di
+  cuáles y por qué, con su texto, para que el usuario las recoloque.
+
+> **Por qué el script no las coloca solas.** Empareja por ID **y por título**, y lo que no
+> case exacto no lo escribe. El análisis **no es reproducible** —medido: sobre un PRD
+> byte-idéntico, pasadas sucesivas dieron 11/5, 12/7, 11/7, 16/11, 5/2 y 7/4 gaps—, así que
+> el mismo `P-XXX` puede ser **otra pregunta** en el documento nuevo. Colocar ahí una
+> respuesta de negocio por coincidencia de ID sería un error invisible: el documento queda
+> con pinta de respondido y dice algo que nadie dijo. Ante la duda, el hueco es mejor.
+>
+> Los tres motivos que devuelve son `titulo_distinto`, `id_ausente` y `ya_respondido`. **No
+> los resuelvas tú**: ni reescribas la respuesta con tus palabras, ni la des por equivalente
+> porque "va de lo mismo". Se las presentas al usuario.
 
 Escribe el informe generado en ese path.
 

@@ -6,6 +6,42 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-051 — Un read-only no se declara quitando `Write`, y regenerar un análisis no puede llevarse por delante las respuestas
+
+- **Fecha:** 2026-09-01 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-030]]/[[D-031]] (main no lee ni escribe artefactos), [[D-038]] (`allowed-tools` no es enforcement — esto es su corolario), [[D-042]] (quién escribe las respuestas de los gaps), [[D-048]] (frontera de `Bash`), ciclo de CU-7 del 2026-08-31/09-01.
+
+**Contexto.** Cuatro cambios de producto encadenados sobre un PRD real (`CR-001`…`CR-004`, v1.0 → v1.5) con sus reviews, su ronda de asunciones —una **rechazada** por el usuario y honrada— y su análisis de impacto. El ciclo funcionó de punta a punta: 14 de 14 delegaciones síncronas, cero clones, 21 `AskUserQuestion`. **Ninguno de los seis defectos encontrados fue de conducta del agente: los seis eran huecos del contrato**, y cinco de los seis en las costuras entre workflows.
+
+**Los dos que dan nombre a esta decisión.**
+
+**1. El read-only del auditor era ficción.** `sdd-spec-auditor` declara `disallowedTools: Write, Edit`, y tres skills que lo tienen como `agent:` declaraban a la vez `allowed-tools: [Read, Write, Bash]`. Manda el agente, así que ese `Write` no habilitaba nada — pero el agente **conserva `Bash`**, y un `cat > fichero` escribe igual de bien. Medido: con el **mismo** frontmatter, los auditores de `wf-spec-conflict` y `wf-spec-readiness` escribieron su informe con `cat >`, y el de `wf-prd-sync-impact` concluyó que no podía y le pasó la escritura al hilo principal, que volcó el artefacto con un heredoc — violando [[D-031]] y firmando como suyo un texto que no redactó. Contrato contradictorio, conducta inconsistente.
+
+**2. Regenerar el `_analysis.md` destruye las respuestas.** `wf-spec-analyze` Paso 7 preguntaba *"¿deseas regenerarlo?"* y, con un sí, sobrescribía. Dentro había cuatro decisiones de negocio de una persona. Y no es un caso raro: un PRD cambia **después** de que alguien responda sus gaps — es el caso normal, con un `wf-prd-change` de por medio. En el ciclo medido, main improvisó un rescate (copia al scratchpad, extracción con python, re-aplicación con `--answer`) y salió impecable. **Ese es el problema:** dependió por completo de que se le ocurriera.
+
+**Decisión.**
+
+1. **`allowed-tools` no declara lo que el `agent:` prohíbe.** Las cuatro skills afectadas pasan a `[Read, Bash]` (`[Read, Bash, Agent]` en `wf-sdd-audit`) y su cuerpo dice **con qué vía se escribe el informe**: redirección por `Bash`, nunca delegando la escritura a main. Regla de linter nueva **`AGENT-TOOL-CLASH` [blocking]**; delta demostrado **4 → 0** (cazó una que el barrido a mano no vio).
+2. **El invariante se escribe donde vive: en el agente, como norma.** *"Tu read-only es una norma, no una jaula: tienes `Write` y `Edit` prohibidos, pero conservas `Bash`."* Nunca modifica el artefacto que audita; su **propio informe** sí lo escribe él. Ninguna lista de tools puede sostener esto — es el corolario de [[D-038]] en la dirección contraria: quitar una tool no quita la capacidad.
+3. **`sdd-analysis-gaps.py` gana `--export-answers` / `--import-answers`**, y `wf-spec-analyze` los ejecuta alrededor de la sobrescritura. **Empareja por ID *y* por título, y lo que no case exacto no se escribe** — el análisis no es reproducible (11/5 → 12/7 → 11/7 → 16/11 → 5/2 → 7/4 sobre el mismo PRD), así que un `P-XXX` puede ser otra pregunta en el documento nuevo. Motivos: `titulo_distinto`, `id_ausente`, `ya_respondido`; exit 2 si queda algo por reconciliar.
+4. **El changelog registra toda versión del PRD, la bumpee quien la bumpee.** Un review que corrige prosa al cerrar asunciones también mueve `version`: el ciclo medido fue de 1.4 a 1.5 y lo dejó **solo** en `changes/CR-004/decision.md`. El índice se quedó en 1.4 y mentía sobre el dato por el que se consulta.
+5. **El análisis declara la versión del PRD en su cabecera** (`Archivo origen: <path> (v<X.Y>)`) y **`wf-spec-discover` la verifica** antes de construir el mapa de features. Se puede parar sin coste **porque el punto 3 ya existe**: antes, avisar de un análisis obsoleto obligaba a elegir entre datos viejos o perder las decisiones del usuario.
+6. **Recortar no convierte prosa en metadato.** La frontera de [[D-048]] se afila: un `grep` de campos redactados pasado por `cut -c1-400` sigue siendo prosa. El criterio es **qué** extraes, no cuánto.
+
+**Alternativas descartadas.**
+
+- **Darle `Write` al auditor.** Resuelve el síntoma y borra el invariante: el candado sobre `Write`/`Edit` sigue teniendo valor como señal de intención, aunque `Bash` lo rodee.
+- **Que main escriba los informes de los auditores.** Es lo que pasó, y es exactamente lo que [[D-031]] prohíbe.
+- **Importar las respuestas emparejando solo por ID.** Es lo cómodo y es el error invisible: el documento queda con pinta de respondido y dice algo que nadie dijo. Ante la duda, el hueco es mejor que la respuesta inventada — mismo criterio que el inventario de 11.2 (*"un script que adivina da falso rigor"*).
+- **Matching difuso de títulos.** Adivinar con más pasos sigue siendo adivinar.
+
+**Aprendizaje.** Dos, y el segundo es de método.
+
+**Quitar una tool no quita una capacidad.** [[D-038]] enseñó que `allowed-tools` no es una jaula; esto es su otra cara: `disallowedTools` tampoco lo es mientras quede `Bash`. Todo invariante de "no toques X" es **normativo** y hay que escribirlo como norma, en el sitio que el agente lee. La lista de tools es una declaración de intención, no un mecanismo.
+
+**Un rescate improvisado que sale bien es un defecto, no un éxito.** El apaño de las respuestas funcionó perfectamente y por eso casi no lo vemos. Cuando el ecosistema depende de que al agente se le ocurra algo, la próxima vez puede no ocurrírsele — y el fallo será silencioso.
+
+---
+
 ## D-050 — El primer plano no se pide al modelo: se habilita en el proyecto. Fork mode off, y el frontmatter solo para fijar background
 
 - **Fecha:** 2026-08-27 · **Estado:** Adoptada (pendiente de medir en CU-3.a pasada 6). · **Supersede:** [[D-048]] y [[D-049]] (el hook se retira entero; sus aprendizajes de método quedan). · **Relacionada:** [[D-043]] (por fin efectiva), [[D-045]] (mismo muro visto desde dentro de un fork), [[D-047]] (intacta: sigue definiendo qué es esperar), CU-3.a pasadas 4–6.

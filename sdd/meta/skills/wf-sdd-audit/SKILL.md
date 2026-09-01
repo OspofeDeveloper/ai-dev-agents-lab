@@ -4,7 +4,7 @@ description: "Audita el ecosistema SDD detectando referencias rotas, skills huer
 when_to_use: "Activa con frases como 'audita el ecosistema', 'revisa que las skills sean SSoT', 'comprueba si hay contradicciones', 'verifica single responsibility', 'busca inconsistencias en las skills', 'chequea el estado del ecosistema'. No activa para crear o modificar skills (usa wf-skill-create, wf-agent-create) ni para auditar artefactos del pipeline SDD como specs o planes (usa wf-spec-validate, wf-plan-validate)."
 argument-hint: "<structural|content|full> [--phase <prd|spec|design|plan|tasks|tech/<stack>|global>]"
 effort: high
-allowed-tools: [Read, Write, Bash, Agent]
+allowed-tools: [Read, Bash, Agent]
 context: fork
 agent: sdd-auditor
 user-invocable: true
@@ -132,7 +132,10 @@ Determina el path de salida:
 - `sdd/docs/audit_<modo>_<fase>.md`
 - Ejemplo: `sdd/docs/audit_full_global.md`, `sdd/docs/audit_content_design.md`
 
-Escribe el reporte del agente en ese archivo.
+Escribe el reporte del agente en ese archivo, **con redirección por `Bash`**
+(`cat > "<path>" <<'EOF' … EOF`): `sdd-auditor` tiene `Write` y `Edit` prohibidos para que
+una auditoría no acabe editando lo auditado ([[D-051]]). El reporte es tu output y lo
+escribes tú — no se lo pases al hilo principal.
 
 ---
 

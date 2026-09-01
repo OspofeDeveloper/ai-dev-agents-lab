@@ -2,7 +2,7 @@
 
 > **Generado por**: sdd-spec-explorer
 > **Fecha**: [YYYY-MM-DD]
-> **Archivo origen**: [path/al/archivo.md]
+> **Archivo origen**: [path/al/archivo.md] (v[X.Y])
 
 > **Nota**: este análisis prepara la información que los Specs van a necesitar. Las respuestas a gaps se anotan **en este archivo**. Si durante la validación aparece un cambio real de producto, debe formalizarse en el PRD mediante `wf-prd-change` antes de seguir resincronizando derivados.
 

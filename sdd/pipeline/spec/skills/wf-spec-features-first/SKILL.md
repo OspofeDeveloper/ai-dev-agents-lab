@@ -24,6 +24,18 @@ Este workflow corre en el **hilo principal** (igual que `wf-prd-create`, `wf-prd
 > - **de metadatos**: IDs, veredictos, recuentos, paths. **Nunca prosa del artefacto para que la interpretes tú** — eso es analizar contenido, y es el trabajo de tu delegado.
 >
 > Ejemplos legítimos: `grep -nE "^### F-[0-9]{3}:" <discovery>` (los IDs del Paso 4), `sdd-analysis-gaps.py --check --json` (el recuento), el stdout de `sdd-features-index.py` (cuántas features indexó). Ejemplo que **no** lo es: `grep -A 12 "CRÍTICO" <analysis>` o `cat <_features.md>` — traen el contenido, y encima cuando el informe del delegado ya te lo había dado.
+>
+> **Recortar no convierte prosa en metadato.** El criterio es **qué** extraes, no cuánto.
+> Un `grep` de campos redactados —`Pregunta para el cliente`, `Asunción por defecto`,
+> `Contexto`, `Respuesta`— sigue siendo prosa aunque lo pases por `cut -c1-400` o por un
+> `head`: te llevas nueve párrafos de contenido a tu contexto para interpretarlos tú, que es
+> justo el trabajo de tu delegado. Los recortes acotan **volumen**; la frontera es de
+> **naturaleza**. Si lo que sacas hay que *leerlo* para entenderlo, no es metadato.
+>
+> **Y el recuento no se hace dos veces.** Si vas a preguntarle al script, pregúntale
+> **primero**: contar marcadores a mano antes es trabajo tirado y, peor, te deja en contexto
+> un número que compite con el bueno. Medido: un `grep -oE '\[CRÍTICO\]'` sobre un análisis
+> devolvió **10** —contando la leyenda y la tabla de marcadores— donde el script decía **4**.
 
 > **Cómo delegas — un solo mecanismo, y el resultado se recibe, no se deduce ([[D-043]], corregida
 > por [[D-045]] y [[D-047]]).** Los cinco puntos de delegación de este workflow (analyze, discover,

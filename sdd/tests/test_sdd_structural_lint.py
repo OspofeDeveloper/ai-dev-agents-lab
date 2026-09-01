@@ -184,6 +184,67 @@ class StructuralLintTest(unittest.TestCase):
         _, types = types_in(self.root)
         self.assertNotIn("AGENT-DISPATCH-UNSYNCED", types)
 
+    # === AGENT-TOOL-CLASH (D-051) =========================================
+    def _auditor(self):
+        write(self.root / "spec" / "agents" / "mi-auditor.md",
+              self._agent_md("mi-auditor", "disallowedTools: Write, Edit\n"))
+
+    def test_agent_tool_clash_flagged(self):
+        # allowed-tools declara Write; el agente que ejecuta la skill lo prohibe.
+        self._auditor()
+        write(self.root / "spec" / "skills" / "wf-audita" / "SKILL.md",
+              skill_md("wf-audita", "Escribe el informe.",
+                       extra_fm=("allowed-tools: [Read, Write, Bash]\n"
+                                 "context: fork\nagent: mi-auditor\n")))
+        r, types = types_in(self.root)
+        self.assertIn("AGENT-TOOL-CLASH", types, r.stdout)
+        self.assertIn("blocking", r.stdout)
+
+    def test_agent_tool_clash_names_the_offending_tool(self):
+        # El mensaje debe decir QUE tool choca: si no, no es accionable.
+        self._auditor()
+        write(self.root / "spec" / "skills" / "wf-audita" / "SKILL.md",
+              skill_md("wf-audita", "Escribe el informe.",
+                       extra_fm=("allowed-tools: [Read, Edit, Bash]\n"
+                                 "context: fork\nagent: mi-auditor\n")))
+        r = run_script("sdd-structural-lint.py", "--root", self.root, "--json")
+        msgs = [f["message"] for f in json.loads(r.stdout)
+                if f["type"] == "AGENT-TOOL-CLASH"]
+        self.assertTrue(msgs, r.stdout)
+        self.assertIn("Edit", msgs[0])
+        self.assertIn("mi-auditor", msgs[0])
+
+    def test_agent_tool_clash_clean_after_removing_the_tool(self):
+        # El arreglo: allowed-tools coherente con lo que el agente tiene.
+        self._auditor()
+        write(self.root / "spec" / "skills" / "wf-audita" / "SKILL.md",
+              skill_md("wf-audita", "Escribe el informe con `cat >`.",
+                       extra_fm=("allowed-tools: [Read, Bash]\n"
+                                 "context: fork\nagent: mi-auditor\n")))
+        _, types = types_in(self.root)
+        self.assertNotIn("AGENT-TOOL-CLASH", types)
+
+    def test_agent_tool_clash_ignores_skill_without_agent(self):
+        # Sin `agent:`, la skill NO la ejecuta nadie con disallowedTools:
+        # su allowed-tools es la palabra final y no hay choque posible.
+        self._auditor()
+        write(self.root / "spec" / "skills" / "wf-suelta" / "SKILL.md",
+              skill_md("wf-suelta", "Escribe el informe.",
+                       extra_fm="allowed-tools: [Read, Write, Bash]\n"))
+        _, types = types_in(self.root)
+        self.assertNotIn("AGENT-TOOL-CLASH", types)
+
+    def test_agent_tool_clash_ignores_agent_without_disallowed(self):
+        # Un agente sin disallowedTools no restringe nada.
+        write(self.root / "spec" / "agents" / "mi-escritor.md",
+              self._agent_md("mi-escritor"))
+        write(self.root / "spec" / "skills" / "wf-escribe" / "SKILL.md",
+              skill_md("wf-escribe", "Escribe el artefacto.",
+                       extra_fm=("allowed-tools: [Read, Write, Bash]\n"
+                                 "context: fork\nagent: mi-escritor\n")))
+        _, types = types_in(self.root)
+        self.assertNotIn("AGENT-TOOL-CLASH", types)
+
     # === FORK-ORCHESTRATOR (D-045) ========================================
     DELEG = ('Delega con:\n\n```\nAgent(\n'
              '  subagent_type: "sdd-spec-writer",\n'

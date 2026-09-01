@@ -147,6 +147,18 @@ Si el veredicto es `LISTO` (y por tanto no quedan `[ASUNCIÓN]` pendientes tras 
    !python3 .sdd/scripts/sdd-prd-apply.py "<path>" --seal "Oscar Pozo (Product Owner) (2026-07-17)"
    ```
    En re-revisión sobrescribe la línea previa. **No autoapruebes**: si no hay respuesta, no llames a `--seal`.
+3. **Si en esta revisión el `version` del PRD ha cambiado, regístralo en el changelog**
+   ([[D-051]], SSoT en `kb-product-change-governance` Regla 5). Una revisión mueve `version`
+   cuando, al cerrar las asunciones, corrige prosa del documento. Comprueba y registra:
+   ```bash
+   !grep -nE '^version:' "<path>"; test -f "<dir>/product-changelog.md" && echo EXISTE || echo NO_EXISTE
+   ```
+   Si el changelog existe y no recoge la versión vigente, **añade su entrada** —rango
+   (`1.4 → 1.5`), qué la motivó y dónde vive el detalle— delegando la escritura al
+   `prd-expert` como el resto de ediciones de este paso. El changelog es el **índice**: si
+   la versión vigente solo consta dentro del expediente de un CR, quien lo abra leerá una
+   versión que ya no existe. Si no hay changelog (el PRD nunca pasó por `wf-prd-change`), no
+   lo crees: no hay historial que indexar.
 
 Si el veredicto es `LISTO_CON_AJUSTES` o `NO_LISTO`, **no** escribas la atribución.
 

@@ -104,6 +104,21 @@ La intención es separar responsabilidades:
 - `change-request.md` explica el diff funcional y el impacto sobre derivados
 - `decision.md` conserva la decisión aprobada como referencia auditable
 
+> **El changelog registra TODA versión del PRD, la bumpee quien la bumpee ([[D-051]]).**
+> Es el **índice**: quien lo abre debe poder leer en él cuál es la versión vigente. Si el
+> `version` del frontmatter avanza y el changelog no lo recoge, el índice miente — y miente
+> justo sobre el dato por el que se consulta.
+>
+> Los CRs no son la única vía que mueve `version`. También la mueve una **revisión** que,
+> al cerrar sus asunciones, corrige prosa del documento. Medido en conformance
+> (2026-09-01): un review llevó el PRD de **1.4 a 1.5** con seis correcciones de coherencia
+> y lo registró **solo** en `changes/CR-004/decision.md`; el changelog se quedó en 1.4 y
+> cualquiera que lo abriera concluía que el PRD vigente era otro.
+>
+> Regla operativa: **si tocas `version`, escribes su entrada** — con el rango (`1.4 → 1.5`),
+> qué la motivó y dónde vive el detalle. Una nota basta cuando no hay CR propio; lo que no
+> vale es que el salto exista solo dentro del expediente de un CR.
+
 ## Regla 6: Editar el PRD no basta
 
 Después de un cambio aprobado no se asume que todo queda en sync.
