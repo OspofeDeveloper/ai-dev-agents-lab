@@ -480,6 +480,86 @@ informe a mano, espera a mano, o **reporta como del delegado un dato que reconst
 > quien tiene el PRD a la vista, o se está midiendo el guardrail contra un error inducido en vez de
 > contra una decisión de producto realista.
 
+
+> **Pasada 8 (2026-09-02, v0.85.0+a7de5cf, `myops-app-specs`, banco re-sellado, modelo
+> `sonnet-5`/`opus-5`) — la más limpia de la campaña. Pasos 1-5 PASS; [[CU-3.b]] paso 1 medido;
+> [[D-051]], 11.7 y 11.8 confirmados en flujo real.** 29 tool calls, 12 delegaciones.
+>
+> **⚠ Reinicio de recuentos, y esta vez con motivo doble.** El PRD del banco pasó de **1.0 a 1.5**
+> por cuatro cambios de producto encadenados (ver nota de método abajo) y el ecosistema saltó de
+> 0.83.0 a 0.85.0. Documento distinto **y** contrato distinto: las pasadas 6 y 7 no son comparables
+> con esta. Serie nueva, y esta es la **1/3**.
+>
+> **12 de 12 con el flag**, booleano. **Los dos fan-outs en un único mensaje** (4 escritores, 4
+> auditores), verificado agrupando por `message.id`. **Cero artefactos cargados por main** — el
+> único `cat` de la sesión fue `.sdd/project-init.json`, que es configuración. Índice **8/8** con
+> `discovery=sí` y `EN_SYNC`; 4 `LISTA` + 4 `PENDIENTE_GENERACIÓN`. PRD **byte-idéntico**.
+> `agent-memory` ausente. Cero HUs `[INCOMPLETO]`.
+>
+> **[[D-051]] medido en sus tres piezas visibles.** (a) La cabecera del `_analysis.md` declaró
+> `prd/prd.md (v1.5)` y el discovery arrancó con `PRD version: 1.5` — el eje analysis↔PRD ya es
+> verificable. (b) Los cuatro `_conflict_report.md` los escribieron **los auditores**, junto a cada
+> spec, sin pasarle la escritura a main. (c) El `--export/--import-answers` **no se ejercitó**: no
+> hubo regeneración de análisis. Esa rama sigue sin medir.
+>
+> **11.7 en el artefacto real, y a medias.** El `prd_analysis.md` generado salió con **cero
+> `/wf-`**: la plantilla limpia funciona de punta a punta. Pero al barrer los artefactos aparecieron
+> **19 nombres de workflow sin barra** (`wf-spec-delta`, `wf-spec-amend`, `wf-prd-change`) en el
+> readiness y en dos informes de conflicto. El arreglo cubrió la forma con barra y el backstop se
+> escribió para comprobar **el arreglo, no el defecto**. Parte de los 19 es procedencia legítima
+> (`Generado por: wf-spec-discover`) y cae del lado bueno del criterio *instrucción vs estado*; el
+> resto es fuga. → ROADMAP 11.10, que pasa a tener dos superficies: el chat y los artefactos.
+>
+> **11.8 confirmado en el camino real.** `sdd-agent-sync.py` llevaba en `.sdd/scripts/` desde el 27
+> de agosto, sobreviviendo a una actualización. Tras subir a 0.85.0 **desapareció solo**.
+>
+> **[[CU-3.b]] paso 1 PASS, con una parada de calidad.** Las respuestas a `P-006`/`P-007` metían
+> notificaciones push. El guardrail paró, dio veredicto **con recuento** (*"6 de 9 respuestas son
+> aclaraciones limpias"*), nombró la superficie nueva que abría (permisos del dispositivo, entrega
+> en segundo plano, deep-linking), lo contrastó con el *"punto clave"* de sencillez del propio PRD,
+> y **separó la señal de alcance de la ambigüedad** de `P-004`, que son problemas distintos. Mejor
+> que la parada de la pasada 7. **El paso 2 no se ejercitó**: se retiró el push, así que no hubo
+> alcance derivado que propagar.
+>
+> **El arbitraje de [[D-047]], tercera vez y sin fisuras.** 3× `SIN_CONFLICTOS` frente a 1×
+> `CONFLICTOS_DETECTADOS` (`CF-001`, MEDIA). El readiness **no cerró por mayoría**: documentó la
+> divergencia, resolvió citando los CAs, distinguió MEDIA de ALTA para el criterio de bloqueo
+> (*"`BLOQUEADA` exige conflicto ALTA, no MEDIA"*) y dejó una nota hacia adelante que nadie pidió —
+> *"cuando se genere F-001, revalidar que la resolución de CF-001 sigue encajando"*.
+>
+> **Hallazgo 1 — `SendMessage`: main encontró una segunda puerta de delegación.** Hizo
+> `ToolSearch {"query": "select:SendMessage"}` y con esa tool **reanudó el mismo `sdd-spec-explorer`**
+> que ya había leído el PRD y el analysis, en vez de lanzar uno nuevo. Es eficiente y explica la
+> calidad del veredicto. Pero está **fuera del contrato**: `SendMessage` no admite
+> `run_in_background`, así que todo el aparato de [[D-043]]/[[D-050]] no le aplica, y su
+> `tool_result` fue un **acuse** (`{"success":true,"message":"Resuming agent…"}`) con la forma exacta
+> que [[D-047]] marca como FALLO. Aquí la espera funcionó —el veredicto llegó— pero nadie verifica
+> que un agente reanudado conserve el contexto que se le supone. **Al verificar esta señal en
+> futuras pasadas: mirar si el informe llegó, no solo si el envío tuvo éxito.**
+>
+> **Hallazgo 2 — el marcador de alcance se puso a las 8 features.** Las 8 salieron con
+> `Origen de alcance: PRD + analysis respondido` y `Avisos de gobernanza: ninguno`, sin haber
+> alcance derivado. En la pasada 7 el mismo campo **discriminaba** (F-006/F-008 marcadas, F-001/F-005
+> con `PRD`). [[CU-3.b]] lo dice literal: *"un marcador puesto a todas no discrimina nada"*. La culpa
+> es del contrato: `wf-spec-discover` dice *"rellena `Origen de alcance` como `PRD` o `PRD + analysis
+> respondido` **según corresponda**"* y nunca define el criterio, así que caben dos lecturas y cada
+> pasada eligió una. **Sin consecuencia aguas abajo** — verificado: `sdd-features-index.py` deriva
+> `REQUIERE_CAMBIO_PRD` de `avisos de gobernanza != ninguno`, no de este campo, y el estado no se
+> corrompió. El daño es de legibilidad, y deja la "otra mitad de la prueba" de [[CU-3.b]]
+> inverificable por falta de contraste.
+>
+> **Nota de método — el banco cambió de PRD, y fue lo correcto.** La pasada 8 original murió: al
+> responder `P-004` el usuario decidió que el traspaso de reserva debía existir, eligió **formalizar
+> el cambio en el PRD** en vez de continuar con alcance derivado, y eso encadenó cuatro CRs con sus
+> reviews (v1.0 → v1.5, ver `cu-07`). Costó la pasada, pero la decisión de producto era la buena y
+> el PRD 1.5 es mejor fixture: más rico y con historial real detrás. **Y la corrección de método
+> funcionó**: esta vez las respuestas las compuso el usuario con el PRD delante, y las dos veces que
+> hubo duda se resolvieron **leyendo el documento** (P-004 ya estaba contestado en las líneas 86-87)
+> en vez de inventando. Cero expansión inducida por el asistente, por primera vez desde la 5.
+>
+> **Muestra de gaps: 9 / 4 críticos.** Primera del PRD 1.5; no comparable con la serie anterior.
+> Discovery: **8 features** (igual recuento que sobre la 1.0, con nombres y fronteras distintas).
+
 ## CU-3.b — Expansión de alcance desde las respuestas del analysis
 
 **Precondición:** al responder el `_analysis.md` introduces capacidad nueva (entidad
