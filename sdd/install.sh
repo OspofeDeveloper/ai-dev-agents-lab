@@ -424,7 +424,9 @@ SDD_COMMIT="$(git -C "$SCRIPT_DIR" rev-parse --short HEAD 2>/dev/null || echo un
 echo ""
 echo "Instalando scripts de enforcement..."
 mkdir -p "$ENFORCE_ROOT/.sdd/scripts"
-for script in sdd-seal.py sdd-gate-check.py sdd-task-state.py sdd-sync-check.py sdd-skill-allow.py sdd-amend.py sdd-features-index.py sdd-project-status.py sdd-kb-check.py sdd-release.py sdd-next-id.py sdd-resolve-path.py sdd-design-resolve.py sdd-source-drift.py sdd-prd-ready.py sdd-prd-frontmatter.py sdd-prd-deps.py sdd-prd-apply.py sdd-analysis-gaps.py; do
+SDD_ENFORCE_SCRIPTS="sdd-seal.py sdd-gate-check.py sdd-task-state.py sdd-sync-check.py sdd-skill-allow.py sdd-amend.py sdd-features-index.py sdd-project-status.py sdd-kb-check.py sdd-release.py sdd-next-id.py sdd-resolve-path.py sdd-design-resolve.py sdd-source-drift.py sdd-prd-ready.py sdd-prd-frontmatter.py sdd-prd-deps.py sdd-prd-apply.py sdd-analysis-gaps.py"
+
+for script in $SDD_ENFORCE_SCRIPTS; do
   cp "$SCRIPT_DIR/scripts/$script" "$ENFORCE_ROOT/.sdd/scripts/$script"
   # Sello de versión en el propio script: viaja commiteado al repo del proyecto
   # y a CI, donde no hay ~/.sdd-home al lado para preguntarle.
@@ -439,6 +441,31 @@ p.write_text("".join(out), encoding="utf-8")
 PYEOF
   fi
   echo "  ✓ $ENFORCE_ROOT/.sdd/scripts/$script"
+done
+
+# Reconciliación: retirar los scripts que el ecosistema YA NO distribuye.
+#
+# Copiar lo que hay sin borrar lo que sobra deja scripts zombis en el proyecto.
+# El daño no es que se ejecuten —un hook retirado ya no está registrado— sino que
+# son DESCUBRIBLES: un agente que haga `ls .sdd/scripts/` los ve y puede concluir
+# que ese gate sigue vivo. Es contexto falso plantado en el consumer (medido: un
+# `sdd-agent-sync.py` de 0.82.x sobrevivió a la actualización a 0.83.0).
+#
+# Criterio de propiedad: el sello `# sdd-version:` de la línea 2. Solo se retira
+# lo que ESTE installer puso; los scripts propios del equipo no lo llevan y no se
+# tocan. Conservador por diseño: ante la duda, no se borra.
+for installed in "$ENFORCE_ROOT/.sdd/scripts"/*.py; do
+  [ -e "$installed" ] || continue
+  base="$(basename "$installed")"
+  case " $SDD_ENFORCE_SCRIPTS " in
+    *" $base "*) continue ;;   # sigue distribuyéndose
+  esac
+  if head -5 "$installed" | grep -q '^# sdd-version:'; then
+    rm -f "$installed"
+    echo "  ✓ retirado $base (ya no forma parte del ecosistema)"
+  else
+    echo "  · $base no lo distribuye el ecosistema y no lleva sello: se deja"
+  fi
 done
 
 # Sello de instalación del proyecto: qué versión del ecosistema produjo esta copia.

@@ -73,17 +73,10 @@
 
 ## Siguiente paso
 
-Para generar el spec de cada feature individualmente:
-```
-/wf-spec-fast-track <prd.md> --scope-from <discovery.md> --feature F-001
-```
+Dile a Claude qué quieres hacer con este mapa; él elige el flujo:
 
-Para generar todos los specs en paralelo (flujo automático):
-```
-/wf-spec-features-first <prd.md>
-```
-
-Para el flujo completo spec-first (spec monolítico):
-```
-/wf-spec-analyze <prd.md>
-```
+- **Generar las specs de todas las features**, o de un subset: *"genera las specs de F-001,
+  F-003 y F-005"*. Es lo habitual — las no incluidas quedan `PENDIENTE_GENERACIÓN` y se
+  generan en pasadas posteriores sin perder lo anterior.
+- **Generar el spec de una sola feature**: *"hazme el spec de F-001"*.
+- **Revisar antes el análisis previo del PRD**, si aún no existe: *"analiza el PRD"*.

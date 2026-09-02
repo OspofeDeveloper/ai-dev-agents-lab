@@ -67,9 +67,9 @@
 ## Próximos pasos
 
 <!-- Si SIN_CONFLICTOS -->
-> Los specs están listos para continuar con `/wf-prepare-plan`.
+> Los specs están listos para continuar a planificación.
 
 <!-- Si CONFLICTOS_DETECTADOS -->
-1. Revisar cada conflicto de severidad **ALTA** — deben resolverse antes de iniciar `/wf-prepare-plan` en las features afectadas
+1. Revisar cada conflicto de severidad **ALTA** — deben resolverse antes de planificar las features afectadas
 2. Los conflictos de severidad **MEDIA** pueden documentarse como decisiones de diseño y resolverse en la fase de implementación
-3. Para cada conflicto resuelto: editar los specs afectados y re-ejecutar `/wf-spec-conflict` para verificar que se eliminó
+3. Para cada conflicto resuelto: editar los specs afectados y pedir una nueva revisión de conflictos para verificar que se eliminó

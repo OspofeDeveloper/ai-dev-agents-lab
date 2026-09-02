@@ -117,7 +117,7 @@ THEN [resultado observable y verificable]
 
 ## Puntos pendientes de validación
 
-> - `[CRÍTICO]`: **debe responderse** antes de ejecutar `/wf-spec-delta apply`.
+> - `[CRÍTICO]`: **debe responderse** antes de aplicar el delta al spec.
 > - `[INFORMATIVO]`: si no se responde, se aplicará la "Asunción por defecto" indicada.
 
 <!-- Si no hay puntos pendientes: eliminar esta sección y añadir "Sin gaps detectados." -->
@@ -141,7 +141,4 @@ THEN [resultado observable y verificable]
 1. Revisar los cambios propuestos en las secciones anteriores
 2. Responder los gaps `[CRÍTICO]` marcados como _(pendiente)_ — son **obligatorios** para continuar
 3. Responder los gaps `[INFORMATIVO]` si tienes la información — si no, se aplicará la asunción por defecto
-4. Una vez completados los `[CRÍTICO]`, ejecutar:
-   ```
-   /wf-spec-delta apply [path/feature_spec.md] [path/feature_delta_analysis.md]
-   ```
+4. Una vez completados los `[CRÍTICO]`, pide que **se aplique este delta al spec**.

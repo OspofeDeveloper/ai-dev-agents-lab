@@ -84,6 +84,59 @@ class InstallAllTest(InstallBase):
         # settings.json
         self.assertTrue((self.claude / "settings.json").exists())
 
+    def test_artifact_templates_do_not_teach_the_user_commands(self):
+        # ROADMAP 11.7: las plantillas producen artefactos que LEE EL USUARIO. Un
+        # `/wf-x <args>` ahi le ensena a teclear comandos y a pasar argumentos a
+        # mano, saltandose la construccion que hace el hilo principal — que es
+        # donde viven las validaciones. El ecosistema se conduce hablando.
+        # Medido: el prd_analysis.md de un proyecto real traia un bloque entero de
+        # comandos porque su output_template lo prescribia.
+        self.install("all")
+        offenders = []
+        for tpl in sorted((self.claude / "skills").rglob("*template*.md")):
+            for i, line in enumerate(tpl.read_text(encoding="utf-8").splitlines(), 1):
+                if "/wf-" in line:
+                    offenders.append(f"{tpl.relative_to(self.claude)}:{i}: {line.strip()[:90]}")
+        self.assertEqual(offenders, [],
+                         "plantillas de artefacto que ensenan comandos al usuario:\n"
+                         + "\n".join(offenders))
+
+    def test_retired_script_is_removed_on_reinstall(self):
+        # ROADMAP 11.8: copiar sin reconciliar deja scripts zombis. El daño no es
+        # que se ejecuten (su hook ya no esta registrado) sino que son DESCUBRIBLES:
+        # un agente que haga `ls .sdd/scripts/` concluye que ese gate sigue vivo.
+        # Medido: sdd-agent-sync.py de 0.82.x sobrevivio a la actualizacion a 0.83.0.
+        self.install("all")
+        zombie = self.proj / ".sdd" / "scripts" / "sdd-retirado.py"
+        write(zombie, "#!/usr/bin/env python3\n# sdd-version: 0.1.0+abc1234\nprint(1)\n")
+        r = self.install("all")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertFalse(zombie.exists(),
+                         "install.sh no retira un script que el ecosistema ya no distribuye")
+
+    def test_reconciliation_does_not_touch_a_script_of_the_team(self):
+        # La otra mitad: el criterio de propiedad es el sello `# sdd-version:`.
+        # Un script propio del equipo no lo lleva y NO se toca. Conservador por
+        # diseno: ante la duda no se borra.
+        self.install("all")
+        mine = self.proj / ".sdd" / "scripts" / "mi-script-del-equipo.py"
+        write(mine, "#!/usr/bin/env python3\nprint('nuestro')\n")
+        r = self.install("all")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertTrue(mine.exists(),
+                        "install.sh borro un script propio del proyecto (sin sello)")
+        self.assertIn("nuestro", mine.read_text(encoding="utf-8"))
+
+    def test_reconciliation_keeps_the_distributed_ones(self):
+        # Guarda anti-regresion: la reconciliacion no puede llevarse por delante
+        # lo que si se distribuye. Dos installs seguidos dejan el set completo.
+        self.install("all")
+        r = self.install("all")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        for s in ENFORCEMENT_SCRIPTS:
+            self.assertTrue((self.proj / ".sdd" / "scripts" / s).exists(),
+                            f"la reconciliacion se llevo {s}")
+
     def test_enforcement_scripts_stamped(self):
         r = self.install("all")
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)

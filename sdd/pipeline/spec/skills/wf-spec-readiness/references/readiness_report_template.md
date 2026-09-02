@@ -12,7 +12,7 @@
 
 > **[TODAS_LISTAS | PARCIALMENTE_LISTAS | NINGUNA_LISTA]**
 >
-> [N] de [M] features listas para `/wf-prepare-plan`. [Resumen en 1 frase de los bloqueos principales si los hay.]
+> [N] de [M] features listas para planificar. [Resumen en 1 frase de los bloqueos principales si los hay.]
 
 ---
 
@@ -38,15 +38,15 @@
 
 | Feature | Estado | Accion requerida |
 |---------|--------|------------------|
-| F-001: [nombre] | LISTA | `/wf-prepare-plan generate features/[nombre]/[nombre]_spec.md` |
+| F-001: [nombre] | LISTA | Lista para planificar |
 | F-005: [nombre] | REQUIERE_CAMBIO_PRD | Consolidar el cambio en PRD y resincronizar derivados antes de planificar |
 
 ### Fase 2 (depende de Fase 1)
 
 | Feature | Depende de | Estado | Accion requerida |
 |---------|------------|--------|------------------|
-| F-003: [nombre] | F-001 | LISTA | `/wf-prepare-plan generate features/[nombre]/[nombre]_spec.md` (implementar despues de F-001) |
-| F-004: [nombre] | F-001, F-003 | BLOQUEADA | Resolver CF-XXX y re-ejecutar `/wf-spec-conflict` |
+| F-003: [nombre] | F-001 | LISTA | Lista para planificar, despues de F-001 |
+| F-004: [nombre] | F-001, F-003 | BLOQUEADA | Resolver CF-XXX y volver a revisar conflictos |
 
 ### Fase N
 
@@ -58,12 +58,12 @@
 
 <!-- Omitir esta seccion completa si no hay features BLOQUEADA por gaps -->
 
-> Los siguientes gaps criticos impiden que las HUs afectadas se completen. Hasta que se resuelvan, las features no pueden pasar a `/wf-prepare-plan`.
+> Los siguientes gaps criticos impiden que las HUs afectadas se completen. Hasta que se resuelvan, las features no pueden pasar a planificacion.
 
 | Gap | Severidad | HUs afectadas | Features afectadas | Accion |
 |-----|-----------|---------------|-------------------|--------|
-| [P-001] | CRITICO | HU-003 | F-001 | Responder y ejecutar `/wf-spec-gap-resolve` sobre el spec afectado |
-| [P-003] | CRITICO | HU-010 | F-003 | Responder y ejecutar `/wf-spec-gap-resolve` sobre el spec afectado |
+| [P-001] | CRITICO | HU-003 | F-001 | Responder el gap y completar las historias incompletas del spec |
+| [P-003] | CRITICO | HU-010 | F-003 | Responder el gap y completar las historias incompletas del spec |
 
 <!-- Agrupar por gap ID. Un mismo gap puede afectar a multiples HUs y features. -->
 
@@ -98,17 +98,17 @@
 <!-- Elegir la variante que aplique segun el Estado general -->
 
 <!-- TODAS_LISTAS -->
-1. Ejecuta `/wf-prepare-plan generate <feature_spec.md>` para cada feature, siguiendo el orden de fases
+1. Planifica cada feature siguiendo el orden de fases indicado
 2. Empieza por las features de Fase 1 (sin dependencias)
 3. Las features de fases posteriores pueden planificarse en paralelo dentro de su fase
 
 <!-- PARCIALMENTE_LISTAS -->
-1. **Features listas**: ejecuta `/wf-prepare-plan generate <feature_spec.md>` para las features LISTA de las primeras fases
-2. **Features con gaps**: responde los gaps pendientes y ejecuta `/wf-spec-gap-resolve` para cada feature afectada
-3. **Features con conflictos**: edita los specs para resolver los conflictos ALTA y re-ejecuta `/wf-spec-conflict`
-4. **Re-evaluar**: despues de resolver bloqueos, ejecuta `/wf-spec-readiness` de nuevo para verificar el progreso
+1. **Features listas**: planifica las features LISTA de las primeras fases
+2. **Features con gaps**: responde los gaps pendientes y pide completar las historias incompletas de cada feature afectada
+3. **Features con conflictos**: resuelve los conflictos ALTA en los specs y pide una nueva revision de conflictos
+4. **Re-evaluar**: despues de resolver bloqueos, pide de nuevo el estado de readiness para verificar el progreso
 
 <!-- NINGUNA_LISTA -->
 1. Prioriza resolver los gaps `[CRITICO]` — afectan a [N] features
 2. Resuelve los conflictos ALTA — afectan a [N] features
-3. Re-ejecuta `/wf-spec-readiness` despues de cada correccion para verificar el progreso
+3. Pide de nuevo el estado de readiness despues de cada correccion para verificar el progreso

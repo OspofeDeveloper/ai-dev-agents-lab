@@ -4,7 +4,7 @@
 > **Fecha**: [YYYY-MM-DD]
 > **Archivo origen**: [path/al/archivo.md] (v[X.Y])
 
-> **Nota**: este análisis prepara la información que los Specs van a necesitar. Las respuestas a gaps se anotan **en este archivo**. Si durante la validación aparece un cambio real de producto, debe formalizarse en el PRD mediante `wf-prd-change` antes de seguir resincronizando derivados.
+> **Nota**: este análisis prepara la información que los Specs van a necesitar. Las respuestas a gaps se anotan **en este archivo**. Si durante la validación aparece un cambio real de producto, debe formalizarse en el PRD —pídeselo a Claude como un cambio de producto— antes de seguir resincronizando derivados.
 
 ---
 
@@ -17,7 +17,7 @@
 | `[P-XXX]` | Pregunta pendiente de validación con el cliente | Sección Puntos pendientes |
 | `[CRÍTICO]` | Gap que impide completar las HUs afectadas — quedarán marcadas `[INCOMPLETO]` en el spec si no se responde | Sección Puntos pendientes |
 | `[INFORMATIVO]` | Gap con asunción por defecto — se aplica automáticamente si no se responde | Sección Puntos pendientes |
-| `[PUEDE_REQUERIR_CR]` | Gap cuya futura respuesta puede introducir cambio de producto y exigir `wf-prd-change` | Sección Puntos pendientes |
+| `[PUEDE_REQUERIR_CR]` | Gap cuya futura respuesta puede introducir cambio de producto y exigir formalizarlo en el PRD | Sección Puntos pendientes |
 | `_(pendiente)_` | Respuesta aún no proporcionada por el cliente | Campo "Respuesta" de cada gap |
 
 ---
@@ -30,14 +30,14 @@
 
 **Significado de los veredictos:**
 - `LISTO_PARA_SPECS`: el PRD está limpio (sin contaminación técnica) y no hay gaps `[CRÍTICO]` pendientes. Se puede arrancar la generación de Specs directamente.
-- `LISTO_PARA_SPECS_CON_PREGUNTAS`: el PRD está limpio, pero hay gaps `[CRÍTICO]` por responder. Se puede continuar hacia Specs, pero `wf-spec-features-first` pedirá una decisión explícita: responder primero esos gaps o re-ejecutar con `--allow-open-critical-gaps`. Si se continúa, las HUs afectadas saldrán marcadas `[INCOMPLETO]` y se podrán completar luego con `/wf-spec-gap-resolve`.
+- `LISTO_PARA_SPECS_CON_PREGUNTAS`: el PRD está limpio, pero hay gaps `[CRÍTICO]` por responder. Se puede continuar hacia Specs, pero al generar las specs se te pedirá una decisión explícita: responder primero esos gaps o continuar. Si se continúa, las HUs afectadas saldrán marcadas `[INCOMPLETO]` y se podrán completar después.
 - `REQUIERE_LIMPIEZA_PRD`: se detectó contaminación técnica en el PRD (Check 2). **Única condición** que requiere modificar el PRD antes de continuar.
 
 ---
 
 ## Elementos del Spec a generar desde este PRD
 
-> Esta sección es **informativa**, no diagnóstica. Mapea qué partes del Spec final ya están en el PRD y cuáles se generarán durante la fase Spec. Es normal y esperable que un PRD bien formado no contenga HUs formales, Journeys paso a paso, CAs en GIVEN/WHEN/THEN ni Checklist — esos elementos pertenecen al Spec (`kb-prd-expert` Regla 9), no al PRD.
+> Esta sección es **informativa**, no diagnóstica. Mapea qué partes del Spec final ya están en el PRD y cuáles se generarán durante la fase Spec. Es normal y esperable que un PRD bien formado no contenga HUs formales, Journeys paso a paso, CAs en GIVEN/WHEN/THEN ni Checklist — esos elementos pertenecen al Spec, no al PRD.
 
 - **Actores** — [ya en PRD / a generar en Spec / parcial — se completará en Spec]
 - **Historias de Usuario (Como/quiero/para que)** — [ya en PRD / a generar en Spec / parcial — se completará en Spec]
@@ -92,13 +92,13 @@
 > Estos puntos **no fueron inferidos por el sistema**. Son ambigüedades o información ausente
 > que debe ser definida por el cliente antes de generar el `.spec` final.
 >
-> **Las respuestas se escriben en este archivo, no en el PRD**, salvo que la propia respuesta cambie el producto comprometido. En ese caso, usa `wf-prd-change`.
+> **Las respuestas se escriben en este archivo, no en el PRD**, salvo que la propia respuesta cambie el producto comprometido. En ese caso, dile a Claude que quieres formalizar un cambio de producto sobre el PRD.
 > Escribe la respuesta de cada cliente en el campo "Respuesta" del gap correspondiente, sustituyendo `_(pendiente)_`.
-> Si prefieres dictárselas a Claude en la conversación, él las aplicará con `sdd-analysis-gaps.py --answer` — no editará este archivo a mano ni completará una respuesta que no hayas dado.
+> Si prefieres dictárselas a Claude en la conversación, él las aplicará por ti — no editará este archivo a mano ni completará una respuesta que no hayas dado.
 >
 > - `[CRÍTICO]`: afecta directamente a las HUs indicadas en "Afecta". Si se deja sin responder, esas HUs se marcarán como `[INCOMPLETO]` en el spec — se generarán con la información disponible pero no podrán avanzar a plan/tasks hasta completarse.
 > - `[INFORMATIVO]`: si no se responde, se aplicará la "Asunción por defecto" indicada.
-> - `[PUEDE_REQUERIR_CR]`: no cambia la severidad, pero obliga a reevaluar la respuesta con `kb-product-change-governance` si introduce expansión de capacidad.
+> - `[PUEDE_REQUERIR_CR]`: no cambia la severidad, pero obliga a reevaluar la respuesta con la gobernanza de cambios de producto si introduce expansión de capacidad.
 
 ### [P-001][CRÍTICO] [Título del gap — describe qué falta]
 - **Contexto**: [cita del documento o descripción de dónde aparece la ambigüedad]
@@ -126,27 +126,20 @@
 
 **Si el veredicto es `LISTO_PARA_SPECS` o `LISTO_PARA_SPECS_CON_PREGUNTAS`**:
 
-1. Anota la respuesta de cada `[P-XXX]` que puedas resolver **en este archivo**, en el campo `Respuesta` (sustituye `_(pendiente)_` por la respuesta real). Si al responder descubres que cambia el producto comprometido, o que la respuesta introduce una entidad persistente, un catálogo reutilizable, una nueva granularidad funcional o un flujo adicional no comprometido en el PRD, usa `wf-prd-change` y no trates la decisión como un simple gap.
+1. Anota la respuesta de cada `[P-XXX]` que puedas resolver **en este archivo**, en el campo `Respuesta` (sustituye `_(pendiente)_` por la respuesta real). Si al responder descubres que cambia el producto comprometido, o que la respuesta introduce una entidad persistente, un catálogo reutilizable, una nueva granularidad funcional o un flujo adicional no comprometido en el PRD, **no lo trates como un simple gap**: dile a Claude que quieres **formalizar un cambio de producto sobre el PRD** y lo llevará por la vía de gobernanza.
 2. Los `[CRÍTICO]` que queden sin respuesta marcarán sus HUs como `[INCOMPLETO]` en el spec (se generarán pero no podrán avanzar a plan/tasks hasta completarse).
 3. Los `[INFORMATIVO]` que queden sin respuesta aplicarán su asunción por defecto.
-4. Si el veredicto es `LISTO_PARA_SPECS`, ejecuta el flujo completo:
-   ```
-   /wf-spec-features-first [path/al/archivo.md]
-   ```
-   Si el veredicto es `LISTO_PARA_SPECS_CON_PREGUNTAS`, elige una de estas dos vías:
-   ```
-   /wf-spec-features-first [path/al/archivo.md]
-   ```
-   tras responder primero los gaps `[CRÍTICO]`, o:
-   ```
-   /wf-spec-features-first [path/al/archivo.md] --allow-open-critical-gaps
-   ```
-   si quieres continuar aceptando HUs `[INCOMPLETO]`.
-   O para el paso a paso (solo discovery):
-   ```
-   /wf-spec-discover [path/al/archivo.md] --analysis [path/al/archivo_analysis.md]
-   ```
-5. Para completar HUs marcadas `[INCOMPLETO]` más tarde: responde los gaps pendientes en este archivo y ejecuta `/wf-spec-gap-resolve <feature_spec.md>`.
+4. Cuando quieras generar las specs, **pídeselo a Claude en lenguaje natural** — él elige el
+   flujo y construye los argumentos:
+   - Si el veredicto es `LISTO_PARA_SPECS`: *"genera las specs de este PRD"*.
+   - Si es `LISTO_PARA_SPECS_CON_PREGUNTAS`, tienes dos vías y te las ofrecerá al llegar al
+     gate: **responder antes los `[CRÍTICO]`** (recomendada), o **continuar aceptando** que
+     las HUs afectadas salgan `[INCOMPLETO]`. Puedes anticiparlo diciéndolo —*"genera las
+     specs aunque queden gaps críticos abiertos"*— y él pedirá tu confirmación explícita.
+   - Si solo quieres el mapa de features sin generar nada todavía: *"descubre las features
+     de este PRD"*.
+5. Para completar más tarde las HUs marcadas `[INCOMPLETO]`: responde aquí los gaps que
+   quedaron pendientes y pídele *"completa las historias incompletas de este spec"*.
 
 **Si el veredicto es `REQUIERE_LIMPIEZA_PRD`** (único caso de edición del PRD por contaminación técnica detectada en analyze):
 
@@ -154,4 +147,4 @@
    - `[x] ACEPTAR` — aplica la reescritura sugerida al PRD
    - `[x] EDITAR` — modifica el texto de "Reescritura sugerida" y marca esta opción; luego aplica ese texto al PRD
    - `[x] RECHAZAR (justificar)` — añade tu justificación; el texto original se conservará como excepción documentada
-2. Tras editar el PRD, vuelve a ejecutar `/wf-spec-analyze [path/al/archivo.md]` para confirmar que la limpieza es completa antes de avanzar.
+2. Tras editar el PRD, pídele que **vuelva a analizarlo** para confirmar que la limpieza es completa antes de avanzar.

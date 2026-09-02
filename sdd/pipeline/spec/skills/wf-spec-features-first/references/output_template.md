@@ -20,26 +20,32 @@ Indica el modo: "Iteración sobre subset `[F-001, F-002, ...]`" o "Generación c
 
 ## Siguientes pasos (bloques condicionales)
 
+> **Estos mensajes los lee el usuario, así que van en lenguaje natural.** No le des nombres de
+> workflow ni comandos con flags: el ecosistema se conduce **hablando**, y quien construye los
+> argumentos —con sus validaciones— eres tú, no él. Un comando surfaceado invita a teclearlo a
+> mano y a saltarse esa construcción.
+
 **Si hay features con gaps `[CRÍTICO]`:**
-> "Las siguientes features tienen gaps críticos sin resolver: [lista]. Edita los specs afectados, responde los gaps marcados como _(pendiente)_ y ejecuta `/wf-spec-gap-resolve <feature_spec.md>` por cada una."
+> "Las siguientes features tienen gaps críticos sin resolver: [lista]. Responde los gaps
+> marcados como _(pendiente)_ en `<path>_analysis.md` y pídeme que **complete las historias
+> incompletas** de esas features."
 
 **Si se usó `_analysis.md` con gaps `[CRÍTICO]` sin responder:**
-> "Hay [N] gaps críticos del análisis previo que no fueron respondidos. Los specs afectados tienen HUs marcadas `[INCOMPLETO]` que bloquean `/wf-prepare-plan`. Responde los gaps en `<path>_analysis.md` y re-ejecuta."
+> "Hay [N] gaps críticos del análisis previo que no fueron respondidos. Los specs afectados
+> tienen HUs marcadas `[INCOMPLETO]`, y eso **bloquea el paso a planificación**. Responde los
+> gaps en `<path>_analysis.md` y dímelo para retomarlo."
 
 **Si hay conflictos de severidad ALTA:**
-> "Se detectaron conflictos entre features. Revisa `<path>_conflict_report.md` y resuelve antes de planificar."
+> "Se detectaron conflictos entre features. Revisa `<path>_conflict_report.md` y resuélvelos
+> antes de planificar."
 
 **Si hay features LISTA:**
-> "Las features marcadas como LISTA pueden avanzar a planificación:"
-> ```
-> /wf-prepare-plan generate features/<nombre>/spec/<nombre>_spec.md
-> ```
+> "Las features marcadas como LISTA pueden avanzar a planificación: [lista]. Dime cuál quieres
+> planificar —o si prefieres empezar por todas— y me encargo."
 
 **Si hay features `PENDIENTE_GENERACIÓN`:**
-> "Quedan [N] features identificadas en el discovery que aún no se han procesado: [lista de IDs]. Para generarlas en una iteración futura:"
-> ```
-> /wf-spec-features-first <prd.md> --features F-XXX,F-YYY,...
-> ```
+> "Quedan [N] features identificadas en el discovery que aún no se han procesado: [lista de
+> IDs]. Cuando quieras generarlas, dímelo indicando cuáles."
 
 **Si todo está listo y no hay pendientes:**
-> "Todas las features están listas para planificar. Puedes ejecutar `/wf-prepare-plan generate` por cada una."
+> "Todas las features están listas para planificar. Dime por cuál empezamos."

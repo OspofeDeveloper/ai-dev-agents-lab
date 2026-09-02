@@ -53,8 +53,8 @@ Añadir al final del spec (antes del Changelog si existiera) si hay gaps `[CRÍT
 ```markdown
 ## Items Pendientes
 
-> ⚠️ Este spec tiene gaps **críticos** sin resolver. Las HUs afectadas están marcadas `[INCOMPLETO]` y `/wf-prepare-plan` quedará bloqueado hasta que se resuelvan.
-> Para resolverlos: responde los gaps en el `_analysis.md` y ejecuta `/wf-spec-gap-resolve <path>_spec.md`.
+> ⚠️ Este spec tiene gaps **críticos** sin resolver. Las HUs afectadas están marcadas `[INCOMPLETO]` y **el paso a planificación queda bloqueado** hasta que se resuelvan.
+> Para resolverlos: responde los gaps en el `_analysis.md` y pide que **se completen las historias incompletas** de este spec.
 
 ### [P-001][CRÍTICO] [Título del gap]
 - **Afecta**: [HU-001, HU-003]

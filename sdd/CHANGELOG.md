@@ -2,6 +2,15 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.85.0 — 2026-09-01
+
+**El ecosistema se conduce hablando, y sus artefactos dejan de enseñar comandos** — ROADMAP 11.7 y 11.8. Dos huecos detectados durante una pasada de conformance, ambos del mismo tipo: cosas que el proyecto del usuario recibe y que dicen algo que no es.
+
+- ⚠ **Las plantillas de artefacto dejan de meter slash-commands en la prosa que lee el usuario.** El `prd_analysis.md` de un proyecto real traía un bloque entero de `/wf-spec-features-first … --allow-open-critical-gaps` porque su plantilla lo prescribía. No es cosmético: si el usuario ve el comando lo teclea, y al teclearlo **pasa los argumentos a mano, saltándose la construcción que hace el hilo principal** — que es donde viven las validaciones de precondición. Barridas **7** plantillas de la fase Spec (analyze, features-first, discover, fast-track, delta, readiness, conflict).
+- **El criterio es instrucción vs estado.** La prosa dirigida al usuario va en lenguaje natural (*"pídeme que complete las historias incompletas de este spec"*); los **marcadores y veredictos** que los scripts parsean —`[CRÍTICO]`, `P-XXX`, `LISTO_PARA_SPECS`, `PENDIENTE_GENERACIÓN`— siguen siendo técnicos: son el estado del artefacto, no una instrucción, y borrarlos rompería el parseo. Regla de autoría con tabla de equivalencias en `kb-sdd-creation-guide`, y backstop que falla si una plantilla instalada contiene `/wf-`. **Solo las plantillas**: al cerrarlo apareció la misma fuga en los **mensajes que los `SKILL.md` dictan al chat** —39 ficheros, ~148 apariciones, las cinco fases—, que exige triaje y va con regla de linter propia (ROADMAP 11.10).
+- ⚠ **`install.sh` reconcilia `.sdd/scripts/`: los scripts retirados se van.** Copiar sin borrar dejaba zombis en el proyecto — medido: un `sdd-agent-sync.py` de 0.82.x sobrevivió a la actualización a 0.83.0. El daño no es que se ejecuten (su hook ya no está registrado) sino que son **descubribles**: un agente que haga `ls .sdd/scripts/` concluye que ese gate sigue vivo, y eso es contexto falso plantado en el consumer.
+- **Criterio de propiedad: el sello `# sdd-version:`.** Solo se retira lo que puso este installer; los scripts propios del equipo no lo llevan y **no se tocan**. Conservador por diseño: ante la duda, no se borra.
+
 ## 0.84.0 — 2026-09-01
 
 **Un read-only no se declara quitando `Write`, y regenerar un análisis no puede llevarse por delante las respuestas** — [[DECISIONS D-051]]. Salió de un ciclo real de cuatro cambios de producto encadenados sobre un PRD (v1.0 → v1.5) con sus reviews y su análisis de impacto. El ciclo funcionó —14/14 delegaciones síncronas, cero clones, 21 gates humanos— y aun así dejó seis defectos: **ninguno de conducta del agente, los seis del contrato**, y cinco de los seis en las costuras entre workflows.

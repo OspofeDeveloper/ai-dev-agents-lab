@@ -257,6 +257,36 @@ Ejecutar: `${CLAUDE_SKILL_DIR}/scripts/validate.sh`
 
 No usar rutas relativas simples (`references/template.md`) ni paths hardcoded al proyecto.
 
+## Plantillas de artefacto: lo que produce el sistema lo lee una persona
+
+Una `references/*_template.md` u `output_template.md` no es documentación interna: es el
+**molde de un artefacto que acaba en el repo del usuario y que él abre**. Escríbela pensando
+en quién la va a leer.
+
+**Nunca metas slash-commands ni flags en la prosa dirigida al usuario.** Nada de
+`/wf-spec-features-first <prd.md> --allow-open-critical-gaps` en un "Próximos pasos". El
+motivo no es estético: si el usuario ve el comando, lo teclea — y al teclearlo **pasa los
+argumentos a mano, saltándose la construcción que hace el hilo principal**, que es donde
+viven las validaciones de precondición. El ecosistema es agnóstico a comandos: se conduce
+**hablando**. Escribe la acción, no la invocación:
+
+| En vez de | Escribe |
+|---|---|
+| `ejecuta /wf-spec-gap-resolve <spec.md>` | *"pídeme que complete las historias incompletas de este spec"* |
+| `re-ejecuta con --allow-open-critical-gaps` | *"dime si prefieres continuar aceptando que esas HUs salgan `[INCOMPLETO]`"* |
+| `usa /wf-prd-change` | *"dile que quieres formalizar un cambio de producto sobre el PRD"* |
+| `/wf-prepare-plan generate <spec.md>` | *"lista para planificar"* |
+
+**Qué sí puede seguir siendo técnico:** los **marcadores y veredictos** que son contrato
+entre agentes y que los scripts parsean — `[CRÍTICO]`, `[INFERIDO]`, `P-XXX`,
+`LISTO_PARA_SPECS`, `PENDIENTE_GENERACIÓN`. No son instrucciones al usuario, son el estado
+del artefacto, y borrarlos rompería el parseo. La frontera es **instrucción vs estado**.
+
+Tampoco cites `kb-*` ni `wf-*` como fuente normativa dentro de la plantilla: esa cita
+pertenece al `SKILL.md` —que lo lee el agente— no al artefacto que lee el usuario.
+
+Backstop: `test_install_sh.py` falla si alguna plantilla instalada contiene `/wf-`.
+
 ## Prevencion de duplicados
 
 Antes de crear cualquier artefacto, buscar si ya existe algo con el mismo dominio o responsabilidad:
