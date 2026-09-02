@@ -26,8 +26,7 @@ Extrae de `$ARGUMENTS`:
 Si no hay argumento, intenta inferir buscando un directorio `features/` en el directorio actual.
 
 Si no hay argumento y no se puede inferir, informa al usuario:
-> "Uso: `/wf-spec-readiness <path/features/>`"
-> "Ejemplo: `/wf-spec-readiness docs/features/`"
+> "Necesito el directorio donde viven las features, para revisar cuáles están listas."
 
 ---
 
@@ -43,10 +42,10 @@ Si no hay argumento y no se puede inferir, informa al usuario:
    Buscar solo en la raíz deja fuera **todos** los informes del fan-out, que es el camino por defecto ([[D-047]]): el readiness se declararía "sin análisis de conflictos" teniendo N informes en disco, y esa advertencia no bloquea — se pierde en silencio.
 
 Valida:
-- Si no hay `_features.md` → detén: "No se encontró `_features.md` en `<directorio_padre>`. Ejecuta `/wf-spec-features-first` o `/wf-spec-fast-track` primero."
-- Si no hay specs → detén: "No se encontraron specs de feature en `<features-dir>`. Ejecuta `/wf-spec-features-first` o `/wf-spec-fast-track` primero."
+- Si no hay `_features.md` → detén: "No se encontró `_features.md` en `<directorio_padre>`. Hay que generar antes los specs por feature."
+- Si no hay specs → detén: "No se encontraron specs de feature en `<features-dir>`. Hay que generarlos antes."
 - Si falta algún README → advertencia no bloqueante: "Falta README.md en `<feature>/`. Las dependencias de esta feature se inferirán solo del `_features.md`."
-- Si no hay **ningún** informe de conflictos en ninguno de los dos sitios → advertencia no bloqueante: "No se encontró ningún `_conflict_report.md`. Ejecuta `/wf-spec-conflict` para un análisis de conflictos completo. Continuando sin análisis de conflictos."
+- Si no hay **ningún** informe de conflictos en ninguno de los dos sitios → advertencia no bloqueante: "No se encontró ningún `_conflict_report.md`. Un análisis de conflictos completo daría más información; continúo sin él."
 
 ---
 

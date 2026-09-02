@@ -23,15 +23,14 @@ Tu objetivo es auditar un `_spec.md` ya generado para detectar regresiones de pu
 Extrae de `$ARGUMENTS` el path del spec a validar.
 
 Si no hay argumento, informa al usuario:
-> "Uso: `/wf-spec-validate <archivo_spec.md>`"
-> "Ejemplo: `/wf-spec-validate docs/requisitos_spec.md`"
+> "Necesito el path del spec que quieres validar."
 
 ---
 
 ## Paso 2: Verificar el archivo
 
 Verifica que el archivo termina en `_spec.md`. Si no → informa:
-> "Este skill espera un spec generado (`_spec.md`). Para analizar un PRD usa `/wf-spec-analyze`."
+> "Esperaba un spec ya generado (`_spec.md`). Si lo que quieres es analizar un PRD, dímelo y hago el análisis previo."
 
 Verifica que el archivo existe:
 ```

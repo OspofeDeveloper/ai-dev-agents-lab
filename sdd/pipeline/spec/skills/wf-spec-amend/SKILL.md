@@ -31,7 +31,7 @@ Extrae:
 - `--reason 'texto'` (opcional: descripción de la ambigüedad)
 
 Si falta el spec o `--ca`:
-> "Uso: `/wf-spec-amend <feature_spec.md> --ca CA-XXX [--from-task T-00X] [--reason 'texto']`"
+> "Necesito el spec de la feature y el CA que hay que aclarar. Si la duda salió implementando una task, dímelo y lo dejo trazado."
 
 ## Paso 2: Verificar archivos y localizar artefactos de la feature
 
@@ -61,7 +61,7 @@ Compara el CA actual con la corrección que la ambigüedad pide. Clasifica:
 - Afecta a otros CAs o HUs además del indicado.
 
 Si es CAMBIO DE COMPORTAMIENTO → detén SIN tocar el spec:
-> "Esto no es una aclaración: cambia el comportamiento esperado. Escribo el material del cambio en `<feature>_amend_request.md` para `/wf-spec-delta analyze <spec.md> --new-reqs <ese archivo>`. La task queda BLOQUEADA hasta resolver el delta."
+> "Esto no es una aclaración: cambia el comportamiento esperado. Dejo el material del cambio en `<feature>_amend_request.md` para tramitarlo como **evolución del spec**. La task queda BLOQUEADA hasta que se resuelva."
 
 Escribe ese archivo (la descripción de la ambigüedad + la decisión pendiente) junto al spec y termina.
 
@@ -125,6 +125,6 @@ Reporta:
 Siguiente paso según el caso:
 
 - Enmienda cerrada (anotación limpiada) y la task origen estaba `BLOQUEADA` →
-  > "CA-XXX aclarado (E-00X). Desbloquea la task y continúa: `/wf-task-run <tasks.md> --task T-00X` (el desbloqueo BLOQUEADA→EN_CURSO lo hace el propio task-run vía script)."
+  > "CA-XXX aclarado (E-00X). Dime cuándo retomamos esa task y sigue por donde estaba — el desbloqueo BLOQUEADA→EN_CURSO se hace solo al reanudarla."
 - Anotación pendiente →
-  > "CA-XXX aclarado (E-00X), pero la sección <X> del plan necesita revisión. Actualízala y re-valida con `/wf-plan-validate <plan.md>` — el sellado absorberá la enmienda y liberará las tasks retenidas."
+  > "CA-XXX aclarado (E-00X), pero la sección <X> del plan necesita revisión. Actualízala y pídeme que **re-valide el plan** — al sellarlo absorbe la enmienda y libera las tasks retenidas."

@@ -24,8 +24,7 @@ Modos soportados:
 - `apply <prd.md> --features F-001,F-002,...`
 
 Si falta argumento:
-> "Uso: `/wf-spec-sync-from-prd analyze <prd.md>`"
-> "Uso: `/wf-spec-sync-from-prd apply <prd.md> --features F-001,F-002`"
+> "Necesito el PRD y si quieres solo el diagnóstico o aplicar ya la resincronización (y sobre qué features)."
 
 ## Paso 2: Preconditions
 

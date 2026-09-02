@@ -27,8 +27,7 @@ Usa `kb-spec-expert` para aplicar los 3 checks. El Check 1 mapea qué elementos 
 Extrae de `$ARGUMENTS` el path del archivo a analizar.
 
 Si no hay argumento, informa al usuario:
-> "Uso: `/wf-spec-analyze <archivo.md>`"
-> "Ejemplo: `/wf-spec-analyze docs/requisitos.md`"
+> "Necesito el path del PRD o documento de requisitos que quieres analizar."
 
 ---
 
@@ -42,7 +41,7 @@ Verifica que el archivo existe:
 Si no existe → informa al usuario con la ruta exacta y detén.
 
 Si el nombre termina en `_spec.md`, `_plan.md` o `_tasks.md` → informa:
-> "Este archivo parece un artefacto posterior del pipeline SDD. `/wf-spec-analyze` opera sobre PRDs o documentos de requisitos previos a Spec."
+> "Este archivo parece un artefacto posterior del pipeline SDD. El análisis previo opera sobre PRDs o documentos de requisitos previos a Spec."
 
 **Readiness del PRD (advisory, [[D-020]]).** Analyze solo produce un `_analysis.md` (no genera specs), así que **no bloquea**, pero **sí surfacea** las asunciones sin confirmar del PRD —la red que la fase PRD promete pero que este análisis, por sí solo, no resolvía—:
 ```
@@ -197,9 +196,9 @@ Tras escribir el archivo, informa:
 - Veredicto del Estado de preparación para Specs
 - Resumen: cuántos elementos del Spec se generarán desde cero vs. ya parciales en PRD, cuántas contaminaciones técnicas detectadas (si las hay), cuántos `[P-XXX]` pendientes (desglosados: CRÍTICOS e INFORMATIVOS)
 - Siguiente paso:
-  - Si veredicto = `LISTO_PARA_SPECS`: "Anota cualquier aclaración adicional en `<path>_analysis.md` y ejecuta `/wf-spec-features-first <archivo.md>` para el flujo completo, o `/wf-spec-discover <archivo.md> --analysis <path>_analysis.md` para el paso a paso."
+  - Si veredicto = `LISTO_PARA_SPECS`: "Anota cualquier aclaración adicional en `<path>_analysis.md`. Cuando quieras, pídeme que **genere las specs por feature**; o si prefieres ir paso a paso, que **descubra primero las features**."
   - Si veredicto = `LISTO_PARA_SPECS_CON_PREGUNTAS`: **no basta con decir "responde los pendientes"** — quien tiene que contestar no debería tener que bucear en el informe para saber qué le toca. Da las tres cosas: (1) el **path exacto** del `_analysis.md`; (2) la lista de gaps `[CRÍTICO]`, cada uno como `[P-XXX] — <su "Pregunta para el cliente" en una línea>`; (3) qué se sustituye literalmente: en el bloque de cada gap, `- **Respuesta**: _(pendiente)_` → la respuesta. Y cierra con las dos vías: "(a) resolver primero los gaps `[CRÍTICO]` y ejecutar `/wf-spec-features-first <archivo.md>`; (b) continuar igualmente con `/wf-spec-features-first <archivo.md> --allow-open-critical-gaps` para aceptar HUs `[INCOMPLETO]`."
 
     > **Las respuestas las escribe el usuario en el fichero** ([[D-042]], tabla de ámbito en `kb-gap-conventions`). Si prefiere dictarlas en la conversación, el hilo principal las aplica con `sdd-analysis-gaps.py --answer P-XXX "texto"` — **nadie edita el `_analysis.md` a mano desde main**, y nadie inventa el contenido de una respuesta.
   - Si veredicto = `REQUIERE_LIMPIEZA_PRD`: "Hay contaminación técnica en el PRD. Tienes dos vías para limpiarlo: (a) aplicar tú mismo las reescrituras de la sección Pureza del análisis; (b) delegar la limpieza al agente `prd-expert` o ejecutar `/wf-prd-review <archivo.md>` para un diagnóstico previo más estructurado antes de corregir. Tras la corrección, vuelve a ejecutar `/wf-spec-analyze <archivo.md>`."
-  - Si detectaste cambio de producto: "Antes de continuar con Specs, formaliza el cambio en el PRD con `/wf-prd-change <archivo.md> --new-reqs <cambio.md>` y luego evalúa impacto con `/wf-prd-sync-impact <archivo.md>`."
+  - Si detectaste cambio de producto: "Antes de continuar con Specs hay que **formalizar el cambio en el PRD** — dímelo y lo abro (`/wf-prd-change <archivo.md> --new-reqs <cambio.md>` y luego evalúa impacto con `/wf-prd-sync-impact <archivo.md>`."

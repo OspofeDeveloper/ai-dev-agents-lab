@@ -30,15 +30,14 @@ Extrae de `$ARGUMENTS`:
   - **Path del delta analysis**: el tercer argumento
 Si no hay argumento o el modo no es válido, informa al usuario:
 > "Uso:"
-> - "`/wf-spec-delta analyze <feature_spec.md> --new-reqs <description.md>`"
-> - "`/wf-spec-delta apply <feature_spec.md> <feature_delta_analysis.md>`"
+> "Puedo hacer dos cosas: **analizar** el cambio sobre el spec (te digo qué HUs y CAs habría que añadir, modificar o eliminar, sin tocar nada), o **aplicar** un análisis de cambio que ya hayas revisado. Dime cuál, el spec, y dónde está la descripción del cambio."
 
 Ejemplos:
 - `analyze features/auth/spec/auth_spec.md --new-reqs new_requirements.md`
 - `apply features/auth/spec/auth_spec.md features/auth/spec/auth_delta_analysis.md`
 
 Si el usuario intenta usar `resolve`, remítele a:
-> "`/wf-spec-gap-resolve <feature_spec.md> [--analysis <path_analysis.md>]`"
+> "Para eso lo que toca es completar las historias incompletas del spec con las respuestas del análisis — pídemelo y lo hago."
 
 ---
 

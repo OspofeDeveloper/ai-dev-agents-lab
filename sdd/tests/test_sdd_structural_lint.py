@@ -184,6 +184,60 @@ class StructuralLintTest(unittest.TestCase):
         _, types = types_in(self.root)
         self.assertNotIn("AGENT-DISPATCH-UNSYNCED", types)
 
+    # === USER-FACING-COMMAND (11.10) ======================================
+    def test_user_facing_command_flagged(self):
+        # Un mensaje dictado al usuario NO lleva comandos: si los ve, los teclea,
+        # y al teclearlos pasa argumentos a mano saltandose las validaciones que
+        # hace el hilo principal al construir la invocacion.
+        write(self.root / "spec" / "skills" / "wf-x" / "SKILL.md",
+              skill_md("wf-x", 'Si falta el argumento, informa:\n'
+                               '> "Uso: `/wf-x <archivo.md>`"\n'))
+        r, types = types_in(self.root)
+        self.assertIn("USER-FACING-COMMAND", types, r.stdout)
+        self.assertNotIn("blocking", r.stdout)
+
+    def test_user_facing_command_flagged_in_option_list(self):
+        # Tambien en listas de opciones dictadas (`> - "..."`).
+        write(self.root / "spec" / "skills" / "wf-x" / "SKILL.md",
+              skill_md("wf-x", '> - "`/wf-x analyze <spec.md>`"\n'))
+        _, types = types_in(self.root)
+        self.assertIn("USER-FACING-COMMAND", types)
+
+    def test_natural_language_message_not_flagged(self):
+        # El arreglo: la misma parada, dicha como accion y no como invocacion.
+        write(self.root / "spec" / "skills" / "wf-x" / "SKILL.md",
+              skill_md("wf-x", 'Si falta el argumento, informa:\n'
+                               '> "Necesito el path del documento que quieres analizar."\n'))
+        _, types = types_in(self.root)
+        self.assertNotIn("USER-FACING-COMMAND", types)
+
+    def test_agent_prose_naming_a_workflow_not_flagged(self):
+        # Prosa dirigida al AGENTE (sin comillas de apertura): es un puntero de
+        # invocacion legitimo, no un mensaje al usuario.
+        write(self.root / "spec" / "skills" / "wf-x" / "SKILL.md",
+              skill_md("wf-x", "Si el PRD no esta sellado, remite a `wf-prd-review`.\n"))
+        _, types = types_in(self.root)
+        self.assertNotIn("USER-FACING-COMMAND", types)
+
+    def test_agent_blockquote_with_inner_quotes_not_flagged(self):
+        # Falso positivo real cazado al estrenar la regla: prosa al agente, en
+        # blockquote, con comillas POR DENTRO (un argumento shell). El mensaje
+        # dictado ABRE con comilla; esto no.
+        write(self.root / "spec" / "skills" / "wf-x" / "SKILL.md",
+              skill_md("wf-x", '> (`!grep -nE \'^version:\' "<prd>"`). Es lo que permite a\n'
+                               '> `wf-spec-discover` comprobar la version.\n'))
+        _, types = types_in(self.root)
+        self.assertNotIn("USER-FACING-COMMAND", types)
+
+    def test_delegation_prompt_keeps_the_skill_path(self):
+        # Un prompt de delegacion es agente->agente y DEBE nombrar el SKILL.md.
+        # No lleva la forma `> "`, asi que la regla no lo toca.
+        write(self.root / "spec" / "skills" / "wf-x" / "SKILL.md",
+              skill_md("wf-x", 'Agent(\n  prompt: "Lee `.claude/skills/wf-y/SKILL.md` '
+                               'y ejecuta sus pasos TU MISMO."\n)\n'))
+        _, types = types_in(self.root)
+        self.assertNotIn("USER-FACING-COMMAND", types)
+
     # === AGENT-TOOL-CLASH (D-051) =========================================
     def _auditor(self):
         write(self.root / "spec" / "agents" / "mi-auditor.md",

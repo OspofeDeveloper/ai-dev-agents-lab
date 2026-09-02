@@ -9,7 +9,12 @@ Dos trabajos, los dos mecanizables al 100% y hoy hechos a ojo (ver DECISIONS D-0
    `wf-spec-gap-resolve`. Hasta ahora lo decidía un agente leyendo prosa: contar
    marcadores `_(pendiente)_` no es juicio, es un conteo.
 
-2. `--answer` — escribir la respuesta que el usuario DICTA en el chat en vez de
+2. `--list` — los gaps con su PREGUNTA, para que el orquestador arme el gate sin abrir
+   el fichero. `--check` da recuento e IDs, pero el mensaje del gate tiene que decir QUÉ
+   se pregunta en cada uno; hasta ahora eso solo llegaba dentro del informe del delegado,
+   y una sesión que retomaba el trabajo se quedaba sin vía sancionada.
+
+3. `--answer` — escribir la respuesta que el usuario DICTA en el chat en vez de
    editar el fichero. La vía normativa sigue siendo que el usuario edite el
    `_analysis.md`; cuando dicta, el hilo principal ejecuta este script y NO hace
    `Read`/`Edit`/`Write` del artefacto (mismo reparto que `sdd-prd-apply.py` en la
@@ -29,7 +34,10 @@ Se aceptan campos EXTRA dentro del bloque (los informes reales añaden p. ej.
 
 Uso:
     sdd-analysis-gaps.py <analysis.md> --check [--json]
+    sdd-analysis-gaps.py <analysis.md> --list [--json]
     sdd-analysis-gaps.py <analysis.md> --answer P-001 "texto de la respuesta" [--force] [--json]
+    sdd-analysis-gaps.py <analysis.md> --export-answers
+    sdd-analysis-gaps.py <analysis.md> --import-answers <respuestas.json> [--force] [--json]
 
 Exit codes: 0 = ok; 1 = error de uso o IO; 2 = veredicto bloqueante / precondición fallida.
 
@@ -210,6 +218,59 @@ def apply_answer(text: str, gap_id: str, answer: str, force: bool):
     return new_text, result
 
 
+QUESTION_RE = re.compile(
+    r"^\s*[-*+]\s*\**\s*Pregunta para el cliente\s*\**\s*:\s*(?P<q>.*)$")
+
+
+def list_gaps(text: str, source: str) -> dict:
+    """Los gaps con su PREGUNTA, para que el orquestador arme el gate sin abrir el fichero.
+
+    `--check` da el recuento y los IDs, pero el mensaje del gate tiene que decir
+    **qué se pregunta en cada uno** ([[D-042]]). Hasta ahora eso solo llegaba dentro
+    del informe del delegado, así que en una sesión que retoma el trabajo —los gaps se
+    responden un martes y se sigue el jueves— main se quedaba sin vía sancionada y
+    acababa grepeando prosa del artefacto ([[D-048]]). Esto es esa vía.
+
+    Emite metadatos, no el documento: id, severidad, flags, título, pregunta y si está
+    respondida. **No** emite el texto de la respuesta — para eso está `--export-answers`.
+    """
+    lines = text.splitlines()
+    gaps = parse_gaps(text)
+    # La pregunta vive dentro del bloque del gap: entre su encabezado y el siguiente.
+    starts = []
+    for i, line in enumerate(lines):
+        if GAP_HEADING_RE.match(line):
+            starts.append(i)
+    bounds = {}
+    for n, s in enumerate(starts):
+        end = starts[n + 1] if n + 1 < len(starts) else len(lines)
+        for j in range(s + 1, end):
+            if HEADING_RE.match(lines[j]) and not GAP_HEADING_RE.match(lines[j]):
+                end = j
+                break
+        bounds[s] = end
+    questions = {}
+    for n, s in enumerate(starts):
+        m = GAP_HEADING_RE.match(lines[s])
+        gid = m.group("id")
+        for j in range(s + 1, bounds[s]):
+            qm = QUESTION_RE.match(lines[j])
+            if qm:
+                questions[gid] = qm.group("q").strip()
+                break
+    return {
+        "action": "list",
+        "source": source,
+        "total": len(gaps),
+        "gaps": [
+            {"id": g["id"], "severity": g["severity"], "flags": g["flags"],
+             "title": g["title"], "question": questions.get(g["id"]),
+             "answered": g["answered"]}
+            for g in gaps
+        ],
+    }
+
+
 def _norm_title(title: str) -> str:
     """Título normalizado para emparejar: minúsculas, espacios colapsados, sin
     puntuación de cierre. NO se hace matching difuso a propósito (ver export_answers)."""
@@ -288,6 +349,7 @@ def _parse_args(argv):
     force = False
     do_check = False
     do_export = False
+    do_list = False
     import_path = None
     answer = None
     rest = []
@@ -301,6 +363,8 @@ def _parse_args(argv):
             do_check = True
         elif a == "--export-answers":
             do_export = True
+        elif a == "--list":
+            do_list = True
         elif a == "--import-answers":
             import_path = next(it, None)
             if import_path is None:
@@ -313,22 +377,22 @@ def _parse_args(argv):
             answer = (gap_id, value)
         else:
             rest.append(a)
-    return as_json, force, do_check, do_export, import_path, answer, rest
+    return as_json, force, do_check, do_export, do_list, import_path, answer, rest
 
 
 def main() -> int:
     try:
-        (as_json, force, do_check, do_export, import_path,
+        (as_json, force, do_check, do_export, do_list, import_path,
          answer, rest) = _parse_args(sys.argv[1:])
     except GapError as e:
         print(f"ERROR: {e}", file=sys.stderr)
         return e.code
 
-    modes = [do_check, do_export, import_path is not None, answer is not None]
+    modes = [do_check, do_export, do_list, import_path is not None, answer is not None]
     if len(rest) != 1 or sum(1 for m in modes if m) != 1:
         print('ERROR: uso: sdd-analysis-gaps.py <analysis.md> --check [--json] | '
               '--answer P-XXX "texto" [--force] [--json] | --export-answers | '
-              '--import-answers <respuestas.json> [--force] [--json]', file=sys.stderr)
+              '--import-answers <respuestas.json> [--force] [--json] | --list', file=sys.stderr)
         return 1
 
     path = Path(rest[0])
@@ -340,6 +404,19 @@ def main() -> int:
 
     if do_export:
         print(json.dumps(export_answers(text, str(path)), ensure_ascii=False, indent=2))
+        return 0
+
+    if do_list:
+        result = list_gaps(text, str(path))
+        if as_json:
+            print(json.dumps(result, ensure_ascii=False))
+        else:
+            for g in result["gaps"]:
+                flags = "".join(f"[{f}]" for f in g["flags"])
+                mark = "✓" if g["answered"] else "·"
+                print(f"{mark} {g['id']}{flags} {g['title']}")
+                if g["question"]:
+                    print(f"    {g['question']}")
         return 0
 
     if import_path is not None:

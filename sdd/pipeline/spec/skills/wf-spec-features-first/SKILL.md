@@ -150,22 +150,73 @@ Verifica que el archivo PRD existe; si no → informa con ruta exacta y detén.
    !python3 .sdd/scripts/sdd-analysis-gaps.py "<path>_analysis.md" --check --json
    ```
    Da `verdict` (`CRITICAL_OPEN` / `CRITICAL_ANSWERED` / `VACUOUS`), `critical_open` y `critical_open_ids`. **Este conteo no se hace leyendo el informe**: contar marcadores `_(pendiente)_` no es juicio, y de él cuelgan las dos ramas duras de los puntos 5 y 6. Si el veredicto es `VACUOUS`, el documento no se ha podido parsear — **detente** y dilo, no lo trates como "sin gaps".
-4. **Si existe** → léelo para lo que **sí** es juicio: veredicto del análisis (`LISTO_PARA_SPECS`, `LISTO_PARA_SPECS_CON_PREGUNTAS`, `REQUIERE_LIMPIEZA_PRD`), presencia de `[PUEDE_REQUERIR_CR]`, y si las respuestas ya escritas introducen expansión funcional no comprometida.
+4. **Si existe** → **no lo leas.** Lo que necesitas sale de dos sitios, y ninguno es abrir el artefacto ([[D-051]]):
+   - **Estado de cada gap** —IDs, severidad, **flags**, título, **su pregunta**, y si está respondido— del script:
+     ```bash
+     !python3 .sdd/scripts/sdd-analysis-gaps.py "<path>_analysis.md" --list --json
+     ```
+   - **Veredicto del análisis**, con una extracción acotada de metadatos:
+     ```bash
+     !grep -oE 'LISTO_PARA_SPECS_CON_PREGUNTAS|LISTO_PARA_SPECS|REQUIERE_LIMPIEZA_PRD' "<path>_analysis.md" | head -1
+     ```
+
+   > **Por qué esto era un agujero, y no un detalle ([[D-051]]).** El texto anterior te pedía
+   > *"léelo para lo que sí es juicio… y si las respuestas ya escritas introducen expansión
+   > funcional"*, en contradicción directa con la Regla de oro de este mismo SKILL. No se notó
+   > porque en el caso habitual las respuestas te las **dicta el usuario** en la conversación y
+   > ya las tienes en contexto. Pero el caso normal de verdad es el otro: los gaps se responden
+   > un martes y se sigue el jueves, en **sesión nueva**. Ahí no tienes el texto de ninguna
+   > respuesta, y la única forma de "inspeccionarlas" sería abrir el fichero.
+   >
+   > **Tú no juzgas respuestas: enrutas por el flag y delegas el juicio** (punto 8). El
+   > `PUEDE_REQUERIR_CR` que viene en `flags` es exactamente el disparador que necesitas, y lo
+   > puso el analyze precisamente para esto. Mismo reparto que [[D-031]]: citas el veredicto
+   > mecánico y la lectura la hace quien tiene el documento delante.
 5. Si el veredicto del análisis es `REQUIERE_LIMPIEZA_PRD` → **DETENERSE** e informar al usuario:
    > "El análisis previo marca `REQUIERE_LIMPIEZA_PRD`. Corrige la contaminación técnica del PRD antes de continuar y vuelve a ejecutar el flujo."
 6. Si el script dio `CRITICAL_OPEN` y **no** se pasó `--allow-open-critical-gaps` de entrada, o si el análisis está **recién generado** (punto 2) → **presenta el gate**.
 
    El texto que acompaña a la pregunta **no puede ser genérico**: quien tiene que responder no debería bucear en el informe para saber qué le toca. Con los IDs que devolvió el script (punto 3), da el **path exacto**, la lista de `[P-XXX]` `[CRÍTICO]` **cada uno con su pregunta en una línea**, y qué se sustituye (`- **Respuesta**: _(pendiente)_`). Las preguntas salen del informe del delegado o de `--list`; no abras el fichero para redactarlas.
 
-   Y después pregunta con `AskUserQuestion`:
-   - *Responderlos primero* (recomendada) — el flujo se detiene aquí. El usuario los escribe en el `_analysis.md`, o **te los dicta y los aplicas tú con el script** (punto siguiente). Cuando estén cerrados, se retoma.
-   - *Continuar aceptando el riesgo* — equivale a `--allow-open-critical-gaps`: sigues al Paso 3 dejando constancia explícita de que las HUs afectadas podrán salir `[INCOMPLETO]` y quedarán bloqueadas para plan/tasks hasta completarse con `/wf-spec-gap-resolve`.
-   - *Responder solo algunas* — el usuario cierra las que tenga claras ahora; el resto quedan abiertas y se vuelve a evaluar el gate.
+   Y después pregunta con `AskUserQuestion`. **Las tres opciones van en un solo eje —cómo se
+   responde— y la vía de dictar es una opción del menú, no una frase dentro de otra opción**
+   ([[D-051]]):
+   - *Me los dictas aquí* (recomendada) — los vas aplicando con el script (punto siguiente),
+     uno por gap; el `_analysis.md` cambia **solo** en esas líneas. Puede cerrar solo los que
+     tenga claros: reevalúas el gate con los que queden.
+   - *Los escribes tú en el fichero* — el flujo se detiene aquí. Le das el path y los IDs con su
+     pregunta, y se retoma cuando estén cerrados.
+   - *Continuar aceptando el riesgo* — equivale a `--allow-open-critical-gaps`: sigues al Paso 3
+     dejando constancia explícita de que las HUs afectadas podrán salir `[INCOMPLETO]` y
+     quedarán bloqueadas para plan/tasks hasta completarse.
+
+   > **Por qué la vía de dictar sube al menú ([[D-051]]).** Está sancionada desde [[D-042]], pero
+   > vivía **enterrada en la descripción de otra opción** — y una descripción se resume al
+   > presentarla, así que la vía desaparecía de la pantalla y el usuario no llegaba a saber que
+   > existía. Es la misma forma del vacío que cerró [[D-038]] en la fase PRD: una ruta que el
+   > contrato contempla y que nadie ofrece. Ofrecer las dos también deja la elección donde debe
+   > estar: **quién teclea** es cosa del usuario; **quién compone la respuesta** es siempre él.
+   >
+   > *"Responder solo algunas"* **desaparece como opción** y pasa a la descripción de las dos
+   > primeras, que es donde ocurre de verdad: si dicta dos de cuatro, la reevaluación del gate es
+   > automática y no hace falta anunciarla como una rama aparte. Mezclaba dos ejes —cuántas y
+   > dónde— en un menú de tres.
 
    Si el análisis estaba recién generado pero el script **no** reporta críticos abiertos, el gate se reduce a dos vías: *revisar el análisis antes de generar* o *continuar ya*.
 7. Si el script dio `CRITICAL_OPEN` y `--allow-open-critical-gaps` vino **de entrada** en `$ARGUMENTS` → no presentes el gate; continúa al Paso 3 dejando constancia explícita de que las HUs afectadas podrán salir `[INCOMPLETO]`.
-8. Si el script dio `CRITICAL_ANSWERED`, inspecciona las respuestas ya resueltas. Si alguna introduce señales de cambio de producto según `kb-product-change-governance`:
-   - si **NO** vino `--allow-derived-scope-from-analysis` de entrada → **presenta el gate**. Di qué respuesta concreta introduce qué señal (nueva entidad persistente, catálogo reutilizable, nueva granularidad funcional o flujo adicional no comprometido en el PRD) y pregunta con `AskUserQuestion`:
+8. Si el script dio `CRITICAL_ANSWERED`, hay que saber si alguna respuesta introduce señales de cambio de producto según `kb-product-change-governance`. **Tú no las lees ([[D-051]]):** mira los `flags` que devolvió `--list --json` y **delega el juicio**.
+
+   - **Si ningún gap respondido lleva `PUEDE_REQUERIR_CR`** → no hay disparador. Continúa al Paso 3.
+   - **Si alguno lo lleva y está respondido** → delega la evaluación al agente que **sí** tiene el PRD y el análisis delante, y espera su veredicto:
+     ```
+     Agent(
+       subagent_type: "sdd-spec-explorer",
+       run_in_background: false,
+       prompt: "Los gaps de <path>_analysis.md están respondidos (`--check` da CRITICAL_ANSWERED). Los siguientes llevan el flag `[PUEDE_REQUERIR_CR]`: <IDs>. Relee sus respuestas y evalúa con `kb-product-change-governance` si alguna introduce señal de cambio de producto —entidad persistente nueva, catálogo reutilizable, nueva granularidad funcional, modelo owner nuevo o flujo no comprometido en el PRD—. Contrasta cada respuesta con lo que el PRD comprometía de verdad, citando su texto. Informa: veredicto (SIN_SEÑALES | CON_SEÑALES), y por cada señal el ID del gap, qué introduce y con qué línea del PRD choca."
+     )
+     ```
+     El flag lo puso el analyze **precisamente para esto**: marca los gaps cuya futura respuesta era de riesgo, así que es el índice de qué hay que reevaluar y evita releerlo todo.
+   - **Si su veredicto es `CON_SEÑALES`** y **NO** vino `--allow-derived-scope-from-analysis` de entrada → **presenta el gate**. Di qué respuesta concreta introduce qué señal —**citando el informe del delegado, no tu lectura**— y pregunta con `AskUserQuestion`:
      - *Formalizar el cambio en el PRD* (recomendada) — el flujo se detiene; el cambio se abre con `wf-prd-change <prd.md> --new-reqs <cambio.md>` y los derivados se generan después, sobre PRD limpio.
      - *Continuar con alcance derivado* — equivale a `--allow-derived-scope-from-analysis`: sigues dejando constancia de que el discovery, `_features.md` y los specs marcarán ese alcance como **scope derivado** y no como PRD puro.
    - si `--allow-derived-scope-from-analysis` vino **de entrada** → no presentes el gate; continúa dejando constancia explícita de que el discovery, `_features.md` y los specs deberán marcar ese alcance como **scope derivado** y no como PRD puro.
@@ -183,7 +234,7 @@ Verifica que el archivo PRD existe; si no → informa con ruta exacta y detén.
 El `_discovery.md` **debe existir previamente** (los IDs `F-XXX` solo tienen sentido contra un discovery existente). Busca `<basename>_discovery.md` en el directorio de artefactos prd (`artifacts.prd` de `.sdd/project-init.json`, si está declarado) y en el mismo directorio del PRD.
 - Si existe → continúa al Paso 4 reutilizándolo.
 - Si NO existe → **detente** e informa al usuario:
-  > "Has indicado `--features <IDs>`, pero no existe `<path>_discovery.md`. Las features se identifican en el discovery — ejecuta primero `/wf-spec-discover <prd.md>`, revisa el mapa generado y vuelve a ejecutar con los IDs que correspondan."
+  > "Has indicado features concretas, pero todavía no existe `<path>_discovery.md`. Las features no están en el PRD: se identifican descubriéndolas. Déjame descubrirlas primero, revisas el mapa, y me dices qué IDs quieres de esa lista."
 
 **Caso B — `--features` no está presente**:
 Delega el discovery con la tool `Agent` ([[D-043]]):

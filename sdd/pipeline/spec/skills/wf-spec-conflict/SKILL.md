@@ -27,8 +27,7 @@ Extrae de `$ARGUMENTS`:
 Si no hay `--features-dir`, intenta inferir el directorio de features como `features/` relativo al directorio del spec objetivo.
 
 Si no hay argumento, informa al usuario:
-> "Uso: `/wf-spec-conflict <feature_spec.md> --features-dir <path/features/>`"
-> "Ejemplo: `/wf-spec-conflict features/auth/spec/auth_spec.md --features-dir features/`"
+> "Necesito el spec de la feature y el directorio donde viven las demás, para poder compararlos."
 
 ---
 
@@ -36,7 +35,7 @@ Si no hay argumento, informa al usuario:
 
 1. Verifica que el spec objetivo existe.
 2. Busca todos los archivos `*_spec.md` dentro del directorio `--features-dir`, cubriendo ambos layouts de feature: `features/*/spec/*_spec.md` (subcarpetas) y `features/*/*_spec.md` (plano legacy).
-3. Si no hay specs en el directorio → informa: "No se encontraron specs en `<features-dir>`. Asegúrate de haber ejecutado `/wf-spec-features-first` o `/wf-spec-fast-track` o de que la ruta es correcta."
+3. Si no hay specs en el directorio → informa: "No se encontraron specs en `<features-dir>`. Comprueba la ruta, o genera antes los specs por feature."
 4. Si solo hay 1 spec en total (contando el objetivo) → informa: "Solo hay 1 spec. Se necesitan al menos 2 specs para verificar conflictos."
 
 ---
@@ -124,5 +123,5 @@ Escribe el informe en el archivo correspondiente.
 - Resumen: estado general (SIN_CONFLICTOS o CONFLICTOS_DETECTADOS)
 - Si hay conflictos: cuántos de severidad ALTA y cuántos MEDIA
 - Siguiente paso:
-  - Sin conflictos: "Los specs están listos. Continúa con `/wf-prepare-plan generate <feature_spec.md>`"
-  - Con conflictos ALTA: "Resuelve los conflictos marcados como ALTA antes de continuar con `/wf-prepare-plan`. Edita los specs afectados y vuelve a ejecutar `/wf-spec-conflict` para verificar."
+  - Sin conflictos: "Los specs están listos para pasar a planificación cuando quieras."
+  - Con conflictos ALTA: "Resuelve los conflictos marcados como ALTA antes de planificar. Edita los specs afectados y pídeme una nueva revisión de conflictos para verificarlo."

@@ -2,6 +2,17 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.86.0 — 2026-09-02
+
+**El orquestador no lee respuestas: enruta por el flag** — [[DECISIONS D-052]]. Cierra los tres puntos que se cayeron al re-alcanzar [[DECISIONS D-051]], todos en la misma superficie (el gate de gaps críticos) y con la misma causa: el contrato pedía cosas que el hilo principal no puede hacer sin romper su propia Regla de oro.
+
+- ⚠ **El gate de gaps ofrece dictar como opción propia del menú.** La vía estaba sancionada desde [[DECISIONS D-042]] pero vivía **dentro de la descripción de otra opción** — y una descripción se resume al presentarla, así que desaparecía de la pantalla. Mismo vacío que cerró [[DECISIONS D-038]] en la fase PRD. *"Responder solo algunas"* se retira: mezclaba **cuántas** con **dónde**.
+- ⚠ **En sesión nueva el Paso 2.5 era inejecutable.** Pedía *"inspecciona las respuestas ya resueltas"*, que contradice la Regla de oro del mismo SKILL. No se notaba porque normalmente las respuestas te las dicta el usuario; pero el caso real es responder los gaps un martes y seguir el jueves. Ahora main **enruta por el flag `PUEDE_REQUERIR_CR`** y **delega** la evaluación de gobernanza a quien sí tiene el PRD delante, presentando el gate con el informe del delegado y no con su lectura.
+- ⚠ **`sdd-analysis-gaps.py --list`** — los gaps con **su pregunta**, para armar el gate sin abrir el artefacto. El SKILL ya citaba `--list`; **no existía**. No emite el texto de las respuestas: eso es `--export-answers`.
+- ⚠ **`Origen de alcance` gana criterio binario.** Antes decía *"según corresponda"* y cada pasada eligió una lectura: una marcó 2 de 4 features, la siguiente **las 8** sin haber alcance derivado. Un marcador puesto a todas no discrimina nada. Regla autocomprobable: `PRD + analysis respondido` y `Avisos de gobernanza: ninguno` no pueden ir juntos.
+- ⚠ **`SendMessage` sancionado como tercera vía de delegación**, con su forma de esperar: su `tool_result` es **un acuse**, no el informe, así que se cede el turno igual que en la vía (b); y a un agente reanudado se le **dan** las referencias, porque pudo compactarse entre medias.
+- **Regla de linter `USER-FACING-COMMAND` [warning]:** mensaje dictado al usuario (`> "..."`) que contiene un `wf-*`. **Fase Spec barrida entera: 30 → 0.** Quedan 83 en design (38), plan (16), tasks (13), prd (9) y meta (7) — su propio ítem, con el recuento a la vista para que baje.
+
 ## 0.85.0 — 2026-09-01
 
 **El ecosistema se conduce hablando, y sus artefactos dejan de enseñar comandos** — ROADMAP 11.7 y 11.8. Dos huecos detectados durante una pasada de conformance, ambos del mismo tipo: cosas que el proyecto del usuario recibe y que dicen algo que no es.

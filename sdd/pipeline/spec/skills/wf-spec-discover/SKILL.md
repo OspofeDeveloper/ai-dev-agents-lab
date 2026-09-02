@@ -28,8 +28,7 @@ Extrae de `$ARGUMENTS`:
 - **Flag opcional**: `--allow-derived-scope-from-analysis` — permite continuar aunque el `_analysis.md` introduzca expansión funcional no consolidada todavía en el PRD. Sin este flag, el workflow se detiene y remite a `wf-prd-change`.
 
 Si no hay argumento, informa al usuario:
-> "Uso: `/wf-spec-discover <prd_archivo.md> [--analysis <analysis.md>] [--allow-derived-scope-from-analysis]`"
-> "Ejemplo: `/wf-spec-discover docs/requisitos.md --analysis docs/requisitos_analysis.md`"
+> "Necesito el path del PRD del que quieres descubrir las features. Si ya hay un análisis previo respondido, dímelo y lo uso como contexto."
 
 ---
 
@@ -158,11 +157,33 @@ Este mapeo es crítico: será usado por `wf-spec-fast-track` en modo scoped para
 
 Consulta `${CLAUDE_SKILL_DIR}/references/discovery_template.md` para la estructura exacta del artefacto.
 
-Si se usó `--analysis` y todas las respuestas resueltas eran compatibles con el PRD vigente:
-- rellena `Origen de alcance` como `PRD` o `PRD + analysis respondido` según corresponda
-- rellena `Avisos de gobernanza` como `ninguno` salvo que el contexto indique una excepción ya formalizada en el PRD o un change request explícito referenciado
+**`Origen de alcance` es POR FEATURE y su criterio es binario ([[D-051]]).** No describe qué
+entradas usaste tú; describe **de dónde sale el alcance de esa feature concreta**:
 
-Si el análisis no añade nada relevante al scope, mantén `Origen de alcance: PRD`.
+- **`PRD`** — todo lo que esa feature cubre está comprometido en el PRD. **Este es el caso
+  normal**, incluso habiendo usado `--analysis`: leer el análisis para desambiguar no cambia
+  el origen del alcance.
+- **`PRD + analysis respondido`** — **solo** si el alcance de esa feature incluye algo que
+  **únicamente** existe en una respuesta del análisis y **no** está en el PRD. Va siempre
+  acompañado de un `Avisos de gobernanza` que **cita el `P-XXX`** responsable.
+
+`Avisos de gobernanza` es `ninguno` salvo que esa feature arrastre alcance derivado (o una
+excepción ya formalizada en el PRD / un change request referenciado).
+
+> **Por qué esto estaba mal y por qué importa ([[D-051]]).** Antes decía *"como `PRD` o `PRD +
+> analysis respondido` **según corresponda**"* sin definir el corte, y el campo admitía dos
+> lecturas: "usé el analysis como entrada" vs "el alcance deriva de una respuesta". Medido en
+> conformance: una pasada marcó **2 de 4** features y la siguiente marcó **las 8** sin haber
+> alcance derivado en ninguna.
+>
+> Un marcador puesto a todas **no discrimina nada**: `Origen de alcance` existe para que una
+> persona sepa de un vistazo qué features tienen el alcance sin consolidar, y con el valor
+> puesto en bloque deja de responder a eso. Y de paso vuelve inverificable el probe de
+> `CU-3.b`, que exige el contraste entre marcadas y no marcadas.
+>
+> **Regla de coherencia, autocomprobable:** `Origen de alcance: PRD + analysis respondido` y
+> `Avisos de gobernanza: ninguno` **no pueden ir juntos** en la misma feature. Si no tienes un
+> `P-XXX` que citar, el origen es `PRD`.
 
 Determina el directorio de salida (regla de layout): si `.sdd/project-init.json` (en el directorio actual o un ancestro) declara `artifacts.prd`, usa ese directorio (relativo a la raíz que contiene `.sdd/`); si no, usa el mismo directorio que el archivo de entrada. Nombre: nombre base del archivo de entrada + `_discovery.md`.
 - Ejemplo (sin mapa): `docs/requisitos.md` → `docs/requisitos_discovery.md`

@@ -82,7 +82,7 @@ Verifica (con `kb-decompose-expert`) que el documento describe una única capabi
 4. Si el inline analysis detecta un gap que no existe en el analysis previo → créalo normalmente
 5. Si una respuesta resuelta introduce señales de cambio de producto según `kb-product-change-governance`:
    - si **NO** se pasó `--allow-derived-scope-from-analysis` → **DETENERSE** con veredicto operativo `STOP_REQUIERE_PRD_CHANGE` e informar:
-     > "La respuesta a `[P-XXX]` introduce expansión funcional no consolidada en el PRD. Formaliza primero el cambio con `wf-prd-change` o re-ejecuta con `--allow-derived-scope-from-analysis` para generar el spec dejando el alcance marcado como derivado."
+     > "La respuesta a `[P-XXX]` introduce expansión funcional no consolidada en el PRD. Formaliza primero el cambio de producto sobre el PRD, o dime que quieres continuar asumiendo alcance derivado (`--allow-derived-scope-from-analysis` para generar el spec dejando el alcance marcado como derivado."
    - si **SÍ** se pasó `--allow-derived-scope-from-analysis` → continuar con veredicto operativo `CONTINUAR_CON_ALCANCE_DERIVADO`. Registra internamente:
      - gaps/respuestas que originan el alcance derivado
      - si la expansión crea modelo owner nuevo, catálogo reutilizable, granularidad funcional nueva o flujo adicional

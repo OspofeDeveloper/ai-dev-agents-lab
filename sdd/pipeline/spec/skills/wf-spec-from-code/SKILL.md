@@ -24,7 +24,7 @@ Tu rol: explorar el código con rigor de evidencia y delegar la redacción. La r
 - `generate <path_codigo> --capability <nombre> --scope <subdir>` — directo, una capacidad que el usuario ya nombra y acota (la validación humana es implícita)
 
 Sin modo válido → informa el uso. `generate --feature` sin `_code_discovery.md` existente → detén:
-> "No hay `_code_discovery.md`. Ejecuta primero `/wf-spec-from-code discover <path>` — el mapa de capacidades validado por el usuario es el gate de este flujo."
+> "No hay `_code_discovery.md`. Primero hay que **descubrir las capacidades del código** — ese mapa, validado por ti, es el gate de este flujo."
 
 ## Paso 2 (discover): Explorar el código y mapear capacidades
 
@@ -44,7 +44,7 @@ Agrupa en capacidades funcionales (`F-C-001`, `F-C-002`...) con: nombre, actor (
 Escribe `<nombre_proyecto|scope>_code_discovery.md` en el directorio raíz de artefactos spec (regla de layout: `artifacts.spec` de `.sdd/project-init.json` si está declarado; si no, el directorio actual). Incluye header con `Evidencia base: commit <SHA corto>` (`git rev-parse --short HEAD`).
 
 **Detente SIEMPRE aquí.** Presenta el mapa (ID, nombre, actor, superficie, confianza) y pide al usuario que confirme/corrija/descarte capacidades:
-> "Este mapa es lo que el código evidencia — revísalo antes de generar specs. ¿Qué capacidades son reales y cuáles quieres caracterizar? Cuando confirmes: `/wf-spec-from-code generate <path> --feature F-C-00X`"
+> "Este mapa es lo que el código evidencia — revísalo antes de generar specs. ¿Qué capacidades son reales y cuáles quieres caracterizar? Dime cuáles y genero su spec."
 
 Las correcciones del usuario se aplican al `_code_discovery.md` (marca las descartadas como `DESCARTADA — <motivo>`, no las borres).
 

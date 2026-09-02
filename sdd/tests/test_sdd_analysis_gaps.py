@@ -172,6 +172,50 @@ class AnalysisGapsTest(unittest.TestCase):
         r = run_script("sdd-analysis-gaps.py", path, "--answer", "P-001", "   ")
         self.assertEqual(r.returncode, 1)
 
+    # === --list (D-052) ===================================================
+    # El gate tiene que decir QUE se pregunta en cada gap, y en una sesion que
+    # retoma el trabajo main no tiene el informe del delegado en contexto. Sin
+    # esta via, la unica forma de saberlo seria abrir el artefacto.
+    def test_list_emits_the_question_of_each_gap(self):
+        path = self.make(gap("P-001", "CRÍTICO"),
+                         gap("P-002", "INFORMATIVO", answer="Ya resuelto."))
+        r = run_script("sdd-analysis-gaps.py", path, "--list", "--json")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        data = json.loads(r.stdout)
+        self.assertEqual(data["total"], 2)
+        self.assertEqual([g["id"] for g in data["gaps"]], ["P-001", "P-002"])
+        self.assertIn("pregunta concreta", data["gaps"][0]["question"])
+        self.assertFalse(data["gaps"][0]["answered"])
+        self.assertTrue(data["gaps"][1]["answered"])
+
+    def test_list_carries_the_flags_that_drive_the_routing(self):
+        # `PUEDE_REQUERIR_CR` es el disparador con el que el orquestador decide
+        # si delegar la evaluacion de gobernanza, sin leer ninguna respuesta.
+        path = self.make(gap("P-001", "CRÍTICO", extra_flags="[PUEDE_REQUERIR_CR]"))
+        r = run_script("sdd-analysis-gaps.py", path, "--list", "--json")
+        data = json.loads(r.stdout)
+        self.assertIn("PUEDE_REQUERIR_CR", data["gaps"][0]["flags"])
+
+    def test_list_does_not_leak_the_answer_text(self):
+        # --list es metadatos. El texto de las respuestas se saca con
+        # --export-answers, que es otra cosa y tiene otro proposito.
+        path = self.make(gap("P-001", "CRÍTICO", answer="Secreto de negocio."))
+        r = run_script("sdd-analysis-gaps.py", path, "--list", "--json")
+        self.assertNotIn("Secreto de negocio", r.stdout)
+
+    def test_list_on_document_without_gaps_is_empty_not_an_error(self):
+        # A diferencia de --check, listar cero gaps no es un veredicto: no bloquea.
+        path = self.root / "vacio.md"
+        write(path, "# Sin bloques de gap\n")
+        r = run_script("sdd-analysis-gaps.py", path, "--list", "--json")
+        self.assertEqual(r.returncode, 0)
+        self.assertEqual(json.loads(r.stdout)["total"], 0)
+
+    def test_list_is_exclusive_with_other_modes(self):
+        path = self.make(gap("P-001", "CRÍTICO"))
+        r = run_script("sdd-analysis-gaps.py", path, "--list", "--check")
+        self.assertEqual(r.returncode, 1)
+
     # === --export-answers / --import-answers (D-051) =====================
     # Regenerar un `_analysis.md` lo SOBRESCRIBE y se lleva por delante las
     # respuestas ya dadas. El emparejamiento es por ID **y** título porque el

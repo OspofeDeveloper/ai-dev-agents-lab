@@ -21,7 +21,7 @@ Usa `kb-product-change-governance` y `kb-traceability-rules` para aplicar criter
 Extrae el path del PRD.
 
 Si falta:
-> "Uso: `/wf-prd-sync-impact <prd.md>`"
+> "Necesito el path del PRD cuyo impacto sobre los derivados quieres medir."
 
 ## Paso 2: Descubrir artefactos relacionados
 

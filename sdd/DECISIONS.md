@@ -6,6 +6,40 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-052 — El orquestador no lee respuestas: enruta por el flag. Y una vía sancionada que vive escondida en la descripción de otra opción no existe
+
+- **Fecha:** 2026-09-02 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-026]] (el override lo arma el usuario), [[D-031]]/[[D-042]] (quién lee y quién escribe), [[D-038]] (el vacío de la vía no ofrecida), [[D-048]] (frontera de `Bash`), [[D-051]] (de la que esto es la parte que se quedó fuera), ROADMAP 11.10 y 11.11.
+
+**Contexto.** Tres defectos que comparten superficie —el Paso 2.5 de `wf-spec-features-first`— y una causa: **el contrato pedía cosas que main no puede hacer sin romper su propia Regla de oro**.
+
+1. **El menú del gate escondía una vía sancionada.** Desde [[D-042]] el usuario puede **dictar** las respuestas y que main las aplique con el script. Pero eso vivía **dentro de la descripción de la opción "Responderlos primero"**, y una descripción se resume al presentarla: la vía desaparecía de la pantalla. Es la forma exacta del vacío que cerró [[D-038]] en la fase PRD — una ruta que el contrato contempla y que nadie llega a ofrecer.
+2. **En sesión nueva, el Paso 2.5 era inejecutable.** Sus puntos 4 y 8 decían *"léelo para lo que sí es juicio"* e *"inspecciona las respuestas ya resueltas"*, en contradicción directa con la Regla de oro del mismo SKILL. No se notaba porque en el caso habitual las respuestas te las dicta el usuario y ya las tienes en contexto. Pero el caso normal de verdad es el otro: los gaps se responden un martes y se sigue el jueves. Medido en conformance (2026-09-02): sesión nueva, main sin el texto de ninguna respuesta, y la única forma de "inspeccionarlas" era abrir el fichero.
+3. **`--list` se citaba y no existía.** El SKILL decía *"las preguntas salen del informe del delegado o de `--list`"*. Comprobado: el script solo aceptaba `--check` y `--answer`. Referencia colgante — y encima la que habría tapado el agujero de (2).
+
+**Decisión.**
+
+1. **`sdd-analysis-gaps.py --list`** emite los gaps con **su pregunta**: id, severidad, flags, título, pregunta y si está respondido. **No** emite el texto de las respuestas (para eso está `--export-answers`). Es la vía sancionada para armar el gate sin abrir el artefacto.
+2. **El menú del gate pasa a un solo eje —cómo se responde— con la vía de dictar como opción propia:** *"Me los dictas aquí"* / *"Los escribes tú en el fichero"* / *"Continuar aceptando el riesgo"*. *"Responder solo algunas"* desaparece: mezclaba **cuántas** con **dónde**, y responder parcialmente ya funciona en las dos primeras.
+3. **Main no juzga respuestas: enruta por el flag y delega.** El `PUEDE_REQUERIR_CR` que el analyze puso en el gap es el disparador. Si hay alguno respondido, main **delega la evaluación de gobernanza** al `sdd-spec-explorer` —que sí tiene el PRD y el análisis delante— y presenta el gate **citando el informe del delegado, no su lectura**. Esto codifica lo que un run real ya hizo por su cuenta.
+4. **`Origen de alcance` gana criterio binario** ([[D-051]] lo dejó ambiguo): `PRD` salvo que el alcance de esa feature **solo** exista en una respuesta del análisis. Regla de coherencia autocomprobable: `PRD + analysis respondido` y `Avisos de gobernanza: ninguno` no pueden ir juntos.
+5. **`SendMessage` queda sancionado como tercera vía de delegación, con su propia forma de esperar.** Reanudar un delegado es mejor que relanzarlo, pero su `tool_result` es **un acuse**, no el informe: hay que ceder el turno igual que en la vía (b). Y un agente reanudado **puede haber perdido contexto**: las referencias se le dan en el mensaje, no se asumen.
+6. **Regla de linter `USER-FACING-COMMAND` [warning]** + barrido completo de la fase Spec (**30 → 0**). Un mensaje dictado al usuario no lleva comandos.
+
+**Alternativas descartadas.**
+
+- **Darle el PRD a main para que juzgue las respuestas.** Rompe [[D-031]] a cambio de duplicar un chequeo que ya existe aguas abajo, y encima peor: main juzgaría sin las `kb-*` del experto.
+- **Un cuarto punto en el menú ("¿dónde las escribes?") tras elegir "responderlos primero".** Es una segunda ronda de `AskUserQuestion` para una pregunta que cabe en el mismo menú.
+- **Que `--list` emitiera también las respuestas.** Mezcla dos propósitos y le pone a main en contexto justo lo que no debe leer.
+- **Hacer `USER-FACING-COMMAND` blocking.** La señal es de forma, no de semántica, y la propia regla tiene excepción legítima ("si el usuario pide el comando, se le da"). Warning con recuento que debe bajar.
+
+**Aprendizaje.**
+
+**Una opción de menú es lo que se ve, no lo que está escrito.** Si una vía solo vive en la descripción de otra, no existe para el usuario. Al diseñar un gate, cada camino que quieras que alguien pueda tomar necesita **su propia línea**.
+
+**Y el segundo, que es de método mío.** Al re-alcanzar [[D-051]] alrededor de seis hallazgos nuevos, estos tres puntos —que ya estaban acordados— se cayeron sin que nadie lo dijera. Los detectó el usuario al ver el gate en pantalla. Cuando una decisión cambia de alcance, lo que sale del alcance hay que **nombrarlo al salir**, no dejar que se evapore.
+
+---
+
 ## D-051 — Un read-only no se declara quitando `Write`, y regenerar un análisis no puede llevarse por delante las respuestas
 
 - **Fecha:** 2026-09-01 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-030]]/[[D-031]] (main no lee ni escribe artefactos), [[D-038]] (`allowed-tools` no es enforcement — esto es su corolario), [[D-042]] (quién escribe las respuestas de los gaps), [[D-048]] (frontera de `Bash`), ciclo de CU-7 del 2026-08-31/09-01.

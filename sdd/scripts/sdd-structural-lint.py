@@ -23,6 +23,7 @@ Checks (cada finding: severidad, tipo, archivo:linea, mensaje):
   FORK-ASKUSER-CONFLICT  [blocking]  wf con context: fork que declara/usa AskUserQuestion (un fork no puede preguntar).
   FORK-INTERVIEW         [warning]   wf con context: fork que entrevista o presenta gate de confirmacion en prosa (sin declarar AskUserQuestion): mismo bug latente.
   AGENT-MEMORY-DECLARED  [blocking]  Agente (o la plantilla de agente) que declara `memory:`: el estado vive en los artefactos, no en la memoria del agente.
+  USER-FACING-COMMAND    [warning]   mensaje dictado al usuario (`> "..."`) que contiene un `/wf-x` o un `wf-x`: los comandos son internos.
   AGENT-TOOL-CLASH       [blocking]  wf cuyo allowed-tools declara una tool que su `agent:` tiene en disallowedTools: manda el agente, la declaracion no habilita nada.
   AGENT-DISPATCH-UNSYNCED [blocking] wf que delega por la tool `Agent` sin `run_in_background: false`: los subagentes corren en background por defecto y la peticion de sincronia no se hace.
   FORK-ORCHESTRATOR      [blocking]  wf con context: fork cuyo cuerpo delega por la tool `Agent`: un fork no puede presentar gates ni conseguir el primer plano para sus delegados.
@@ -629,6 +630,63 @@ def check_agent_memory(findings):
                     "vuelve a todo el ecosistema."))
 
 
+USER_MSG_CMD_RE = re.compile(r"/wf-[a-z][a-z0-9-]*|`wf-[a-z][a-z0-9-]*")
+
+
+def check_user_facing_commands(findings):
+    """USER-FACING-COMMAND — un mensaje dictado al usuario que contiene un `wf-*`.
+
+       Los nombres de skill y los slash-commands son INTERNOS: sirven para invocar, no
+       para mostrarselos al usuario (SSoT: `pipeline/orchestration.md`, seccion
+       "Comunicacion con el usuario"). Si se surfacean, el usuario cree que debe teclear
+       comandos y pasa argumentos a mano, saltandose la construccion que hace el hilo
+       principal — que es donde viven las validaciones de precondicion.
+
+       Detecta la forma inequivoca: una linea de BLOCKQUOTE que ademas lleva comillas
+       (`> "..."`), que es como los SKILL.md dictan lo que hay que decirle al usuario.
+       La prosa dirigida al agente, las citas de decision y los punteros de invocacion
+       NO se marcan: van sin comillas y son legitimos.
+
+       Warning, no blocking: la senal es de forma, no de semantica, y un mensaje puede
+       caer legitimamente en la excepcion de la regla ("si el usuario pide el comando,
+       se le da"). El recuento es lo que importa, y debe bajar.
+    """
+    for skill_md in sorted(SDD_ROOT.rglob("SKILL.md")):
+        if is_excluded(skill_md):
+            continue
+        try:
+            text = skill_md.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        fm, body, body_start = split_frontmatter(text)
+        name = frontmatter_value(fm, "name") or skill_md.parent.name
+        if not name.startswith("wf-"):
+            continue
+        rp = relpath(skill_md)
+        for off, line in enumerate(body.splitlines()):
+            stripped = line.lstrip()
+            if not stripped.startswith(">"):
+                continue
+            # El mensaje dictado ABRE con comilla justo tras el marcador de cita
+            # (`> "..."`, o `> - "..."` en una lista de opciones). Exigirlo evita el
+            # falso positivo de la prosa dirigida al agente que lleva comillas por
+            # dentro (p. ej. un argumento shell entrecomillado a mitad de frase).
+            rest = stripped[1:].lstrip()
+            if rest.startswith("- "):
+                rest = rest[2:].lstrip()
+            rest = rest.lstrip("`")
+            if not rest.startswith('"'):
+                continue
+            m = USER_MSG_CMD_RE.search(line)
+            if not m:
+                continue
+            findings.append(Finding(
+                "warning", "USER-FACING-COMMAND", rp, body_start + off,
+                f"Mensaje al usuario con `{m.group(0)}` dentro. Los slash-commands y los "
+                f"nombres de skill son internos: descríbele la ACCION en lenguaje natural "
+                f"(\"pídeme que…\", \"dime si prefieres…\"), no la invocación."))
+
+
 def _agent_disallowed_map():
     """{nombre_de_agente: set(tools prohibidas)} leido de */agents/*.md."""
     out = {}
@@ -934,6 +992,7 @@ def run_all():
     check_name_mismatch(findings)
     check_agent_memory(findings)
     check_agent_tool_clash(findings)
+    check_user_facing_commands(findings)
     check_agent_dispatch(findings)
     check_fork_orchestrator(findings)
     check_agent_prompt_redispatch(findings)
