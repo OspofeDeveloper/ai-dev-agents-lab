@@ -205,4 +205,4 @@ Escribe el artefacto generado en ese path.
 
 Tras escribir el archivo, informa: path generado, número de features, tabla resumen (Feature | Actor principal | RFs cubiertos | Shared models). Si hubo merges: listar candidatas fusionadas y razón. Si hay ownership ambiguo pendiente: listarlo. Si se usó `--analysis`: mencionar que se utilizó como contexto.
 
-Siempre mostrar siguientes pasos: `/wf-spec-features-first <prd.md>` para todos los specs en paralelo, o `/wf-spec-fast-track <prd.md> --scope-from <path>_discovery.md --feature F-001` para una feature individual.
+Siempre mostrar los siguientes pasos **como decisión, no como comando**: puede pedir que se **generen las specs de todas las features** (en paralelo), o **la de una feature concreta** citándola por su `F-00X`. El mapa que acabas de escribir es lo que necesita para elegir.

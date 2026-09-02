@@ -2,6 +2,19 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.87.0 — 2026-09-02
+
+**La fase Spec deja de enseñar comandos: también en el chat y también dentro de los artefactos** — ROADMAP 11.10. El `30 → 0` de 0.86.0 era el delta de lo que la regla **detecta**, no de lo que la fase **tiene**: la regla sólo veía el mensaje dictado entre comillas (`> "..."`), y la fuga real viaja en línea, dentro del paso de informe.
+
+- **La regla `USER-FACING-COMMAND` gana un segundo detector, estructural.** Todo lo que cae bajo un encabezado **"Informar al usuario"** —convención que siguen 42 `SKILL.md`— es, por construcción, mensaje al usuario. Con él, la fase Spec pasa de **0 a 8** hallazgos nuevos; ese es el delta que prueba que la regla no es vacua. Total del árbol 83 → 114, y de ahí a **106** tras barrer los 8.
+- ⚠ **`_features.md` ya no dicta un comando.** La nota de `PENDIENTE_GENERACIÓN` traía `Ejecuta /wf-spec-features-first <prd.md> --features F-00X` literal. Vivía **en el script** (`sdd-features-index.py`), así que el barrido de plantillas de 11.7 no podía verla y su backstop tampoco. El `F-00X` se queda: es como el usuario nombra la feature.
+- ⚠ **El marcador `[INCOMPLETO]` que se escribe en el spec** cerraba con *"ejecuta `/wf-spec-gap-resolve`"*. El marcador, el prefijo `Pendiente de gap(s):` y los `[P-XXX]` son estado parseado y no se tocan; la frase que los sigue la lee una persona.
+- ⚠ **Los siguientes pasos se describen como decisiones, no como invocaciones**, en discover, readiness, fast-track, delta y analyze. En el gate de gaps críticos eso además refuerza [[DECISIONS D-026]]: la vía de continuar la arma el usuario **eligiéndola**, así que el mensaje no le enseña el flag que la activa.
+- ⚠ **Nueva sección en la guía de la fase Spec: "lo que escribes en un artefacto lo lee una persona".** Es donde faltaba la norma: los 19 nombres de workflow que se colaron en un `_readiness_report.md`, dos `_conflict_report.md` y un `_features.md` de una corrida real **no salían de ninguna plantilla** — los ponía el agente, de su propio vocabulario. Ahora la frontera (estado y procedencia se quedan; recomendaciones en lenguaje natural) la carga quien escribe el artefacto.
+- **El backstop de plantillas busca el defecto, no el arreglo:** `wf-` además de `/wf-`, con excepciones de forma (línea de procedencia, comentario HTML). Verificado que falla al plantar la forma sin barra. Acotado a la fase Spec — ampliar el filtro es el criterio de cierre de cada fase restante.
+
+**Sigue abierto:** los otros **106** hallazgos (design 51, tasks 17, plan 16, prd 12, meta 10) y la sección equivalente en las guías de esas fases.
+
 ## 0.86.0 — 2026-09-02
 
 **El orquestador no lee respuestas: enruta por el flag** — [[DECISIONS D-052]]. Cierra los tres puntos que se cayeron al re-alcanzar [[DECISIONS D-051]], todos en la misma superficie (el gate de gaps críticos) y con la misma causa: el contrato pedía cosas que el hilo principal no puede hacer sin romper su propia Regla de oro.

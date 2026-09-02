@@ -84,6 +84,26 @@ class FeaturesIndexTest(unittest.TestCase):
         # F-001 tiene spec -> LISTA; F-002 no -> PENDIENTE_GENERACIÓN
         self.assertIn("PENDIENTE_GENERACIÓN", text)
 
+    def test_pendiente_note_does_not_teach_a_command(self):
+        # ROADMAP 11.10: `_features.md` lo lee una persona, y esta nota la escribe
+        # el SCRIPT — no una plantilla, asi que el barrido de plantillas de 11.7 no
+        # podia verla. Traia `/wf-spec-features-first <prd.md> --features F-00X`
+        # literal. El ID de feature SI se queda: es como el usuario la nombra.
+        write(self.dir / "prj_discovery.md", DISCOVERY)
+        write(self.dir / "features" / "login" / "spec" / "login_spec.md",
+              spec("F-001", "Login"))
+        self._run()
+        text = (self.dir / "prj_features.md").read_text(encoding="utf-8")
+        for line in text.splitlines():
+            if "identificada en el discovery" not in line:
+                continue
+            self.assertNotIn("/wf-", line, f"la nota ensena un comando: {line}")
+            self.assertNotIn("wf-spec", line, f"la nota nombra un workflow: {line}")
+            self.assertIn("F-002", line, "la nota debe nombrar la feature")
+            break
+        else:
+            self.fail("no se emitio la nota de PENDIENTE_GENERACIÓN")
+
     def test_idempotent_byte_identical(self):
         write(self.dir / "prj_discovery.md", DISCOVERY)
         write(self.dir / "features" / "login" / "spec" / "login_spec.md",

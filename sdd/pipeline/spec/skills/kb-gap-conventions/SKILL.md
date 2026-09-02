@@ -159,8 +159,15 @@ El marcador `[INCOMPLETO]` se aplica a nivel de HU en el spec generado cuando un
 
 Al final de cada HU afectada:
 ```markdown
-> ⚠ [INCOMPLETO] — Pendiente de gap(s): [P-001], [P-003]. Responde en el `_analysis.md` y ejecuta `/wf-spec-gap-resolve` para completar.
+> ⚠ [INCOMPLETO] — Pendiente de gap(s): [P-001], [P-003]. Responde esos gaps en el `_analysis.md` y pide que se complete la HU.
 ```
+
+> **Qué es contrato y qué es prosa, en esta misma línea** (ROADMAP 11.10). El marcador
+> `[INCOMPLETO]`, el prefijo `Pendiente de gap(s):` y los `[P-XXX]` son **estado que se
+> parsea** (`sdd-gate-check.py`, `sdd-seal.py`, `wf-spec-readiness` Paso 4) y no se tocan.
+> La frase que cierra la línea la lee **una persona** dentro de su spec: va en lenguaje
+> natural, sin comando. Las menciones a `wf-*` del resto de este documento sí se quedan —
+> describen el mecanismo al agente que carga la KB, no le dictan qué decirle al usuario.
 
 ### Efecto en el pipeline
 

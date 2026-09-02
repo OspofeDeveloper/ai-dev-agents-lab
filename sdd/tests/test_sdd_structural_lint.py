@@ -238,6 +238,70 @@ class StructuralLintTest(unittest.TestCase):
         _, types = types_in(self.root)
         self.assertNotIn("USER-FACING-COMMAND", types)
 
+    # --- detector (b): la seccion "Informar al usuario" -------------------
+    def test_user_facing_command_flagged_inline_in_report_section(self):
+        # La forma que el detector de comillas NO veia, y que costo 19 nombres de
+        # workflow filtrados a los artefactos de una corrida real: el paso de
+        # informe dicta los siguientes pasos EN LINEA, sin comillas.
+        write(self.root / "spec" / "skills" / "wf-x" / "SKILL.md",
+              skill_md("wf-x", "## Paso 9: Informar al usuario\n\n"
+                               "Informa: path del informe. Siguiente paso: "
+                               "`/wf-prepare-plan generate <spec.md>`.\n"))
+        r, types = types_in(self.root)
+        self.assertIn("USER-FACING-COMMAND", types, r.stdout)
+        self.assertNotIn("blocking", r.stdout)
+
+    def test_user_facing_command_flagged_without_slash_in_report_section(self):
+        # Sin barra tambien: el nombre desnudo es igual de invocable a ojos del
+        # usuario. El backstop de 11.7 se escribio mirando `/wf-` —el arreglo—
+        # en vez de `wf-` —el defecto—, y por ahi se colaron los 19.
+        write(self.root / "spec" / "skills" / "wf-x" / "SKILL.md",
+              skill_md("wf-x", "## Paso 9: Informar al usuario\n\n"
+                               "Si hay conflictos, sugiere resolverlos con "
+                               "`wf-spec-delta`.\n"))
+        _, types = types_in(self.root)
+        self.assertIn("USER-FACING-COMMAND", types)
+
+    def test_report_section_ends_at_the_next_heading(self):
+        # La seccion acaba donde acaba: un puntero de invocacion en el paso
+        # SIGUIENTE es prosa al agente y no se marca. Sin este corte, la regla
+        # marcaria media skill desde el primer "Informar al usuario".
+        write(self.root / "spec" / "skills" / "wf-x" / "SKILL.md",
+              skill_md("wf-x", "## Paso 8: Informar al usuario\n\n"
+                               "Informa el path generado.\n\n"
+                               "## Paso 9: Cierre\n\n"
+                               "Delega en `wf-spec-conflict` para la pasada final.\n"))
+        _, types = types_in(self.root)
+        self.assertNotIn("USER-FACING-COMMAND", types)
+
+    def test_natural_language_report_section_not_flagged(self):
+        # El arreglo, medido: el mismo paso, dicho como accion que el usuario
+        # PIDE en vez de comando que teclea.
+        write(self.root / "spec" / "skills" / "wf-x" / "SKILL.md",
+              skill_md("wf-x", "## Paso 9: Informar al usuario\n\n"
+                               "Informa: path del informe. Siguiente paso: pedirme "
+                               "que **genere el plan tecnico** de la feature.\n"))
+        _, types = types_in(self.root)
+        self.assertNotIn("USER-FACING-COMMAND", types)
+
+    def test_ordinary_section_with_workflow_pointer_not_flagged(self):
+        # Un encabezado normal no activa el detector (b): fuera de la seccion de
+        # informe sigue mandando la forma `> "..."` del detector (a).
+        write(self.root / "spec" / "skills" / "wf-x" / "SKILL.md",
+              skill_md("wf-x", "## Paso 3: Verificar precondiciones\n\n"
+                               "Si el PRD no esta sellado, remite a `wf-prd-review`.\n"))
+        _, types = types_in(self.root)
+        self.assertNotIn("USER-FACING-COMMAND", types)
+
+    def test_report_section_in_a_kb_not_flagged(self):
+        # La regla escanea workflows. Una `kb-*` describe el mecanismo AL AGENTE
+        # que la carga; nombrar ahi un `wf-*` es legitimo.
+        write(self.root / "spec" / "skills" / "kb-y" / "SKILL.md",
+              skill_md("kb-y", "## Informar al usuario\n\n"
+                               "El orquestador remite a `/wf-spec-gap-resolve`.\n"))
+        _, types = types_in(self.root)
+        self.assertNotIn("USER-FACING-COMMAND", types)
+
     # === AGENT-TOOL-CLASH (D-051) =========================================
     def _auditor(self):
         write(self.root / "spec" / "agents" / "mi-auditor.md",

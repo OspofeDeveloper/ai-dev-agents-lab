@@ -158,6 +158,6 @@ Este paso es **informativo y no bloquea** el flujo.
 
 ## Paso N: Informar al usuario
 
-**Tras analyze:** path del delta generado, impacto (HUs añadidas/modificadas/eliminadas, CAs afectados), nº de gaps `[CRÍTICO]` e `[INFORMATIVO]` pendientes. Siguiente paso: responder gaps críticos y ejecutar `/wf-spec-delta apply`.
+**Tras analyze:** path del delta generado, impacto (HUs añadidas/modificadas/eliminadas, CAs afectados), nº de gaps `[CRÍTICO]` e `[INFORMATIVO]` pendientes. Siguiente paso: responder los gaps críticos y pedirme que **aplique el delta al spec**.
 
-**Tras apply:** path del spec actualizado, nueva versión, resumen de cambios (HUs/CAs). Si se actualizó `_features.md`: indicar "✓ Trazabilidad actualizada". Si hay conflictos: referenciar `_conflict_report.md`. Siguiente paso: `/wf-spec-validate <path>_spec.md`.
+**Tras apply:** path del spec actualizado, nueva versión, resumen de cambios (HUs/CAs). Si se actualizó `_features.md`: indicar "✓ Trazabilidad actualizada". Si hay conflictos: referenciar `_conflict_report.md`. Siguiente paso: pedirme que **valide el spec actualizado**.

@@ -68,10 +68,12 @@ import tempfile
 from pathlib import Path
 
 CANON_STATES = ("LISTA", "BLOQUEADA", "PENDIENTE_GENERACIÓN", "REQUIERE_CAMBIO_PRD")
+# ROADMAP 11.10: esta nota va DENTRO de `_features.md`, que lo lee una persona.
+# Describe el estado y la accion en lenguaje natural; el `F-00X` se queda porque es
+# el identificador con el que el usuario nombra la feature, no una invocacion.
 PENDIENTE_NOTE = (
-    "> Esta feature está identificada en el discovery pero aún no se ha generado "
-    "spec. Ejecuta /wf-spec-features-first <prd.md> --features {fid} cuando quieras "
-    "procesarla."
+    "> {fid} está identificada en el discovery pero aún no tiene spec generada. "
+    "Pide que se genere cuando quieras procesarla."
 )
 
 # ── Helpers de parseo ──────────────────────────────────────────────────────

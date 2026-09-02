@@ -16,6 +16,7 @@ Black-box: corre `bash install.sh ...` con cwd = proyecto-fixture.
 from __future__ import annotations
 
 import json
+import re
 import sys
 import tempfile
 import unittest
@@ -91,11 +92,25 @@ class InstallAllTest(InstallBase):
         # donde viven las validaciones. El ecosistema se conduce hablando.
         # Medido: el prd_analysis.md de un proyecto real traia un bloque entero de
         # comandos porque su output_template lo prescribia.
+        # ROADMAP 11.10: la primera version de este backstop buscaba `/wf-` —el
+        # ARREGLO— en vez de `wf-` —el DEFECTO—, y por ahi se colaron 19 nombres de
+        # workflow sin barra a los artefactos de una corrida real. Ahora busca las
+        # dos formas. Excepciones de forma, no de criterio: una linea de procedencia
+        # (`Generado por: wf-x`) es ESTADO, y un comentario HTML va dirigido al
+        # agente que rellena la plantilla, no al lector del artefacto.
         self.install("all")
         offenders = []
         for tpl in sorted((self.claude / "skills").rglob("*template*.md")):
+            # Alcance: fase Spec (la barrida). Design/plan/tasks siguen en cola de
+            # 11.10; ampliar este filtro es el criterio de cierre de cada fase.
+            if not tpl.relative_to(self.claude / "skills").parts[0].startswith("wf-spec-"):
+                continue
             for i, line in enumerate(tpl.read_text(encoding="utf-8").splitlines(), 1):
-                if "/wf-" in line:
+                if "Generado por:" in line or "Generada por:" in line:
+                    continue
+                if line.lstrip().startswith("<!--"):
+                    continue
+                if re.search(r"/wf-[a-z]|wf-[a-z]", line):
                     offenders.append(f"{tpl.relative_to(self.claude)}:{i}: {line.strip()[:90]}")
         self.assertEqual(offenders, [],
                          "plantillas de artefacto que ensenan comandos al usuario:\n"

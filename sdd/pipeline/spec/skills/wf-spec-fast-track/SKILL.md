@@ -185,4 +185,4 @@ python3 .sdd/scripts/sdd-features-index.py <raíz_spec>
 
 ## Paso 11: Informar al usuario
 
-Informa: paths generados (spec, README) y `_features.md` regenerado. Si hay `[CRÍTICO]` pendientes: listarlos (bloquean `/wf-prepare-plan`). Si se aplicaron asunciones: cuántas y dónde. Siguiente paso: `/wf-prepare-plan generate <path>_spec.md`.
+Informa: paths generados (spec, README) y `_features.md` regenerado. Si hay `[CRÍTICO]` pendientes: listarlos, avisando de que **bloquean el paso a planificación**. Si se aplicaron asunciones: cuántas y dónde. Siguiente paso: pedirme que **genere el plan técnico de esta feature**.

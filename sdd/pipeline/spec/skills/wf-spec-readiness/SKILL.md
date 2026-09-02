@@ -194,4 +194,4 @@ python3 .sdd/scripts/sdd-features-index.py <raíz_spec>
 
 ## Paso 9: Informar al usuario
 
-Informa: path del informe, resumen (N listas de M totales, N bloqueadas por tipo, N `PENDIENTE_GENERACIÓN`). Siguientes pasos según estado: si todas listas → ejecutar `/wf-prepare-plan generate` por fase; si algunas listas → empezar con primeras fases; si ninguna → resolver bloqueos; si hay `PENDIENTE_GENERACIÓN` → proporcionar comando `/wf-spec-features-first <prd.md> --features ...`.
+Informa: path del informe, resumen (N listas de M totales, N bloqueadas por tipo, N `PENDIENTE_GENERACIÓN`). Siguientes pasos según estado, **descritos como acciones que puede pedirte**: si todas listas → **generar el plan técnico** feature a feature, siguiendo el orden por fases del informe; si algunas listas → empezar por las primeras fases; si ninguna → resolver antes los bloqueos que el informe lista; si hay `PENDIENTE_GENERACIÓN` → nombrar esas features por su `F-00X` y ofrecerle **generar sus specs** cuando quiera.
