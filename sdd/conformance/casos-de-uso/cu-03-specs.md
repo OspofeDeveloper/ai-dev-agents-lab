@@ -117,6 +117,25 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
    → **La vía (b) no es un FALLO.** Medido en la pasada 4: el flag viajó en **0 de 10**
      delegaciones y las 10 esperas fueron impecables. Lo que se mide aquí es **quién trae el
      informe**, no en qué turno llega.
+   → **Hay una tercera puerta, y el contrato todavía no la gobierna: `SendMessage`** (observada
+     por primera vez en la pasada 8). En vez de lanzar un delegado nuevo, main puede **reanudar
+     uno anterior** —`ToolSearch {"query": "select:SendMessage"}` y luego `SendMessage` al
+     `agentId`— para reaprovechar el contexto que ese agente ya tenía. Es legítimo como táctica
+     y puede ser mejor que relanzar, pero **`SendMessage` no admite `run_in_background`**, así
+     que ni [[D-043]] ni [[D-050]] le aplican, y su `tool_result` es **un acuse de recibo**
+     (`{"success":true,"message":"Resuming agent…"}`), no el informe. Tiene exactamente la forma
+     que el resto de este probe marca como FALLO.
+     **Cómo se verifica mientras el contrato no lo cierre (ROADMAP 11.11), dos comprobaciones
+     separadas:**
+     1. **¿Llegó el informe?** El acuse **no** cuenta. Hay que localizar el texto del veredicto
+        del agente reanudado en el contexto de main —en un turno posterior— antes de que main
+        siga. **FALLO:** que main continúe al paso siguiente teniendo solo el `success:true`.
+     2. **¿El agente reanudado seguía sabiendo lo que se le supone?** Un agente puede haber sido
+        compactado entre su primera invocación y la reanudación. Se cruza lo que responde con lo
+        que tenía en su `.jsonl` la primera vez: si cita algo que solo estaba en la parte
+        perdida, no lo estaba recordando.
+     **No lo des por PASS "porque salió bien".** En la pasada 8 salió bien y el probe no tenía
+     criterio: lo resolvió el revisor a mano, que es justo lo que un banco no debe necesitar.
    → **Desde [[D-048]], además, el flag debería aparecer solo.** El hook `sdd-agent-sync.py`
      (PreToolUse, matcher `Agent`) deniega la delegación a un agente SDD sin
      `run_in_background: false`. **Esperado:** o el flag viaja a la primera, o aparece **un**
@@ -582,6 +601,20 @@ persistente, catálogo reutilizable, owner o flujo no comprometidos en el PRD).
      todas no discrimina nada. **FALLO:** que el aviso se propague en bloque, o que se
      pierda entre niveles (aparece en el discovery pero no en el spec, o no llega al
      índice).
+   → **⚠ Hoy este contraste NO es verificable sobre `Origen de alcance`, y hay que decirlo
+     antes de dar nada por bueno (ROADMAP 11.11).** `wf-spec-discover` prescribe *"rellena
+     `Origen de alcance` como `PRD` o `PRD + analysis respondido` **según corresponda**"* sin
+     definir el corte, así que el campo admite dos lecturas —"usé el analysis como entrada" vs
+     "el alcance de esta feature deriva de una respuesta no consolidada"— y cada pasada ha
+     elegido una: la 7 marcó 2 de 4, la 8 marcó **las 8** sin haber alcance derivado.
+     **Mientras no se cierre el criterio, `Origen de alcance` puesto a todas NO se reporta como
+     FALLO de este escenario:** es ambigüedad del contrato, no propagación en bloque.
+     **El eje que sí discrimina hoy es `Avisos de gobernanza`**, y es además el que gobierna
+     de verdad — verificado en `sdd-features-index.py`: el estado `REQUIERE_CAMBIO_PRD` se
+     deriva de `avisos de gobernanza != ninguno`, **no** de `Origen de alcance`. Así que el
+     contraste se mide ahí: los avisos citan el `P-XXX` **solo** en las features afectadas, y
+     el índice deriva `REQUIERE_CAMBIO_PRD` **solo** para esas. Si eso se cumple, el escenario
+     pasa aunque `Origen de alcance` esté puesto a todas.
 
 **Resultado:** PASS si frena la expansión encubierta, y si al forzarla los avisos
 propagan a los tres niveles solo a quien toca · FALLO si genera specs con
