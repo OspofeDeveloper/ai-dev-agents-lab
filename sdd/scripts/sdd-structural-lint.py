@@ -640,6 +640,15 @@ USER_REPORT_HEADING_RE = re.compile(
     r"[^#]*\bal usuario\b", re.IGNORECASE)
 ANY_HEADING_RE = re.compile(r"^#{1,6}\s")
 
+# Un bloque de opciones de `AskUserQuestion` ES la pantalla que ve el usuario: el
+# titulo y la descripcion de cada opcion se le muestran literalmente.
+ASKUSER_INTRO_RE = re.compile(r"AskUserQuestion", re.IGNORECASE)
+BULLET_RE = re.compile(r"^\s*[-*+]\s")
+# Mensaje entrecomillado en linea: `informa: "..."`, `avisa ("...")`.
+INLINE_MSG_RE = re.compile(
+    r"\b(informa|informar|avisa|avisar|indica|comunica|reporta|dile|responde)\b"
+    r"[^\"\n]{0,40}[\"(]", re.IGNORECASE)
+
 
 def check_user_facing_commands(findings):
     """USER-FACING-COMMAND — un mensaje dictado al usuario que contiene un `wf-*`.
@@ -682,13 +691,31 @@ def check_user_facing_commands(findings):
             continue
         rp = relpath(skill_md)
         in_report_section = False
+        in_options_block = False
         for off, line in enumerate(body.splitlines()):
             if ANY_HEADING_RE.match(line):
                 in_report_section = bool(USER_REPORT_HEADING_RE.match(line))
+                in_options_block = False
                 continue
             stripped = line.lstrip()
-            # (b) Bajo "Informar al usuario", todo es mensaje al usuario.
-            if not in_report_section:
+            # (c) Un bloque de opciones de `AskUserQuestion`: la linea que lo
+            # introduce nombra la tool, y las vinetas que siguen SON la pantalla.
+            # El bloque acaba en la primera linea que no es vineta ni continuacion.
+            if ASKUSER_INTRO_RE.search(line):
+                # Solo si la linea INTRODUCE el bloque (acaba en `:`). Mencionar la
+                # tool a media frase —"sostiene gates que requieren AskUserQuestion"—
+                # es prosa al agente: fue un falso positivo real al estrenar (d).
+                in_options_block = line.rstrip().endswith(":")
+                continue
+            if in_options_block and stripped and not BULLET_RE.match(stripped):
+                in_options_block = False
+            # En el bloque solo cuentan las vinetas: son las opciones que se pintan.
+            is_user_surface = in_report_section or (
+                in_options_block and bool(BULLET_RE.match(stripped)))
+            # (d) Mensaje entrecomillado en linea: `informa: "..."`, `avisa ("...")`.
+            if not is_user_surface and INLINE_MSG_RE.search(line):
+                is_user_surface = True
+            if not is_user_surface:
                 # (a) El mensaje dictado ABRE con comilla justo tras el marcador de
                 # cita (`> "..."`, o `> - "..."` en una lista de opciones). Exigirlo
                 # evita el falso positivo de la prosa dirigida al agente que lleva

@@ -58,8 +58,12 @@ from pathlib import Path
 PENDING = "_(pendiente)_"
 
 # `### [P-001][CRÍTICO][PUEDE_REQUERIR_CR] Título` — el ID y los flags entre corchetes.
+# El `\s*` entre grupos tolera la variante espaciada (`[CRÍTICO] [PUEDE_REQUERIR_CR]`):
+# sin él, el flag se cuela en el titulo y DESAPARECE de `flags`, en silencio. Y por ese
+# flag enruta el gate de gobernanza de wf-spec-features-first (D-052), asi que la
+# degradacion no da error: simplemente el gate no se abre nunca.
 GAP_HEADING_RE = re.compile(
-    r"^\s*#{1,6}\s+\[(?P<id>[PD]-\d+)\](?P<flags>(?:\[[^\]\n]+\])*)\s*(?P<title>.*)$"
+    r"^\s*#{1,6}\s+\[(?P<id>[PD]-\d+)\](?P<flags>(?:\s*\[[^\]\n]+\])*)\s*(?P<title>.*)$"
 )
 HEADING_RE = re.compile(r"^\s*#{1,6}\s+")
 # `- **Respuesta**: valor` (tolera `*`/`_` y espacios alrededor del rótulo).

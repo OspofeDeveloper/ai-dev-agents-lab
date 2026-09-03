@@ -2,6 +2,16 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.88.0 — 2026-09-03
+
+**Barrido previo a las tres pasadas de sellado de CU-3.a.** Revisión dirigida de todo lo que la campaña va a medir. Cuatro hallazgos, uno de ellos silencioso.
+
+- ⚠ **`sdd-analysis-gaps.py` perdía el flag `[PUEDE_REQUERIR_CR]` si venía separado por un espacio.** La forma canónica (`[CRÍTICO][PUEDE_REQUERIR_CR]`) parseaba bien, pero la variante espaciada metía el flag en el **título** y lo hacía desaparecer de `flags` — **sin error**. Y por ese flag enruta el gate de gobernanza que [[DECISIONS D-052]] estrenó: la degradación no fallaba, simplemente el gate no se abría nunca. Regex endurecida; las dos formas parsean idénticas.
+- **Verificado sobre datos reales, no sobre fixture:** el `prd_analysis.md` de la pasada 8 usa la forma canónica y su gap marcado enruta correctamente. El roundtrip de rescate de respuestas (`--export-answers` → regenerar → `--import-answers`) también se ejercitó por primera vez: devuelve lo que coincide por ID **y** título, y sale con exit 2 nombrando lo que hay que reconciliar a mano.
+- ⚠ **Seis fugas más de `wf-*` en mensajes al usuario**, tres de ellas en las **opciones de gate que se pintan en pantalla** durante una pasada de CU-3.a (readiness del PRD y gobernanza de alcance), más los dos mensajes de argumento inválido de delta y el siguiente-paso de from-code.
+- **Dos detectores nuevos en `USER-FACING-COMMAND`:** el **bloque de opciones de `AskUserQuestion`** (la línea que lo introduce acaba en `:`; se marcan las viñetas, que son la pantalla) y el **mensaje entrecomillado en línea** (`informa: "…"`, `avisa ("…")`). Fase Spec otra vez a **0**; total del árbol **113**. La regla detecta formas, no intención: fuera de Spec conserva algo de ruido, y el barrido de cada fase sigue siendo un triaje.
+- **El instrumento también tenía un defecto.** El paso 5 de `CU-3.a` mandaba verificar el hook `sdd-agent-sync.py` y buscar `deny` con `[SDD-SYNC]` — que [[DECISIONS D-050]] **retiró entero**, y que además decía que "cero deny" significaba instalación incompleta. Habría mandado al revisor a un callejón sin salida o producido un FALLO falso. Ahora apunta a lo que de verdad sostiene la sincronía: `CLAUDE_CODE_FORK_SUBAGENT=0` en el `settings.json` del consumer.
+
 ## 0.87.0 — 2026-09-02
 
 **La fase Spec deja de enseñar comandos: también en el chat y también dentro de los artefactos** — ROADMAP 11.10. El `30 → 0` de 0.86.0 era el delta de lo que la regla **detecta**, no de lo que la fase **tiene**: la regla sólo veía el mensaje dictado entre comillas (`> "..."`), y la fuga real viaja en línea, dentro del paso de informe.

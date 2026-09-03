@@ -44,12 +44,12 @@ Si el usuario intenta usar `resolve`, remítele a:
 ## Paso 2: Verificar archivos
 
 **Modo `analyze`:**
-1. Verifica que el spec existe y termina en `_spec.md`. Si no → informa: "El primer argumento debe ser un spec SDD (`_spec.md`). Para generar un spec nuevo, usa `/wf-spec-analyze`."
+1. Verifica que el spec existe y termina en `_spec.md`. Si no → informa: "El primer argumento debe ser un spec SDD (`_spec.md`). Si lo que quieres es un spec nuevo, pídemelo y lo analizamos desde el documento de origen."
 2. Verifica que el archivo de nuevos requisitos existe. Si no → informa con la ruta exacta y detén.
 
 **Modo `apply`:**
 1. Verifica que el spec existe y termina en `_spec.md`.
-2. Verifica que el delta analysis existe y termina en `_delta_analysis.md`. Si no → informa: "El segundo argumento debe ser un delta analysis generado por `/wf-spec-delta analyze`."
+2. Verifica que el delta analysis existe y termina en `_delta_analysis.md`. Si no → informa: "El segundo argumento debe ser un delta analysis (`_delta_analysis.md`); pídeme que analice antes los cambios sobre el spec y te lo genero."
 3. Lee el delta analysis y comprueba si hay gaps `[CRÍTICO]` con `_(pendiente)_` sin respuesta. Si los hay → informa al usuario: "Hay X gaps **críticos** sin responder. Las HUs afectadas se marcarán como `[INCOMPLETO]`." **Continúa.**
 
 ---

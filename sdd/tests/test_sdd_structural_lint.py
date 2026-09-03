@@ -302,6 +302,55 @@ class StructuralLintTest(unittest.TestCase):
         _, types = types_in(self.root)
         self.assertNotIn("USER-FACING-COMMAND", types)
 
+    # --- detectores (c) opciones de gate y (d) mensaje en linea ----------
+    def test_askuserquestion_option_naming_a_workflow_flagged(self):
+        # Las opciones de un gate SON la pantalla que ve el usuario: su titulo y
+        # su descripcion se le pintan literalmente. Medido en el gate de
+        # gobernanza de features-first, que nombraba el workflow con sus flags.
+        write(self.root / "spec" / "skills" / "wf-x" / "SKILL.md",
+              skill_md("wf-x", "Presenta el gate y pregunta con `AskUserQuestion`:\n"
+                               "  - *Formalizar el cambio* (recomendada) — se abre con "
+                               "`wf-prd-change <prd.md> --new-reqs <c.md>`.\n"
+                               "  - *Continuar igualmente* — sigues con alcance derivado.\n"))
+        r, types = types_in(self.root)
+        self.assertIn("USER-FACING-COMMAND", types, r.stdout)
+
+    def test_askuserquestion_mentioned_midsentence_not_flagged(self):
+        # Falso positivo real al estrenar (c): una linea que solo MENCIONA la tool
+        # a media frase es prosa al agente. El bloque se abre si la linea lo
+        # INTRODUCE (acaba en `:`), no si la nombra.
+        write(self.root / "spec" / "skills" / "wf-x" / "SKILL.md",
+              skill_md("wf-x", "Corre en el hilo principal (igual que `wf-prd-create`) "
+                               "porque sostiene gates que requieren `AskUserQuestion`.\n"))
+        _, types = types_in(self.root)
+        self.assertNotIn("USER-FACING-COMMAND", types)
+
+    def test_option_block_ends_at_the_first_non_bullet(self):
+        # El bloque de opciones acaba donde acaba: la prosa que sigue vuelve a ser
+        # del agente.
+        write(self.root / "spec" / "skills" / "wf-x" / "SKILL.md",
+              skill_md("wf-x", "Pregunta con `AskUserQuestion`:\n"
+                               "  - *Seguir* — continua el flujo.\n"
+                               "\nDespues delega en `wf-spec-conflict` la pasada final.\n"))
+        _, types = types_in(self.root)
+        self.assertNotIn("USER-FACING-COMMAND", types)
+
+    def test_inline_quoted_message_flagged(self):
+        # `informa: "..."` / `avisa ("...")`: mensaje al usuario sin blockquote.
+        write(self.root / "spec" / "skills" / "wf-x" / "SKILL.md",
+              skill_md("wf-x", 'Si no esta sellado → avisa ("recomendable cerrarlo '
+                               'con `/wf-prd-review`") y continua.\n'))
+        _, types = types_in(self.root)
+        self.assertIn("USER-FACING-COMMAND", types)
+
+    def test_inline_message_in_natural_language_not_flagged(self):
+        # El arreglo: mismo aviso, sin ensenar la invocacion.
+        write(self.root / "spec" / "skills" / "wf-x" / "SKILL.md",
+              skill_md("wf-x", 'Si no esta sellado → avisa ("conviene cerrar la '
+                               'aprobacion; dime si lo revisamos") y continua.\n'))
+        _, types = types_in(self.root)
+        self.assertNotIn("USER-FACING-COMMAND", types)
+
     # === AGENT-TOOL-CLASH (D-051) =========================================
     def _auditor(self):
         write(self.root / "spec" / "agents" / "mi-auditor.md",

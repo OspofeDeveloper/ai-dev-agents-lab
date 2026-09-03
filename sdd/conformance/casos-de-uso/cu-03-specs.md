@@ -136,15 +136,15 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
         perdida, no lo estaba recordando.
      **No lo des por PASS "porque salió bien".** En la pasada 8 salió bien y el probe no tenía
      criterio: lo resolvió el revisor a mano, que es justo lo que un banco no debe necesitar.
-   → **Desde [[D-048]], además, el flag debería aparecer solo.** El hook `sdd-agent-sync.py`
-     (PreToolUse, matcher `Agent`) deniega la delegación a un agente SDD sin
-     `run_in_background: false`. **Esperado:** o el flag viaja a la primera, o aparece **un**
-     `deny` con `[SDD-SYNC]` y el reintento inmediato **con la misma llamada más el flag**.
-     **FALLO:** que tras el deny el orquestador **cambie de estrategia** —invoque por `Skill`,
-     haga el trabajo él mismo, o le diga al usuario que no puede—; o que el deny se repita en
-     bucle (señal de que el parámetro no se acepta: apagar con `SDD_ALLOW_ASYNC_AGENTS=1` y
-     reportar). Cero `deny` **y** cero flags significa que el hook no está instalado: comprueba
-     el `settings.json` del consumer antes de dar el probe por bueno.
+   → **El flag ya no lo fuerza ningún hook — lo habilita el proyecto ([[D-050]]).** [[D-048]]
+     puso un `PreToolUse` (`sdd-agent-sync.py`) que denegaba la delegación sin el flag;
+     [[D-050]] lo **retiró entero** al descubrir la causa real: con fork mode activo el flag
+     ni siquiera llegaba a evaluarse. Lo que lo sustituye es
+     `CLAUDE_CODE_FORK_SUBAGENT=0` en el `settings.json` del consumer, que devuelve el
+     efecto a `run_in_background: false`. **Verifica eso, no el hook:** que la variable esté
+     en el `settings.json` del consumer. **No busques `deny` con `[SDD-SYNC]`, ni el script en
+     `.sdd/scripts/`, ni `SDD_ALLOW_ASYNC_AGENTS`** — nada de eso existe ya, y su ausencia
+     **no** es señal de instalación incompleta.
    → **FALLO de contexto ([[D-048]], antes O-8):** que el orquestador cargue un artefacto
      entero por `Bash` —`cat` del `_features.md`, del PRD o del analysis, o un `grep -A/-B`
      generoso—. La prohibición es sobre **lo que acaba en su contexto**, no sobre la tool: un

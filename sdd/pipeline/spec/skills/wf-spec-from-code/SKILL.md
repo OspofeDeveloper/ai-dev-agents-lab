@@ -99,6 +99,6 @@ Layout estándar (mismas reglas que `wf-spec-fast-track`):
 ## Paso 7: Informar
 
 - Paths generados y nº de CAs por nivel de evidencia (tests / código / config / `[INFERIDO]`).
-- **Los `[INFERIDO]` bloquean `/wf-prepare-plan`** (los gates los tratan como `[INCOMPLETO]`): siguiente paso para confirmarlos → `/wf-spec-gap-resolve <spec.md>`.
+- **Los `[INFERIDO]` bloquean el paso a planificación** (los gates los tratan como `[INCOMPLETO]`): el siguiente paso es **confirmarlos uno a uno con el usuario**, que es lo que desbloquea el spec.
 - Si hay `[SOSPECHA_BUG]`: listarlos — decisión de producto pendiente (mantener o `wf-spec-delta`).
 - Si el proyecto no tiene tests: recomienda characterization tests para los CAs de mayor riesgo antes de refactorizar.

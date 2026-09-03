@@ -125,9 +125,9 @@ Verifica que el archivo PRD existe; si no → informa con ruta exacta y detén.
 ```
 - Veredicto `READY` → continúa.
 - `OPEN_ASSUMPTIONS` o `ASSUMPTION_MISMATCH`, y **no** se pasó `--allow-unreviewed-prd` → **presenta el gate**: informa del veredicto y del detalle que dio el script, y pregunta con `AskUserQuestion`:
-  - *Revisar el PRD primero* (recomendada) — el flujo se detiene aquí; el usuario cierra las asunciones con `/wf-prd-review <prd.md>` y vuelve cuando esté sellado.
+  - *Revisar el PRD primero* (recomendada) — el flujo se detiene aquí; el usuario **cierra las asunciones revisando el PRD** y vuelve cuando esté sellado.
   - *Continuar sobre un PRD no-revisado* — equivale a `--allow-unreviewed-prd`: sigues al Paso 2.5 dejando constancia explícita de que los derivados se generan sobre alcance **no-revisado**.
-- `UNSEALED` → **advisory**: avisa ("el PRD no está sellado; recomendable cerrar la aprobación con `/wf-prd-review`") y continúa.
+- `UNSEALED` → **advisory**: avisa ("el PRD no está sellado; conviene cerrar la aprobación antes de derivar specs — dime si quieres que lo revisemos primero") y continúa.
 - Con `--allow-unreviewed-prd` de entrada sobre un veredicto bloqueante → no presentes el gate; continúa dejando constancia explícita de que los derivados se generan sobre un PRD **no-revisado**.
 - Si falta el script (`.sdd/scripts/sdd-prd-ready.py` no existe) → avisa (reinstala el ecosistema con `install.sh`) y continúa (conservador: no bloquees por falta de tooling).
 
@@ -217,7 +217,7 @@ Verifica que el archivo PRD existe; si no → informa con ruta exacta y detén.
      ```
      El flag lo puso el analyze **precisamente para esto**: marca los gaps cuya futura respuesta era de riesgo, así que es el índice de qué hay que reevaluar y evita releerlo todo.
    - **Si su veredicto es `CON_SEÑALES`** y **NO** vino `--allow-derived-scope-from-analysis` de entrada → **presenta el gate**. Di qué respuesta concreta introduce qué señal —**citando el informe del delegado, no tu lectura**— y pregunta con `AskUserQuestion`:
-     - *Formalizar el cambio en el PRD* (recomendada) — el flujo se detiene; el cambio se abre con `wf-prd-change <prd.md> --new-reqs <cambio.md>` y los derivados se generan después, sobre PRD limpio.
+     - *Formalizar el cambio en el PRD* (recomendada) — el flujo se detiene; **el cambio se formaliza primero en el PRD** y los derivados se generan después, sobre PRD limpio.
      - *Continuar con alcance derivado* — equivale a `--allow-derived-scope-from-analysis`: sigues dejando constancia de que el discovery, `_features.md` y los specs marcarán ese alcance como **scope derivado** y no como PRD puro.
    - si `--allow-derived-scope-from-analysis` vino **de entrada** → no presentes el gate; continúa dejando constancia explícita de que el discovery, `_features.md` y los specs deberán marcar ese alcance como **scope derivado** y no como PRD puro.
 9. Si el script dio `CRITICAL_ANSWERED` y no se detectan señales de cambio → continuar al Paso 3 usando el `_analysis.md` como contexto.
