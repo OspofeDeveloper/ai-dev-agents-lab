@@ -203,6 +203,64 @@ class AnalysisGapsTest(unittest.TestCase):
         r = run_script("sdd-analysis-gaps.py", path, "--list", "--json")
         self.assertNotIn("Secreto de negocio", r.stdout)
 
+    def test_list_emits_the_context_fields_of_each_gap(self):
+        # D-053: la pregunta pelada no basta. `Contexto`, `Problema` y `Afecta` son
+        # los campos que le dicen al usuario POR QUE importa y CUANTO detalle hace
+        # falta; sin ellos main tendria que abrir el fichero, que la Regla de oro
+        # de wf-spec-features-first le prohibe.
+        path = self.make(gap("P-001", "CRÍTICO", with_problema=True))
+        r = run_script("sdd-analysis-gaps.py", path, "--list", "--json")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        g = json.loads(r.stdout)["gaps"][0]
+        self.assertIn("dónde se detectó", g["contexto"])
+        self.assertIn("por qué bloquea", g["problema"])
+        self.assertIn("HU-001", g["afecta"])
+
+    def test_list_field_missing_is_none_not_an_error(self):
+        # Los informes reales no siempre traen `Problema` (los INFORMATIVO del
+        # fichero medido no lo llevan). Ausencia != malformado.
+        path = self.make(gap("P-002", "INFORMATIVO"))
+        r = run_script("sdd-analysis-gaps.py", path, "--list", "--json")
+        self.assertEqual(r.returncode, 0)
+        g = json.loads(r.stdout)["gaps"][0]
+        self.assertIsNone(g["problema"])
+        self.assertIsNotNone(g["question"])
+
+    def test_list_joins_a_field_that_continues_on_the_next_line(self):
+        # Un `Contexto` largo puede seguir en la linea siguiente. Se entrega
+        # entero: es texto que se le ENSENA al usuario, no un resumen.
+        block = ("### [P-001][CRÍTICO] Título\n\n"
+                 "- **Contexto**: primera parte\n"
+                 "  y la continuación de la frase.\n"
+                 "- **Pregunta para el cliente**: ¿pregunta concreta?\n"
+                 "- **Respuesta**: _(pendiente)_\n\n---\n\n")
+        path = self.make(block)
+        r = run_script("sdd-analysis-gaps.py", path, "--list", "--json")
+        g = json.loads(r.stdout)["gaps"][0]
+        self.assertEqual(g["contexto"], "primera parte y la continuación de la frase.")
+
+    def test_list_gap_filters_to_one(self):
+        # D-053: los gaps se presentan de UNO EN UNO, asi que main pide uno cada
+        # vez. Traer los 7 de golpe le metaria en contexto medio artefacto, que es
+        # justo lo que la Regla de oro de wf-spec-features-first evita.
+        path = self.make(gap("P-001", "CRÍTICO", with_problema=True),
+                         gap("P-002", "CRÍTICO"),
+                         gap("P-003", "INFORMATIVO"))
+        r = run_script("sdd-analysis-gaps.py", path, "--list", "--gap", "P-002", "--json")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        data = json.loads(r.stdout)
+        self.assertEqual([g["id"] for g in data["gaps"]], ["P-002"])
+        self.assertNotIn("P-001", r.stdout)
+
+    def test_list_gap_with_unknown_id_lists_the_valid_ones(self):
+        # Mismo trato que --answer con un ID inexistente: error accionable, no
+        # traceback. Se cazo al estrenarlo: el GapError escapaba sin capturar.
+        path = self.make(gap("P-001", "CRÍTICO"))
+        r = run_script("sdd-analysis-gaps.py", path, "--list", "--gap", "P-099")
+        self.assertEqual(r.returncode, 2)
+        self.assertNotIn("Traceback", r.stdout + r.stderr)
+        self.assertIn("P-001", r.stderr)
+
     def test_list_on_document_without_gaps_is_empty_not_an_error(self):
         # A diferencia de --check, listar cero gaps no es un veredicto: no bloquea.
         path = self.root / "vacio.md"

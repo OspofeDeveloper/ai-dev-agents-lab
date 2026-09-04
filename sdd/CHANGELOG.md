@@ -2,6 +2,18 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.89.0 — 2026-09-04
+
+**Una decisión se pregunta una vez; una respuesta abierta no se pide con un selector** — [[DECISIONS D-053]]. [[DECISIONS D-052]] reconstruyó el menú del gate de gaps críticos sobre el texto y lo dio por cerrado **sin haberlo visto en pantalla**. Al ejercitarlo por primera vez en una pasada real aparecieron dos defectos que leyendo el contrato no se veían.
+
+- ⚠ **El menú se preguntaba una vez por gap.** Con 4 críticos abiertos había que decidir cuatro veces *dictar / escribir / continuar* antes de poder responder nada. El propio menú lo delataba: la tercera opción tenía que aclarar *"(aplica a los 4 gaps críticos, no solo este)"* — ámbito global dentro de una pregunta individual. Ahora es **un solo `AskUserQuestion`** para toda la tanda, precedido del path, el recuento y los IDs con su título.
+- ⚠ **La respuesta se pedía con `AskUserQuestion`.** Una respuesta de gap es **prosa abierta**: no hay opciones, así que el camino principal acababa siendo la escotilla *"Other"* del selector. Y su pantalla **no tiene sitio para `Contexto` ni `Problema`** — los dos campos que dicen por qué importa el gap y cuánto detalle hace falta. Medido: llegaba la pregunta pelada y los dos campos se tiraban. Ahora los gaps se presentan **en la conversación, de uno en uno**, con esos campos verbatim.
+- ⚠ **`sdd-analysis-gaps.py --list` emite `contexto`, `problema` y `afecta`** además de la pregunta, y acepta **`--gap <P-XXX>`** para pedir uno solo. Traer los N de golpe metería media prosa del informe en el contexto del orquestador por la puerta de atrás; pedirlos gap a gap es lo que hace la presentación posible sin romper su Regla de oro.
+- **De uno en uno por atribución, no por comodidad.** Presentar los N juntos obliga a **repartir** un bloque de texto entre N IDs, y repartir es interpretar una respuesta que el usuario no dio literalmente — el FALLO del paso 4 de `CU-3.a`.
+- **El detalle solo se pide en la rama de dictar.** Si elige escribir en el fichero o continuar aceptando el riesgo, no se pide nunca: el gate se arma con el recuento de `--check`.
+- **Descartado, y por qué:** que un `sdd-spec-explorer` leyera el análisis y reportara los gaps. Es el patrón del ecosistema y es lo que [[DECISIONS D-052]] hizo para la gobernanza, pero aquí main es un **relé** hacia la pantalla y un agente al que le pides "reporta los gaps" **resume** — y una pregunta resumida se contesta peor. Criterio que queda escrito: **delegar donde hace falta criterio, extraer donde hace falta exactitud.**
+- `CU-3.a` pasos 2, 3 y 4 alineados: describían el menú **anterior** a [[DECISIONS D-052]] (*"o responder solo algunas"*), retirado hace dos versiones.
+
 ## 0.88.0 — 2026-09-03
 
 **Barrido previo a las tres pasadas de sellado de CU-3.a.** Revisión dirigida de todo lo que la campaña va a medir. Cuatro hallazgos, uno de ellos silencioso.

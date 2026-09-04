@@ -6,6 +6,39 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-053 — Una decisión se pregunta una vez; una respuesta abierta no se pide con un selector
+
+- **Fecha:** 2026-09-04 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-042]] (quién escribe las respuestas, y "no basta con decir responde los pendientes"), [[D-052]] (de la que corrige el menú y amplía `--list`), [[D-031]] (main no lee artefactos), [[D-002]] (un fork no puede preguntar), CU-3.a paso 4.
+
+**Contexto.** [[D-052]] reconstruyó el menú del gate de gaps críticos en un solo eje y lo dio por bueno **sin haberlo visto en pantalla**. Al ejercitarlo por primera vez en una pasada real (2026-09-04) aparecieron dos defectos que el texto del contrato no dejaba ver:
+
+1. **El menú se presentaba una vez por gap.** Con 4 críticos abiertos, el usuario tenía que decidir cuatro veces *dictar / escribir / continuar* antes de poder responder nada. El propio menú lo delataba: la tercera opción tenía que aclarar *"(aplica a los 4 gaps críticos, no solo este)"* — una opción de ámbito global dentro de una pregunta de ámbito individual. **Cuando una opción necesita explicar que no va con su propia pregunta, la pregunta está en el sitio equivocado.**
+2. **La respuesta se pedía con `AskUserQuestion`.** Una respuesta de gap es **prosa abierta**: no hay opciones que elegir, así que el camino principal acababa siendo la escotilla *"Other → escribe algo"* del selector. Y el daño no era solo de fricción: **la pantalla del selector no tiene sitio para `Contexto` ni `Problema`**, los dos campos que dicen *por qué* importa el gap y *cuánto* detalle hace falta. Medido: al usuario le llegó la pregunta pelada y los dos campos se tiraron.
+
+**Decisión.**
+
+1. **La decisión se pregunta una vez, para toda la tanda.** Un solo `AskUserQuestion` con las tres vías. Antes de preguntar, main da el path, el recuento y **los IDs con su título**, para que se vea el alcance **antes** de elegir cómo responderlo.
+2. **El detalle se trae solo en la rama de dictar, y de uno en uno.** Si elige escribir en el fichero o continuar aceptando el riesgo, **no se pide nunca**: el gate se arma con el recuento de `--check`. Y traer los N gaps de golpe metería media prosa del informe en el contexto de main por la puerta de atrás — lo mismo que la Regla de oro evita. De ahí `--list --gap <P-XXX>`.
+3. **Los gaps se presentan en la conversación, no con un selector**: ID, `contexto`, `problema`, `afecta` y la pregunta, **verbatim**; el usuario responde en texto libre; main aplica con `--answer`.
+4. **`--list` emite `contexto`, `problema` y `afecta`** además de la pregunta. Es lo que hace (3) posible sin abrir el artefacto.
+5. **Uno a uno por atribución, no por comodidad.** Presentar los N juntos obliga a **repartir** un bloque de texto entre N IDs, y repartir es interpretar una respuesta que el usuario no dio literalmente — el FALLO del paso 4 de `CU-3.a`. Gap a gap la atribución es inequívoca por construcción.
+
+**Alternativas descartadas.**
+
+- **Que un `sdd-spec-explorer` lea el análisis y le reporte los gaps a main** (propuesta del usuario, y no es mala: es el patrón del ecosistema, y es exactamente lo que [[D-052]] hizo para la evaluación de gobernanza). Descartada aquí por tres razones. **Fidelidad:** main es un **relé** hacia la pantalla, no razona sobre el contenido; un agente al que le pides "reporta los gaps" **resume** —es lo que hacen los agentes— y una pregunta resumida se contesta peor, que es contra lo que se construyó [[D-042]]. Una extracción verbatim no tiene ese modo de fallo. **Coherencia:** la pregunta ya salía del script; tener la pregunta del script y su contexto de un agente son dos fuentes para el mismo bloque del mismo fichero. **Coste:** una invocación de subagente con su KB cargada para extraer tres campos que el parser **ya recorre**. El criterio que queda escrito: **delegar donde hace falta criterio, extraer donde hace falta exactitud.**
+- **Dejar el menú por gap y solo arreglar la opción 3.** Trata el síntoma. El problema es el ámbito de la pregunta, no la redacción de una opción.
+- **Presentar los N gaps juntos y pedir respuestas prefijadas por ID.** Traslada al usuario la carga de un formato para que main no tenga que interpretar. Si el formato se incumple —y se incumple— volvemos al reparto.
+
+**Consecuencias y aprendizaje.**
+
+- **Un menú no está validado hasta que se ve en pantalla.** [[D-052]] lo rediseñó sobre el texto y lo dio por cerrado; los dos defectos solo se vieron al presentarlo. Es el mismo aprendizaje que [[D-038]]: lo que el contrato dice que existe y lo que el usuario acaba viendo son cosas distintas, y solo una de las dos se puede medir leyendo.
+- **`AskUserQuestion` tiene un dominio: elegir entre opciones.** Cuando el input es prosa abierta, el selector no es una comodidad — es una amputación del enunciado, porque su pantalla no tiene sitio para el contexto que hace la pregunta contestable. Criterio de autoría a aplicar en el resto del ecosistema.
+- **La pasada que lo encontró se gasta.** Cambiar `wf-spec-features-first` reinicia los recuentos conductuales del escenario que lo mide; se asume y se reinicia la serie.
+
+**Referencias.** `pipeline/spec/skills/wf-spec-features-first/SKILL.md` (Paso 2.5, puntos 4, 6 y 6b), `scripts/sdd-analysis-gaps.py` (`--list` ampliado, `--gap`), `tests/test_sdd_analysis_gaps.py` (5 casos nuevos), `conformance/casos-de-uso/cu-03-specs.md` CU-3.a pasos 2-4.
+
+---
+
 ## D-052 — El orquestador no lee respuestas: enruta por el flag. Y una vía sancionada que vive escondida en la descripción de otra opción no existe
 
 - **Fecha:** 2026-09-02 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-026]] (el override lo arma el usuario), [[D-031]]/[[D-042]] (quién lee y quién escribe), [[D-038]] (el vacío de la vía no ofrecida), [[D-048]] (frontera de `Bash`), [[D-051]] (de la que esto es la parte que se quedó fuera), ROADMAP 11.10 y 11.11.

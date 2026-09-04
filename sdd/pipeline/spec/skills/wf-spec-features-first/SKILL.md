@@ -150,15 +150,22 @@ Verifica que el archivo PRD existe; si no → informa con ruta exacta y detén.
    !python3 .sdd/scripts/sdd-analysis-gaps.py "<path>_analysis.md" --check --json
    ```
    Da `verdict` (`CRITICAL_OPEN` / `CRITICAL_ANSWERED` / `VACUOUS`), `critical_open` y `critical_open_ids`. **Este conteo no se hace leyendo el informe**: contar marcadores `_(pendiente)_` no es juicio, y de él cuelgan las dos ramas duras de los puntos 5 y 6. Si el veredicto es `VACUOUS`, el documento no se ha podido parsear — **detente** y dilo, no lo trates como "sin gaps".
-4. **Si existe** → **no lo leas.** Lo que necesitas sale de dos sitios, y ninguno es abrir el artefacto ([[D-051]]):
-   - **Estado de cada gap** —IDs, severidad, **flags**, título, **su pregunta**, y si está respondido— del script:
+4. **Si existe** → **no lo leas.** Lo que necesitas sale del script y de una extracción acotada de metadatos, nunca de abrir el artefacto ([[D-051]]):
+   - **Estado de cada gap** —IDs, severidad, **flags**, título y si está respondido—:
      ```bash
      !python3 .sdd/scripts/sdd-analysis-gaps.py "<path>_analysis.md" --list --json
      ```
-   - **Veredicto del análisis**, con una extracción acotada de metadatos:
+   - **Veredicto del análisis**:
      ```bash
      !grep -oE 'LISTO_PARA_SPECS_CON_PREGUNTAS|LISTO_PARA_SPECS|REQUIERE_LIMPIEZA_PRD' "<path>_analysis.md" | head -1
      ```
+
+   > **El detalle de un gap se pide cuando hace falta, y de uno en uno ([[D-053]]).** `--list`
+   > emite además `contexto`, `problema` y `afecta`, pero **no los traigas todos ahora**: con 7
+   > gaps eso te mete media prosa del informe en contexto por la puerta de atrás, que es
+   > exactamente lo que la Regla de oro evita. Se piden con `--gap <P-XXX>` **solo en la rama de
+   > dictar** (punto 6b), gap a gap. Y si el usuario elige escribir él en el fichero o continuar
+   > aceptando el riesgo, **no se piden nunca**: el gate no los necesita.
 
    > **Por qué esto era un agujero, y no un detalle ([[D-051]]).** El texto anterior te pedía
    > *"léelo para lo que sí es juicio… y si las respuestas ya escritas introducen expansión
@@ -176,33 +183,70 @@ Verifica que el archivo PRD existe; si no → informa con ruta exacta y detén.
    > "El análisis previo marca `REQUIERE_LIMPIEZA_PRD`. Corrige la contaminación técnica del PRD antes de continuar y vuelve a ejecutar el flujo."
 6. Si el script dio `CRITICAL_OPEN` y **no** se pasó `--allow-open-critical-gaps` de entrada, o si el análisis está **recién generado** (punto 2) → **presenta el gate**.
 
-   El texto que acompaña a la pregunta **no puede ser genérico**: quien tiene que responder no debería bucear en el informe para saber qué le toca. Con los IDs que devolvió el script (punto 3), da el **path exacto**, la lista de `[P-XXX]` `[CRÍTICO]` **cada uno con su pregunta en una línea**, y qué se sustituye (`- **Respuesta**: _(pendiente)_`). Las preguntas salen del informe del delegado o de `--list`; no abras el fichero para redactarlas.
+   **La decisión se pregunta UNA VEZ, para toda la tanda ([[D-053]]).** Antes de preguntar, di:
+   el **path exacto** del `_analysis.md`, cuántos `[CRÍTICO]` hay abiertos, y **sus IDs con el
+   título en una línea cada uno** (de `--list`, punto 4 — no abras el fichero). Eso le deja ver
+   el alcance de lo que se le pide **antes** de elegir cómo responderlo.
 
-   Y después pregunta con `AskUserQuestion`. **Las tres opciones van en un solo eje —cómo se
-   responde— y la vía de dictar es una opción del menú, no una frase dentro de otra opción**
-   ([[D-051]]):
-   - *Me los dictas aquí* (recomendada) — los vas aplicando con el script (punto siguiente),
-     uno por gap; el `_analysis.md` cambia **solo** en esas líneas. Puede cerrar solo los que
-     tenga claros: reevalúas el gate con los que queden.
-   - *Los escribes tú en el fichero* — el flujo se detiene aquí. Le das el path y los IDs con su
-     pregunta, y se retoma cuando estén cerrados.
+   Después, **un solo `AskUserQuestion`** con tres opciones en un eje —cómo se responde—:
+   - *Me los dictas aquí* (recomendada) — te los presento uno a uno con su contexto y los vas
+     respondiendo en el chat; cada respuesta la aplicas con el script y el `_analysis.md` cambia
+     **solo** en esa línea. Puede cerrar solo los que tenga claros.
+   - *Los escribes tú en el fichero* — el flujo se detiene aquí. Le das el path y qué se
+     sustituye (`- **Respuesta**: _(pendiente)_`), y se retoma cuando estén cerrados.
    - *Continuar aceptando el riesgo* — equivale a `--allow-open-critical-gaps`: sigues al Paso 3
      dejando constancia explícita de que las HUs afectadas podrán salir `[INCOMPLETO]` y
      quedarán bloqueadas para plan/tasks hasta completarse.
 
-   > **Por qué la vía de dictar sube al menú ([[D-051]]).** Está sancionada desde [[D-042]], pero
-   > vivía **enterrada en la descripción de otra opción** — y una descripción se resume al
-   > presentarla, así que la vía desaparecía de la pantalla y el usuario no llegaba a saber que
-   > existía. Es la misma forma del vacío que cerró [[D-038]] en la fase PRD: una ruta que el
-   > contrato contempla y que nadie ofrece. Ofrecer las dos también deja la elección donde debe
-   > estar: **quién teclea** es cosa del usuario; **quién compone la respuesta** es siempre él.
+   > **Una decisión, una pregunta ([[D-053]]).** Antes esto se preguntaba **una vez por gap**, y
+   > el propio menú lo delataba: la tercera opción tenía que aclarar *"(aplica a los 4 gaps
+   > críticos, no solo este)"* — una opción de ámbito global metida dentro de una pregunta de
+   > ámbito individual. Si una opción necesita explicar que no va con su propia pregunta, la
+   > pregunta está en el sitio equivocado. Además obliga a decidir cuatro veces lo mismo antes de
+   > poder responder nada.
    >
-   > *"Responder solo algunas"* **desaparece como opción** y pasa a la descripción de las dos
-   > primeras, que es donde ocurre de verdad: si dicta dos de cuatro, la reevaluación del gate es
-   > automática y no hace falta anunciarla como una rama aparte. Mezclaba dos ejes —cuántas y
-   > dónde— en un menú de tres.
+   > Y hay un ahorro real: si elige escribir él en el fichero o continuar aceptando el riesgo,
+   > **el detalle de los gaps no hace falta para nada** — y el gate se arma solo con el recuento
+   > de `--check`, que ya tienes.
 
    Si el análisis estaba recién generado pero el script **no** reporta críticos abiertos, el gate se reduce a dos vías: *revisar el análisis antes de generar* o *continuar ya*.
+
+6b. **Solo si eligió dictar** → presenta los gaps **en la conversación, de uno en uno**. Para cada `[CRÍTICO]` abierto, en orden:
+
+   ```bash
+   !python3 .sdd/scripts/sdd-analysis-gaps.py "<path>_analysis.md" --list --gap <P-XXX> --json
+   ```
+
+   Escribe en el chat, **verbatim**, lo que devuelve: el ID y su título, el `contexto`, el
+   `problema`, el `afecta` y la **pregunta** literal. Si sus `flags` incluyen
+   `PUEDE_REQUERIR_CR`, añade **una línea** avisando de que la respuesta puede expandir el
+   producto y que entonces habrá que formalizarlo en el PRD (punto 8). Luego **cede el turno**:
+   el usuario responde en texto libre.
+
+   Con su respuesta, y solo con ella:
+   ```bash
+   !python3 .sdd/scripts/sdd-analysis-gaps.py "<path>_analysis.md" --answer <P-XXX> "<lo que dijo, literal>"
+   ```
+   Confirma en una línea que se aplicó y pasa al siguiente. Cuando no queden, vuelve a correr
+   `--check` y sigue por el punto 8 o 9 según el veredicto. Si cierra solo algunos y quiere
+   parar, `--check` reevalúa el gate con los que queden — no hace falta anunciarlo como rama.
+
+   > **Por qué en el chat y no con `AskUserQuestion` ([[D-053]]).** `AskUserQuestion` es para
+   > **elegir entre opciones**. La respuesta a un gap es **prosa abierta**: no hay opciones, así
+   > que el camino principal acababa siendo la escotilla *"Other → escribe algo"* del selector.
+   > Y el coste no era solo de fricción: **la pantalla del selector no tiene sitio para el
+   > `contexto` ni el `problema`**, que son justo los campos que dicen *por qué* importa y
+   > *cuánto* detalle hace falta. Medido: al usuario le llegaba la pregunta pelada y los dos
+   > campos se tiraban. Una pregunta amputada se contesta peor, que es contra lo que se
+   > construyó [[D-042]].
+   >
+   > **Y de uno en uno por atribución, no por comodidad.** Si presentas los cuatro juntos y te
+   > responde en un bloque, tienes que **repartir** su texto entre cuatro IDs — y eso es
+   > interpretar una respuesta que no dio literalmente, que es el FALLO del paso 4 de `CU-3.a`.
+   > Gap a gap, la atribución es inequívoca por construcción. **Nunca compones, completas ni
+   > reinterpretas una respuesta**: si lo que dijo no responde a lo que se preguntaba, se lo
+   > dices y le dejas reformular.
+
 7. Si el script dio `CRITICAL_OPEN` y `--allow-open-critical-gaps` vino **de entrada** en `$ARGUMENTS` → no presentes el gate; continúa al Paso 3 dejando constancia explícita de que las HUs afectadas podrán salir `[INCOMPLETO]`.
 8. Si el script dio `CRITICAL_ANSWERED`, hay que saber si alguna respuesta introduce señales de cambio de producto según `kb-product-change-governance`. **Tú no las lees ([[D-051]]):** mira los `flags` que devolvió `--list --json` y **delega el juicio**.
 

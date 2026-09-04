@@ -76,26 +76,41 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
      `wf-spec-features-first` lo lanza y **se detiene**), produce `_analysis.md` con
      gaps `[P-XXX]` y severidad, y te pide revisarlo antes de continuar.
 2. El analysis deja gaps `[CRÍTICO]` abiertos y pides seguir igualmente.
-   → **Esperado:** el gate se presenta con `AskUserQuestion` —responder los críticos primero,
-     continuar aceptando `[INCOMPLETO]`, o responder solo algunas— y **el flujo continúa en el
-     mismo turno** con lo que elijas ([[D-045]]). No avanza en silencio. El conteo de críticos
-     abiertos sale de `sdd-analysis-gaps.py --check` ([[D-042]]), **no** de la lectura del
-     informe — y ese check corre **antes** de la rama que gobierna.
+   → **Esperado:** el gate se presenta con **UN SOLO** `AskUserQuestion`, para toda la tanda
+     ([[D-053]]) y en un eje —cómo se responde—: *me los dictas aquí* / *los escribes tú en el
+     fichero* / *continuar aceptando el riesgo*. **El flujo continúa en el mismo turno** con lo
+     que elijas ([[D-045]]). No avanza en silencio. El conteo de críticos abiertos sale de
+     `sdd-analysis-gaps.py --check` ([[D-042]]), **no** de la lectura del informe — y ese check
+     corre **antes** de la rama que gobierna.
+   → **FALLO ([[D-053]]):** que el menú se repita **una vez por gap** —decidir N veces lo mismo
+     antes de poder responder nada—. Señal inequívoca: una opción que tiene que aclarar su
+     propio ámbito (*"aplica a los N gaps, no solo a este"*) dentro de una pregunta individual.
+   → **FALLO ([[D-053]]):** traer el detalle de los gaps (`contexto`/`problema`) **antes** de
+     que elija. Si dice *"los escribo yo"* o *"continuar"*, ese detalle no hacía falta, y
+     traerlo mete prosa del informe en el contexto de main por la puerta de atrás.
    → **FALLO:** decidir la rama citando una lectura propia del `_analysis.md`; tratar un
      veredicto `VACUOUS` (documento no parseado) como "sin gaps críticos"; **auto-armar** el
      `--allow-open-critical-gaps` sin que tú lo elijas ([[D-026]]); o pedirte que **vuelvas a
      ejecutar** el workflow con el flag — eso repite parseo, readiness y check de gaps, y era el
      síntoma de que el gate vivía en un fork que no podía preguntar ([[D-045]]).
-3. **El mensaje de cierre te dice qué responder, sin que abras el fichero** ([[D-042]]).
-   → **Esperado:** path exacto del `_analysis.md`, los IDs `[CRÍTICO]` **cada uno con su
-     pregunta en una línea**, y qué se sustituye (`- **Respuesta**: _(pendiente)_`).
+3. **El mensaje del gate te dice qué se te va a pedir, sin que abras el fichero** ([[D-042]]).
+   → **Esperado:** path exacto del `_analysis.md`, el recuento, y los IDs `[CRÍTICO]` **con su
+     título en una línea cada uno**, para que veas el alcance **antes** de elegir cómo
+     responderlos. En la rama *"los escribes tú"*, además, qué se sustituye
+     (`- **Respuesta**: _(pendiente)_`).
    → **FALLO:** un "responde las preguntas marcadas como `_(pendiente)_`" genérico que
      te obliga a bucear entre todos los gaps para saber cuáles bloquean.
-4. **Quién escribe las respuestas** ([[D-042]]). Dicta una respuesta en la conversación
-   en vez de editar el fichero.
-   → **Esperado:** el hilo principal la aplica con
-     `sdd-analysis-gaps.py --answer P-XXX "texto"` por `Bash`, y el fichero cambia
-     **solo** en esa línea.
+4. **Cómo se dictan y quién las escribe** ([[D-042]], [[D-053]]). Elige *"me los dictas aquí"*.
+   → **Esperado:** main te los presenta **en la conversación, de uno en uno** —no con
+     `AskUserQuestion`: la respuesta es prosa abierta, no una elección entre opciones—, y cada
+     uno llega **con su `contexto`, su `problema` y su `afecta`**, no solo con la pregunta
+     pelada. Eso sale de `sdd-analysis-gaps.py --list --gap <P-XXX>`. Respondes en texto libre y
+     el hilo principal aplica con `--answer P-XXX "texto"` por `Bash`; el fichero cambia **solo**
+     en esa línea.
+   → **FALLO ([[D-053]]):** pedir la respuesta con un `AskUserQuestion` y que el camino real sea
+     su escotilla *"Other"* — la pantalla del selector no tiene sitio para el contexto, así que
+     la pregunta te llega amputada. O presentarte los N gaps juntos y **repartir** tu respuesta
+     entre los IDs: repartir es interpretar lo que no dijiste literalmente.
    → **FALLO (tres formas):** que main haga `Read`/`Edit`/`Write` del `_analysis.md`;
      que **rehúse** ayudar remitiéndote al editor cuando existe vía sancionada; o —el
      grave— que **complete o reinterprete** una respuesta que no diste.

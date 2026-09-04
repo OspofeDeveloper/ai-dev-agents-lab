@@ -222,53 +222,105 @@ def apply_answer(text: str, gap_id: str, answer: str, force: bool):
     return new_text, result
 
 
-QUESTION_RE = re.compile(
-    r"^\s*[-*+]\s*\**\s*Pregunta para el cliente\s*\**\s*:\s*(?P<q>.*)$")
+# Campos etiquetados dentro del bloque de un gap: `- **Contexto**: ...`.
+FIELD_RE = re.compile(
+    r"^\s*[-*+]\s*\**\s*(?P<label>[^:*][^:]*?)\s*\**\s*:\s*(?P<value>.*)$")
+# Etiqueta del informe -> clave que emite `--list`. `Respuesta` NO esta aqui a
+# proposito: el texto de las respuestas lo da `--export-answers`, no este modo.
+LIST_FIELDS = {
+    "contexto": "contexto",
+    "problema": "problema",
+    "afecta": "afecta",
+    "pregunta para el cliente": "question",
+}
 
 
-def list_gaps(text: str, source: str) -> dict:
-    """Los gaps con su PREGUNTA, para que el orquestador arme el gate sin abrir el fichero.
+def _gap_fields(lines, start, end) -> dict:
+    """Campos etiquetados de UN bloque de gap, verbatim y con continuaciones.
+
+    Un campo puede seguir en las lineas siguientes mientras no empiece otro bullet,
+    otro encabezado ni una linea en blanco. Se devuelve tal cual esta escrito: este
+    texto se le ENSENA al usuario para que responda, asi que resumirlo o
+    reformatearlo seria degradar justo lo que tiene que leer.
+    """
+    out, label, buf = {}, None, []
+
+    def flush():
+        if label and label not in out:
+            out[label] = " ".join(buf).strip()
+
+    for j in range(start, end):
+        line = lines[j]
+        if HEADING_RE.match(line):
+            break
+        m = FIELD_RE.match(line)
+        if m:
+            flush()
+            key = LIST_FIELDS.get(" ".join(m.group("label").lower().split()))
+            label, buf = key, [m.group("value").strip()]
+            continue
+        if label is None:
+            continue
+        if not line.strip() or re.match(r"^\s*[-*+]\s", line):
+            flush()
+            label, buf = None, []
+            continue
+        buf.append(line.strip())
+    flush()
+    return {k: v for k, v in out.items() if k}
+
+
+def list_gaps(text: str, source: str, only_gap: str = None) -> dict:
+    """Los gaps con su PREGUNTA Y SU CONTEXTO, para que el orquestador arme el gate
+    y presente cada gap sin abrir el fichero.
 
     `--check` da el recuento y los IDs, pero el mensaje del gate tiene que decir
     **qué se pregunta en cada uno** ([[D-042]]). Hasta ahora eso solo llegaba dentro
     del informe del delegado, así que en una sesión que retoma el trabajo —los gaps se
     responden un martes y se sigue el jueves— main se quedaba sin vía sancionada y
-    acababa grepeando prosa del artefacto ([[D-048]]). Esto es esa vía.
+    acababa grepeando prosa del artefacto. Esto es esa vía.
 
-    Emite metadatos, no el documento: id, severidad, flags, título, pregunta y si está
-    respondida. **No** emite el texto de la respuesta — para eso está `--export-answers`.
+    Emite también `contexto`, `problema` y `afecta` ([[D-053]]): sin ellos la pregunta
+    llega pelada, y son los campos que dicen POR QUÉ importa y CUÁNTO detalle hace
+    falta. Van **verbatim**: main es un relé hacia la pantalla, no un resumidor.
+
+    Emite metadatos, no el documento. **No** emite el texto de la respuesta — para eso
+    está `--export-answers`.
     """
     lines = text.splitlines()
     gaps = parse_gaps(text)
-    # La pregunta vive dentro del bloque del gap: entre su encabezado y el siguiente.
-    starts = []
-    for i, line in enumerate(lines):
-        if GAP_HEADING_RE.match(line):
-            starts.append(i)
+    # El bloque de un gap va de su encabezado al siguiente encabezado (de gap o no).
+    starts = [i for i, line in enumerate(lines) if GAP_HEADING_RE.match(line)]
     bounds = {}
-    for n, s in enumerate(starts):
+    for n, s0 in enumerate(starts):
         end = starts[n + 1] if n + 1 < len(starts) else len(lines)
-        for j in range(s + 1, end):
+        for j in range(s0 + 1, end):
             if HEADING_RE.match(lines[j]) and not GAP_HEADING_RE.match(lines[j]):
                 end = j
                 break
-        bounds[s] = end
-    questions = {}
-    for n, s in enumerate(starts):
-        m = GAP_HEADING_RE.match(lines[s])
-        gid = m.group("id")
-        for j in range(s + 1, bounds[s]):
-            qm = QUESTION_RE.match(lines[j])
-            if qm:
-                questions[gid] = qm.group("q").strip()
-                break
+        bounds[s0] = end
+    fields = {}
+    for s0 in starts:
+        gid = GAP_HEADING_RE.match(lines[s0]).group("id")
+        fields[gid] = _gap_fields(lines, s0 + 1, bounds[s0])
+    if only_gap is not None:
+        known = [g["id"] for g in gaps]
+        if only_gap not in known:
+            raise GapError(
+                f"{only_gap} no existe en el informe. IDs validos: "
+                + (", ".join(known) if known else "(ninguno)"))
+        gaps = [g for g in gaps if g["id"] == only_gap]
     return {
         "action": "list",
         "source": source,
         "total": len(gaps),
         "gaps": [
             {"id": g["id"], "severity": g["severity"], "flags": g["flags"],
-             "title": g["title"], "question": questions.get(g["id"]),
+             "title": g["title"],
+             "question": fields.get(g["id"], {}).get("question"),
+             "contexto": fields.get(g["id"], {}).get("contexto"),
+             "problema": fields.get(g["id"], {}).get("problema"),
+             "afecta": fields.get(g["id"], {}).get("afecta"),
              "answered": g["answered"]}
             for g in gaps
         ],
@@ -354,6 +406,7 @@ def _parse_args(argv):
     do_check = False
     do_export = False
     do_list = False
+    only_gap = None
     import_path = None
     answer = None
     rest = []
@@ -369,6 +422,10 @@ def _parse_args(argv):
             do_export = True
         elif a == "--list":
             do_list = True
+        elif a == "--gap":
+            only_gap = next(it, None)
+            if only_gap is None:
+                raise GapError("--gap requiere <P-XXX>", code=1)
         elif a == "--import-answers":
             import_path = next(it, None)
             if import_path is None:
@@ -381,12 +438,13 @@ def _parse_args(argv):
             answer = (gap_id, value)
         else:
             rest.append(a)
-    return as_json, force, do_check, do_export, do_list, import_path, answer, rest
+    return (as_json, force, do_check, do_export, do_list, only_gap,
+            import_path, answer, rest)
 
 
 def main() -> int:
     try:
-        (as_json, force, do_check, do_export, do_list, import_path,
+        (as_json, force, do_check, do_export, do_list, only_gap, import_path,
          answer, rest) = _parse_args(sys.argv[1:])
     except GapError as e:
         print(f"ERROR: {e}", file=sys.stderr)
@@ -411,7 +469,11 @@ def main() -> int:
         return 0
 
     if do_list:
-        result = list_gaps(text, str(path))
+        try:
+            result = list_gaps(text, str(path), only_gap)
+        except GapError as e:
+            print(f"ERROR: {e}", file=sys.stderr)
+            return e.code
         if as_json:
             print(json.dumps(result, ensure_ascii=False))
         else:
@@ -419,6 +481,10 @@ def main() -> int:
                 flags = "".join(f"[{f}]" for f in g["flags"])
                 mark = "✓" if g["answered"] else "·"
                 print(f"{mark} {g['id']}{flags} {g['title']}")
+                if only_gap:
+                    for label in ("contexto", "problema", "afecta"):
+                        if g.get(label):
+                            print(f"    {label.capitalize()}: {g[label]}")
                 if g["question"]:
                     print(f"    {g['question']}")
         return 0
