@@ -10,6 +10,7 @@ Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afec
 - ⚠ **Causa B — los auditores sí tenían la regla cargada y aun así nombraron workflows.** 4 ocurrencias en campos de recomendación (`_readiness_report`, dos `_conflict_report`, `_discovery`). No es desobediencia: la guía de fase se presenta a sí misma como *"contexto de fase, **no una instrucción de rol**"*, mientras la instrucción que empuja a escribir (*"sugiere una posible resolución"*) vive en el SKILL. La norma pasa a estar **también** en el punto donde cada skill redacta: `wf-spec-conflict` Paso 6, `wf-spec-readiness` Paso 7 y el campo `Avisos de gobernanza` de `wf-spec-discover`. Y la guía deja dicho que esa sección **sí** vincula al que escribe, por excepción explícita.
 - **Backstops**: dos en `test_install_sh.py` (la regla de Spec declara los dos globs, y el override `--artifacts-spec` no se los lleva por delante).
 - Barrida de paso una fuga más en `wf-spec-readiness` (`/wf-spec-conflict` dentro de la prosa del Paso 4c).
+- **El segundo hueco del espacio de IDs queda declarado**: un análisis **regenerado** con más gaps invade el rango que los specs derivados ya reclamaron. No se arregla desplazando la base —el rescate de respuestas empareja por ID **y título**, y moverla garantizaría cero coincidencias, perdiendo decisiones de negocio—. La resolución sigue siendo correcta porque se busca **primero en el spec**; el daño posible es de lectura humana, que es justo lo que cubre el corolario de citar siempre el fichero.
 
 ## 0.90.1 — 2026-09-07
 

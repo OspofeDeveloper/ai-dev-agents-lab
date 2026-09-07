@@ -48,6 +48,23 @@ ID con uno de su análisis: ahí es donde el marcador sería ambiguo. Consecuenc
 `P-XXX` **no identifica un gap por sí solo fuera de su spec** — al citarlo en un informe, en un
 conflicto o al usuario, nómbralo junto al fichero donde vive.
 
+**El segundo hueco: regenerar el análisis.** `wf-spec-analyze` numera desde `001` dentro de su
+documento, así que un análisis regenerado que produzca **más** gaps que el anterior invade el
+rango que los specs derivados ya reclamaron. No se arregla desplazando la base del análisis: el
+rescate de respuestas (`--export/--import-answers`) empareja por **ID y título**, y mover la base
+garantizaría **cero** coincidencias, perdiendo decisiones de negocio que valen más que la
+unicidad del ID.
+
+Y hay una razón de fondo para no perseguirlo: **tras regenerar, los `P-XXX` del análisis ya no
+significan lo mismo**, colisionen o no —el análisis no es reproducible, y el mismo ID puede ser
+otra pregunta (ver `wf-spec-analyze`, "Rescatar las respuestas antes de sobrescribir")—. El
+riesgo que abre la colisión no es nuevo; es ese, que ya estaba.
+
+**Lo que sostiene la resolución en los dos casos** es la regla de arriba: se busca **primero en el
+spec**. Un `[P-011]` local se resuelve contra su propio bloque aunque el análisis regenerado tenga
+otro `[P-011]`. El daño posible es de **lectura humana**, no de resolución — y por eso el corolario
+de citar siempre el fichero no es cosmético.
+
 ---
 
 ## Dónde vive un gap: dos hogares, y cuál manda ([[D-054]])
