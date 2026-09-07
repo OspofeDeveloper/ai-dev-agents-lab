@@ -594,6 +594,78 @@ informe a mano, espera a mano, o **reporta como del delegado un dato que reconst
 > **Muestra de gaps: 9 / 4 críticos.** Primera del PRD 1.5; no comparable con la serie anterior.
 > Discovery: **8 features** (igual recuento que sobre la 1.0, con nombres y fronteras distintas).
 
+> **Pasada 9 (2026-09-07, v0.88.0, `myops-app-specs`, banco reseteado, modelo `opus-5`) — pasos
+> 1-5 PASS; [[D-053]] ejercitado por primera vez en pantalla; subset de 4 features.** Muestra de
+> gaps: **8 / 5 críticos** (la 8 dio 9/4 sobre el mismo PRD — ver Observación A: el análisis no es
+> reproducible).
+>
+> **⚠ Reinicio de recuentos: esta es la 1/3.** Entre la 8 y la 9, [[D-052]] (0.86.0) y 11.10
+> (0.87.0) reescribieron el gate de gaps críticos **dentro de `wf-spec-features-first`**, que es la
+> skill cuyo contrato miden los pasos 1-5. Contrato distinto, serie nueva.
+>
+> **Y una salvedad sobre el recuento hacia adelante.** [[D-054]] (0.90.0) **no toca**
+> `wf-spec-features-first` —arregla `wf-spec-gap-resolve`, la SSoT y un script—, así que los cinco
+> probes de arriba siguen midiendo lo mismo. Pero 0.90.1 sí toca `wf-spec-fast-track` Paso 6, que
+> es el **escritor** que este flujo delega: la asignación de `[P-XXX]` cambió. No afecta a lo que
+> los probes 1-5 miden (orquestación, delegación y gates), y por eso la 9 se mantiene como 1/3 —
+> pero queda dicho, porque el criterio de la campaña es que tocar un SKILL del camino medido
+> reinicia lo que ese SKILL gobierna.
+>
+> **Lo que salió limpio, verificado contra los ficheros:** los 4 specs con cabecera de trazabilidad
+> completa y sello de hash (`sdd-sync-check check-all` sin deriva), `status_sync: in_sync` los
+> cuatro, rigor `standard` propagado, PRD sin tocar, `agent-memory` ausente, **12/12 delegaciones
+> con el flag**, los **dos fan-outs en un único mensaje** (agrupando por `message.id`), y el
+> marcador `[INCOMPLETO]` en lenguaje natural — el cambio de 0.87.0 propagado al artefacto real.
+>
+> **[[D-053]] funcionó donde [[D-052]] había fallado.** Una sola pregunta para toda la tanda y
+> después la presentación conversacional gap a gap. Confirma la lección de [[D-053]]: el defecto
+> anterior no era visible leyendo el contrato, solo ejecutándolo.
+>
+> **Hallazgo 1 — callejón sin salida en la costura fast-track ↔ gap-resolve (el más grave de la
+> campaña hasta aquí).** F-006 quedó con 4 HUs `[INCOMPLETO]` por un `[P-011]` que solo existía en
+> el `## Items Pendientes` de su propio spec. El gate denegaba el plan **correctamente** y la vía
+> sancionada no alcanzaba el gap: `wf-spec-gap-resolve` solo miraba el `_analysis.md`, que daba
+> `CRITICAL_ANSWERED, 0 abiertos`. No corrompe estado — deja una feature **inplanificable**, y la
+> única salida habría sido editar el spec a mano, que es justo lo que el ecosistema prohíbe.
+> → [[D-054]], v0.90.0.
+>
+> **Hallazgo 2 — el espacio de IDs `P-XXX` era compartido y nadie lo coordinaba.** El writer
+> continuó la numeración del análisis por su cuenta (`P-009`…`P-012`) y **acertó contra la regla
+> escrita**, que mandaba reiniciar en cada artefacto. → numeración por linaje en [[D-054]];
+> instrucción en línea en `wf-spec-fast-track` Paso 6 en v0.90.1.
+>
+> **Hallazgo 3 — 11.10 en una superficie nueva: los mensajes del gate.** Los **12** mensajes de
+> denegación de `sdd-gate-check.py` llevaban slash-commands. Es lo que el usuario lee en **cada
+> gate bloqueado**, y ninguna regla de linter llega a un script. → barrido en v0.90.0.
+>
+> **Hallazgo 4 — la regla de fase no llega a los exploradores (11.10, causa A).** Los `paths:` de
+> la regla de la fase Spec (`spec/**`, `**/*_spec.md`, `**/*_features.md`) **no cubren**
+> `*_analysis.md` ni `*_discovery.md`, que son artefactos de Spec que viven en `prd/`. Medido: las
+> **3** ejecuciones de `sdd-spec-explorer` corrieron con la regla **NO cargada** (0 hits); todos
+> los escritores y auditores la tenían. **Pendiente.**
+>
+> **Hallazgo 5 — los auditores sí tenían la regla y aun así nombraron workflows (causa B).** 4
+> ocurrencias en "Sugerencia de resolución" (`spec_readiness_report.md:33`,
+> `registro-de-movimientos_conflict_report.md:51`, `gestion-contactos_conflict_report.md:78`,
+> `prd_discovery.md:147`). La norma vive en un documento cuyo propio encabezado dice que es
+> *"contexto de fase, **no una instrucción de rol**"*, mientras la instrucción que empuja
+> (*"sugiere una posible resolución"*) está en el SKILL. El arreglo pertenece a `wf-spec-conflict`
+> Paso 6 y al paso de informe de `wf-spec-readiness`. **Pendiente.**
+>
+> **Cuestión abierta — verbatim vs. desjergonizar.** Al presentar los gaps, main reescribió el
+> campo `Problema` (*"el CA … no tiene un THEN verificable"* → *"el criterio de aceptación … no
+> tiene un resultado verificable"*). El contrato dice **verbatim**. Las dos lecturas son
+> defendibles (verbatim estricto, o verbatim salvo expandir siglas internas `CA`/`THEN`/`HU`) y
+> **no está decidido**: mientras tanto no se reporta como FALLO.
+>
+> **Nota de método — cinco comprobaciones mal hechas en la revisión de esta pasada.** Comandos
+> truncados a 120 caracteres que ocultaron 3 de 5 llamadas y casi producen una acusación de
+> fabricación contra el run; `git status` sobre un repo sin commits leído como "modificado"; un
+> `grep` anclado a frontmatter cuando las cabeceras de spec son blockquote; un `| head` que se
+> tragó el exit status del `grep` y desactivó el fallback; y un fixture con la forma espaciada del
+> flag en vez de la del SSoT. **Patrón:** escribir la comprobación esperando lo que se cree que se
+> va a encontrar. Todo lo afirmado arriba está reverificado contra el fichero.
+
 ## CU-3.b — Expansión de alcance desde las respuestas del analysis
 
 **Precondición:** al responder el `_analysis.md` introduces capacidad nueva (entidad
