@@ -2,6 +2,15 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.90.1 — 2026-09-07
+
+**El writer se entera de la norma donde numera** — cierre de [[DECISIONS D-054]] (puntos 6 y 7). La numeración por linaje quedaba definida en la SSoT, pero `wf-spec-fast-track` —que es quien asigna el `[P-XXX]`— solo remitía a ella *"para el formato de IDs"*, mientras que para el `F-NNN` sí tenía la instrucción en línea (*"no lo cuentes a mano"*). Esa asimetría es exactamente donde la pasada 9 dependió del criterio del writer.
+
+- ⚠ **`wf-spec-fast-track` Paso 6 gana la instrucción en línea**: el ID se pide a `sdd-next-id.py` pasándole los ficheros del linaje que existan en disco; sin análisis ni hermanos (modo directo, brownfield) el linaje es el propio spec y empieza en `[P-001]`.
+- **El límite de la garantía se declara** en la SSoT y en la skill: el linaje se calcula sobre lo que hay en disco, así que en un fan-out paralelo dos specs hermanos pueden reclamar el mismo `P-XXX`. Lo que sí queda garantizado —y es lo que hace falta— es que dentro de **un mismo spec** ningún gap propio comparta ID con uno de su análisis, que es donde el marcador sería ambiguo. Corolario: un `P-XXX` no identifica un gap fuera de su spec, así que se cita siempre junto a su fichero.
+- **Dos backstops de linaje** en `tests/test_sdd_next_id.py` (análisis + spec → `P-010`; spec solo → `P-001`).
+- El Paso 6 deja de nombrar `/wf-prepare-plan` al describir el bloqueo (ROADMAP 11.10).
+
 ## 0.90.0 — 2026-09-07
 
 **Un gap tiene dos hogares, y se resuelve donde está definido** — [[DECISIONS D-054]]. Medido en la pasada 9: una feature quedó **inplanificable sin salida** — 4 HUs `[INCOMPLETO]` por un gap que solo existía en el `## Items Pendientes` de su propio spec, con el gate denegando el plan (correctamente) y la vía sancionada sin poder alcanzarlo.

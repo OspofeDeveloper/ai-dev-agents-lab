@@ -27,6 +27,8 @@ Y el gap era de una clase que el análisis **estructuralmente no puede contener*
 3. **Se resuelve donde está definido el bloque**: se busca primero en el spec, luego en el análisis; la respuesta se escribe **en ese fichero**, con `--answer` apuntado a él. El script ya es agnóstico al documento — parsea cualquier fichero con bloques de gap—, así que no hubo que tocarlo.
 4. **El check de cierre corre en los dos hogares.** Un `--check` contra el análisis **no dice nada** sobre los gaps que viven en el spec.
 5. **La numeración pasa a ser por LINAJE** (el análisis más todos los specs derivados de él), no *"reiniciando en cada artefacto nuevo"* como decía la SSoT. El ID se pide a `sdd-next-id.py` pasándole todos los ficheros del linaje — ya acepta varios.
+6. **La norma se le dice al writer donde numera**, no solo en la SSoT. `wf-spec-fast-track` Paso 6 gana la instrucción en línea —simétrica a la que ya tenía el `F-NNN` del Paso 9 (*"no lo cuentes a mano"*)—, porque quien asigna el ID es él y en ese punto no estaba escrito que hubiera que pedírselo al script.
+7. **La garantía tiene un límite, y se declara.** El linaje se calcula sobre lo que hay **en disco**: en un fan-out paralelo dos fast-tracks hermanos pueden reclamar el mismo `P-XXX` sin verse. El invariante que sí se garantiza —y el único que hace falta— es que dentro de un mismo spec ningún gap propio comparta ID con uno de su análisis. Consecuencia: un `P-XXX` **no identifica un gap fuera de su spec**, así que al citarlo se nombra junto a su fichero (que es justo lo que [[D-054]] ya obliga a hacer al reportar gaps pendientes).
 
 **Alternativas descartadas.**
 
@@ -39,7 +41,7 @@ Y el gap era de una clase que el análisis **estructuralmente no puede contener*
 - **Una regla que la práctica contradice y acierta es una regla mal escrita.** La SSoT decía *"reiniciando en cada artefacto"*; el writer continuó la numeración por su cuenta y evitó una colisión que la regla habría provocado. Se alineó la regla con la práctica, no al revés.
 - **Barrido colateral:** los **12** mensajes de denegación de `sdd-gate-check.py` llevaban slash-commands. Son los mensajes que el usuario ve en **cada gate bloqueado** —la superficie más visible de ROADMAP 11.10— y ninguna regla de linter llega a un script.
 
-**Referencias.** `pipeline/spec/skills/kb-gap-conventions/SKILL.md` (secciones "Formatos de ID" y "Dónde vive un gap"), `pipeline/spec/skills/wf-spec-gap-resolve/SKILL.md` (Pasos 2, 3 y 7), `scripts/sdd-gate-check.py`, `tests/test_sdd_analysis_gaps.py` (3 backstops, incl. el callejón reproducido).
+**Referencias.** `pipeline/spec/skills/kb-gap-conventions/SKILL.md` (secciones "Formatos de ID" y "Dónde vive un gap"), `pipeline/spec/skills/wf-spec-gap-resolve/SKILL.md` (Pasos 2, 3 y 7), `pipeline/spec/skills/wf-spec-fast-track/SKILL.md` (Paso 6), `scripts/sdd-gate-check.py`, `tests/test_sdd_analysis_gaps.py` (3 backstops, incl. el callejón reproducido), `tests/test_sdd_next_id.py` (2 backstops de linaje).
 
 ---
 

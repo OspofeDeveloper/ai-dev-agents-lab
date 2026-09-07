@@ -40,6 +40,14 @@ primer gap que levante un spec de ese linaje es `[P-009]`. El ID se pide al scri
 > (analysis hasta `P-008`, spec desde `P-009`) **contradiciendo esta regla tal como estaba
 > escrita**, y acertó. La regla se alinea con lo que la práctica ya demostró correcto.
 
+**Hasta dónde llega la garantía.** El linaje se calcula sobre lo que hay **en disco**: en un
+fan-out paralelo —`wf-spec-features-first` lanza varios fast-tracks a la vez— dos specs hermanos
+pueden reclamar el mismo `P-XXX`, porque ninguno ve todavía al otro. El invariante que sí queda
+garantizado, y es el que hace falta, es que **dentro de un mismo spec** ningún gap propio comparta
+ID con uno de su análisis: ahí es donde el marcador sería ambiguo. Consecuencia práctica: un
+`P-XXX` **no identifica un gap por sí solo fuera de su spec** — al citarlo en un informe, en un
+conflicto o al usuario, nómbralo junto al fichero donde vive.
+
 ---
 
 ## Dónde vive un gap: dos hogares, y cuál manda ([[D-054]])

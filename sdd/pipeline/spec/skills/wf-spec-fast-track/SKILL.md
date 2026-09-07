@@ -104,8 +104,18 @@ Aplica los 3 checks del modo ANALYZE pero enfocados en la capability indicada:
 
 No genera un `_analysis.md` separado. Consulta `kb-gap-conventions` para el formato de IDs `[P-XXX]`, severidades, marcador `_(pendiente)_` y campo `Afecta`. Los gaps se gestionan directamente en el spec:
 
-- **`[CRÍTICO]`**: determina qué HUs afecta (campo `Afecta`). Las HUs afectadas se marcan `[INCOMPLETO]` en el spec (se generan con la información disponible). La presencia de HUs `[INCOMPLETO]` en el spec **bloquea** la ejecución de `/wf-prepare-plan`. Los gaps se documentan en una sección `## Items Pendientes` al final del spec (ver formato abajo).
+- **`[CRÍTICO]`**: determina qué HUs afecta (campo `Afecta`). Las HUs afectadas se marcan `[INCOMPLETO]` en el spec (se generan con la información disponible). La presencia de HUs `[INCOMPLETO]` en el spec **bloquea** el paso a planificación. Los gaps se documentan en una sección `## Items Pendientes` al final del spec (ver formato abajo).
 - **`[INFORMATIVO]`**: aplicar la asunción más conservadora y documentar en `## Asunciones Aplicadas` al final del spec.
+
+**El ID no lo cuentas a mano** (misma norma que el `F-NNN` del Paso 9). La numeración de los `[P-XXX]` es **por linaje** —el `_analysis.md` de origen más todos los specs derivados de él—, **no por artefacto**: si el análisis llegó a `[P-008]`, el primer gap que levantes es `[P-009]`. Pídeselo al script, pasándole todos los ficheros del linaje que existan en disco:
+
+```bash
+!python3 .sdd/scripts/sdd-next-id.py P <analysis.md, si hay> <specs hermanos del linaje…>
+```
+
+Sin `--analysis` y sin hermanos (modo directo, brownfield) el linaje es solo este spec: empieza en `[P-001]`.
+
+> **Qué colisión evita esto, y hasta dónde llega ([[D-054]]).** Tu spec referencia gaps de los dos hogares en un mismo marcador —`Pendiente de gap(s): [P-XXX]`— sin decir en cuál vive cada uno. Si reiniciaras en `001`, un gap tuyo compartiría ID con uno del análisis **dentro del mismo spec** y el marcador quedaría ambiguo: esa colisión es la que el script te evita, y evitarla es obligatorio. Lo que **no** te da es unicidad global — en un fan-out paralelo dos fast-tracks pueden reclamar el mismo ID porque el spec hermano aún no está en disco. No corrompe nada (quien resuelve busca primero en el `## Items Pendientes` del spec que referencia el ID), pero significa que un `P-XXX` **no identifica un gap por sí solo fuera de su spec**: al citarlo en un informe, di también en qué fichero vive.
 
 ---
 

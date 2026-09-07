@@ -50,6 +50,24 @@ class NextIdTest(unittest.TestCase):
         b = write(self.dir / "b.md", "### B-010\n")
         self.assertEqual(self.next("B", a, b).stdout.strip(), "B-011")
 
+    def test_P_lineage_analysis_plus_spec(self):
+        """D-054: los P-XXX se numeran por LINAJE (analysis + specs derivados).
+
+        Backstop del punto 2 del hallazgo de la pasada 9: si el spec reiniciara
+        en 001, un gap propio compartiria ID con uno del analysis DENTRO del
+        mismo spec y el marcador `Pendiente de gap(s): [P-XXX]` seria ambiguo.
+        """
+        analysis = write(self.dir / "prd_analysis.md",
+                         "### [P-007] [CRITICO] siete\n\n### [P-008] [CRITICO] ocho\n")
+        spec = write(self.dir / "f_spec.md",
+                     "## Items Pendientes\n\n### [P-009] [CRITICO] nueve\n")
+        self.assertEqual(self.next("P", analysis, spec).stdout.strip(), "P-010")
+
+    def test_P_lineage_without_analysis_starts_at_001(self):
+        """Modo directo / brownfield: no hay analysis, el linaje es solo el spec."""
+        spec = write(self.dir / "f_spec.md", "# Spec\n")
+        self.assertEqual(self.next("P", spec).stdout.strip(), "P-001")
+
     # --- desambiguacion de prefijos ---
     def test_F_ignores_RF_and_FC(self):
         f = write(self.dir / "features.md", "RF-001 RF-002\nF-001\nF-C-003\nF-C-001\n")
