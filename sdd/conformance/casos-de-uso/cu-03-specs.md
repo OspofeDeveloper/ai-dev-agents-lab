@@ -642,7 +642,7 @@ informe a mano, espera a mano, o **reporta como del delegado un dato que reconst
 > la regla de la fase Spec (`spec/**`, `**/*_spec.md`, `**/*_features.md`) **no cubren**
 > `*_analysis.md` ni `*_discovery.md`, que son artefactos de Spec que viven en `prd/`. Medido: las
 > **3** ejecuciones de `sdd-spec-explorer` corrieron con la regla **NO cargada** (0 hits); todos
-> los escritores y auditores la tenían. **Pendiente.**
+> los escritores y auditores la tenían. → cerrado en v0.91.0 (quinto corte de 11.10).
 >
 > **Hallazgo 5 — los auditores sí tenían la regla y aun así nombraron workflows (causa B).** 4
 > ocurrencias en "Sugerencia de resolución" (`spec_readiness_report.md:33`,
@@ -650,7 +650,8 @@ informe a mano, espera a mano, o **reporta como del delegado un dato que reconst
 > `prd_discovery.md:147`). La norma vive en un documento cuyo propio encabezado dice que es
 > *"contexto de fase, **no una instrucción de rol**"*, mientras la instrucción que empuja
 > (*"sugiere una posible resolución"*) está en el SKILL. El arreglo pertenece a `wf-spec-conflict`
-> Paso 6 y al paso de informe de `wf-spec-readiness`. **Pendiente.**
+> Paso 6 y al paso de informe de `wf-spec-readiness`. → cerrado en v0.91.0, poniendo la norma donde
+> cada skill redacta y declarando en la guía que esa sección **sí** vincula a quien escribe.
 >
 > **Cuestión abierta — verbatim vs. desjergonizar.** Al presentar los gaps, main reescribió el
 > campo `Problema` (*"el CA … no tiene un THEN verificable"* → *"el criterio de aceptación … no

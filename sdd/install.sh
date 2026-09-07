@@ -280,6 +280,14 @@ echo "Instalando CLAUDE.md y reglas de fase..."
 # pasa con --artifacts-<fase> y la reescritura del glob de directorio la hace
 # este script de forma determinista (antes era una edición a mano del agente,
 # fácil de omitir — CU-1.m). El backstop es el check rule-globs de verify().
+#
+# `*_analysis.md` y `*_discovery.md` matchean a PROPOSITO en prd Y en spec: son
+# artefactos de la fase Spec (los generan wf-spec-analyze y wf-spec-discover)
+# que viven en el directorio del PRD. Con solo el glob de prd, quien los escribe
+# —sdd-spec-explorer— cargaba la guia de PRD y NO la de Spec: medido en la
+# pasada 9 de CU-3.a, 3 de 3 ejecuciones sin la regla de Spec cargada, que es
+# justo donde vive la norma de no enseñar comandos en los artefactos (11.10).
+# Que carguen las dos reglas es correcto: el analysis vive en la costura.
 mkdir -p "$CLAUDE_DIR/rules"
 
 # Directorio raíz del glob de cada fase: el override de --artifacts-<fase> o, si
@@ -297,7 +305,7 @@ phase_globs() {
   local dir
   case "$1" in
     prd)    dir="$(phase_dir prd)";    printf '%s\n' "$dir/**" "**/prd*.md" "**/*_analysis.md" "**/*_discovery.md" ;;
-    spec)   dir="$(phase_dir spec)";   printf '%s\n' "$dir/**" "**/features/*/spec/**" "**/*_spec.md" "**/*_features.md" ;;
+    spec)   dir="$(phase_dir spec)";   printf '%s\n' "$dir/**" "**/features/*/spec/**" "**/*_spec.md" "**/*_features.md" "**/*_analysis.md" "**/*_discovery.md" ;;
     design) dir="$(phase_dir design)"; printf '%s\n' "$dir/**" "**/features/*/design/**" "**/DESIGN*.md" "**/*_flows.md" "**/*_views.md" "**/*_ui_prompt*.md" ;;
     plan)   printf '%s\n' "**/*_plan.md" ;;
     tasks)  printf '%s\n' "**/*_tasks.md" "**/*_bugs.md" "**/*_qa_plan.md" "**/*_qa_report.md" ;;

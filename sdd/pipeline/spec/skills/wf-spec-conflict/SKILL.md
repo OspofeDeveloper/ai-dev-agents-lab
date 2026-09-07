@@ -82,6 +82,16 @@ Por cada conflicto:
 - Cita las secciones exactas en conflicto
 - Sugiere una posible resolución (sin imponer — es una sugerencia)
 
+> **Lo que escribes aquí lo lee una persona, y esa persona no invoca comandos.** La
+> **Sugerencia de resolución** va en lenguaje natural y nombra **la acción**, no el workflow que
+> la ejecuta: *"formalizar el cambio en el PRD antes de seguir"*, no *"lanzar `wf-prd-change`"*;
+> *"pedir que se aclare el CA-004"*, no *"ejecutar `wf-spec-amend`"*. Los IDs y los veredictos
+> (`CF-001`, `ALTA`, `SIN_CONFLICTOS`) **sí** se quedan: los parsean los gates.
+>
+> Medido (pasada 9 de CU-3.a): **2 de los 4** nombres de workflow que se colaron en artefactos
+> salieron justo de este campo, con la guía de fase **cargada**. Por eso la norma está aquí y no
+> solo allí: la guía es contexto de fase, y esto es tu instrucción de rol.
+
 Si no se detecta ningún conflicto → prepara un informe breve con estado `SIN_CONFLICTOS`, indica explícitamente que el número de conflictos ALTA y MEDIA es `0`, y conserva el inventario de comparaciones realizadas.
 
 ---

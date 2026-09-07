@@ -2,6 +2,15 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.91.0 — 2026-09-07
+
+**Las dos causas de la fuga de 11.10 en los artefactos, cerradas por separado** — porque eran dos, y la segunda no se arreglaba con la primera. Medido en la pasada 9 de CU-3.a.
+
+- ⚠ **Causa A — la guía de fase no llegaba a quien escribe el análisis y el discovery.** `*_analysis.md` y `*_discovery.md` son artefactos de la fase **Spec** que viven en el directorio del **PRD**, y solo estaban en los globs de la regla de PRD. Resultado medido: las **3** ejecuciones de `sdd-spec-explorer` corrieron **sin** la regla de Spec cargada —0 hits—, que es justo donde vive la norma de no enseñar comandos en los artefactos; todos los escritores y auditores sí la tenían. La regla de Spec pasa a declarar los dos globs. Que carguen **las dos** reglas sobre esos ficheros es lo correcto: el análisis vive en la costura entre las dos fases. Los proyectos ya inicializados regeneran sus reglas al actualizar.
+- ⚠ **Causa B — los auditores sí tenían la regla cargada y aun así nombraron workflows.** 4 ocurrencias en campos de recomendación (`_readiness_report`, dos `_conflict_report`, `_discovery`). No es desobediencia: la guía de fase se presenta a sí misma como *"contexto de fase, **no una instrucción de rol**"*, mientras la instrucción que empuja a escribir (*"sugiere una posible resolución"*) vive en el SKILL. La norma pasa a estar **también** en el punto donde cada skill redacta: `wf-spec-conflict` Paso 6, `wf-spec-readiness` Paso 7 y el campo `Avisos de gobernanza` de `wf-spec-discover`. Y la guía deja dicho que esa sección **sí** vincula al que escribe, por excepción explícita.
+- **Backstops**: dos en `test_install_sh.py` (la regla de Spec declara los dos globs, y el override `--artifacts-spec` no se los lleva por delante).
+- Barrida de paso una fuga más en `wf-spec-readiness` (`/wf-spec-conflict` dentro de la prosa del Paso 4c).
+
 ## 0.90.1 — 2026-09-07
 
 **El writer se entera de la norma donde numera** — cierre de [[DECISIONS D-054]] (puntos 6 y 7). La numeración por linaje quedaba definida en la SSoT, pero `wf-spec-fast-track` —que es quien asigna el `[P-XXX]`— solo remitía a ella *"para el formato de IDs"*, mientras que para el `F-NNN` sí tenía la instrucción en línea (*"no lo cuentes a mano"*). Esa asimetría es exactamente donde la pasada 9 dependió del criterio del writer.

@@ -863,6 +863,29 @@ class ArtifactsGlobTest(InstallBase):
         self.assertIn('"specs/**"', rule)
         self.assertNotIn('"specs//**"', rule)
 
+    def test_spec_rule_covers_analysis_and_discovery(self):
+        """11.10 causa A: `_analysis.md` y `_discovery.md` son artefactos de Spec.
+
+        Viven en el directorio del PRD, asi que con solo el glob de prd quien los
+        escribe (sdd-spec-explorer) cargaba la guia de PRD y NO la de Spec — que es
+        donde vive la norma de no enseñar comandos en los artefactos. Medido en la
+        pasada 9 de CU-3.a: 3 de 3 ejecuciones sin la regla de Spec cargada.
+        """
+        r = self.install("spec")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        rule = self._spec_rule()
+        for g in ('"**/*_analysis.md"', '"**/*_discovery.md"'):
+            self.assertIn(g, rule,
+                          f"la regla de Spec no cubre {g}: quien escribe ese artefacto "
+                          f"no carga la guia de fase (11.10 causa A)")
+
+    def test_noncanonical_dir_keeps_artifact_globs(self):
+        """El override de directorio no debe arrastrarse los globs por nombre."""
+        self.install("spec", "--artifacts-spec=specs")
+        rule = self._spec_rule()
+        self.assertIn('"**/*_analysis.md"', rule)
+        self.assertIn('"**/*_discovery.md"', rule)
+
     def test_no_flag_keeps_canonical_glob(self):
         r = self.install("spec")
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)

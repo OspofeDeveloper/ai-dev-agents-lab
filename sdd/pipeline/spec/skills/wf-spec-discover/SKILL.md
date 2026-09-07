@@ -170,6 +170,15 @@ entradas usaste tú; describe **de dónde sale el alcance de esa feature concret
 `Avisos de gobernanza` es `ninguno` salvo que esa feature arrastre alcance derivado (o una
 excepción ya formalizada en el PRD / un change request referenciado).
 
+> **Lo que escribes aquí lo lee una persona, y esa persona no invoca comandos.** El aviso
+> cita el `P-XXX` responsable —eso es estado y es obligatorio— y explica **en lenguaje natural**
+> qué habría que hacer con él: *"el usuario eligió continuar con este alcance derivado en vez de
+> formalizarlo antes en el PRD"*. **No nombres el workflow** que formaliza el cambio.
+>
+> Medido (pasada 9 de CU-3.a): este campo cerró con *"…en vez de formalizarlo antes en el PRD con
+> `wf-prd-change`"* teniendo la guía de fase cargada. El resto de la frase estaba bien; sobraban
+> dos palabras.
+
 > **Por qué esto estaba mal y por qué importa ([[D-051]]).** Antes decía *"como `PRD` o `PRD +
 > analysis respondido` **según corresponda**"* sin definir el corte, y el campo admitía dos
 > lecturas: "usé el analysis como entrada" vs "el alcance deriva de una respuesta". Medido en

@@ -86,7 +86,7 @@ Para **cada** informe de conflictos localizado:
 - Primero verifica su estado general. Debe indicar explícitamente `SIN_CONFLICTOS` o `CONFLICTOS_DETECTADOS`.
 - Si el archivo existe pero no deja ese estado de forma inequívoca, trátalo como artefacto ambiguo y repórtalo en el informe de readiness.
 - Busca todos los conflictos de severidad **ALTA** que involucren esta feature.
-- Un conflicto se considera no resuelto si aparece en algún informe (el informe refleja el estado en el momento de su generación; si se resolvió, el usuario debió re-ejecutar `/wf-spec-conflict`).
+- Un conflicto se considera no resuelto si aparece en algún informe (el informe refleja el estado en el momento de su generación; si se resolvió, la verificación de conflictos tuvo que volver a pasarse después).
 
 Clasifica la feature como **BLOQUEADA** si tiene al menos un conflicto ALTA asociado.
 
@@ -154,6 +154,17 @@ Una feature puede tener múltiples bloqueos simultáneos. En ese caso, listar to
 ## Paso 7: Formato del informe
 
 Usa `${CLAUDE_SKILL_DIR}/references/readiness_report_template.md` para estructurar el informe.
+
+> **Lo que escribes aquí lo lee una persona, y esa persona no invoca comandos.** Los
+> **bloqueantes** y lo que propongas para desbloquearlos van en lenguaje natural, nombrando **la
+> acción**: *"responder los gaps que bloquean sus historias"*, *"resolver el conflicto CF-001 con
+> F-003"*, *"generar el spec de F-007"* — nunca el workflow que lo hace, ni con barra ni sin ella.
+> Estados, IDs y marcadores (`LISTA`, `BLOQUEADA`, `PENDIENTE_GENERACIÓN`, `F-00X`, `CF-001`,
+> `[INCOMPLETO]`) **son contrato** y se quedan tal cual.
+>
+> Medido (pasada 9 de CU-3.a): un nombre de workflow se coló en la "Sugerencia de resolución" de
+> este informe teniendo la guía de fase **cargada**. La guía da contexto; esta línea es la
+> instrucción.
 
 ---
 
