@@ -690,8 +690,10 @@ informe a mano, espera a mano, o **reporta como del delegado un dato que reconst
 > Discovery: **8 features** (igual recuento que sobre la 1.0, con nombres y fronteras distintas).
 
 > **Pasada 9 (2026-09-07, v0.89.0+e548522, `myops-app-specs`, banco reseteado, modelo `opus-5`) — pasos
-> 1-5 PASS; [[D-053]] ejercitado por primera vez en pantalla; subset de 4 features.** Muestra de
-> gaps: **8 / 5 críticos** (la 8 dio 9/4 sobre el mismo PRD — ver Observación A: el análisis no es
+> 1-5 PASS; [[D-053]] ejercitado por primera vez en pantalla.** Discovery: **9 features** (la 8
+> dio 8 sobre el mismo PRD — la no reproducibilidad de la Observación A alcanza también al
+> discovery, no solo al recuento de gaps). Subset ejercitado: **F-001, F-005, F-006, F-007**.
+> Muestra de gaps: **8 / 5 críticos** (la 8 dio 9/4 sobre el mismo PRD — ver Observación A: el análisis no es
 > reproducible).
 >
 > **⚠ Reinicio de recuentos: esta es la 1/3.** Entre la 8 y la 9, [[D-052]] (0.86.0), 11.10
