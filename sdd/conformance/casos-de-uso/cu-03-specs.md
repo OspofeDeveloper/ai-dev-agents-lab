@@ -129,6 +129,37 @@ globs, no de conducta: sin este check, la conclusión habría sido "el agente de
 
 ---
 
+## ♻️ Reset del banco entre pasadas
+
+Verificado contra el layout real del consumer (`myops-app-specs`, 2026-09-07). Sin esto la
+pasada N+1 no arranca del mismo estado que la N y las corridas no son independientes
+(`kb-sdd-conformance`, Regla 9 punto 6).
+
+```bash
+cp .conformance-attic/.prd-sealed.bak prd/prd.md
+rm -f  prd/prd_analysis.md prd/prd_discovery.md
+rm -rf spec/features spec/spec_features.md spec/spec_readiness_report.md
+rm -rf .claude/agent-memory/sdd-spec-explorer .claude/agent-memory/sdd-spec-writer \
+       .claude/agent-memory/sdd-spec-auditor
+```
+
+**Lo que NO se borra, y por qué:** `prd/changes/` y `prd/product-changelog.md` son los CRs de
+CU-7 que llevaron el PRD de 1.0 a 1.5. El fixture **es** el PRD 1.5 con su historia detrás;
+borrarlos cambiaría el documento de entrada.
+
+**Comprobación de que el reset quedó bien**, antes de arrancar:
+
+```bash
+md5 -q prd/prd.md .conformance-attic/.prd-sealed.bak   # las dos iguales
+cat .sdd/sdd-version.json                              # la versión que vas a medir
+```
+
+La versión instalada **se lee del fichero, no de la memoria de nadie**: la nota de la pasada 9
+llegó a decir `v0.88.0` cuando el consumer tenía `0.89.0+e548522`, y la versión es justo lo que
+nombra el contrato que la pasada mide.
+
+---
+
 ## CU-3.a — El analyze es obligatorio y para en gaps críticos
 
 **Precondición:** PRD `LISTO`, sin `_analysis.md` todavía.
@@ -658,13 +689,14 @@ informe a mano, espera a mano, o **reporta como del delegado un dato que reconst
 > **Muestra de gaps: 9 / 4 críticos.** Primera del PRD 1.5; no comparable con la serie anterior.
 > Discovery: **8 features** (igual recuento que sobre la 1.0, con nombres y fronteras distintas).
 
-> **Pasada 9 (2026-09-07, v0.88.0, `myops-app-specs`, banco reseteado, modelo `opus-5`) — pasos
+> **Pasada 9 (2026-09-07, v0.89.0+e548522, `myops-app-specs`, banco reseteado, modelo `opus-5`) — pasos
 > 1-5 PASS; [[D-053]] ejercitado por primera vez en pantalla; subset de 4 features.** Muestra de
 > gaps: **8 / 5 críticos** (la 8 dio 9/4 sobre el mismo PRD — ver Observación A: el análisis no es
 > reproducible).
 >
-> **⚠ Reinicio de recuentos: esta es la 1/3.** Entre la 8 y la 9, [[D-052]] (0.86.0) y 11.10
-> (0.87.0) reescribieron el gate de gaps críticos **dentro de `wf-spec-features-first`**, que es la
+> **⚠ Reinicio de recuentos: esta es la 1/3.** Entre la 8 y la 9, [[D-052]] (0.86.0), 11.10
+> (0.87.0) y [[D-053]] (0.89.0, la versión que el consumer tenía instalada — verificado en su
+> `.sdd/sdd-version.json`, no de memoria) reescribieron el gate de gaps críticos **dentro de `wf-spec-features-first`**, que es la
 > skill cuyo contrato miden los pasos 1-5. Contrato distinto, serie nueva.
 >
 > **Y una salvedad sobre el recuento hacia adelante.** [[D-054]] (0.90.0) **no toca**
