@@ -2,6 +2,17 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.90.0 — 2026-09-07
+
+**Un gap tiene dos hogares, y se resuelve donde está definido** — [[DECISIONS D-054]]. Medido en la pasada 9: una feature quedó **inplanificable sin salida** — 4 HUs `[INCOMPLETO]` por un gap que solo existía en el `## Items Pendientes` de su propio spec, con el gate denegando el plan (correctamente) y la vía sancionada sin poder alcanzarlo.
+
+- ⚠ **`wf-spec-gap-resolve` resuelve el gap donde vive.** Antes leía los IDs del spec pero buscaba **todas** las respuestas en el `_analysis.md`, y su check de cierre corría solo contra él: con el análisis respondido habría dicho *"no queda nada que resolver"* mientras la feature seguía bloqueada. Ahora localiza cada `[P-XXX]` en su fichero —primero el spec, luego el análisis—, escribe la respuesta ahí y **checkea los dos hogares**.
+- **El writer no se había desviado.** `wf-spec-fast-track` Paso 6 es literalmente *"Gap handling inline"* y ordena crear en el spec los gaps que no están en el análisis. Y no tenía otro sitio: escribir en el `_analysis.md` sería tocar el artefacto de otra fase, reservado a `--answer` por [[DECISIONS D-042]].
+- **La doble ubicación es forzosa.** `--analysis` es opcional: en modo directo y en todo el brownfield **no hay análisis**, así que el spec tiene que poder alojar sus gaps. Y hay una clase que el análisis no puede contener: la de **segundo orden**, nacida del cruce de dos respuestas que no existían cuando se escribió.
+- ⚠ **`kb-gap-conventions` gana la sección que faltaba**, y que es la causa raíz de la deriva: no mencionaba `Items Pendientes` **ni una vez**, así que cada skill asumió su fuente. Ahora define los dos hogares, cuál manda y cómo se escribe la respuesta en cada uno.
+- ⚠ **La numeración de IDs pasa a ser por LINAJE** (análisis + specs derivados), no *"reiniciando en cada artefacto"*. Con la regla anterior, dos gaps distintos habrían compartido ID dentro del mismo spec y el marcador `Pendiente de gap(s): [P-011]` sería ambiguo. Medido: un writer continuó la numeración por su cuenta y **acertó contra la regla escrita**.
+- ⚠ **Los 12 mensajes de denegación de `sdd-gate-check.py` dejan de enseñar comandos** (ROADMAP 11.10). Son lo que el usuario lee en **cada gate bloqueado** — la superficie más visible del ecosistema, y donde ninguna regla de linter llega porque viven en un script.
+
 ## 0.89.0 — 2026-09-04
 
 **Una decisión se pregunta una vez; una respuesta abierta no se pide con un selector** — [[DECISIONS D-053]]. [[DECISIONS D-052]] reconstruyó el menú del gate de gaps críticos sobre el texto y lo dio por cerrado **sin haberlo visto en pantalla**. Al ejercitarlo por primera vez en una pasada real aparecieron dos defectos que leyendo el contrato no se veían.

@@ -261,6 +261,56 @@ class AnalysisGapsTest(unittest.TestCase):
         self.assertNotIn("Traceback", r.stdout + r.stderr)
         self.assertIn("P-001", r.stderr)
 
+    def test_spec_local_gaps_are_parsed_like_analysis_gaps(self):
+        # D-054: un gap puede vivir en el `## Items Pendientes` del propio spec
+        # (wf-spec-fast-track Paso 6, "gap handling inline"). El script es
+        # agnostico al documento y wf-spec-gap-resolve depende de eso.
+        spec = self.root / "feature_spec.md"
+        write(spec,
+              "# Spec: Feature\n> Versión: 1.0\n\n## Historias\n\n"
+              "> ⚠ [INCOMPLETO] — Pendiente de gap(s): [P-011].\n\n"
+              "## Items Pendientes\n\n"
+              + gap("P-009", "INFORMATIVO")
+              + gap("P-011", "CRÍTICO"))
+        r = run_script("sdd-analysis-gaps.py", spec, "--list", "--json")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        data = json.loads(r.stdout)
+        self.assertEqual([g["id"] for g in data["gaps"]], ["P-009", "P-011"])
+        self.assertEqual(data["gaps"][1]["severity"], "CRÍTICO")
+
+    def test_answered_analysis_says_nothing_about_the_specs_own_gaps(self):
+        # EL CALLEJON SIN SALIDA que motivo D-054, reproducido: el analysis con
+        # todo respondido y el spec bloqueado por un gap que solo existe en su
+        # propia seccion. Checkear el analysis daria "no queda nada" mientras el
+        # gate sigue denegando el plan de esa feature. Hay que checkear LOS DOS.
+        analysis = self.make(gap("P-001", "CRÍTICO", answer="Resuelto."),
+                             name="prd_analysis.md")
+        spec = self.root / "feature_spec.md"
+        write(spec, "# Spec\n\n> ⚠ [INCOMPLETO] — Pendiente de gap(s): [P-011].\n\n"
+                    "## Items Pendientes\n\n" + gap("P-011", "CRÍTICO"))
+
+        ra = run_script("sdd-analysis-gaps.py", analysis, "--check", "--json")
+        self.assertEqual(ra.returncode, 0, "el analysis esta respondido")
+        self.assertEqual(json.loads(ra.stdout)["verdict"], "CRITICAL_ANSWERED")
+
+        rs = run_script("sdd-analysis-gaps.py", spec, "--check", "--json")
+        self.assertEqual(rs.returncode, 2, "el spec sigue bloqueado")
+        ds = json.loads(rs.stdout)
+        self.assertEqual(ds["verdict"], "CRITICAL_OPEN")
+        self.assertEqual(ds["critical_open_ids"], ["P-011"])
+
+    def test_next_id_continues_the_lineage_across_analysis_and_spec(self):
+        # D-054: la numeracion es POR LINAJE (analysis + specs derivados), no por
+        # artefacto. Si se reiniciara en cada fichero, dos gaps distintos
+        # compartirian ID dentro del mismo spec y el marcador seria ambiguo.
+        analysis = self.make(gap("P-001", "CRÍTICO"), gap("P-008", "INFORMATIVO"),
+                             name="prd_analysis.md")
+        spec = self.root / "feature_spec.md"
+        write(spec, "# Spec\n\n## Items Pendientes\n\n" + gap("P-009", "CRÍTICO"))
+        r = run_script("sdd-next-id.py", "P", analysis, spec)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(r.stdout.strip(), "P-010")
+
     def test_list_on_document_without_gaps_is_empty_not_an_error(self):
         # A diferencia de --check, listar cero gaps no es un veredicto: no bloquea.
         path = self.root / "vacio.md"

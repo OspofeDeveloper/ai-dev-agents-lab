@@ -6,6 +6,43 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-054 — Un gap tiene dos hogares posibles, y se resuelve donde está definido
+
+- **Fecha:** 2026-09-07 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-042]] (quién escribe las respuestas y con qué vía), [[D-051]] (misma familia: el defecto vive en la costura entre dos workflows), ROADMAP 11.2b (`sdd-next-id.py`), CU-3.a / CU-3.b.
+
+**Contexto.** Medido en conformance (pasada 9, 2026-09-07). Una feature quedó con 4 HUs `[INCOMPLETO]` por un gap `[P-011]` que **no existe en el `_analysis.md`** (que llega hasta `P-008`): lo levantó el writer del spec y lo definió en el `## Items Pendientes` de ese spec.
+
+El writer **no se desvió**: `wf-spec-fast-track` Paso 6 se titula literalmente *"Gap handling inline"*, dice *"No genera un `_analysis.md` separado… los gaps se gestionan directamente en el spec"* y su línea 82 remata: *"Si el inline analysis detecta un gap que no existe en el analysis previo → **créalo normalmente**"*. Tampoco tenía otro sitio: meter un gap en `prd/prd_analysis.md` sería escribir en el artefacto de otra fase, que [[D-042]] reserva a `--answer`.
+
+Y el gap era de una clase que el análisis **estructuralmente no puede contener**: **de segundo orden**. Nació del cruce de dos respuestas —una fijó una relación 1:1, la otra introdujo 1:N— y el cruce ("¿y si cambias el importe cuando hay reparto?") no existía cuando se escribió el análisis, porque las respuestas no existían. El análisis se deriva del **PRD**; ese gap se deriva de las **respuestas**.
+
+**El defecto estaba en el otro extremo de la costura.** `wf-spec-gap-resolve` ya leía el spec para sacar los `[P-XXX]` referenciados, pero buscaba **todas** las respuestas en el `_analysis.md`, y su check de cierre corría contra el análisis. Con el análisis en `CRITICAL_ANSWERED, 0 abiertos`, habría concluido *"no queda nada que resolver"* mientras el gate seguía denegando el plan de esa feature: **callejón sin salida**, con el gate correcto y la vía sancionada sin alcanzar el gap.
+
+**Causa raíz de la deriva:** `kb-gap-conventions` —la SSoT de marcadores— **no mencionaba `Items Pendientes` ni una vez**. Sin definición compartida, cada skill asumió su fuente.
+
+**Decisión.**
+
+1. **Un `[P-XXX]` tiene dos hogares legítimos:** el `_analysis.md` del documento origen, o el `## Items Pendientes` del propio spec cuando el gap nace al escribirlo. Queda definido en la SSoT, con la tabla de quién escribe en cuál.
+2. **La doble ubicación es forzosa, no una comodidad.** `--analysis` es opcional en `wf-spec-fast-track`: en modo directo (`--capability`) y en todo el onramp brownfield de `wf-spec-from-code` **no hay analysis en absoluto**. Centralizar los gaps en el análisis dejaría a esas dos entradas del pipeline sin sitio donde ponerlos.
+3. **Se resuelve donde está definido el bloque**: se busca primero en el spec, luego en el análisis; la respuesta se escribe **en ese fichero**, con `--answer` apuntado a él. El script ya es agnóstico al documento — parsea cualquier fichero con bloques de gap—, así que no hubo que tocarlo.
+4. **El check de cierre corre en los dos hogares.** Un `--check` contra el análisis **no dice nada** sobre los gaps que viven en el spec.
+5. **La numeración pasa a ser por LINAJE** (el análisis más todos los specs derivados de él), no *"reiniciando en cada artefacto nuevo"* como decía la SSoT. El ID se pide a `sdd-next-id.py` pasándole todos los ficheros del linaje — ya acepta varios.
+
+**Alternativas descartadas.**
+
+- **Prohibir los gaps locales del spec y obligar a que todo viva en el análisis.** Es la reacción intuitiva y es inviable: rompe el modo directo de fast-track y el brownfield entero, que corren sin análisis. Además obligaría al writer a escribir en el artefacto de otra fase.
+- **Dejar que `gap-resolve` fusionara ambos ficheros en una vista única.** Más código para el mismo resultado, y borra la distinción que importa al escribir la respuesta: hay que saber **en qué fichero** se sustituye el `_(pendiente)_`.
+
+**Consecuencias y aprendizaje.**
+
+- **Cuando dos skills comparten un artefacto, la SSoT tiene que nombrarlo.** `Items Pendientes` existía en el contrato de quien escribe y era invisible para el contrato de quien lee. Eso no es un descuido de redacción: es la firma de la familia [[D-051]] —el defecto vive en la costura— y se detecta preguntando, por cada sección que una skill produce, **quién la consume**.
+- **Una regla que la práctica contradice y acierta es una regla mal escrita.** La SSoT decía *"reiniciando en cada artefacto"*; el writer continuó la numeración por su cuenta y evitó una colisión que la regla habría provocado. Se alineó la regla con la práctica, no al revés.
+- **Barrido colateral:** los **12** mensajes de denegación de `sdd-gate-check.py` llevaban slash-commands. Son los mensajes que el usuario ve en **cada gate bloqueado** —la superficie más visible de ROADMAP 11.10— y ninguna regla de linter llega a un script.
+
+**Referencias.** `pipeline/spec/skills/kb-gap-conventions/SKILL.md` (secciones "Formatos de ID" y "Dónde vive un gap"), `pipeline/spec/skills/wf-spec-gap-resolve/SKILL.md` (Pasos 2, 3 y 7), `scripts/sdd-gate-check.py`, `tests/test_sdd_analysis_gaps.py` (3 backstops, incl. el callejón reproducido).
+
+---
+
 ## D-053 — Una decisión se pregunta una vez; una respuesta abierta no se pide con un selector
 
 - **Fecha:** 2026-09-04 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-042]] (quién escribe las respuestas, y "no basta con decir responde los pendientes"), [[D-052]] (de la que corrige el menú y amplía `--list`), [[D-031]] (main no lee artefactos), [[D-002]] (un fork no puede preguntar), CU-3.a paso 4.

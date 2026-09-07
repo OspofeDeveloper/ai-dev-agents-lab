@@ -66,17 +66,17 @@ def gate_plan_validado(args: str):
         return None  # sin path resoluble → permitir (politica conservadora)
     text = read(plan_path)
     if text is None:
-        return f"El plan '{plan_path}' no existe o no es legible. Genera el plan primero con /wf-prepare-plan generate <spec.md>."
+        return f"El plan '{plan_path}' no existe o no es legible. Pide que se genere el plan de esa feature antes de continuar."
     m = ESTADO_RE.search(text)
     if m is None:
-        return f"'{plan_path}' no tiene linea `Estado:` reconocible — no parece un plan SDD sellable. Ejecuta /wf-plan-validate {plan_path} primero."
+        return f"'{plan_path}' no tiene linea `Estado:` reconocible — no parece un plan SDD sellable. Pide que se valide el plan primero."
     if m.group("value") != "VALIDADO":
-        return f"El plan '{plan_path}' esta en Estado: {m.group('value')}. Ejecuta /wf-plan-validate {plan_path} y resuelve sus hallazgos antes de generar tasks."
+        return f"El plan '{plan_path}' esta en Estado: {m.group('value')}. Pide que se valide el plan y resuelve sus hallazgos antes de generar tasks."
     amends = AMEND_RE.findall(text)
     if amends:
         detail = ", ".join(f"{ca} ({ref})" for ca, ref in amends)
         return (f"El plan '{plan_path}' tiene enmienda(s) pendiente(s) de revision: {detail}. "
-                f"Cierra la revision scoped que dejo indicada /wf-spec-amend o re-valida con /wf-plan-validate {plan_path} antes de generar tasks.")
+                f"Cierra la revision scoped que dejo indicada la enmienda del CA, o pide una re-validacion del plan, antes de generar tasks.")
     return None
 
 
@@ -104,8 +104,8 @@ def prd_drift(spec_path: Path, spec_text: str):
         if digest.startswith(h.group(1).lower()):
             return None
         return (f"el PRD origen '{c}' cambió desde que se generó/sincronizó el spec "
-                f"(deriva detectada por hash). Analiza el impacto con /wf-prd-sync-impact {c} "
-                f"y resincroniza con /wf-spec-sync-from-prd antes de continuar.")
+                f"(deriva detectada por hash). Pide que se mida el impacto del cambio de PRD "
+                f"y que se resincronicen las specs, antes de continuar.")
     return None  # PRD no resoluble → permitir (política conservadora)
 
 
@@ -120,20 +120,20 @@ def gate_spec_fiable(args: str):
         return f"El spec '{spec_path}' no existe o no es legible."
     n_inc = len(re.findall(r"\[INCOMPLETO\]", text))
     if n_inc:
-        return f"El spec '{spec_path}' tiene {n_inc} HU(s) [INCOMPLETO]. Resuelvelas con /wf-spec-gap-resolve antes de continuar."
+        return f"El spec '{spec_path}' tiene {n_inc} HU(s) [INCOMPLETO]. Responde los gaps que las bloquean —en el `_analysis.md` o en la seccion `Items Pendientes` del propio spec, segun donde esten definidos— y pide que se completen esas historias."
     n_crit = len(re.findall(r"\[CR[IÍ]TICO\]", text))
     if n_crit:
         return f"El spec '{spec_path}' tiene {n_crit} gap(s) [CRITICO] abiertos. Resuelvelos antes de continuar."
     n_inf = len(re.findall(r"\[INFERIDO\]", text))
     if n_inf:
         return (f"El spec '{spec_path}' tiene {n_inf} CA(s) [INFERIDO] sin confirmar (caracterizacion brownfield). "
-                f"Confirmalos con /wf-spec-gap-resolve antes de construir nada encima.")
+                f"Confirmalos uno a uno antes de construir nada encima.")
     # Bloquean solo los estados con evidencia de desalineacion (kb-traceability-rules,
     # Regla 8). `unknown` es legitimo en specs sin PRD (fast-track directo) y la
     # deriva real con PRD la caza el check de hash de abajo.
     sync = re.search(r"status_sync\s*:\s*[\"']?(\w+)", text)
     if sync and sync.group(1) in ("stale", "needs_review"):
-        return f"El spec '{spec_path}' declara status_sync: {sync.group(1)} (no fiable). Resincroniza con /wf-spec-sync-from-prd antes de continuar."
+        return f"El spec '{spec_path}' declara status_sync: {sync.group(1)} (no fiable). Pide que se resincronice con el PRD antes de continuar."
     drift = prd_drift(spec_path, text)
     if drift:
         return f"El spec '{spec_path}' está desincronizado: {drift}"
@@ -147,7 +147,7 @@ def gate_tasks_plan_vigente(args: str):
         return None
     text = read(tasks_path)
     if text is None:
-        return f"El tasks '{tasks_path}' no existe o no es legible. Generalo primero con /wf-prepare-tasks generate <plan.md>."
+        return f"El tasks '{tasks_path}' no existe o no es legible. Pide que se generen las tasks de esa feature primero."
     m = re.search(r"Plan origen(?:\*\*)?\s*:?\**\s*`?(?P<path>[^`\s|]+)`?", text, re.IGNORECASE)
     if m is None:
         return None  # sin header resoluble → permitir (politica conservadora)
@@ -160,7 +160,7 @@ def gate_tasks_plan_vigente(args: str):
     pm = ESTADO_RE.search(plan_text)
     if pm and pm.group("value") != "VALIDADO":
         return (f"El plan origen '{plan_path}' esta en Estado: {pm.group('value')} — fue degradado tras generar las tasks. "
-                f"Ejecuta /wf-plan-validate {plan_path} antes de ejecutar tasks.")
+                f"Pide que se valide el plan antes de ejecutar tasks.")
 
     # Retencion selectiva por enmienda (sdd-amend.py): si la invocacion apunta a
     # una task concreta (--task T-00X) y esa task referencia (Spec CA) un CA con
@@ -182,7 +182,7 @@ def gate_tasks_plan_vigente(args: str):
                     detail = ", ".join(f"{ca} ({amends[ca]})" for ca in held)
                     return (f"la task {task_id} esta retenida por enmienda pendiente sobre {detail}. "
                             f"Revisa la seccion del plan que cubre ese CA y limpia la anotacion "
-                            f"(sdd-amend.py clear) o re-valida con /wf-plan-validate {plan_path}.")
+                            f"(sdd-amend.py clear) o pide una re-validacion del plan.")
     return None
 
 

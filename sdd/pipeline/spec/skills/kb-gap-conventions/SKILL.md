@@ -21,7 +21,60 @@ Este skill es el **Single Source of Truth** para todas las convenciones de gaps 
 | Análisis de documento origen (modos `analyze`, `fast-track`) | `[P-XXX]` | `[P-001]`, `[P-042]` |
 | Análisis de cambios incrementales (modo `delta`) | `[D-XXX]` | `[D-001]`, `[D-003]` |
 
-**Numeración**: secuencial desde `001`, sin saltos, reiniciando en cada artefacto nuevo.
+**Numeración**: secuencial desde `001`, sin saltos, **por linaje** — no por artefacto.
+
+Un linaje es el `_analysis.md` de un documento origen **más todos los specs derivados de él**.
+Los IDs no se reinician al pasar del análisis al spec: si el análisis llegó a `[P-008]`, el
+primer gap que levante un spec de ese linaje es `[P-009]`. El ID se pide al script, que escanea
+**todos** los ficheros del linaje:
+
+```bash
+!python3 .sdd/scripts/sdd-next-id.py P <analysis.md> <spec_1.md> <spec_2.md> …
+```
+
+> **Por qué por linaje y no por artefacto ([[D-054]]).** Un spec referencia gaps de los dos
+> sitios a la vez: su marcador dice `Pendiente de gap(s): [P-011]` sin decir en qué fichero
+> vive. Si cada artefacto reiniciara en `001`, dos gaps distintos compartirían ID dentro del
+> mismo spec y el marcador sería ambiguo — y `wf-spec-gap-resolve`, que resuelve por ID, no
+> podría saber a cuál se refiere. Medido: un writer continuó la numeración por su cuenta
+> (analysis hasta `P-008`, spec desde `P-009`) **contradiciendo esta regla tal como estaba
+> escrita**, y acertó. La regla se alinea con lo que la práctica ya demostró correcto.
+
+---
+
+## Dónde vive un gap: dos hogares, y cuál manda ([[D-054]])
+
+Un `[P-XXX]` puede estar definido en **uno de dos sitios**, y los dos son legítimos:
+
+| Hogar | Cuándo | Quién lo escribe |
+|---|---|---|
+| `_analysis.md` del documento origen | El gap sale de leer el PRD | `wf-spec-analyze` |
+| `## Items Pendientes` del propio spec | El gap **nace al escribir el spec** | `wf-spec-fast-track` (Paso 6, "gap handling inline") |
+
+**La doble ubicación no es un accidente: es forzosa.** `wf-spec-fast-track` corre con `--analysis`
+**opcional** —en modo directo (`--capability`) y en todo el onramp brownfield de
+`wf-spec-from-code` no hay ningún `_analysis.md`—, así que el spec tiene que poder alojar sus
+propios gaps o esas dos entradas del pipeline se quedan sin sitio donde ponerlos.
+
+Y hay una clase de gap que el análisis **estructuralmente no puede contener**: el de **segundo
+orden**, que nace del cruce de dos respuestas. Medido (conformance, 2026-09-07): la respuesta a
+un gap fijó una relación 1:1 y la de otro introdujo 1:N; el cruce de ambas —"¿y si cambias el
+importe cuando hay reparto?"— no existía cuando se escribió el análisis, porque las respuestas
+no existían. El análisis se deriva del **PRD**; ese gap se deriva de las **respuestas**.
+
+**Regla de resolución — manda dónde está definido el bloque.** Quien resuelva un `[P-XXX]`
+referenciado por un spec lo busca **primero en el `## Items Pendientes` de ese spec** y, si no
+está ahí, en el `_analysis.md` del linaje. La respuesta se escribe **en el fichero donde vive el
+bloque**, con la misma vía sancionada de [[D-042]]:
+
+```bash
+!python3 .sdd/scripts/sdd-analysis-gaps.py "<fichero donde vive el gap>" --answer P-XXX "texto"
+```
+
+El script es **agnóstico al documento**: parsea cualquier fichero con bloques de gap, así que
+`--list`, `--check` y `--answer` funcionan igual sobre un `_analysis.md` que sobre un `_spec.md`.
+Un `--check` contra el análisis **no dice nada** sobre los gaps que viven en el spec: si un spec
+tiene `[INCOMPLETO]`, hay que checkear **el spec**.
 
 ---
 
