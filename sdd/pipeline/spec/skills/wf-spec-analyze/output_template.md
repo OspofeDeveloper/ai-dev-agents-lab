@@ -99,6 +99,8 @@
 > - `[CRÍTICO]`: afecta directamente a las HUs indicadas en "Afecta". Si se deja sin responder, esas HUs se marcarán como `[INCOMPLETO]` en el spec — se generarán con la información disponible pero no podrán avanzar a plan/tasks hasta completarse.
 > - `[INFORMATIVO]`: si no se responde, se aplicará la "Asunción por defecto" indicada.
 > - `[PUEDE_REQUERIR_CR]`: no cambia la severidad, pero obliga a reevaluar la respuesta con la gobernanza de cambios de producto si introduce expansión de capacidad.
+>
+> **Al redactar cada gap:** `Contexto`, `Problema` y `Pregunta para el cliente` las lee una persona de producto. Los **IDs se quedan** (`CA-001`, `HU-003`, `RF-006`); las **siglas sueltas no** — *"el CA de X"* → *"el criterio de aceptación de X"*, *"sin THEN verificable"* → *"sin resultado verificable"*. El campo `Afecta` lista IDs y no se toca.
 
 ### [P-001][CRÍTICO] [Título del gap — describe qué falta]
 - **Contexto**: [cita del documento o descripción de dónde aparece la ambigüedad]

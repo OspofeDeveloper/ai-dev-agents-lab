@@ -2,6 +2,15 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.92.0 — 2026-09-07
+
+**El ID es contrato; la sigla suelta es jerga** — cierre de la cuestión abierta de la pasada 9 (verbatim vs. desjergonizar), resuelta **aguas arriba** en vez de en quien presenta.
+
+- ⚠ **`wf-spec-analyze` redacta la prosa del gap en claro.** Los campos `Contexto`, `Problema` y `Pregunta para el cliente` los lee una persona de producto: los **IDs se quedan** (`CA-001`, `HU-003`, `RF-006` — los parsean `sdd-seal.py` y `sdd-features-index.py`, y todas esas regex exigen el `-NNN`), las **siglas sueltas y el vocabulario de formato van en claro** (*"el CA de X"* → *"el criterio de aceptación de X"*; *"sin THEN verificable"* → *"sin resultado verificable"*). Verificado antes de escribir la norma: `GIVEN`/`WHEN`/`THEN` **no los lee ningún script** — cero coincidencias en `scripts/`.
+- **Tres bordes explícitos**, para que la norma no se derrame: `Afecta` lista IDs y no se toca; el **spec** sigue escribiendo sus CAs en GIVEN/WHEN/THEN porque ese es su formato; y la sección **Testabilidad** puede nombrar el formato porque ahí el formato **es el asunto** — un CA sin `THEN` es literalmente el defecto que reporta.
+- **Por qué aquí y no en el presentador.** El orquestador tiene contrato de leer estos campos **verbatim** y aun así los reescribió: la reescritura mejoraba el texto y el contrato era correcto. Con el campo naciendo en claro no hay nada que traducir, y `verbatim` se queda estricto — medible con un diff en vez de con un juicio.
+- Recordatorio de una línea en la plantilla del análisis (es lo que el writer copia) y backstop en `test_install_sh.py`.
+
 ## 0.91.0 — 2026-09-07
 
 **Las dos causas de la fuga de 11.10 en los artefactos, cerradas por separado** — porque eran dos, y la segunda no se arreglaba con la primera. Medido en la pasada 9 de CU-3.a.

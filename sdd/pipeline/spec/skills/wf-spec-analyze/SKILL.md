@@ -110,6 +110,39 @@ Mejor:
 - "¿cómo se identifica este elemento en el producto actual?"
 - y, si la respuesta introduce catálogo persistente o gestión reutilizable, escalar a `wf-prd-change`
 
+### Cómo se redacta la prosa del gap: el ID es contrato, la sigla suelta es jerga
+
+Los campos `Contexto`, `Problema` y la pregunta al cliente **los lee una persona** —normalmente de
+producto, no del pipeline— y son los que deciden si sabe qué contestar. Ahí rige la norma de la
+guía de fase ("lo que escribes en un artefacto lo lee una persona"), aplicada al vocabulario:
+
+- **Los IDs se quedan siempre, tal cual**: `CA-001`, `HU-003`, `RF-006`, `P-011`. Son estado y los
+  parsean los scripts (`sdd-seal.py` sella los encabezados `### CA-XXX`; `sdd-features-index.py`
+  deriva la trazabilidad RF→HU→CA). Todas esas regex exigen el `-NNN`.
+- **Las siglas sueltas y el vocabulario de formato van en claro**: *"el CA de X"* → *"el criterio
+  de aceptación de X"*; *"no tiene un THEN verificable"* → *"no tiene un resultado verificable"*;
+  *"la HU de alta"* → *"la historia de usuario de alta"*. `GIVEN`/`WHEN`/`THEN` **no los lee ningún
+  script**: son el formato del CA **dentro del spec**, no vocabulario con el que explicarle un
+  hueco a alguien.
+
+**Tres bordes que no se cruzan.**
+
+1. El campo `Afecta` lista **IDs** y se queda como está — es lo que el writer usa para marcar las
+   historias `[INCOMPLETO]`.
+2. Esto **no toca el spec**: allí los CAs se escriben en GIVEN/WHEN/THEN porque ese es su formato
+   (`kb-spec-expert`).
+3. Esto aplica a los bloques **`[P-XXX]`**, no a la sección **Testabilidad**. Ahí el formato **es
+   el asunto** —un CA al que le falta el `THEN` es literalmente el defecto que reportas—, así que
+   nombrarlo es correcto y la plantilla lo hace a propósito. La diferencia: en Testabilidad hablas
+   *del formato*; en un gap usabas el formato *como abreviatura* de otra cosa.
+
+> **Por qué la norma está aquí y no en quien presenta el gap (pasada 9 de CU-3.a).** El
+> orquestador tiene contrato de leer estos campos **verbatim** y aun así reescribió *"el CA … no
+> tiene un THEN verificable"* como *"el criterio de aceptación … no tiene un resultado
+> verificable"*. La reescritura mejoraba el texto y el contrato era correcto: el defecto estaba
+> aguas arriba. Si el campo **nace** en claro, no hay nada que traducir, y `verbatim` se queda
+> estricto — que es lo que lo hace medible con un diff en vez de con un juicio.
+
 ### Campo "Afecta" (obligatorio en CRÍTICO)
 
 Para cada gap `[CRÍTICO]`, determina qué HUs del documento no pueden completarse sin la respuesta a este gap. Lista sus IDs en el campo `- **Afecta**: [HU-001, HU-003]`. Si las HUs aún no tienen IDs asignados (porque el documento es un PRD sin HUs formales), describe las funcionalidades afectadas en texto libre (ej: `- **Afecta**: funcionalidad de login, recuperación de contraseña`).

@@ -390,6 +390,15 @@ class InstallAllTest(InstallBase):
         self.assertIn("no es reproducible", skill,
                       "falta por qué el emparejamiento no puede ser solo por ID (D-051)")
 
+        # 11.10: la prosa del gap la lee una persona. Los IDs son contrato y se
+        # quedan (`CA-\d{3,4}`, `HU-\d+` los parsean seal/features-index); las
+        # siglas sueltas y el vocabulario de formato van en claro. Sin esto, el
+        # que presenta el gap acaba traduciendo — y su contrato es verbatim.
+        self.assertIn("el ID es contrato", skill,
+                      "wf-spec-analyze no declara la frontera ID/jerga en la prosa del gap")
+        self.assertIn("Afecta", skill,
+                      "falta el borde: `Afecta` lista IDs y no se desjergoniza")
+
     def test_features_first_checks_gaps_before_deciding(self):
         # D-042 + lección de D-037: el conteo de [CRÍTICO] abiertos gobierna dos ramas
         # duras (detenerse / --allow-open-critical-gaps). Si el script corre DESPUÉS de

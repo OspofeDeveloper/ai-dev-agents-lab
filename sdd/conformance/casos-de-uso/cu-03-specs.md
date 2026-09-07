@@ -656,8 +656,18 @@ informe a mano, espera a mano, o **reporta como del delegado un dato que reconst
 > **Cuestión abierta — verbatim vs. desjergonizar.** Al presentar los gaps, main reescribió el
 > campo `Problema` (*"el CA … no tiene un THEN verificable"* → *"el criterio de aceptación … no
 > tiene un resultado verificable"*). El contrato dice **verbatim**. Las dos lecturas son
-> defendibles (verbatim estricto, o verbatim salvo expandir siglas internas `CA`/`THEN`/`HU`) y
-> **no está decidido**: mientras tanto no se reporta como FALLO.
+> defendibles (verbatim estricto, o verbatim salvo expandir siglas internas `CA`/`THEN`/`HU`).
+> **Resuelta en v0.92.0, y por ninguna de las dos vías:** el defecto estaba aguas arriba. `CA` y
+> `THEN` en un campo que lee una persona son la misma clase de fuga que un nombre de workflow en
+> un informe, así que la norma va en `wf-spec-analyze` —el campo nace en claro— y `verbatim` se
+> queda **estricto**, que es lo que lo hace medible con un diff en vez de con un juicio. La
+> reescritura de main no se reporta como FALLO: incumplió un contrato correcto por un defecto que
+> no era suyo.
+>
+> Verificado antes de escribir la norma: los scripts parsean `CA-\d{3,4}` y `HU-\d+` **siempre con
+> el `-NNN`** (`sdd-seal.py`, `sdd-features-index.py`, `sdd-gate-check.py`, `sdd-task-state.py`,
+> `sdd-amend.py`), y `GIVEN`/`WHEN`/`THEN` **no los lee ninguno** — cero coincidencias en
+> `scripts/`. La sigla suelta en prosa no la matchea nada.
 >
 > **Nota de método — cinco comprobaciones mal hechas en la revisión de esta pasada.** Comandos
 > truncados a 120 caracteres que ocultaron 3 de 5 llamadas y casi producen una acusación de
