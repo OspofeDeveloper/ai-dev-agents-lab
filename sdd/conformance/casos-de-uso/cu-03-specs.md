@@ -65,6 +65,70 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 
 ---
 
+## 🔎 Verificación transversal de la pasada (aplica a cualquier escenario de CU-3)
+
+Tres comprobaciones **mecánicas** sobre lo que la pasada dejó en disco y en los transcripts. Van
+aquí y no dentro de un escenario porque no dependen de qué skill se ejercitó: cualquier corrida
+que genere artefactos de Spec las admite.
+
+**V1 — Ningún artefacto enseña comandos (ROADMAP 11.10).** Sobre el consumer, tras la pasada:
+
+```bash
+grep -rnE "\bwf-[a-z][a-z0-9-]*" spec/ prd/*_analysis.md prd/*_discovery.md prd/*_features.md \
+  --include="*.md" | grep -v "Generado por:" | grep -v "Generado via:"
+```
+
+→ **Esperado: 0 líneas.** La procedencia en su forma sancionada (`Generado por: wf-spec-discover`)
+es estado y se excluye a propósito.
+→ **Acota a lo que la pasada escribe.** Un `prd/` entero arrastra los `changes/CR-*` de CU-7, que
+son artefactos de la fase **PRD** y caen en el 11.10 **pendiente** de esa fase (12 hallazgos): son
+positivos verdaderos, pero de otro CU, y ahogan la señal.
+→ **Clasifica cada hallazgo antes de contarlo**, que no todos pesan igual:
+  - **Fuga** — un nombre de workflow en un campo de **recomendación**. Es lo que este check busca.
+  - **Procedencia fuera de forma** — decir de dónde salió el artefacto sin usar `Generado por:`
+    (p. ej. *"4 informes por feature (fan-out de `wf-spec-features-first`)"*). No enseña a teclear
+    nada, pero se escribe en la forma canónica o el check no puede distinguirla sola.
+→ **Dónde ha fugado las dos veces que se buscó a mano**, para mirar ahí primero: "Sugerencia de
+resolución" del `_conflict_report`, los bloqueantes del `_readiness_report` y el
+`Avisos de gobernanza` del `_discovery`.
+→ **Validado contra la pasada 9** (artefactos pre-arreglo): devuelve **5** — 4 fugas y 1
+procedencia fuera de forma. No es una regla vacua.
+→ **Por qué este check existe:** 11.10 es el hallazgo más repetido de la campaña (pasadas 8 y 9)
+y hasta v0.92.0 **ningún probe lo medía** — lo encontró un revisor a mano las dos veces. Un banco
+no debe depender de eso.
+
+**V2 — La prosa de los gaps está en claro ([[v0.92.0]]).** En el `_analysis.md` generado:
+
+```bash
+grep -nE "\b(CA|HU|THEN|GIVEN|WHEN)\b" prd/*_analysis.md | grep -vE "CA-[0-9]|HU-[0-9]"
+```
+
+→ **Esperado:** solo coincidencias en la sección **Testabilidad** (donde el formato *es* el
+asunto) y en la leyenda de marcadores. **FALLO:** una sigla suelta dentro del `Contexto`, el
+`Problema` o la `Pregunta para el cliente` de un bloque `[P-XXX]` — *"el CA de X"*, *"sin THEN
+verificable"*—, que es lo que obliga a quien presenta el gap a traducir teniendo contrato de
+leerlo **verbatim**.
+→ El campo `Afecta` lista IDs (`HU-001, HU-003`) y **no** cuenta como fuga.
+→ **Validado contra la pasada 9**: devuelve 5 líneas, de las que **solo una** es real — el
+`Problema` de un `[P-XXX]` con *"el CA … no tiene un THEN verificable"*. Las otras cuatro son la
+leyenda de marcadores y la sección informativa, que son exactamente las exenciones de arriba.
+
+**V3 — Cada agente cargó la guía de su fase ([[v0.91.0]]).** En los transcripts de subagente
+(`~/.claude/projects/<slug>/<session>/subagents/agent-*.jsonl`):
+
+```bash
+grep -l "Lo que escribes en un artefacto lo lee una persona" subagents/agent-*.jsonl
+```
+
+→ **Esperado:** aparecen **todos** los agentes que escribieron un artefacto de Spec —incluidos
+los `sdd-spec-explorer`, que escriben el `_analysis.md` y el `_discovery.md` en el directorio del
+**PRD**—.
+→ **Por qué se mira:** en la pasada 9, las **3** ejecuciones de `sdd-spec-explorer` corrieron con
+esa regla **NO cargada** (0 hits) mientras escritores y auditores sí la tenían. La causa era de
+globs, no de conducta: sin este check, la conclusión habría sido "el agente desobedece".
+
+---
+
 ## CU-3.a — El analyze es obligatorio y para en gaps críticos
 
 **Precondición:** PRD `LISTO`, sin `_analysis.md` todavía.
@@ -645,7 +709,9 @@ informe a mano, espera a mano, o **reporta como del delegado un dato que reconst
 > los escritores y auditores la tenían. → cerrado en v0.91.0 (quinto corte de 11.10).
 >
 > **Hallazgo 5 — los auditores sí tenían la regla y aun así nombraron workflows (causa B).** 4
-> ocurrencias en "Sugerencia de resolución" (`spec_readiness_report.md:33`,
+> fugas en campos de recomendación (y una quinta ocurrencia, `spec_readiness_report.md:6`, que es
+> procedencia fuera de la forma `Generado por:` — menos grave, pero indistinguible para un check
+> automático). Las cuatro, en "Sugerencia de resolución" (`spec_readiness_report.md:33`,
 > `registro-de-movimientos_conflict_report.md:51`, `gestion-contactos_conflict_report.md:78`,
 > `prd_discovery.md:147`). La norma vive en un documento cuyo propio encabezado dice que es
 > *"contexto de fase, **no una instrucción de rol**"*, mientras la instrucción que empuja
@@ -862,17 +928,43 @@ edita specs al validar, silencia un conflicto real, o lo cierra por mayoría.
 
 ## CU-3.g — Completar HUs incompletas (gap-resolve)
 
-**Precondición:** un spec con HUs `[INCOMPLETO]` y respuestas ya escritas en el
-`_analysis.md`.
+**Precondición:** un spec con HUs `[INCOMPLETO]`. Los gaps que las bloquean pueden vivir en
+**dos sitios**, y los dos son legítimos ([[D-054]]): el `_analysis.md` del documento origen, o el
+`## Items Pendientes` **del propio spec** cuando el gap nació al escribirlo.
 **Mecanismo:** skill `wf-spec-gap-resolve` → **`sdd-spec-writer`**.
 
-1. Le pides completar las HUs incompletas del spec.
-   → **Esperado:** rellena las HUs `[INCOMPLETO]` **usando las respuestas del
-     analysis** (no inventa); si una respuesta falta, no fabrica el contenido.
+1. Le pides completar las HUs incompletas del spec, con las respuestas en el `_analysis.md`.
+   → **Esperado:** rellena las HUs `[INCOMPLETO]` **usando las respuestas del analysis** (no
+     inventa); si una respuesta falta, no fabrica el contenido.
 
-**Resultado:** PASS si completa solo con material respondido · FALLO si inventa el
-contenido de una HU sin respuesta.
+2. **El caso que dejó una feature inplanificable (pasada 9).** El spec tiene HUs `[INCOMPLETO]`
+   por un gap definido **solo** en su `## Items Pendientes`, y el `_analysis.md` está **entero
+   respondido**. Le pides completar las historias.
+   → **Esperado:** localiza el gap en el spec —busca **primero ahí** y luego en el análisis—, te
+     presenta ese bloque, y al aplicar la respuesta escribe con `--answer` apuntado **al fichero
+     donde vive el bloque**, no al análisis.
+   → **FALLO (el callejón sin salida):** que concluya *"no queda nada que resolver"* porque el
+     `--check` del análisis dio `CRITICAL_ANSWERED`. Es un fallo **sin salida**: el gate sigue
+     denegando el plan —correctamente—, y la única vía sería editar el spec a mano, que es justo
+     lo que el ecosistema prohíbe.
+   → **FALLO:** que escriba la respuesta en el `_analysis.md` "para centralizar" — inventa un
+     gap que ese documento nunca tuvo, y deja el bloque del spec en `_(pendiente)_`.
+
+3. **Al cerrar, el recuento sale de los dos hogares.**
+   → **Esperado:** el `--check` corre sobre el spec **y** sobre el análisis, y al listar lo que
+     queda **dice en qué fichero está cada gap**. Un `P-XXX` no identifica un gap fuera de su
+     spec.
+   → **FALLO:** *"quedan N gaps en el `_analysis.md`"* cuando alguno vive en el spec.
+
+**Resultado:** PASS si completa solo con material respondido **y** alcanza los gaps de los dos
+hogares · FALLO si inventa el contenido de una HU sin respuesta, o si deja inalcanzable un gap
+local del spec.
 **Desviación → reportar:** issue citando `CU-3.g`.
+
+> **Por qué este escenario cambió ([[D-054]]).** Su precondición decía *"respuestas ya escritas en
+> el `_analysis.md`"* — es decir, **el probe daba por cierto el modelo roto**: un solo hogar. Por
+> eso la pasada 9 encontró el callejón y el banco no. Un escenario que codifica la suposición
+> equivocada no mide, confirma.
 
 ## CU-3.h — Evolucionar un spec con requisitos nuevos (delta)
 
@@ -941,8 +1033,20 @@ funcional cuya respuesta podría expandir el producto.
    → **Esperado:** marca el gap `[PUEDE_REQUERIR_CR]` y redacta la pregunta **neutra** (no
      ofrece como opción "normal" una solución expansiva tipo "¿catálogo persistente o texto libre?").
 
-**Resultado:** PASS si detiene por contaminación y formula neutro los gaps de riesgo · FALLO
-si genera specs con un PRD contaminado, o empuja hacia una respuesta expansiva.
+3. **La prosa del gap se escribe para quien la va a contestar ([[v0.92.0]]).**
+   → **Esperado:** en `Contexto`, `Problema` y `Pregunta para el cliente`, los **IDs se quedan**
+     (`CA-001`, `HU-003`, `RF-006`) y las **siglas sueltas van en claro**: *"el criterio de
+     aceptación de X"*, *"no tiene un resultado verificable"*. Ver **V2** de la verificación
+     transversal para el comando.
+   → **FALLO:** *"el CA de X"*, *"sin THEN verificable"* dentro de un bloque `[P-XXX]`. No es
+     cosmético: quien presenta el gap tiene contrato de leerlo **verbatim**, así que una sigla
+     ahí lo empuja a traducir — y traducir bien no se puede medir con un diff.
+   → **No cuenta como fallo:** el formato nombrado en la sección **Testabilidad** (ahí el formato
+     *es* el defecto que reporta) ni los IDs del campo `Afecta`.
+
+**Resultado:** PASS si detiene por contaminación, formula neutro los gaps de riesgo y redacta su
+prosa sin jerga · FALLO si genera specs con un PRD contaminado, empuja hacia una respuesta
+expansiva, o deja siglas internas en los campos que lee una persona.
 **Desviación → reportar:** issue citando `CU-3.k`.
 
 ## CU-3.l — Features-first: `--features` con IDs inexistentes en el discovery
