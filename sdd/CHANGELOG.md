@@ -2,6 +2,16 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.93.0 — 2026-09-07
+
+**Una regla de fase no puede gobernar lo que se escribe desde cero** — [[DECISIONS D-055]]. Corrige el diagnóstico de la causa A de 11.10, destapado al volver a medir en la pasada 10 con los globs de v0.91.0 ya instalados: el explorer **seguía sin la guía de Spec**.
+
+- ⚠ **La norma de forma de los artefactos pasa a `kb-spec-expert`**, que los tres agentes de Spec cargan por su `skills:` y entra en la **línea 1** de su contexto, antes de cualquier tool call. Una regla de `.claude/rules/` se carga **al tocar** un path que matchea sus globs, y un agente que **genera** toca ese path por primera vez en el `Write` **final**, con el contenido ya compuesto: llega tarde por construcción, por muchos globs que se le añadan.
+- **Los globs de v0.91.0 se mantienen** — siguen siendo correctos y necesarios para el **editor**, que sí lee el artefacto antes de tocarlo. Lo que cambia es que dejan de ser *la* causa y pasan a ser *una* de dos.
+- **La guía de fase deja de prometer lo que no puede cumplir**: su cabecera decía que la sección *"vincula a todo el que escriba uno"*; ahora dice cuándo llega y cuándo no, y se declara **tercer carril**, no el primero.
+- **Redundancia deliberada en tres carriles**: la `kb-*` (siempre y a tiempo), la instrucción de rol de cada skill que redacta (en el punto donde compone), y la guía de fase (para quien edita). Cada uno cubre un caso que los otros no alcanzan.
+- **El probe V3 de CU-3 se reescribe**: pedía una propiedad **inalcanzable por construcción** para un generador, y un probe así reporta FALLO donde no lo hay — el mismo daño que uno vacuo, en el otro sentido.
+
 ## 0.92.0 — 2026-09-07
 
 **El ID es contrato; la sigla suelta es jerga** — cierre de la cuestión abierta de la pasada 9 (verbatim vs. desjergonizar), resuelta **aguas arriba** en vez de en quien presenta.

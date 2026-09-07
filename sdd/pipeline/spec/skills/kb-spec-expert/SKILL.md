@@ -171,6 +171,38 @@ Un spec con `Modo: ligero` se valida contra el núcleo de 4 + N/A explícitos: c
 
 ---
 
+## Lo que escribes en un artefacto lo lee una persona
+
+Vale para **cualquier** artefacto de la fase Spec que produzcas —`_analysis.md`, `_discovery.md`,
+`_spec.md`, `_conflict_report.md`, `_readiness_report.md`, `_delta_analysis.md`— y para cualquier
+prosa dentro de ellos: descripciones, problemas, sugerencias, avisos, siguientes pasos.
+
+**Dos fronteras, y las dos son de una línea:**
+
+| Se queda tal cual (**estado**) | Se escribe en claro (**lo lee una persona**) |
+|---|---|
+| Marcadores: `[CRÍTICO]`, `[INCOMPLETO]`, `[INFERIDO]`, `_(pendiente)_` | Recomendaciones y siguientes pasos: *"formalizar el cambio en el PRD"*, no el workflow que lo hace |
+| Veredictos: `LISTO_PARA_SPECS`, `SIN_CONFLICTOS`, `PENDIENTE_GENERACIÓN` | Siglas sueltas: *"el CA de X"* → *"el criterio de aceptación de X"*; *"sin THEN verificable"* → *"sin resultado verificable"* |
+| IDs: `P-011`, `CA-001`, `HU-003`, `RF-006`, `F-00X`, `CF-001` | |
+| Procedencia en su forma canónica: `Generado por: wf-spec-discover` | |
+
+**No nombres un workflow en prosa dirigida al lector** —ni `wf-spec-delta`, ni `/wf-spec-amend`,
+ni con barra ni sin ella—. El usuario no invoca comandos: te lo pide hablando, y surfacearlos le
+enseña a teclear argumentos a mano saltándose las validaciones.
+
+**Excepción:** cuando el formato **es** el asunto —la sección de Testabilidad de un análisis, donde
+un CA al que le falta el `THEN` es literalmente el defecto que reportas— nombrarlo es correcto.
+
+> **Por qué esta norma vive aquí y no solo en la guía de fase ([[D-055]]).** La guía
+> (`.claude/rules/sdd-spec.md`) se carga **cuando tocas un fichero que matchea sus globs** —medido
+> en la pasada 10: el `Read` del PRD en la línea 29 inyectó la guía de PRD en la 33—. Para un
+> agente que **genera** un artefacto desde cero, el primer contacto con ese path es el `Write`
+> **final**, cuando el contenido ya está compuesto: la guía llega tarde por construcción, por
+> muchos globs que le añadas. Esta `kb-*`, en cambio, entra en tu contexto en la **línea 1**, antes
+> de cualquier tool call. Por eso es el único portador fiable para quien escribe desde cero.
+
+---
+
 ## Lo que un Spec NO DEBE tener
 
 Consulta `${CLAUDE_SKILL_DIR}/references/prohibited_items.md` para la tabla completa de elementos prohibidos y la Prueba de Pureza antes de emitir cualquier veredicto de contaminación.

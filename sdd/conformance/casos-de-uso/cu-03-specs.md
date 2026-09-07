@@ -113,19 +113,40 @@ leerlo **verbatim**.
 `Problema` de un `[P-XXX]` con *"el CA … no tiene un THEN verificable"*. Las otras cuatro son la
 leyenda de marcadores y la sección informativa, que son exactamente las exenciones de arriba.
 
-**V3 — Cada agente cargó la guía de su fase ([[v0.91.0]]).** En los transcripts de subagente
-(`~/.claude/projects/<slug>/<session>/subagents/agent-*.jsonl`):
+**V3 — La norma de forma le llegó a quien escribió, y a tiempo ([[D-055]]).** En los transcripts
+de subagente (`~/.claude/projects/<slug>/<session>/subagents/agent-*.jsonl`).
+
+**Antes de medir, clasifica al agente**, porque los dos casos no admiten el mismo check:
+
+- **Generador** (escribe un artefacto que no existía: `wf-spec-analyze`, `wf-spec-discover`,
+  `wf-spec-fast-track`, `wf-spec-from-code`). **La guía de fase NO puede llegarle** — una regla de
+  `.claude/rules/` se carga al tocar un path que matchea sus globs, y su primer contacto con ese
+  path es el `Write` final. Pedirle que la tenga es pedir lo imposible.
+- **Editor / auditor** (lee un artefacto existente y luego escribe o informa: `wf-spec-gap-resolve`,
+  `wf-spec-delta`, `wf-spec-conflict`, `wf-spec-readiness`, `wf-spec-validate`). A este **sí** le
+  llega, en el `Read`.
 
 ```bash
-grep -l "Lo que escribes en un artefacto lo lee una persona" subagents/agent-*.jsonl
+grep -c "Prueba de Pureza" agent-*.jsonl   # kb-spec-expert  → TODOS, y en las primeras lineas
+grep -c "Spec Lab"        agent-*.jsonl    # guia de fase    → solo los editores/auditores
 ```
 
-→ **Esperado:** aparecen **todos** los agentes que escribieron un artefacto de Spec —incluidos
-los `sdd-spec-explorer`, que escriben el `_analysis.md` y el `_discovery.md` en el directorio del
-**PRD**—.
-→ **Por qué se mira:** en la pasada 9, las **3** ejecuciones de `sdd-spec-explorer` corrieron con
-esa regla **NO cargada** (0 hits) mientras escritores y auditores sí la tenían. La causa era de
-globs, no de conducta: sin este check, la conclusión habría sido "el agente desobedece".
+→ **Esperado en un generador:** `kb-spec-expert` presente **desde el arranque** (es lo que porta la
+norma a tiempo); la guía de fase, indiferente.
+→ **Esperado en un editor:** las dos.
+→ **FALLO real, y es de contenido, no de carga:** que el artefacto salga con un nombre de workflow
+o con jerga en la prosa — es decir, **V1 o V2 en rojo**. V3 solo sirve para explicar *por qué*
+cuando alguna de esas dos falla.
+→ **Cómo se localiza la inyección**, si hace falta el detalle: numera las líneas del `.jsonl` y
+cruza la posición de la regla con la del `Read`/`Write` que la disparó. Medido en la pasada 10:
+`Read prd/prd.md` en la 29 → guía de PRD en la **33**; `Write prd/prd_analysis.md` en la **44**, la
+última llamada. Ese hueco es la demostración.
+
+> **Por qué este probe cambió ([[D-055]]).** Nació como *"¿cargó cada agente la guía de su fase?"*
+> tras la pasada 9, atribuyendo a los globs los 0 hits de los exploradores. La pasada 10, ya con
+> los globs arreglados, volvió a dar 0 — y el transcript enseñó que la causa es **cuándo** se
+> evalúa el match, no qué paths cubre. Un probe que pide una propiedad inalcanzable por
+> construcción reporta FALLO donde no lo hay: el mismo daño que uno vacuo, en el otro sentido.
 
 ---
 
@@ -740,7 +761,9 @@ informe a mano, espera a mano, o **reporta como del delegado un dato que reconst
 > la regla de la fase Spec (`spec/**`, `**/*_spec.md`, `**/*_features.md`) **no cubren**
 > `*_analysis.md` ni `*_discovery.md`, que son artefactos de Spec que viven en `prd/`. Medido: las
 > **3** ejecuciones de `sdd-spec-explorer` corrieron con la regla **NO cargada** (0 hits); todos
-> los escritores y auditores la tenían. → cerrado en v0.91.0 (quinto corte de 11.10).
+> los escritores y auditores la tenían. → v0.91.0 añadió los globs (quinto corte de 11.10), pero
+> **el diagnóstico era incompleto**: la pasada 10 volvió a dar 0 con los globs ya puestos. La causa
+> operativa es **cuándo** se evalúa el match, no qué paths cubre → [[D-055]], v0.93.0.
 >
 > **Hallazgo 5 — los auditores sí tenían la regla y aun así nombraron workflows (causa B).** 4
 > fugas en campos de recomendación (y una quinta ocurrencia, `spec_readiness_report.md:6`, que es
@@ -776,6 +799,34 @@ informe a mano, espera a mano, o **reporta como del delegado un dato que reconst
 > tragó el exit status del `grep` y desactivó el fallback; y un fixture con la forma espaciada del
 > flag en vez de la del SSoT. **Patrón:** escribir la comprobación esperando lo que se cree que se
 > va a encontrar. Todo lo afirmado arriba está reverificado contra el fichero.
+
+
+> **Pasada 10 (2026-09-07, v0.92.0+5486ba1, `myops-app-specs`, banco reseteado, modelo `opus-5`)
+> — ABORTADA a propósito en el gate, tras destapar [[D-055]]. No cuenta para la serie.** Llegó
+> hasta el `--check` del análisis: paso 1 PASS y paso 5 (delegación) PASS.
+>
+> **Lo medido antes de abortar, que se conserva porque el banco estaba limpio:**
+> - **Delegación impecable**: `Agent` + `subagent_type: sdd-spec-explorer` +
+>   `run_in_background: false`, y **el informe llegó dentro del `tool_result`** (2608 caracteres,
+>   con path, veredicto y desglose por severidad). Cero sondeo, un solo reporte.
+> - **Main no cargó ningún artefacto**: `sdd-prd-ready.py`, un one-liner sobre
+>   `project-init.json` (configuración), un `ls prd/` y el `--check --json`. Ni un `cat` del PRD.
+> - **`--check` antes de la rama**, con `CRITICAL_OPEN` y los IDs.
+> - **Primera observación en vivo del endurecimiento de v0.88.0**: `P-003` salió
+>   `[CRÍTICO][PUEDE_REQUERIR_CR]` y el flag se parseó **a `flags`**, sin colarse en el título.
+> - **V1 = 0 y V2 limpia** — el análisis no enseña comandos y no tiene una sola sigla suelta en
+>   los bloques `[P-XXX]`. **v0.92.0 propagó**, y contrasta con la 9, que tenía la fuga en el
+>   `Problema` de un gap.
+> - **Muestra de gaps: 7 / 3 críticos.** Novena marca de la Observación A sobre el mismo PRD.
+>
+> **Por qué se abortó.** V3 dio que la guía de fase Spec **no se había cargado**, con los globs de
+> v0.91.0 ya instalados. Verificado que no era un fallo del grep —`sdd-prd.md` y `sdd-routing.md`
+> sí aparecían en el mismo transcript— la causa resultó ser el **momento** de la inyección, no los
+> globs: [[D-055]]. Seguir habría medido una fase Spec cuya norma acababa de demostrarse que no
+> llegaba a los generadores, así que se paró, se arregló y se reinició.
+>
+> **Lo que esta pasada enseña sobre el método:** el arreglo de la 9 se dio por bueno sin volver a
+> medirlo. Lo que destapó el error fue **medir después de arreglar**, no razonar mejor.
 
 ## CU-3.b — Expansión de alcance desde las respuestas del analysis
 

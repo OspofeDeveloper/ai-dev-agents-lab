@@ -376,6 +376,27 @@ class InstallAllTest(InstallBase):
         self.assertIn("norma", agent.lower(),
                       "falta la norma que sustituye al candado inexistente (D-051)")
 
+    def test_spec_expert_carries_the_artifact_form_norm(self):
+        """D-055: la norma de forma tiene que llegarle a quien ESCRIBE DESDE CERO.
+
+        Una regla de `.claude/rules/` se carga al tocar un path que matchea sus
+        globs; un generador toca ese path por primera vez en el `Write` final, con
+        el contenido ya compuesto. `kb-spec-expert` la cargan los tres agentes de
+        Spec por su `skills:` y entra antes de cualquier tool call — es el unico
+        portador fiable. Medido en la pasada 10 de CU-3.a.
+        """
+        self.install("all")
+        kb = (self.skill_dir("kb-spec-expert") / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("lo lee una persona", kb,
+                      "kb-spec-expert no porta la norma de forma de los artefactos (D-055)")
+        self.assertIn("Generado por:", kb,
+                      "falta la frontera: la procedencia canonica es estado y se queda")
+        # Los tres agentes de Spec tienen que cargarla, o la norma no viaja.
+        for agent in ("sdd-spec-writer", "sdd-spec-explorer", "sdd-spec-auditor"):
+            body = (self.claude / "agents" / f"{agent}.md").read_text(encoding="utf-8")
+            self.assertIn("kb-spec-expert", body,
+                          f"{agent} no carga kb-spec-expert: la norma de D-055 no le llega")
+
     def test_analyze_rescues_answers_before_overwriting(self):
         # D-051: regenerar el analysis lo sobrescribe. Las respuestas son decisiones
         # de negocio de una persona, no material regenerable: el export tiene que

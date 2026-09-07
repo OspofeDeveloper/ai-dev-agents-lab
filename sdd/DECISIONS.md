@@ -6,6 +6,48 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-055 — Una regla de fase no puede gobernar lo que se escribe desde cero: llega con el `Write`, no antes
+
+- **Fecha:** 2026-09-07 · **Estado:** Adoptada (medida en la pasada 10). · **Relacionada:** ROADMAP 11.10 (causa A, que esta entrada **corrige parcialmente**), [[D-051]], CU-3.a.
+
+**Contexto.** La pasada 9 midió que las **3** ejecuciones de `sdd-spec-explorer` corrieron sin la guía de fase Spec cargada, mientras escritores y auditores sí la tenían. Lo atribuí a los `paths:`: `*_analysis.md` y `*_discovery.md` solo estaban en los globs de la fase PRD. Se añadieron a los de Spec en v0.91.0 (causa A).
+
+**Lo que la pasada 10 midió, y corrige ese diagnóstico.** Con los globs ya arreglados, el explorer **volvió a correr sin la guía de Spec**. El transcript dice por qué, y es mecánico:
+
+| línea | evento |
+|---|---|
+| 1 | entra `kb-spec-expert` (inyectada por el `skills:` del agente) |
+| 14 | `Read` del `SKILL.md` de `wf-spec-analyze` |
+| 29 | `Read prd/prd.md` |
+| **33** | **se inyecta la guía de fase PRD** — cuatro líneas después de tocar un path que matchea |
+| 44 | `Write prd/prd_analysis.md` ← primer y único contacto con un path de los globs de Spec |
+| 48 | fin del transcript |
+
+**Una regla de `.claude/rules/` se carga cuando tocas un fichero que matchea sus globs.** Para un agente que **genera** un artefacto desde cero, ese momento es el `Write` **final**: el contenido ya está compuesto. La guía no puede influir en lo que escribe **por muchos globs que se le añadan**. Para un agente que **edita** —lee el spec y luego lo modifica— sí llega a tiempo, y por eso escritores y auditores la tenían.
+
+**Decisión.**
+
+1. **La norma de forma de los artefactos vive en `kb-spec-expert`**, que los tres agentes de Spec cargan por su `skills:` y entra en la **línea 1** del contexto, antes de cualquier tool call. Es el único carril fiable para quien escribe desde cero.
+2. **Redundancia deliberada, en tres carriles**: la `kb-*` (siempre, y a tiempo), la instrucción de rol de cada skill que redacta (en el punto donde compone), y la guía de fase (para quien edita artefactos existentes). No es duplicación por descuido: cada carril cubre un caso que los otros no alcanzan.
+3. **La guía de fase deja de prometer lo que no puede cumplir.** Su cabecera decía que la sección *"vincula a todo el que escriba uno"*; ahora dice cuándo llega y cuándo no.
+4. **El arreglo de v0.91.0 no se revierte**: sigue siendo correcto y necesario para los editores. Lo que cambia es que deja de ser *la* causa y pasa a ser *una* de dos.
+
+**Alternativas descartadas.**
+
+- **Más globs.** Es la reacción inmediata y no puede funcionar: el problema no es qué paths matchean, es **cuándo** se evalúa el match.
+- **Copiar la norma en las 6 skills que escriben y no la tienen.** Seis copias que divergen a la primera edición. La `kb-*` la sirve una vez a los tres agentes.
+- **Un `kb-*` nuevo solo para esto.** Un fichero más que cargar en cada agente para tres párrafos que son, literalmente, calidad de artefacto — que es de lo que trata `kb-spec-expert`.
+
+**Consecuencias y aprendizaje.**
+
+- **Un diagnóstico que explica los datos no es por eso el correcto.** "Los globs no cubren el fichero" explicaba perfectamente los 0 hits de la pasada 9, era verdad, y aun así no era la causa operativa. Lo que lo destapó fue **volver a medir después de arreglar** en vez de dar el arreglo por bueno.
+- **Los probes de conformance pueden pedir lo imposible.** El check "¿cargó el agente la guía de su fase?" es inalcanzable por construcción para un generador. Un probe así reporta FALLO donde no lo hay — el mismo daño que un probe vacuo, en el otro sentido. Reescrito en CU-3 para distinguir generador de editor.
+- **Confirma por qué el arreglo de la causa B era el que funcionaba.** La norma en el `SKILL.md` se lee en la línea 14; por eso la pasada 10 salió con el análisis limpio de jerga y de comandos mientras la guía de fase no había llegado.
+
+**Referencias.** `pipeline/spec/skills/kb-spec-expert/SKILL.md` (sección "Lo que escribes en un artefacto lo lee una persona"), `pipeline/spec/CLAUDE.md` (cabecera de audiencia), `conformance/casos-de-uso/cu-03-specs.md` (V3 de la verificación transversal, nota de la pasada 10), `install.sh` (los globs de v0.91.0, que se mantienen).
+
+---
+
 ## D-054 — Un gap tiene dos hogares posibles, y se resuelve donde está definido
 
 - **Fecha:** 2026-09-07 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-042]] (quién escribe las respuestas y con qué vía), [[D-051]] (misma familia: el defecto vive en la costura entre dos workflows), ROADMAP 11.2b (`sdd-next-id.py`), CU-3.a / CU-3.b.
