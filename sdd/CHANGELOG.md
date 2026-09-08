@@ -2,6 +2,15 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.98.0 — 2026-09-08
+
+**Un imperativo sin sujeto lo ejecuta quien lee** — [[DECISIONS D-059]]. El Paso 7 terminaba con *"Escribe `_conflict_report.md` si hay conflictos"* en un párrafo cuyas demás frases van dirigidas al orquestador. La intención era *"[cada auditor] escribe el suyo"*; el sujeto se perdió y el lector asumió el único disponible: él mismo.
+
+- ⚠ **El informe de conflictos lo escribe cada auditor**, junto a su spec. El orquestador no escribe ninguno, y ahora la frase lo dice con sujeto explícito.
+- ⚠ **Prohibido consolidar los informes en un fichero.** Medido en la pasada 13: main escribió un `spec/_conflict_report.md` —artefacto que ningún contrato declara— y **al transcribir cuatro informes ajenos adjudicó un conflicto al auditor equivocado**. Lo cazó el readiness al ir a las fuentes. Consolidar obliga a copiar contenido que no produjiste, y copiar introduce errores que no estaban en el original.
+- **La divergencia viaja en el prompt** del readiness, que no es un artefacto sin gobierno; la vista consolidada con autoridad la produce el readiness al arbitrar.
+- **Nota sobre la obediencia observada:** main no se saltó nada. Con dos instrucciones en tensión escribió una consolidación que **no arbitra** —etiquetada como tal, con cada hallazgo atribuido a su auditor— y **además** pasó las divergencias en el prompt. Un contrato contradictorio no produce desobediencia: produce una síntesis, y por eso el defecto es difícil de ver en el resultado.
+
 ## 0.97.0 — 2026-09-08
 
 **La forma del bloque de gap es contrato, no estilo** — [[DECISIONS D-058]]. Medido en la pasada 12: un spec escribió sus gaps locales como lista de viñetas, con el contenido perfectamente redactado, y `sdd-analysis-gaps.py` **dejó de verlos** — `--check` dio `VACUOUS`, `--answer` falló con exit 2.

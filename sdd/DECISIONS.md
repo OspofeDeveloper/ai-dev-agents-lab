@@ -6,6 +6,43 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-059 — Un imperativo sin sujeto lo ejecuta quien lee: el orquestador escribió un artefacto porque se lo pedimos
+
+- **Fecha:** 2026-09-08 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-047]] (el readiness arbitra), [[D-051]] (`allowed-tools` no es enforcement: un `cat >` escribe igual), [[D-045]] (la Regla de oro del orquestador), CU-3.a.
+
+**Contexto.** Pasada 13 de CU-3.a. El orquestador escribió `spec/_conflict_report.md` —un artefacto que ningún contrato declara— consolidando los cuatro informes de conflicto de la tanda. Lo hizo con `cat >` por `Bash`, teniendo `allowed-tools: [Bash, Agent, AskUserQuestion]` **sin `Write`**: la misma puerta que [[D-051]] documentó para los auditores, ahora en el orquestador.
+
+**Mi primer diagnóstico fue equivocado y conviene dejarlo escrito.** Lo llamé desviación tras leer el blockquote del Paso 7 (*"no eres el árbitro… lo que sí haces es recoger la divergencia y pasársela al Paso 8 en el prompt"*) y dar por hecho que el contrato decía lo contrario de lo que main hizo. No llegué al final del párrafo anterior, que termina así:
+
+> *"**Emite las N llamadas en un único mensaje**, con el flag: igual que el Paso 5, es una barrera — el Paso 8 lee lo que escriben todas. **Escribe `_conflict_report.md` si hay conflictos.** Sin specs nuevos → omitir."*
+
+Todas las demás frases de ese párrafo se dirigen a main —*"delega con la tool `Agent`"*, *"emite las N llamadas"*—, así que el imperativo `Escribe` cae sobre él. La intención al redactarlo era *"[cada auditor] escribe su `_conflict_report.md`"*; el sujeto se perdió y el lector asumió el único disponible: él mismo.
+
+**Main no solo obedeció: reconcilió dos instrucciones contradictorias mejor de lo que estaban escritas.** Al ver que el blockquote le negaba el papel de árbitro, escribió una consolidación que **no arbitra**: se etiqueta a sí misma como tal, atribuye cada hallazgo al auditor que lo levantó, conserva las divergencias y nombra al readiness como quien decide. Y **además** pasó las divergencias en el prompt del readiness con un encargo de arbitraje explícito, que es lo que el blockquote pedía.
+
+**Y aun así el paso hizo daño, medido.** Al transcribir cuatro informes ajenos **se equivocó de autor**: adjudicó el conflicto `C-A` al auditor de F-002 cuando lo habían levantado los de F-001 y F-005. Lo detectó el readiness al ir a las fuentes, y main corrigió el fichero. El sistema se salvó por tener un lector posterior que verifica, no por diseño de este paso.
+
+**Decisión.**
+
+1. **El informe de conflictos lo escribe cada auditor**, junto a su spec. El orquestador no escribe ninguno, y la frase lo dice con sujeto explícito.
+2. **Prohibido consolidar informes en un fichero.** La divergencia viaja **en el prompt** del readiness —que no es un artefacto que nadie gobierne— y la vista consolidada con autoridad la produce el readiness.
+3. **El motivo queda escrito junto a la prohibición**: consolidar obliga a copiar contenido que no produjiste, y copiar introduce errores que no estaban en el original.
+
+**Alternativas descartadas.**
+
+- **Sancionar el consolidado**: declararlo, darle plantilla y nombre determinista. Sería un quinto artefacto que duplica lo que ya está en cuatro ficheros más el readiness, sin sello, sin regenerador y sin nadie que detecte su deriva. Y no resuelve el error de transcripción — lo institucionaliza.
+- **Dejarlo y anotar el defecto** para no reiniciar el recuento de CU-3.a. Sellar tres pasadas sobre un contrato que sabemos que pide algo indebido es sellar el defecto: las tres saldrían "en verde" produciendo cada una ese artefacto.
+
+**Consecuencias y aprendizaje.**
+
+- **Un imperativo sin sujeto lo ejecuta quien lee.** En un documento donde el lector es un agente con herramientas, *"Escribe X"* no es una descripción del sistema: es una orden para él. Al revisar un SKILL conviene leer cada verbo en imperativo preguntando **quién es el sujeto** — y si el sujeto es otro, nombrarlo.
+- **Un contrato contradictorio no produce desobediencia: produce una síntesis.** Main no eligió una de las dos instrucciones ni se bloqueó; cumplió las dos como pudo. Eso hace que el defecto sea **difícil de ver en el resultado** —el fichero parecía razonable— y solo aparezca al preguntarse por qué existe.
+- **Mi propio error tiene la misma forma que los que persigo.** Afirmé que el contrato decía lo contrario habiendo leído solo el fragmento que confirmaba mi hipótesis. Es el patrón de la nota de método de la pasada 9, otra vez.
+
+**Referencias.** `pipeline/spec/skills/wf-spec-features-first/SKILL.md` (Paso 7), `conformance/casos-de-uso/cu-03-specs.md` (nota de la pasada 13), `tests/test_install_sh.py`.
+
+---
+
 ## D-058 — La forma del bloque de gap es contrato, no estilo
 
 - **Fecha:** 2026-09-08 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-037]] (la guarda que salvó la situación), [[D-042]] (`--answer` como única vía), [[D-054]] (el callejón), [[D-057]], CU-3.a.

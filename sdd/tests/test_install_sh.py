@@ -504,6 +504,24 @@ class InstallAllTest(InstallBase):
         self.assertIn("no\nse reproduce", sec.replace("**", ""),
                       "la plantilla no prohibe reproducir el gap heredado (D-057)")
 
+    def test_orchestrator_does_not_write_the_conflict_report(self):
+        """D-059: el informe de conflictos lo escribe cada auditor, no el orquestador.
+
+        El Paso 7 terminaba con "Escribe `_conflict_report.md` si hay conflictos"
+        en un parrafo dirigido a main: un imperativo sin sujeto lo ejecuta quien
+        lee. Medido en la pasada 13 — main escribio un consolidado y al transcribir
+        cuatro informes ajenos adjudico un conflicto al auditor equivocado.
+        """
+        self.install("all")
+        ff = (self.skill_dir("wf-spec-features-first") / "SKILL.md").read_text(encoding="utf-8")
+        paso7 = ff[ff.index("## Paso 7"):ff.index("## Paso 8")]
+        self.assertNotIn("Escribe `_conflict_report.md`", paso7,
+                         "el Paso 7 vuelve a pedirle a main que escriba el informe (D-059)")
+        self.assertIn("lo escribe cada auditor", paso7,
+                      "el Paso 7 no dice quien escribe el informe (D-059)")
+        self.assertIn("no consolides", paso7.lower(),
+                      "el Paso 7 no prohibe consolidar los informes (D-059)")
+
     def test_analyze_rescues_answers_before_overwriting(self):
         # D-051: regenerar el analysis lo sobrescribe. Las respuestas son decisiones
         # de negocio de una persona, no material regenerable: el export tiene que

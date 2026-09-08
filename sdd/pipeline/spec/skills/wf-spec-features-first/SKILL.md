@@ -469,7 +469,7 @@ python3 .sdd/scripts/sdd-features-index.py <raíz_spec>
 
 ## Paso 7: Conflict check (si no `--skip-conflict`)
 
-Opera sobre **todas las features con spec en `features/`**, incluyendo preexistentes de iteraciones anteriores. Con ≥2 specs: por cada spec recién generado delega con la tool `Agent` ([[D-043]]), `subagent_type: "sdd-spec-auditor"` y `run_in_background: false`, con el prompt `"Lee .claude/skills/wf-spec-conflict/SKILL.md y ejecuta sus pasos TÚ MISMO sobre: <spec.md> --features-dir <features_dir>. NO uses el Skill tool ([[D-044]]): ya eres su agente y te forkearía en un clon."` (solo los nuevos se chequean contra todos). **Emite las N llamadas en un único mensaje**, con el flag: igual que el Paso 5, es una barrera — el Paso 8 lee lo que escriben todas ([[D-047]]). Escribe `_conflict_report.md` si hay conflictos. Sin specs nuevos → omitir.
+Opera sobre **todas las features con spec en `features/`**, incluyendo preexistentes de iteraciones anteriores. Con ≥2 specs: por cada spec recién generado delega con la tool `Agent` ([[D-043]]), `subagent_type: "sdd-spec-auditor"` y `run_in_background: false`, con el prompt `"Lee .claude/skills/wf-spec-conflict/SKILL.md y ejecuta sus pasos TÚ MISMO sobre: <spec.md> --features-dir <features_dir>. NO uses el Skill tool ([[D-044]]): ya eres su agente y te forkearía en un clon."` (solo los nuevos se chequean contra todos). **Emite las N llamadas en un único mensaje**, con el flag: igual que el Paso 5, es una barrera — el Paso 8 lee lo que escriben todas ([[D-047]]). **El informe lo escribe cada auditor**, en `features/<nombre>/spec/<nombre>_conflict_report.md`, junto a su spec: tú no escribes ninguno ([[D-059]]). Sin specs nuevos → omitir.
 
 > **Los auditores pueden contradecirse, y tú no eres el árbitro ([[D-047]]).** Cada auditor mira el
 > mismo grafo desde su feature, así que sobre un mismo par es normal que uno levante un conflicto y
@@ -482,6 +482,17 @@ Opera sobre **todas las features con spec en `features/`**, incluyendo preexiste
 > un cuarto lector independiente sobre el conjunto y es **quien arbitra**; llega con encargo
 > explícito o no arbitra nada. Si no delegas readiness (`--skip-readiness`), el conflicto queda
 > **abierto y así lo reportas** — no lo cierres tú por mayoría.
+
+> **Y no consolides sus informes en un fichero ([[D-059]]).** La frase anterior decía *"Escribe
+> `_conflict_report.md` si hay conflictos"* en un párrafo dirigido a ti, así que se leía como
+> encargo tuyo. **Medido (pasada 13 de CU-3.a):** el orquestador escribió un
+> `spec/_conflict_report.md` consolidando los cuatro informes —con buen criterio: lo etiquetó como
+> "no es un arbitraje", atribuyó cada hallazgo a su auditor y pasó igualmente las divergencias en
+> el prompt—. Y aun así **se equivocó al transcribir**: adjudicó un conflicto al auditor
+> equivocado, y lo cazó el readiness al ir a las fuentes. Consolidar te obliga a copiar contenido
+> que no produjiste, y copiar introduce errores que no estaban en el original. La vista
+> consolidada con autoridad la produce el readiness; hasta entonces, la divergencia viaja **en el
+> prompt**, que no es un artefacto que nadie gobierne.
 
 ---
 

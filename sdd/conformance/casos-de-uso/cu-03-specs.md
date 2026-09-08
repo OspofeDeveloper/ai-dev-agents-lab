@@ -950,6 +950,44 @@ informe a mano, espera a mano, o **reporta como del delegado un dato que reconst
 > no cargar artefactos— miden lo mismo antes y después, así que la 12 **cuenta como 1/3**. Lo que
 > sí se reinicia es [[CU-3.e]] (calidad del spec de fast-track).
 
+
+> **Pasada 13 (2026-09-08, v0.97.0+07089d1, `myops-app-specs`, banco reseteado, modelo `opus-5`)
+> — la más completa de la campaña: cae por fin la costura de gobernanza. NO cuenta para la serie**
+> (el arreglo de [[D-059]] toca `wf-spec-features-first`, la skill que estos probes miden).
+>
+> **Tres primeras veces:**
+> 1. **La cadena de gobernanza, entera.** `P-001` llevaba `[PUEDE_REQUERIR_CR]` y quedó
+>    respondido → main **delegó la evaluación**, recibió **`SIN_SEÑALES`** y **propagó el veredicto
+>    al siguiente prompt**. Tres pasadas persiguiéndolo.
+> 2. **[[D-058]] aguantó**: los tres specs con gaps usaron la forma canónica y el script los ve
+>    todos. La deriva de formato de la 12 no se repitió.
+> 3. **[[D-056]], segunda pasada consecutiva sin colisiones** (`011-013`, `031-033`, `041-042`).
+>    Un escritor lo reportó como *"bloque P-041–P-050, usé 2 de 10"*: el concepto llegó, no solo
+>    el número.
+>
+> **La respuesta dictada llega al artefacto, y entera.** Los cinco bloques dictados para P-001
+> salieron como `CA-001`…`CA-005` de F-002, y el párrafo de **exclusiones** como
+> `CA-006 — "Sin gráficas, histórico ni desglose cuenta a cuenta"`. Hasta lo que se dijo que no
+> debía aparecer se convirtió en criterio verificable.
+>
+> **Conducta:** **12/12** delegaciones con el flag; los dos fan-outs cada uno en un mensaje; cero
+> `SendMessage`; un solo `Skill`; **main no leyó ni un artefacto** (verificado llamada por
+> llamada). 4 specs `IN_SYNC`, cero `[INCOMPLETO]`, V2 limpia.
+>
+> **Hallazgo — main escribió un artefacto porque el contrato se lo pidió ([[D-059]], v0.98.0).**
+> `spec/_conflict_report.md`, con `cat >` teniendo `allowed-tools` sin `Write` (la puerta de
+> [[D-051]], ahora en el orquestador). **No fue desviación:** el Paso 7 terminaba con *"Escribe
+> `_conflict_report.md` si hay conflictos"* en un párrafo dirigido a él. Con esa instrucción y el
+> blockquote que le niega el arbitraje, main **reconcilió las dos**: escribió una consolidación
+> que no arbitra, atribuida y etiquetada como tal, **y además** pasó las divergencias en el
+> prompt. Aun así el paso hizo daño: al transcribir informes ajenos **adjudicó un conflicto al
+> auditor equivocado**, y lo cazó el readiness al ir a las fuentes.
+>
+> **Nota de método — mi primer diagnóstico fue falso.** Afirmé que *"el contrato es explícito y
+> dice lo contrario"* habiendo leído solo el blockquote, sin llegar al final del párrafo anterior.
+> El mismo patrón de la nota de la pasada 9: leer hasta donde confirma la hipótesis. Lo destapó
+> la pregunta del usuario —*"¿por qué razón escribió ese fichero?"*—, no una comprobación mía.
+
 ## CU-3.b — Expansión de alcance desde las respuestas del analysis
 
 **Precondición:** al responder el `_analysis.md` introduces capacidad nueva (entidad
