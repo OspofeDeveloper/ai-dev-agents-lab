@@ -439,6 +439,28 @@ class InstallAllTest(InstallBase):
         self.assertNotIn("/wf-", marker,
                          "la seccion del marcador enseña un slash-command (11.10)")
 
+    def test_informative_gap_review_is_reachable(self):
+        """D-057: el paso de informativos no puede ser codigo muerto.
+
+        Al anadirlo, el final del paso anterior seguia diciendo "sigue por el
+        punto 8 o 9", que lo salta entero. Un paso nuevo vale lo que valgan los
+        saltos que lo alcanzan: se verifica que 6b y la rama sin criticos
+        enrutan a 6c, y que 6c enruta a 8/9.
+        """
+        self.install("all")
+        ff = (self.skill_dir("wf-spec-features-first") / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("6c.", ff, "no existe el paso de repaso de informativos (D-057)")
+        self.assertIn("sigue por el punto 6c", ff,
+                      "el flujo de criticos salta el paso de informativos (D-057)")
+        self.assertIn("pasa igualmente por el punto 6c", ff,
+                      "la rama sin criticos salta el paso de informativos (D-057)")
+        i6c = ff.index("6c.")
+        self.assertIn("punto 8", ff[i6c:], "6c no enruta a la evaluacion de gobernanza")
+        # El script tiene que dar la asuncion, o main la redactaria el.
+        gaps = (self.proj / ".sdd" / "scripts" / "sdd-analysis-gaps.py").read_text(encoding="utf-8")
+        self.assertIn('"asuncion"', gaps,
+                      "sdd-analysis-gaps.py no emite la asuncion por defecto (D-057)")
+
     def test_analyze_rescues_answers_before_overwriting(self):
         # D-051: regenerar el analysis lo sobrescribe. Las respuestas son decisiones
         # de negocio de una persona, no material regenerable: el export tiene que

@@ -12,6 +12,12 @@ Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afec
 - **El banco acota V2**: dentro de un spec, `CA` y `HU` son el vocabulario estructural del propio documento y no cuentan como jerga. La norma protege la prosa que explica **un hueco** a alguien de producto, no la nomenclatura del artefacto.
 - **Nota de la pasada 11** en CU-3, con la conducta medida, los cuatro hallazgos y el eje nuevo de la Observación A.
 
+### 0.96.1 — el paso de informativos era código muerto
+
+Verificación previa a las pasadas de sellado, ejecutando el flujo en vez de leerlo: el punto **6c** de [[DECISIONS D-057]] **no se alcanzaba**. El final del paso de críticos seguía diciendo *"sigue por el punto 8 o 9"* —escrito cuando 6c no existía—, así que saltaba el repaso entero; y la rama de "no hay críticos" tampoco pasaba por él. Enrutados los dos, y 6c cierra enrutando a 8/9. Backstop que falla si algún salto vuelve a esquivarlo.
+
+Verificada de paso la costura con la gobernanza: la condición del punto 8 es *"lo lleva y está respondido"*, **sin mirar la severidad**, así que un informativo con `PUEDE_REQUERIR_CR` respondido en 6c entra en la evaluación igual que un crítico.
+
 ## 0.95.0 — 2026-09-08
 
 **Una asunción por defecto es una decisión de producto** — [[DECISIONS D-057]]. Dos hallazgos de la pasada 11 con la misma raíz: qué se le enseña a quien tiene que decidir.

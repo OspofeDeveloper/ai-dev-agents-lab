@@ -209,7 +209,7 @@ Verifica que el archivo PRD existe; si no → informa con ruta exacta y detén.
    > **el detalle de los gaps no hace falta para nada** — y el gate se arma solo con el recuento
    > de `--check`, que ya tienes.
 
-   Si el análisis estaba recién generado pero el script **no** reporta críticos abiertos, el gate se reduce a dos vías: *revisar el análisis antes de generar* o *continuar ya*.
+   Si el análisis estaba recién generado pero el script **no** reporta críticos abiertos, el gate se reduce a dos vías: *revisar el análisis antes de generar* o *continuar ya*. En cualquiera de las dos, **pasa igualmente por el punto 6c**: que no haya críticos no significa que no haya decisiones tomándose solas.
 
 6b. **Solo si eligió dictar** → presenta los gaps **en la conversación, de uno en uno**. Para cada `[CRÍTICO]` abierto, en orden:
 
@@ -234,9 +234,9 @@ Verifica que el archivo PRD existe; si no → informa con ruta exacta y detén.
    gesto con distinto tamaño, y la línea que los separa no la puedes trazar tú a mitad de un
    dictado. Si algo del texto te parece un error que importa, **pregunta**; no lo arregles al
    pasarlo.
-   Confirma en una línea que se aplicó y pasa al siguiente. Cuando no queden, vuelve a correr
-   `--check` y sigue por el punto 8 o 9 según el veredicto. Si cierra solo algunos y quiere
-   parar, `--check` reevalúa el gate con los que queden — no hace falta anunciarlo como rama.
+   Confirma en una línea que se aplicó y pasa al siguiente. Cuando no queden críticos, vuelve a
+   correr `--check` y **sigue por el punto 6c**. Si cierra solo algunos y quiere parar, `--check`
+   reevalúa el gate con los que queden — no hace falta anunciarlo como rama.
 
    > **Por qué en el chat y no con `AskUserQuestion` ([[D-053]]).** `AskUserQuestion` es para
    > **elegir entre opciones**. La respuesta a un gap es **prosa abierta**: no hay opciones, así
@@ -287,6 +287,11 @@ Verifica que el archivo PRD existe; si no → informa con ruta exacta y detén.
 
    **Si elige seguir** → no insistas: las asunciones se aplican solas, que es el comportamiento
    documentado. Ya se lo has enseñado, que era lo que faltaba.
+
+   Salgas por donde salgas, **desde aquí se va al punto 8 o al 9** según el veredicto de `--check`.
+   Ojo a la costura: si respondió un informativo que llevaba `PUEDE_REQUERIR_CR`, ese gap **ya
+   cuenta** para el punto 8 —su condición es *"lo lleva y está respondido"*, sin mirar la
+   severidad—, así que la evaluación de gobernanza le aplica igual que a un crítico.
 
 7. Si el script dio `CRITICAL_OPEN` y `--allow-open-critical-gaps` vino **de entrada** en `$ARGUMENTS` → no presentes el gate; continúa al Paso 3 dejando constancia explícita de que las HUs afectadas podrán salir `[INCOMPLETO]`.
 8. Si el script dio `CRITICAL_ANSWERED`, hay que saber si alguna respuesta introduce señales de cambio de producto según `kb-product-change-governance`. **Tú no las lees ([[D-051]]):** mira los `flags` que devolvió `--list --json` y **delega el juicio**.
