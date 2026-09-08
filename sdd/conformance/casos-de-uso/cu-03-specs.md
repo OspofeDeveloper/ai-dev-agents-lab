@@ -827,6 +827,27 @@ informe a mano, espera a mano, o **reporta como del delegado un dato que reconst
 >
 > **Lo que esta pasada enseña sobre el método:** el arreglo de la 9 se dio por bueno sin volver a
 > medirlo. Lo que destapó el error fue **medir después de arreglar**, no razonar mejor.
+>
+> **Continuación del 2026-09-08 (misma sesión, consumer aún en 0.92.0), y también descartada.** El
+> banco no se reseteó tras [[D-055]], así que esta parte tampoco cuenta para la serie — pero midió
+> tres cosas que no teníamos:
+>
+> - **[[D-053]] en pantalla por segunda vez, y correcto:** **un solo** `AskUserQuestion` para los 3
+>   críticos, en el eje *cómo se responde* (dictar / escribir en el fichero / continuar aceptando el
+>   riesgo). Ninguna opción tuvo que aclarar su propio ámbito. El defecto de la 9 no reapareció.
+> - **La cadena de gobernanza, entera y por primera vez:** `P-003` nació con
+>   `[CRÍTICO][PUEDE_REQUERIR_CR]`, el flag se parseó a `flags` (v0.88.0), y al responderse
+>   —*"también los ingresos tienen categorías"*, que el PRD **no** compromete: dice categorías para
+>   **gastos**— el orquestador **paró y mandó evaluar la señal** en vez de seguir a discovery. Las
+>   tres piezas habían sido verificadas por separado; nunca encadenadas.
+> - **`SendMessage`, tercera aparición** (pasadas 8, 10 y esta). Main **reanudó** el explorer que ya
+>   había leído el PRD para la evaluación de gobernanza, en vez de lanzar uno nuevo. Sigue fuera del
+>   contrato (ROADMAP 11.11): no admite `run_in_background` y su `tool_result` es un acuse. Que
+>   aparezca en 3 de 3 pasadas recientes deja de ser anécdota — **es la vía que el orquestador
+>   elige cuando quiere contexto ya cargado**, y el contrato tiene que decidir si la sanciona.
+>
+> **Lo que sigue sin medirse desde [[D-054]]:** discovery, fast-track y los auditores. Esta pasada
+> murió en el gate de gobernanza, antes de llegar a ninguno.
 
 ## CU-3.b — Expansión de alcance desde las respuestas del analysis
 
