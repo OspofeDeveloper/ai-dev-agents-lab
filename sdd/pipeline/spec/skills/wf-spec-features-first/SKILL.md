@@ -312,7 +312,7 @@ Verifica que el archivo PRD existe; si no → informa con ruta exacta y detén.
    - si `--allow-derived-scope-from-analysis` vino **de entrada** → no presentes el gate; continúa dejando constancia explícita de que el discovery, `_features.md` y los specs deberán marcar ese alcance como **scope derivado** y no como PRD puro.
 9. Si el script dio `CRITICAL_ANSWERED` y no se detectan señales de cambio → continuar al Paso 3 usando el `_analysis.md` como contexto.
 
-**Importante:** `[INFORMATIVO]` nunca bloquea (el script los reporta aparte: cada uno aplicará su asunción por defecto); `[CRÍTICO]` abiertos requieren `--allow-open-critical-gaps`. Para señales de expansión consulta `kb-product-change-governance`. Si el PRD cambió después de generar specs previos, puede ser necesario `wf-prd-sync-impact` antes de mezclar pasadas.
+**Importante:** `[INFORMATIVO]` nunca bloquea (el script los reporta aparte: cada uno aplicará su asunción por defecto) — **pero no bloquear no es no enseñar**: se repasan en el punto 6c, porque esa asunción es una decisión de producto que se toma sola ([[D-057]]); `[CRÍTICO]` abiertos requieren `--allow-open-critical-gaps`. Para señales de expansión consulta `kb-product-change-governance`. Si el PRD cambió después de generar specs previos, puede ser necesario `wf-prd-sync-impact` antes de mezclar pasadas.
 
 > **Las respuestas de los gaps no las escribes tú** ([[D-042]]; tabla de ámbito en `kb-gap-conventions`). Las escribe el usuario en el `_analysis.md`; si te las dicta, las aplicas con `sdd-analysis-gaps.py --answer P-XXX "texto"`. Nunca edites el informe a mano ni completes una respuesta que el usuario no ha dado.
 

@@ -18,6 +18,15 @@ Verificación previa a las pasadas de sellado, ejecutando el flujo en vez de lee
 
 Verificada de paso la costura con la gobernanza: la condición del punto 8 es *"lo lleva y está respondido"*, **sin mirar la severidad**, así que un informativo con `PUEDE_REQUERIR_CR` respondido en 6c entra en la evaluación igual que un crítico.
 
+### 0.96.2 — la tercera copia de la suposición vieja
+
+Segunda vuelta de verificación, buscando **la clase** de defecto en vez del defecto: la plantilla de `## Items Pendientes` decía *"responde los gaps en el `_analysis.md`"* — la plantilla de la sección que existe **precisamente** para alojar los gaps locales del spec, contradiciéndose a sí misma. Es la tercera aparición de la misma suposición (tras `wf-spec-gap-resolve` en [[DECISIONS D-054]] y el marcador en [[DECISIONS D-056]]).
+
+- ⚠ La plantilla responde **en su propia sección**, contempla `[INFORMATIVO]` además de `[CRÍTICO]`, incluye `Contexto`, y dice explícitamente que un gap heredado del análisis **no se reproduce** aquí.
+- ⚠ La plantilla de `## Asunciones Aplicadas` gana la forma del gap heredado: ID, **fichero** y asunción, sin campo `Respuesta`.
+- La nota *"`[INFORMATIVO]` nunca bloquea"* aclara que **no bloquear no es no enseñar**, y remite al punto 6c.
+- Backstop que falla si la plantilla vuelve a mandar al analysis.
+
 ## 0.95.0 — 2026-09-08
 
 **Una asunción por defecto es una decisión de producto** — [[DECISIONS D-057]]. Dos hallazgos de la pasada 11 con la misma raíz: qué se le enseña a quien tiene que decidir.

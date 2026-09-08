@@ -461,6 +461,25 @@ class InstallAllTest(InstallBase):
         self.assertIn('"asuncion"', gaps,
                       "sdd-analysis-gaps.py no emite la asuncion por defecto (D-057)")
 
+    def test_pending_items_template_answers_in_place(self):
+        """D-057: la plantilla de Items Pendientes no manda al analysis.
+
+        Tercera aparicion del mismo defecto y la peor: es la plantilla de la
+        seccion que existe PARA alojar los gaps locales del spec, y decia
+        "responde los gaps en el _analysis.md". Se contradecia a si misma.
+        """
+        self.install("all")
+        tpl = (self.skill_dir("wf-spec-fast-track") / "references"
+               / "spec_header_templates.md").read_text(encoding="utf-8")
+        sec = tpl[tpl.index("## Sección opcional: Items Pendientes"):]
+        sec = sec[:sec.index("## Sección opcional: Asunciones Aplicadas")]
+        self.assertNotIn("responde los gaps en el `_analysis.md`", sec,
+                         "la plantilla de Items Pendientes manda al analysis (D-057)")
+        self.assertIn("en esta misma sección", sec,
+                      "la plantilla no dice donde se responde el gap local (D-057)")
+        self.assertIn("no\nse reproduce", sec.replace("**", ""),
+                      "la plantilla no prohibe reproducir el gap heredado (D-057)")
+
     def test_analyze_rescues_answers_before_overwriting(self):
         # D-051: regenerar el analysis lo sobrescribe. Las respuestas son decisiones
         # de negocio de una persona, no material regenerable: el export tiene que
