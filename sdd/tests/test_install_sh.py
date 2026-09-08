@@ -397,6 +397,48 @@ class InstallAllTest(InstallBase):
             self.assertIn("kb-spec-expert", body,
                           f"{agent} no carga kb-spec-expert: la norma de D-055 no le llega")
 
+    def test_gap_id_ranges_are_dealt_by_the_orchestrator(self):
+        """D-056: en un fan-out los IDs los reparte quien lanza, no el escritor.
+
+        Cuatro escritores en paralelo piden todos el mismo "siguiente ID libre":
+        sus specs aun no existen en disco. Medido en la pasada 11 de CU-3.a, dos
+        specs hermanos reclamaron el mismo [P-009] para gaps distintos.
+        """
+        self.install("all")
+        ff = (self.skill_dir("wf-spec-features-first") / "SKILL.md").read_text(encoding="utf-8")
+        ft = (self.skill_dir("wf-spec-fast-track") / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("--gap-id-start", ff,
+                      "features-first no reparte rangos de ID en el fan-out (D-056)")
+        self.assertIn("sdd-next-id.py", ff,
+                      "features-first no pide el primer ID libre del linaje (D-056)")
+        self.assertIn("--gap-id-start", ft,
+                      "fast-track no acepta el rango que le asigna el orquestador (D-056)")
+        # El reparto tiene que ocurrir ANTES de emitir las llamadas Agent.
+        self.assertLess(ff.index("--gap-id-start"), ff.index("CRÍTICO: emite TODOS"),
+                        "el reparto de IDs va despues del fan-out: llega tarde (D-056)")
+
+    def test_incomplete_marker_names_the_gap_home(self):
+        """D-056: el marcador [INCOMPLETO] manda al fichero donde vive el gap.
+
+        La plantilla hardcodeaba `_analysis.md`; un spec salio mandando al usuario
+        a un fichero donde su [P-009] no existia — el callejon de D-054 por la via
+        del texto.
+        """
+        self.install("all")
+        kb = (self.skill_dir("kb-gap-conventions") / "SKILL.md").read_text(encoding="utf-8")
+        marker = kb[kb.index("## Marcador de HU incompleta"):]
+        # Acotado al bloque de plantilla: la prosa de alrededor puede citar la
+        # forma vieja como ejemplo de lo que NO se escribe, y eso es legitimo.
+        tpl = marker[marker.index("```markdown"):]
+        tpl = tpl[:tpl.index("```", 3)]
+        self.assertNotIn("_analysis.md", tpl,
+                         "la plantilla del marcador sigue hardcodeando el analysis (D-056)")
+        self.assertIn("Items Pendientes", marker,
+                      "la plantilla no contempla el gap que vive en el propio spec (D-056)")
+        # Y la seccion no dicta comandos al usuario (ROADMAP 11.10).
+        self.assertNotIn("/wf-", marker,
+                         "la seccion del marcador enseña un slash-command (11.10)")
+
     def test_analyze_rescues_answers_before_overwriting(self):
         # D-051: regenerar el analysis lo sobrescribe. Las respuestas son decisiones
         # de negocio de una persona, no material regenerable: el export tiene que

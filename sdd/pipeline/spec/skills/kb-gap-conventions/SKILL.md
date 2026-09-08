@@ -21,7 +21,7 @@ Este skill es el **Single Source of Truth** para todas las convenciones de gaps 
 | Análisis de documento origen (modos `analyze`, `fast-track`) | `[P-XXX]` | `[P-001]`, `[P-042]` |
 | Análisis de cambios incrementales (modo `delta`) | `[D-XXX]` | `[D-001]`, `[D-003]` |
 
-**Numeración**: secuencial desde `001`, sin saltos, **por linaje** — no por artefacto.
+**Numeración**: secuencial desde `001` y **por linaje** — no por artefacto. Sin saltos, salvo los **bloques reservados** del fan-out paralelo ([[D-056]], abajo), que sí los dejan a propósito.
 
 Un linaje es el `_analysis.md` de un documento origen **más todos los specs derivados de él**.
 Los IDs no se reinician al pasar del análisis al spec: si el análisis llegó a `[P-008]`, el
@@ -40,30 +40,31 @@ primer gap que levante un spec de ese linaje es `[P-009]`. El ID se pide al scri
 > (analysis hasta `P-008`, spec desde `P-009`) **contradiciendo esta regla tal como estaba
 > escrita**, y acertó. La regla se alinea con lo que la práctica ya demostró correcto.
 
-**Hasta dónde llega la garantía.** El linaje se calcula sobre lo que hay **en disco**: en un
-fan-out paralelo —`wf-spec-features-first` lanza varios fast-tracks a la vez— dos specs hermanos
-pueden reclamar el mismo `P-XXX`, porque ninguno ve todavía al otro. El invariante que sí queda
-garantizado, y es el que hace falta, es que **dentro de un mismo spec** ningún gap propio comparta
-ID con uno de su análisis: ahí es donde el marcador sería ambiguo. Consecuencia práctica: un
-`P-XXX` **no identifica un gap por sí solo fuera de su spec** — al citarlo en un informe, en un
-conflicto o al usuario, nómbralo junto al fichero donde vive.
+**El fan-out paralelo: quien reparte es quien los ve a todos ([[D-056]]).** El linaje se calcula
+sobre lo que hay **en disco**, así que varios escritores lanzados a la vez piden todos el mismo
+"siguiente ID libre": sus specs todavía no existen. **No lo resuelve el escritor, lo resuelve quien
+lanza**: `wf-spec-features-first` pide el primer ID libre del linaje y reparte **bloques de 10**,
+uno por escritor, que viajan en `--gap-id-start`. Los huecos entre bloques son deliberados — un ID
+sin usar no cuesta nada; dos gaps distintos con el mismo ID corrompen la trazabilidad.
 
-**El segundo hueco: regenerar el análisis.** `wf-spec-analyze` numera desde `001` dentro de su
-documento, así que un análisis regenerado que produzca **más** gaps que el anterior invade el
-rango que los specs derivados ya reclamaron. No se arregla desplazando la base del análisis: el
-rescate de respuestas (`--export/--import-answers`) empareja por **ID y título**, y mover la base
-garantizaría **cero** coincidencias, perdiendo decisiones de negocio que valen más que la
-unicidad del ID.
+> **Esto no era un riesgo teórico.** Se documentó como *"puede pasar en un fan-out paralelo"* y
+> pasó en la **primera** pasada paralela siguiente (11 de CU-3.a): con 4 escritores,
+> `movement-tracking` y `debt-tracking` reclamaron los dos `[P-009]` para gaps distintos —uno
+> informativo, otro crítico y bloqueante—.
 
-Y hay una razón de fondo para no perseguirlo: **tras regenerar, los `P-XXX` del análisis ya no
-significan lo mismo**, colisionen o no —el análisis no es reproducible, y el mismo ID puede ser
-otra pregunta (ver `wf-spec-analyze`, "Rescatar las respuestas antes de sobrescribir")—. El
-riesgo que abre la colisión no es nuevo; es ese, que ya estaba.
+**Lo que sigue sin poder garantizarse: regenerar el análisis.** `wf-spec-analyze` numera desde
+`001` dentro de su documento, así que un análisis regenerado con **más** gaps que el anterior
+invade el rango que los specs derivados ya reclamaron. No se arregla desplazando su base: el
+rescate de respuestas (`--export/--import-answers`) empareja por **ID y título**, y moverla
+garantizaría **cero** coincidencias, perdiendo decisiones de negocio que valen más que la unicidad
+del ID. Y el riesgo de fondo no es nuevo: tras regenerar, los `P-XXX` del análisis **ya no
+significan lo mismo**, colisionen o no (ver `wf-spec-analyze`, "Rescatar las respuestas antes de
+sobrescribir").
 
-**Lo que sostiene la resolución en los dos casos** es la regla de arriba: se busca **primero en el
-spec**. Un `[P-011]` local se resuelve contra su propio bloque aunque el análisis regenerado tenga
-otro `[P-011]`. El daño posible es de **lectura humana**, no de resolución — y por eso el corolario
-de citar siempre el fichero no es cosmético.
+**Lo que sostiene la resolución en todos los casos** es la regla de arriba: se busca **primero en el
+spec**. Y el corolario se mantiene: un `P-XXX` **no identifica un gap por sí solo fuera de su
+spec** — al citarlo en un informe, en un conflicto o al usuario, nómbralo junto al fichero donde
+vive.
 
 ---
 
@@ -237,8 +238,25 @@ El marcador `[INCOMPLETO]` se aplica a nivel de HU en el spec generado cuando un
 
 Al final de cada HU afectada:
 ```markdown
-> ⚠ [INCOMPLETO] — Pendiente de gap(s): [P-001], [P-003]. Responde esos gaps en el `_analysis.md` y pide que se complete la HU.
+> ⚠ [INCOMPLETO] — Pendiente de gap(s): [P-001], [P-003]. Responde esos gaps en <dónde viven> y pide que se complete la HU.
 ```
+
+**`<dónde viven>` no es decorativo: es la diferencia entre una salida y un callejón** ([[D-054]]).
+Un gap tiene dos hogares, así que la frase nombra el que corresponde:
+
+| Los gaps del marcador vienen de… | La frase dice |
+|---|---|
+| El análisis del documento origen | ``Responde esos gaps en `prd/prd_analysis.md` `` (la ruta real) |
+| El `## Items Pendientes` de este mismo spec | `Responde esos gaps en la sección «Items Pendientes» de este spec` |
+| Los dos hogares a la vez | Nombra cada uno con sus IDs: ``[P-002] en `prd/prd_analysis.md`, [P-009] en «Items Pendientes»`` |
+
+> **Por qué esto está escrito con esta insistencia (medido, pasada 11 de CU-3.a).** Esta plantilla
+> decía *"Responde esos gaps en el `_analysis.md`"*, fijo. Un spec salió con
+> `Pendiente de gap(s): [P-009]` —un gap que vivía en su **propia** sección— y esa frase mandaba al
+> usuario a un fichero donde `[P-009]` no existe. Es el callejón de [[D-054]] otra vez, por la vía
+> del texto en vez de la de las herramientas: el writer copió la plantilla, que es exactamente lo
+> que se le pide hacer.
+
 
 > **Qué es contrato y qué es prosa, en esta misma línea** (ROADMAP 11.10). El marcador
 > `[INCOMPLETO]`, el prefijo `Pendiente de gap(s):` y los `[P-XXX]` son **estado que se
@@ -252,4 +270,4 @@ Al final de cada HU afectada:
 - Una HU marcada `[INCOMPLETO]` **se incluye** en el spec con toda la información disponible
 - Los CAs asociados se generan parcialmente si es posible (con el GIVEN/WHEN disponible) o se omiten con referencia al gap
 - `wf-prepare-plan` **bloquea** si el feature spec contiene HUs `[INCOMPLETO]`
-- Para completar: responder el gap en el `_analysis.md`, luego ejecutar `/wf-spec-gap-resolve <feature_spec.md>` para integrar la respuesta y eliminar la marca
+- Para completar: responder el gap **en el fichero donde vive su bloque** ([[D-054]]) y pedir que se completen las historias afectadas; al integrar la respuesta se retira la marca

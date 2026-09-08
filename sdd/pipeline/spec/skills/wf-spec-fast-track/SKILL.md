@@ -2,7 +2,7 @@
 name: wf-spec-fast-track
 description: "Genera el Spec de una feature directamente desde un documento de requisitos acotado a una sola capacidad. Soporta modo scoped con --scope-from para filtrar un PRD completo a una feature del discovery. Acepta --analysis para usar gaps pre-resueltos de un analisis previo."
 when_to_use: "Activa en frases como 'genera el spec directo de esta feature', 'fast-track del spec', 'crea el spec de esta capability directamente', 'genera spec sin analisis previo'."
-argument-hint: "<archivo.md> --capability <nombre-kebab> [--light|--standard] [--analysis <analysis.md>] [--allow-derived-scope-from-analysis] | <prd.md> --scope-from <discovery.md> --feature <F-00X> [--light|--standard] [--analysis <analysis.md>] [--allow-derived-scope-from-analysis]"
+argument-hint: "<archivo.md> --capability <nombre-kebab> [--light|--standard] [--analysis <analysis.md>] [--gap-id-start <P-XXX>] [--allow-derived-scope-from-analysis] | <prd.md> --scope-from <discovery.md> --feature <F-00X> [--light|--standard] [--analysis <analysis.md>] [--gap-id-start <P-XXX>] [--allow-derived-scope-from-analysis]"
 effort: high
 allowed-tools: [Read, Write, Bash]
 context: fork
@@ -27,6 +27,7 @@ Extrae de `$ARGUMENTS`:
 - **Flag opcional**: `--analysis <path>` → path a un `_analysis.md` con gaps pre-resueltos
 - **Flag opcional**: `--allow-derived-scope-from-analysis` → permite continuar aunque el analysis introduzca expansión funcional no consolidada todavía en el PRD. Sin este flag, el workflow se detiene para remitir a `wf-prd-change`.
 - **Flag opcional**: `--light` / `--standard` → fuerza el modo del pipeline para esta feature.
+- **Flag opcional**: `--gap-id-start <P-XXX>` → primer ID que puedes usar para los gaps que levantes. Te lo da quien te lanza cuando hay varios escritores en paralelo ([[D-056]]); si viene, **manda sobre cualquier cálculo propio**.
 
 **Resolución del modo** (en este orden): flag explícito > `pipeline_mode` de `.sdd/project-init.json` (directorio actual o ancestro) > `standard`. Las reglas exactas de qué relaja el modo ligero viven en `kb-spec-expert` ("Modo ligero — proporcionalidad declarada"); los invariantes (CAs testables, trazabilidad, marcadores, pureza, gobernanza) son idénticos en ambos modos.
 
@@ -107,7 +108,11 @@ No genera un `_analysis.md` separado. Consulta `kb-gap-conventions` para el form
 - **`[CRÍTICO]`**: determina qué HUs afecta (campo `Afecta`). Las HUs afectadas se marcan `[INCOMPLETO]` en el spec (se generan con la información disponible). La presencia de HUs `[INCOMPLETO]` en el spec **bloquea** el paso a planificación. Los gaps se documentan en una sección `## Items Pendientes` al final del spec (ver formato abajo).
 - **`[INFORMATIVO]`**: aplicar la asunción más conservadora y documentar en `## Asunciones Aplicadas` al final del spec.
 
-**El ID no lo cuentas a mano** (misma norma que el `F-NNN` del Paso 9). La numeración de los `[P-XXX]` es **por linaje** —el `_analysis.md` de origen más todos los specs derivados de él—, **no por artefacto**: si el análisis llegó a `[P-008]`, el primer gap que levantes es `[P-009]`. Pídeselo al script, pasándole todos los ficheros del linaje que existan en disco:
+**El ID no lo cuentas a mano** (misma norma que el `F-NNN` del Paso 9). La numeración de los `[P-XXX]` es **por linaje** —el `_analysis.md` de origen más todos los specs derivados de él—, **no por artefacto**.
+
+**Si recibiste `--gap-id-start P-0NN`, empieza ahí y numera consecutivo desde ese punto.** Ese valor te lo asignó quien te lanzó, que es el único que ve a tus hermanos en paralelo ([[D-056]]): **no lo recalcules ni lo corrijas**, aunque el script te diga otra cosa —él no ve los specs que se están escribiendo ahora mismo—. Tienes un bloque de **10** IDs; si te quedaras sin, no invadas el siguiente: dilo en tu informe final.
+
+Sin ese flag (invocación directa, sin fan-out) el ID se lo pides al script, pasándole todos los ficheros del linaje que existan en disco:
 
 ```bash
 !python3 .sdd/scripts/sdd-next-id.py P <analysis.md, si hay> <specs hermanos del linaje…>

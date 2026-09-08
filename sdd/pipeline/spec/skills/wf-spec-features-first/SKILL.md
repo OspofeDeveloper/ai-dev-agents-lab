@@ -330,13 +330,39 @@ Para cada feature del subset: si ya existe su spec — `features/<nombre>/spec/<
 
 Lanza fast-track únicamente para las features del **subset** que NO tienen spec preexistente (lista calculada en el Paso 4b). Las features que ya tenían spec se preservan tal cual; las que están fuera del subset no se tocan.
 
+### 5.0 — Reparte los rangos de ID de gap **antes** de lanzar ([[D-056]])
+
+Cada escritor puede levantar gaps propios en su spec y ninguno ve a sus hermanos: van en paralelo y
+sus ficheros aún no existen en disco. Si cada uno pide el siguiente ID libre, **todos obtienen el
+mismo**. Tú eres el único punto que los ve a la vez, así que el reparto es tuyo.
+
+Pide el primer ID libre del linaje —el análisis más los specs que ya existan— y reparte bloques de
+**10** en el orden en que vas a lanzar:
+
+```bash
+!python3 .sdd/scripts/sdd-next-id.py P <analysis.md, si hay> <specs existentes…>
+```
+
+Si devuelve `P-008`, el primer escritor arranca en **`P-011`** (redondea hacia arriba a la decena
+siguiente, para que los bloques se lean de un vistazo), el segundo en `P-021`, el tercero en
+`P-031`, y así. Cada uno recibe su arranque en `--gap-id-start`.
+
+**Los huecos entre bloques son deliberados** y la SSoT los sanciona: un ID sin usar no cuesta nada,
+dos gaps distintos con el mismo ID corrompen la trazabilidad. Sin análisis en el linaje, el primer
+bloque empieza en `P-001`.
+
+> **Medido (pasada 11 de CU-3.a).** Con 4 escritores en paralelo, `movement-tracking` y
+> `debt-tracking` reclamaron **los dos** `[P-009]` para gaps distintos —uno informativo, otro
+> crítico y bloqueante—. Ocurrió en la **primera** pasada paralela tras documentarse como riesgo
+> teórico: con este fan-out no es un caso raro, es el caso normal.
+
 Para cada feature F-00X a generar, lanza un subagente con el `Agent` tool usando `subagent_type: sdd-spec-writer`:
 
 ```
 Agent(
   subagent_type: "sdd-spec-writer",
   run_in_background: false,
-  prompt: "Lee `.claude/skills/wf-spec-fast-track/SKILL.md` y ejecuta sus pasos TÚ MISMO sobre estos argumentos: <prd.md> --scope-from <discovery.md> --feature F-00X [--light|--standard si se pasó o si project-init declara pipeline_mode] [--analysis <analysis.md> si disponible]. NO uses el `Skill` tool: esa skill es `context: fork` y invocarla te forkearía otro subagente en cascada. Dentro de ese SKILL.md, `${CLAUDE_SKILL_DIR}` es `.claude/skills/wf-spec-fast-track/`. Al terminar, informa del path del spec generado, nº de gaps `[CRÍTICO]` y nº de asunciones aplicadas."
+  prompt: "Lee `.claude/skills/wf-spec-fast-track/SKILL.md` y ejecuta sus pasos TÚ MISMO sobre estos argumentos: <prd.md> --scope-from <discovery.md> --feature F-00X --gap-id-start P-0NN [--light|--standard si se pasó o si project-init declara pipeline_mode] [--analysis <analysis.md> si disponible]. NO uses el `Skill` tool: esa skill es `context: fork` y invocarla te forkearía otro subagente en cascada. Dentro de ese SKILL.md, `${CLAUDE_SKILL_DIR}` es `.claude/skills/wf-spec-fast-track/`. Al terminar, informa del path del spec generado, nº de gaps `[CRÍTICO]`, nº de asunciones aplicadas y los IDs de gap que hayas usado."
 )
 ```
 

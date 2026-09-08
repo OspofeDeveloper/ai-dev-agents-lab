@@ -6,6 +6,39 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-056 — En un fan-out, los IDs los reparte quien lanza; y un marcador nombra el fichero donde vive el gap
+
+- **Fecha:** 2026-09-08 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-054]] (los dos hogares de un gap), [[D-047]] (la barrera del fan-out), ROADMAP 11.2b, CU-3.a / CU-3.g.
+
+**Contexto.** Pasada 11 de CU-3.a, la más limpia de la campaña en conducta (11/11 delegaciones con el flag, los dos fan-outs en un mensaje, `spawnDepth: 1` en los once). Precisamente por funcionar bien destapó dos defectos que solo aparecen cuando **cuatro escritores trabajan a la vez**.
+
+**Defecto 1 — la colisión de IDs dejó de ser teórica.** `movement-tracking` reclamó `[P-009][INFORMATIVO]` y `debt-tracking` `[P-009][CRÍTICO]`: gaps distintos, mismo ID, specs distintos. [[D-054]] lo había **declarado como límite conocido** —*"en un fan-out paralelo dos specs hermanos pueden reclamar el mismo `P-XXX`"*— con el argumento de que no corrompe la resolución porque se busca primero en el spec. Ese argumento sigue siendo cierto: el readiness lo diagnosticó, citó la SSoT y propuso la renumeración. Lo que estaba mal era la **estimación de frecuencia**: ocurrió en la primera pasada paralela siguiente, con solo 4 escritores. Un límite que se cumple siempre no es un límite aceptable.
+
+**Defecto 2 — el marcador `[INCOMPLETO]` mandaba al fichero equivocado.** `debt-tracking_spec.md` salió con *"Pendiente de gap(s): [P-009]. Responde ese gap en el `_analysis.md`"* — y `[P-009]` vivía en el `## Items Pendientes` de ese mismo spec. La frase manda al usuario a un fichero donde el gap no existe: **el callejón de [[D-054]] otra vez**, ahora por la vía del texto en lugar de la de las herramientas. El writer no se desvió: copió la plantilla canónica de `kb-gap-conventions`, que hardcodeaba `_analysis.md`.
+
+**Decisión.**
+
+1. **El reparto de IDs sube al orquestador.** `wf-spec-features-first` pide el primer ID libre del linaje **antes** del fan-out y asigna a cada escritor un **bloque de 10** vía `--gap-id-start`. Es el único punto que ve a todos los hermanos a la vez; el escritor, por construcción, no puede.
+2. **`--gap-id-start` manda sobre cualquier cálculo propio.** Si llega, el escritor no recalcula: el script no ve los specs que se están escribiendo ahora mismo, así que su respuesta sería peor que el dato que le dieron.
+3. **Los huecos entre bloques quedan sancionados.** La SSoT decía *"sin saltos"*; ahora exceptúa los bloques reservados. Un ID sin usar no cuesta nada; dos gaps distintos con el mismo ID corrompen la trazabilidad.
+4. **La plantilla del marcador nombra el hogar del gap**, con las tres formas: la ruta del análisis, la sección del propio spec, o ambas con sus IDs cuando el marcador cruza los dos.
+
+**Alternativas descartadas.**
+
+- **Dejarlo como límite documentado.** Era la postura de [[D-054]] y la evidencia la tumbó: se cumple en la pasada siguiente, no en un caso raro.
+- **Que cada escritor bloquee un fichero de IDs.** Coordinación por disco entre agentes paralelos, con su carrera y su fichero de estado que limpiar. El orquestador ya tiene la información sin nada de eso.
+- **Renumerar después, al detectar la colisión.** Es lo que propuso el readiness, y como remedio está bien — pero exige reescribir specs ya sellados y sus referencias cruzadas. Prevenir cuesta una línea en el prompt de delegación.
+
+**Consecuencias y aprendizaje.**
+
+- **Declarar un límite no es cerrarlo, y la frecuencia estimada es parte de la decisión.** Escribí *"no corrompe nada"* y era verdad para la resolución; lo que no evalué es cada cuánto pasaría. Un riesgo aceptable que ocurre siempre deja de serlo.
+- **Un defecto arreglado en las herramientas puede seguir vivo en la prosa.** [[D-054]] arregló `wf-spec-gap-resolve`, la SSoT y el mensaje del gate — y dejó intacta la línea que el writer **copia**, tres párrafos por encima de una nota que discutía esa misma línea por otro motivo. Al cerrar un defecto conviene preguntar **qué plantillas repiten la suposición vieja**.
+- **Un fan-out que funciona bien es el que destapa los defectos de concurrencia.** Las pasadas anteriores no llegaron a generar cuatro specs a la vez; esta sí, y por eso vio lo que ninguna había visto.
+
+**Referencias.** `pipeline/spec/skills/wf-spec-features-first/SKILL.md` (Paso 5.0), `pipeline/spec/skills/wf-spec-fast-track/SKILL.md` (Paso 1 y Paso 6), `pipeline/spec/skills/kb-gap-conventions/SKILL.md` ("Formatos de ID" y "Marcador de HU incompleta"), `conformance/casos-de-uso/cu-03-specs.md` (nota de la pasada 11).
+
+---
+
 ## D-055 — Una regla de fase no puede gobernar lo que se escribe desde cero: llega con el `Write`, no antes
 
 - **Fecha:** 2026-09-07 · **Estado:** Adoptada (medida en la pasada 10). · **Relacionada:** ROADMAP 11.10 (causa A, que esta entrada **corrige parcialmente**), [[D-051]], CU-3.a.

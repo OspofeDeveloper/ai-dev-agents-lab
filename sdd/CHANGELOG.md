@@ -2,6 +2,15 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.94.0 — 2026-09-08
+
+**En un fan-out, los IDs los reparte quien lanza** — [[DECISIONS D-056]]. Dos defectos que solo aparecen cuando **cuatro escritores trabajan a la vez**, destapados por la pasada 11 de CU-3.a precisamente porque el fan-out funcionó bien (11/11 delegaciones con el flag, los dos fan-outs en un mensaje, `spawnDepth: 1` en los once).
+
+- ⚠ **La colisión de IDs dejó de ser teórica y pasa a prevenirse.** `movement-tracking` reclamó `[P-009][INFORMATIVO]` y `debt-tracking` `[P-009][CRÍTICO]`: gaps distintos, mismo ID. [[DECISIONS D-054]] lo había declarado como límite conocido y aceptable; ocurrió en la **primera** pasada paralela siguiente, con solo 4 escritores. `wf-spec-features-first` pide ahora el primer ID libre del linaje **antes** del fan-out y reparte **bloques de 10** vía `--gap-id-start`, que `wf-spec-fast-track` acepta y respeta por encima de cualquier cálculo propio — el escritor no puede ver a sus hermanos, el orquestador sí.
+- ⚠ **El marcador `[INCOMPLETO]` nombra el fichero donde vive el gap.** La plantilla canónica hardcodeaba *"Responde esos gaps en el `_analysis.md`"*, y un spec salió mandando al usuario a un fichero donde su `[P-009]` no existía: **el callejón de D-054 otra vez**, por la vía del texto en lugar de la de las herramientas. Ahora la plantilla da las tres formas —ruta del análisis, sección del propio spec, o ambas con sus IDs—.
+- **Los huecos entre bloques quedan sancionados** en la SSoT, que decía *"sin saltos"*: un ID sin usar no cuesta nada; dos gaps distintos con el mismo ID corrompen la trazabilidad.
+- **Segunda ocurrencia del mismo defecto, cazada por su propio backstop**: la sección "Efecto en el pipeline" repetía la suposición del fichero **y** enseñaba `/wf-spec-gap-resolve` — un slash-command dentro de la SSoT que ninguna regla del linter alcanzaba (ROADMAP 11.10).
+
 ## 0.93.0 — 2026-09-07
 
 **Una regla de fase no puede gobernar lo que se escribe desde cero** — [[DECISIONS D-055]]. Corrige el diagnóstico de la causa A de 11.10, destapado al volver a medir en la pasada 10 con los globs de v0.91.0 ya instalados: el explorer **seguía sin la guía de Spec**.
