@@ -119,7 +119,7 @@ Escribe el informe en el archivo correspondiente.
 > skill tiene `Write` y `Edit` **prohibidos**: es el candado que impide que un auditor
 > reescriba lo que audita. Tu informe **sí** lo escribes tú, con redirección por `Bash`
 > (`cat > "<path>" <<'EOF' … EOF`). **No le pases la escritura al hilo principal:** el
-> informe es tu output, y main no escribe artefactos ([[D-031]]).
+> informe es tu output, y main no escribe artefactos ([[D-060]]; [[D-031]] es la mitad de leer).
 >
 > Y que quede claro el alcance del candado: con `Bash` disponible, técnicamente nada te
 > impide tocar el spec auditado. **No lo haces por norma, no porque no puedas.** Auditas y

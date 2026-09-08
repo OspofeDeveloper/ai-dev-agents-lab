@@ -6,6 +6,42 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-060 — El orquestador tampoco redacta artefactos, y hasta hoy eso no estaba escrito en ninguna parte que él cargue
+
+- **Fecha:** 2026-09-08 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-038]] (**el precedente**: lo fija para el PRD), [[D-059]] (el defecto que lo destapó), [[D-031]] (la mitad de leer), [[D-051]] (`allowed-tools` no es enforcement), CU-3.a.
+
+**Contexto.** Al arreglar [[D-059]] —el Paso 7 le pedía a main escribir el informe de conflictos— fui a comprobar si algo, a nivel general, se lo impedía. No lo hay.
+
+La regla **eager** que el hilo principal siempre lleva cargada (`orchestration.md`) dice que **no lee** artefactos para diagnosticarlos ([[D-031]]) y **no dice nada de escribirlos**: cero coincidencias de "no escribe" / "nunca escribe" / "no escribas". Y [[D-031]], leída entera, trata **solo** de la lectura cualitativa y el diagnóstico sin `kb-*`; no menciona la escritura.
+
+Peor: **dos sitios citan a [[D-031]] como si dijera eso** — `wf-spec-conflict` Paso 8 (*"main no escribe artefactos ([[D-031]])"*) y el propio agente `sdd-spec-auditor`. La norma se daba por establecida, se citaba con número, y **no existía**. Vivía como consenso: la "Regla de oro" de `wf-spec-features-first` dice *"no generas specs"* —solo specs, y solo mientras esa skill esté cargada— y el resto era costumbre.
+
+**Precisión, tras comprobar las citas una a una:** la norma **sí existía**, pero acotada. [[D-038]] la fija con todas las letras —*"el hilo principal nunca escribe el artefacto"*— **para `wf-prd-review` y el PRD**. Lo que faltaba era generalizarla, exactamente el mismo movimiento que [[D-031]] hizo con [[D-030]] para la lectura: la mitad de leer se generalizó en su día y la mitad de escribir se quedó en la fase donde nació. Las citas a [[D-031]] son, entonces, cuatro documentos apuntando a la decisión equivocada de las dos.
+
+Eso es lo que dejó sitio a [[D-059]]: una frase ambigua en un Paso de la fase Spec pudo interpretarse como encargo de escritura **porque ninguna norma general la contradecía** — la que lo habría hecho hablaba solo del PRD.
+
+**Decisión.**
+
+1. **El hilo principal no escribe contenido en un fichero del proyecto**: ni informes, ni consolidaciones de lo que le reportan sus delegados, ni resúmenes de apoyo. Queda en la regla **eager**, que es la que él siempre tiene.
+2. **El motivo es la autoría, no la higiene**: cada artefacto tiene un autor declarado —el agente que lo produce dentro de su skill—, y eso es lo que lo hace auditable. Un informe firmado por quien no lo redactó pierde su autoría.
+3. **Lo que necesite transmitir viaja en el prompt del siguiente delegado**, que no es un artefacto sin gobierno.
+4. **La frontera es quién compone el texto.** Invocar un generador determinista que escribe ficheros (`sdd-features-index.py`, `sdd-sync-check.py seal`) **sí** es suyo: ahí no redacta, ejecuta, y el contenido lo deriva el script de sus fuentes de forma reproducible.
+5. **Se corrigen las dos citas erróneas** a [[D-031]].
+
+**Alternativas descartadas.**
+
+- **Quitarle `Bash`.** Es su herramienta principal: con ella corre los verificadores mecánicos de los que depende todo el enrutado. Y no cerraría nada — [[D-051]] ya estableció que el candado es la norma, no la lista de herramientas.
+- **Ampliar [[D-031]] en vez de crear una decisión nueva.** [[D-031]] responde a una pregunta distinta (quién diagnostica el contenido y con qué autoridad). Mezclarlas habría dejado el registro peor: parte de lo que se cita de [[D-031]] hoy es precisamente lo que no dice.
+
+**Consecuencias y aprendizaje.**
+
+- **Una norma citada no es una norma escrita — y una cita puede apuntar a la decisión equivocada.** **Cuatro** documentos invocaban [[D-031]] para la escritura; la que lo decía era [[D-038]], y solo para el PRD. Nadie lo comprobó, yo incluido: leí esa cita durante la investigación de [[D-059]] y la di por buena como prueba de que la norma general existía. **Al apoyarse en un `[[D-XXX]]`, hay que abrir la decisión y leer qué decide.**
+- **Los huecos de este tipo no se ven arreglando el caso.** [[D-059]] quedaba cerrado con una frase; solo al preguntar *"¿y qué se lo impedía en general?"* apareció que no había nada. La pregunta que lo destapa es **"¿dónde está escrito, y lo carga quien tiene que cumplirlo?"** — la misma de [[D-055]].
+
+**Referencias.** `pipeline/orchestration.md` (regla eager), `pipeline/spec/skills/wf-spec-conflict/SKILL.md` (Paso 8), `pipeline/spec/agents/sdd-spec-auditor.md`, `tests/test_install_sh.py`.
+
+---
+
 ## D-059 — Un imperativo sin sujeto lo ejecuta quien lee: el orquestador escribió un artefacto porque se lo pedimos
 
 - **Fecha:** 2026-09-08 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-047]] (el readiness arbitra), [[D-051]] (`allowed-tools` no es enforcement: un `cat >` escribe igual), [[D-045]] (la Regla de oro del orquestador), CU-3.a.

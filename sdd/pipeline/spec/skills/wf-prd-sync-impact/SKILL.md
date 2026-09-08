@@ -84,7 +84,7 @@ Produce un informe `<basename>_sync_report.md` con tablas separadas para:
 > **prohibidos** —el candado que impide que un auditor reescriba lo que audita—, así que
 > este informe lo escribes **tú, con redirección por `Bash`** (`cat > "<path>" <<'EOF' …
 > EOF`). **No le pases la escritura al hilo principal:** main no escribe artefactos
-> ([[D-031]]), y si lo hace acaba volcando un heredoc con tu texto y firmándolo como suyo.
+> ([[D-060]]), y si lo hace acaba volcando un heredoc con tu texto y firmándolo como suyo.
 >
 > **Este informe es efímero y lo dice en su cabecera.** Registra el estado de un momento:
 > en cuanto el PRD vuelva a cambiar, o el derivado que señala se regenere, deja de ser

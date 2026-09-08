@@ -2,6 +2,15 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.99.0 — 2026-09-08
+
+**El orquestador tampoco redacta artefactos** — [[DECISIONS D-060]]. Al cerrar [[DECISIONS D-059]] fui a comprobar qué se lo impedía **en general**. Nada.
+
+- ⚠ **La norma entra en la regla eager**, que es la que el hilo principal siempre lleva cargada: no escribe contenido en un fichero del proyecto —ni informes, ni consolidaciones de lo que le reportan sus delegados, ni resúmenes de apoyo—. El motivo es la **autoría**: cada artefacto tiene un autor declarado, y eso es lo que lo hace auditable.
+- **La frontera es quién compone el texto.** Invocar un generador determinista que escribe ficheros (`sdd-features-index.py`, `sdd-sync-check.py seal`) sigue siendo suyo: ahí no redacta, ejecuta.
+- ⚠ **Cuatro citas erróneas corregidas.** `wf-spec-conflict`, `wf-spec-readiness`, `wf-prd-sync-impact` y el agente `sdd-spec-auditor` invocaban *"main no escribe artefactos ([[DECISIONS D-031]])"* — y D-031 trata **solo** de la lectura cualitativa. La norma sí existía, pero en [[DECISIONS D-038]] y **acotada al PRD**: faltaba generalizarla, el mismo movimiento que D-031 hizo con D-030 para la lectura. Ese hueco es lo que dejó sitio al defecto de [[DECISIONS D-059]] en la fase Spec.
+- **Aprendizaje:** una norma citada no es una norma escrita. Al apoyarse en un `[[D-XXX]]` conviene abrir la decisión y leer qué decide — yo mismo di esa cita por buena como prueba de que la norma existía.
+
 ## 0.98.0 — 2026-09-08
 
 **Un imperativo sin sujeto lo ejecuta quien lee** — [[DECISIONS D-059]]. El Paso 7 terminaba con *"Escribe `_conflict_report.md` si hay conflictos"* en un párrafo cuyas demás frases van dirigidas al orquestador. La intención era *"[cada auditor] escribe el suyo"*; el sujeto se perdió y el lector asumió el único disponible: él mismo.

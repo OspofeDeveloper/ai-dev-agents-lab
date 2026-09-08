@@ -504,6 +504,23 @@ class InstallAllTest(InstallBase):
         self.assertIn("no\nse reproduce", sec.replace("**", ""),
                       "la plantilla no prohibe reproducir el gap heredado (D-057)")
 
+    def test_eager_rule_forbids_the_orchestrator_writing_artifacts(self):
+        """D-060: la norma tiene que estar donde main SIEMPRE la lleva.
+
+        Estaba citada en dos sitios como [[D-031]] y D-031 no dice eso: trata
+        solo de la lectura cualitativa. La regla eager no la contenia, y ese
+        hueco es lo que dejo sitio a D-059.
+        """
+        self.install("all")
+        rule = (self.claude / "rules" / "sdd-orchestration.md").read_text(encoding="utf-8")
+        self.assertIn("tampoco redacta artefactos", rule,
+                      "la regla eager no prohibe que main escriba artefactos (D-060)")
+        self.assertIn("generador determinista", rule,
+                      "falta la frontera: invocar un generador si es suyo (D-060)")
+        # La regla es eager: sin frontmatter `paths:`, o main no la lleva siempre.
+        self.assertFalse(rule.lstrip().startswith("---\npaths:"),
+                         "sdd-orchestration.md dejo de ser eager: main no la cargaria")
+
     def test_orchestrator_does_not_write_the_conflict_report(self):
         """D-059: el informe de conflictos lo escribe cada auditor, no el orquestador.
 
