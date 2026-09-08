@@ -261,6 +261,28 @@ class AnalysisGapsTest(unittest.TestCase):
         self.assertNotIn("Traceback", r.stdout + r.stderr)
         self.assertIn("P-001", r.stderr)
 
+    def test_bullet_form_gap_is_not_parsed_and_says_so(self):
+        """D-058: la forma del bloque es contrato; otra forma falla RUIDOSAMENTE.
+
+        Medido en la pasada 12 de CU-3.a: un spec escribio sus gaps como lista de
+        vinetas con todo el contenido correcto y el script dejo de verlos. Lo que
+        salva la situacion es la guarda de D-037: VACUOUS, nunca "0 abiertos".
+        """
+        block = ("## Items Pendientes\n\n"
+                 "- **[P-011][INFORMATIVO]** Obligatoriedad de la categoria\n"
+                 "  - **Contexto**: el PRD no lo dice.\n"
+                 "  - **Respuesta**: _(pendiente)_\n")
+        path = self.make(block)
+        r = run_script("sdd-analysis-gaps.py", path, "--check")
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("VACUOUS", r.stdout + r.stderr)
+        self.assertNotIn("CRITICAL_ANSWERED", r.stdout + r.stderr)
+        # Y no se puede responder: exit 2, fichero intacto.
+        before = open(path, encoding="utf-8").read()
+        r2 = run_script("sdd-analysis-gaps.py", path, "--answer", "P-011", "x")
+        self.assertEqual(r2.returncode, 2)
+        self.assertEqual(open(path, encoding="utf-8").read(), before)
+
     def test_list_emits_the_default_assumption(self):
         """D-057: la asuncion por defecto de un [INFORMATIVO] se emite verbatim.
 

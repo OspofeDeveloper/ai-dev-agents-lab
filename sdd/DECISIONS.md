@@ -6,6 +6,43 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-058 — La forma del bloque de gap es contrato, no estilo
+
+- **Fecha:** 2026-09-08 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-037]] (la guarda que salvó la situación), [[D-042]] (`--answer` como única vía), [[D-054]] (el callejón), [[D-057]], CU-3.a.
+
+**Contexto.** Pasada 12 de CU-3.a, la más limpia de la campaña. `registro-de-movimientos` escribió sus dos gaps locales como **lista de viñetas** —`- **[P-011][INFORMATIVO]** …` con los campos anidados— en vez de con el encabezado `### [P-011][INFORMATIVO]` que prescribe la SSoT. El contenido era correcto: contexto, pregunta, respuesta pendiente y asunción, todo bien redactado.
+
+`sdd-analysis-gaps.py` **dejó de verlos**. Medido: `--list` devuelve cero gaps para ese spec, `--check` da `VACUOUS` con exit 2, y `--answer P-011` falla con exit 2 sin tocar el fichero.
+
+**Lo que salvó la situación fue [[D-037]].** El script no dijo *"0 gaps abiertos"* —que habría sido una mentira tranquilizadora— sino *"no se ha podido parsear"*. La guarda que se escribió para que una regla no fuera vacua resultó ser la que impide que un fallo de formato se lea como un documento limpio. En esta pasada los gaps eran `[INFORMATIVO]`, así que no bloqueaban nada; **con un `[CRÍTICO]` ese gap habría quedado inalcanzable desde la vía sancionada**: el gate denegando el plan y el script incapaz de responderlo. Tercera vía posible hacia el callejón de [[D-054]], esta vez por el formato.
+
+**Causa raíz, y es de contrato.** Dos huecos que se combinan:
+
+1. **La plantilla solo cubría el caso crítico.** Su cabecera decía *"Este spec tiene gaps **críticos** sin resolver… el paso a planificación queda bloqueado"*. Dos de los cuatro escritores se encontraron con **solo informativos**, un caso que la plantilla no contempla. Uno adaptó la prosa y conservó la forma; el otro reescribió la sección entera y de paso cambió la forma del bloque.
+2. **La SSoT nunca dijo que esa forma la parsea un script.** Describía el formato sin decir que era mecánico, así que un escritor podía razonablemente leerlo como estilo — igual que adaptó la cabecera, adaptó el bloque.
+
+**Decisión.**
+
+1. **La forma del bloque queda declarada contrato** en `kb-gap-conventions`, con lo que cuelga de ella (`--list`, `--check`, `--answer`) y con el fallo medido.
+2. **La plantilla cubre los tres casos** —solo críticos, solo informativos, mixto— y da el bloque de un `[INFORMATIVO]` con su `Asunción por defecto`.
+3. **Se dice explícitamente qué puede adaptar el escritor y qué no**: la prosa de la cabecera es suya; la forma del bloque, no.
+4. **Si no hay gaps propios, la sección no se escribe**: ni sección vacía ni nota de "no hay nada".
+
+**Alternativas descartadas.**
+
+- **Hacer el parser tolerante a la forma de viñetas.** Aceptar dos formatos multiplica los casos del parser y no cierra el problema: mañana aparece un tercero. Y el formato canónico no tiene nada de incómodo — tres de los cuatro escritores lo respetaron sin esfuerzo.
+- **Validar el formato en un gate.** Ya hay algo mejor: el propio `--check` devuelve `VACUOUS` y es ruidoso. El problema no era detectarlo, era que el escritor no sabía que importaba.
+
+**Consecuencias y aprendizaje.**
+
+- **Una plantilla incompleta no produce un hueco: produce improvisación.** El escritor no dejó la sección a medias — se inventó una entera, cabecera y formato incluidos. Al escribir una plantilla, la pregunta no es *"¿cubre el caso normal?"* sino *"¿qué hará quien se encuentre con lo que no cubre?"*.
+- **Si una forma es mecánica, hay que decirlo donde se escribe.** Es la misma lección que [[D-055]] por otra puerta: la norma tiene que llegarle a quien actúa, en el momento de actuar, y aquí faltaba además el *por qué*.
+- **[[D-037]] se cobró su seguro.** La guarda contra veredictos vacuos se escribió para otra cosa y es lo que convirtió esto en un fallo visible en vez de en un documento silenciosamente roto.
+
+**Referencias.** `pipeline/spec/skills/kb-gap-conventions/SKILL.md` ("La forma del bloque de gap es contrato"), `pipeline/spec/skills/wf-spec-fast-track/references/spec_header_templates.md`, `tests/test_sdd_analysis_gaps.py` (la forma de viñetas falla ruidosamente), `tests/test_install_sh.py` (la plantilla cubre los tres casos).
+
+---
+
 ## D-057 — Una asunción por defecto es una decisión de producto, y un gap tiene un solo sitio donde contestarse
 
 - **Fecha:** 2026-09-08 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-054]] (los dos hogares), [[D-053]] (una decisión, una pregunta), [[D-042]] (quién escribe las respuestas), [[D-026]], CU-3.a / CU-3.b.

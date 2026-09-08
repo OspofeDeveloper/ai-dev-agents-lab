@@ -461,6 +461,30 @@ class InstallAllTest(InstallBase):
         self.assertIn('"asuncion"', gaps,
                       "sdd-analysis-gaps.py no emite la asuncion por defecto (D-057)")
 
+    def test_pending_items_template_covers_every_case(self):
+        """D-058: la plantilla no puede dejar casos sin cubrir.
+
+        Solo traia la cabecera del caso CRITICO. Dos escritores se encontraron
+        con "solo informativos" y improvisaron; uno de ellos cambio tambien la
+        forma del bloque y el script dejo de ver sus gaps.
+        """
+        self.install("all")
+        tpl = (self.skill_dir("wf-spec-fast-track") / "references"
+               / "spec_header_templates.md").read_text(encoding="utf-8")
+        sec = tpl[tpl.index("## Sección opcional: Items Pendientes"):]
+        sec = sec[:sec.index("## Sección opcional: Asunciones Aplicadas")]
+        self.assertIn("informativos", sec.lower(),
+                      "la plantilla no cubre el caso solo-informativos (D-058)")
+        self.assertIn("### [P-002][INFORMATIVO]", sec,
+                      "la plantilla no da el bloque de un informativo (D-058)")
+        self.assertIn("Asunción por defecto", sec,
+                      "el bloque informativo no lleva su asuncion (D-057)")
+        self.assertIn("CONTRATO", sec.upper(),
+                      "la plantilla no dice que la forma del bloque la parsea un script (D-058)")
+        kb = (self.skill_dir("kb-gap-conventions") / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("contrato, no estilo", kb,
+                      "la SSoT no declara la forma del bloque como contrato (D-058)")
+
     def test_pending_items_template_answers_in_place(self):
         """D-057: la plantilla de Items Pendientes no manda al analysis.
 

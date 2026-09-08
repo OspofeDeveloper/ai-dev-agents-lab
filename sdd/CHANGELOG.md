@@ -2,6 +2,16 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.97.0 — 2026-09-08
+
+**La forma del bloque de gap es contrato, no estilo** — [[DECISIONS D-058]]. Medido en la pasada 12: un spec escribió sus gaps locales como lista de viñetas, con el contenido perfectamente redactado, y `sdd-analysis-gaps.py` **dejó de verlos** — `--check` dio `VACUOUS`, `--answer` falló con exit 2.
+
+- ⚠ **La SSoT declara la forma como contrato**: encabezado `### [P-XXX][SEVERIDAD] Título` y campos como bullets, porque de ese parseo cuelgan `--list`, `--check` y `--answer`. Con lo que pasa si se escribe de otra forma, medido.
+- ⚠ **La plantilla cubre los tres casos** —solo críticos, solo informativos, mixto— y da el bloque de un `[INFORMATIVO]` con su `Asunción por defecto`. Solo traía el caso crítico: **una plantilla incompleta no produce un hueco, produce improvisación** — el escritor se inventó la sección entera, cabecera y formato incluidos.
+- ⚠ **Queda dicho qué puede adaptar quien escribe**: la prosa de la cabecera es suya; la forma del bloque, no. Y si no hay gaps propios, la sección no se escribe.
+- **[[DECISIONS D-037]] se cobró su seguro.** La guarda contra veredictos vacuos —escrita para que una regla no fuera vacua— es lo que impidió que esto se leyera como *"0 gaps abiertos"*. Con un `[CRÍTICO]` habría sido una tercera vía hacia el callejón de [[DECISIONS D-054]].
+- Dos backstops: la forma de viñetas falla ruidosamente y no toca el fichero; la plantilla cubre los tres casos.
+
 ## 0.96.0 — 2026-09-08
 
 **Barrido de cierre de los hallazgos de la pasada 11** — los cuatro menores, que comparten una idea: una norma vale lo que valga su frontera.

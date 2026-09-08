@@ -125,6 +125,37 @@ tiene `[INCOMPLETO]`, hay que checkear **el spec**.
 
 ---
 
+## La forma del bloque de gap es contrato, no estilo ([[D-058]])
+
+Un gap se escribe **siempre** así, viva donde viva —en el `_analysis.md` o en el
+`## Items Pendientes` de un spec—:
+
+```markdown
+### [P-XXX][SEVERIDAD] Título del gap
+- **Contexto**: …
+- **Pregunta para el cliente**: …
+- **Respuesta**: _(pendiente)_
+```
+
+**Encabezado `###` con el ID entre corchetes, y los campos como bullets `- **Campo**: valor`.**
+No es una preferencia de formato: es lo que parsea `sdd-analysis-gaps.py`, y de ese parseo cuelgan
+`--list` (lo que se le enseña al usuario), `--check` (el gate) y `--answer` (la única vía
+sancionada para escribir una respuesta, [[D-042]]).
+
+> **Qué pasa si se escribe de otra forma (medido, pasada 12 de CU-3.a).** Un spec puso sus gaps
+> como lista de viñetas —`- **[P-011][INFORMATIVO]** …`— con todo el contenido correcto. El script
+> **dejó de verlos**: `--check` devolvió `VACUOUS` y `--answer P-011` falló con exit 2 sin tocar el
+> fichero. **Falla ruidosamente**, que es el diseño de [[D-037]] —nunca decir *"0 abiertos"* sobre
+> algo que no se ha sabido parsear—, y en aquel caso eran informativos, así que no bloqueó nada.
+> Con un `[CRÍTICO]` ese gap habría quedado **inalcanzable desde la vía sancionada**: el gate
+> denegando el plan y el script incapaz de responderlo. Tercera vía posible hacia el callejón de
+> [[D-054]], esta vez por el formato.
+
+**Corolario para quien escribe:** si tu caso no encaja en las plantillas, adapta **la prosa** de la
+cabecera —esa es tuya— pero **no la forma del bloque**.
+
+---
+
 ## Severidades
 
 ### Marcador advisory opcional: `[PUEDE_REQUERIR_CR]`

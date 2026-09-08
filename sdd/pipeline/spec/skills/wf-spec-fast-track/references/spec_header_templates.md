@@ -56,18 +56,56 @@ se reproduce** en esta sección: ya tiene su bloque respondible allí, y un segu
 sitios donde contestar y ninguno que mande. Si aplicaste su asunción, se referencia en
 `## Asunciones Aplicadas` citando su ID y **su fichero**, sin campo `Respuesta`.
 
+> **La forma del bloque es CONTRATO, no estilo.** Cada gap va con encabezado
+> `### [P-XXX][SEVERIDAD] Título` y sus campos como bullets `- **Campo**: valor`. Lo parsea
+> `sdd-analysis-gaps.py`, que es quien lo lista, lo checkea y escribe la respuesta con `--answer`.
+> **Medido (pasada 12 de CU-3.a):** un spec escribió sus gaps como lista de viñetas
+> (`- **[P-011][INFORMATIVO]** …`) y el script dejó de verlos: `--check` devolvió `VACUOUS` y
+> `--answer` falló con exit 2. Falla ruidosamente —la guarda no dice *"0 abiertos"* sobre lo que
+> no ha parseado— pero con un `[CRÍTICO]` ese gap sería inalcanzable desde la vía sancionada.
+
+**Cabecera según lo que haya.** Elige una de las tres:
+
 ```markdown
 ## Items Pendientes
 
 > ⚠️ Este spec tiene gaps **críticos** sin resolver. Las HUs afectadas están marcadas `[INCOMPLETO]` y **el paso a planificación queda bloqueado** hasta que se resuelvan.
 > Para resolverlos: responde los gaps **en esta misma sección** —sustituyendo `- **Respuesta**: _(pendiente)_` en el bloque de cada uno, o dictándomelos— y pide que **se completen las historias incompletas** de este spec.
+```
 
+```markdown
+## Items Pendientes
+
+> Este spec tiene gaps **informativos** cuya asunción por defecto ya está aplicada en los criterios de aceptación (ver `## Asunciones Aplicadas`). **No bloquean** el paso a planificación; quedan anotados por trazabilidad.
+> Si quieres decidir alguno de otra forma: responde el gap **en esta misma sección** —sustituyendo `- **Respuesta**: _(pendiente)_`, o dictándomelo— y pide que se actualice el spec.
+```
+
+```markdown
+## Items Pendientes
+
+> Este spec tiene gaps **críticos e informativos**. Los críticos marcan sus HUs como `[INCOMPLETO]` y **bloquean** el paso a planificación; los informativos ya tienen su asunción aplicada y no bloquean.
+> En los dos casos se responden **en esta misma sección**, sustituyendo `- **Respuesta**: _(pendiente)_` en el bloque de cada uno, o dictándomelos.
+```
+
+Y los bloques, siempre con esta forma (los campos que no apliquen se omiten; un `[INFORMATIVO]`
+lleva además `Asunción por defecto`, y un `[CRÍTICO]` lleva `Afecta`):
+
+```markdown
 ### [P-001][CRÍTICO] [Título del gap]
 - **Contexto**: [dónde aparece la ambigüedad al escribir este spec]
 - **Afecta**: [HU-001, HU-003]
-- **Pregunta**: [pregunta concreta]
+- **Pregunta para el cliente**: [pregunta concreta]
 - **Respuesta**: _(pendiente)_
+
+### [P-002][INFORMATIVO] [Título del gap]
+- **Contexto**: [dónde aparece la ambigüedad al escribir este spec]
+- **Pregunta para el cliente**: [pregunta concreta]
+- **Respuesta**: _(pendiente)_
+- **Asunción por defecto**: [la opción más conservadora, ya aplicada en los CAs]
 ```
+
+**Si no hay ningún gap propio, la sección no se escribe.** No hace falta un `Items Pendientes`
+vacío ni una nota diciendo que no hay nada pendiente.
 
 ## Sección opcional: Asunciones Aplicadas
 
