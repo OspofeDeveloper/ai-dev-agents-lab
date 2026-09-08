@@ -903,6 +903,53 @@ informe a mano, espera a mano, o **reporta como del delegado un dato que reconst
 > *"Sí,"*, puntos finales) — límite explicitado en v0.96.0; y el readiness nombró un workflow al
 > **explicar la causa** de la colisión, que se reclasifica como diagnóstico y no como fuga.
 
+
+> **Pasada 12 (2026-09-08, v0.96.2+2c61486, `myops-app-specs`, banco reseteado, modelo `opus-5`)
+> — la más limpia de la campaña, y la primera que ejercita [[D-056]] y [[D-057]] en flujo real.
+> Cuenta como 1/3 de CU-3.a** (ver la salvedad al final). Corrida completa: análisis → gate de
+> críticos → **repaso de informativos** → discovery → subset de 4 → 4 specs en paralelo → 4
+> conflict checks → readiness.
+>
+> **Conducta, todo en verde:** **11/11** delegaciones con `run_in_background: false`; los **dos
+> fan-outs cada uno en un único mensaje**; `spawnDepth: 1`; **cero `SendMessage`**; un solo
+> `Skill`. Rigor ofrecido antes de delegar ([[CU-3.r]]). Gate de críticos: **un solo**
+> `AskUserQuestion` + presentación uno a uno ([[D-053]]). Main sin cargar artefactos. 4 specs
+> `IN_SYNC` sin deriva. **V1 = 0** y **V2 limpia**. Índice y readiness coherentes.
+>
+> **[[D-056]] medido de punta a punta.** Main ejecutó `sdd-next-id.py P prd/prd_analysis.md` y
+> repartió **P-011 / P-021 / P-031 / P-041** — bloques de 10 redondeados, el diseño exacto. Los
+> cuatro escritores respetaron su bloque (`011-012`, `021-022`, `031-033`, `041-042`).
+> **Cero colisiones**, donde la 11 tuvo dos `[P-009]`. Y el marcador de un gap local ya dice
+> *"Responde ese gap en la sección «Items Pendientes» de este spec"*.
+>
+> **[[D-057]] medido, incluida la parte que importa.** El punto 6c se ejecutó: una sola pregunta
+> con las 4 asunciones listadas encima, y al elegir repasar, uno a uno con `--list --gap` →
+> `--answer`. Ningún gap heredado reproducido; las 8 asunciones aplicadas salieron con la forma
+> nueva *(sobre [P-0XX], que nace en este spec)*. **La prueba de que el repaso cambia el
+> artefacto:** la respuesta a `P-005` se apartó de la asunción por defecto y generó en F-004 una
+> HU entera —*"Consultar el límite global calculado automáticamente"*— con su journey y sus CAs.
+> Con la asunción, ese spec diría lo contrario.
+>
+> **Hallazgo — la forma del bloque de gap ([[D-058]], v0.97.0).** `registro-de-movimientos`
+> escribió sus gaps como lista de viñetas y el script dejó de verlos (`VACUOUS`, exit 2). Eran
+> informativos; con un crítico habría sido inalcanzable. Causa: la plantilla solo cubría el caso
+> crítico y la SSoT no decía que la forma la parsea un script.
+>
+> **Observación abierta — el guardrail no ve contradicciones, solo expansiones.** La respuesta a
+> `P-005` (*"el límite global se calcula automáticamente como la suma de las categorías"*) se
+> aparta de lo que el PRD compromete (*"se define por categoría, **además de** un límite
+> global"*). El punto 8 enruta por el flag `PUEDE_REQUERIR_CR`, que el analizador pone al
+> **escribir** el gap prediciendo riesgo de expansión — no puede anticipar que una respuesta
+> **contradiga** el PRD. Ningún gap de esta pasada llevaba el flag, así que esa costura tampoco
+> se midió. **Pendiente de decidir:** si el guardrail debe evaluar todas las respuestas o solo
+> las marcadas.
+>
+> **Salvedad del recuento.** El arreglo de [[D-058]] toca la plantilla de fast-track y
+> `kb-gap-conventions`: eso gobierna **cómo se escriben los gaps dentro de un spec**, no la
+> orquestación. Los cinco probes de CU-3.a —rigor, delegación, barrera del fan-out, gate de gaps,
+> no cargar artefactos— miden lo mismo antes y después, así que la 12 **cuenta como 1/3**. Lo que
+> sí se reinicia es [[CU-3.e]] (calidad del spec de fast-track).
+
 ## CU-3.b — Expansión de alcance desde las respuestas del analysis
 
 **Precondición:** al responder el `_analysis.md` introduces capacidad nueva (entidad
