@@ -227,6 +227,13 @@ Verifica que el archivo PRD existe; si no → informa con ruta exacta y detén.
    ```bash
    !python3 .sdd/scripts/sdd-analysis-gaps.py "<path>_analysis.md" --answer <P-XXX> "<lo que dijo, literal>"
    ```
+
+   **Literal incluye la ortografía.** No añadas tildes, no cierres con punto, no reordenes. Medido
+   (pasada 11): *"Si,"* se aplicó como *"Sí,"* y a dos respuestas se les añadió punto final. No
+   inventó nada y no es un fallo — pero *"corregir la tilde"* y *"mejorar la frase"* son el mismo
+   gesto con distinto tamaño, y la línea que los separa no la puedes trazar tú a mitad de un
+   dictado. Si algo del texto te parece un error que importa, **pregunta**; no lo arregles al
+   pasarlo.
    Confirma en una línea que se aplicó y pasa al siguiente. Cuando no queden, vuelve a correr
    `--check` y sigue por el punto 8 o 9 según el veredicto. Si cierra solo algunos y quiere
    parar, `--check` reevalúa el gate con los que queden — no hace falta anunciarlo como rama.

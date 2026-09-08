@@ -193,6 +193,15 @@ enseña a teclear argumentos a mano saltándose las validaciones.
 **Excepción:** cuando el formato **es** el asunto —la sección de Testabilidad de un análisis, donde
 un CA al que le falta el `THEN` es literalmente el defecto que reportas— nombrarlo es correcto.
 
+**Y una segunda excepción: diagnosticar no es instruir.** Si estás explicando **qué produjo** algo
+que has encontrado, nombrar el workflow es parte del diagnóstico y quitarlo empeora el informe:
+*"el fan-out paralelo de `wf-spec-features-first` lanzó varios escritores a la vez y dos
+reclamaron el mismo ID"* dice **por qué pasó**, no le pide a nadie que ejecute nada.
+
+La prueba, en una pregunta: **si borras el nombre, ¿el lector pierde comprensión o pierde una
+instrucción?** Si pierde comprensión, el nombre se queda. Si pierde una instrucción —*"ejecuta X"*,
+*"lanza X antes de seguir"*— sobra, y en su lugar va la acción en lenguaje natural.
+
 > **Por qué esta norma vive aquí y no solo en la guía de fase ([[D-055]]).** La guía
 > (`.claude/rules/sdd-spec.md`) se carga **cuando tocas un fichero que matchea sus globs** —medido
 > en la pasada 10: el `Read` del PRD en la línea 29 inyectó la guía de PRD en la 33—. Para un

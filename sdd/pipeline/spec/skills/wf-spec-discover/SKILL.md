@@ -170,6 +170,13 @@ entradas usaste tú; describe **de dónde sale el alcance de esa feature concret
 `Avisos de gobernanza` es `ninguno` salvo que esa feature arrastre alcance derivado (o una
 excepción ya formalizada en el PRD / un change request referenciado).
 
+**El nombre kebab-case de cada feature va en el idioma del documento de origen.** No es
+cosmética: ese nombre **es el nombre del directorio** (`features/<nombre>/`) y aparece en el
+índice, en los informes y en las rutas de todos los artefactos derivados. Medido (pasadas 9 y 11
+de CU-3.a, mismo PRD en español): una dio `registro-de-movimientos`, `cuentas-y-tarjetas`; la otra
+`movement-tracking`, `account-management`. Dos árboles incompatibles y cualquier documento que
+cite una feature por su nombre queda obsoleto al regenerar el discovery.
+
 > **Lo que escribes aquí lo lee una persona, y esa persona no invoca comandos.** El aviso
 > cita el `P-XXX` responsable —eso es estado y es obligatorio— y explica **en lenguaje natural**
 > qué habría que hacer con él: *"el usuario eligió continuar con este alcance derivado en vez de

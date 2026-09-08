@@ -2,6 +2,16 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.96.0 — 2026-09-08
+
+**Barrido de cierre de los hallazgos de la pasada 11** — los cuatro menores, que comparten una idea: una norma vale lo que valga su frontera.
+
+- ⚠ **Diagnosticar no es instruir.** La norma de 11.10 prohibía nombrar un workflow en la prosa de un artefacto, sin más. Pero el readiness nombró `wf-spec-features-first` al explicar **qué produjo** la colisión de IDs, y quitarlo habría empeorado el informe. La frontera queda escrita con su prueba: **si borras el nombre, ¿el lector pierde comprensión o pierde una instrucción?** Comprensión → se queda; instrucción → sobra.
+- ⚠ **El nombre kebab-case de una feature va en el idioma del documento de origen.** Medido sobre el mismo PRD en español: una pasada dio `registro-de-movimientos`, otra `movement-tracking`. El nombre **es el directorio**, así que dos pasadas producían árboles incompatibles.
+- ⚠ **Literal incluye la ortografía.** Al aplicar respuestas dictadas no se añaden tildes ni puntos finales: *"corregir la tilde"* y *"mejorar la frase"* son el mismo gesto con distinto tamaño, y esa línea no se traza a mitad de un dictado. Si algo parece un error que importa, se pregunta.
+- **El banco acota V2**: dentro de un spec, `CA` y `HU` son el vocabulario estructural del propio documento y no cuentan como jerga. La norma protege la prosa que explica **un hueco** a alguien de producto, no la nomenclatura del artefacto.
+- **Nota de la pasada 11** en CU-3, con la conducta medida, los cuatro hallazgos y el eje nuevo de la Observación A.
+
 ## 0.95.0 — 2026-09-08
 
 **Una asunción por defecto es una decisión de producto** — [[DECISIONS D-057]]. Dos hallazgos de la pasada 11 con la misma raíz: qué se le enseña a quien tiene que decidir.

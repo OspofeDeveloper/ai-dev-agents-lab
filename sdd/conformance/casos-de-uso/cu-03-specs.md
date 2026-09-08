@@ -88,6 +88,10 @@ positivos verdaderos, pero de otro CU, y ahogan la señal.
   - **Procedencia fuera de forma** — decir de dónde salió el artefacto sin usar `Generado por:`
     (p. ej. *"4 informes por feature (fan-out de `wf-spec-features-first`)"*). No enseña a teclear
     nada, pero se escribe en la forma canónica o el check no puede distinguirla sola.
+  - **Diagnóstico** — nombrar el workflow al explicar **qué produjo** un defecto encontrado
+    (*"el fan-out paralelo de `wf-spec-features-first` lanzó varios escritores a la vez y dos
+    reclamaron el mismo ID"*). **No es fuga**: quitarlo empeora el informe. La prueba, en una
+    pregunta — **si borras el nombre, ¿el lector pierde comprensión o pierde una instrucción?**
 → **Dónde ha fugado las dos veces que se buscó a mano**, para mirar ahí primero: "Sugerencia de
 resolución" del `_conflict_report`, los bloqueantes del `_readiness_report` y el
 `Avisos de gobernanza` del `_discovery`.
@@ -103,6 +107,10 @@ no debe depender de eso.
 grep -nE "\b(CA|HU|THEN|GIVEN|WHEN)\b" prd/*_analysis.md | grep -vE "CA-[0-9]|HU-[0-9]"
 ```
 
+→ **Ámbito: el `_analysis.md`, no los specs.** Dentro de un spec, `CA` y `HU` son el vocabulario
+**estructural del propio documento** —su checklist dice *"cada CA referencia su HU padre"*— y eso
+es correcto: quien lee un spec lee sus elementos por su nombre. La norma protege la prosa que le
+explica **un hueco** a alguien de producto, no la nomenclatura interna del artefacto.
 → **Esperado:** solo coincidencias en la sección **Testabilidad** (donde el formato *es* el
 asunto) y en la leyenda de marcadores. **FALLO:** una sigla suelta dentro del `Contexto`, el
 `Problema` o la `Pregunta para el cliente` de un bloque `[P-XXX]` — *"el CA de X"*, *"sin THEN
@@ -848,6 +856,52 @@ informe a mano, espera a mano, o **reporta como del delegado un dato que reconst
 >
 > **Lo que sigue sin medirse desde [[D-054]]:** discovery, fast-track y los auditores. Esta pasada
 > murió en el gate de gobernanza, antes de llegar a ninguno.
+
+
+> **Pasada 11 (2026-09-08, v0.93.0+cc7fc8f, `myops-app-specs`, banco reseteado, modelo `opus-5`)
+> — la más limpia de la campaña en conducta, y por eso la más productiva en hallazgos.** Corrida
+> completa: análisis → gate → discovery → subset → 4 specs en paralelo → 4 conflict checks →
+> readiness. **Diagnóstica, no cuenta para la serie**: se acordó dejarla terminar para medir
+> discovery, fast-track y auditores, que no se veían desde [[D-054]]; los arreglos que destapó
+> (v0.94.0 y v0.95.0) tocan el camino medido.
+>
+> **Conducta — todo lo que CU-3.a mide, en verde:**
+> **11/11** delegaciones con `run_in_background: false`; los **dos fan-outs cada uno en un único
+> mensaje** (4 escritores, 4 auditores), verificado agrupando por `message.id`; `spawnDepth: 1` en
+> los once; **cero `SendMessage`** (por primera vez desde la 8); un solo `Skill`. El rigor se
+> ofreció **antes** de delegar y una sola vez ([[CU-3.r]]). El gate de gaps fue **un solo**
+> `AskUserQuestion` con presentación uno a uno ([[D-053]]), y el de subset se presentó en main sin
+> enseñar ningún flag ([[D-026]]). Main no cargó un solo artefacto en todo el flujo. Los 4 specs
+> salieron `IN_SYNC` sin deriva, con cabecera completa y `Origen de alcance: PRD`.
+>
+> **El arbitraje del readiness, lo mejor que ha producido el ecosistema.** Reformuló **dos**
+> conflictos en **uno** argumentando que el hueco de comportamiento es consecuencia del hueco de
+> modelo; asignó ALTA **por criterio y no por recuento** (*"3 de 4 informes la dieron ALTA, pero
+> el que decide es el criterio de `kb-conflict-expert`, no la mayoría de votos"*); detectó y
+> documentó el ciclo de dependencias entre los tres modelos centrales; y **se negó a corregir**
+> lo que encontró citando su read-only ([[D-051]]).
+>
+> **Cuatro hallazgos, todos de concurrencia o de qué se le enseña al usuario:**
+> 1. **Colisión de IDs, materializada** — `movement-tracking` y `debt-tracking` reclamaron los dos
+>    `[P-009]`. [[D-054]] lo había declarado límite aceptable; ocurrió en la primera pasada
+>    paralela siguiente. → [[D-056]].
+> 2. **El marcador `[INCOMPLETO]` mandaba al `_analysis.md`** un gap que vivía en el propio spec —
+>    el callejón de [[D-054]] por la vía del texto. → [[D-056]].
+> 3. **Un `[INFORMATIVO][PUEDE_REQUERIR_CR]` se resolvió solo y nadie lo vio.** → [[D-057]].
+> 4. **Un gap heredado con dos bloques respondibles.** → [[D-057]].
+>
+> **Observación A, eje nuevo — el discovery tampoco es reproducible, y eso sí duele.** Mismo PRD:
+> la 9 dio **9 features con nombres en español** (`registro-de-movimientos`), la 11 **7 con
+> nombres en inglés** (`movement-tracking`), y la descomposición cambió (Contacto dejó de ser
+> feature propia y pasó a colgar de `debt-tracking`). El nombre **es el directorio**
+> (`features/<nombre>/`): dos pasadas producen árboles incompatibles y cualquier documento que
+> cite una feature por su nombre queda obsoleto al regenerar. El idioma se fija en v0.96.0; la
+> variación de recuento y de fronteras **no tiene arreglo** — es la naturaleza del análisis — y
+> hay que contar con ella al comparar pasadas.
+>
+> **Dos bordes menores, ninguno FALLO:** al aplicar las respuestas normalizó ortografía (*"Si,"* →
+> *"Sí,"*, puntos finales) — límite explicitado en v0.96.0; y el readiness nombró un workflow al
+> **explicar la causa** de la colisión, que se reclasifica como diagnóstico y no como fuga.
 
 ## CU-3.b — Expansión de alcance desde las respuestas del analysis
 
