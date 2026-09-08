@@ -108,6 +108,12 @@ No genera un `_analysis.md` separado. Consulta `kb-gap-conventions` para el form
 - **`[CRÍTICO]`**: determina qué HUs afecta (campo `Afecta`). Las HUs afectadas se marcan `[INCOMPLETO]` en el spec (se generan con la información disponible). La presencia de HUs `[INCOMPLETO]` en el spec **bloquea** el paso a planificación. Los gaps se documentan en una sección `## Items Pendientes` al final del spec (ver formato abajo).
 - **`[INFORMATIVO]`**: aplicar la asunción más conservadora y documentar en `## Asunciones Aplicadas` al final del spec.
 
+**`## Items Pendientes` es solo para los gaps que nacen aquí ([[D-057]]).** Si un gap del
+`_analysis.md` afecta a tu feature y sigue sin responder, **no lo reproduzcas**: anótalo en
+`## Asunciones Aplicadas` citando su ID, **su fichero** y la asunción que aplicaste, y **sin campo
+`Respuesta`**. Ese gap ya tiene su bloque respondible en el análisis; crear un segundo significa
+dos sitios donde contestar y ninguno que mande.
+
 **El ID no lo cuentas a mano** (misma norma que el `F-NNN` del Paso 9). La numeración de los `[P-XXX]` es **por linaje** —el `_analysis.md` de origen más todos los specs derivados de él—, **no por artefacto**.
 
 **Si recibiste `--gap-id-start P-0NN`, empieza ahí y numera consecutivo desde ese punto.** Ese valor te lo asignó quien te lanzó, que es el único que ve a tus hermanos en paralelo ([[D-056]]): **no lo recalcules ni lo corrijas**, aunque el script te diga otra cosa —él no ve los specs que se están escribiendo ahora mismo—. Tienes un bloque de **10** IDs; si te quedaras sin, no invadas el siguiente: dilo en tu informe final.

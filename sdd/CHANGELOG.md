@@ -2,6 +2,16 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.95.0 — 2026-09-08
+
+**Una asunción por defecto es una decisión de producto** — [[DECISIONS D-057]]. Dos hallazgos de la pasada 11 con la misma raíz: qué se le enseña a quien tiene que decidir.
+
+- ⚠ **Tras cerrar los críticos, el gate ofrece repasar los informativos.** Un `[INFORMATIVO]` sin responder no se queda sin decidir: se aplica su asunción y esa asunción entra en los CAs. Una sola pregunta más —*repasarlos* o *aplicarlas y seguir*—, con las asunciones listadas en una línea cada una **antes** de preguntar. Misma forma que [[DECISIONS D-053]], mismo motivo.
+- ⚠ **Los `[INFORMATIVO][PUEDE_REQUERIR_CR]` se enseñan siempre.** Medido: el orquestador razonó —bien, según el contrato— que un informativo sin responder aplicaría su asunción y no dispararía gobernanza, y siguió. El flag existe para declarar que **la respuesta podría mover el producto**: no preguntar nunca garantiza que esa vía no se recorra jamás.
+- ⚠ **Un gap tiene UN solo bloque respondible.** Un spec heredó `[P-007]` del análisis y lo reprodujo entero en sus `Items Pendientes`, con su propio `Respuesta: _(pendiente)_` — dos sitios donde contestar y ninguno que mande. `Items Pendientes` queda para los gaps que **nacen** en ese spec; el heredado se referencia en `Asunciones Aplicadas`, con su fichero y sin campo `Respuesta`.
+- **`sdd-analysis-gaps.py --list --json` emite `asuncion`**, para que la asunción se enseñe **verbatim** en vez de redactarla quien presenta. 3 backstops, incluido el campo sin tilde.
+- **Confirmar una asunción se escribe** con `--answer`: `_(pendiente)_` significa *nadie lo ha mirado*; una respuesta significa *alguien lo decidió*.
+
 ## 0.94.0 — 2026-09-08
 
 **En un fan-out, los IDs los reparte quien lanza** — [[DECISIONS D-056]]. Dos defectos que solo aparecen cuando **cuatro escritores trabajan a la vez**, destapados por la pasada 11 de CU-3.a precisamente porque el fan-out funcionó bien (11/11 delegaciones con el flag, los dos fan-outs en un mensaje, `spawnDepth: 1` en los once).

@@ -261,6 +261,43 @@ class AnalysisGapsTest(unittest.TestCase):
         self.assertNotIn("Traceback", r.stdout + r.stderr)
         self.assertIn("P-001", r.stderr)
 
+    def test_list_emits_the_default_assumption(self):
+        """D-057: la asuncion por defecto de un [INFORMATIVO] se emite verbatim.
+
+        Es una decision de producto que se aplica SOLA si nadie responde. Sin este
+        campo, quien presenta el gap tendria que redactarla de su cosecha — justo
+        lo que el contrato verbatim existe para impedir.
+        """
+        block = ("### [P-001][INFORMATIVO] Periodicidad\n\n"
+                 "- **Contexto**: no se dice.\n"
+                 "- **Pregunta para el cliente**: cual es?\n"
+                 "- **Respuesta**: _(pendiente)_\n"
+                 "- **Asunción por defecto**: mensual natural, del 1 al ultimo dia.\n")
+        path = self.make(block)
+        r = run_script("sdd-analysis-gaps.py", path, "--list", "--json")
+        g = json.loads(r.stdout)["gaps"][0]
+        self.assertEqual(g["asuncion"], "mensual natural, del 1 al ultimo dia.")
+        # La respuesta NO se emite por este modo (para eso esta --export-answers).
+        self.assertNotIn("respuesta", g)
+
+    def test_list_assumption_without_accent_also_parses(self):
+        """El campo se escribe a mano: se acepta con y sin tilde."""
+        block = ("### [P-001][INFORMATIVO] Periodicidad\n\n"
+                 "- **Contexto**: no se dice.\n"
+                 "- **Respuesta**: _(pendiente)_\n"
+                 "- **Asuncion por defecto**: mensual natural.\n")
+        path = self.make(block)
+        r = run_script("sdd-analysis-gaps.py", path, "--list", "--json")
+        self.assertEqual(json.loads(r.stdout)["gaps"][0]["asuncion"], "mensual natural.")
+
+    def test_list_assumption_absent_is_none_not_missing(self):
+        """Un CRITICO no lleva asuncion: el campo sale, vacio."""
+        path = self.make(gap("P-001", "CRÍTICO"))
+        r = run_script("sdd-analysis-gaps.py", path, "--list", "--json")
+        g = json.loads(r.stdout)["gaps"][0]
+        self.assertIn("asuncion", g)
+        self.assertIsNone(g["asuncion"])
+
     def test_spec_local_gaps_are_parsed_like_analysis_gaps(self):
         # D-054: un gap puede vivir en el `## Items Pendientes` del propio spec
         # (wf-spec-fast-track Paso 6, "gap handling inline"). El script es

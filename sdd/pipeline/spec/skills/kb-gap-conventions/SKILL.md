@@ -97,6 +97,27 @@ bloque**, con la misma vía sancionada de [[D-042]]:
 !python3 .sdd/scripts/sdd-analysis-gaps.py "<fichero donde vive el gap>" --answer P-XXX "texto"
 ```
 
+**Un gap tiene UN solo bloque respondible ([[D-057]]).** Lo que hace respondible a un bloque es su
+campo `- **Respuesta**:`. Si el mismo `[P-XXX]` tiene ese campo en dos ficheros, hay **dos sitios
+donde contestar y ninguno manda**: responder en uno deja el otro en `_(pendiente)_` para siempre, y
+los dos documentos acaban diciendo cosas distintas sobre la misma decisión.
+
+Por eso `## Items Pendientes` es **solo** para los gaps que **nacen al escribir ese spec**. Un gap
+del análisis que afecta a la feature **se referencia, no se reproduce**: se anota en
+`## Asunciones Aplicadas` —citando su ID, su fichero y la asunción que aplicaste— y **sin** campo
+`Respuesta`, porque ese gap ya tiene el suyo en el análisis.
+
+```markdown
+- **[A-002]** (sobre [P-007], que vive en `prd/prd_analysis.md` y sigue sin responder): cuentas y
+  tarjetas se tratan igual en esta feature. Si se responde allí y la respuesta cambia esto, pide
+  que se actualice este spec.
+```
+
+> **Medido (pasada 11 de CU-3.a).** Un spec heredó `[P-007]` del análisis y lo reprodujo entero en
+> sus `Items Pendientes`, con su propio `- **Respuesta**: _(pendiente)_`. El writer **declaró la
+> herencia y citó el fichero de origen** —hizo lo cuidadoso— pero el resultado eran dos bloques
+> respondibles para una sola pregunta. No es un caso de descuido: es que la regla no existía.
+
 El script es **agnóstico al documento**: parsea cualquier fichero con bloques de gap, así que
 `--list`, `--check` y `--answer` funcionan igual sobre un `_analysis.md` que sobre un `_spec.md`.
 Un `--check` contra el análisis **no dice nada** sobre los gaps que viven en el spec: si un spec
@@ -210,12 +231,31 @@ Los orquestadores verifican la presencia de marcadores pendientes antes de avanz
 
 ---
 
-## Convenciones para "Asunción por defecto"
+## Convenciones para "Asunción por defecto" — y por qué no es un detalle menor
 
 - Debe ser la opción **más conservadora** (la que minimiza las asunciones funcionales)
 - Debe ser **específica**: no "se comportará de forma estándar" sino "se mostrará un mensaje de error genérico y el usuario permanecerá en la pantalla actual"
 - Se documenta en el spec generado en la sección `## Asunciones Aplicadas`
 - En modo `delta`, se documenta en la sección `## Asunciones Aplicadas (vX.Y)` del spec actualizado
+
+Un `[INFORMATIVO]` sin responder **no se queda sin decidir**: se aplica su `Asunción por defecto`,
+y esa asunción entra en los CAs del spec como si alguien la hubiera elegido. Es la opción
+conservadora, así que **no expande** el producto — pero sigue siendo una decisión tomada en nombre
+de una persona que quizá nunca supo que existía.
+
+Dos consecuencias:
+
+- **La asunción se enseña, no se resume.** El script la emite en `--list --json` (campo `asuncion`)
+  para que quien presente el gap la muestre **verbatim**, igual que el `contexto` y el `problema`.
+- **Confirmar una asunción se escribe.** Si la persona la revisa y dice «sí, esa está bien», eso se
+  aplica con `--answer` **con el texto de la asunción**, no se deja en `_(pendiente)_`. La
+  diferencia importa: `_(pendiente)_` significa *nadie lo ha mirado*; una respuesta significa
+  *alguien lo decidió*. Aguas abajo son cosas distintas.
+
+**Los `[INFORMATIVO][PUEDE_REQUERIR_CR]` son el caso que no se puede pasar por alto.** Ese flag
+declara que **la respuesta podría mover el producto**. Si nunca se pregunta, la vía de gobernanza
+que el flag existe para abrir no se recorre jamás — no porque se eligiera lo conservador, sino
+porque nadie lo planteó. Se surfacean **siempre**, aunque la persona decline revisar el resto.
 
 ---
 

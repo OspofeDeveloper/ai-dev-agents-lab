@@ -247,6 +247,40 @@ Verifica que el archivo PRD existe; si no → informa con ruta exacta y detén.
    > reinterpretas una respuesta**: si lo que dijo no responde a lo que se preguntaba, se lo
    > dices y le dejas reformular.
 
+6c. **Cuando ya no quedan críticos abiertos, ofrece repasar los informativos** ([[D-057]]).
+   Un `[INFORMATIVO]` sin responder **no se queda sin decidir**: se aplica su asunción por defecto
+   y esa asunción entra en los CAs del spec. Es la opción conservadora, así que no expande el
+   producto — pero es una decisión tomada en nombre de alguien que quizá no sabe que existe.
+
+   Del `--check --json` que ya tienes sale `informative_open` con sus IDs. Si es **0**, sigue. Si
+   no, pide sus asunciones —una llamada, todos los IDs no hace falta uno a uno— y **escríbelas en
+   una línea cada una** antes de preguntar:
+
+   ```bash
+   !python3 .sdd/scripts/sdd-analysis-gaps.py "<path>_analysis.md" --list --json
+   ```
+
+   `P-004 — Periodicidad del presupuesto → se asumirá: mes natural, del 1 al último día.`
+
+   Y entonces **una sola pregunta** con dos vías: *repasarlos ahora* / *aplicar esas asunciones y
+   seguir*. Una pregunta para toda la tanda, igual que en el punto 6 y por el mismo motivo.
+
+   **Los que lleven `PUEDE_REQUERIR_CR` se enseñan siempre**, aunque elija seguir: ese flag declara
+   que la respuesta **podría mover el producto**, así que su línea lleva el `⚠` y dice que, si la
+   respuesta fuera otra, habría que formalizarlo en el PRD. No preguntar nunca equivale a garantizar
+   que esa vía de gobernanza no se recorre.
+
+   **Si elige repasarlos** → mismo formato conversacional que 6b, uno a uno, con el `contexto` y la
+   `asuncion` **verbatim** del script. Dos salidas por gap:
+   - **la asunción le vale** → se aplica con `--answer` **escribiendo el texto de la asunción**.
+     `_(pendiente)_` significa *nadie lo ha mirado*; una respuesta significa *alguien lo decidió*, y
+     aguas abajo no son lo mismo.
+   - **quiere otra cosa** → `--answer` con lo que diga, literal. Si eso introduce capacidad nueva,
+     sigues por el punto 8 como con cualquier otra respuesta expansiva.
+
+   **Si elige seguir** → no insistas: las asunciones se aplican solas, que es el comportamiento
+   documentado. Ya se lo has enseñado, que era lo que faltaba.
+
 7. Si el script dio `CRITICAL_OPEN` y `--allow-open-critical-gaps` vino **de entrada** en `$ARGUMENTS` → no presentes el gate; continúa al Paso 3 dejando constancia explícita de que las HUs afectadas podrán salir `[INCOMPLETO]`.
 8. Si el script dio `CRITICAL_ANSWERED`, hay que saber si alguna respuesta introduce señales de cambio de producto según `kb-product-change-governance`. **Tú no las lees ([[D-051]]):** mira los `flags` que devolvió `--list --json` y **delega el juicio**.
 

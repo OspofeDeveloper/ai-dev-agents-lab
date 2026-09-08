@@ -232,6 +232,11 @@ LIST_FIELDS = {
     "problema": "problema",
     "afecta": "afecta",
     "pregunta para el cliente": "question",
+    # La asuncion por defecto de un gap [INFORMATIVO] es una DECISION DE PRODUCTO
+    # que se aplica sola si nadie responde (D-057). Se emite para que quien
+    # presenta el gap pueda ensenarla verbatim en vez de redactarla el.
+    "asuncion por defecto": "asuncion",
+    "asunción por defecto": "asuncion",
 }
 
 
@@ -284,6 +289,11 @@ def list_gaps(text: str, source: str, only_gap: str = None) -> dict:
     llega pelada, y son los campos que dicen POR QUÉ importa y CUÁNTO detalle hace
     falta. Van **verbatim**: main es un relé hacia la pantalla, no un resumidor.
 
+    Y emite `asuncion` ([[D-057]]): la "Asunción por defecto" de un `[INFORMATIVO]` es
+    una **decisión de producto que se aplica sola** si nadie responde. Sin este campo,
+    quien presenta el gap tendría que redactarla de su cosecha — que es exactamente lo
+    que el contrato verbatim existe para impedir.
+
     Emite metadatos, no el documento. **No** emite el texto de la respuesta — para eso
     está `--export-answers`.
     """
@@ -321,6 +331,7 @@ def list_gaps(text: str, source: str, only_gap: str = None) -> dict:
              "contexto": fields.get(g["id"], {}).get("contexto"),
              "problema": fields.get(g["id"], {}).get("problema"),
              "afecta": fields.get(g["id"], {}).get("afecta"),
+             "asuncion": fields.get(g["id"], {}).get("asuncion"),
              "answered": g["answered"]}
             for g in gaps
         ],

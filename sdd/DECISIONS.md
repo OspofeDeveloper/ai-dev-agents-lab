@@ -6,6 +6,41 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-057 — Una asunción por defecto es una decisión de producto, y un gap tiene un solo sitio donde contestarse
+
+- **Fecha:** 2026-09-08 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-054]] (los dos hogares), [[D-053]] (una decisión, una pregunta), [[D-042]] (quién escribe las respuestas), [[D-026]], CU-3.a / CU-3.b.
+
+**Contexto.** Dos hallazgos de la pasada 11 de CU-3.a que comparten raíz: **qué se le enseña a la persona que tiene que decidir**.
+
+**1 — Los `[INFORMATIVO]` se deciden solos y nadie los ve.** El análisis salió con 4 informativos abiertos, uno de ellos `[P-007][INFORMATIVO][PUEDE_REQUERIR_CR]`. El orquestador cerró los 3 críticos, comprobó el flag y razonó —correctamente según el contrato— que *"P-007 lo lleva, pero es informativo y sin responder: aplicará su asunción por defecto, así que no hay disparador de cambio de producto"*. Y siguió.
+
+El razonamiento es impecable y el resultado es un agujero. La asunción por defecto es la opción **conservadora**, así que aplicarla no expande el producto: por ese lado no hay riesgo. El problema es el otro: el flag `PUEDE_REQUERIR_CR` existe para declarar que **la respuesta podría mover el producto**, y al no preguntar nunca, el sistema **garantiza que esa vía de gobernanza no se recorre jamás** — no porque alguien eligiera lo conservador, sino porque nadie se lo planteó. La decisión se toma en nombre del usuario y queda anotada solo dentro de un documento que el ecosistema le dice que no necesita abrir. Si resulta que las tarjetas de crédito sí necesitan ciclo de facturación, se descubre con el spec escrito y el plan hecho.
+
+**2 — Un gap con dos bloques respondibles.** `account-management_spec.md` heredó `[P-007]` del análisis y lo reprodujo entero en sus `## Items Pendientes`, con su propio `- **Respuesta**: _(pendiente)_`. El writer hizo lo cuidadoso: declaró la herencia (*"heredado del análisis del PRD (`prd/prd_analysis.md`)"*) y anotó la asunción aplicada en `Asunciones Aplicadas`. Pero el resultado son **dos sitios donde contestar la misma pregunta**: responder en el análisis deja la copia del spec en `_(pendiente)_` para siempre, y los dos documentos acaban diciendo cosas distintas sobre la misma decisión. No fue descuido — la regla no existía.
+
+**Decisión.**
+
+1. **Un gap tiene UN solo bloque respondible**, y lo que lo hace respondible es el campo `Respuesta`. `## Items Pendientes` es **solo** para los gaps que nacen al escribir ese spec; uno heredado del análisis se **referencia** en `## Asunciones Aplicadas` —ID, fichero y asunción aplicada— **sin** campo `Respuesta`.
+2. **La asunción se enseña verbatim, no se resume.** `sdd-analysis-gaps.py --list --json` emite el campo `asuncion` junto a `contexto`, `problema` y `afecta`. Sin él, quien presenta el gap tendría que redactarla de su cosecha, que es lo que el contrato verbatim existe para impedir.
+3. **Tras cerrar los críticos, una pregunta más**: *repasar los informativos* o *aplicar sus asunciones y seguir*, con las asunciones listadas en una línea cada una **antes** de preguntar. Una sola pregunta para toda la tanda — misma forma que [[D-053]], mismo motivo.
+4. **Los `PUEDE_REQUERIR_CR` se surfacean siempre**, incluso si declina repasar el resto.
+5. **Confirmar una asunción se escribe** con `--answer` y el texto de la asunción. `_(pendiente)_` significa *nadie lo ha mirado*; una respuesta significa *alguien lo decidió*.
+
+**Alternativas descartadas.**
+
+- **Presentar los informativos como los críticos, uno a uno y sin preguntar antes.** Devuelve exactamente la fatiga que [[D-053]] quitó: aquí serían 7 decisiones en vez de 1, y la mayoría de las asunciones son buenas.
+- **Bloquear el paso mientras haya informativos abiertos.** Convierte en crítico lo que por definición no lo es, y el pipeline dejaría de avanzar por preferencias menores.
+- **Que main redacte la asunción al presentarla.** Es lo que pasa hoy si el script no la emite, y es un resumen de un texto que existe: el mismo defecto que [[D-053]] arregló para `contexto` y `problema`.
+
+**Consecuencias y aprendizaje.**
+
+- **"El contrato lo permite" y "el usuario lo sabe" son cosas distintas.** El orquestador razonó bien sobre el contrato y aun así el usuario se quedó sin enterarse. Cuando un flag existe para abrir una vía, hay que preguntarse **quién la abre y cuándo**, o el flag decora.
+- **Cuidado con el defecto que nace de hacer las cosas bien.** El writer duplicó el gap **por ser riguroso con la trazabilidad**. La regla no dice "no lo menciones": dice dónde va lo que quería dejar dicho.
+
+**Referencias.** `scripts/sdd-analysis-gaps.py` (`LIST_FIELDS`, campo `asuncion`), `pipeline/spec/skills/wf-spec-features-first/SKILL.md` (punto 6c), `pipeline/spec/skills/wf-spec-fast-track/SKILL.md` (Paso 6), `pipeline/spec/skills/kb-gap-conventions/SKILL.md` ("Dónde vive un gap", "Convenciones para Asunción por defecto"), `tests/test_sdd_analysis_gaps.py` (3 backstops).
+
+---
+
 ## D-056 — En un fan-out, los IDs los reparte quien lanza; y un marcador nombra el fichero donde vive el gap
 
 - **Fecha:** 2026-09-08 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-054]] (los dos hogares de un gap), [[D-047]] (la barrera del fan-out), ROADMAP 11.2b, CU-3.a / CU-3.g.
