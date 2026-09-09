@@ -21,9 +21,9 @@
 
 > **`Estado:` lo escribes una sola vez, en BORRADOR, y nunca lo tocas después ([[D-061]]).**
 > Un spec recién generado **no está validado**: nadie lo ha auditado todavía. La promoción a
-> `VALIDADO` la escribe **`sdd-seal.py spec … --seal`** tras `wf-spec-validate`, y solo si las
+> `VALIDADO` la escribe **`sdd-seal.py spec … --seal`** tras la validación del spec, y solo si las
 > condiciones mecánicas pasan — mismo reparto autor/verificador que en el plan. **Nunca escribas
-> `VALIDADO` a mano**: es la evidencia que mira el gate de `wf-prepare-plan`.
+> `VALIDADO` a mano**: es la evidencia que mira el gate al pasar a planificación.
 
 ## Modo scoped (`--scope-from` + `--feature`)
 
