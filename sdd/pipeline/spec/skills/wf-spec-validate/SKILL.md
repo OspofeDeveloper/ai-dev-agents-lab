@@ -67,7 +67,29 @@ Consulta `${CLAUDE_SKILL_DIR}/references/output_template.md` para la estructura 
 
 ## Paso 6: Informar al usuario
 
-Imprime el informe directamente (no escribe ningún archivo).
+Imprime el informe directamente: **el informe no se escribe en ningún archivo**.
+
+Lo que sí cambia en el spec es su **estado operativo**, y no lo escribes tú ([[D-061]]):
+
+```bash
+# veredicto sin hallazgos bloqueantes
+!python3 .sdd/scripts/sdd-seal.py spec "<path_del_spec>" --seal
+# con hallazgos bloqueantes
+!python3 .sdd/scripts/sdd-seal.py spec "<path_del_spec>" --unseal
+```
+
+- **exit 0** → el spec queda `VALIDADO`. Díselo al usuario y que ya puede planificar sobre él.
+- **exit 2** → el script muestra qué condición mecánica falló (HU `[INCOMPLETO]`, gap `[CRÍTICO]`
+  abierto, CA `[INFERIDO]`, `status_sync` no fiable, deriva de PRD, CA sin HU padre). El spec
+  queda en `BORRADOR`. Trata cada `✗` como hallazgo.
+- **script ausente** → **no escribas el estado a mano**: informa de que falta
+  `.sdd/scripts/sdd-seal.py` y que hay que reponer los scripts reinstalando el ecosistema.
+
+> **Por qué esto no rompe tu read-only ([[D-051]]).** Tú no modificas el spec: **ejecutas un
+> verificador** que comprueba condiciones y escribe una marca de estado. Es el mismo reparto
+> autor≠verificador del plan — tu veredicto experto no basta para sellar, y por eso el sello es
+> una marca fiable. Lo que sigues sin tocar es el **contenido** de lo que auditas.
+
 
 - Si el resultado es **VÁLIDO**: confirma que el spec pasa los 3 checks y está listo para la siguiente fase
 - Si el resultado es **REQUIERE_REVISIÓN**: indica los problemas encontrados y sugiere corregirlos manualmente antes de continuar

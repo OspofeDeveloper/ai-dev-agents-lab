@@ -96,6 +96,7 @@ La numeración E-00X y la anotación del plan las gestiona **solo** `sdd-amend.p
 Edición quirúrgica, mínima:
 
 - Sustituye SOLO el texto del CA confirmado. No reformatees nada más, no renumeres CAs, no toques otras HUs.
+- Tras escribir, **reabre la validación del spec**: `!python3 .sdd/scripts/sdd-seal.py spec "<path_del_spec>" --unseal` ([[D-061]]). Lo que se validó ya no es lo que hay; degradar a `BORRADOR` siempre es seguro. Misma norma que en el PRD, donde un cambio reabre el sello ([[D-028]]).
 - Incrementa la versión menor del spec.
 - Registra en el changelog (orden cronológico inverso):
   ```

@@ -6,6 +6,49 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-061 — El spec gana estado operativo: era el único eslabón del pipeline sin sello que consumir
+
+- **Fecha:** 2026-09-09 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-028]]/[[D-032]] (el sello del PRD y su reapertura), [[D-024]] (**el precedente que se declaró general y no se heredó**), [[D-054]] (los dos hogares de un gap), [[D-037]] (nunca declarar limpio lo que no se ha parseado), [[D-051]], CU-3.f / CU-3.g.
+
+**Contexto.** Comparando la fase PRD —cerrada— con la fase Spec, buscando normas que la primera estableció y la segunda no heredó. La más grave es un hueco **en mitad del pipeline**, con los dos vecinos resueltos:
+
+| Fase | Estado en el artefacto | Quién lo lee | Se reabre al cambiarlo |
+|---|---|---|---|
+| **PRD** | `status: approved` + `Aprobado por:` | `sdd-prd-ready.py` | sí, determinista ([[D-028]]/[[D-032]]) |
+| **Spec** | **nada** | — | — |
+| **Plan** | `Estado: BORRADOR \| VALIDADO` | `sdd-gate-check.py` | — |
+
+`wf-spec-validate` terminaba, literal: *"Imprime el informe directamente (**no escribe ningún archivo**)"*. Consecuencia: **nada distinguía un spec validado de uno que no había mirado nadie**. El gate de `wf-prepare-plan` comprobaba marcadores y `status_sync`, y la validación no entraba. Y como no había estado, tampoco había nada que reabrir cuando un delta o una enmienda lo cambiaban — lo que en el PRD es determinista desde [[D-028]].
+
+La norma general **ya existía** y era Spec quien no la honraba: `orchestration.md` dice *"Cada fase consume artefactos **listos/sellados** de la anterior (PRD → Spec → Design → Plan → Tasks)"*. Spec simplemente no tenía sello que consumir.
+
+**Decisión.**
+
+1. **El spec lleva `Estado: BORRADOR | VALIDADO`** en su cabecera, y nace en `BORRADOR` — un spec recién generado no está auditado. Vale también para los de caracterización (`kb-spec-characterization`).
+2. **El estado lo escribe un script, no un agente**: `sdd-seal.py spec <path> --check|--seal|--unseal`, con las mismas condiciones mecánicas que ya se exigían al spec origen de un plan (sin `[INCOMPLETO]`, sin críticos abiertos, sin `[INFERIDO]`, `status_sync` fiable, sin deriva de PRD) más una propia: **todo CA declara su HU padre**. Autor≠verificador: el veredicto experto del auditor no basta para sellar.
+3. **`wf-spec-validate` invoca el sellador** y no escribe el estado a mano. Eso no rompe su read-only de [[D-051]]: ejecuta un verificador, no modifica el contenido que audita.
+4. **Modificar un spec reabre su validación**: `wf-spec-delta apply`, `wf-spec-amend` y `wf-spec-gap-resolve` hacen `--unseal` tras escribir. Degradar siempre es seguro.
+5. **El gate de `wf-prepare-plan` exige `VALIDADO`** — pero **solo si el spec declara el estado**: un spec legacy sin la línea no se bloquea (misma política conservadora que `status_sync`).
+
+**Un callejón latente, encontrado al implementarlo.** El gate contaba `[CRÍTICO]` **en crudo**. Desde [[D-054]] un spec conserva en `## Items Pendientes` el bloque de sus gaps críticos **también después de responderlos**, por trazabilidad — así que responder un crítico dejaba la feature **bloqueada para siempre**. Ahora se cuentan los **abiertos** (bloque con `Respuesta: _(pendiente)_`).
+
+Y al arreglarlo apareció el riesgo inverso, que la primera versión del arreglo introducía: si solo se cuentan bloques bien formados, **un crítico mal escrito se cuela** —justo la deriva de formato de [[D-058]]—. La síntesis, aplicando [[D-037]]: si hay marcas `[CRÍTICO]` **fuera** de un bloque reconocible, el gate **deniega** diciendo que no puede verificarlas. Nunca declarar limpio lo que no se ha sabido parsear.
+
+**Alternativas descartadas.**
+
+- **Que el auditor escriba `VALIDADO` él mismo.** Su veredicto es experto pero no verificable; el sello dejaría de ser una marca fiable. Es exactamente lo que [[D-032]] y el sellador de planes evitan.
+- **Exigir `VALIDADO` siempre, también en specs sin la línea.** Rompería todo consumer con specs anteriores. La política de "solo si lo declara" es la misma que ya se usa con `status_sync`.
+- **Un fichero de estado aparte.** El estado tiene que viajar con el artefacto: un `.json` paralelo se desincroniza y no sobrevive a un `git mv`.
+
+**Consecuencias y aprendizaje.**
+
+- **Una decisión que se declara "principio general" y difiere su propagación no se propaga.** [[D-024]] lo dice en su propio texto —*"no se propaga a las otras fases en este cambio, **se hereda al mantenerlas**"*— y nombra explícitamente al *"spec validado"*. Dos años de campaña después, no se había heredado. Una promesa sin dueño ni backstop no es un plan.
+- **Los huecos se ven comparando fases, no auditando una.** Ninguna pasada de CU-3 lo habría encontrado: dentro de la fase Spec todo era coherente consigo mismo. Apareció al poner las tres columnas al lado.
+
+**Referencias.** `scripts/sdd-seal.py` (modo `spec`), `scripts/sdd-gate-check.py` (`gate_spec_fiable`), `pipeline/spec/skills/wf-spec-validate/SKILL.md` (Paso 6), `wf-spec-delta`/`wf-spec-amend`/`wf-spec-gap-resolve` (reapertura), `spec_header_templates.md`, `kb-spec-characterization`, `tests/test_sdd_seal.py`, `tests/test_sdd_gate_check.py`.
+
+---
+
 ## D-060 — El orquestador tampoco redacta artefactos, y hasta hoy eso no estaba escrito en ninguna parte que él cargue
 
 - **Fecha:** 2026-09-08 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-038]] (**el precedente**: lo fija para el PRD), [[D-059]] (el defecto que lo destapó), [[D-031]] (la mitad de leer), [[D-051]] (`allowed-tools` no es enforcement), CU-3.a.

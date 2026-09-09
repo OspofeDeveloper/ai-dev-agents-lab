@@ -2,6 +2,17 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.100.0 — 2026-09-09
+
+**El spec gana estado operativo** — [[DECISIONS D-061]]. Comparando la fase PRD (cerrada) con la fase Spec apareció un hueco **en mitad del pipeline**, con los dos vecinos resueltos: el PRD tiene sello (`status: approved` + `Aprobado por:`, leído por script, reabierto al cambiar) y el Plan tiene `Estado: BORRADOR | VALIDADO` (leído por el gate). El Spec **no tenía nada**: `wf-spec-validate` *"no escribe ningún archivo"*, así que nada distinguía un spec validado de uno que no había mirado nadie.
+
+- ⚠ **El spec lleva `Estado:` y nace en `BORRADOR`** — también los de caracterización.
+- ⚠ **Lo escribe un script, no un agente**: `sdd-seal.py spec <path> --check|--seal|--unseal`, con las condiciones que ya se exigían al spec origen de un plan más una propia (todo CA declara su HU padre). El veredicto del auditor no basta para sellar: autor≠verificador.
+- ⚠ **Modificar un spec reabre su validación** (`--unseal` en delta, amend y gap-resolve), igual que un cambio reabre el sello del PRD ([[DECISIONS D-028]]).
+- ⚠ **El gate de `wf-prepare-plan` exige `VALIDADO`**, pero solo si el spec declara el estado: un spec legacy sin la línea no se bloquea.
+- 🔴 **Callejón latente arreglado de paso:** el gate contaba `[CRÍTICO]` **en crudo**, así que responder un crítico —cuyo bloque se conserva desde [[DECISIONS D-054]]— dejaba la feature bloqueada **para siempre**. Ahora cuenta los abiertos. Y si hay marcas `[CRÍTICO]` fuera de un bloque reconocible, **deniega** en vez de darlas por respondidas ([[DECISIONS D-037]]): nunca declarar limpio lo que no se ha sabido parsear.
+- **Sobre la causa raíz:** [[DECISIONS D-024]] declaró esta ponderación *"principio general"*, nombró al *"spec validado"* y difirió la propagación a *"se hereda al mantenerlas"*. No se heredó. Una promesa sin dueño ni backstop no es un plan.
+
 ## 0.99.0 — 2026-09-08
 
 **El orquestador tampoco redacta artefactos** — [[DECISIONS D-060]]. Al cerrar [[DECISIONS D-059]] fui a comprobar qué se lo impedía **en general**. Nada.

@@ -109,6 +109,29 @@ def prd_drift(spec_path: Path, spec_text: str):
     return None  # PRD no resoluble → permitir (política conservadora)
 
 
+GAP_CRIT_RE = re.compile(r"^#{2,4}\s*\[(?P<id>[PD]-\d{3,4})\]\s*\[CR[IÍ]TICO\]", re.MULTILINE)
+PENDIENTE_RE = re.compile(r"\*\*Respuesta\*\*\s*:\s*_\(pendiente\)_")
+
+
+def open_critical_gaps(text: str):
+    """Gaps `[CRITICO]` del propio spec que siguen SIN responder (D-061).
+
+    Contar ocurrencias crudas de `[CRITICO]` bloquearia el spec para siempre:
+    desde D-054 un spec conserva en `## Items Pendientes` el bloque de sus gaps
+    criticos **tambien despues de responderlos**, por trazabilidad. Lo que
+    bloquea es `Respuesta: _(pendiente)_`, no la palabra.
+    """
+    heads = list(GAP_CRIT_RE.finditer(text))
+    abiertos = []
+    for n, m in enumerate(heads):
+        end = heads[n + 1].start() if n + 1 < len(heads) else len(text)
+        nxt = re.search(r"^#{1,4}\s", text[m.end():end], re.MULTILINE)
+        block = text[m.end():m.end() + nxt.start()] if nxt else text[m.end():end]
+        if PENDIENTE_RE.search(block):
+            abiertos.append(m.group("id"))
+    return abiertos
+
+
 def gate_spec_fiable(args: str):
     # Nota: el DESIGN_BRIEF.md no se verifica aqui (su ubicacion es ambigua
     # desde los args); ese gate sigue siendo de la prosa del workflow.
@@ -121,9 +144,23 @@ def gate_spec_fiable(args: str):
     n_inc = len(re.findall(r"\[INCOMPLETO\]", text))
     if n_inc:
         return f"El spec '{spec_path}' tiene {n_inc} HU(s) [INCOMPLETO]. Responde los gaps que las bloquean —en el `_analysis.md` o en la seccion `Items Pendientes` del propio spec, segun donde esten definidos— y pide que se completen esas historias."
-    n_crit = len(re.findall(r"\[CR[IÍ]TICO\]", text))
-    if n_crit:
-        return f"El spec '{spec_path}' tiene {n_crit} gap(s) [CRITICO] abiertos. Resuelvelos antes de continuar."
+    # Gaps criticos: bloquean los ABIERTOS, no la palabra (D-061). Desde D-054 un
+    # spec conserva el bloque de un critico ya respondido, y contarlo en crudo lo
+    # dejaria insellable para siempre.
+    n_raw = len(re.findall(r"\[CR[IÍ]TICO\]", text))
+    heads = GAP_CRIT_RE.findall(text)
+    if n_raw > len(heads):
+        # Hay marcas [CRITICO] fuera de un bloque reconocible: no se puede
+        # concluir que esten respondidas (guarda de D-037 — no declarar limpio
+        # lo que no se ha sabido parsear).
+        return (f"El spec '{spec_path}' tiene marcas [CRITICO] que no estan en un bloque de gap "
+                f"con la forma `### [P-XXX][CRITICO]` (kb-gap-conventions). No se puede verificar "
+                f"si estan respondidas: dale la forma canonica o resuelvelas antes de continuar.")
+    abiertos = open_critical_gaps(text)
+    if abiertos:
+        return (f"El spec '{spec_path}' tiene {len(abiertos)} gap(s) [CRITICO] sin responder "
+                f"({', '.join(abiertos)}). Respondelos donde estan definidos y pide que se "
+                f"completen las historias afectadas.")
     n_inf = len(re.findall(r"\[INFERIDO\]", text))
     if n_inf:
         return (f"El spec '{spec_path}' tiene {n_inf} CA(s) [INFERIDO] sin confirmar (caracterizacion brownfield). "
@@ -137,6 +174,14 @@ def gate_spec_fiable(args: str):
     drift = prd_drift(spec_path, text)
     if drift:
         return f"El spec '{spec_path}' está desincronizado: {drift}"
+    # Estado del spec (D-061): cada fase consume artefactos sellados de la anterior.
+    # Solo se exige si el spec DECLARA el estado — un spec legacy sin la linea no
+    # se bloquea (misma politica conservadora que `status_sync`).
+    estado = re.search(r"^\s*(?:[-*>]\s*)?\**Estado:?\**\s*:?\s*(BORRADOR|VALIDADO)\s*\**\s*$",
+                       text, re.MULTILINE)
+    if estado and estado.group(1) == "BORRADOR":
+        return (f"El spec '{spec_path}' esta en BORRADOR: nadie lo ha validado todavia. "
+                f"Pide que se valide antes de planificar sobre el.")
     return None
 
 

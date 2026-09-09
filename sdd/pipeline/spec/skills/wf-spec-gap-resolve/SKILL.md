@@ -97,6 +97,13 @@ Aplica la misma lógica de integración necesaria para completar un spec ya gene
 
 ## Paso 6: Versionado y trazabilidad
 
+> **Al modificar un spec, su validación se reabre ([[D-061]]).** Tras escribir, ejecuta:
+> ```bash
+> !python3 .sdd/scripts/sdd-seal.py spec "<path_del_spec>" --unseal
+> ```
+> Degradar a `BORRADOR` siempre es seguro y siempre es correcto: lo que se validó ya no es lo que
+> hay. Es la misma norma que en el PRD, donde un cambio reabre el sello ([[D-028]]).
+
 Incrementa versión menor del spec y registra en changelog:
 
 - HUs completadas

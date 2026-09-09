@@ -111,6 +111,13 @@ Aplica los cambios siguiendo las reglas de `${CLAUDE_SKILL_DIR}/references/spec_
 
 ### Paso 6B: Actualizar versionado y Changelog
 
+> **Al modificar un spec, su validación se reabre ([[D-061]]).** Tras escribir, ejecuta:
+> ```bash
+> !python3 .sdd/scripts/sdd-seal.py spec "<path_del_spec>" --unseal
+> ```
+> Degradar a `BORRADOR` siempre es seguro y siempre es correcto: lo que se validó ya no es lo que
+> hay. Es la misma norma que en el PRD, donde un cambio reabre el sello ([[D-028]]).
+
 Incrementar la versión en el header del spec (1.0 → 1.1, 1.2 → 1.3, 2.0 → 2.1).
 
 Añadir o actualizar `## Changelog` al final del spec (orden cronológico inverso) siguiendo la plantilla de `${CLAUDE_SKILL_DIR}/references/changelog_template.md`. Si se aplicaron asunciones `[INFORMATIVO]`, añadir también `## Asunciones Aplicadas (v[X.Y])` antes del Changelog.

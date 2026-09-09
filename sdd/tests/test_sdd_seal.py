@@ -207,5 +207,68 @@ class UsageTest(unittest.TestCase):
         self.assertEqual(r.returncode, 1)
 
 
+
+class SealSpecTest(unittest.TestCase):
+    """D-061: el spec gana estado operativo, con el mismo reparto que el plan."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.dir = Path(self.tmp.name)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def spec(self, extra="", estado="BORRADOR"):
+        body = (f"# Spec: x\n\n> Estado: {estado}\n> status_sync: unknown\n\n"
+                "## Historias\n\n### HU-001: Algo\n\n"
+                "## Criterios\n\n### CA-001: Se cumple ← HU-001\n" + extra)
+        p = self.dir / "f_spec.md"
+        p.write_text(body, encoding="utf-8")
+        return p
+
+    def run_seal(self, path, mode):
+        return run_script("sdd-seal.py", "spec", str(path), mode)
+
+    def test_clean_spec_is_sealable(self):
+        p = self.spec()
+        r = self.run_seal(p, "--seal")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("Estado: VALIDADO", p.read_text(encoding="utf-8"))
+
+    def test_answered_critical_does_not_block(self):
+        """El bloque de un critico respondido se conserva (D-054) y no bloquea."""
+        p = self.spec("\n## Items Pendientes\n\n### [P-011][CRÍTICO] Resuelto\n"
+                      "- **Respuesta**: el usuario dijo que si.\n")
+        self.assertEqual(self.run_seal(p, "--seal").returncode, 0)
+
+    def test_open_critical_blocks_and_downgrades(self):
+        p = self.spec("\n## Items Pendientes\n\n### [P-011][CRÍTICO] Abierto\n"
+                      "- **Respuesta**: _(pendiente)_\n", estado="VALIDADO")
+        r = self.run_seal(p, "--seal")
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("P-011", r.stdout)
+        self.assertIn("Estado: BORRADOR", p.read_text(encoding="utf-8"))
+
+    def test_incompleto_blocks(self):
+        p = self.spec("\n> ⚠ [INCOMPLETO] — Pendiente de gap(s): [P-011].\n")
+        self.assertEqual(self.run_seal(p, "--seal").returncode, 2)
+
+    def test_ca_without_parent_hu_blocks(self):
+        p = self.spec("\n### CA-002: Huerfano\n")
+        r = self.run_seal(p, "--seal")
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("CA-002", r.stdout)
+
+    def test_unseal_always_allowed(self):
+        p = self.spec(estado="VALIDADO")
+        self.assertEqual(self.run_seal(p, "--unseal").returncode, 0)
+        self.assertIn("Estado: BORRADOR", p.read_text(encoding="utf-8"))
+
+    def test_check_does_not_write(self):
+        p = self.spec()
+        before = p.read_text(encoding="utf-8")
+        self.assertEqual(self.run_seal(p, "--check").returncode, 0)
+        self.assertEqual(p.read_text(encoding="utf-8"), before)
+
 if __name__ == "__main__":
     unittest.main()

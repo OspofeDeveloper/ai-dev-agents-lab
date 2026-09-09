@@ -69,6 +69,42 @@ class GateSpecFiableTest(unittest.TestCase):
         r = self._run("wf-prepare-plan", SPEC_OK + "\n[CRÍTICO] gap\n")
         self.assertEqual(is_deny(r.stdout), "deny")
 
+    def test_answered_critical_block_does_not_block(self):
+        """D-061: un critico YA RESPONDIDO no puede bloquear el plan para siempre.
+
+        Desde D-054 el spec conserva el bloque por trazabilidad; contar la palabra
+        [CRITICO] en crudo dejaba la feature inplanificable tras responderla.
+        """
+        spec = (SPEC_OK + "\n## Items Pendientes\n\n"
+                "### [P-011][CRÍTICO] Ya respondido\n"
+                "- **Contexto**: x\n"
+                "- **Respuesta**: el usuario decidio que si.\n")
+        r = self._run("wf-prepare-plan", spec)
+        self.assertEqual(r.stdout.strip(), "", "un critico respondido no debe denegar")
+
+    def test_open_critical_block_denied_with_its_id(self):
+        spec = (SPEC_OK + "\n## Items Pendientes\n\n"
+                "### [P-011][CRÍTICO] Sin responder\n"
+                "- **Respuesta**: _(pendiente)_\n")
+        r = self._run("wf-prepare-plan", spec)
+        self.assertEqual(is_deny(r.stdout), "deny")
+        self.assertIn("P-011", r.stdout)
+
+    def test_spec_in_borrador_denied(self):
+        """D-061: cada fase consume artefactos sellados de la anterior."""
+        r = self._run("wf-prepare-plan", "> Estado: BORRADOR\n" + SPEC_OK)
+        self.assertEqual(is_deny(r.stdout), "deny")
+        self.assertIn("BORRADOR", r.stdout)
+
+    def test_spec_validado_allowed(self):
+        r = self._run("wf-prepare-plan", "> Estado: VALIDADO\n" + SPEC_OK)
+        self.assertEqual(r.stdout.strip(), "")
+
+    def test_spec_without_estado_line_allowed(self):
+        """Legacy: un spec sin la linea Estado no se bloquea (politica conservadora)."""
+        r = self._run("wf-prepare-plan", SPEC_OK)
+        self.assertEqual(r.stdout.strip(), "")
+
     def test_spec_with_inferido_denied(self):
         r = self._run("wf-prepare-plan", SPEC_OK + "\n[INFERIDO] sin confirmar\n")
         self.assertEqual(is_deny(r.stdout), "deny")

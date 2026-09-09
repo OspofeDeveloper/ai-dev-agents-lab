@@ -36,10 +36,16 @@ Los gates del pipeline (gate de plan, sellador) tratan `[INFERIDO]` igual que `[
 
 ```markdown
 > **Origen:** characterization
+> **Estado:** BORRADOR
 > **PRD origen:** N/A (brownfield)
 > **Evidencia base:** commit <SHA corto> (<fecha>)
 > **Status sync:** in_sync
 ```
+
+`Estado` nace en `BORRADOR` y **no lo escribes tú** después ([[D-061]]): la promoción a `VALIDADO`
+la hace `sdd-seal.py spec … --seal` tras la validación, y en un spec de caracterización exige
+además que no queden CAs `[INFERIDO]` sin confirmar — que es precisamente lo que distingue un
+spec de código *auditado* de uno recién extraído.
 
 `Evidencia base` ancla el spec en el tiempo: las afirmaciones eran verdad en ese commit. Si el código avanza mucho, el spec puede estar desactualizado — eso es deriva, no error del spec.
 

@@ -5,6 +5,7 @@
 ```markdown
 # Spec: [Nombre de la Capability]
 > Versión: 1.0 | Fecha: [YYYY-MM-DD]
+> Estado: BORRADOR
 > Generado via: fast-track desde [path/del/documento.md]
 > Feature ID: F-001
 > Spec monolítico origen: N/A (fast-track directo)
@@ -18,11 +19,18 @@
 > Avisos de gobernanza: [ninguno | alcance derivado desde P-00X, P-00Y]
 ```
 
+> **`Estado:` lo escribes una sola vez, en BORRADOR, y nunca lo tocas después ([[D-061]]).**
+> Un spec recién generado **no está validado**: nadie lo ha auditado todavía. La promoción a
+> `VALIDADO` la escribe **`sdd-seal.py spec … --seal`** tras `wf-spec-validate`, y solo si las
+> condiciones mecánicas pasan — mismo reparto autor/verificador que en el plan. **Nunca escribas
+> `VALIDADO` a mano**: es la evidencia que mira el gate de `wf-prepare-plan`.
+
 ## Modo scoped (`--scope-from` + `--feature`)
 
 ```markdown
 # Spec: [Nombre de la Capability]
 > Versión: 1.0 | Fecha: [YYYY-MM-DD]
+> Estado: BORRADOR
 > Generado via: fast-track desde [path/del/prd.md] (scope: F-00X via [discovery.md])
 > Feature ID: F-00X
 > Spec monolítico origen: N/A (features-first via discover)
