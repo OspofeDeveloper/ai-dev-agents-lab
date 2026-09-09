@@ -95,6 +95,35 @@ Aplica la misma lógica de integración necesaria para completar un spec ya gene
 - eliminación de marcadores `[INCOMPLETO]`
 - actualización de `Items Pendientes`
 
+### 5.1 — Lo que completes más allá de la respuesta va marcado ([[D-063]])
+
+Una respuesta a un gap casi nunca trae **todo** lo que hace falta para cerrar la HU. Lo que falte
+lo pones tú, y ahí es donde entra la fabricación silenciosa: el gap se cierra, el `[INCOMPLETO]`
+desaparece, el spec queda impecable — y contiene decisiones que nadie tomó.
+
+**La regla es la misma de la generación, y no caduca porque el spec ya exista** (SSoT:
+`kb-gap-conventions`, "La obligación de marcar rige cada escritura"): **lo que escribas y no trace
+a la respuesta, al spec vigente o al PRD es una asunción y va con su `[A-00X]` en
+`## Asunciones Aplicadas`**, citando de dónde sale. Si la sección no existe, créala arrancando en
+`A-001`; si existe, continúa desde el ID más alto.
+
+Las dos escapatorias que hay que nombrar porque se sienten inocentes:
+
+- **Ajustar un CA vecino "para que no quede contradictorio" con la respuesta nueva es una decisión,
+  no higiene.** Ajustarlo está bien; ajustarlo sin marca, no.
+- **No difieras a Design ni a Plan una decisión de alcance.** Dejar el detalle fino para la fase
+  siguiente mientras resuelves por tu cuenta qué hace la feature es diferir lo pequeño y decidir lo
+  grande.
+
+Y **no confundas marcar con decidir**: si lo que falta no es un detalle sino una bifurcación real
+del producto, no la marques — es el Paso 4, y se detiene. Corres sin poder preguntar, así que
+tampoco puedes decidir; marcar es para lo conservador y menor, parar es para lo demás.
+
+> **Verificación mecánica, para que no dependa de tu criterio.** Al sellarse el spec,
+> `sdd-seal.py spec --check` deniega si un gap `[INFORMATIVO]` sin responder no tiene entrada que
+> lo cite ([[D-063]]). No juzga si tu asunción es buena —eso no es mecanizable—: exige que sea
+> **visible**.
+
 ## Paso 6: Versionado y trazabilidad
 
 > **Al modificar un spec, su validación se reabre ([[D-061]]).** Tras escribir, ejecuta:

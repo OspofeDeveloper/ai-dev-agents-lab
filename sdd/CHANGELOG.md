@@ -2,6 +2,17 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.102.0 — 2026-09-09
+
+**La anti-fabricación llega a Spec** — [[DECISIONS D-063]]. [[DECISIONS D-039]] estableció en el PRD que la regla **no caduca al sellar**: rige cada escritura, porque *"un invariante mantenido por un workflow no es un invariante del artefacto — pregúntate quién más escribe ese fichero"*. En Spec nunca se heredó: sobre un spec escriben **cuatro** workflows y la regla la conocían **dos**.
+
+- 🔴 **`wf-spec-gap-resolve` completaba HUs y CAs sin obligación de marcar nada.** Una respuesta a un gap casi nunca trae todo lo que hace falta para cerrar una HU; lo que falte lo pone quien escribe. Y aquí es peor que en el PRD porque **se borra la evidencia**: el gap se cierra, el `[INCOMPLETO]` desaparece, el spec queda impecable — y contiene decisiones que nadie tomó. Ahora tiene su Paso 5.1, con la frontera explícita entre **marcar** (lo conservador y menor) y **parar** (una bifurcación real de producto).
+- ⚠ **La norma sube a `kb-gap-conventions`**, que entra en la **línea 1** del contexto de los agentes de Spec ([[DECISIONS D-055]]: el único carril que llega a tiempo a quien escribe desde cero), con la tabla de los cuatro escritores y las dos escapatorias de D-039 nombradas — estrechar un CA "para que no quede contradictorio" no es higiene, y no vale diferir alcance a Design o Plan.
+- ⚠ **Backstop mecánico en `sdd-seal.py spec --check`:** un gap `[INFORMATIVO]` sin responder —cuya asunción por defecto **ya está aplicada en los CAs**— debe dejar entrada que lo cite en `## Asunciones Aplicadas`, o el spec no se sella. Con guarda de vacuidad ([[DECISIONS D-037]]): si la sección existe pero no se le reconoce ninguna entrada, **deniega** en vez de darla por buena.
+- **El paralelo con el PRD era falso, y eso abarató el arreglo.** El plan era portar el invariante 1:1 de `sdd-prd-ready.py`; no se puede, porque ese 1:1 empareja marcas **inline** y el spec no tiene ninguna. La salida fue buscar qué contrapartida ya existe — el bloque `[INFORMATIVO]` lo es—: mismo invariante, **sin tocar el formato** justo antes de las pasadas de sellado.
+- **Corrección sobre el diagnóstico:** `wf-spec-amend` **no era un hueco**. Su gate de clasificación (todo lo que el spec o el PRD no determinen sale a `wf-spec-delta`) más la confirmación humana del texto final son más fuertes que una marca. Solo se nombró el mecanismo y se cerró una costura real: su changelog `E-00X` decía *que* hubo enmienda, no **qué se fijó ni contra qué traza**.
+- **Aprendizaje:** el sitio donde enganchar un backstop puede no existir todavía, y diferirlo es legítimo — pero entonces hay que volver. D-039 no podía tener este check porque el spec no se sellaba; en cuanto [[DECISIONS D-061]] lo hizo sellable, la deuda venció.
+
 ## 0.101.0 — 2026-09-09
 
 **Regenerar un spec se pondera por su estado** — [[DECISIONS D-062]]. [[DECISIONS D-024]] fijó esta regla para el PRD, se declaró *"principio general"*, **nombró explícitamente al "spec validado"** y difirió la herencia a *"se hereda al mantenerlas"*. Al ir por fin a heredarla aparecieron **tres** sitios, y ninguno era el "¿seguro?" plano que esperábamos.

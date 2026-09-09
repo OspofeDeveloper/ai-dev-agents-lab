@@ -80,8 +80,9 @@ Lo que sí cambia en el spec es su **estado operativo**, y no lo escribes tú ([
 
 - **exit 0** → el spec queda `VALIDADO`. Díselo al usuario y que ya puede planificar sobre él.
 - **exit 2** → el script muestra qué condición mecánica falló (HU `[INCOMPLETO]`, gap `[CRÍTICO]`
-  abierto, CA `[INFERIDO]`, `status_sync` no fiable, deriva de PRD, CA sin HU padre). El spec
-  queda en `BORRADOR`. Trata cada `✗` como hallazgo.
+  abierto, CA `[INFERIDO]`, `status_sync` no fiable, deriva de PRD, CA sin HU padre, o una asunción
+  aplicada que no dejó rastro en `## Asunciones Aplicadas` — [[D-063]]). El spec queda en
+  `BORRADOR`. Trata cada `✗` como hallazgo.
 - **script ausente** → **no escribas el estado a mano**: informa de que falta
   `.sdd/scripts/sdd-seal.py` y que hay que reponer los scripts reinstalando el ecosistema.
 

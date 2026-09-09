@@ -42,6 +42,13 @@ Condiciones verificadas para `spec` (D-061):
   5. Si declara `status_sync`, no esta desalineado (bloquean: stale, needs_review).
   6. Si declara `derived_from_prd_hash` y su PRD origen es resoluble, sin deriva.
   7. Trazabilidad interna: todo `### CA-XXX` declara su HU padre (`← HU-XXX`).
+  8. Asunciones visibles (D-063): todo gap `[INFORMATIVO]` sin responder —cuya
+     `Asuncion por defecto` YA esta aplicada en los CAs— deja su entrada en
+     `## Asunciones Aplicadas` citando el gap. No se juzga si la asuncion es
+     correcta (juicio semantico, no mecanizable): se exige que la decision
+     tomada en nombre del usuario sea VISIBLE. Guarda de vacuidad: si la
+     seccion existe pero no se le reconoce ninguna entrada `- **[A-00X]**`,
+     se deniega en vez de darla por buena (D-037).
 
 El sello es una marca operativa confiable (kb-plan-expert, "Estados del Plan"):
 si cualquier condicion falla, el plan queda/vuelve a BORRADOR.
@@ -203,6 +210,25 @@ def check_plan(plan_path: Path):
 GAP_CRIT_RE = re.compile(r"^#{2,4}\s*\[(?P<id>[PD]-\d{3,4})\]\s*\[CR[IÍ]TICO\]", re.MULTILINE)
 PENDIENTE_RE = re.compile(r"\*\*Respuesta\*\*\s*:\s*_\(pendiente\)_")
 CA_HU_RE = re.compile(r"^#{2,4}\s*(?P<ca>CA-\d{3,4})\b(?P<rest>[^\n]*)$", re.MULTILINE)
+GAP_INFO_RE = re.compile(r"^#{2,4}\s*\[(?P<id>[PD]-\d{3,4})\]\s*\[INFORMATIVO\]", re.MULTILINE)
+# `## Asunciones Aplicadas`, y la variante versionada que escribe wf-spec-delta:
+# `## Asunciones Aplicadas (v1.1)`. Puede haber varias en un spec con historia.
+ASUNCIONES_SEC_RE = re.compile(r"^#{2,3}[ \t]*Asunciones Aplicadas\b[^\n]*$", re.MULTILINE)
+ASUNCION_ENTRY_RE = re.compile(r"^[ \t]*[-*][ \t]*\**\[(?P<id>A-\d{3,4})\]", re.MULTILINE)
+GAP_REF_RE = re.compile(r"\b[PD]-\d{3,4}\b")
+
+
+def _open_gaps(text: str, head_re):
+    """IDs de los bloques de gap que casan `head_re` y siguen `_(pendiente)_`."""
+    heads = list(head_re.finditer(text))
+    open_ids = []
+    for n, m in enumerate(heads):
+        end = heads[n + 1].start() if n + 1 < len(heads) else len(text)
+        nxt = re.search(r"^#{1,4}\s", text[m.end():end], re.MULTILINE)
+        block = text[m.end():m.end() + nxt.start()] if nxt else text[m.end():end]
+        if PENDIENTE_RE.search(block):
+            open_ids.append(m.group("id"))
+    return open_ids
 
 
 def _open_critical_gaps(text: str):
@@ -213,15 +239,53 @@ def _open_critical_gaps(text: str):
     respuesta pendiente, no la palabra `[CRITICO]` (contar ocurrencias crudas
     dejaria el spec insellable para siempre).
     """
-    heads = list(GAP_CRIT_RE.finditer(text))
-    open_ids = []
-    for n, m in enumerate(heads):
-        end = heads[n + 1].start() if n + 1 < len(heads) else len(text)
-        nxt = re.search(r"^#{1,4}\s", text[m.end():end], re.MULTILINE)
-        block = text[m.end():m.end() + nxt.start()] if nxt else text[m.end():end]
-        if PENDIENTE_RE.search(block):
-            open_ids.append(m.group("id"))
-    return open_ids
+    return _open_gaps(text, GAP_CRIT_RE)
+
+
+def _assumption_sections(text: str):
+    """Cuerpo de cada `## Asunciones Aplicadas` del spec (puede haber varias)."""
+    bodies = []
+    for m in ASUNCIONES_SEC_RE.finditer(text):
+        rest = text[m.end():]
+        nxt = re.search(r"^#{1,2}[ \t]", rest, re.MULTILINE)
+        bodies.append(rest[:nxt.start()] if nxt else rest)
+    return bodies
+
+
+def _undocumented_assumptions(text: str):
+    """Asunciones aplicadas en nombre del usuario que no dejaron rastro (D-063).
+
+    Un gap `[INFORMATIVO]` sin responder NO se queda sin decidir: se aplica su
+    `Asuncion por defecto` y esa decision entra en los CAs como si alguien la
+    hubiera elegido (kb-gap-conventions). Por eso tiene que dejar su entrada en
+    `## Asunciones Aplicadas`, citando el gap del que sale.
+
+    Es el analogo del invariante 1:1 del PRD (`sdd-prd-ready.py`), con la
+    diferencia de que aqui la contrapartida ya existe en el formato actual —el
+    bloque `[INFORMATIVO]`— y no hace falta inventar ninguna marca inline.
+
+    No verifica que la asuncion sea correcta: eso es juicio semantico y no es
+    mecanizable. Verifica que la decision es VISIBLE.
+
+    Devuelve (ids_sin_rastro, seccion_ilegible).
+    """
+    aplicadas = _open_gaps(text, GAP_INFO_RE)
+    if not aplicadas:
+        return [], False
+
+    bodies = _assumption_sections(text)
+    if not bodies:
+        return aplicadas, False
+
+    # Guarda de vacuidad (D-037): la seccion esta, pero no se le reconoce
+    # ninguna entrada `- **[A-00X]**`. No declares documentado lo que no has
+    # sabido parsear — es el modo de fallo medido en la pasada 12 de CU-3.a,
+    # donde unos gaps escritos como vinetas dejaron de existir para el script.
+    if not any(ASUNCION_ENTRY_RE.search(b) for b in bodies):
+        return aplicadas, True
+
+    citados = {ref for b in bodies for ref in GAP_REF_RE.findall(b)}
+    return [g for g in aplicadas if g not in citados], False
 
 
 def check_spec(spec_path: Path):
@@ -292,6 +356,20 @@ def check_spec(spec_path: Path):
         add(not huerfanos,
             "Todo CA declara su HU padre"
             + (f" (sin padre: {', '.join(huerfanos)})" if huerfanos else ""))
+
+    # 8. Toda asuncion aplicada en nombre del usuario deja rastro (D-063).
+    sin_rastro, ilegible = _undocumented_assumptions(text)
+    if ilegible:
+        add(False,
+            "`## Asunciones Aplicadas` existe pero no se le reconoce ninguna entrada "
+            "`- **[A-00X]**` — no se da por documentada una seccion que no se ha sabido "
+            "parsear (ver D-037)")
+    elif sin_rastro:
+        add(False,
+            "Toda asuncion aplicada deja rastro en `## Asunciones Aplicadas` "
+            f"(sin entrada que los cite: {', '.join(sin_rastro)})")
+    elif _open_gaps(text, GAP_INFO_RE):
+        add(True, "Toda asuncion aplicada deja rastro en `## Asunciones Aplicadas`")
 
     return checks, all(ok for ok, _ in checks)
 

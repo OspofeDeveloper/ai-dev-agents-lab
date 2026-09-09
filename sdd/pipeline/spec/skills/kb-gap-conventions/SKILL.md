@@ -290,6 +290,46 @@ porque nadie lo planteó. Se surfacean **siempre**, aunque la persona decline re
 
 ---
 
+## La obligación de marcar rige **cada escritura** sobre el spec ([[D-063]])
+
+`## Asunciones Aplicadas` no es un trámite de la generación: es el invariante de que **nada de lo
+que dice el spec fue decidido en silencio**. Y un invariante que mantiene *un* workflow no es un
+invariante del artefacto — hay que preguntarse **quién más escribe ese fichero** ([[D-039]], que
+aprendió esto en el PRD). Sobre un spec escriben cuatro:
+
+| Escritor | Cuándo | Qué debe marcar |
+|---|---|---|
+| `wf-spec-fast-track` | al generarlo | la asunción de cada `[INFORMATIVO]` que aplique |
+| `wf-spec-delta` | al evolucionarlo | ídem, en `## Asunciones Aplicadas (vX.Y)` |
+| `wf-spec-gap-resolve` | al integrar una respuesta | **lo que complete más allá de lo que la respuesta dice** |
+| `wf-spec-amend` | al aclarar un CA | **el dato que fije y que el CA no determinaba** |
+
+Los dos últimos son los que se olvidan, porque no "generan": integran. Pero una respuesta a un gap
+casi nunca trae todo lo que hace falta para cerrar una HU, y lo que falte lo pone quien escribe.
+**Si lo pusiste tú y no sale de lo que te dijeron, es una asunción y va anotada** — con su
+`[A-00X]`, citando de dónde sale (el gap, la respuesta, la enmienda). Numera continuando desde el
+`[A-00X]` más alto presente; si la sección no existe, créala arrancando en `A-001`.
+
+**Dos escapatorias, nombradas para que no se cuelen** (son las de [[D-039]], que se colaron en el
+PRD precisamente por sentirse inocentes):
+
+- **Estrechar o reinterpretar un CA, una exclusión o una regla transversal que ya estaba es una
+  decisión, no higiene.** Se cuela porque se siente como limpieza: *"si no matizo este CA queda
+  contradictorio con la respuesta nueva"*. Matizarlo está bien; matizarlo **sin marca** no.
+- **No vale diferir una decisión de alcance a la fase siguiente.** Dejar para Design o para Plan
+  *"el detalle fino"* mientras resuelves por tu cuenta la frontera de lo que la feature hace es el
+  patrón exacto que se midió en el PRD: **diferir lo pequeño y decidir lo grande**. Materia de
+  Design es el cómo; qué hace el producto es de aquí para arriba.
+
+**Backstop mecánico, y lo que NO cubre.** `sdd-seal.py spec --check` deniega el sello si un gap
+`[INFORMATIVO]` sin responder no tiene entrada que lo cite en `## Asunciones Aplicadas` ([[D-063]]):
+la decisión está tomada —su asunción ya vive en los CAs— así que tiene que verse. Lo que ese check
+**no** puede hacer es decidir si una frase traza a lo que te dijeron: eso es juicio semántico y no
+es mecanizable ([[D-039]] ya lo descartó). Lo mecanizable es que la decisión sea **visible**; que
+esté **bien** es tuyo.
+
+---
+
 ## Marcadores de specs de caracterización: `[INFERIDO]` y `[SOSPECHA_BUG]`
 
 Solo aplican en specs con `Origen: characterization` (brownfield, generados por `wf-spec-from-code`):

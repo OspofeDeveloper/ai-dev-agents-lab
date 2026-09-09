@@ -6,6 +6,45 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-063 — La anti-fabricación llega a Spec: rige cada escritura, y el sello exige que la asunción se vea
+
+- **Fecha:** 2026-09-09 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-039]] (el precedente en PRD, declarado y no heredado), [[D-061]] (el sello del spec, que da dónde enganchar el backstop), [[D-057]] (un gap tiene un solo bloque respondible), [[D-037]] (guarda de vacuidad), [[D-055]] (qué carril llega al escritor a tiempo), CU-3.a / CU-3.f.
+
+**Contexto.** Segundo hueco del reporte PRD↔Spec. [[D-039]] estableció en el PRD que la anti-fabricación **no caduca al sellar**: rige cada escritura, porque *"un invariante mantenido por un workflow no es un invariante del artefacto — hay que preguntarse quién más escribe ese fichero"*. En Spec eso nunca se heredó. Sobre un spec escriben **cuatro** workflows y la regla la conocían **dos**:
+
+| Escritor | ¿Registra lo que infiere? |
+|---|---|
+| `wf-spec-fast-track` | sí — `## Asunciones Aplicadas` al generar |
+| `wf-spec-delta` | sí — `## Asunciones Aplicadas (vX.Y)` al evolucionar |
+| `wf-spec-gap-resolve` | **no** — cero menciones de asunción o inferencia en sus 135 líneas |
+| `wf-spec-amend` | **no las tenía escritas** (ver la corrección de abajo) |
+
+El caso grave es `gap-resolve`, y no es teórico: su Paso 5 integra respuestas completando *"texto faltante de HUs"* y *"CAs que no pudieron generarse"*. Una respuesta a un gap casi nunca trae **todo** lo que hace falta para cerrar una HU; lo que falte lo pone quien escribe. Y el resultado es peor que en el PRD, porque además **se borra la evidencia**: el gap se cierra, el `[INCOMPLETO]` desaparece, el spec queda impecable — y contiene decisiones que nadie tomó, sin ningún marcador que lo delate.
+
+**Corrección de diagnóstico (el reporte inicial se pasó de frenada con `wf-spec-amend`).** Al leerlo entero resultó estar **mejor cubierto de lo que yo dije**, y por un mecanismo más fuerte que una marca: su Paso 4 es un gate de clasificación que manda a `wf-spec-delta` todo lo que *"el spec/PRD no determina"*, y su Paso 5 exige que **el humano confirme el texto final palabra por palabra**. Añadirle la maquinaria de marcado habría sido acumular prosa redundante sobre una garantía que ya existía. Lo que sí faltaba era **nombrar el mecanismo** (para que no parezca un olvido) y cerrar una costura real: su línea de changelog `E-00X` registraba *que* hubo enmienda, no **qué se fijó ni contra qué traza** — y *"aclaración CA-004"* no permite comprobar después que fuera una aclaración.
+
+**Decisión.** Dos piezas, normativa y mecánica.
+
+1. **La obligación sube a `kb-gap-conventions`** —la SSoT de gaps, que entra en la **línea 1** del contexto de los agentes de Spec por su `skills:` ([[D-055]]: es el único carril que llega a tiempo a quien escribe desde cero)— con la tabla de los cuatro escritores y **las dos escapatorias de [[D-039]] nombradas**: (i) estrechar o reinterpretar un CA o una regla transversal que ya estaba **no es higiene**, aunque se sienta como limpieza; (ii) **no vale diferir a Design o Plan** una decisión de alcance — el patrón *diferir lo pequeño y decidir lo grande*. `wf-spec-gap-resolve` gana el bloque operativo (Paso 5.1), con la frontera explícita entre **marcar** (lo conservador y menor) y **parar** (una bifurcación real de producto: corre en fork, no puede preguntar, luego no puede decidir).
+
+2. **Backstop mecánico en `sdd-seal.py spec --check`:** un gap `[INFORMATIVO]` sin responder cuya asunción por defecto **ya está aplicada en los CAs** debe tener entrada que lo cite en `## Asunciones Aplicadas`, o no se sella. Con la guarda de vacuidad de [[D-037]]: si la sección existe pero no se le reconoce ninguna entrada `- **[A-00X]**`, **deniega** en vez de darla por buena.
+
+**Lo que este backstop NO hace, dicho para que nadie lo sobrevenda.** No juzga si la asunción es correcta ni si una frase traza a lo que dijeron: eso es juicio semántico y [[D-039]] ya lo descartó como no mecanizable. Y no detecta una inferencia libre en la prosa de un CA sin gap detrás. Lo que verifica es que **la decisión sea visible** — y ese era exactamente el agujero: en el PRD el verificador *confirmaba* el invariante (`0 = 0`) precisamente porque el contenido fabricado no se había marcado.
+
+**Sobre la mitad que se difirió, y por qué el paralelo con el PRD era falso.** El plan inicial era darle al spec el invariante **1:1** de `sdd-prd-ready.py`. No se puede: ese 1:1 empareja marcas **inline** `[ASUNCIÓN]` con entradas `[ASN-XXX]`, y el spec **no tiene marca inline** —`## Asunciones Aplicadas` es una lista sin contrapartida en el texto de los CA—, así que no hay con qué emparejar. Construirlo exigía inventarle un formato al spec: cambio de contrato, y no antes de las pasadas de sellado. La salida fue mirar qué contrapartida **sí** existe ya, y resulta que el bloque `[INFORMATIVO]` lo es: el mismo invariante, sin tocar el formato. Queda abierto en el ROADMAP si el residuo (inferencia libre sin gap detrás) merece la marca inline.
+
+**Alternativas descartadas.**
+- *Solo la norma, sin backstop* → es lo que hizo [[D-039]] en el PRD y su propio texto dice por qué no basta: la obligación de generar las marcas es normativa, pero sin nada que la verifique el spec se sella igual. [[D-061]] acababa de crear el sitio donde engancharla; no usarlo habría sido dejar la pieza a medias por segunda vez.
+- *Inventar la marca inline ahora para tener el 1:1 completo* → cambio de contrato a tres pasadas de sellar la fase. El coste no es escribirla: es que todo lo que parsea specs asuma un formato que aún no se ha medido.
+- *Dar a `wf-spec-amend` la misma maquinaria que a `gap-resolve`* → prosa redundante sobre una garantía más fuerte que ya existía. Cuando dos skills necesitan el mismo invariante por mecanismos distintos, duplicar el mecanismo debilita los dos: el lector deja de saber cuál manda.
+- *Bloquear también por `[INFORMATIVO]` respondido* → un gap respondido **no** tiene asunción que documentar: alguien lo decidió. Bloquear ahí convertiría el check en ruido y enseñaría a rodearlo.
+
+**Consecuencias / aprendizaje.** Tres. (a) **El sitio donde enganchar un backstop puede no existir todavía**, y esa es una razón legítima para diferir — pero entonces hay que volver: [[D-039]] no podía tener este check en Spec porque el spec no se sellaba, y en cuanto [[D-061]] lo hizo sellable, la deuda venció. (b) **Un paralelo entre fases puede ser falso por el formato, no por el principio**: el 1:1 del PRD no era portable, el principio sí; buscar qué contrapartida ya existe es más barato que replicar la del vecino. (c) **Al heredar una norma hay que leer al destinatario, no solo al precedente** — di por hueco en `wf-spec-amend` lo que era una garantía distinta y más fuerte, y de haber "arreglado" lo que creía, habría empeorado el skill.
+
+**Referencias.** `sdd/pipeline/spec/skills/kb-gap-conventions/SKILL.md` (sección nueva, SSoT), `sdd/pipeline/spec/skills/wf-spec-gap-resolve/SKILL.md` (Paso 5.1), `sdd/pipeline/spec/skills/wf-spec-amend/SKILL.md` (Pasos 4 y 7), `sdd/scripts/sdd-seal.py` (`check_spec` condición 8), `sdd/tests/test_sdd_seal.py`, `sdd/tests/test_install_sh.py`, `sdd/docs/ROADMAP.md` (13.3 / 13.4), `sdd/CHANGELOG.md`.
+
+---
+
 ## D-062 — La sobreescritura ponderada por riesgo llega a Spec: el silencio protector también decide en tu nombre
 
 - **Fecha:** 2026-09-09 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-024]] (el principio general que no se heredó), [[D-061]] (que creó la línea objetiva: `Estado: VALIDADO`), [[D-045]]/[[D-026]] (dónde vive un gate y quién lo presenta), [[D-025]], CU-3.a / CU-3.f.

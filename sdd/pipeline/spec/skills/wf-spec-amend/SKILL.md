@@ -69,6 +69,15 @@ Si la respuesta correcta contradice el PRD vigente o mueve algo entre MVP y fase
 
 **Caso dudoso = CAMBIO.** Ante cualquier duda sobre la frontera, escala a delta: el coste de un delta innecesario es minutos; el de una enmienda que era un cambio encubierto es un spec que miente.
 
+> **Aquí la anti-fabricación se sostiene con este gate, no con una marca ([[D-063]]).** La regla
+> general —lo que escribas y no trace a lo que te dijeron va anotado como asunción (SSoT:
+> `kb-gap-conventions`)— también rige esta escritura; lo que cambia es **el mecanismo**. En
+> `wf-spec-gap-resolve` hace falta una marca porque completa texto que nadie dictó; aquí no, porque
+> tienes algo más fuerte: **este gate deja fuera todo lo que el spec o el PRD no determinen** (eso
+> es CAMBIO, y se detiene) y el Paso 5 hace que **el humano confirme el texto final palabra por
+> palabra**. Si te descubres a punto de anotar una asunción para poder seguir, no la anotes: es la
+> señal de que esto no era una aclaración.
+
 ## Paso 5: Proponer la corrección y confirmar con el humano
 
 Presenta lado a lado:
@@ -100,9 +109,14 @@ Edición quirúrgica, mínima:
 - Incrementa la versión menor del spec.
 - Registra en el changelog (orden cronológico inverso):
   ```
-  - vX.Y (YYYY-MM-DD) — E-00X: aclaración CA-XXX desde T-00X — <una línea: qué se aclaró>.
+  - vX.Y (YYYY-MM-DD) — E-00X: aclaración CA-XXX desde T-00X — <qué queda fijado> (ya determinado por <dónde: el CA, otro CA, el PRD>).
   ```
   (sin `--from-task`, usa `desde implementación`).
+
+  **La entrada dice qué se fijó y contra qué traza, no solo que hubo enmienda ([[D-063]]).**
+  *"aclaración CA-004"* no es trazabilidad: no deja comprobar después que era una aclaración y no
+  una decisión. Si al escribir esta línea no sabes nombrar de dónde sale el dato que fijaste,
+  entonces no estaba determinado — y el Paso 4 dice que eso es un CAMBIO, así que vuelve a él.
 
 ## Paso 8: Revisión scoped del plan (cerrar el stale puntual)
 

@@ -249,6 +249,77 @@ class SealSpecTest(unittest.TestCase):
         self.assertIn("P-011", r.stdout)
         self.assertIn("Estado: BORRADOR", p.read_text(encoding="utf-8"))
 
+    # --- D-063: toda asuncion aplicada en nombre del usuario deja rastro ---
+
+    INFO_GAP = ("\n## Items Pendientes\n\n### [P-020][INFORMATIVO] Formato de la fecha\n"
+                "- **Contexto**: no se dice como se muestra\n"
+                "- **Respuesta**: _(pendiente)_\n"
+                "- **Asunción por defecto**: formato local corto.\n")
+
+    def test_applied_assumption_without_record_blocks(self):
+        """Un [INFORMATIVO] sin responder YA decidio en nombre del usuario.
+
+        Su asuncion por defecto entra en los CAs como si alguien la hubiera
+        elegido; sellar sin que eso sea visible es declarar validada una
+        decision de producto que nadie vio.
+        """
+        p = self.spec(self.INFO_GAP)
+        r = self.run_seal(p, "--seal")
+        self.assertEqual(r.returncode, 2, r.stdout)
+        self.assertIn("P-020", r.stdout)
+        self.assertIn("Estado: BORRADOR", p.read_text(encoding="utf-8"))
+
+    def test_applied_assumption_with_record_is_sealable(self):
+        """Mismo spec + la entrada que lo cita: sellable.
+
+        El delta importa: sin este caso la condicion podria estar bloqueando
+        por otro motivo y pareceria que funciona (leccion de D-037).
+        """
+        p = self.spec(self.INFO_GAP + "\n## Asunciones Aplicadas\n\n"
+                      "- **[A-001]** (sobre [P-020], que nace en este spec): formato local corto.\n")
+        r = self.run_seal(p, "--seal")
+        self.assertEqual(r.returncode, 0, r.stdout)
+        self.assertIn("Estado: VALIDADO", p.read_text(encoding="utf-8"))
+
+    def test_answered_informative_needs_no_record(self):
+        """Si alguien lo decidio de verdad, no hay asuncion que documentar."""
+        p = self.spec("\n## Items Pendientes\n\n### [P-021][INFORMATIVO] Decidido\n"
+                      "- **Respuesta**: se muestra en formato ISO.\n"
+                      "- **Asunción por defecto**: formato local corto.\n")
+        self.assertEqual(self.run_seal(p, "--seal").returncode, 0)
+
+    def test_record_for_another_gap_does_not_count(self):
+        """La entrada tiene que citar EL gap, no valer como coartada generica."""
+        p = self.spec(self.INFO_GAP + "\n## Asunciones Aplicadas\n\n"
+                      "- **[A-001]** (sobre [P-099], que vive en `prd/prd_analysis.md`): otra cosa.\n")
+        r = self.run_seal(p, "--seal")
+        self.assertEqual(r.returncode, 2, r.stdout)
+        self.assertIn("P-020", r.stdout)
+
+    def test_unparseable_assumption_section_is_denied_not_assumed(self):
+        """Guarda de vacuidad (D-037): no des por documentado lo que no parseas.
+
+        Modo de fallo real (pasada 12 de CU-3.a): un spec escribio sus bloques
+        como vinetas y el script dejo de verlos. Si la seccion esta pero no se
+        le reconoce ninguna entrada, se deniega — no se asume que este bien.
+        """
+        p = self.spec(self.INFO_GAP + "\n## Asunciones Aplicadas\n\n"
+                      "Se asumio el formato local corto para P-020.\n")
+        r = self.run_seal(p, "--seal")
+        self.assertEqual(r.returncode, 2, r.stdout)
+        self.assertIn("no se ha sabido", r.stdout)
+
+    def test_versioned_assumption_section_counts(self):
+        """wf-spec-delta escribe `## Asunciones Aplicadas (v1.1)` — tambien vale."""
+        p = self.spec(self.INFO_GAP + "\n## Asunciones Aplicadas (v1.1)\n\n"
+                      "- **[A-003]** (sobre [P-020]): formato local corto.\n")
+        self.assertEqual(self.run_seal(p, "--seal").returncode, 0)
+
+    def test_spec_without_informative_gaps_is_unaffected(self):
+        """Sin gaps informativos la condicion no aplica: nada que documentar."""
+        p = self.spec()
+        self.assertEqual(self.run_seal(p, "--seal").returncode, 0)
+
     def test_incompleto_blocks(self):
         p = self.spec("\n> ⚠ [INCOMPLETO] — Pendiente de gap(s): [P-011].\n")
         self.assertEqual(self.run_seal(p, "--seal").returncode, 2)

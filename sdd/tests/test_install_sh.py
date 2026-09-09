@@ -397,6 +397,37 @@ class InstallAllTest(InstallBase):
             self.assertIn("kb-spec-expert", body,
                           f"{agent} no carga kb-spec-expert: la norma de D-055 no le llega")
 
+    def test_antifabrication_reaches_every_spec_writer(self):
+        """D-063: la obligacion de marcar rige cada escritura, no solo la generacion.
+
+        Un invariante mantenido por un workflow no es un invariante del
+        artefacto (D-039, que lo aprendio en el PRD). Sobre un spec escriben
+        cuatro; `gap-resolve` y `amend` no sabian que la regla existia.
+        La SSoT viaja en `kb-gap-conventions`, que entra en la linea 1 del
+        contexto de los agentes de Spec por su `skills:` (D-055).
+        """
+        self.install("all")
+        kb = (self.skill_dir("kb-gap-conventions") / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("cada escritura", kb,
+                      "kb-gap-conventions no porta la norma de D-063")
+        for writer in ("wf-spec-fast-track", "wf-spec-delta",
+                       "wf-spec-gap-resolve", "wf-spec-amend"):
+            self.assertIn(writer, kb,
+                          f"la tabla de escritores del spec no nombra a {writer} (D-063)")
+        # El agente que ejecuta esas skills tiene que cargar la KB, o no llega.
+        writer_agent = (self.claude / "agents" / "sdd-spec-writer.md").read_text(encoding="utf-8")
+        self.assertIn("kb-gap-conventions", writer_agent,
+                      "sdd-spec-writer no carga kb-gap-conventions: la norma no le llega")
+        # gap-resolve completa texto que nadie dicto -> necesita la marca.
+        gr = (self.skill_dir("wf-spec-gap-resolve") / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("Asunciones Aplicadas", gr,
+                      "wf-spec-gap-resolve no obliga a anotar lo que completa (D-063)")
+        self.assertIn("D-063", gr)
+        # amend NO usa marca: su mecanismo es el gate + la confirmacion humana.
+        am = (self.skill_dir("wf-spec-amend") / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("D-063", am,
+                      "wf-spec-amend no declara como sostiene la anti-fabricacion")
+
     def test_spec_overwrite_gate_is_risk_weighted(self):
         """D-062: regenerar un spec se pondera por su estado, como el PRD (D-024).
 
