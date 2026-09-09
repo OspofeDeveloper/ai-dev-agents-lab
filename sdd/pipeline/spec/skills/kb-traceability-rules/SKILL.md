@@ -105,21 +105,24 @@ Cuando una **aclaración** de un CA (la intención no cambia; solo se precisa te
 
 ## Regla 10: Atribución de aprobación humana en los gates de sellado (`Aprobado por`)
 
-Los tres gates donde el pipeline sella el avance de fase —`wf-prd-review` (PRD), `wf-plan-validate` (Plan), `wf-qa-verify` (QA)— registran **quién aprobó el gate** en el header del artefacto. Esto da trazabilidad de autoría en proyectos multi-desarrollador. Esta regla es la SSoT del convenio; las KBs de fase (`kb-prd-expert`, `kb-plan-expert`, `kb-qa-expert`) la referencian, no la redefinen.
+Los **cuatro** gates donde el pipeline sella el avance de fase —`wf-prd-review` (PRD), `wf-spec-validate` (Spec), `wf-plan-validate` (Plan), `wf-qa-verify` (QA)— registran **quién aprobó el gate** en el header del artefacto. Esto da trazabilidad de autoría en proyectos multi-desarrollador. Esta regla es la SSoT del convenio; las KBs de fase (`kb-prd-expert`, `kb-spec-expert`, `kb-plan-expert`, `kb-qa-expert`) la referencian, no la redefinen.
+
+> **Esta lista se quedó obsoleta en silencio, y por eso ahora tiene backstop ([[D-065]]).** Decía *"los tres gates"* porque se escribió cuando el spec no sellaba nada. [[D-061]] le dio estado operativo y **nadie volvió a esta regla**: durante ese tiempo el spec fue el único artefacto que llegaba a `VALIDADO` sin que constara nadie, mientras el plan derivado de él sí exigía un nombre. Una enumeración que gobierna conducta no se mantiene sola: `test_install_sh.py` comprueba que los cuatro gates siguen nombrados aquí.
 
 ```
 Aprobado por: <nombre> [(<rol>)] (<YYYY-MM-DD>)
 ```
 
 - **Qué es**: registro del checkpoint humano del gate — **quién** aprobó. El valor prioritario es la **identidad de la persona** (nombre); el rol es **opcional** y complementario (`Oscar Pozo (Product Owner) (2026-06-09)`). Un rol pelado (`PM`) no identifica a nadie en un equipo con varios: por eso el nombre es lo que da la trazabilidad de autoría que persigue esta regla ([[D-027]]).
-- **Dato humano, no verificable**: a diferencia del `derived_from_prd_hash` (Regla 1) o del `Estado:` del plan, `Aprobado por` **no es mecánicamente verificable** — ningún script lo escribe ni lo valida. Es el mismo tipo de anotación de header que escribe el orquestador que la `Aprobada por` per-TD de la deuda técnica del plan (`kb-plan-expert`), distinta del sello operativo.
-- **Único escritor**: el **orquestador/workflow del gate**, en el momento de aprobar, con la fecha real de su contexto. `sdd-seal.py` y los gates **no lo tocan** (no es verificable). Esto invierte el reparto autor≠sellador de las Reglas 1 y 9: aquí no hay verificador mecánico porque no hay nada mecánico que verificar.
+- **Dato humano, no verificable**: a diferencia del `derived_from_prd_hash` (Regla 1) o del `Estado:` del plan, el **valor** de `Aprobado por` **no es mecánicamente verificable** — ningún script comprueba que ese nombre sea quien dice ser. Es distinto del sello operativo, y del mismo tipo que la `Aprobada por` per-TD de la deuda técnica del plan.
+- **Quién lo captura y quién lo estampa son dos cosas ([[D-065]]).** Lo **captura** el workflow del gate, preguntando (ver abajo). Lo **estampa en el artefacto** un script — `sdd-prd-apply.py --seal "<valor>"` en el PRD, `sdd-seal.py … --seal --approved-by "<valor>"` en el Spec—, porque el hilo principal no escribe contenido en un artefacto ([[D-060]]). Que el valor no sea verificable no significa que main tenga que escribirlo: el script transcribe un dato que recibe, no lo juzga. **Plan y QA siguen escribiéndolo desde el workflow** por precedencia histórica; unificarlos es ítem de ROADMAP, no una licencia para copiar ese patrón en un gate nuevo.
 - **Captura de la identidad**: el workflow la pregunta con `AskUserQuestion` **precargando el nombre con `git config user.name`** como default (misma filosofía que capturar el SHA en `sdd-release.py`: no teclear lo que git ya sabe), con el **rol por fase como opcional**. El usuario confirma el nombre, lo cambia o añade rol; si git no da nombre, cae al rol por defecto. **No autoaprobar**: si el usuario no responde, no se escribe la línea.
 - **Solo cuando el gate PASA**: se escribe únicamente con resultado positivo del gate. Si el gate no pasa, la línea **no** se escribe.
 
 | Gate | Workflow | Default rol | Se escribe cuando | NO se escribe cuando |
 |---|---|---|---|---|
 | PRD | `wf-prd-review` | `PM` / `Product Owner` | veredicto `LISTO` | `LISTO_CON_AJUSTES`, `NO_LISTO` |
+| Spec | `wf-spec-validate` | `Product Owner` / `Analista` | `sdd-seal.py spec --check` exit 0 y sin hallazgos bloqueantes del auditor | exit 2, o hallazgos bloqueantes (`BORRADOR`) |
 | Plan | `wf-plan-validate` | `Tech Lead` | `sdd-seal.py --seal` exit 0 (plan `VALIDADO`) | exit 2 (`BORRADOR`) |
 | QA | `wf-qa-verify` | `QA` | veredicto `APTO` o `APTO_CON_RESERVAS` | `NO_APTO` |
 

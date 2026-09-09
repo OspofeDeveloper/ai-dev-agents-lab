@@ -2,6 +2,17 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.103.0 — 2026-09-09
+
+**Revisión PRD↔Spec: tres asimetrías cerradas, y el detector que las encontró** — [[DECISIONS D-064]], [[DECISIONS D-065]], [[DECISIONS D-066]]. Comparando la fase PRD (cerrada) con la fase Spec, norma a norma: qué decisión cita cada fichero, dónde corre cada skill, qué verificador determinista tiene una fase y la otra no.
+
+- 🔴 **Diez gates escritos donde no pueden presentarse.** [[DECISIONS D-062]] arregló dos; había **cuatro más en el mismo directorio** (`wf-spec-analyze`, `wf-spec-discover`, `wf-spec-conflict`, `wf-spec-readiness`) y seis en Design/Plan/Tasks. Nadie los veía porque `FORK-ASKUSER-CONFLICT` dispara con el **nombre literal de la tool** y estos preguntan **en prosa**: el detector vigilaba la cita, no la conducta. Regla nueva **`FORK-CONFIRM-GATE`** (blocking), delta **10 → 0** — y encontró uno (`wf-design-intake`) que el barrido a mano no había visto.
+- ⚠ **Arreglados según lo que hay que perder, no con plantilla única.** Donde el artefacto guarda trabajo humano o estado —respuestas de un análisis, `F-00X` que los specs ya citan, un plan validado, tasks en curso, los `Estado` de un qa plan— la skill **para y reporta**, y el override `--allow-overwrite-*` lo arma el usuario en el gate de quien sí puede preguntar. En los dos **informes derivados** el gate **se quita**: no protegía nada.
+- 🔴 **Un spec se sellaba sin que constara quién lo validó.** `kb-traceability-rules` Regla 10 —que vive en la fase Spec— enumeraba *"los **tres** gates de sellado"* y **Spec no estaba en su propia lista**: se escribió antes de que el spec tuviera sello, y nadie volvió a ella. ⚠ `wf-spec-validate` pasa al **hilo principal** (como los otros tres gates), delega la auditoría y captura la identidad; `sdd-seal.py … --seal --approved-by "<valor>"` la estampa. Con backstop: la enumeración ya no se mantiene sola.
+- ⚠ **La cabecera del spec ahora se verifica.** `Feature ID` y `Origen de alcance` los leen tres scripts, y no los validaba nadie: `parse_spec()` devuelve `None` sin `Feature ID`, así que el spec **desaparecía del índice entero, sin un aviso**. Condición nueva en `sdd-seal.py spec --check`, `sdd-features-index.py` nombra en alto lo que no pudo indexar, y la plantilla de caracterización declara los dos campos —no los tenía, aunque su workflow dijera que sí—.
+- **Un hueco de PRD, no de Spec:** `wf-prd-create` corría en main declarando `[Read, Write, …]` y era la única de las cuatro workflows-en-main sin la mitad de escritura de la norma. Tenía la de lectura desde siempre.
+- **Aprendizaje:** un barrido a mano no cierra una clase de bug, ni hecho a conciencia con el patrón delante. Lo que lo cierra es un detector — y para escribirlo hay que preguntarse **qué forma tiene la conducta en el mundo**, no qué palabra la nombraría.
+
 ## 0.102.0 — 2026-09-09
 
 **La anti-fabricación llega a Spec** — [[DECISIONS D-063]]. [[DECISIONS D-039]] estableció en el PRD que la regla **no caduca al sellar**: rige cada escritura, porque *"un invariante mantenido por un workflow no es un invariante del artefacto — pregúntate quién más escribe ese fichero"*. En Spec nunca se heredó: sobre un spec escriben **cuatro** workflows y la regla la conocían **dos**.

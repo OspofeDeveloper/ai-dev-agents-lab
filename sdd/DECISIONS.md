@@ -6,6 +6,81 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-066 — La cabecera del spec se verifica: el índice omitía en silencio lo que no sabía leer
+
+- **Fecha:** 2026-09-09 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-046]] (no encontrarlo no puede ser advertencia blanda), `sdd-prd-frontmatter.py` (el precedente en PRD), [[D-060]] (main no redacta), CU-3.a.
+
+**Contexto.** Tercer hallazgo de la revisión PRD↔Spec. El PRD tiene `sdd-prd-frontmatter.py`, que existe —según su propio docstring— porque *"al ser disciplina conductual, el agente omite algún campo de forma intermitente"*, y lo invocan **create y review**. La cabecera del spec **la consumen tres scripts** (`sdd-features-index.py`, `sdd-project-status.py`, `sdd-release.py`) y **no la validaba nadie**.
+
+Lo que lo vuelve grave no es la ausencia del validador, sino cómo falla: `parse_spec()` **devuelve `None`** si no encuentra `Feature ID`, así que el spec **desaparece del índice entero**. No hay error, no hay aviso: sale un `_features.md` con menos features y apariencia de correcto. Es la forma exacta del incidente ya medido en la campaña —el índice mostrando 3 features mientras la conversación narraba 9— y es justo lo que [[D-046]] declaró inaceptable.
+
+Y había una segunda pieza, invisible hasta cruzar las dos fuentes: **`kb-spec-characterization` —la SSoT de la cabecera de caracterización— no declaraba `Feature ID` ni `Origen de alcance`**, aunque `wf-spec-from-code` dijera en prosa que el header los lleva. Dos sitios describiendo la misma cabecera y contradiciéndose; un spec escrito según la plantilla se caía del índice. Además `header_field()` solo leía la forma pelada `> key: valor` y esa plantilla escribe en negrita, así que aunque los campos hubieran estado, no se habrían leído.
+
+**Decisión.** Tres piezas. (1) **`sdd-seal.py spec --check` gana la condición 8b**: la cabecera declara `Feature ID` y `Origen de alcance`, o no se sella — el análogo de `sdd-prd-frontmatter.py`, alojado en el gate que ya existe en vez de en un script nuevo. (2) **`sdd-features-index.py` deja de omitir en silencio**: nombra en `stderr` cada spec que no pudo indexar y por qué, siguiendo el patrón que ya usaba para *"sin discovery"*. (3) **La plantilla de caracterización declara los dos campos** y `header_field()` tolera la negrita.
+
+De paso, el hueco que la revisión encontró **en PRD**, no en Spec: `wf-prd-create` corría en el hilo principal declarando `[Read, Write, …]` y era la única de las cuatro workflows-en-main sin la norma *"y tampoco lo escribes tú"*. Tenía la mitad de lectura y le faltaba la de escritura.
+
+**Alternativas descartadas.**
+- *Un script propio, calcado de `sdd-prd-frontmatter.py`* → superficie nueva para una comprobación de tres líneas, cuando el gate de sellado ya lee el fichero y ya deniega. El PRD lo tiene aparte por historia, no por diseño.
+- *Que `parse_spec` invente un ID cuando falta* → convierte un artefacto incompleto en uno **incorrecto**, que es peor: el índice diría algo falso con total aplomo.
+- *Validar la cabecera entera (los 12 campos de la plantilla)* → falsos negativos garantizados: la cabecera de caracterización es legítimamente distinta de la de fast-track. Se exigen solo los dos campos que **algún consumidor lee**, que es el criterio que hace la regla defendible.
+
+**Consecuencias / aprendizaje.** Un campo de cabecera no es documentación: es la **entrada de otro programa**, y la lista de campos obligatorios se deriva de quién los lee, no de lo bonita que quede la plantilla. Y el corolario de [[D-046]]: cuando un parser devuelve `None` ante lo que no entiende, **el silencio se propaga aguas abajo con apariencia de dato**. Validado contra los cuatro specs reales de la campaña: los cuatro declaran ambos campos, así que la condición no falsea las pasadas.
+
+**Referencias.** `sdd/scripts/sdd-seal.py` (condición 8b), `sdd/scripts/sdd-features-index.py` (`header_field`, `SPECS_SIN_CABECERA`), `sdd/pipeline/spec/skills/kb-spec-characterization/SKILL.md`, `sdd/pipeline/prd/skills/wf-prd-create/SKILL.md`, `sdd/tests/test_sdd_seal.py`, `sdd/CHANGELOG.md`.
+
+---
+
+## D-065 — `wf-spec-validate` sale del fork: el único gate de sellado que no registraba a nadie
+
+- **Fecha:** 2026-09-09 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-027]] (identidad del aprobador), [[D-061]] (el spec gana sello), [[D-045]]/[[D-040]] (el mismo movimiento, dos veces antes), [[D-060]] (main no redacta), CU-3.f / CU-3.g.
+
+**Contexto.** `kb-traceability-rules` Regla 10 es la SSoT de la atribución de aprobación humana y empezaba diciendo *"los **tres** gates donde el pipeline sella el avance de fase — `wf-prd-review` (PRD), `wf-plan-validate` (Plan), `wf-qa-verify` (QA)"*. Esa regla **vive en la fase Spec** y Spec **no estaba en su propia lista**.
+
+Se escribió cuando el spec no sellaba nada, así que era correcta. [[D-061]] le dio estado operativo y nadie volvió a ella: desde entonces el spec era el **único artefacto que llegaba a `VALIDADO` sin que constara nadie**, mientras el plan derivado de él sí exigía un nombre. La causa inmediata es estructural: `wf-spec-validate` era `context: fork`, y capturar la identidad exige preguntar. De los cuatro gates de sellado, era el único fork.
+
+**Decisión.** `wf-spec-validate` pasa al **hilo principal**, con la forma exacta de `wf-plan-validate`: orquestador puro que delega la auditoría a `sdd-spec-auditor` por la tool `Agent` con `run_in_background: false`, presenta el informe, corre el `--check` y, solo si pasa, captura la identidad y sella. Es el mismo movimiento que [[D-040]] hizo con `wf-prd-change` y [[D-045]] con `wf-spec-features-first` — tercera vez, y la razón siempre es la misma: **un gate se escribe donde puede presentarse**.
+
+Y Regla 10 se corrige en dos frentes. Pasa a enumerar **cuatro** gates con backstop en `test_install_sh.py` (una enumeración que gobierna conducta no se mantiene sola). Y separa dos cosas que conflaba: **quién captura** el dato humano (el workflow, preguntando) y **quién lo estampa** en el artefacto (un script). Decía *"ningún script lo escribe"*, cuando el PRD **ya lo escribía por script** desde siempre (`sdd-prd-apply.py --seal "<valor>"`). El spec sigue ese precedente con `sdd-seal.py … --seal --approved-by "<valor>"`, y así main no escribe contenido en un artefacto ([[D-060]]).
+
+**Alternativas descartadas.**
+- *Que el fork reporte y main estampe la línea* → main escribiendo contenido en el artefacto, justo lo que [[D-060]] cierra. Y deja el gate a merced de que el orquestador improvise la pregunta, que es lo que [[D-045]] midió fallando.
+- *Dejar el spec sin atribución («total, no es verificable»)* → confunde *no verificable* con *no necesario*. La Regla 10 existe para trazabilidad de autoría en equipo, y el eslabón que se saltaba es el que decide si un plan puede construirse encima.
+- *Que `sdd-seal.py` valide el nombre* → no hay nada que validar; el script transcribe un dato que recibe. Esa es exactamente la frontera que la regla ahora explicita.
+
+**Consecuencias / aprendizaje.** Dos. (a) **Una enumeración dentro de una norma es deuda con fecha de caducidad**: «los tres gates» fue verdad hasta que dejó de serlo, y no hubo señal. Toda lista que gobierne conducta necesita backstop o derivarse del árbol. (b) *No verificable mecánicamente* dice algo sobre el **valor**, no sobre **quién lo escribe** — conflar las dos cosas es lo que dejó a Plan y QA escribiendo desde el workflow; unificarlos queda como ítem de ROADMAP, no como patrón a copiar.
+
+**Referencias.** `sdd/pipeline/spec/skills/wf-spec-validate/SKILL.md`, `sdd/pipeline/spec/skills/kb-traceability-rules/SKILL.md` (Regla 10), `sdd/scripts/sdd-seal.py` (`--approved-by`), `sdd/tests/test_sdd_seal.py`, `sdd/tests/test_install_sh.py`, `sdd/CHANGELOG.md`.
+
+---
+
+## D-064 — El linter vigilaba la cita, no la conducta: diez gates escritos donde no pueden presentarse
+
+- **Fecha:** 2026-09-09 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-062]] (que arregló dos de los diez), [[D-045]]/[[D-002]] (fork ⊥ preguntar), [[D-016]] (barrido exhaustivo por construcción), [[D-024]] (ponderación por riesgo), [[D-026]] (el override lo arma el usuario).
+
+**Contexto.** [[D-062]] arregló el gate de sobreescritura de `wf-spec-fast-track` y `wf-spec-from-code`. Al comparar la fase PRD con la fase Spec aparecieron **cuatro más en el mismo directorio** —`wf-spec-analyze`, `wf-spec-discover`, `wf-spec-conflict`, `wf-spec-readiness`—, todos `context: fork`, todos diciendo *"pregunta al usuario"*. Mi propio barrido, hecho con la clase de bug ya identificada, se quedó corto **dentro de su propia fase**.
+
+La razón de que nadie los viera está en el linter, y es el hallazgo que de verdad importa: `FORK-ASKUSER-CONFLICT` es **blocking** y daba **0**, porque dispara con el **nombre literal de la tool**. Un fork que pregunta en prosa era invisible. Existía además `FORK-INTERVIEW` como complemento heurístico —también **0**—, afilado en [[D-045]] para la forma «entrevista secuencial» y ciego a la forma «gate de sobreescritura», que es la común. **El detector vigilaba la cita, no la conducta.**
+
+Al escribir la regla nueva, el conteo real fue **10**, no 6: aparecieron los seis de Design/Plan/Tasks que ya estaban registrados en el ROADMAP **y uno más** (`wf-design-intake`) que el barrido a mano no había encontrado. La regla halló lo que la revisión cuidadosa se dejó.
+
+**Decisión.** Regla nueva **`FORK-CONFIRM-GATE` (blocking)**: un `wf-*` con `context: fork` cuyo cuerpo **dicte** un gate de confirmación en prosa. Patrones de alta precisión a propósito —cada alternativa es una instrucción de preguntar, nunca una descripción de que no se puede—, para que las notas explicativas de [[D-062]] no casen. Delta medido: **10 → 0**.
+
+Y los diez se arreglan **según lo que haya que perder**, no con una plantilla única:
+- **Artefacto con trabajo humano o estado dentro** (`_analysis.md` con respuestas, `_discovery.md` cuyos `F-00X` citan los specs, plan validado, tasks con estado de ejecución, qa plan con sus `Estado`, `DESIGN.md`, prototipos, brief) → **para y reporta** `STOP_ARTEFACTO_EXISTE`, y el override `--allow-overwrite-*` lo arma el usuario en el gate de quien sí puede preguntar ([[D-026]]). El mensaje de parada **carga el dato que hace útil al gate**: cuántas respuestas se perderían, que los IDs están citados aguas abajo, qué estado se descarta.
+- **Informe derivado sin decisiones humanas dentro** (`_conflict_report.md`, `_readiness_report.md`) → **el gate se quita**. No protegía nada: quien lanza el flujo los regenera en cada pasada. Un gate que no protege trabajo es fricción, y desde un fork además es fricción imposible.
+
+**Alternativas descartadas.**
+- *Ampliar `FORK-INTERVIEW` (warning) en vez de una regla nueva* → mezcla dos cosas con precisión distinta. La heurística de entrevista tolera falsos positivos y por eso es warning; un gate de confirmación en un fork es un defecto **cierto**. Separarlas deja que cada una tenga la severidad que merece.
+- *Aplicar a los diez la forma de [[D-062]]* → habría metido un gate ceremonial en dos informes que nadie edita a mano. La pregunta que ordena esto no es "¿existe?" sino "¿qué se pierde?".
+- *Arreglar solo los cuatro de Spec y dejar los seis restantes al ítem de ROADMAP* → imposible sin desactivar la regla: `--check` sale 2 con cualquier blocking. Y una regla que no muerde es teatro.
+
+**Consecuencias / aprendizaje.** Tres. (a) **Un detector que busca la cita de una norma no detecta su incumplimiento**: `FORK-ASKUSER-CONFLICT` daba 0 sobre un árbol con diez violaciones reales. Al escribir un check hay que preguntarse qué forma tiene la conducta en el mundo, no qué palabra la nombraría. (b) **Un barrido a mano no cierra una clase de bug**, ni siquiera hecho a conciencia y con el patrón delante — [[D-016]] ya lo dijo (*"exhaustivo por construcción"*) y esta vez la prueba es directa: la regla encontró uno que yo no. (c) La lección de [[D-024]] se afina: el valor de un gate es la información que carga, y **un artefacto derivado no merece gate ninguno**.
+
+**Referencias.** `sdd/scripts/sdd-structural-lint.py` (`FORK-CONFIRM-GATE`), los diez `SKILL.md` de spec/design/plan/tasks, `sdd/pipeline/orchestration.md` (familia `--allow-overwrite-*`), `sdd/docs/ROADMAP.md` (13.2), `sdd/CHANGELOG.md`.
+
+---
+
 ## D-063 — La anti-fabricación llega a Spec: rige cada escritura, y el sello exige que la asunción se vea
 
 - **Fecha:** 2026-09-09 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-039]] (el precedente en PRD, declarado y no heredado), [[D-061]] (el sello del spec, que da dónde enganchar el backstop), [[D-057]] (un gap tiene un solo bloque respondible), [[D-037]] (guarda de vacuidad), [[D-055]] (qué carril llega al escritor a tiempo), CU-3.a / CU-3.f.

@@ -218,8 +218,9 @@ class SealSpecTest(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def spec(self, extra="", estado="BORRADOR"):
-        body = (f"# Spec: x\n\n> Estado: {estado}\n> status_sync: unknown\n\n"
+    def spec(self, extra="", estado="BORRADOR", header=True):
+        cab = ("> Feature ID: F-001\n> Origen de alcance: Documento fuente\n" if header else "")
+        body = (f"# Spec: x\n\n> Estado: {estado}\n{cab}> status_sync: unknown\n\n"
                 "## Historias\n\n### HU-001: Algo\n\n"
                 "## Criterios\n\n### CA-001: Se cumple ← HU-001\n" + extra)
         p = self.dir / "f_spec.md"
@@ -228,6 +229,10 @@ class SealSpecTest(unittest.TestCase):
 
     def run_seal(self, path, mode):
         return run_script("sdd-seal.py", "spec", str(path), mode)
+
+    def run_seal_approved(self, path, valor):
+        return run_script("sdd-seal.py", "spec", str(path), "--seal",
+                          "--approved-by", valor)
 
     def test_clean_spec_is_sealable(self):
         p = self.spec()
@@ -248,6 +253,99 @@ class SealSpecTest(unittest.TestCase):
         self.assertEqual(r.returncode, 2)
         self.assertIn("P-011", r.stdout)
         self.assertIn("Estado: BORRADOR", p.read_text(encoding="utf-8"))
+
+    # --- D-066: la cabecera declara lo que los derivados leen ---
+
+    def test_header_fields_missing_blocks(self):
+        """Sin `Feature ID` / `Origen de alcance` el spec no se sella.
+
+        Su ausencia no rompe nada de forma visible: `sdd-features-index.py` no
+        los emite y la feature sale incompleta —o no sale— de un indice con
+        apariencia de correcto. Es el modo de fallo que D-046 declaro inaceptable.
+        """
+        p = self.spec(header=False)
+        r = self.run_seal(p, "--seal")
+        self.assertEqual(r.returncode, 2, r.stdout)
+        self.assertIn("Feature ID", r.stdout)
+        self.assertIn("Origen de alcance", r.stdout)
+
+    def test_header_fields_present_is_sealable(self):
+        """El delta: mismo spec con la cabecera completa, sellable."""
+        self.assertEqual(self.run_seal(self.spec(), "--seal").returncode, 0)
+
+    def test_header_fields_accept_the_bold_form(self):
+        """La cabecera de caracterizacion los escribe en negrita; tambien valen."""
+        p = self.dir / "f_spec.md"
+        p.write_text("# Spec: x\n\n> **Estado:** BORRADOR\n> **Feature ID:** F-C-001\n"
+                     "> **Origen de alcance:** characterization\n\n"
+                     "## H\n\n### HU-001: a\n\n### CA-001: b \u2190 HU-001\n",
+                     encoding="utf-8")
+        r = self.run_seal(p, "--seal")
+        self.assertEqual(r.returncode, 0, r.stdout)
+
+    # --- D-065: quien valido el spec consta, y lo estampa el script ---
+
+    def test_seal_stamps_human_approval(self):
+        """Regla 10: el gate de sellado registra QUIEN aprobo.
+
+        Lo escribe el script, no el hilo principal — mismo reparto que el PRD
+        (`sdd-prd-apply.py --seal "<valor>"`), asi main no escribe contenido en
+        el artefacto (D-060).
+        """
+        p = self.spec()
+        r = self.run_seal_approved(p, "Ana Ruiz (QA) (2026-09-09)")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        text = p.read_text(encoding="utf-8")
+        self.assertIn("Estado: VALIDADO", text)
+        self.assertIn("Aprobado por: Ana Ruiz (QA) (2026-09-09)", text)
+
+    def test_approval_line_clones_the_estado_format(self):
+        """La linea nueva calca el formato de `Estado:`, no lo reconstruye."""
+        for raw in ("> Estado: BORRADOR", "- Estado: BORRADOR",
+                    "**Estado:** BORRADOR", "**Estado: BORRADOR**"):
+            p = self.dir / "f_spec.md"
+            p.write_text("# Spec: x\n\n" + raw + "\n> Feature ID: F-001\n"
+                         "> Origen de alcance: Documento fuente\n"
+                         "> status_sync: unknown\n\n"
+                         "## H\n\n### HU-001: a\n\n### CA-001: b \u2190 HU-001\n",
+                         encoding="utf-8")
+            self.run_seal_approved(p, "Ana (2026-09-09)")
+            lines = p.read_text(encoding="utf-8").splitlines()
+            i = next(n for n, l in enumerate(lines) if "Estado" in l)
+            estado, aprobado = lines[i], lines[i + 1]
+            self.assertIn("Aprobado por", aprobado, f"no se estampo junto a {raw!r}")
+            # Mismo adorno: lo que rodea a la etiqueta es identico.
+            self.assertEqual(estado.split("Estado")[0], aprobado.split("Aprobado por")[0],
+                             f"el prefijo no se hereda con {raw!r}")
+            self.assertEqual(estado.endswith("**"), aprobado.endswith("**"),
+                             f"el sufijo no se hereda con {raw!r}")
+
+    def test_reseal_overwrites_the_approval_instead_of_duplicating(self):
+        p = self.spec()
+        self.run_seal_approved(p, "Ana (2026-09-09)")
+        self.run_seal_approved(p, "Luis (2026-09-10)")
+        text = p.read_text(encoding="utf-8")
+        self.assertEqual(text.count("Aprobado por"), 1, "se duplico la linea de aprobacion")
+        self.assertIn("Luis (2026-09-10)", text)
+
+    def test_seal_without_approval_leaves_the_line_untouched(self):
+        """Sellar sin el dato humano no lo inventa ni lo borra."""
+        p = self.spec()
+        self.run_seal_approved(p, "Ana (2026-09-09)")
+        run_script("sdd-seal.py", "spec", str(p), "--seal")
+        self.assertIn("Aprobado por: Ana (2026-09-09)", p.read_text(encoding="utf-8"))
+
+    def test_approval_needs_a_successful_seal(self):
+        """Un spec que no pasa las condiciones no tiene aprobacion que registrar."""
+        p = self.spec("\n> \u26a0 [INCOMPLETO] \u2014 pendiente.\n")
+        r = self.run_seal_approved(p, "Ana (2026-09-09)")
+        self.assertEqual(r.returncode, 2)
+        self.assertNotIn("Aprobado por", p.read_text(encoding="utf-8"))
+
+    def test_approved_by_only_with_seal(self):
+        r = run_script("sdd-seal.py", "spec", str(self.spec()), "--check",
+                       "--approved-by", "Ana")
+        self.assertEqual(r.returncode, 1, "deberia rechazarse: solo aplica con --seal")
 
     # --- D-063: toda asuncion aplicada en nombre del usuario deja rastro ---
 

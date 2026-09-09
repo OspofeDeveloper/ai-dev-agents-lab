@@ -2,7 +2,7 @@
 name: wf-spec-discover
 description: "Analiza un PRD e identifica features candidatas por cohesion funcional. Genera un _discovery.md con el mapa de features, scope por feature y shared models. No genera specs — solo el roadmap para ejecutar wf-spec-fast-track por feature."
 when_to_use: "Activa en frases como 'identifica features del PRD', 'descubre las features', 'que features tiene este PRD', 'mapa de features', 'features-first', 'que features hay en este documento'."
-argument-hint: "<prd_archivo.md> [--analysis <analysis.md>] [--allow-derived-scope-from-analysis]"
+argument-hint: "<prd_archivo.md> [--analysis <analysis.md>] [--allow-derived-scope-from-analysis] [--allow-overwrite-discovery]"
 effort: high
 allowed-tools: [Read, Write, Bash]
 context: fork
@@ -208,10 +208,15 @@ Antes de escribir, verifica si el archivo ya existe:
 ```bash
 !test -f "<path_calculado>" && echo "EXISTE" || echo "NO_EXISTE"
 ```
-Si ya existe → pregunta al usuario:
-> "Ya existe `<path>`. ¿Deseas regenerarlo?"
-- Si responde **no** → informa el path del artefacto existente y detén.
-- Si responde **sí** → continúa.
+- **`NO_EXISTE`** → sigue.
+- **`EXISTE` sin `--allow-overwrite-discovery`** → **detente sin escribir nada** y devuelve el bloqueo a quien te
+  lanzó, con veredicto operativo `STOP_ARTEFACTO_EXISTE`:
+  > "Ya existe `<path>`. Regenerarlo puede **renumerar los `F-00X`**, y los specs ya generados los citan en su cabecera: la trazabilidad quedaría apuntando a otra feature. No lo he tocado."
+- **`EXISTE` con `--allow-overwrite-discovery`** → sobreescribe y **dilo en tu informe final**.
+
+> **Por qué aquí no preguntas ([[D-064]]).** Corres en `context: fork`, y un subagente no puede
+> presentarle una elección al usuario: la instrucción que este paso tenía antes no era
+> ejecutable ([[D-045]]). Paras y reportas; el gate lo presenta quien puede ([[D-026]]).
 
 Escribe el artefacto generado en ese path.
 

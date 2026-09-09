@@ -2,7 +2,7 @@
 name: wf-spec-analyze
 description: "Recopila las decisiones de negocio que necesitan los Specs desde un PRD vigente: mapea que elementos del Spec saldran del PRD, detecta contaminacion tecnica y formula preguntas concretas. Genera un _analysis.md."
 when_to_use: "Activa en frases como 'prepara los inputs para los specs', 'que decisiones de negocio faltan para los specs', 'analiza este PRD para empezar los specs', 'genera el analisis previo al spec'."
-argument-hint: "<archivo.md>"
+argument-hint: "<archivo.md> [--allow-overwrite-analysis]"
 effort: high
 allowed-tools: [Read, Write, Bash]
 context: fork
@@ -179,10 +179,20 @@ Antes de escribir, verifica si el archivo ya existe:
 ```bash
 !test -f "<path_calculado>" && echo "EXISTE" || echo "NO_EXISTE"
 ```
-Si ya existe → pregunta al usuario:
-> "Ya existe `<path>`. ¿Deseas regenerarlo?"
-- Si responde **no** → informa el path del artefacto existente y detén.
-- Si responde **sí** → **rescata sus respuestas antes de pisarlo** (ver abajo) y continúa.
+- **`NO_EXISTE`** → sigue.
+- **`EXISTE` sin `--allow-overwrite-analysis`** → **detente sin escribir nada** y devuelve el bloqueo a quien te
+  lanzó, con veredicto operativo `STOP_ARTEFACTO_EXISTE`:
+  > "Ya existe `<path>` y contiene <N> respuesta(s) escritas. Regenerarlo las pisa, y son decisiones de negocio de una persona, no material regenerable. No lo he tocado."
+- **`EXISTE` con `--allow-overwrite-analysis`** → sobreescribe y **dilo en tu informe final**. Antes de escribir, **rescata sus respuestas** (ver abajo).
+
+> **Por qué aquí no preguntas ([[D-064]]).** Corres en `context: fork`, y un subagente no puede
+> presentarle una elección al usuario: la instrucción que este paso tenía antes no era
+> ejecutable ([[D-045]]). Paras y reportas; el gate lo presenta quien puede ([[D-026]]).
+
+El número de respuestas escritas te lo da el script, no tu lectura ([[D-042]]):
+```bash
+!python3 .sdd/scripts/sdd-analysis-gaps.py "<path>" --check --json
+```
 
 ### 7.1 Rescatar las respuestas antes de sobrescribir ([[D-051]])
 

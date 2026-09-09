@@ -2,7 +2,7 @@
 name: wf-design-intake
 description: "Cierra el DESIGN_BRIEF.md antes de generar el sistema visual: fija modo de decision, preset, familia visual, densidad, profundidad, motion y policy de referencias y autonomia. Delega a design-system-architect. Modos guided, hybrid y auto."
 when_to_use: "Activa con frases como 'cierra el brief de diseño', 'necesito el design brief', 'quiero definir el brief visual', 'preparar el brief antes de diseñar', 'genera el DESIGN_BRIEF.md'. No activa si ya existe un DESIGN_BRIEF.md y solo se quiere actualizar (usa wf-design-delta) ni para generar directamente el DESIGN.md sin brief (el brief es gate obligatorio)."
-argument-hint: "generate <feature_spec.md> [--prd <prd.md>] [--output DESIGN_BRIEF.md] [--mode guided|hybrid|auto] [--preset <name>] [--learn]"
+argument-hint: "generate <feature_spec.md> [--prd <prd.md>] [--output DESIGN_BRIEF.md] [--mode guided|hybrid|auto] [--preset <name>] [--learn] [--allow-overwrite-brief]"
 effort: high
 allowed-tools: [Read, Write, Bash, Agent]
 context: fork
@@ -50,9 +50,15 @@ Si no se paso, continua sin PRD. El PRD mejora la calidad del brief, pero no es 
    - En otro caso, usa `DESIGN_BRIEF.md` en la raiz del producto (el directorio que contiene `features/` si el spec esta dentro de `features/<nombre>/` — directamente o en su subcarpeta `spec/` —, el mismo directorio en otros casos).
 
 2. Comprobar si el archivo ya existe:
-   - **Si existe**: leelo completo. Pregunta al usuario:
-     > "Ya existe `DESIGN_BRIEF.md`. ¿Quieres (a) revisarlo y actualizar variables concretas, (b) sobrescribirlo desde cero, o (c) cancelar?"
-   - En modo `--mode auto` sin interaccion: por defecto `actualizar` preservando las variables ya cerradas y solo revisando consistencia.
+   - **Si existe**: leelo completo y **actualiza**, preservando las variables ya cerradas y revisando
+     solo consistencia. Ese es el comportamiento por defecto **siempre**, no solo en `--mode auto`:
+     es la via no destructiva, y las variables cerradas son decisiones de producto de una persona.
+   - **Rehacerlo desde cero** exige `--allow-overwrite-brief`. Sin ese flag no lo reescribas: si crees
+     que hay que rehacerlo, **dilo en tu informe** y que lo decida quien puede preguntar ([[D-026]]).
+
+> **Por qué aquí no preguntas ([[D-064]]).** Corres en `context: fork`, y un subagente no puede
+> presentarle una elección al usuario: la instrucción que este paso tenía antes no era
+> ejecutable ([[D-045]]). Paras y reportas; el gate lo presenta quien puede ([[D-026]]).
    - **Si no existe**: continua normal, lo crearas en el Paso 7.
 
 Pasa el contenido del brief existente (si lo hay) al agente como base. Cualquier variable que cambie debe registrarse en una nueva seccion `## Update log` con `[<fecha>] <variable>: <antes> -> <despues> — <motivo>` por parte del agente.

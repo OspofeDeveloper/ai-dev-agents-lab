@@ -21,6 +21,7 @@ Checks (cada finding: severidad, tipo, archivo:linea, mensaje):
   SKILL-REF-MISSING      [warning]   Token `kb-X`/`wf-X` en docs que no es una skill real.
   ALLOWED-TOOLS-MISMATCH [blocking/warning] frontmatter allowed-tools no cubre el body.
   FORK-ASKUSER-CONFLICT  [blocking]  wf con context: fork que declara/usa AskUserQuestion (un fork no puede preguntar).
+  FORK-CONFIRM-GATE      [blocking]  wf con context: fork que DICTA un gate de confirmacion en prosa ("pregunta al usuario", "[sobreescribir | cancelar]"): el gate no puede presentarse; para y reporta.
   FORK-INTERVIEW         [warning]   wf con context: fork que entrevista o presenta gate de confirmacion en prosa (sin declarar AskUserQuestion): mismo bug latente.
   AGENT-MEMORY-DECLARED  [blocking]  Agente (o la plantilla de agente) que declara `memory:`: el estado vive en los artefactos, no en la memoria del agente.
   USER-FACING-COMMAND    [warning]   mensaje al usuario con un `/wf-x` o un `wf-x` dentro: dictado (`> "..."`) o bajo "Informar al usuario". Los comandos son internos.
@@ -112,6 +113,18 @@ INTERVIEW_RE = re.compile(
     r"pregunta(?:r)? secuencialmente|una opci[oó]n a la vez|esperar respuesta|"
     r"antes de tocar ning|espera(?:r)?\s+confirmaci[oó]n",
     re.IGNORECASE)
+# Formas en PROSA de un GATE DE CONFIRMACION, dictadas en imperativo al agente.
+# Complementa a FORK-ASKUSER-CONFLICT, que solo ve el nombre literal de la tool:
+# un fork que dice "pregunta al usuario" tiene el mismo defecto y era invisible.
+# Alta precision a proposito — cada alternativa es una instruccion de PREGUNTAR,
+# nunca una descripcion de que no se puede preguntar (las notas de [[D-062]] dicen
+# "un subagente no puede presentarle una pregunta al usuario" y NO deben casar).
+FORK_CONFIRM_GATE_RE = re.compile(
+    r"(?:^|[.;:]|\u2192|\*\*)\s*pregunta(?:le)?\s+al\s+usuario"
+    r"|\bpregunta:\s*`?\["
+    r"|\[\s*sobre?escribir\s*\|\s*cancelar\s*\]"
+    r"|¿\s*Deseas\s+regenerar",
+    re.IGNORECASE | re.MULTILINE)
 AGENT_RE = re.compile(r"^agent:\s*\S+", re.MULTILINE)
 # Senal de que una skill SOSTIENE UN GATE: declara una escotilla `--allow-*`, que por
 # contrato ([[D-026]]) solo el usuario arma eligiendo — y elegir requiere preguntar.
@@ -412,6 +425,26 @@ def check_allowed_tools(findings):
                 "`context: fork` es incompatible con `AskUserQuestion`: un fork/subagente "
                 "no puede presentar preguntas al usuario. Quita `context: fork` — la skill "
                 "interactiva corre en el hilo principal y delega el trabajo pesado via `Agent`."))
+
+        # --- FORK-CONFIRM-GATE (blocking) ---
+        # Un `context: fork` no puede presentar una eleccion al usuario. Escribir
+        # el gate igualmente es PEOR que no tenerlo: parece que hay uno. Medido en
+        # [[D-062]] (fast-track y from-code) y de nuevo en la revision PRD<->Spec,
+        # que encontro cuatro mas — todos invisibles porque FORK-ASKUSER-CONFLICT
+        # solo mira el nombre de la tool y estos preguntan en prosa. La salida
+        # correcta es parar y reportar; el gate lo presenta quien puede ([[D-026]]).
+        if has_fork:
+            gate = FORK_CONFIRM_GATE_RE.search(body)
+            if gate:
+                lineno = body_start + body[:gate.start()].count("\n")
+                findings.append(Finding(
+                    "blocking", "FORK-CONFIRM-GATE", rp, lineno,
+                    f"`context: fork` dicta un gate de confirmacion en prosa "
+                    f"(\"{gate.group(0).strip()}\"): un subagente no puede presentarlo, asi que "
+                    "la instruccion no es ejecutable. Para y reporta el bloqueo a quien te "
+                    "lanzo, con un override `--allow-*` que arme el usuario en el gate de main "
+                    "([[D-026]]/[[D-062]]); o, si el artefacto es derivado y no guarda "
+                    "decisiones humanas, sobreescribe sin gate."))
 
         # --- FORK-INTERVIEW (warning) ---
         # Complemento heuristico de FORK-ASKUSER-CONFLICT: una wf-* con `context: fork`

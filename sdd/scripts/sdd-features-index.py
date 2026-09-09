@@ -171,8 +171,14 @@ def bullet(line_body: str, key: str) -> str | None:
 
 
 def header_field(text: str, key: str) -> str | None:
-    """Extrae `> key: valor` del header de un artefacto."""
-    m = re.search(r"^>\s*" + re.escape(key) + r"\s*:\s*(.*)$", text, re.MULTILINE)
+    """Extrae `> key: valor` del header de un artefacto.
+
+    Tolera la variante en negrita (`> **key:** valor`), que es la que usa la
+    cabecera de los specs de caracterizacion: leyendo solo la forma pelada esos
+    campos salian ausentes y el indice los omitia en silencio ([[D-066]]).
+    """
+    m = re.search(r"^>\s*\**" + re.escape(key) + r"\**\s*:\s*\**\s*(.*?)\**\s*$",
+                  text, re.MULTILINE)
     return m.group(1).strip() if m else None
 
 
@@ -268,6 +274,13 @@ def parse_discovery(path: Path | None) -> dict:
     return out
 
 
+# Specs que el escaneo NO pudo indexar por cabecera incompleta. No es una lista
+# de cortesia: sin `Feature ID` el spec se cae del indice ENTERO y el resultado es
+# un artefacto parcial con apariencia de completo — el peor modo de fallo posible
+# ([[D-046]], [[D-066]]). Se vuelca en stderr y dentro del propio indice.
+SPECS_SIN_CABECERA: list[str] = []
+
+
 def parse_spec(path: Path, features_root: Path) -> dict | None:
     text = read_text(path)
     if not text:
@@ -277,7 +290,10 @@ def parse_spec(path: Path, features_root: Path) -> dict | None:
         m = FID_RE.search(text[:600])
         fid = m.group(0) if m else None
     if not fid:
+        SPECS_SIN_CABECERA.append(f"{path} (sin `Feature ID`: NO se indexa)")
         return None
+    if not header_field(text, "Origen de alcance"):
+        SPECS_SIN_CABECERA.append(f"{path} (sin `Origen de alcance`: se indexa incompleto)")
     m = re.search(r"^#\s+Spec:\s*(.*)$", text, re.MULTILINE)
     title = m.group(1).strip() if m else fid
     try:
@@ -589,6 +605,15 @@ def main(argv: list[str]) -> int:
         raise
     n_feat = content.count("\n### F-")
     print(f"[features-index] regenerado {out_path.name} ({n_feat} features)")
+    if SPECS_SIN_CABECERA:
+        sys.stderr.write(
+            f"[features-index] ⚠ {len(SPECS_SIN_CABECERA)} spec(s) con la cabecera "
+            "incompleta — el indice NO los refleja bien:\n")
+        for s in SPECS_SIN_CABECERA:
+            sys.stderr.write(f"  - {s}\n")
+        sys.stderr.write(
+            "  Repon `Feature ID` y `Origen de alcance` en su cabecera y regenera. "
+            "Mientras falten, este indice esta incompleto ([[D-066]]).\n")
     if "> ⚠ SIN DISCOVERY" in content:
         sys.stderr.write(
             "[features-index] ⚠ sin discovery: el índice solo cubre los specs "

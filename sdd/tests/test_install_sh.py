@@ -428,6 +428,61 @@ class InstallAllTest(InstallBase):
         self.assertIn("D-063", am,
                       "wf-spec-amend no declara como sostiene la anti-fabricacion")
 
+    def test_sealing_gates_enumeration_names_all_four(self):
+        """D-065: una enumeracion que gobierna conducta no se mantiene sola.
+
+        Regla 10 decia "los tres gates" porque se escribio antes de D-061. Cuando
+        el spec gano sello, nadie volvio a esta lista: el spec fue el unico
+        artefacto que llegaba a VALIDADO sin que constara nadie. Este backstop
+        existe para que la proxima fase que gane un gate no repita el silencio.
+        """
+        self.install("all")
+        kb = (self.skill_dir("kb-traceability-rules") / "SKILL.md").read_text(encoding="utf-8")
+        for gate in ("wf-prd-review", "wf-spec-validate", "wf-plan-validate", "wf-qa-verify"):
+            self.assertIn(gate, kb,
+                          f"Regla 10 no nombra el gate de sellado {gate} (ver D-065)")
+        self.assertNotIn("Los tres gates", kb,
+                         "Regla 10 vuelve a enumerar tres gates de sellado (ver D-065)")
+
+    def test_spec_validate_holds_its_gate_from_the_main_thread(self):
+        """D-065: el gate de sellado del spec captura quien aprueba, luego es main.
+
+        Era el unico de los cuatro que corria en fork, y por eso el unico que no
+        registraba a nadie. Estampa por script, no desde main (D-060).
+        """
+        self.install("all")
+        head = (self.skill_dir("wf-spec-validate") / "SKILL.md").read_text(encoding="utf-8")
+        fm = head.split("---")[1]
+        self.assertNotIn("context: fork", fm,
+                         "wf-spec-validate vuelve a ser fork: no podria capturar la identidad")
+        self.assertIn("AskUserQuestion", fm,
+                      "wf-spec-validate no declara la tool con la que sostiene su gate")
+        self.assertIn("--approved-by", head,
+                      "wf-spec-validate no estampa la atribucion por script (D-065)")
+        self.assertIn("run_in_background: false", head,
+                      "wf-spec-validate delega la auditoria sin pedir sincronia (D-043)")
+
+    def test_spec_header_contract_is_declared_where_it_is_written(self):
+        """D-066: `Feature ID` y `Origen de alcance` los lee otro programa.
+
+        La plantilla de caracterizacion no los declaraba y `parse_spec` devuelve
+        None sin `Feature ID`: el spec se caia del indice ENTERO, en silencio.
+        """
+        self.install("all")
+        kb = (self.skill_dir("kb-spec-characterization") / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("Feature ID", kb,
+                      "la cabecera de caracterizacion no declara `Feature ID` (D-066)")
+        self.assertIn("Origen de alcance", kb,
+                      "la cabecera de caracterizacion no declara `Origen de alcance` (D-066)")
+
+    def test_prd_create_carries_both_halves_of_the_norm(self):
+        """D-066: era la unica workflow-en-main sin la mitad de escritura."""
+        self.install("all")
+        skill = (self.skill_dir("wf-prd-create") / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("No leas el fichero en el hilo principal", skill)
+        self.assertIn("tampoco lo escribes tú", skill,
+                      "wf-prd-create pierde la mitad de escritura de la norma (D-066)")
+
     def test_spec_overwrite_gate_is_risk_weighted(self):
         """D-062: regenerar un spec se pondera por su estado, como el PRD (D-024).
 

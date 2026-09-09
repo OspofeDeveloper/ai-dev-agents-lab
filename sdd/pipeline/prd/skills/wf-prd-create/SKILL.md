@@ -4,7 +4,7 @@ description: "Crea un PRD inicial guiado para el pipeline SDD. Puede partir de n
 when_to_use: "Activa en frases como 'ayudame a crear el PRD', 'genera un PRD', 'construye el documento de requisitos', 'convierte estas notas en un PRD'."
 argument-hint: "<directorio_proyecto> [--source <notas.md>] [--output <prd.md>]"
 effort: medium
-allowed-tools: [Read, Write, Bash, Agent, AskUserQuestion]
+allowed-tools: [Bash, Agent, AskUserQuestion]
 user-invocable: true
 ---
 
@@ -54,6 +54,8 @@ Si no existe, informa al usuario con la ruta exacta y detén.
 ### Si hay `--source`
 
 **No leas el fichero en el hilo principal.** Solo verificaste que existe (Paso 2); pásalo por **path** a `prd-expert` (Paso 5), que lo leerá con su propia `Read`. Así el contenido no se duplica en el contexto del orquestador ni se incrusta en el prompt del agente.
+
+**Y tampoco lo escribes tú ([[D-060]]).** El PRD lo redacta `prd-expert`; lo único que tú ejecutas sobre el fichero es un script determinista por `Bash`. Esto vale **aunque las tools estén disponibles**: `allowed-tools` es declarativo, no una jaula ([[D-038]]), así que la restricción se sostiene por norma. Si te descubres a punto de hacer `Write` o `Edit` del PRD, para y delega — es la mitad que a esta skill le faltaba y que sus hermanas de fase (`wf-prd-review`, `wf-prd-change`) sí llevaban ([[D-066]]).
 
 ### Si NO hay `--source`
 

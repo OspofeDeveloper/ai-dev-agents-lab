@@ -2,7 +2,7 @@
 name: wf-qa-plan
 description: "Genera el plan de QA de una feature: deriva casos de prueba TC-XXX trazables desde los CAs GIVEN/WHEN/THEN del feature spec (afinados con plan/tasks y project state si existen) y produce <feature>_qa_plan.md. Delega a qa-engineer."
 when_to_use: "Activa con frases como 'genera el plan de QA', 'deriva los casos de prueba', 'qa plan de la feature', 'qué casos de prueba salen de estos CAs', 'prepara el testing de la feature'. No activa para escribir tests (owner implementador/tester del stack) ni para verificar cobertura tras implementar (usa wf-qa-verify)."
-argument-hint: "generate <feature_spec.md>"
+argument-hint: "generate <feature_spec.md> [--allow-overwrite-qa-plan]"
 effort: medium
 allowed-tools: [Read, Write, Bash, Agent]
 context: fork
@@ -59,7 +59,21 @@ Delega en `qa-engineer` la derivación completa según `kb-qa-expert`:
 
 El QA plan vive junto al `_tasks.md` de la feature: `features/<nombre>/tasks/<nombre>_qa_plan.md` (subcarpetas) o `features/<nombre>/<nombre>_qa_plan.md` (plano legacy — no mezclar layouts).
 
-Si ya existe → pregunta al usuario si desea regenerarlo (no → informa del path y detén; los `Estado` previos escritos por `wf-qa-verify` se pierden al regenerar — adviértelo).
+Comprueba si ya existe:
+```bash
+!test -f "<path>" && echo "EXISTE" || echo "NO_EXISTE"
+```
+
+- **`NO_EXISTE`** → sigue.
+- **`EXISTE` sin `--allow-overwrite-qa-plan`** → **detente sin escribir nada** y devuelve el bloqueo con
+  veredicto operativo `STOP_ARTEFACTO_EXISTE`:
+  > "Ya existe `<path>`. Regenerarlo **descarta los `Estado` de cada caso de prueba** —lo que se
+  > verificó y con qué evidencia— y eso no se recupera. No lo he tocado."
+- **`EXISTE` con `--allow-overwrite-qa-plan`** → sobreescribe y **dilo en tu informe final**.
+
+> **Por qué aquí no preguntas ([[D-064]]).** Corres en `context: fork`, y un subagente no puede
+> presentarle una elección al usuario: la instrucción que este paso tenía antes no era
+> ejecutable ([[D-045]]). Paras y reportas; el gate lo presenta quien puede ([[D-026]]).
 
 Header de trazabilidad obligatorio:
 

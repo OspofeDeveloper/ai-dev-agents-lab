@@ -2,7 +2,7 @@
 name: wf-design-feature-prototype
 description: "Deriva flows, views y un prompt de ensamblaje tool-agnostic (target_tool stitch en mobile, web-generic en web/desktop) de una feature desde su _spec.md, el DESIGN.md y el DESIGN_BRIEF.md, listos para contrastar con cliente antes del plan tecnico."
 when_to_use: "Activa en frases como 'genera las vistas para Stitch', 'crea el prototipo de la feature', 'prepara flows y prompt de diseno', 'deriva las pantallas desde el spec'. No activa para modificar el spec, ni para generar plan o tasks."
-argument-hint: "generate <feature_spec.md> [--design-file DESIGN.md] [--brief DESIGN_BRIEF.md] [--no-brief]"
+argument-hint: "generate <feature_spec.md> [--design-file DESIGN.md] [--brief DESIGN_BRIEF.md] [--no-brief] [--allow-overwrite-prototype]"
 effort: high
 allowed-tools: [Read, Write, Bash, Agent]
 context: fork
@@ -113,10 +113,15 @@ Antes de continuar, verifica si el artefacto principal ya existe:
 ```bash
 !test -f "<feature>_flows.md" && echo "EXISTE" || echo "NO_EXISTE"
 ```
-Si ya existe → pregunta al usuario:
-> "Ya existen los artefactos de prototipado para `<feature>` (`_flows.md`, `_views.md`, `_ui_prompt.md`). ¿Deseas regenerarlos?"
-- Si responde **no** → informa los paths existentes y detén.
-- Si responde **sí** → continúa.
+- **`NO_EXISTE`** → sigue.
+- **`EXISTE` sin `--allow-overwrite-prototype`** → **detente sin escribir nada** y devuelve el bloqueo a quien te
+  lanzó, con veredicto operativo `STOP_ARTEFACTO_EXISTE`:
+  > "Ya existen los artefactos de prototipado de `<feature>` (`_flows.md`, `_views.md`, `_ui_prompt.md`). Regenerarlos descarta los ajustes que se les hayan hecho tras la validación visual. No los he tocado."
+- **`EXISTE` con `--allow-overwrite-prototype`** → sobreescribe y **dilo en tu informe final**.
+
+> **Por qué aquí no preguntas ([[D-064]]).** Corres en `context: fork`, y un subagente no puede
+> presentarle una elección al usuario: la instrucción que este paso tenía antes no era
+> ejecutable ([[D-045]]). Paras y reportas; el gate lo presenta quien puede ([[D-026]]).
 
 Antes de delegar, busca otras features ya prototipadas en el directorio hermano:
 - Lista las features con `_views.md` y `_flows.md` existentes, en ambos layouts: `features/*/design/*` (subcarpetas) y `features/*/*` (plano legacy).

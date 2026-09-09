@@ -174,8 +174,10 @@ Path de salida: directorio padre del directorio de features + `<basename>_readin
 - El basename se toma del `_features.md` encontrado (ej: si es `prd-hogar-sad_features.md` → `prd-hogar-sad_readiness_report.md`)
 - Ejemplo: `docs/prd-hogar-sad_features.md` → `docs/prd-hogar-sad_readiness_report.md`
 
-Antes de escribir, verifica si el archivo ya existe:
-- `!test -f "<path>"` — si existe, informa al usuario del path y pregunta: `[sobreescribir | cancelar]`. Continua solo si elige sobreescribir.
+**Si ya existe, sobreescríbelo sin preguntar ([[D-064]]).** Un informe de readiness es un artefacto
+**derivado**: no guarda ninguna decisión humana dentro, y quien lanza el flujo lo regenera en
+cada pasada. Un gate aquí no protegería nada — y, siendo `context: fork`, tampoco podrías
+presentarlo. Lo que sí haces es **decir en tu informe que lo reemplazaste**.
 
 Escribe el informe en el archivo correspondiente.
 

@@ -2,7 +2,7 @@
 name: wf-prepare-tasks
 description: "Transforma Planes tecnicos validados en Tasks de implementacion. Usalo cuando tengas un _plan.md validado y quieras generar el listado de tasks delegables. Los owners se asignan segun el stack del proyecto (agentes del overlay tech, p. ej. KMM) o al orquestador en modo generico."
 when_to_use: "Activa en frases como 'genera las tasks del plan', 'trocea el plan en tasks', 'crea el listado de implementacion', 'prepara las tasks para', '¿que tasks tengo que hacer?'. No activa para generar Specs (usa wf-spec-analyze), ni para generar Planes (usa wf-prepare-plan), ni para validar Planes (usa wf-plan-validate)."
-argument-hint: "generate <plan.md>"
+argument-hint: "generate <plan.md> [--allow-overwrite-tasks]"
 effort: high
 allowed-tools: [Read, Write, Bash, Agent]
 context: fork
@@ -101,10 +101,15 @@ Antes de escribir, verifica si el archivo ya existe:
 ```bash
 !test -f "<path_calculado>" && echo "EXISTE" || echo "NO_EXISTE"
 ```
-Si ya existe → pregunta al usuario:
-> "Ya existe `<path>`. ¿Deseas regenerarlo?"
-- Si responde **no** → informa el path del artefacto existente y detén.
-- Si responde **sí** → continúa.
+- **`NO_EXISTE`** → sigue.
+- **`EXISTE` sin `--allow-overwrite-tasks`** → **detente sin escribir nada** y devuelve el bloqueo a quien te
+  lanzó, con veredicto operativo `STOP_ARTEFACTO_EXISTE`:
+  > "Ya existe `<path>`. Regenerarlo **descarta el estado de ejecución** (tasks EN_CURSO o HECHA, sus commits y las retenidas por enmienda), que no es material regenerable. No lo he tocado."
+- **`EXISTE` con `--allow-overwrite-tasks`** → sobreescribe y **dilo en tu informe final**.
+
+> **Por qué aquí no preguntas ([[D-064]]).** Corres en `context: fork`, y un subagente no puede
+> presentarle una elección al usuario: la instrucción que este paso tenía antes no era
+> ejecutable ([[D-045]]). Paras y reportas; el gate lo presenta quien puede ([[D-026]]).
 
 Escribe el output del agente en ese archivo.
 

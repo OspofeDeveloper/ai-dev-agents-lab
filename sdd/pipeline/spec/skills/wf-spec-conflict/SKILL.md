@@ -110,8 +110,10 @@ Determina el path de salida:
 - Si se verificaron todos los specs del directorio: raíz del directorio de features + `_conflict_report.md`
   - Ejemplo: `features/` → `features/_conflict_report.md`
 
-Antes de escribir, verifica si el archivo ya existe:
-- `!test -f "<path>"` — si existe, informa al usuario del path y pregunta: `[sobreescribir | cancelar]`. Continua solo si elige sobreescribir.
+**Si ya existe, sobreescríbelo sin preguntar ([[D-064]]).** Un informe de conflicto es un artefacto
+**derivado**: no guarda ninguna decisión humana dentro, y quien lanza el flujo lo regenera en
+cada pasada. Un gate aquí no protegería nada — y, siendo `context: fork`, tampoco podrías
+presentarlo. Lo que sí haces es **decir en tu informe que lo reemplazaste**.
 
 Escribe el informe en el archivo correspondiente.
 

@@ -9,6 +9,8 @@ Un veredicto `OK` de un agente ya no es suficiente para sellar.
 Uso:
     sdd-seal.py <plan|spec> <archivo.md> --check    # verifica condiciones, no escribe
     sdd-seal.py <plan|spec> <archivo.md> --seal     # verifica y sella VALIDADO si pasa
+    sdd-seal.py <plan|spec> <archivo.md> --seal --approved-by "Nombre (Rol) (fecha)"
+                                                   # ademas estampa `Aprobado por:` (Regla 10)
     sdd-seal.py <plan|spec> <archivo.md> --unseal   # fuerza Estado: BORRADOR (downgrade siempre permitido)
 
 Exit codes: 0 = OK / sellado; 1 = error de uso o IO; 2 = condiciones no cumplidas.
@@ -42,6 +44,10 @@ Condiciones verificadas para `spec` (D-061):
   5. Si declara `status_sync`, no esta desalineado (bloquean: stale, needs_review).
   6. Si declara `derived_from_prd_hash` y su PRD origen es resoluble, sin deriva.
   7. Trazabilidad interna: todo `### CA-XXX` declara su HU padre (`← HU-XXX`).
+  8b. Cabecera completa (D-066): declara `Feature ID` y `Origen de alcance`, los
+      campos que `sdd-features-index.py`, `sdd-project-status.py` y `sdd-release.py`
+      leen para derivar indice, estado de delivery y coordenada de release. Si
+      faltan, esos scripts NO fallan: omiten la feature en silencio.
   8. Asunciones visibles (D-063): todo gap `[INFORMATIVO]` sin responder —cuya
      `Asuncion por defecto` YA esta aplicada en los CAs— deja su entrada en
      `## Asunciones Aplicadas` citando el gap. No se juzga si la asuncion es
@@ -77,6 +83,13 @@ TD_HEADER_RE = re.compile(r"^#{2,4}\s*(?P<td>TD-\d{3,4})\b", re.MULTILINE)
 TD_FIELDS = ("Decisión", "A pesar de", "Riesgo asumido", "Queda pendiente",
              "Componentes afectados", "Aprobada por")
 # Anotacion de enmienda pendiente (unico escritor: sdd-amend.py; absorbida al re-sellar)
+# Atribucion de aprobacion humana (kb-traceability-rules Regla 10). El valor es un
+# dato HUMANO —no verificable mecanicamente— pero quien lo estampa es el script, no
+# el hilo principal: mismo reparto que en el PRD (`sdd-prd-apply.py --seal "<valor>"`),
+# y asi main no escribe contenido en el artefacto ([[D-060]]). [[D-065]]
+APROBADO_RE = re.compile(
+    r"^(?P<prefix>\s*(?:[-*>]\s*)?\**Aprobado por:?\**\s*:?\s*)(?P<value>[^\n]*)$",
+    re.MULTILINE)
 AMEND_LINE_RE = re.compile(
     r"^[ \t]*(?:[-*>][ \t]*)?\**Enmienda pendiente:?\**[ \t]*:?[ \t]*"
     r"(?P<ca>CA-\d{3,4})[ \t]*\([ \t]*(?P<ref>E-\d{3,4})[^)\n]*\)[ \t]*$\n?",
@@ -357,6 +370,17 @@ def check_spec(spec_path: Path):
             "Todo CA declara su HU padre"
             + (f" (sin padre: {', '.join(huerfanos)})" if huerfanos else ""))
 
+    # 8b. La cabecera declara lo que los derivados leen (D-066).
+    # Un campo ausente aqui no rompe nada de forma visible: `sdd-features-index.py`
+    # simplemente no lo emite, y la feature aparece incompleta —o no aparece— en un
+    # indice con apariencia de correcto. Es el modo de fallo que [[D-046]] declaro
+    # inaceptable, y el analogo de `sdd-prd-frontmatter.py` en la fase PRD.
+    faltan = [k for k in ("Feature ID", "Origen de alcance")
+              if not re.search(r"^\s*>?\s*\**" + k + r"\**\s*:\s*\**\s*\S", text, re.MULTILINE)]
+    add(not faltan,
+        "La cabecera declara `Feature ID` y `Origen de alcance`"
+        + (f" (faltan: {', '.join(faltan)})" if faltan else ""))
+
     # 8. Toda asuncion aplicada en nombre del usuario deja rastro (D-063).
     sin_rastro, ilegible = _undocumented_assumptions(text)
     if ilegible:
@@ -389,14 +413,58 @@ def write_estado(plan_path: Path, new_state: str) -> bool:
     return True
 
 
+def write_aprobado(path: Path, valor: str) -> bool:
+    """Estampa `Aprobado por: <valor>` en la cabecera; la crea junto a `Estado:` si falta.
+
+    Solo se llama tras un sellado con exito: un artefacto que no pasa las condiciones
+    no tiene aprobacion que registrar.
+    """
+    text = path.read_text(encoding="utf-8")
+    m = APROBADO_RE.search(text)
+    if m is not None:
+        new_text = text[:m.start()] + m.group("prefix") + valor + text[m.end():]
+    else:
+        e = ESTADO_RE.search(text)
+        if e is None:
+            print("ERROR: no hay linea `Estado:` junto a la que estampar `Aprobado por:`",
+                  file=sys.stderr)
+            return False
+        # La linea nueva se CALCA de la de `Estado:` (blockquote, bullet o negrita)
+        # sustituyendo etiqueta y valor: asi hereda el formato exacto de la cabecera
+        # sin tener que reconstruirlo, que es donde se rompia `**Estado:**`.
+        # Ni `e.start()` ni `e.end()` sirven de ancla: el `^` de ESTADO_RE puede casar
+        # en una linea en blanco anterior (su `\s*` se come el salto) y el `suffix`
+        # puede comerse el de despues. La posicion fiable es la palabra `Estado`.
+        pos = text.index("Estado", e.start())
+        line_start = text.rfind("\n", 0, pos) + 1
+        nl = text.find("\n", pos)
+        end = len(text) if nl == -1 else nl
+        estado_line = text[line_start:end]
+        line = estado_line.replace("Estado", "Aprobado por", 1)
+        line = line.replace(e.group("value"), valor, 1)
+        new_text = text[:end] + "\n" + line + text[end:]
+    path.write_text(new_text, encoding="utf-8")
+    print(f"Aprobado por: {valor} — escrito en {path}")
+    return True
+
+
 def main() -> int:
     args = sys.argv[1:]
+    aprobado = None
+    if "--approved-by" in args:
+        i = args.index("--approved-by")
+        if i + 1 >= len(args):
+            return fail_usage("`--approved-by` necesita un valor entre comillas")
+        aprobado = args[i + 1]
+        args = args[:i] + args[i + 2:]
     if (len(args) != 3 or args[0] not in ("plan", "spec")
             or args[2] not in ("--check", "--seal", "--unseal")):
         return fail_usage("argumentos invalidos")
     kind = args[0]
     plan_path = Path(args[1])
     mode = args[2]
+    if aprobado is not None and mode != "--seal":
+        return fail_usage("`--approved-by` solo aplica con `--seal`")
 
     if mode == "--unseal":
         # Downgrade siempre permitido: volver a BORRADOR es la direccion segura.
@@ -425,7 +493,11 @@ def main() -> int:
         for ca, ref in absorbed:
             print(f"Enmienda absorbida por re-validacion: {ca} ({ref}) — anotacion limpiada.")
 
-    return 0 if write_estado(plan_path, "VALIDADO") else 1
+    if not write_estado(plan_path, "VALIDADO"):
+        return 1
+    if aprobado and not write_aprobado(plan_path, aprobado):
+        return 1
+    return 0
 
 
 if __name__ == "__main__":

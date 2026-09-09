@@ -2,7 +2,7 @@
 name: wf-prepare-plan
 description: "Transforma un Spec validado y el handoff de Design en un Plan tecnico de implementacion, especializado segun el stack del proyecto (overlay tech, p. ej. KMM) o generico para stacks agnosticos."
 when_to_use: "Activa con un _spec.md sin items pendientes y la feature lista a nivel visual; frases como 'genera el plan desde el spec', 'crea el plan tecnico', 'transforma el spec en plan', 'planifica la implementacion de', 'prepara el plan para'. No activa para analizar o generar Specs (usa wf-spec-analyze), ni para validar Planes (usa wf-plan-validate), ni para crear Tasks (usa wf-prepare-tasks)."
-argument-hint: "generate <spec.md>"
+argument-hint: "generate <spec.md> [--allow-overwrite-plan]"
 effort: high
 allowed-tools: [Read, Write, Bash, Agent]
 context: fork
@@ -188,10 +188,15 @@ Antes de escribir, verifica si el archivo ya existe:
 ```bash
 !test -f "<path_calculado>" && echo "EXISTE" || echo "NO_EXISTE"
 ```
-Si ya existe → pregunta al usuario:
-> "Ya existe `<path>`. ¿Deseas regenerarlo?"
-- Si responde **no** → informa el path del artefacto existente y detén.
-- Si responde **sí** → continúa.
+- **`NO_EXISTE`** → sigue.
+- **`EXISTE` sin `--allow-overwrite-plan`** → **detente sin escribir nada** y devuelve el bloqueo a quien te
+  lanzó, con veredicto operativo `STOP_ARTEFACTO_EXISTE`:
+  > "Ya existe `<path>`<, y está **validado** (`Estado: VALIDADO`, aprobado por <quién>) si lo está>. Regenerarlo descarta la validación y las decisiones técnicas que contiene. No lo he tocado."
+- **`EXISTE` con `--allow-overwrite-plan`** → sobreescribe y **dilo en tu informe final**.
+
+> **Por qué aquí no preguntas ([[D-064]]).** Corres en `context: fork`, y un subagente no puede
+> presentarle una elección al usuario: la instrucción que este paso tenía antes no era
+> ejecutable ([[D-045]]). Paras y reportas; el gate lo presenta quien puede ([[D-026]]).
 
 Escribe el output del agente en ese archivo.
 

@@ -599,6 +599,58 @@ class StructuralLintTest(unittest.TestCase):
         r, types = types_in(self.root, "--severity", "warning")
         self.assertNotIn("ALLOWED-TOOLS-MISMATCH", types, r.stdout)
 
+    # === FORK-CONFIRM-GATE (blocking, D-064) ==============================
+    def test_fork_confirm_gate_in_prose_is_blocking(self):
+        """Un fork que DICTA "pregunta al usuario" no puede presentar ese gate.
+
+        Es el hueco por el que se colaron diez sitios reales: FORK-ASKUSER-CONFLICT
+        solo mira el nombre literal de la tool y daba 0 sobre un arbol con diez
+        violaciones. El detector vigilaba la cita, no la conducta.
+        """
+        body = "Si ya existe → pregunta al usuario:\n> \"Ya existe. ¿Deseas regenerarlo?\"\n"
+        write(self.root / "spec" / "skills" / "wf-fork-ow" / "SKILL.md",
+              skill_md("wf-fork-ow", body,
+                       extra_fm="allowed-tools: [Read, Write, Bash]\ncontext: fork\n"
+                                "agent: sdd-spec-writer\n"))
+        r, types = types_in(self.root, "--severity", "blocking")
+        self.assertIn("FORK-CONFIRM-GATE", types, r.stdout)
+
+    def test_fork_confirm_gate_catches_the_bracketed_choice(self):
+        """La otra forma medida: "pregunta: `[sobreescribir | cancelar]`"."""
+        body = "- `!test -f x` — si existe, informa al usuario y pregunta: `[sobreescribir | cancelar]`.\n"
+        write(self.root / "spec" / "skills" / "wf-fork-ow2" / "SKILL.md",
+              skill_md("wf-fork-ow2", body,
+                       extra_fm="allowed-tools: [Read, Bash]\ncontext: fork\n"
+                                "agent: sdd-spec-auditor\n"))
+        r, types = types_in(self.root, "--severity", "blocking")
+        self.assertIn("FORK-CONFIRM-GATE", types, r.stdout)
+
+    def test_describing_the_prohibition_is_not_a_gate(self):
+        """El falso positivo que habria hecho la regla inusable.
+
+        Las notas de D-062/D-064 explican DENTRO del fork por que ahi no se
+        pregunta. Marcar esa prosa obligaria a quitar la explicacion justo del
+        sitio donde hace falta.
+        """
+        body = ("> **Por qué aquí no preguntas.** Corres en `context: fork`, y un subagente no puede\n"
+                "> presentarle una elección al usuario ni una pregunta al usuario final.\n"
+                "Paras y reportas `STOP_ARTEFACTO_EXISTE` a quien te lanzó.\n")
+        write(self.root / "spec" / "skills" / "wf-fork-ok" / "SKILL.md",
+              skill_md("wf-fork-ok", body,
+                       extra_fm="allowed-tools: [Read, Write, Bash]\ncontext: fork\n"
+                                "agent: sdd-spec-writer\n"))
+        r, types = types_in(self.root)
+        self.assertNotIn("FORK-CONFIRM-GATE", types, r.stdout)
+
+    def test_main_thread_skill_may_hold_the_gate(self):
+        """En el hilo principal el gate es correcto: la regla no debe morderlo."""
+        body = "Si ya existe → pregunta al usuario con AskUserQuestion qué hacer.\n"
+        write(self.root / "spec" / "skills" / "wf-main-gate" / "SKILL.md",
+              skill_md("wf-main-gate", body,
+                       extra_fm="allowed-tools: [Bash, Agent, AskUserQuestion]\n"))
+        r, types = types_in(self.root)
+        self.assertNotIn("FORK-CONFIRM-GATE", types, r.stdout)
+
     # === FORK-INTERVIEW (warning, D-015) ==================================
     def test_fork_interview_flagged_as_warning(self):
         # fork que entrevista EN PROSA (sin declarar AskUserQuestion) → warning

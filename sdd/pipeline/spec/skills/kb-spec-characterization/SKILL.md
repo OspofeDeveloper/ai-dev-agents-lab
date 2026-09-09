@@ -35,12 +35,21 @@ Los gates del pipeline (gate de plan, sellador) tratan `[INFERIDO]` igual que `[
 ## Header obligatorio
 
 ```markdown
+> **Feature ID:** F-C-00X
 > **Origen:** characterization
+> **Origen de alcance:** characterization
 > **Estado:** BORRADOR
 > **PRD origen:** N/A (brownfield)
 > **Evidencia base:** commit <SHA corto> (<fecha>)
 > **Status sync:** in_sync
 ```
+
+> **`Feature ID` y `Origen de alcance` no son decoración ([[D-066]]).** Los leen
+> `sdd-features-index.py`, `sdd-project-status.py` y `sdd-release.py` para derivar el índice, el
+> estado de delivery y la coordenada de release. Esta plantilla no los declaraba —solo lo hacía la
+> prosa de la workflow que la usa—, así que un spec escrito según ella dejaba esos campos vacíos y
+> el índice **omitía la feature en silencio** en vez de fallar ruidosamente ([[D-046]]).
+> `sdd-seal.py spec --check` ahora deniega el sello si faltan.
 
 `Estado` nace en `BORRADOR` y **no lo escribes tú** después ([[D-061]]): la promoción a `VALIDADO`
 la hace `sdd-seal.py spec … --seal` tras la validación, y en un spec de caracterización exige

@@ -2,7 +2,7 @@
 name: wf-design-extract
 description: "Ingenieria inversa de un DESIGN.md desde una UI ya en produccion: descubre tokens, paleta, tipografia y componentes con evidencia (archivo:linea, mediciones) y genera un DESIGN.md de extraccion (origin: extracted) conforme al contrato. Entrada alternativa a la fase design para producto no rediseñable; delega la redaccion a design-system-architect."
 when_to_use: "Activa en frases como 'extrae el DESIGN.md de la UI existente', 'ingenieria inversa del diseño de este proyecto', 'documenta el sistema visual que ya tenemos', 'deriva el DESIGN.md del CSS actual', 'caracteriza la UI en produccion'. No activa si se diseña desde cero (usa wf-design-system) ni para cambiar la UI ya extraida (usa wf-design-delta sobre el DESIGN.md extraido)."
-argument-hint: "discover <path_ui> [--scope <subdir>] | generate <path_ui> [--from <extraction.md>] [--scope <subdir>] [--design-file DESIGN.md]"
+argument-hint: "discover <path_ui> [--scope <subdir>] | generate <path_ui> [--from <extraction.md>] [--scope <subdir>] [--design-file DESIGN.md] [--allow-overwrite-design]"
 effort: high
 allowed-tools: [Read, Write, Bash, Grep, Glob, Agent]
 context: fork
@@ -109,10 +109,15 @@ Antes de escribir, verifica si el archivo ya existe:
 ```bash
 !test -f "<path_design>" && echo "EXISTE" || echo "NO_EXISTE"
 ```
-Si ya existe → pregunta al usuario:
-> "Ya existe `<path_design>`. ¿Deseas sobrescribirlo con la extraccion?"
-- **No** → informa el path existente y deten.
-- **Si** → continua.
+- **`NO_EXISTE`** → sigue.
+- **`EXISTE` sin `--allow-overwrite-design`** → **detente sin escribir nada** y devuelve el bloqueo a quien te
+  lanzó, con veredicto operativo `STOP_ARTEFACTO_EXISTE`:
+  > "Ya existe `<path_design>`. Es el SSoT visual del producto y pudo editarse a mano o evolucionar por deltas; la extraccion lo reescribe entero. No lo he tocado."
+- **`EXISTE` con `--allow-overwrite-design`** → sobreescribe y **dilo en tu informe final**.
+
+> **Por qué aquí no preguntas ([[D-064]]).** Corres en `context: fork`, y un subagente no puede
+> presentarle una elección al usuario: la instrucción que este paso tenía antes no era
+> ejecutable ([[D-045]]). Paras y reportas; el gate lo presenta quien puede ([[D-026]]).
 
 1. Escribe el output del agente en el path destino como `DESIGN.md`.
 2. Ejecuta el linter de Google design.md:
