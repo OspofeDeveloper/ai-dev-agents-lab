@@ -6,6 +6,38 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-062 — La sobreescritura ponderada por riesgo llega a Spec: el silencio protector también decide en tu nombre
+
+- **Fecha:** 2026-09-09 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-024]] (el principio general que no se heredó), [[D-061]] (que creó la línea objetiva: `Estado: VALIDADO`), [[D-045]]/[[D-026]] (dónde vive un gate y quién lo presenta), [[D-025]], CU-3.a / CU-3.f.
+
+**Contexto.** Al comparar la fase PRD —cerrada— con la fase Spec, [[D-024]] apareció como el caso más claro de decisión declarada **"principio general"** que nunca se propagó: su propio texto dice *"no se propaga a las otras fases en este cambio, **se hereda al mantenerlas**"* y **nombra explícitamente al "spec validado"**. Al ir a heredarla aparecieron **tres** sitios, y ninguno de los tres era el que esperábamos:
+
+1. **`wf-spec-features-first` Paso 4b** — *"si ya existe su spec → no relances (preservar trabajo previo), excluye del fast-track y anota como «ya generada»"*. Es el **extremo contrario** al "¿seguro?" plano que [[D-024]] atacó: protección máxima, cero elección. Un *"regenera el spec de F-003, he cambiado el PRD"* se convierte en un **no-op reportado como éxito**. Y es el único de los tres que está en la ruta que mide CU-3.a.
+2. **`wf-spec-fast-track` Paso 10** — *"Si existe → pregunta al usuario si desea regenerarlo"*. La instrucción **no era ejecutable**: la skill es `context: fork` con `allowed-tools: [Read, Write, Bash]`, así que no tiene `AskUserQuestion`. Un gate escrito donde no puede presentarse — la misma clase de defecto que [[D-045]] encontró en los cuatro gates de features-first, sobrevivida en un quinto sitio.
+3. **`wf-spec-from-code` Paso 6** — *"Si ya existe → pregunta antes de regenerar"*. Idéntico: fork, sin `AskUserQuestion`, gate inejecutable.
+
+Los tres llevaban ahí desde antes de [[D-024]], y hasta [[D-061]] **no había forma de arreglarlos**: la ponderación necesita una línea objetiva que diga "esto está sellado", y el spec no tenía ninguna.
+
+**Decisión.** La regla de [[D-024]] se hereda a Spec con sus tres ramas intactas (sellado → confirma siempre avisando del descarte; draft + intención explícita → procede; draft + petición ambigua → gate ligero), leyendo `Estado: VALIDADO` ([[D-061]]) donde el PRD lee `Aprobado por:`. Con **tres precisiones nuevas** que el caso del PRD no obligaba a resolver:
+
+- **El reparto entre main y el fork.** El gate vive donde puede presentarse: `wf-spec-features-first` (hilo principal) clasifica el subset y sostiene los dos gates; `wf-spec-fast-track` y `wf-spec-from-code` (fork) **paran y reportan** con veredicto `STOP_SPEC_SELLADO` en vez de fingir que preguntan. El override es `--allow-overwrite-sealed-spec`, armado **solo** por el usuario eligiendo ([[D-026]]).
+- **La cardinalidad.** El PRD es un fichero; el spec son N. El gate es **uno solo con la lista de features dentro** — preguntar feature a feature por un lote de nueve es exactamente el *nagging* que [[D-024]] existe para evitar.
+- **La salida no destructiva se nombra en el propio bloqueo.** Quien quiere *cambiar* un spec validado no quiere regenerarlo: el mensaje de parada apunta a `wf-spec-delta` / `wf-spec-amend`, que **reabren** el sello ([[D-061]]) en vez de descartarlo.
+
+Y la norma general sube a `pipeline/orchestration.md` —el carril eager que el orquestador **sí** lleva encima— con las líneas objetivas de las tres fases tabuladas, en vez de quedarse como promesa dentro del texto de una decisión ([[D-060]], mismo patrón).
+
+**Alternativas descartadas.**
+- *Dejar el salto silencioso de 4b («preservar trabajo previo» es el default seguro)* → el default **es** correcto; lo que no lo es es tomarlo sin decírselo a quien pidió lo contrario. Un no-op reportado como "ya generada" es indistinguible de un éxito, y el usuario descubre que su regeneración no ocurrió cuando lee un spec viejo tres pasos después.
+- *Dar `AskUserQuestion` a los dos forks* → no existe: un subagente no puede renderizarlo ([[D-045]]). Escribirlo igualmente es lo que ya estaba y es peor que no tener gate, porque **parece** que hay uno.
+- *Preguntar por cada feature del lote* → el nagging que [[D-024]] rechazó, multiplicado por N.
+- *Un `--force` genérico en vez de un `--allow-*` nominal* → rompería la familia de overrides del ecosistema y su norma de armado ([[D-026]]). El flag nombra **qué** gate cruza, que es lo que permite auditarlo.
+
+**Consecuencias / aprendizaje.** Tres, y el tercero es el que vale para la campaña. (a) **El silencio protector también es una decisión tomada en nombre de otro** — [[D-024]] atacó el gate que interrumpe de más y dejó sin nombrar el que no interrumpe nunca; las dos mitades del mismo error tardaron dos meses en aparecer juntas. (b) **Un gate escrito en un fork no es un gate**, y la revisión de [[D-045]] —que barrió features-first— no barrió a quién más le había pasado lo mismo: la clase de bug se arregló donde saltó, no donde vivía. (c) **Una decisión que difiere su propagación no se propaga**: [[D-024]] nombró el caso exacto ("spec validado") y aun así hicieron falta dos meses, una campaña de conformance y [[D-061]] para que alguien fuera a mirarlo. Por eso el mecanismo cambia: lo que se declare "principio general" para otras fases deja un **ítem abierto en `docs/ROADMAP.md`**, con dueño, no una frase de buena voluntad dentro de su propio texto.
+
+**Referencias.** `sdd/pipeline/spec/skills/wf-spec-features-first/SKILL.md` (Paso 4b, Paso 5), `sdd/pipeline/spec/skills/wf-spec-fast-track/SKILL.md` (Paso 1, Paso 10), `sdd/pipeline/spec/skills/wf-spec-from-code/SKILL.md` (Paso 1, Paso 6), `sdd/pipeline/orchestration.md`, `sdd/docs/ROADMAP.md` (FASE 13), `sdd/tests/test_install_sh.py`, `sdd/CHANGELOG.md`.
+
+---
+
 ## D-061 — El spec gana estado operativo: era el único eslabón del pipeline sin sello que consumir
 
 - **Fecha:** 2026-09-09 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-028]]/[[D-032]] (el sello del PRD y su reapertura), [[D-024]] (**el precedente que se declaró general y no se heredó**), [[D-054]] (los dos hogares de un gap), [[D-037]] (nunca declarar limpio lo que no se ha parseado), [[D-051]], CU-3.f / CU-3.g.

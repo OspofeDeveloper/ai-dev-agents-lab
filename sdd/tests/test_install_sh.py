@@ -397,6 +397,57 @@ class InstallAllTest(InstallBase):
             self.assertIn("kb-spec-expert", body,
                           f"{agent} no carga kb-spec-expert: la norma de D-055 no le llega")
 
+    def test_spec_overwrite_gate_is_risk_weighted(self):
+        """D-062: regenerar un spec se pondera por su estado, como el PRD (D-024).
+
+        Tres ramas, la linea objetiva es `Estado: VALIDADO` (D-061). El defecto
+        que se arregla NO era el "seguro?" plano: features-first excluia en
+        silencio cualquier spec preexistente, convirtiendo un "regenera F-003"
+        en un no-op reportado como exito ("ya generada").
+        """
+        self.install("all")
+        ff = (self.skill_dir("wf-spec-features-first") / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("SELLADO", ff,
+                      "features-first pierde la rama de spec sellado (ver D-062)")
+        self.assertIn("DRAFT", ff,
+                      "features-first pierde la rama de draft (ver D-062)")
+        self.assertIn("VALIDADO", ff,
+                      "features-first pierde la deteccion de sello por `Estado:` (ver D-061/D-062)")
+        self.assertNotIn("no relances (preservar trabajo previo)", ff,
+                         "features-first vuelve a saltarse en silencio los specs preexistentes (D-062)")
+
+    def test_spec_generators_stop_instead_of_faking_a_gate(self):
+        """D-062: un gate escrito en un fork no es un gate — para y reporta.
+
+        `wf-spec-fast-track` y `wf-spec-from-code` son `context: fork` sin
+        `AskUserQuestion`: su instruccion anterior ("pregunta al usuario si desea
+        regenerarlo") no era ejecutable, misma clase de defecto que D-045. El
+        override lo arma el usuario en el gate de quien si puede preguntar (D-026).
+        """
+        self.install("all")
+        ft = (self.skill_dir("wf-spec-fast-track") / "SKILL.md").read_text(encoding="utf-8")
+        fc = (self.skill_dir("wf-spec-from-code") / "SKILL.md").read_text(encoding="utf-8")
+        for name, body in (("wf-spec-fast-track", ft), ("wf-spec-from-code", fc)):
+            self.assertIn("STOP_SPEC_SELLADO", body,
+                          f"{name} no para ante un spec sellado (ver D-062)")
+            self.assertIn("--allow-overwrite-sealed-spec", body,
+                          f"{name} pierde el override nominal del gate (ver D-026/D-062)")
+            head = body.split("---")[1] if body.startswith("---") else body[:800]
+            self.assertIn("context: fork", head,
+                          f"{name} dejo de ser fork: revisa si el gate debe volver a el (D-062)")
+            self.assertNotIn("AskUserQuestion", head,
+                             f"{name} declara AskUserQuestion en frontmatter siendo fork (ver D-045)")
+        # Las instrucciones inejecutables originales, completas, no vuelven.
+        self.assertNotIn(
+            "Si existe \u2192 pregunta al usuario si desea regenerarlo", ft,
+            "wf-spec-fast-track recupera el gate inejecutable (ver D-062)")
+        self.assertNotIn(
+            "Si ya existe \u2192 pregunta antes de regenerar", fc,
+            "wf-spec-from-code recupera el gate inejecutable (ver D-062)")
+        # Y el override tiene que ser invocable: declarado en el argument-hint.
+        self.assertIn("[--allow-overwrite-sealed-spec]", ft,
+                      "wf-spec-fast-track no declara el flag en su argument-hint")
+
     def test_gap_id_ranges_are_dealt_by_the_orchestrator(self):
         """D-056: en un fan-out los IDs los reparte quien lanza, no el escritor.
 

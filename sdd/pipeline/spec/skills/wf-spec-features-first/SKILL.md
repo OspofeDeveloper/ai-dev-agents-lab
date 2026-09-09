@@ -366,15 +366,67 @@ Si no hay `--features` y el discovery contiene >5 features, y **no** vino `--all
 
 Si hay gaps `[CRÍTICO]` abiertos, dilo aquí también: indica qué features quedarían con HUs `[INCOMPLETO]`, porque cambia la decisión de alcance. Con `--all-features` o `--features` **de entrada** → no presentes el gate; continúa.
 
-### 4b — Detectar specs preexistentes
+### 4b — Clasificar specs preexistentes (ponderado por riesgo, [[D-024]])
 
-Para cada feature del subset: si ya existe su spec — `features/<nombre>/spec/<nombre>_spec.md` (subcarpetas) o `features/<nombre>/<nombre>_spec.md` (plano legacy) — → no relances (preservar trabajo previo), excluye del fast-track y anota como "ya generada". Informa al usuario: N_total totales, N_subset a procesar, N_a_generar nuevas, N_pendientes futuras.
+Un spec que ya existe **no se pisa en silencio, pero tampoco se salta en silencio**. Lo que decide
+no es "existe / no existe" sino **cuánto trabajo hay que perder**, y desde [[D-061]] esa línea es
+objetiva: `Estado: VALIDADO` en la cabecera del spec.
+
+Clasifica **todas** las features del subset de una vez (una sola llamada, no una por feature):
+
+```bash
+!for f in <capabilities del subset, separadas por espacio>; do
+  p=$(python3 .sdd/scripts/sdd-resolve-path.py find spec "<raíz_spec>/features/$f/spec/${f}_spec.md" 2>/dev/null)
+  if [ -z "$p" ]; then echo "$f NO_EXISTE";
+  elif grep -Eq '^[[:space:]]*[-*>]?[[:space:]]*\*{0,2}Estado:?\*{0,2}[[:space:]]*:?[[:space:]]*VALIDADO' "$p"; then echo "$f SELLADO $p";
+  else echo "$f DRAFT $p"; fi
+done
+```
+
+> Esto **no** es leer el artefacto: es una extracción acotada de **un** campo de metadatos, la misma
+> vía sancionada que usas en el Paso 3 para el `_analysis.md` ([[D-051]]). No hagas `Read` ni `cat`
+> del spec para verlo "en contexto".
+
+Actúa por clase. **Los gates de abajo son uno solo cada uno**, con la lista de features dentro:
+preguntar feature a feature por un lote de nueve es justo el *nagging* que [[D-024]] existe para
+evitar.
+
+- **`NO_EXISTE`** → van al fast-track (Paso 5), como siempre.
+
+- **`SELLADO`** → **siempre** confirma, y el mensaje **avisa del descarte**, con independencia de lo
+  explícito que fuera la petición. Un solo `AskUserQuestion` **nombrando las features selladas**:
+  > "Estas features ya tienen un spec **validado**: `<lista>`. Regenerarlas **descarta el trabajo de
+  > validación** (y los gaps ya respondidos en ellas). ¿Qué hago?"
+  - **Conservarlas (recomendado)** → quedan fuera del fast-track; se reportan como "ya generada
+    (sellada)".
+  - **Regenerarlas** → entran al fast-track **con `--allow-overwrite-sealed-spec`**. Ese flag lo
+    arma el usuario **eligiendo aquí**; nunca lo pongas por tu cuenta ([[D-026]]).
+
+- **`DRAFT`** → depende de lo que pidió el usuario, no del fichero:
+  - **Intención explícita de regenerar** esas features ("regenera el spec de F-003", "rehaz las
+    specs de la fase 1", "vuelve a generarlas") → entran al fast-track **sin re-preguntar**: el
+    consentimiento ya está dado.
+  - **Petición ambigua** (p. ej. "genera las specs del PRD" y resulta que algunas ya tienen draft;
+    el usuario puede no saberlo) → **gate ligero**, un solo `AskUserQuestion` con la lista:
+    > "Estas features ya tienen un spec en borrador: `<lista>`. ¿Las regenero (se sobreescriben) o
+    > las conservo?"
+    - **Conservar (recomendado)** → fuera del fast-track, se reportan como "ya generada".
+    - **Regenerar** → entran al fast-track (no hace falta flag: un draft no está sellado).
+
+Informa al usuario: N_total totales, N_subset a procesar, N_a_generar nuevas, N_conservadas
+(distinguiendo selladas de draft), N_pendientes futuras.
+
+> **Por qué esto cambió** (ver `DECISIONS.md` [[D-062]]): antes este paso **excluía del fast-track
+> cualquier spec preexistente**, sellado o borrador, sin preguntar. Preservar trabajo es el default
+> correcto, pero tomarlo en silencio convierte un "regenérame F-003, he cambiado el PRD" en un
+> **no-op reportado como éxito** ("ya generada"). El gate no vale por interrumpir: vale por la
+> información que carga.
 
 ---
 
 ## Paso 5: Lanzar fast-track en paralelo (solo features a generar)
 
-Lanza fast-track únicamente para las features del **subset** que NO tienen spec preexistente (lista calculada en el Paso 4b). Las features que ya tenían spec se preservan tal cual; las que están fuera del subset no se tocan.
+Lanza fast-track únicamente para las features que el Paso 4b dejó **a generar**: las `NO_EXISTE`, más las preexistentes que el usuario decidió regenerar en sus gates. Las que decidió conservar se preservan tal cual; las que están fuera del subset no se tocan.
 
 ### 5.0 — Reparte los rangos de ID de gap **antes** de lanzar ([[D-056]])
 
@@ -408,7 +460,7 @@ Para cada feature F-00X a generar, lanza un subagente con el `Agent` tool usando
 Agent(
   subagent_type: "sdd-spec-writer",
   run_in_background: false,
-  prompt: "Lee `.claude/skills/wf-spec-fast-track/SKILL.md` y ejecuta sus pasos TÚ MISMO sobre estos argumentos: <prd.md> --scope-from <discovery.md> --feature F-00X --gap-id-start P-0NN [--light|--standard si se pasó o si project-init declara pipeline_mode] [--analysis <analysis.md> si disponible]. NO uses el `Skill` tool: esa skill es `context: fork` y invocarla te forkearía otro subagente en cascada. Dentro de ese SKILL.md, `${CLAUDE_SKILL_DIR}` es `.claude/skills/wf-spec-fast-track/`. Al terminar, informa del path del spec generado, nº de gaps `[CRÍTICO]`, nº de asunciones aplicadas y los IDs de gap que hayas usado."
+  prompt: "Lee `.claude/skills/wf-spec-fast-track/SKILL.md` y ejecuta sus pasos TÚ MISMO sobre estos argumentos: <prd.md> --scope-from <discovery.md> --feature F-00X --gap-id-start P-0NN [--light|--standard si se pasó o si project-init declara pipeline_mode] [--analysis <analysis.md> si disponible] [--allow-overwrite-sealed-spec **solo** si el usuario eligió regenerar esa feature sellada en el gate del Paso 4b]. NO uses el `Skill` tool: esa skill es `context: fork` y invocarla te forkearía otro subagente en cascada. Dentro de ese SKILL.md, `${CLAUDE_SKILL_DIR}` es `.claude/skills/wf-spec-fast-track/`. Al terminar, informa del path del spec generado, nº de gaps `[CRÍTICO]`, nº de asunciones aplicadas y los IDs de gap que hayas usado."
 )
 ```
 

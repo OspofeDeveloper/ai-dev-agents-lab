@@ -258,6 +258,30 @@ Implementación **por fases** de `D-011` (ver `DECISIONS.md`). Expande el fit a 
 
 ---
 
+## FASE 13 — Herencia de principios generales entre fases *(añadida 2026-09-09 tras D-062)*
+
+Una decisión que se declara **"principio general"** y difiere su propagación **no se propaga**: no tiene dueño ni backstop, y nadie va a mirarla. [[D-024]] nombró explícitamente el caso *"spec validado"* y tardó **dos meses, una campaña de conformance entera y [[D-061]]** en heredarse. Esta fase existe para que eso deje de ser una frase de buena voluntad dentro del texto de una decisión y pase a ser un **ítem con dueño**. Regla desde ahora: **lo que se declare principio general para otras fases entra aquí en el mismo commit que lo declara.**
+
+- [x] 🟠 **13.1 — D-024 (sobreescritura ponderada por riesgo) → fase Spec.** ✅ *2026-09-09 ([[D-062]]): `wf-spec-features-first` Paso 4b (clasificación del subset + dos gates batched), `wf-spec-fast-track` Paso 10 y `wf-spec-from-code` Paso 6 (parada `STOP_SPEC_SELLADO` + `--allow-overwrite-sealed-spec`), norma general a `pipeline/orchestration.md`. La línea objetiva la creó [[D-061]] (`Estado: VALIDADO`).*
+
+- [ ] 🟠 **13.2 — D-024 → fases Design, Plan y Tasks (6 sitios, 5 de ellos con el gate inejecutable).** El barrido de [[D-062]] paró en Spec, pero el mismo *"Si ya existe → pregunta al usuario"* plano sigue en:
+  - `pipeline/design/skills/wf-design-system/SKILL.md:158` — **hilo principal** (usa `AskUserQuestion`): solo falta ponderar por estado.
+  - `pipeline/design/skills/wf-design-feature-prototype/SKILL.md:116` — `context: fork`, **sin `AskUserQuestion`** → gate inejecutable.
+  - `pipeline/design/skills/wf-design-extract/SKILL.md:112` — `context: fork`, **sin `AskUserQuestion`** → gate inejecutable.
+  - `pipeline/plan/skills/wf-prepare-plan/SKILL.md:191` — `context: fork`, **sin `AskUserQuestion`** → gate inejecutable. Y el plan **sí** tiene línea objetiva (`Estado: VALIDADO`, leída por `sdd-gate-check.py`), así que aquí es barato.
+  - `pipeline/tasks/skills/wf-prepare-tasks/SKILL.md:104` — `context: fork`, **sin `AskUserQuestion`** → gate inejecutable.
+  - `pipeline/tasks/skills/wf-qa-plan/SKILL.md:62` — `context: fork`, **sin `AskUserQuestion`**. Además ya **sabe** lo que se pierde (*"los `Estado` previos escritos por `wf-qa-verify` se pierden al regenerar — adviértelo"*) y aun así no puede advertirlo: tiene la información correcta en el sitio equivocado.
+
+  Es la misma clase de defecto de [[D-045]] —un gate escrito donde no puede presentarse— sobreviviendo en cinco sitios más. `DESIGN.md` no tiene hoy línea objetiva de estado: decidir si la necesita (paralelo de [[D-061]]) es parte del ítem, no un prerrequisito bloqueante.
+
+- [ ] 🟠 **13.3 — D-039 (anti-fabricación en cada escritura) → fase Spec.** `wf-spec-gap-resolve` y `wf-spec-amend` escriben en un spec existente **sin obligación de marcar lo que infieran**: cero menciones de asunción o inferencia en sus SKILLs. Es el patrón de [[D-039]] una fase más tarde —*"un invariante mantenido por un workflow no es un invariante del artefacto: pregúntate quién más escribe ese fichero"*—: el spec tiene cuatro escritores y la regla la conocen dos (`wf-spec-fast-track` y `wf-spec-delta`).
+
+- [ ] 🟢 **13.4 — ¿Necesita el spec una marca de asunción *inline*?** Lo que `sdd-prd-ready.py` verifica no es que las asunciones sean correctas —[[D-039]] descartó eso como no mecanizable— sino el **1:1** entre marcas inline `[ASUNCIÓN]` y entradas `[ASN-XXX]`. El spec **no tiene marca inline**: `## Asunciones Aplicadas` es una lista sin contrapartida en el texto de los CA, así que no hay con qué hacer el 1:1. Dar al spec ese invariante verificable exige inventarle el formato — cambio de contrato, **no antes de las pasadas de sellado de CU-3.a**. Depende de 13.3.
+
+- [ ] 🟢 **13.5 — Barrido de cláusulas de propagación diferida en `DECISIONS.md`.** Inventariar toda decisión cuyo texto prometa herencia futura ("principio general", "se hereda al mantenerlas", "roll-out a las demás fases tras validar") y darle su ítem aquí o cerrarla. Conocidas: [[D-024]] (13.1 ✅ / 13.2 abierto), [[D-039]] (13.3), [[D-022]] (*"roll-out a las demás fases tras validar"* — verificar si se completó).
+
+---
+
 | Prioridad | Qué | Por qué primero |
 |---|---|---|
 | 1 | **Fase 0** completa ✅ | Bugs reproducibles, bajo esfuerzo, varios "roto de fábrica" |

@@ -2,7 +2,7 @@
 name: wf-spec-from-code
 description: "Ingeniería inversa de specs desde código existente (brownfield): descubre capacidades con evidencia (archivo:línea, rutas, tests) y genera specs de caracterización que describen lo que el sistema hace hoy. Entrada alternativa al pipeline cuando no hay PRD."
 when_to_use: "Activa en frases como 'genera specs del código existente', 'documenta lo que hace este sistema', 'specs de este proyecto legacy', 'ingeniería inversa de specs', 'caracteriza este módulo'. No activa si existe un PRD como fuente (usa wf-spec-features-first), ni para cambiar comportamiento (usa wf-spec-delta sobre el spec de caracterización)."
-argument-hint: "discover <path_codigo> [--scope <subdir>] | generate <path_codigo> --feature <F-C-00X> [--discovery <file>] | generate <path_codigo> --capability <nombre> --scope <subdir>"
+argument-hint: "discover <path_codigo> [--scope <subdir>] | generate <path_codigo> --feature <F-C-00X> [--discovery <file>] [--allow-overwrite-sealed-spec] | generate <path_codigo> --capability <nombre> --scope <subdir> [--allow-overwrite-sealed-spec]"
 effort: high
 allowed-tools: [Read, Write, Bash, Grep, Glob, Agent]
 context: fork
@@ -22,6 +22,7 @@ Tu rol: explorar el código con rigor de evidencia y delegar la redacción. La r
 - `discover <path_codigo> [--scope <subdir>]`
 - `generate <path_codigo> --feature <F-C-00X> [--discovery <file>]` — desde un discovery validado
 - `generate <path_codigo> --capability <nombre> --scope <subdir>` — directo, una capacidad que el usuario ya nombra y acota (la validación humana es implícita)
+- **Flag opcional** (modo `generate`): `--allow-overwrite-sealed-spec` → autoriza sobreescribir un spec de caracterización cuya cabecera declare `Estado: VALIDADO`. Sin él, si el spec de destino está sellado **te detienes** (Paso 6). Solo llega armado por quien te lanza, porque el usuario lo eligió en un gate ([[D-024]]/[[D-026]]).
 
 Sin modo válido → informa el uso. `generate --feature` sin `_code_discovery.md` existente → detén:
 > "No hay `_code_discovery.md`. Primero hay que **descubrir las capacidades del código** — ese mapa, validado por ti, es el gate de este flujo."
@@ -85,7 +86,21 @@ CONTEXTO: <actor, superficie, modelos del discovery>
 
 Layout estándar (mismas reglas que `wf-spec-fast-track`):
 
-1. **Spec**: `<raíz_spec>/features/<nombre>/spec/<nombre>_spec.md` (feature plana legacy existente: en su raíz). Si ya existe → pregunta antes de regenerar. El header declara `> Feature ID: F-C-00X` y `> Origen de alcance: characterization` — el índice los deriva de ahí.
+1. **Spec**: `<raíz_spec>/features/<nombre>/spec/<nombre>_spec.md` (feature plana legacy existente: en su raíz). El header declara `> Feature ID: F-C-00X` y `> Origen de alcance: characterization` — el índice los deriva de ahí.
+
+   **Si ya existe, mira su estado antes de escribir ([[D-024]]/[[D-062]])** — pisar un borrador no es lo mismo que pisar un spec validado:
+
+   ```bash
+   !grep -Eq '^[[:space:]]*[-*>]?[[:space:]]*\*{0,2}Estado:?\*{0,2}[[:space:]]*:?[[:space:]]*VALIDADO' "<path_existente>" && echo SELLADO || echo DRAFT
+   ```
+
+   - **`DRAFT`** (o no existe) → reescribe en su ubicación actual y sigue.
+   - **`SELLADO` sin `--allow-overwrite-sealed-spec`** → **detente sin escribir nada** y devuelve el bloqueo con veredicto operativo `STOP_SPEC_SELLADO`:
+     > "El spec de caracterización de `<nombre>` ya existe y está **validado** (`Estado: VALIDADO`) en `<path>`. Regenerarlo desde el código descarta el trabajo de validación —incluidos los `[INFERIDO]` que ya se confirmaron uno a uno—. No lo he tocado. Si el usuario quiere rehacerlo desde cero igualmente, relánzame con `--allow-overwrite-sealed-spec`. Si lo que quiere es **reflejar un cambio de comportamiento**, no hace falta rehacerlo: se aplica ese cambio sobre el spec existente y su validación se reabre en vez de descartarse — dile que te lo pida y lo enrutas tú."
+   - **`SELLADO` con `--allow-overwrite-sealed-spec`** → reescribe y **dilo en el Paso 7**. El spec nuevo nace en `Estado: BORRADOR`.
+
+   > **Por qué aquí no preguntas.** Corres en `context: fork`, y un subagente **no puede presentarle una pregunta al usuario**: la instrucción anterior —*"pregunta antes de regenerar"*— **no era ejecutable** ([[D-045]]). Paras y reportas; el gate lo presenta quien puede ([[D-026]]).
+
 2. **README** de la feature en su raíz, con `Origen de alcance: characterization (código, commit <SHA>)`.
 3. **`_features.md`**: NO lo escribas a mano (es un índice generado). Tras escribir el spec, regenéralo desde la raíz del proyecto (el directorio que contiene `.sdd/`):
 

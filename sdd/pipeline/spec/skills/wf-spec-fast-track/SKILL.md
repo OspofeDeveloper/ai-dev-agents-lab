@@ -2,7 +2,7 @@
 name: wf-spec-fast-track
 description: "Genera el Spec de una feature directamente desde un documento de requisitos acotado a una sola capacidad. Soporta modo scoped con --scope-from para filtrar un PRD completo a una feature del discovery. Acepta --analysis para usar gaps pre-resueltos de un analisis previo."
 when_to_use: "Activa en frases como 'genera el spec directo de esta feature', 'fast-track del spec', 'crea el spec de esta capability directamente', 'genera spec sin analisis previo'."
-argument-hint: "<archivo.md> --capability <nombre-kebab> [--light|--standard] [--analysis <analysis.md>] [--gap-id-start <P-XXX>] [--allow-derived-scope-from-analysis] | <prd.md> --scope-from <discovery.md> --feature <F-00X> [--light|--standard] [--analysis <analysis.md>] [--gap-id-start <P-XXX>] [--allow-derived-scope-from-analysis]"
+argument-hint: "<archivo.md> --capability <nombre-kebab> [--light|--standard] [--analysis <analysis.md>] [--gap-id-start <P-XXX>] [--allow-derived-scope-from-analysis] [--allow-overwrite-sealed-spec] | <prd.md> --scope-from <discovery.md> --feature <F-00X> [--light|--standard] [--analysis <analysis.md>] [--gap-id-start <P-XXX>] [--allow-derived-scope-from-analysis] [--allow-overwrite-sealed-spec]"
 effort: high
 allowed-tools: [Read, Write, Bash]
 context: fork
@@ -27,6 +27,7 @@ Extrae de `$ARGUMENTS`:
 - **Flag opcional**: `--analysis <path>` → path a un `_analysis.md` con gaps pre-resueltos
 - **Flag opcional**: `--allow-derived-scope-from-analysis` → permite continuar aunque el analysis introduzca expansión funcional no consolidada todavía en el PRD. Sin este flag, el workflow se detiene para remitir a `wf-prd-change`.
 - **Flag opcional**: `--light` / `--standard` → fuerza el modo del pipeline para esta feature.
+- **Flag opcional**: `--allow-overwrite-sealed-spec` → autoriza sobreescribir un spec cuya cabecera declare `Estado: VALIDADO`. Sin él, si el spec de destino está sellado **te detienes** (Paso 10). Este flag **solo** llega armado por quien te lanza, porque el usuario lo eligió en un gate ([[D-024]]/[[D-026]]).
 - **Flag opcional**: `--gap-id-start <P-XXX>` → primer ID que puedes usar para los gaps que levantes. Te lo da quien te lanza cuando hay varios escritores en paralelo ([[D-056]]); si viene, **manda sobre cualquier cálculo propio**.
 
 **Resolución del modo** (en este orden): flag explícito > `pipeline_mode` de `.sdd/project-init.json` (directorio actual o ancestro) > `standard`. Las reglas exactas de qué relaja el modo ligero viven en `kb-spec-expert` ("Modo ligero — proporcionalidad declarada"); los invariantes (CAs testables, trazabilidad, marcadores, pureza, gobernanza) son idénticos en ambos modos.
@@ -178,7 +179,22 @@ Verifica si el spec ya existe en cualquiera de los dos layouts con el resolutor 
 ```bash
 !python3 .sdd/scripts/sdd-resolve-path.py find spec "<raíz_spec>/features/<capability>/spec/<capability>_spec.md"
 ```
-Emite el path existente (vacío + exit 3 si no existe en ningún layout). **Fallback** a mano: busca en `<raíz_spec>/features/<capability>/spec/<capability>_spec.md` (subcarpetas) o `<raíz_spec>/features/<capability>/<capability>_spec.md` (plano legacy). Si existe → pregunta al usuario si desea regenerarlo (no → informa del path y detén; sí → reescribe en su ubicación actual). Escribe los 2 artefactos que tú compones (crea directorios si no existen), relativos a esa raíz:
+Emite el path existente (vacío + exit 3 si no existe en ningún layout). **Fallback** a mano: busca en `<raíz_spec>/features/<capability>/spec/<capability>_spec.md` (subcarpetas) o `<raíz_spec>/features/<capability>/<capability>_spec.md` (plano legacy).
+
+**Si el spec ya existe, mira su estado antes de escribir ([[D-024]]/[[D-062]]).** No es lo mismo pisar un borrador que pisar un spec validado:
+
+```bash
+!grep -Eq '^[[:space:]]*[-*>]?[[:space:]]*\*{0,2}Estado:?\*{0,2}[[:space:]]*:?[[:space:]]*VALIDADO' "<path_existente>" && echo SELLADO || echo DRAFT
+```
+
+- **`DRAFT`** (o no existe) → reescribe en su ubicación actual y sigue. Quien te lanzó ya resolvió si procedía regenerarlo; re-plantearlo aquí sería fricción redundante.
+- **`SELLADO` sin `--allow-overwrite-sealed-spec`** → **detente sin escribir nada** (ni el spec ni el README) y devuelve el bloqueo a quien te lanzó, con veredicto operativo `STOP_SPEC_SELLADO`:
+  > "El spec de `<capability>` ya existe y está **validado** (`Estado: VALIDADO`) en `<path>`. Regenerarlo descarta el trabajo de validación y los gaps ya respondidos. No lo he tocado. Si el usuario quiere rehacerlo desde cero de todas formas, relánzame con `--allow-overwrite-sealed-spec`. Si lo que quiere es **cambiar algo de lo que ya dice**, no hace falta rehacerlo: se aplica el cambio sobre el spec existente, y eso reabre su validación en vez de descartarla — dile que te pida el cambio y ya lo enrutas tú."
+- **`SELLADO` con `--allow-overwrite-sealed-spec`** → reescribe en su ubicación actual, y **dilo en tu informe del Paso 11** ("se sobreescribió un spec validado, autorizado por el usuario"). El spec nuevo nace en `Estado: BORRADOR`, así que el sello anterior no sobrevive por accidente.
+
+> **Por qué aquí no preguntas.** Corres en `context: fork`, y un subagente **no puede presentarle una pregunta al usuario**: la instrucción que este paso tenía antes —*"pregunta al usuario si desea regenerarlo"*— **no era ejecutable** ([[D-045]]). Un gate se escribe donde puede presentarse; lo tuyo es **parar y reportar** para que lo presente quien sí puede ([[D-026]]).
+
+Escribe los 2 artefactos que tú compones (crea directorios si no existen), relativos a esa raíz:
 1. **Spec**: `<raíz_spec>/features/<capability>/spec/<capability>_spec.md`
 2. **README**: `<raíz_spec>/features/<capability>/README.md` (siempre en la raíz de la feature)
 

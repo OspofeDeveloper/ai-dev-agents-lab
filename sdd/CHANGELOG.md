@@ -2,6 +2,16 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.101.0 — 2026-09-09
+
+**Regenerar un spec se pondera por su estado** — [[DECISIONS D-062]]. [[DECISIONS D-024]] fijó esta regla para el PRD, se declaró *"principio general"*, **nombró explícitamente al "spec validado"** y difirió la herencia a *"se hereda al mantenerlas"*. Al ir por fin a heredarla aparecieron **tres** sitios, y ninguno era el "¿seguro?" plano que esperábamos.
+
+- 🔴 **`wf-spec-features-first` excluía en silencio cualquier spec preexistente** (*"no relances, preservar trabajo previo"*) — el extremo contrario al que atacó D-024: protección máxima, cero elección. Un *"regenera el spec de F-003, he cambiado el PRD"* se convertía en un **no-op reportado como éxito** (*"ya generada"*). Ahora clasifica el subset por estado y sostiene **un solo gate por clase**, con la lista de features dentro.
+- ⚠ **`wf-spec-fast-track` y `wf-spec-from-code` decían "pregunta al usuario si desea regenerarlo"** — y son `context: fork` **sin `AskUserQuestion`**: la instrucción **no era ejecutable**. Misma clase de defecto que [[DECISIONS D-045]], sobrevivida en dos sitios más. Ahora **paran y reportan** (`STOP_SPEC_SELLADO`), que es lo que un worker puede hacer; el gate lo presenta quien sí puede preguntar.
+- ⚠ **Override nominal nuevo: `--allow-overwrite-sealed-spec`**, armado **solo** por el usuario eligiendo en el gate ([[DECISIONS D-026]]). El bloqueo nombra además la **salida no destructiva**: quien quiere *cambiar* un spec validado no quiere regenerarlo — la vía es delta o amend, que **reabren** el sello ([[DECISIONS D-061]]) en vez de descartarlo.
+- ⚠ **La norma general sube a la regla eager** (`orchestration.md`), con las líneas objetivas de las tres fases tabuladas — el carril que el orquestador sí lleva encima ([[DECISIONS D-060]], mismo patrón).
+- 🟠 **FASE 13 nueva en el ROADMAP — "Herencia de principios generales entre fases".** Lo que se declare *"principio general"* deja desde ahora un **ítem con dueño**, no una frase dentro de su propia decisión. Arranca con lo que este barrido dejó a la vista: el mismo gate plano sigue en **6 sitios de Design, Plan y Tasks**, y en **5 de ellos es igualmente inejecutable** (fork sin `AskUserQuestion`). El más elocuente es `wf-qa-plan`, que ya **sabe** lo que se pierde al regenerar (*"los `Estado` previos de `wf-qa-verify` se pierden — adviértelo"*) y no puede advertirlo: la información correcta en el sitio equivocado.
+
 ## 0.100.0 — 2026-09-09
 
 **El spec gana estado operativo** — [[DECISIONS D-061]]. Comparando la fase PRD (cerrada) con la fase Spec apareció un hueco **en mitad del pipeline**, con los dos vecinos resueltos: el PRD tiene sello (`status: approved` + `Aprobado por:`, leído por script, reabierto al cambiar) y el Plan tiene `Estado: BORRADOR | VALIDADO` (leído por el gate). El Spec **no tenía nada**: `wf-spec-validate` *"no escribe ningún archivo"*, así que nada distinguía un spec validado de uno que no había mirado nadie.
