@@ -59,7 +59,7 @@ El `DESIGN_BRIEF.md` es precondicion salvo override explicito: la feature debe h
    - si `.sdd/project-init.json` declara `artifacts.design`, en ese directorio
    - si el spec esta dentro de `features/<nombre>/` (directamente o en su subcarpeta `spec/`), en el directorio que contiene `features/`
    - en el mismo directorio en otros casos
-3. Si existe, leelo completo y pasalo al agente como fuente prioritaria.
+3. Si existe, leelo completo y usalo como fuente prioritaria.
 4. Si **no existe** y **no se paso `--no-brief`**, deten el flujo con:
    > "No hay `DESIGN_BRIEF.md`. Ejecuta primero `/wf-design-intake generate <feature_spec.md>` para fijar direccion y autonomia. Para saltar el intake (legacy o experimental), reintenta con `--no-brief`."
 5. Si se paso `--no-brief`, continua solo con `DESIGN.md` y deja documentada esta decision en el bundle resultante.
@@ -76,7 +76,7 @@ Deriva las superficies a generar y su `target_tool`:
 - una sola superficie `web`/`desktop` → un `ui_prompt`, `target_tool: web-generic`
 - **multi-superficie** (p. ej. `[mobile, web]`) → **un `ui_prompt` por superficie** (no uno mezclado): `mobile`→`stitch`, `web`/`desktop`→`web-generic` (ver `kb-design-feature-artifacts` Regla 7, sección multi-superficie).
 
-Pasa al agente en el Paso 5 la lista de superficies con su `target_tool` (una o varias). `flows`/`views` se generan una sola vez (agnósticos); el `ui_prompt` se genera por superficie.
+Lleva al Paso 5 la lista de superficies con su `target_tool` (una o varias). `flows`/`views` se generan una sola vez (agnósticos); el `ui_prompt` se genera por superficie.
 
 ## Paso 3d: Resolver design targets y divergencia (D-011)
 
@@ -125,7 +125,7 @@ Antes de continuar, verifica si el artefacto principal ya existe:
 
 Antes de delegar, busca otras features ya prototipadas en el directorio hermano:
 - Lista las features con `_views.md` y `_flows.md` existentes, en ambos layouts: `features/*/design/*` (subcarpetas) y `features/*/*` (plano legacy).
-- Si las hay, lee los `_views.md` y `_flows.md` de hasta 3 features previas (las mas recientes) y pasalos al agente para que aplique `kb-design-conflict-expert`.
+- Si las hay, lee los `_views.md` y `_flows.md` de hasta 3 features previas (las mas recientes) y aplicales `kb-design-conflict-expert`.
 - Si es la primera feature del producto, no hace falta este chequeo.
 
 ## Paso 5: Derivar los artefactos de feature
@@ -186,13 +186,13 @@ Formato de output: usa el bundle definido en ${CLAUDE_SKILL_DIR}/references/outp
 
 ## Paso 6: Manejar DESIGN_GAPs
 
-Si el agente devuelve `DESIGN_GAP` o `DESIGN_GAPs`:
+Si tu derivacion arroja `DESIGN_GAP` o `DESIGN_GAPs`:
 - informa al usuario
 - no escribas archivos
 
 ## Paso 7: Escribir resultados
 
-Parsea la respuesta del agente usando el formato de bundle de `${CLAUDE_SKILL_DIR}/references/output_bundle_template.md`: extrae cada bloque `===FILE: <nombre>===` como archivo separado y escribe cada uno en su path correspondiente.
+Organiza tu salida usando el formato de bundle de `${CLAUDE_SKILL_DIR}/references/output_bundle_template.md`: extrae cada bloque `===FILE: <nombre>===` como archivo separado y escribe cada uno en su path correspondiente.
 
 ## Paso 8: Informar al usuario
 

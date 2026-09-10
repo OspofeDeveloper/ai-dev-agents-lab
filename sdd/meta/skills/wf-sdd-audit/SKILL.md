@@ -1,6 +1,6 @@
 ---
 name: wf-sdd-audit
-description: "Audita el ecosistema SDD detectando referencias rotas, skills huerfanas, violaciones de SSoT/SRP, contradicciones e inconsistencias. Soporta modos structural (rapido), content (profundo) y full (ambos). Delega al agente sdd-auditor."
+description: "Audita el ecosistema SDD detectando referencias rotas, skills huerfanas, violaciones de SSoT/SRP, contradicciones e inconsistencias. Soporta modos structural (rapido), content (profundo) y full (ambos). Funde los findings deterministas del linter con el juicio experto no mecanizable."
 when_to_use: "Activa con frases como 'audita el ecosistema', 'revisa que las skills sean SSoT', 'comprueba si hay contradicciones', 'verifica single responsibility', 'busca inconsistencias en las skills', 'chequea el estado del ecosistema'. No activa para crear o modificar skills (usa wf-skill-create, wf-agent-create) ni para auditar artefactos del pipeline SDD como specs o planes (usa wf-spec-validate, wf-plan-validate)."
 argument-hint: "<structural|content|full> [--phase <prd|spec|design|plan|tasks|tech/<stack>|global>]"
 effort: high
@@ -77,7 +77,7 @@ python3 sdd/scripts/sdd-structural-lint.py --json
 
 (Si el repo se invoca desde otra raiz, ajusta a `scripts/sdd-structural-lint.py`. En un proyecto consumidor el script vive en `.sdd/scripts/sdd-structural-lint.py`.)
 
-Estos findings son **SSoT determinista** (no los re-deriva el agente por prosa): se incorporan tal cual al reporte como hallazgos verificados. El agente `sdd-auditor` los recibe como entrada y añade encima solo el juicio estructural **no mecanizable** (huerfanas con matiz, drift semantico de rootmap, referencias rotas que el lint no cubre). Cita `kb-sdd-audit-structural` para el reparto exacto entre lo mecanizado y lo experto.
+Estos findings son **SSoT determinista** (no se re-derivan por prosa): se incorporan tal cual al reporte como hallazgos verificados. Los recibes como entrada y añades encima solo el juicio estructural **no mecanizable** (huerfanas con matiz, drift semantico de rootmap, referencias rotas que el lint no cubre). Cita `kb-sdd-audit-structural` para el reparto exacto entre lo mecanizado y lo experto.
 
 En modo `content` puro, omite este paso (el lint es estructural).
 
@@ -85,7 +85,7 @@ En modo `content` puro, omite este paso (el lint es estructural).
 
 ## Paso 4: Construir el contexto de auditoria
 
-Construye el prompt para el agente con:
+Construye el contexto de auditoria con:
 
 ```text
 Modo: <structural|content|full>
@@ -132,8 +132,8 @@ Determina el path de salida:
 - `sdd/docs/audit_<modo>_<fase>.md`
 - Ejemplo: `sdd/docs/audit_full_global.md`, `sdd/docs/audit_content_design.md`
 
-Escribe el reporte del agente en ese archivo, **con redirección por `Bash`**
-(`cat > "<path>" <<'EOF' … EOF`): `sdd-auditor` tiene `Write` y `Edit` prohibidos para que
+Escribe el reporte en ese archivo, **con redirección por `Bash`**
+(`cat > "<path>" <<'EOF' … EOF`): eres `sdd-auditor` y tienes `Write` y `Edit` prohibidos para que
 una auditoría no acabe editando lo auditado ([[D-051]]). El reporte es tu output y lo
 escribes tú — no se lo pases al hilo principal.
 

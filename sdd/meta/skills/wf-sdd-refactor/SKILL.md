@@ -1,6 +1,6 @@
 ---
 name: wf-sdd-refactor
-description: "Orquestador SDD para refactorizar una skill (kb-* o wf-*) o agente existente del ecosistema. Parsea el path del artefacto y el motivo del cambio, lee el estado actual, y delega el diagnostico y la refactorizacion al agente sdd-author."
+description: "Orquestador SDD para refactorizar una skill (kb-* o wf-*) o agente existente del ecosistema. Parsea el path del artefacto y el motivo del cambio, lee el estado actual, diagnostica y aplica la refactorizacion segura."
 when_to_use: "Activa con frases como 'refactoriza esta skill', 'esta kb es demasiado ancha', 'separa esta skill en dos', 'esta wf mezcla responsabilidades', 'extrae una SSoT de', 'actualiza el frontmatter de', 'corrige la estructura de este agente'. No activa para crear piezas nuevas (usa wf-skill-create, wf-agent-create) ni para auditar el ecosistema en general (usa wf-sdd-audit)."
 argument-hint: "<path-skill-o-agente> [--reason <motivo>]"
 effort: medium
@@ -73,7 +73,7 @@ Lee el contenido de las piezas relacionadas encontradas.
 
 ## Paso 4: Diagnosticar y proponer la refactorizacion
 
-Construye el prompt para el agente con:
+Construye el contrato que vas a aplicar con:
 
 ```text
 Modo: refactor
@@ -101,7 +101,7 @@ Aplica **tú** ese contrato. `sdd-author` es el `agent:` de esta skill: ya corre
 
 Escribe el contenido refactorizado en el path original del artefacto.
 
-Si el agente indica que la refactorizacion requiere crear nuevas piezas (extraccion de SSoT, particion), no las crees: informa al usuario:
+Si tu diagnostico concluye que la refactorizacion requiere crear nuevas piezas (extraccion de SSoT, particion), no las crees: informa al usuario:
 > "⚠ La refactorizacion completa requiere crear las siguientes piezas nuevas. Usa los workflows indicados para cada una:"
 > [lista de piezas con comando sugerido]
 

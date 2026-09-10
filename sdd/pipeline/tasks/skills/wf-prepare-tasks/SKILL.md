@@ -111,7 +111,7 @@ Antes de escribir, verifica si el archivo ya existe:
 > presentarle una elección al usuario: la instrucción que este paso tenía antes no era
 > ejecutable ([[D-045]]). Paras y reportas; el gate lo presenta quien puede ([[D-026]]).
 
-Escribe el output del agente en ese archivo.
+Escribe en ese archivo las tasks que has descompuesto.
 
 ---
 

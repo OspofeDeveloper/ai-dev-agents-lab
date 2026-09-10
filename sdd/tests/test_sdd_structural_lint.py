@@ -472,6 +472,81 @@ class StructuralLintTest(unittest.TestCase):
         _, types = types_in(self.root)
         self.assertNotIn("FORK-ORCHESTRATOR", types)
 
+    # === FORK-CONFIRM-GATE / FORK-INTERVIEW, formas de Design (D-072) =====
+
+    def test_fork_confirm_gate_catches_the_closed_yes_no_suffix(self):
+        # La forma de Design: la pregunta cerrada dictada con su sufijo.
+        write(self.root / "design" / "skills" / "wf-merge" / "SKILL.md",
+              skill_md("wf-merge",
+                       "Si el diff es breaking, avisa:\n"
+                       "> \"Esto sobrescribe el target. ¿Quieres continuar? (y/n)\"\n",
+                       extra_fm="context: fork\nagent: design-system-architect\n"))
+        r, types = types_in(self.root)
+        self.assertIn("FORK-CONFIRM-GATE", types)
+        self.assertIn("blocking", r.stdout)
+
+    def test_fork_confirm_gate_catches_the_infinitive_forms(self):
+        # "pedir confirmacion" y "pedir al usuario": la regla cazaba la forma
+        # conjugada y estas se le escapaban por una letra.
+        write(self.root / "design" / "skills" / "wf-pide" / "SKILL.md",
+              skill_md("wf-pide",
+                       "Antes de escribir, pedir confirmacion al usuario del formato.",
+                       extra_fm="context: fork\nagent: design-system-architect\n"))
+        _, types = types_in(self.root)
+        self.assertIn("FORK-CONFIRM-GATE", types)
+
+    def test_fork_confirm_gate_catches_asking_the_user_to_confirm(self):
+        # "Detente y pide al usuario que confirme": para bien, pero le dicta la
+        # pregunta y le promete una continuacion que un fork no puede tener.
+        write(self.root / "design" / "skills" / "wf-inventario" / "SKILL.md",
+              skill_md("wf-inventario",
+                       "Detente aqui. Presenta el inventario y pide al usuario "
+                       "que confirme, corrija o descarte.",
+                       extra_fm="context: fork\nagent: design-system-architect\n"))
+        _, types = types_in(self.root)
+        self.assertIn("FORK-CONFIRM-GATE", types)
+
+    def test_fork_interview_catches_the_open_questionnaire(self):
+        # El caso medido: siete preguntas abiertas dictadas en un fork, y el
+        # check reportando CERO porque su heuristica no conocia esta forma.
+        write(self.root / "design" / "skills" / "wf-vibes" / "SKILL.md",
+              skill_md("wf-vibes",
+                       "Realiza al usuario una serie de preguntas abiertas sobre el producto.",
+                       extra_fm="context: fork\nagent: design-system-architect\n"))
+        _, types = types_in(self.root)
+        self.assertIn("FORK-INTERVIEW", types)
+
+    def test_fork_interview_catches_iterating_with_the_user(self):
+        write(self.root / "design" / "skills" / "wf-cura" / "SKILL.md",
+              skill_md("wf-cura",
+                       "Presenta la lista. Iterar hasta que el usuario confirme.",
+                       extra_fm="context: fork\nagent: design-system-architect\n"))
+        _, types = types_in(self.root)
+        self.assertIn("FORK-INTERVIEW", types)
+
+    def test_interview_in_the_main_thread_is_not_flagged(self):
+        # El arreglo: la misma entrevista, sin fork, con AskUserQuestion. Es
+        # exactamente donde debe vivir.
+        write(self.root / "design" / "skills" / "wf-vibes-main" / "SKILL.md",
+              skill_md("wf-vibes-main",
+                       "Realiza al usuario una serie de preguntas abiertas sobre el producto.",
+                       extra_fm="allowed-tools: [Bash, Agent, AskUserQuestion]\n"))
+        _, types = types_in(self.root)
+        self.assertNotIn("FORK-INTERVIEW", types)
+        self.assertNotIn("FORK-CONFIRM-GATE", types)
+
+    def test_questions_written_into_an_artifact_are_not_an_interview(self):
+        # Un fork que EJEMPLIFICA como redactar las preguntas de un artefacto no
+        # esta preguntando nada: wf-spec-analyze lleva `¿…?` de muestra y es
+        # correcto. Si esto casara, la regla seria inservible en Spec.
+        write(self.root / "spec" / "skills" / "wf-analiza" / "SKILL.md",
+              skill_md("wf-analiza",
+                       "Cada gap se redacta concreto: \"¿catalogo persistente o texto libre?\".",
+                       extra_fm="context: fork\nagent: sdd-spec-explorer\n"))
+        _, types = types_in(self.root)
+        self.assertNotIn("FORK-INTERVIEW", types)
+        self.assertNotIn("FORK-CONFIRM-GATE", types)
+
     # === FORK-SELF-DELEGATION (D-070) =====================================
 
     def test_fork_ordering_delegation_to_its_own_agent_is_blocking(self):

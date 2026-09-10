@@ -12,7 +12,7 @@ user-invocable: true
 
 # design-extract — DESIGN.md por ingenieria inversa de la UI existente
 
-Tu rol: explorar la UI en produccion con rigor de evidencia y delegar la redaccion. La regla central viene de `kb-design-characterization` (en el contexto del agente): **un token o decision visual sin evidencia no se inventa**. Tu recolectas la evidencia; el agente redacta sin fabricar.
+Tu rol: explorar la UI en produccion con rigor de evidencia y redactar **solo** lo que esa evidencia sostiene. La regla central viene de `kb-design-characterization`, que ya tienes cargada —eres `design-system-architect`—: **un token o decision visual sin evidencia no se inventa**. Recolectas la evidencia y redactas con ella; no fabricas para rellenar.
 
 Es el espejo de `wf-spec-from-code` en la fase Design. **NO exige spec validado ni `DESIGN_BRIEF.md`**: es una entrada ALTERNATIVA a la fase (igual que `wf-spec-from-code` no exige PRD). La UI existente es la fuente de verdad.
 
@@ -58,10 +58,10 @@ Resuelve donde iria el `DESIGN.md` (misma regla de layout que `wf-design-system`
 
 Escribe `<producto>_design_extraction.md` en esa raiz de producto. Incluye header con `Evidencia base: commit <SHA corto>` (o `sin repo git`) y `Cobertura de evidencia: <nivel de acceso>`.
 
-**Detente SIEMPRE aqui.** Presenta el inventario (paleta con inconsistencias, tipografia, componentes, spacing — cada uno con confianza) y pide al usuario que confirme/corrija/descarte:
-> "Este inventario es lo que la UI evidencia — revisalo antes de generar el DESIGN.md. Confirma que roles son correctos, que inconsistencias son reales y que quieres documentar. Cuando confirmes: `/wf-design-extract generate <path_ui>`"
+**Detente SIEMPRE aqui**, con veredicto operativo `STOP_EXTRACCION_SIN_VALIDAR`. Devuelve el inventario (paleta con inconsistencias, tipografia, componentes, spacing — cada uno con su confianza) y el bloqueo:
+> "El inventario visual esta en `<path>`: es lo que la UI evidencia, y **nadie lo ha validado todavia**. Generar el `DESIGN.md` sobre un inventario sin validar convierte en contrato lo que puede ser CSS muerto o una inconsistencia que nadie eligio. No lo he generado. Lo que falta es que una persona confirme que roles son correctos, que inconsistencias son reales y cuales quiere documentar — y eso lo presenta quien me invoco."
 
-Las correcciones del usuario se aplican al `_design_extraction.md` (marca lo descartado como `DESCARTADO — <motivo>`, no lo borres).
+**No esperes respuesta**: corres en `context: fork` y no tienes turno donde recibirla ([[D-045]]); el gate lo presenta quien puede preguntar ([[D-026]]/[[D-064]]). Las correcciones llegaran como una invocacion nueva, y entonces se aplican al `_design_extraction.md` (marca lo descartado como `DESCARTADO — <motivo>`, no lo borres).
 
 ## Paso 4 (generate): Recolectar el dossier de evidencia
 
@@ -119,7 +119,7 @@ Antes de escribir, verifica si el archivo ya existe:
 > presentarle una elección al usuario: la instrucción que este paso tenía antes no era
 > ejecutable ([[D-045]]). Paras y reportas; el gate lo presenta quien puede ([[D-026]]).
 
-1. Escribe el output del agente en el path destino como `DESIGN.md`.
+1. Escribe el `DESIGN.md` que has redactado en el path destino.
 2. Ejecuta el linter de Google design.md:
    ```bash
    npx @google/design.md lint <path_design>

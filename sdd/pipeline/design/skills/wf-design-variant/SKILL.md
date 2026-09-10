@@ -4,15 +4,21 @@ description: "Permite el A/B testing visual de una feature. Genera dos o mas var
 when_to_use: "Activa en frases como 'quiero probar dos versiones del checkout', 'haz un A/B del onboarding', 'compara variantes de esta feature'."
 argument-hint: "create <feature_spec.md> --variants <A,B,...> [--hypothesis <texto>] | compare <feature_variants.md>"
 effort: medium
-allowed-tools: [Read, Write]
-context: fork
-agent: design-feature-architect
+allowed-tools: [Bash, Agent, AskUserQuestion]
 user-invocable: true
 ---
 
 # design-variant — A/B testing visual
 
-Tu rol es producir y comparar variantes paralelas de una feature compartiendo spec y `DESIGN.md`, para validar hipotesis visuales antes de comprometerse.
+**Corres en el hilo principal.** Este workflow pregunta cuatro veces: la hipotesis del A/B, en que
+difiere cada variante, y —en modo `compare`— que metrica dio cada una y que aprendiste. Nada de eso se
+puede hacer desde un `context: fork` ([[D-002]]/[[D-045]]), y sin usuario el riesgo no es pararse: es
+**inventar la hipotesis**, que es justo lo que este workflow existe para no hacer ([[D-072]]).
+
+Tu rol es de **orquestador**: sostienes esas preguntas con `AskUserQuestion` y **delegas** la
+generacion y la actualizacion de artefactos en `design-feature-architect` (tool `Agent`,
+`run_in_background: false` — [[D-043]]). No lees el spec ni el `DESIGN.md` ([[D-031]]) y no escribes
+los artefactos ([[D-060]]): pasas paths, y el agente lee, redacta y escribe.
 
 ## Paso 1: Parsear argumentos
 
@@ -37,28 +43,29 @@ Si no hay argumento valido, informa:
 1. Spec valido (Reglas estandar de SDD).
 2. `DESIGN.md` existe.
 3. `DESIGN_BRIEF.md` cerrado (salvo override `--no-brief`).
-4. La feature debe tener Success Metrics declarados en el brief para que el A/B tenga sentido. Si no los hay, advertir:
-   > "El `DESIGN_BRIEF.md` no declara `Success Metrics`. Sin metricas no se puede evaluar la variante ganadora. ¿Continuar igualmente? (y/n)"
+4. La feature debe tener Success Metrics declarados en el brief para que el A/B tenga sentido. Si no los hay, **presenta la eleccion con `AskUserQuestion`**: cerrar antes las metricas en el brief (recomendado) o continuar sabiendo que el A/B no tendra criterio de victoria. Si continua, queda registrado en el `_variants.md`.
 
 ### 2.2 Capturar hipotesis
 
-Si `--hypothesis` no se paso, preguntar al usuario:
-> "¿Cual es la hipotesis que quieres validar con estas variantes? (ej: 'una version con CTA mas prominente aumentara el task completion en checkout')"
+Si `--hypothesis` no se paso, pregúntasela al usuario **en conversacion** (es abierta: no la metas en
+un menu de opciones). Dale un ejemplo para calibrar la forma: *"una version con CTA mas prominente
+aumentara el task completion en checkout"*.
 
 La hipotesis debe ser:
 - Especifica (que cambia en cada variante).
 - Medible (con que metrica del brief se evalua).
 - Acotada en alcance (vista, flujo, componente).
 
-Si el usuario no proporciona hipotesis clara, deten:
-> "Sin hipotesis especifica, el A/B es decoracion, no validacion. Define que esperas que cambie entre las variantes."
+Si el usuario no da una hipotesis especifica, **para y dilo**: sin ella el A/B es decoracion, no
+validacion. **No la inventes tu** ni la derives del spec: la hipotesis es lo que alguien quiere
+aprender, y eso no esta escrito en ningun artefacto.
 
 ### 2.3 Generar variantes
 
 Por cada variante (`A`, `B`, ...):
 
-1. Pedir al usuario una descripcion corta de en que difiere de las demas (1-2 frases).
-2. Aplica **tú** este contrato (eres el `agent:` de esta skill, [[D-070]]):
+1. Pregunta al usuario, en conversacion, en que difiere de las demas (1-2 frases). Su respuesta viaja **literal** al delegado.
+2. Delega la generacion en `design-feature-architect` (tool `Agent`, `run_in_background: false`) con este contrato:
    ```text
    Modo: design-variant-generate
    Path del spec: <path>
@@ -76,34 +83,45 @@ Por cada variante (`A`, `B`, ...):
 
    Documenta en cada artefacto que es variante <X> y enlaza a la hipotesis.
    ```
-3. Escribir los archivos resultantes en el mismo directorio que los artefactos de prototipado de la feature: la subcarpeta `design/` de la feature si el spec esta en `features/<nombre>/spec/` (crea el directorio si no existe); el mismo directorio del spec en otros casos (layout plano legacy).
+3. **Los escribe el agente** ([[D-059]]/[[D-060]]), en el mismo directorio que los artefactos de prototipado de la feature: la subcarpeta `design/` de la feature si el spec esta en `features/<nombre>/spec/` (que crea si no existe); el mismo directorio del spec en otros casos (layout plano legacy). Emite **las N llamadas en un unico mensaje** si generas varias variantes: con el flag, esa es la barrera que necesita el 2.4 ([[D-047]]).
 
 ### 2.4 Generar `<feature>_variants.md`
 
-Documento maestro siguiendo la plantilla de `${CLAUDE_SKILL_DIR}/references/variant_templates.md`, en el mismo directorio que las variantes.
+Documento maestro siguiendo la plantilla de `${CLAUDE_SKILL_DIR}/references/variant_templates.md`, en el mismo directorio que las variantes. **Lo escribe tambien el agente**, en una ultima delegacion con la hipotesis, las descripciones literales del usuario y los paths ya generados. Comprueba despues con `test -f` que esta; si falta, reportalo y para — no lo escribas tu.
 
 ### 2.5 Informar al usuario
 
 - archivos generados
-- siguiente paso recomendado:
-  > "Cuando el A/B termine y tengas resultados, ejecuta `/wf-design-variant compare <feature>_variants.md` y registra el ganador."
+- siguiente paso, en lenguaje natural: cuando el A/B termine y haya resultados, te los cuenta y registras el ganador. **No le des el comando** — te lo pide hablando.
 
 ## Paso 3: Modo `compare`
 
 ### 3.1 Verificar
 
-Leer `<feature>_variants.md`. Verificar que `status: pending_validation`.
+Comprobacion mecanica, sin leer el documento entero:
+
+```bash
+!test -f "<path_variants>" && grep -q 'status: *pending_validation' "<path_variants>" && echo PENDIENTE || echo NO_PENDIENTE
+```
+
+`NO_PENDIENTE` → o no existe, o ya se valido: dilo y para.
 
 ### 3.2 Capturar resultados
 
-Preguntar al usuario:
-1. ¿Cual fue la metric de cada variante?
-2. ¿Que variante gano? (o "empate", "no concluyente").
-3. ¿Que aprendiste? (notas cualitativas relevantes).
+Pregunta al usuario, en el hilo principal, y **no rellenes lo que no conteste**:
+1. La metrica que dio cada variante.
+2. Que variante gano — o "empate" / "no concluyente", que son resultados validos.
+3. Que aprendio (notas cualitativas).
 
-### 3.3 Actualizar el documento
+Si no hay datos de metrica, el resultado se registra como **no concluyente con la razon**; nunca se
+deduce un ganador de la variante que "parece mejor".
 
-Añadir sección `## Resultados` siguiendo la plantilla de `${CLAUDE_SKILL_DIR}/references/variant_templates.md`. Cambiar `status: pending_validation` a `status: validated`.
+### 3.3 Actualizar el documento (delegado)
+
+Delega en `design-feature-architect` con las respuestas literales: añade la sección `## Resultados`
+siguiendo la plantilla de `${CLAUDE_SKILL_DIR}/references/variant_templates.md` y cambia
+`status: pending_validation` a `status: validated`. **Lo edita el agente**, que es el autor del
+documento ([[D-060]]).
 
 ### 3.4 Sugerir siguiente paso
 

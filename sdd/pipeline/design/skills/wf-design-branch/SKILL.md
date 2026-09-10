@@ -2,7 +2,7 @@
 name: wf-design-branch
 description: Permite explorar variantes paralelas del sistema visual sin comprometerse. Crea ramas del DESIGN.md (DESIGN.<branch>.md), las compara, las mergea a main o las descarta. Pensado para hipotesis de direccion visual o presentaciones A/B al cliente.
 when_to_use: "Activa en frases como 'explora una variante mas brand-forward del sistema', 'crea una rama del DESIGN con dark mode prominente', 'compara estas dos versiones del DESIGN.md', 'haz un branch para probar otra familia'."
-argument-hint: "create <branch-name> | list | compare <branch-a> <branch-b> | merge <branch> --into <target> | discard <branch>"
+argument-hint: "create <branch-name> | list | compare <branch-a> <branch-b> | merge <branch> --into <target> [--allow-breaking-merge] | discard <branch> [--allow-discard-branch]"
 effort: medium
 allowed-tools: [Read, Write, Bash]
 context: fork
@@ -86,27 +86,33 @@ Argumentos: `<branch>` y `--into <target>` (target normalmente `main`).
 Pasos:
 1. Resolver paths.
 2. Ejecutar internamente `compare` primero, sin escribir output, solo en memoria.
-3. Si el diff es `breaking` (cambia style_family, primary, tipografia, elimina componentes), pedir confirmacion explicita al usuario:
-   > "Este merge introduce un cambio MAJOR (segun Regla 22). ¿Quieres continuar? Esto sobrescribira `<target>` y bumpeara la version. (y/n)"
-4. Si el usuario confirma o el diff no es breaking:
+3. Si el diff es `breaking` (cambia style_family, primary, tipografia, elimina componentes) y **no** viene `--allow-breaking-merge`, **detente sin escribir nada** con veredicto operativo `STOP_MERGE_BREAKING`:
+   > "El merge de `<branch>` en `<target>` es un cambio **MAJOR** (`kb-design-governance` Regla 3, criterios de MAJOR): cambia `<lo concreto: style_family / primary / tipografia / componentes eliminados>`. Sobrescribe `<target>` y bumpea su version mayor. No lo he tocado. La decision es de quien pueda confirmarla; si la toma, relanzame con `--allow-breaking-merge`."
+
+   > **Por que aqui no preguntas ([[D-064]]).** Corres en `context: fork` y un subagente no puede
+   > presentar una eleccion: la confirmacion cerrada que este paso dictaba **no era ejecutable**
+   > ([[D-045]]). Paras y reportas; el gate lo presenta quien puede, y el override lo arma el usuario
+   > eligiendo ([[D-026]]).
+4. Si el diff no es breaking, o viene `--allow-breaking-merge`:
    - Copiar el contenido del branch al target.
    - Eliminar del frontmatter del target los campos `branch`, `branched_from`, `branched_at` (esos campos son solo para branches).
    - Bumpear la version segun la naturaleza del cambio (MAJOR / MINOR / PATCH).
    - Anadir entry al `## Changelog` del target: `[<fecha>] [merge:<branch>] <resumen del diff>`.
-5. Preguntar si descartar el branch tras merge:
-   > "Merge completado en `<target>` (version <X.Y.Z>). ¿Quieres descartar el branch `<name>`? (y/n)"
-6. Si el usuario dice si, ejecutar `discard` internamente.
+5. **El branch se queda.** Informa de que el merge termino (`<target>`, version `<X.Y.Z>`) y de que
+   `DESIGN.<name>.md` sigue ahi. Descartarlo es una **accion propia y explicita** —el modo `discard`—,
+   no una coletilla del merge: asi el usuario lo pide cuando quiera y con su gate, en vez de
+   contestar a una pregunta que un fork no puede hacerle.
 
 ## Paso 6: Modo `discard`
 
-Argumentos: `<branch-name>`.
+Argumentos: `<branch-name> [--allow-discard-branch]`.
 
 Pasos:
 1. Verificar que `DESIGN.<branch-name>.md` existe.
-2. Pedir confirmacion:
-   > "Vas a descartar el branch `<name>` (`DESIGN.<name>.md`). Esto no es reversible. ¿Continuar? (y/n)"
-3. Si confirma, eliminar el archivo.
-4. Si existe un `<branch_name>_compare_*` cercano, ofrecer eliminarlo tambien.
+2. Sin `--allow-discard-branch`, **detente sin borrar nada** con veredicto operativo `STOP_DISCARD_IRREVERSIBLE`:
+   > "Descartar el branch `<name>` (`DESIGN.<name>.md`) **borra el fichero y no es reversible**: se pierde la exploracion visual que contiene, incluidas las decisiones que no esten en `DESIGN.md`. No lo he tocado. Si aun asi se quiere descartar, relanzame con `--allow-discard-branch`."
+3. Con el flag, eliminar el archivo.
+4. Si existe un `<branch_name>_compare_*` cercano, **no lo borres ni lo ofrezcas**: nombralo en el informe como fichero que quedo huerfano, y que lo decida quien pueda decidirlo.
 5. Anadir entry al `## Changelog` de `DESIGN.md` principal: `[<fecha>] [branch-discarded:<name>] Branch descartado sin merge.`
 6. Informar al usuario.
 

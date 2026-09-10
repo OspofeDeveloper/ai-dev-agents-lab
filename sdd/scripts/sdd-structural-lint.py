@@ -112,7 +112,12 @@ CONTEXT_FORK_RE = re.compile(r"^context:\s*fork\b", re.MULTILINE)
 # interaccion real con el usuario de la mera delegacion con args. Ver FORK-INTERVIEW.
 INTERVIEW_RE = re.compile(
     r"pregunta(?:r)? secuencialmente|una opci[oó]n a la vez|esperar respuesta|"
-    r"antes de tocar ning|espera(?:r)?\s+confirmaci[oó]n",
+    r"antes de tocar ning|espera(?:r)?\s+confirmaci[oó]n|"
+    # Formas medidas en Design ([[D-072]]): la entrevista abierta no se parecia a
+    # ninguna de las de arriba y el check reportaba CERO sobre siete preguntas
+    # dictadas al usuario en un fork.
+    r"realiza\s+al\s+usuario|serie\s+de\s+preguntas|preguntas\s+abiertas|"
+    r"iterar\s+hasta\s+que\s+el\s+usuario",
     re.IGNORECASE)
 # Formas en PROSA de un GATE DE CONFIRMACION, dictadas en imperativo al agente.
 # Complementa a FORK-ASKUSER-CONFLICT, que solo ve el nombre literal de la tool:
@@ -122,18 +127,24 @@ INTERVIEW_RE = re.compile(
 # "un subagente no puede presentarle una pregunta al usuario" y NO deben casar).
 FORK_CONFIRM_GATE_RE = re.compile(
     # (a) la orden de preguntar, en sus formas medidas
-    r"(?:^|[.;:]|\u2192|\*\*)\s*pregunta(?:le)?\s+al\s+usuario"
+    r"(?:^|[.;:]|\u2192|\*\*)\s*pregunta(?:r|le)?\s+al\s+usuario"
     # El dos-puntos es lo que separa la ORDEN de preguntar ("o preguntando al
     # usuario:" + la pregunta dictada) de la DESCRIPCION del gate ajeno
     # ("...resolver las bifurcaciones preguntando al usuario." en cascade).
     r"|\bpreguntando\s+al\s+usuario\s*:"
-    r"|\bpide\s+confirmaci[oó]n\s+expl[ií]cita"
+    r"|\bp(?:id|ed)(?:e|es|ir|ele)\s+confirmaci[oó]n(?:\s+expl[ií]cita)?"
+    # "Pedir al usuario una descripcion", "pide al usuario que confirme": ordenar
+    # que se le pida ALGO al usuario es ordenar preguntar, con o sin la palabra.
+    r"|\bp(?:ed(?:ir|ile)|id(?:e|ele))\s+al\s+usuario\b"
+    r"|\bpreguntar?\s+si\s+descartar"
     # (b) la orden de ESPERAR al usuario: un fork no tiene turno donde esperar
     r"|\bespera(?:r)?\s+(?:la\s+)?respuesta\s+del\s+usuario"
     # (c) el menu de opciones dictado (con o sin corchetes)
     r"|\bpregunta:\s*`?\["
     r"|\by\s+pregunta:\s*$"
     r"|\[\s*sobre?escribir\s*\|\s*cancelar\s*\]"
+    # (d) el sufijo de una pregunta cerrada dictada al usuario, la forma de Design
+    r"|\(\s*y\s*/\s*n\s*\)"
     r"|¿\s*Deseas\s+regenerar",
     re.IGNORECASE | re.MULTILINE)
 AGENT_RE = re.compile(r"^agent:\s*\S+", re.MULTILINE)

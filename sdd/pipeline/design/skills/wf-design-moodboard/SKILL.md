@@ -4,15 +4,25 @@ description: "Captura inspiracion visual no estructurada antes del discovery: el
 when_to_use: "Activa con frases como 'quiero capturar inspiración visual', 'crea un moodboard', 'tengo referencias de estilo', 'quiero definir vibes antes del brief', 'captura referencias de diseño'. No activa para cerrar el brief formal (usa wf-design-intake) ni para generar el sistema visual (usa wf-design-system)."
 argument-hint: "<feature_spec.md> [--prd <prd.md>] [--output <path>] [--mode interactive|auto]"
 effort: high
-allowed-tools: [Read, Write, Bash, WebSearch]
-context: fork
-agent: design-system-architect
+allowed-tools: [Bash, Agent, AskUserQuestion]
 user-invocable: true
 ---
 
 # design-moodboard — Captura de inspiracion visual
 
-Tu rol es recoger la inspiracion del usuario **con fidelidad** y articular ese material crudo en candidatos visuales concretos (familia, adjetivos, atmosfera, paleta intuitiva traducida al taxonomy) aplicando `kb-design-style-taxonomy` y `kb-design-style-decision-tree`. Corres como `design-system-architect` —es el `agent:` de esta skill—, asi que esa articulacion es trabajo tuyo ([[D-070]]). Lo que no haces es **sustituir** lo que dijo el usuario por tu propio criterio: sus palabras entran tal cual y la traduccion al taxonomy se justifica.
+**Corres en el hilo principal.** Esta skill **es** una entrevista: siete preguntas abiertas al usuario
+sobre como deberia sentirse su producto. Un `context: fork` no puede presentar una pregunta
+([[D-002]]/[[D-045]]), asi que ahi este workflow no tenia forma de funcionar — y el riesgo no era
+quedarse a medias, era **rellenar las respuestas por su cuenta**: un moodboard fabricado tiene
+exactamente la misma pinta que uno real ([[D-072]]).
+
+Tu rol es de **orquestador**: recoges la inspiracion del usuario **con fidelidad** y **delegas** la
+articulacion de ese material crudo en `design-system-architect` con la tool `Agent` y
+`run_in_background: false` ([[D-043]]). Traducir "madera clara" al vocabulario del taxonomy es trabajo
+del experto, con sus `kb-*` en contexto; recoger literalmente lo que el usuario dijo es tuyo.
+
+**No leas el spec ni el PRD** ([[D-031]]) y **no escribas el moodboard** ([[D-060]]): pasas paths, y
+el agente lee, redacta y escribe — es su artefacto.
 
 ## Paso 1: Parsear argumentos
 
@@ -27,14 +37,18 @@ Si no hay path, informa:
 
 ## Paso 2: Verificar el Spec
 
-1. Verifica que el archivo existe.
-2. Lee el archivo completo.
-3. Si no parece un Spec SDD validado, deten:
-   > "Este archivo no parece un Spec SDD validado. Primero ejecuta los workflows de spec."
+Comprobacion **mecanica**, sin leer el contenido:
+
+```bash
+!test -f "<path_spec>" && echo EXISTE || echo NO_EXISTE
+```
+
+`NO_EXISTE` → deten: la inspiracion se captura para una feature concreta, y ese path no existe. Si el
+contenido es o no un Spec SDD utilizable lo valora tu delegado, que es quien lo lee.
 
 ## Paso 3: Resolver PRD
 
-Si `--prd` se paso, leelo. Si no, intenta resolver `prd.md` en la raiz del producto. Si no existe, continua sin PRD (no bloqueante).
+Si `--prd` se paso, comprueba que existe. Si no, intenta resolver `prd.md` en la raiz del producto (`test -f`). Si no existe, continua sin PRD (no bloqueante). En los dos casos pasas **el path**, no el contenido.
 
 ## Paso 4: Determinar path de salida
 
@@ -45,7 +59,10 @@ Si `--prd` se paso, leelo. Si no, intenta resolver `prd.md` en la raiz del produ
 
 ### Modo `interactive` (por defecto)
 
-Realiza al usuario una serie de preguntas abiertas, sin forzar opciones cerradas. No interpretes las respuestas; transcribelas literales para pasarselas al agente. Adapta las preguntas al contexto del spec:
+Estas siete son **abiertas a proposito**: el material que buscas es como el usuario habla de su
+producto, no una opcion de un menu. Presentalas en conversacion —agrupadas, no de una en una— y
+reserva `AskUserQuestion` para las dos que si son cerradas (la 6 y la 7). **No interpretes las
+respuestas**: viajan literales al Paso 6. Adapta el enunciado al contexto del spec:
 
 1. **Vibe general en una frase**: "Si tuvieras que describir como deberia sentirse esta app en una frase, sin pensar en colores ni botones, ¿que dirias?"
 2. **Apps que admiras**: "¿Hay una app o producto que admires por como se siente — no por funcionalidad, por sensacion? ¿Cuales?"
@@ -59,11 +76,15 @@ Permite respuestas vacias ("no se", "no me importa"). No fuerces decisiones. Rec
 
 ### Modo `auto`
 
-No preguntes al usuario. Pasa el spec y PRD al agente con la senal de modo `auto` para que derive el mood directamente del material funcional.
+No preguntes al usuario. Pasa los paths del spec y del PRD al agente con la senal de modo `auto` para
+que derive el mood directamente del material funcional. **El artefacto tiene que decir que nadie lo
+dijo**: el agente marca cada candidato como derivado y de que material, para que `wf-design-intake` no
+lo lea como una preferencia del usuario que nunca existio.
 
-## Paso 6: Articular el mood board
+## Paso 6: Articular el mood board (delegado)
 
-Construye el prompt para el agente con:
+Delega con la tool `Agent` ([[D-043]]), `subagent_type: "design-system-architect"` y
+**`run_in_background: false`**, con este prompt:
 
 ```text
 Modo cognitivo: moodboard-articulate
@@ -85,14 +106,18 @@ INSTRUCCION:
 - Articula el material crudo en candidatos a `style_family` aplicando `kb-design-style-taxonomy` y `kb-design-style-decision-tree`.
 - Traduce la paleta intuitiva ("madera clara", "cielo de tarde") a familias de color compatibles con el taxonomy, sin cerrar tokens (eso es trabajo de wf-design-system).
 - Si hay apps mencionadas, valida brevemente con WebSearch ligero (2-3 lookups maximo) — no es discovery formal.
-- Genera el contenido del moodboard segun la plantilla. No escribas el archivo: devuelvelo para que el orquestador lo escriba.
+- Genera el moodboard segun la plantilla y **escribelo tu** en el output path: eres su autor ([[D-059]]/[[D-060]]). Informa de la ruta al terminar.
+- Las respuestas del usuario entran **literales** en su seccion; tu traduccion al taxonomy va aparte y con su razon. Si una respuesta vino vacia ("no se", "no me importa"), eso se documenta como tal — no se rellena.
 ```
 
-Aplica **tú** ese contrato. `design-system-architect` es el `agent:` de esta skill: ya corres como él, con sus KBs, así que invocarlo forkearía un clon tuyo ([[D-070]]).
+## Paso 7: Comprobar el resultado
 
-## Paso 7: Escribir el mood board
+```bash
+!test -f "<path_moodboard>" && echo ESCRITO || echo FALTA
+```
 
-Escribe `<basename>_design_moodboard.md` con el contenido devuelto por el agente.
+`FALTA` → no lo escribas tu ([[D-060]]): reporta que el agente no dejo el artefacto y para. Que su
+informe diga que lo escribio no es que este escrito ([[D-047]]).
 
 ## Paso 8: Informar al usuario
 
@@ -100,8 +125,7 @@ Reporta:
 - path del moodboard generado
 - vibe principal capturada
 - candidatos a `style_family` inferidos
-- siguiente paso recomendado:
-  > "Ahora ejecuta `/wf-design-intake generate <feature_spec.md> --mode hybrid` — el intake consumira este moodboard si esta en el directorio esperado."
+- siguiente paso, en lenguaje natural: cerrar el brief visual del producto, que consumira este moodboard si esta en el directorio esperado. **No le des el comando** — te lo pide hablando.
 
 ## Paso 9: Integracion con `wf-design-intake`
 

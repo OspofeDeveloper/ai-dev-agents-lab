@@ -125,13 +125,13 @@ Si **sí requiere** handoff de Design:
 
 Si **no requiere** handoff de Design:
 - continúa
-- deja trazado en el prompt del agente que se trata de una feature sin superficie UI visible
+- deja trazado en el contrato del Paso 5 que se trata de una feature sin superficie UI visible
 
 ---
 
 ## Paso 5: Construir el contrato del plan
 
-Construye el prompt para el agente ensamblando los bloques de `${CLAUDE_SKILL_DIR}/references/plan_prompt_templates.md`:
+Construye el contrato ensamblando los bloques de `${CLAUDE_SKILL_DIR}/references/plan_prompt_templates.md`:
 - Bloque base (siempre): spec completo
 - Bloque shared models (si existe `_features.md`): instrucción de no redefinir owners ajenos
 - Bloque handoff de Design (si la feature lo requiere): DESIGN.md + flows + views, con instrucción normativa
@@ -142,15 +142,15 @@ Aplica **tú** el contrato que acabas de construir. `plan-architect` es el `agen
 
 ---
 
-## Paso 6: Manejar gaps del agente
+## Paso 6: Manejar los gaps que detectes
 
-Si el agente devuelve `DESIGN_GAPs`:
+Si tu analisis arroja `DESIGN_GAPs`:
 - informa al usuario los gaps detectados
 - no escribas ningún archivo de salida
 - siguiente paso sugerido:
   > "Corrige el handoff de Design (`DESIGN.md`, `*_flows.md`, `*_views.md`) y vuelve a ejecutar `/wf-prepare-plan generate <spec.md>`"
 
-Si el agente devuelve `TECH_GAPs`:
+Si arroja `TECH_GAPs`:
 - informa al usuario los gaps detectados
 - no escribas ningún archivo de salida
 - siguiente paso sugerido:
@@ -158,13 +158,13 @@ Si el agente devuelve `TECH_GAPs`:
 
 Si no hay gaps → continúa.
 
-Si el agente devuelve otros gaps normativos (`TRACE_GAPs`, `PLAN_GAPs`):
+Si arroja otros gaps normativos (`TRACE_GAPs`, `PLAN_GAPs`):
 - informa al usuario los gaps detectados
 - no escribas ningún archivo de salida
 - siguiente paso sugerido:
   > "Corrige los gaps estructurales del Plan y vuelve a ejecutar `/wf-prepare-plan generate <spec.md>`"
 
-**Deuda técnica (`TD-00X`) — no es un gap:** si el Plan incluye una sección `## Deuda técnica asumida`, **NO bloquea ni impide escribir el archivo** (a diferencia de los gaps). La deuda es una decisión técnica viable con riesgo acotado que el agente tomó en vez de detenerse (frontera CÓMO vs QUÉ de `kb-plan-expert`). El archivo se escribe en estado `BORRADOR` con las entradas `Aprobada por: PENDIENTE`; la aprobación humana ocurre en `wf-plan-validate`. Si el agente mezcla deuda con gaps, los gaps mandan (bloquean); la deuda sola no.
+**Deuda técnica (`TD-00X`) — no es un gap:** si el Plan incluye una sección `## Deuda técnica asumida`, **NO bloquea ni impide escribir el archivo** (a diferencia de los gaps). La deuda es una decisión técnica viable con riesgo acotado que tomaste en vez de detenerte (frontera CÓMO vs QUÉ de `kb-plan-expert`). El archivo se escribe en estado `BORRADOR` con las entradas `Aprobada por: PENDIENTE`; la aprobación humana ocurre en `wf-plan-validate`. Si mezclas deuda con gaps, los gaps mandan (bloquean); la deuda sola no.
 
 ---
 
@@ -198,7 +198,7 @@ Antes de escribir, verifica si el archivo ya existe:
 > presentarle una elección al usuario: la instrucción que este paso tenía antes no era
 > ejecutable ([[D-045]]). Paras y reportas; el gate lo presenta quien puede ([[D-026]]).
 
-Escribe el output del agente en ese archivo.
+Escribe en ese archivo el plan que has producido.
 
 Antes de cerrar, escribe/verifica el header `Spec origen` del plan como ruta relativa **desde la ubicación final del `_plan.md`** con el resolutor (evita computar el `../` a mano):
 ```bash

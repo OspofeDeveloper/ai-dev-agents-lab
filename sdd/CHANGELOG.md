@@ -2,6 +2,18 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.106.0 — 2026-09-10
+
+**Design: cuatro conversaciones que vivían donde no se puede conversar** — [[DECISIONS D-072]]. Cerrando el residuo anotado en 13.11 apareció el bloque entero: la fase Design tenía cuatro workflows que le piden material al usuario escritos como `context: fork`.
+
+- 🔴 **`wf-design-intake`, `wf-design-moodboard`, `wf-design-discover` y `wf-design-variant` pasan al hilo principal.** No pedían permiso: pedían **lo que solo está en la cabeza del usuario** —la vibe del producto, la hipótesis de un A/B, qué referencias sirven—. Un fork que necesita eso y no puede preguntarlo tiene una salida silenciosa: derivarlo del spec. **Un moodboard fabricado tiene la misma pinta que uno real.**
+- ⚠ **El reparto es el de [[DECISIONS D-065]]**: main sostiene las preguntas, el arquitecto de la fase hace el trabajo experto y **escribe su artefacto**; main comprueba que está y, si falta, lo reporta en vez de escribirlo. `wf-design-intake` queda en tres tiempos —el experto propone, el usuario decide, el experto redacta— y el modo `auto` **marca en el artefacto que nadie lo validó**.
+- ⚠ **Siete gates dictados en workers adoptan la forma de [[DECISIONS D-064]]** (`wf-design-branch` ×3, `export`, `delta`, `extract`): veredicto `STOP_*` con lo que se pierde nombrado y override que arma el usuario (`--allow-breaking-merge`, `--allow-discard-branch`). Dos se resuelven **quitando la pregunta**.
+- 🔴 **Los detectores no veían nada de esto.** `FORK-INTERVIEW` reportaba **cero** sobre una entrevista de siete preguntas; `FORK-CONFIRM-GATE` no conocía *"pedir confirmacion"* (sabía la forma conjugada, no la infinitiva), *"pide al usuario que confirme"* ni el sufijo de pregunta cerrada. Ampliados con las formas **observadas**: delta **4 blocking + 2 warning → 0**.
+- ⚠ **La lista de skills que corren en main sale de `pipeline/orchestration.md`**: se quedó vieja **seis veces en dos días**. La sustituye el criterio derivable — sin `context: fork`, con `AskUserQuestion` en `allowed-tools` ([[DECISIONS D-069]]).
+- ⚠ Cerrado el residuo de prosa de [[DECISIONS D-070]] y corregidas cinco `description` que seguían prometiendo una delegación que ya no ocurre. Y una cita falsa que el linter destapó al reescribir: el gate de merge invocaba una regla número 22 de la KB de gobernanza de Design, que define cinco.
+- **Aprendizaje:** el criterio para decidir dónde vive una skill deja de ser *"¿tiene gates?"* y pasa a ser **"¿necesita algo que solo el usuario sabe?"**. Cuando la respuesta es sí, el fallo de ponerla en un fork no es un bloqueo visible: es una fabricación plausible que ninguna pasada de conformance destaparía, porque el artefacto se genera y se ve bien.
+
 ## 0.105.0 — 2026-09-10
 
 **El onramp brownfield se engancha a su fase, y 15 workflows dejan de forkearse un clon de sí mismas** — [[DECISIONS D-070]], [[DECISIONS D-071]]. Salió de mapear qué hace cada agente de Spec, qué skills usa y qué casos cubre: el mapa dejó ver lo que no estaba enlazado.

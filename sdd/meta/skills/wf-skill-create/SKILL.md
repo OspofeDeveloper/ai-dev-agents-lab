@@ -1,6 +1,6 @@
 ---
 name: wf-skill-create
-description: "Orquestador SDD para crear una nueva skill (kb-* o wf-*) en el ecosistema. Parsea tipo, nombre, fase y opciones, verifica que no existe ya una skill equivalente, y delega la creacion al agente sdd-author."
+description: "Orquestador SDD para crear una nueva skill (kb-* o wf-*) en el ecosistema. Parsea tipo, nombre, fase y opciones, verifica que no existe ya una skill equivalente, y escribe la skill con las KBs del autor del ecosistema."
 when_to_use: "Activa con frases como 'crea una kb de X', 'necesito un nuevo workflow para Y', 'añade una knowledge base de', 'crea la skill wf-Z', 'quiero un workflow que haga'. No activa para crear agentes (usa wf-agent-create), ni para refactorizar skills existentes."
 argument-hint: "<kb|wf> <nombre> --phase <prd|spec|design|plan|tasks|tech/<stack>|global> [--description <desc>] [--agent <nombre>] [--effort <low|medium|high>]"
 effort: medium
@@ -120,7 +120,7 @@ el directorio y escribe el frontmatter siguiendo `kb-sdd-creation-guide`.
 
 ## Paso 7: Delegar a sdd-author el relleno del cuerpo
 
-Construye el prompt para el agente con:
+Construye el contrato que vas a aplicar con:
 
 ```text
 Modo: fill-body-<kb|wf>

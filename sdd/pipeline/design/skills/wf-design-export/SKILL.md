@@ -39,7 +39,7 @@ Si el brief incluye `target_platforms`, sugiere automaticamente:
 - `Web` → recomendar `css` o `tailwind` o `style-dictionary`.
 - Mobile multi-plataforma → recomendar `style-dictionary` como SSoT (genera todos los formatos derivables).
 
-Si el usuario ya paso `--platforms`, respeta su seleccion; si no, sugiere las anteriores y pide confirmacion.
+Si el usuario ya paso `--platforms`, respeta su seleccion. Si no, **aplica la recomendacion y dilo en el informe** (formato elegido y por que): corres en `context: fork`, y un subagente no tiene turno donde presentarle una eleccion al usuario ([[D-045]]). Es seguro hacerlo sin gate — exportar tokens **deriva** de un `DESIGN.md` que no se toca, no destruye nada, y repetir el export con `--platforms` cuesta un comando. Lo que no vale es exportar sin decir con que criterio se eligio.
 
 ## Paso 4: Parsear el frontmatter del DESIGN.md
 

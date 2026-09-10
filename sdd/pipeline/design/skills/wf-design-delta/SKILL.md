@@ -44,7 +44,7 @@ Si no hay argumento o el modo no es valido, informa:
 1. Verifica que `DESIGN.md` existe.
 2. Verifica que el delta analysis existe y termina en `_delta_analysis.md`. Si no:
    > "El segundo argumento debe ser un delta analysis generado por `/wf-design-delta analyze`."
-3. Si el delta analysis tiene items `[CRITICO]_(pendiente)_` sin responder, deten y pide al usuario resolverlos antes de aplicar.
+3. Si el delta analysis tiene items `[CRITICO]_(pendiente)_` sin responder, **detente** con veredicto operativo `STOP_DELTA_CON_CRITICOS_ABIERTOS` y devuelve la lista de items: aplicar un delta con decisiones visuales sin cerrar hornea en el `DESIGN.md` una eleccion que nadie hizo. Quien te invoco presenta lo que falta ([[D-064]]).
 
 ## Paso 3: Leer contenido
 
@@ -82,7 +82,7 @@ Aplica las reglas de kb-design-expert que tienes en contexto:
 No escribas el DESIGN.md. Devuelve solo el analisis estructurado.
 ```
 
-Escribe el output del agente en `<basename>_delta_analysis.md` junto al `DESIGN.md`.
+Escribe el delta analysis que has producido en `<basename>_delta_analysis.md`, junto al `DESIGN.md`.
 
 ### Modo `apply`
 
@@ -115,7 +115,7 @@ Devuelve el `DESIGN.md` completo, no solo el diff.
 
 ## Paso 5: Manejar DESIGN_GAPs
 
-Si el agente devuelve gaps:
+Si tu analisis arroja gaps:
 - en modo `analyze`: incluirlos en el delta_analysis con severidad y marcar `_(pendiente)_`.
 - en modo `apply`: no escribir el archivo; informar al usuario y sugerir resolverlos en el analysis primero.
 

@@ -6,6 +6,42 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-072 — Cuatro conversaciones de Design vivían dentro de forks; sin turno, el riesgo no es pararse, es rellenar
+
+- **Fecha:** 2026-09-10 · **Estado:** Adoptada (regla ampliada + cuatro workflows movidos; conducta pendiente de medir). · **Relacionada:** [[D-002]] (fork ⊥ preguntar), [[D-045]] (el gate vive donde puede presentarse), [[D-064]] (la forma parar-y-reportar), [[D-065]]/[[D-068]] (el mismo movimiento en Spec), [[D-070]] (misma lectura), [[D-026]] (el override lo arma el usuario), [[D-069]] (la enumeración de skills de main que derivó seis veces).
+
+**Contexto.** El residuo anotado en 13.11 —prosa vieja en 15 workflows— resultó tapar algo mayor: **la fase Design tenía cuatro workflows que conversan con el usuario escritos como `context: fork`**, donde no hay turno en el que preguntar.
+
+| Workflow | Lo que le pide al usuario |
+|---|---|
+| `wf-design-intake` | El **árbol de decisión del brief**, "pregunta a pregunta" en `guided`; en `hybrid`, confirmar seis variables propuestas |
+| `wf-design-moodboard` | **Siete preguntas abiertas** sobre cómo debe sentirse el producto |
+| `wf-design-discover` | Curar la lista de apps de referencia — *"iterar hasta que el usuario confirme"* |
+| `wf-design-variant` | La **hipótesis** del A/B, en qué difiere cada variante, y sus resultados |
+
+Y siete gates de confirmación dictados en prosa dentro de workers (`wf-design-branch` ×3, `wf-design-export`, `wf-design-delta`, `wf-design-extract`, más el `wf-spec-from-code` cerrado en [[D-071]]).
+
+**Lo que hace distinto a este bloque.** En [[D-062]]/[[D-064]] el daño de un gate no presentable era **quedarse a medias**: la skill paraba y el usuario relanzaba. Aquí no. Estos cuatro no piden permiso: piden **material que solo existe en la cabeza del usuario** —la vibe del producto, la hipótesis que quiere validar, qué referencias le sirven—. Un fork sin turno que necesita ese material y no puede pedirlo tiene una salida obvia y silenciosa: **derivarlo del spec**. Y un moodboard fabricado tiene exactamente la misma pinta que uno real; la hipótesis inventada de un A/B también. El artefacto sale, parece correcto, y la dirección visual del producto la decidió nadie.
+
+**Decisión.** Los cuatro **pasan al hilo principal** (fuera `context: fork` y `agent:`, `allowed-tools: [Bash, Agent, AskUserQuestion]`), con el reparto que ya usan `wf-spec-validate` y `wf-spec-amend`: main sostiene las preguntas, **delega el trabajo experto** al arquitecto de la fase con `run_in_background: false`, y **el agente escribe su artefacto** ([[D-059]]/[[D-060]]) — main comprueba con `test -f` que está, y si falta lo reporta en vez de escribirlo él. `wf-design-intake` queda en tres tiempos: **6A** el experto propone contra sus KBs, **6B** el usuario decide lo suyo, **6C** el experto redacta con las respuestas literales; el modo `auto` se salta el 6B y **marca en el artefacto que nadie lo validó**.
+
+Los siete gates de los workers adoptan la forma de [[D-064]]: veredicto `STOP_*` con lo que se pierde nombrado, y override `--allow-*` que arma el usuario (`--allow-breaking-merge`, `--allow-discard-branch`). Dos se resuelven **quitando la pregunta**: el "¿descarto el branch tras el merge?" pasa a ser una acción explícita propia, y el formato de export aplica la recomendación y la justifica (exportar deriva de un `DESIGN.md` que no se toca; repetirlo cuesta un comando).
+
+**El detector, otra vez, vigilaba frases.** `FORK-INTERVIEW` reportaba **cero** sobre un árbol con una entrevista de siete preguntas, y `FORK-CONFIRM-GATE` no veía *"pedir confirmacion"* (conocía la forma conjugada, no la infinitiva), *"pide al usuario que confirme"*, ni el sufijo de pregunta cerrada `(y/n)`. Ampliadas ambas con las formas **observadas**, no imaginadas. Delta: **4 blocking + 2 warning → 0**.
+
+**Alternativas descartadas.**
+- *Degradar las entrevistas a `--mode auto` y quitar el modo interactivo* → es tirar el producto para arreglar la arquitectura: el moodboard **es** la entrevista, y el brief `guided` es el que ancla la dirección visual. `auto` ya existe para quien lo quiera, y ahora dice en el artefacto que nadie validó nada.
+- *Dejarlas en fork y que paren pidiendo los datos* → funciona para un permiso, no para una conversación de siete preguntas: cada respuesta obligaría a relanzar el workflow entero, perdiendo lo ya recogido. Es el relanzado que [[D-045]] midió, multiplicado por siete.
+- *Un solo `AskUserQuestion` con las siete* → las preguntas del moodboard son **abiertas a propósito** ("si esto fuera un espacio físico, ¿cómo sería?"); meterlas en menús de opciones cambia el material que se recoge. Van en conversación, y `AskUserQuestion` queda para las dos que sí son cerradas.
+
+**Consecuencias / aprendizaje.** Dos. (a) **La pregunta que un fork no puede hacer no siempre es un permiso.** Cuando lo que falta es *información que solo el usuario tiene*, el fallo no es un bloqueo visible sino una **fabricación plausible**, y por eso ninguna pasada de conformance lo habría destapado: el artefacto se genera y se ve bien. El criterio para decidir dónde vive una skill deja de ser "¿tiene gates?" y pasa a ser "¿necesita algo que solo el usuario sabe?". (b) La lista de skills que corren en main que vivía en `pipeline/orchestration.md` **se quedó vieja seis veces en dos días**; se sustituye por el criterio derivable —sin `context: fork`, con `AskUserQuestion` en `allowed-tools`— que es lo único que no envejece ([[D-069]]).
+
+**Pendiente de medir.** Que las cuatro conversaciones ocurran de verdad en main —y que el artefacto de `auto` declare que nadie lo validó— se comprueba en la primera pasada de conformance de Design, que esta fase todavía no tiene.
+
+**Referencias.** `sdd/pipeline/design/skills/wf-design-{intake,moodboard,discover,variant,branch,export,delta,extract}/SKILL.md`, `sdd/pipeline/design/routing.md`, `sdd/pipeline/orchestration.md`, `sdd/scripts/sdd-structural-lint.py`, `sdd/tests/test_sdd_structural_lint.py`, `sdd/CHANGELOG.md`.
+
+---
+
 ## D-071 — Un carril que se declara en el enrutado pero no en el mapa de su fase queda medio enganchado
 
 - **Fecha:** 2026-09-10 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-070]] (salió de esta misma lectura), [[D-069]] (el planner retirado que el README seguía nombrando), [[D-023]] (borrar el inventario que duplica un `ls`), [[D-022]] (el enrutado vive en las `description`).
