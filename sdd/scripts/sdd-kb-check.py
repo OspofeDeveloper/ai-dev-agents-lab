@@ -18,11 +18,19 @@ Uso:
     sdd-kb-check.py [--claude-dir <path>] --agent <nombre>  # un agente
     sdd-kb-check.py ... --quiet                             # solo resumen
 
+Y una segunda verificación, del mismo espíritu (D-069): que el bloque
+`## Verificación de contexto` del cuerpo del agente **enumere todas** las KBs de
+su `skills:`. Es lo que cierra el circuito: el `KB Load Status` solo puede
+reportar `missing` de lo que está enumerado, así que una KB declarada y no
+enumerada es invisible para el auto-reporte Y para todo lo demás. Esa lista
+duplica el frontmatter, y una enumeración duplicada deriva sola.
+
 `--claude-dir` por defecto: el `.claude/` del directorio actual o un ancestro.
 
-Exit codes: 0 = todas las KBs declaradas existen instaladas;
+Exit codes: 0 = todas las KBs declaradas existen instaladas y están enumeradas;
             1 = error de uso / no se encuentra `.claude/`;
-            2 = al menos un agente declara una KB que no está instalada.
+            2 = al menos un agente declara una KB que no está instalada, o no la
+                enumera en su `## Verificación de contexto`.
 """
 from __future__ import annotations
 
@@ -74,14 +82,39 @@ def parse_agent_skills(agent_md: Path) -> list[str]:
     return skills
 
 
-def check_agent(agent_md: Path, skills_dir: Path) -> tuple[list[str], list[str]]:
-    """Devuelve (declaradas, faltantes) para un agente."""
+def unlisted_in_context_check(agent_md: Path, declared: list[str]) -> list[str]:
+    """KBs declaradas que el cuerpo NO enumera en `## Verificación de contexto`.
+
+    El `KB Load Status` que el agente reporta al final de cada respuesta solo
+    cubre lo que esa seccion enumera: una KB fuera de una lista PARCIAL nunca
+    sale `missing`, ni ahi ni en ningun otro sitio. Como esa lista duplica el
+    frontmatter, deriva sola — misma clase de fallo que dejo la Regla 10 de
+    kb-traceability-rules enumerando tres gates cuando ya eran cuatro.
+
+    Remitir en generico ("cada KB de tu frontmatter") NO es un hallazgo: es la
+    forma preferida, porque no duplica y por tanto no puede quedarse corta.
+    """
+    text = agent_md.read_text(encoding="utf-8", errors="replace")
+    m = re.search(r"##\s+Verificaci[oó]n de contexto(.*?)(?=\n##\s|\Z)", text, re.S)
+    if m is None:
+        return list(declared)
+    listed = set(re.findall(r"`(kb-[a-z0-9-]+)`", m.group(1)))
+    # Enumera TODAS o NINGUNA. La forma generica —"cada KB de tu frontmatter"—
+    # es correcta y ademas es la unica que no puede derivar: no duplica nada.
+    # Lo que falla es la lista PARCIAL, que se lee como exhaustiva y no lo es.
+    if not listed:
+        return []
+    return [kb for kb in declared if kb not in listed]
+
+
+def check_agent(agent_md: Path, skills_dir: Path) -> tuple[list[str], list[str], list[str]]:
+    """Devuelve (declaradas, no_instaladas, no_enumeradas) para un agente."""
     declared = parse_agent_skills(agent_md)
     missing = [
         kb for kb in declared
         if not (skills_dir / kb / "SKILL.md").is_file()
     ]
-    return declared, missing
+    return declared, missing, unlisted_in_context_check(agent_md, declared)
 
 
 def main(argv: list[str]) -> int:
@@ -125,14 +158,24 @@ def main(argv: list[str]) -> int:
 
     total_missing = 0
     agents_with_gaps = 0
+    total_unlisted = 0
+    agents_unlisted = 0
     for agent_md in agent_files:
-        declared, missing = check_agent(agent_md, skills_dir)
+        declared, missing, unlisted = check_agent(agent_md, skills_dir)
         if missing:
             agents_with_gaps += 1
             total_missing += len(missing)
             sys.stderr.write(
                 f"  ⚠ {agent_md.stem}: {len(missing)}/{len(declared)} KB(s) no "
                 f"instaladas → {', '.join(missing)}\n"
+            )
+        if unlisted:
+            agents_unlisted += 1
+            total_unlisted += len(unlisted)
+            sys.stderr.write(
+                f"  ⚠ {agent_md.stem}: {len(unlisted)}/{len(declared)} KB(s) "
+                f"declaradas y NO enumeradas en `## Verificación de contexto` → "
+                f"{', '.join(unlisted)}\n"
             )
 
     if total_missing:
@@ -141,11 +184,18 @@ def main(argv: list[str]) -> int:
             f"{agents_with_gaps} agente(s). Reinstala el ecosistema (`install.sh`) "
             f"con la fase/overlay que las aporta.\n"
         )
+    if total_unlisted:
+        sys.stderr.write(
+            f"[kb-check] {total_unlisted} KB(s) sin enumerar en {agents_unlisted} "
+            f"agente(s): su `KB Load Status` no las cubre, así que si el harness no "
+            f"las inyecta nadie se entera. Añádelas a `## Verificación de contexto`.\n"
+        )
+    if total_missing or total_unlisted:
         return 2
 
     if not quiet:
         print(f"[kb-check] OK: {len(agent_files)} agente(s), todas las KBs "
-              f"declaradas están instaladas")
+              f"declaradas están instaladas y enumeradas")
     return 0
 
 

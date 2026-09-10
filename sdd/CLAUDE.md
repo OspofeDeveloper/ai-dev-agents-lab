@@ -27,53 +27,59 @@ Si buscas mejor rendimiento y menos carga de contexto, instala y usa el `CLAUDE.
 
 ## Rootmap de workflow skills
 
-| Intención del usuario | Skill | Argumentos |
-|---|---|---|
-| Crear un PRD desde notas o desde cero | `/wf-prd-create` | `<directorio_proyecto> [--source <notas.md>] [--output <prd.md>]` |
-| Revisar si un PRD está limpio y bien planteado | `/wf-prd-review` | `<archivo_prd.md>` |
-| Formalizar un cambio de producto sobre un PRD existente | `/wf-prd-change` | `<archivo_prd.md> --new-reqs <cambio.md>` |
-| Medir impacto de un cambio de PRD sobre artefactos derivados | `/wf-prd-sync-impact` | `<archivo_prd.md>` |
-| Propagar un cambio de PRD por todo el pipeline en un solo comando (cascade) | `/wf-prd-change-cascade` | `<archivo_prd.md> [--new-reqs <cambio.md>] [--features F-001,...] [--review-before-apply] [--skip-design] [--dry-run]` |
-| Resincronizar specs tras un cambio de PRD | `/wf-spec-sync-from-prd` | `analyze <prd.md> \| apply <prd.md> --features F-001,F-002,...` |
-| Analizar un PRD/documento para detectar gaps | `/wf-spec-analyze` | `<archivo.md>` |
-| Generar specs desde código existente (brownfield, sin PRD) | `/wf-spec-from-code` | `discover <path_codigo> [--scope <subdir>] \| generate <path_codigo> --feature <F-C-00X>` |
-| Validar un spec existente | `/wf-spec-validate` | `<archivo_spec.md>` |
-| Identificar features de un PRD | `/wf-spec-discover` | `<archivo_prd.md> [--analysis <analysis.md>]` |
-| Generar todos los specs por feature (flujo completo) | `/wf-spec-features-first` | `<archivo_prd.md> [--light\|--standard] [--all-features] [--allow-open-critical-gaps] [--allow-derived-scope-from-analysis]` |
-| Generar specs de un subset / iteración / fase de features | `/wf-spec-features-first` | `<archivo_prd.md> --features F-001,F-002,... [--allow-open-critical-gaps] [--allow-derived-scope-from-analysis]` |
-| Generar spec directo de una feature | `/wf-spec-fast-track` | `<archivo.md> --capability <nombre> [--light\|--standard] [--analysis <analysis.md>] [--allow-derived-scope-from-analysis]` |
-| Generar spec de una feature desde un discovery | `/wf-spec-fast-track` | `<prd.md> --scope-from <discovery.md> --feature <F-00X> [--light\|--standard] [--analysis <analysis.md>] [--allow-derived-scope-from-analysis]` |
-| Detectar conflictos entre specs de features | `/wf-spec-conflict` | `<feature_spec.md> --features-dir <path/features/>` |
-| Qué features están listas / orden de implementación | `/wf-spec-readiness` | `<path/features/>` |
-| Actualizar un spec con requisitos nuevos (análisis) | `/wf-spec-delta` | `analyze <feature_spec.md> --new-reqs <description.md>` |
-| Aplicar un delta analysis a un spec | `/wf-spec-delta` | `apply <feature_spec.md> <delta_analysis.md>` |
-| Completar HUs incompletas (gaps respondidos en analysis) | `/wf-spec-gap-resolve` | `<feature_spec.md> [--analysis <path_analysis.md>]` |
-| Aclarar un CA ambiguo descubierto al implementar (back-edge) | `/wf-spec-amend` | `<feature_spec.md> --ca CA-XXX [--from-task T-00X] [--reason 'texto']` |
-| Cerrar el brief visual y policy de autonomia del producto | `/wf-design-intake` | `generate <feature_spec.md> [--prd <prd.md>] [--output DESIGN_BRIEF.md] [--mode guided\|hybrid\|auto] [--preset <name>]` |
-| Descubrir apps de referencia con research validado por el usuario | `/wf-design-discover` | `<feature_spec.md> [--prd <prd.md>] [--brief <DESIGN_BRIEF.md>] [--output <path>] [--mode interactive\|auto]` |
-| Crear o actualizar el sistema visual del producto desde un feature spec | `/wf-design-system` | `generate <feature_spec.md> [--prd <prd.md>] [--brief <DESIGN_BRIEF.md>] [--design-file DESIGN.md] [--no-brief]` |
-| Derivar el DESIGN.md de una UI ya en producción (brownfield, sin spec ni brief) | `/wf-design-extract` | `discover <path_ui> [--scope <subdir>] \| generate <path_ui> [--from <extraction.md>] [--scope <subdir>] [--design-file DESIGN.md]` |
-| Auditar un DESIGN.md existente sin regenerarlo | `/wf-design-validate` | `<DESIGN.md> [--brief <DESIGN_BRIEF.md>] [--views <views.md>] [--lenient] [--pedagogical]` |
-| Analizar cambios sobre un DESIGN.md existente | `/wf-design-delta` | `analyze <DESIGN.md> --new-reqs <cambios.md> [--brief <DESIGN_BRIEF.md>]` |
-| Aplicar un delta analysis a un DESIGN.md | `/wf-design-delta` | `apply <DESIGN.md> <design_delta_analysis.md>` |
-| Medir qué artefactos de diseño (flows/views/ui_prompt/tokens) quedaron stale tras un cambio | `/wf-design-sync` | `<DESIGN.md>` |
-| Generar flows, views y prompt de ensamblaje para Stitch desde un feature spec | `/wf-design-feature-prototype` | `generate <feature_spec.md> [--design-file DESIGN.md] [--brief <DESIGN_BRIEF.md>] [--no-brief]` |
-| Capturar inspiración visual antes del intake (moodboard) | `/wf-design-moodboard` | `<feature_spec.md> [--prd <prd.md>] [--output <path>] [--mode interactive\|auto]` |
-| Explorar una variante paralela del DESIGN.md sin comprometer main | `/wf-design-branch` | `create <branch-name> \| list \| compare <a> <b> \| merge <branch> --into <target> \| discard <branch>` |
-| A/B testing visual de una feature concreta | `/wf-design-variant` | `create <feature_spec.md> --variants A,B [--hypothesis 'texto'] \| compare <feature_variants.md>` |
-| Exportar tokens del DESIGN.md a CSS, Style Dictionary, Compose, SwiftUI o Tailwind | `/wf-design-export` | `<DESIGN.md> --platforms <css,style-dictionary,compose,swiftui,tailwind> [--output-dir <path>] [--dry-run]` |
-| Auditoría ejecutiva de accesibilidad (contraste, touch targets, focus order) | `/wf-design-a11y-audit` | `<DESIGN.md> [--views <feature_views.md>] [--brief <DESIGN_BRIEF.md>] [--target AA\|AAA] [--lenient]` |
-| Capturar feedback no estructurado de stakeholders | `/wf-design-feedback` | `capture <feedback.md\|texto> [--source ...] [--feature ...]` |
-| Triajear un feedback capturado en categorías accionables | `/wf-design-feedback` | `triage <feedback_capture.md>` |
-| Generar el plan técnico desde un spec | `/wf-prepare-plan` | `generate <spec.md>` |
-| Validar si un plan está listo para pasar a tasks | `/wf-plan-validate` | `<plan.md>` |
-| Generar las tasks desde un plan | `/wf-prepare-tasks` | `generate <plan.md>` |
-| Ejecutar tasks con estado y commits trazables | `/wf-task-run` | `<feature_tasks.md> [--task T-00X \| --next \| --all] [--no-commit]` |
-| Derivar los casos de prueba de una feature desde sus CAs | `/wf-qa-plan` | `generate <feature_spec.md>` |
-| Verificar la cobertura real de CAs tras implementar | `/wf-qa-verify` | `<feature_qa_plan.md>` |
-| Vincular el cierre de una feature (QA APTO) a un commit SHA / tag de release | `/wf-release` | `<feature_dir\|tasks_path> [--tag <tag>] [--no-tag] [--note <texto>]` |
-| Reportar o arreglar un bug de una feature entregada | `/wf-bug` | `<descripcion.md\|texto> [--feature <nombre>]` |
-| Ver el estado de delivery del proyecto (qué fase y qué falta por feature) | `/wf-project-status` | `[<raíz_artefactos_spec>] [--output <path>]` |
+| Intención del usuario | Skill |
+|---|---|
+| Crear un PRD desde notas o desde cero | `/wf-prd-create` |
+| Revisar si un PRD está limpio y bien planteado | `/wf-prd-review` |
+| Formalizar un cambio de producto sobre un PRD existente | `/wf-prd-change` |
+| Medir impacto de un cambio de PRD sobre artefactos derivados | `/wf-prd-sync-impact` |
+| Propagar un cambio de PRD por todo el pipeline en un solo comando (cascade) | `/wf-prd-change-cascade` |
+| Resincronizar specs tras un cambio de PRD | `/wf-spec-sync-from-prd` |
+| Analizar un PRD/documento para detectar gaps | `/wf-spec-analyze` |
+| Generar specs desde código existente (brownfield, sin PRD) | `/wf-spec-from-code` |
+| Validar un spec existente | `/wf-spec-validate` |
+| Identificar features de un PRD | `/wf-spec-discover` |
+| Generar todos los specs por feature (flujo completo) | `/wf-spec-features-first` |
+| Generar specs de un subset / iteración / fase de features | `/wf-spec-features-first` |
+| Generar spec directo de una feature | `/wf-spec-fast-track` |
+| Generar spec de una feature desde un discovery | `/wf-spec-fast-track` |
+| Detectar conflictos entre specs de features | `/wf-spec-conflict` |
+| Qué features están listas / orden de implementación | `/wf-spec-readiness` |
+| Actualizar un spec con requisitos nuevos (análisis) | `/wf-spec-delta` |
+| Aplicar un delta analysis a un spec | `/wf-spec-delta` |
+| Completar HUs incompletas (gaps respondidos en analysis) | `/wf-spec-gap-resolve` |
+| Aclarar un CA ambiguo descubierto al implementar (back-edge) | `/wf-spec-amend` |
+| Cerrar el brief visual y policy de autonomia del producto | `/wf-design-intake` |
+| Descubrir apps de referencia con research validado por el usuario | `/wf-design-discover` |
+| Crear o actualizar el sistema visual del producto desde un feature spec | `/wf-design-system` |
+| Derivar el DESIGN.md de una UI ya en producción (brownfield, sin spec ni brief) | `/wf-design-extract` |
+| Auditar un DESIGN.md existente sin regenerarlo | `/wf-design-validate` |
+| Analizar cambios sobre un DESIGN.md existente | `/wf-design-delta` |
+| Aplicar un delta analysis a un DESIGN.md | `/wf-design-delta` |
+| Medir qué artefactos de diseño (flows/views/ui_prompt/tokens) quedaron stale tras un cambio | `/wf-design-sync` |
+| Generar flows, views y prompt de ensamblaje para Stitch desde un feature spec | `/wf-design-feature-prototype` |
+| Capturar inspiración visual antes del intake (moodboard) | `/wf-design-moodboard` |
+| Explorar una variante paralela del DESIGN.md sin comprometer main | `/wf-design-branch` |
+| A/B testing visual de una feature concreta | `/wf-design-variant` |
+| Exportar tokens del DESIGN.md a CSS, Style Dictionary, Compose, SwiftUI o Tailwind | `/wf-design-export` |
+| Auditoría ejecutiva de accesibilidad (contraste, touch targets, focus order) | `/wf-design-a11y-audit` |
+| Capturar feedback no estructurado de stakeholders | `/wf-design-feedback` |
+| Triajear un feedback capturado en categorías accionables | `/wf-design-feedback` |
+| Generar el plan técnico desde un spec | `/wf-prepare-plan` |
+| Validar si un plan está listo para pasar a tasks | `/wf-plan-validate` |
+| Generar las tasks desde un plan | `/wf-prepare-tasks` |
+| Ejecutar tasks con estado y commits trazables | `/wf-task-run` |
+| Derivar los casos de prueba de una feature desde sus CAs | `/wf-qa-plan` |
+| Verificar la cobertura real de CAs tras implementar | `/wf-qa-verify` |
+| Vincular el cierre de una feature (QA APTO) a un commit SHA / tag de release | `/wf-release` |
+| Reportar o arreglar un bug de una feature entregada | `/wf-bug` |
+| Ver el estado de delivery del proyecto (qué fase y qué falta por feature) | `/wf-project-status` |
+
+> **Este mapa da la intención→skill, no los argumentos ([[D-069]]).** La columna de argumentos que
+> había aquí duplicaba a mano el `argument-hint` de cada skill y llevaba tiempo derivando: le
+> faltaban flags que sí existen. Los argumentos los arma el orquestador leyendo el frontmatter de la
+> skill que invoca, que es la única fuente que no se queda vieja. Mismo criterio que [[D-023]] usó
+> para borrar el rootmap de las reglas de fase.
 
 ## Cómo actuar ante una petición
 
@@ -82,7 +88,7 @@ Si buscas mejor rendimiento y menos carga de contexto, instala y usa el `CLAUDE.
 3. **Respeta la fase actual** y sus precondiciones: PRD antes de Spec, Spec antes de Design, Design antes de Plan, Plan antes de Tasks
 4. **Reporta al usuario** el resultado y el siguiente paso en el pipeline
 
-Si la intención no coincide exactamente, usa matching semántico con la columna de intenciones. Si hay ambigüedad dentro de una misma fase, delega al agente planificador o explorador de esa fase antes de cargar fases ajenas.
+Si la intención no coincide exactamente, usa matching semántico con la columna de intenciones. Si hay ambigüedad dentro de una misma fase, delega al agente explorador de esa fase —que diagnostica el estado y recomienda el siguiente paso— antes de cargar fases ajenas.
 
 ### Patrón especial — "fase X" / "iteración X" / "subset de features"
 
@@ -107,7 +113,6 @@ La unidad primaria de trabajo en SDD es el **agente especializado** cuando la pe
 |---|---|
 | `prd-expert` | Redacción, reorganización y revisión guiada de PRDs |
 | `sdd-spec-explorer` | Exploración, diagnóstico y lectura del estado de artefactos Spec |
-| `sdd-spec-planner` | Planificación del approach de trabajo dentro del ecosistema Spec |
 | `sdd-spec-writer` | Escritura y evolución de artefactos Spec |
 | `sdd-spec-auditor` | Validación, conflictos y readiness de artefactos Spec |
 | `design-system-architect` | Autoría del sistema visual del producto (`DESIGN.md`, agnóstico de superficie): brief, sistema, validación, evolución, exportación |

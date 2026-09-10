@@ -120,8 +120,18 @@ INTERVIEW_RE = re.compile(
 # nunca una descripcion de que no se puede preguntar (las notas de [[D-062]] dicen
 # "un subagente no puede presentarle una pregunta al usuario" y NO deben casar).
 FORK_CONFIRM_GATE_RE = re.compile(
+    # (a) la orden de preguntar, en sus formas medidas
     r"(?:^|[.;:]|\u2192|\*\*)\s*pregunta(?:le)?\s+al\s+usuario"
+    # El dos-puntos es lo que separa la ORDEN de preguntar ("o preguntando al
+    # usuario:" + la pregunta dictada) de la DESCRIPCION del gate ajeno
+    # ("...resolver las bifurcaciones preguntando al usuario." en cascade).
+    r"|\bpreguntando\s+al\s+usuario\s*:"
+    r"|\bpide\s+confirmaci[oó]n\s+expl[ií]cita"
+    # (b) la orden de ESPERAR al usuario: un fork no tiene turno donde esperar
+    r"|\bespera(?:r)?\s+(?:la\s+)?respuesta\s+del\s+usuario"
+    # (c) el menu de opciones dictado (con o sin corchetes)
     r"|\bpregunta:\s*`?\["
+    r"|\by\s+pregunta:\s*$"
     r"|\[\s*sobre?escribir\s*\|\s*cancelar\s*\]"
     r"|¿\s*Deseas\s+regenerar",
     re.IGNORECASE | re.MULTILINE)

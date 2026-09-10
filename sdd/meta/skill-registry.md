@@ -1,7 +1,7 @@
 # SDD Skill Registry
 <!-- Auto-generado por scripts/generate-skill-registry.py. No editar manualmente. -->
 <!-- Total: 134 skills | 58 wf-* (user-invocable) | 76 kb-* -->
-<!-- Última actualización: 2026-06-16 -->
+<!-- Última actualización: 2026-09-10 -->
 
 ## Meta-Ecosistema (meta/)
 
@@ -16,7 +16,7 @@
 | wf-agent-create | Orquestador SDD para crear un nuevo agente dentro del ecosistema | true | meta/skills/wf-agent-create/SKILL.md |
 | wf-conformance-author | Audita la cobertura de conformance de una skill (o de una fase entera) contra el catalogo de Casos de Uso y escribe los escenarios CU-N.x que falten en formato… | true | meta/skills/wf-conformance-author/SKILL.md |
 | wf-conformance-status | Genera un snapshot de cobertura de la bateria de conformance leyendo la matriz del ROADMAP: conteo por Estado, ejes en hueco (happy/edge/harness/args) y progre… | true | meta/skills/wf-conformance-status/SKILL.md |
-| wf-project-init | Inicializa o amplia un proyecto SDD: instala siempre el backbone (spec, plan, tasks) y añade prd/design segun el perfil de quien inicializa (desarrollo, produc… | true | bootstrap/skills/wf-project-init/SKILL.md |
+| wf-project-init | Inicializa o amplia un proyecto SDD a partir de la TOPOLOGIA de contenido del repo: authoring (PRD/specs/sistema de diseño, sin código), consumer (código que c… | true | bootstrap/skills/wf-project-init/SKILL.md |
 | wf-sdd-audit | Audita el ecosistema SDD detectando referencias rotas, skills huerfanas, violaciones de SSoT/SRP, contradicciones e inconsistencias | true | meta/skills/wf-sdd-audit/SKILL.md |
 | wf-sdd-refactor | Orquestador SDD para refactorizar una skill (kb-* o wf-*) o agente existente del ecosistema | true | meta/skills/wf-sdd-refactor/SKILL.md |
 | wf-sdd-status | Genera un inventario rapido del ecosistema SDD y actualiza sdd/meta/skill-registry.md: cuantas skills y agentes hay por fase, que KBs existen, que workflows es… | true | meta/skills/wf-sdd-status/SKILL.md |
@@ -46,7 +46,7 @@
 | kb-spec-expert | Experto en Spec Driven Development (SDD): qué debe y qué NO debe contener un Spec | false | pipeline/spec/skills/kb-spec-expert/SKILL.md |
 | kb-traceability-rules | Reglas de trazabilidad entre PRD, discovery, specs, plan y tasks en el ecosistema SDD | false | pipeline/spec/skills/kb-traceability-rules/SKILL.md |
 | wf-prd-sync-impact | Analiza el impacto de un PRD actualizado sobre los artefactos SDD ya generados (analysis, discovery, features, specs, plan, tasks) y produce un informe de sinc… | true | pipeline/spec/skills/wf-prd-sync-impact/SKILL.md |
-| wf-spec-amend | Enmienda quirúrgica de un CA ambiguo descubierto durante la implementación (back-edge tasks→spec) | true | pipeline/spec/skills/wf-spec-amend/SKILL.md |
+| wf-spec-amend | Enmienda quirurgica de un CA ambiguo descubierto durante la implementacion (back-edge tasks-spec) | true | pipeline/spec/skills/wf-spec-amend/SKILL.md |
 | wf-spec-analyze | Recopila las decisiones de negocio que necesitan los Specs desde un PRD vigente: mapea que elementos del Spec saldran del PRD, detecta contaminacion tecnica y… | true | pipeline/spec/skills/wf-spec-analyze/SKILL.md |
 | wf-spec-conflict | Detecta conflictos entre Specs SDD de un mismo proyecto: HUs duplicadas, CAs contradictorios, scope overlap, shared models inconsistentes | true | pipeline/spec/skills/wf-spec-conflict/SKILL.md |
 | wf-spec-delta | Evoluciona un Spec de feature de forma incremental | true | pipeline/spec/skills/wf-spec-delta/SKILL.md |
@@ -57,7 +57,7 @@
 | wf-spec-gap-resolve | Completa HUs y CAs [INCOMPLETO] desde respuestas ya escritas en un _analysis.md y confirma CAs [INFERIDO] de specs de caracterizacion | true | pipeline/spec/skills/wf-spec-gap-resolve/SKILL.md |
 | wf-spec-readiness | Genera un informe de readiness desde los artefactos post-spec (specs, READMEs, _features.md, _conflict_report.md): que features estan listas para plan, cuales… | true | pipeline/spec/skills/wf-spec-readiness/SKILL.md |
 | wf-spec-sync-from-prd | Resincroniza specs de feature tras un PRD actualizado | true | pipeline/spec/skills/wf-spec-sync-from-prd/SKILL.md |
-| wf-spec-validate | Audita un _spec.md ya generado para detectar regresiones de pureza, testabilidad o completitud introducidas por ediciones manuales | true | pipeline/spec/skills/wf-spec-validate/SKILL.md |
+| wf-spec-validate | Audita un _spec.md ya generado para detectar regresiones de pureza, testabilidad o completitud, y sella su estado operativo registrando quien lo aprobo | true | pipeline/spec/skills/wf-spec-validate/SKILL.md |
 
 ## Fase: Design
 

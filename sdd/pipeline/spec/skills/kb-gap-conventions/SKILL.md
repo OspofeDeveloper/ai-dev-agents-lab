@@ -254,11 +254,21 @@ Los orquestadores verifican la presencia de marcadores pendientes antes de avanz
 | Condición en el `_spec.md` | Acción del orquestador |
 |-----------------------------|------------------------|
 | Hay HUs marcadas `[INCOMPLETO]` | **Bloquear**: listar las HUs incompletas y los gaps que las bloquean |
-| Hay CAs marcados `[INFERIDO]` (caracterización) | **Bloquear**: igual que `[INCOMPLETO]` — comportamiento no confirmado; remitir a `/wf-spec-gap-resolve` |
-| Hay gaps `[INFORMATIVO]` con `_(pendiente)_` pero no `[INCOMPLETO]` | **Continuar** con advertencia |
+| Hay gaps `[CRÍTICO]` **abiertos** en `## Items Pendientes` (con `Respuesta: _(pendiente)_`) | **Bloquear**: un crítico respondido NO bloquea — su bloque se conserva por trazabilidad ([[D-054]]); lo que bloquea es la respuesta pendiente |
+| Hay CAs marcados `[INFERIDO]` (caracterización) | **Bloquear**: igual que `[INCOMPLETO]` — comportamiento no confirmado |
+| Hay gaps `[INFORMATIVO]` con `_(pendiente)_` pero no `[INCOMPLETO]` | **Continuar** con advertencia — su asunción por defecto ya está aplicada y debe constar en `## Asunciones Aplicadas` ([[D-063]]) |
 | Sin marcadores pendientes | **Continuar** normalmente |
 
-**Patrón de verificación**: buscar la cadena literal `[INCOMPLETO]` para HUs incompletas, `[INFERIDO]` para CAs de caracterización sin confirmar, y `_(pendiente)_` para gaps sin responder.
+**No verifiques esto a ojo ni con un `grep` propio.** La autoridad es
+`sdd-seal.py spec <path> --check`, que además comprueba lo que ningún marcador delata:
+`status_sync` no fiable, deriva respecto al PRD origen, CAs sin HU padre y asunciones aplicadas sin
+rastro. Un spec **no es sellable** si falla cualquiera de esas condiciones. La tabla de arriba
+describe **qué** bloquea; el script es **quien** lo dice.
+
+> **Esta tabla omitía `[CRÍTICO]` ([[D-067]]).** Se autodeclaraba SSoT y su patrón literal de
+> verificación —el que un auditor copia tal cual— dejaba pasar un crítico abierto que el sellador
+> sí deniega. Cuatro ficheros definían este conjunto y ninguno coincidía con el script. Ahora hay
+> una definición y tres citas.
 
 ---
 

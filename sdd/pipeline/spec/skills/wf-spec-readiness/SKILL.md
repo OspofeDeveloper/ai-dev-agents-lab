@@ -12,9 +12,13 @@ user-invocable: true
 
 # Workflow: READINESS
 
-Tu objetivo es sintetizar el estado de los artefactos post-spec-generation en un informe accionable que le diga al usuario exactamente qué features puede pasar a `/wf-prepare-plan` y en qué orden. No generas ni modificas ningún artefacto existente — solo lees y sintetizas. Usa `kb-gap-conventions` para interpretar marcadores `[INCOMPLETO]` y severidades, y `kb-conflict-expert` para interpretar severidades de conflictos.
+Tu objetivo es sintetizar el estado de los artefactos post-spec-generation en un informe accionable que diga exactamente qué features pueden pasar a planificación y en qué orden. **No tocas los specs que lees**: escribes tu informe y nada más. Usa `kb-gap-conventions` para interpretar marcadores y severidades, y `kb-conflict-expert` para interpretar severidades de conflictos.
 
-**Regla de oro:** Este informe es una fotografía del estado actual. No propone resoluciones — indica qué falta y dónde encontrarlo.
+**Regla de oro:** tu informe **es el veredicto**, no una fotografía neutra. Cuando los informes de conflicto se contradicen entre sí, **arbitras tú** (Paso 4c) — y el regenerador del índice toma tu `## Matriz de readiness` como autoridad por encima de la derivación mecánica. Lo que no haces es **resolver** lo que falta: señalas qué bloquea y dónde está, y quien corresponda lo arregla.
+
+> **Antes esto decía dos cosas incompatibles ([[D-067]]).** La regla de oro afirmaba *"no propone
+> resoluciones"* y *"no modifica artefactos"* —prosa anterior a [[D-047]]— mientras el Paso 4c te
+> nombra árbitro y el 8.5 hace tu veredicto autoritativo. Manda lo segundo.
 
 ---
 
@@ -194,14 +198,14 @@ Escribe el informe en el archivo correspondiente.
 
 ## Paso 8.5: Regenerar `_features.md` desde el report
 
-No edites `_features.md` a mano (esta workflow no modifica artefactos — solo lee y sintetiza; el veredicto vive en TU report). `_features.md` es un índice **generado**: el regenerador `sdd-features-index.py` lee tu `## Matriz de readiness` y la usa como **veredicto autoritativo** del estado por feature (anula la derivación marcador-based). Basta con regenerar el índice desde la raíz del proyecto (el directorio que contiene `.sdd/`):
+No edites `_features.md` a mano: el veredicto vive en TU informe y el índice lo deriva de ahí. `_features.md` es un índice **generado**: el regenerador `sdd-features-index.py` lee tu `## Matriz de readiness` y la usa como **veredicto autoritativo** del estado por feature (anula la derivación marcador-based). Basta con regenerar el índice desde la raíz del proyecto (el directorio que contiene `.sdd/`):
 
 ```
 python3 .sdd/scripts/sdd-features-index.py <raíz_spec>
 ```
 
 `<raíz_spec>` es el directorio que contiene `features/` y `_features.md` (el directorio padre del de features, localizado en el Paso 2). El estado y los bloqueantes de cada feature se propagan desde tu report. Si el script no existe:
-> "⚠ Falta `.sdd/scripts/sdd-features-index.py`. Re-ejecuta la instalación del ecosistema (`install.sh`) para reponer los scripts de enforcement. `_features.md` no refleja el veredicto de readiness hasta regenerarlo."
+> "⚠ Falta `.sdd/scripts/sdd-features-index.py`. Re-ejecuta la instalación del ecosistema (`install.sh`) para reponer los scripts de enforcement. El índice `_features.md` no se ha regenerado."
 
 ---
 

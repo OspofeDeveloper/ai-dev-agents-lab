@@ -1,7 +1,7 @@
 ---
 name: wf-spec-discover
 description: "Analiza un PRD e identifica features candidatas por cohesion funcional. Genera un _discovery.md con el mapa de features, scope por feature y shared models. No genera specs — solo el roadmap para ejecutar wf-spec-fast-track por feature."
-when_to_use: "Activa en frases como 'identifica features del PRD', 'descubre las features', 'que features tiene este PRD', 'mapa de features', 'features-first', 'que features hay en este documento'."
+when_to_use: "Activa en frases como 'identifica features del PRD', 'descubre las features', 'que features tiene este PRD', 'mapa de features', 'que features hay en este documento'. No activa ante una petición general de crear las specs ('crea las specs', 'genera las specs del PRD', 'features-first'): ese es wf-spec-features-first, que ya ejecuta el discovery por dentro."
 argument-hint: "<prd_archivo.md> [--analysis <analysis.md>] [--allow-derived-scope-from-analysis] [--allow-overwrite-discovery]"
 effort: high
 allowed-tools: [Read, Write, Bash]
@@ -40,7 +40,7 @@ Verifica que el archivo existe; si no → informa con ruta exacta y detén. Si e
 ```
 !python3 .sdd/scripts/sdd-prd-ready.py "<path>"
 ```
-Si el veredicto es `OPEN_ASSUMPTIONS`/`ASSUMPTION_MISMATCH`, avísalo en la salida ("el PRD arrastra N `[ASUNCIÓN]` sin confirmar; el gate bloqueará la generación de specs en `wf-spec-features-first` hasta revisarlas con `/wf-prd-review`"). Si falta el script, omite el aviso y continúa.
+Si el veredicto es `OPEN_ASSUMPTIONS`/`ASSUMPTION_MISMATCH`, avísalo en la salida ("el PRD arrastra N `[ASUNCIÓN]` sin confirmar; el flujo de generación se detendrá para que decidas si continuar"). Si falta el script, omite el aviso y continúa.
 
 ---
 
@@ -131,10 +131,17 @@ Para cada shared model, asigna ownership aplicando las reglas de `kb-decompose-e
 
 ### Ownership checkpoint
 
-Si algún modelo tiene ownership ambiguo (empate tras aplicar los 4 criterios):
-- Presenta la tabla al usuario con los modelos ambiguos y los candidatos
-- Explica qué criterio aplicaste y por qué hay empate
-- **Espera respuesta del usuario** antes de continuar
+Si algún modelo tiene ownership ambiguo (empate tras aplicar los 4 criterios), **detente sin
+escribir el discovery** y devuelve el bloqueo con veredicto operativo `STOP_OWNERSHIP_AMBIGUO`:
+- la tabla de modelos ambiguos con sus candidatos
+- qué criterio aplicaste y por qué hay empate
+- qué cambia según quién sea el owner (es el dato que hace útil la decisión)
+
+> **Por qué paras en vez de esperar ([[D-068]]).** Corres en `context: fork`: no tienes turno en el
+> que quedarte aguardando a una persona, así que la instrucción que este paso tenía antes no era
+> ejecutable. Quien te lanzó **ya sabe qué hacer con esto** — `wf-spec-features-first` tiene escrito
+> que, si te detienes por shared models ambiguos, transmite tu mensaje y sostiene la resolución—, y
+> es quien puede presentar la elección ([[D-026]]).
 
 Si todos los modelos tienen owner claro → continúa directamente.
 

@@ -625,6 +625,46 @@ class StructuralLintTest(unittest.TestCase):
         r, types = types_in(self.root, "--severity", "blocking")
         self.assertIn("FORK-CONFIRM-GATE", types, r.stdout)
 
+    def test_fork_confirm_gate_catches_waiting_for_the_user(self):
+        """D-068: ordenar ESPERAR a una persona tampoco es ejecutable en un fork.
+
+        Forma real, en el ownership checkpoint de wf-spec-discover.
+        """
+        body = "- Presenta la tabla\n- **Espera respuesta del usuario** antes de continuar\n"
+        write(self.root / "spec" / "skills" / "wf-fork-wait" / "SKILL.md",
+              skill_md("wf-fork-wait", body,
+                       extra_fm="allowed-tools: [Read, Write, Bash]\ncontext: fork\n"
+                                "agent: sdd-spec-explorer\n"))
+        r, types = types_in(self.root, "--severity", "blocking")
+        self.assertIn("FORK-CONFIRM-GATE", types, r.stdout)
+
+    def test_fork_confirm_gate_catches_explicit_confirmation(self):
+        """Forma real, en el Paso 5 de wf-spec-amend."""
+        body = "Pide confirmación explícita al usuario. Sin confirmación no hay enmienda.\n"
+        write(self.root / "spec" / "skills" / "wf-fork-conf" / "SKILL.md",
+              skill_md("wf-fork-conf", body,
+                       extra_fm="allowed-tools: [Read, Write, Bash]\ncontext: fork\n"
+                                "agent: sdd-spec-writer\n"))
+        r, types = types_in(self.root, "--severity", "blocking")
+        self.assertIn("FORK-CONFIRM-GATE", types, r.stdout)
+
+    def test_describing_another_skills_gate_is_not_a_finding(self):
+        """El falso positivo que aparecio al afilar la regla (D-068).
+
+        `wf-prd-change-cascade` describe el gate de OTRA skill —"resolver las
+        bifurcaciones preguntando al usuario"— justo para explicar que el no
+        puede heredarlo. El dos-puntos es lo que separa la orden de la
+        descripcion.
+        """
+        body = ("`wf-prd-change` tiene un gate: confirmar la clasificación y resolver las "
+                "bifurcaciones preguntando al usuario. Tú eres un subagente y no puedes "
+                "heredarlo, así que pasa `--defer-decisions`.\n")
+        write(self.root / "prd" / "skills" / "wf-fork-desc" / "SKILL.md",
+              skill_md("wf-fork-desc", body,
+                       extra_fm="allowed-tools: [Read, Bash, Skill]\ncontext: fork\n"))
+        r, types = types_in(self.root)
+        self.assertNotIn("FORK-CONFIRM-GATE", types, r.stdout)
+
     def test_describing_the_prohibition_is_not_a_gate(self):
         """El falso positivo que habria hecho la regla inusable.
 

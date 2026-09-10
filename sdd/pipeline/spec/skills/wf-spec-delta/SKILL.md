@@ -124,7 +124,7 @@ Añadir o actualizar `## Changelog` al final del spec (orden cronológico invers
 
 ### Paso 6B.5: Regenerar `_features.md` (si existe)
 
-`_features.md` es un índice **generado** (no se edita a mano): la trazabilidad RF→HU→Feature y el estado se derivan de los specs en disco. Tras escribir el spec actualizado, regenera el índice desde la raíz del proyecto (el directorio que contiene `.sdd/`):
+`_features.md` es un índice **generado**: no se edita a mano y ningún workflow lo compone escribiendo texto. Por qué, qué deriva de dónde y quién lo regenera: `kb-decompose-expert`, "Reparto de SSoT" ([[D-069]]). Tras escribir, regenéralo desde la raíz del proyecto (el directorio que contiene `.sdd/`):
 
 ```
 python3 .sdd/scripts/sdd-features-index.py <raíz_spec>
@@ -156,10 +156,19 @@ Revisa que el spec resultante sigue teniendo los 8 elementos SDD. Si alguno ha q
 
 Solo en modo `apply`. Busca si existe un `_features.md` en el proyecto (si el spec está dentro de `features/<nombre>/` — directamente o en su subcarpeta `spec/` — búscalo en el directorio que contiene `features/`; en otro caso, en el mismo directorio):
 
-- **Si existe `_features.md`**: lee todos los specs `*_spec.md` de las features declaradas. Ejecuta el workflow `wf-spec-conflict` con el spec recién actualizado + todos los otros specs. Si detecta conflictos → escribe el informe en `<nombre>_conflict_report.md` en el mismo directorio que el spec.
-- **Si no existe `_features.md`**: omitir este paso.
+**Tú no chequeas los conflictos, y menos aún firmas el informe ([[D-067]]).** Acabas de escribir
+este spec: auditarlo tú rompe autor≠verificador, y el `_conflict_report.md` **lo escribe el auditor
+que lo produce**, nunca otro ([[D-059]]).
 
-Este paso es **informativo y no bloquea** el flujo.
+- **Si existe `_features.md`** → dilo en tu informe final: *"este spec ha cambiado; conviene
+  revisar si choca con el resto antes de planificar"*. Nombra el spec y para ahí.
+- **Si no existe `_features.md`** → omite este paso.
+
+Este aviso es **informativo y no bloquea** el flujo.
+
+> **Por qué no lo ejecutas tú.** Además del reparto autor/verificador, `wf-spec-conflict` corre en
+> `context: fork`: invocarla desde otro fork encadena subagentes ([[D-044]]) y ninguno de los dos
+> puede presentar nada. Quien te lanzó decide si toca revisión de conflictos y con qué auditor.
 
 ---
 

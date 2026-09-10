@@ -70,10 +70,23 @@ escribe **en ese fichero**, con `--answer` apuntado a él.
 
 ### Caso `[INFERIDO]` — confirmación humana, no analysis
 
-Los `[INFERIDO]` no se resuelven desde un `_analysis.md`: la fuente de confirmación es el usuario (o evidencia nueva que aporte). Para cada CA `[INFERIDO]`, presenta el comportamiento deducido + su `Confirmación pendiente` y pregunta:
-- **Confirmado** → elimina el marcador y actualiza `Evidencia:` a `confirmado por <usuario> el <fecha>` (mantén la evidencia parcial original).
-- **Incorrecto** → corrige el CA con el comportamiento real que indique el usuario (con su nueva evidencia si la aporta) o elimínalo si la capacidad no existe.
+Los `[INFERIDO]` no se resuelven desde un `_analysis.md`: la fuente de confirmación es el usuario (o
+evidencia nueva que aporte). **Tú no puedes recogerla**: corres en `context: fork` y no tienes turno
+en el que preguntar ([[D-068]]).
+
+**Si el spec tiene CAs `[INFERIDO]` sin confirmar y no vienen decididos en tu invocación**, aplica
+todo lo demás que sí puedas resolver y **cierra devolviendo el bloqueo** con veredicto operativo
+`STOP_INFERIDO_SIN_CONFIRMAR`. Por cada uno, dale a quien te lanzó lo que necesita para presentarlo:
+el ID del CA, el comportamiento deducido **verbatim**, su `Confirmación pendiente` y la evidencia
+parcial que tenga. **Las tres vías las presenta quien puede preguntar**, no tú:
+
+- **Confirmado** → se elimina el marcador y `Evidencia:` pasa a `confirmado por <usuario> el <fecha>` (la evidencia parcial original se mantiene).
+- **Incorrecto** → el CA se corrige con el comportamiento real que indique el usuario (con su nueva evidencia si la aporta), o se elimina si la capacidad no existe.
 - **No lo sé** → el marcador se queda; ese CA sigue bloqueando el plan (regla de `kb-spec-characterization`).
+
+**Si vienen decididos** (quien te lanza ya los resolvió con el usuario y te pasa la decisión de cada
+uno), aplícalas tal cual. Lo que **nunca** haces es decidir tú: si no puedes preguntar, no puedes
+decidir — el mismo invariante que rige la anti-fabricación ([[D-063]]).
 
 ## Paso 4: Validar que sigue siendo un gap y no un change request
 

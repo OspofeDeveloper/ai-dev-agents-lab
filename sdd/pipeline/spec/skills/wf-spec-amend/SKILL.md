@@ -1,29 +1,26 @@
 ---
 name: wf-spec-amend
-description: "Enmienda quirúrgica de un CA ambiguo descubierto durante la implementación (back-edge tasks→spec). Solo admite ACLARACIÓN estricta: precisar el texto sin cambiar el comportamiento esperado. Aplica la corrección con versión menor + changelog E-00X, y marca el plan afectado con 'Enmienda pendiente' (stale puntual: solo se retienen las tasks que referencian ese CA). Cualquier cambio de comportamiento escala a wf-spec-delta."
+description: "Enmienda quirurgica de un CA ambiguo descubierto durante la implementacion (back-edge tasks-spec). Solo admite ACLARACION estricta: precisar el texto sin cambiar el comportamiento esperado. Cualquier cambio de comportamiento escala a wf-spec-delta."
 when_to_use: "Activa en frases como 'este CA es ambiguo', 'el criterio de aceptación no especifica X', 'implementando descubrí que el spec no aclara', 'aclara el CA-XXX', 'la task está bloqueada porque el spec es ambiguo'. No activa si el comportamiento esperado cambia (usa wf-spec-delta), ni para bugs de código entregado (usa wf-bug), ni para HUs [INCOMPLETO] con respuestas en un analysis (usa wf-spec-gap-resolve)."
 argument-hint: "<feature_spec.md> --ca CA-XXX [--from-task T-00X] [--reason 'texto']"
 effort: high
-allowed-tools: [Read, Write, Bash]
-context: fork
-agent: sdd-spec-writer
+allowed-tools: [Bash, Agent, AskUserQuestion]
 user-invocable: true
 ---
 
 # Workflow: SPEC-AMEND — enmienda desde implementación
 
-Tu objetivo es resolver una ambigüedad de un CA descubierta al implementar, **sin re-descender todo el waterfall**: corriges el texto del CA en el spec, dejas trazabilidad (E-00X) y marcas el plan afectado con un stale puntual que solo retiene las tasks que tocan ese CA.
+Resuelve una ambigüedad de un CA descubierta al implementar **sin re-descender todo el waterfall**: se corrige el texto del CA, queda trazado con `E-00X`, y el plan afectado se marca con un stale puntual que solo retiene las tasks que tocan ese CA.
 
-Esta skill existe para separar dos casos:
+Este workflow corre en el **hilo principal** (igual que `wf-prd-change`, `wf-spec-validate` y `wf-plan-validate`, y **no** en `context: fork`) por una razón que es su propio núcleo ([[D-068]]): sostiene **dos gates humanos** —la clasificación aclaración-vs-cambio y la confirmación del texto final palabra por palabra— y un subagente no puede presentar ninguno de los dos. Mientras esto fue un fork, la parte que da valor a la skill no era ejecutable.
 
-- **aclarar** un CA cuyo texto era ambiguo pero cuya intención no cambia → esta vía corta
-- **cambiar** el comportamiento esperado, por pequeño que sea → `wf-spec-delta` (waterfall normal)
+**Tu rol es de orquestador puro.** El análisis del CA y la edición los hace el agente `sdd-spec-writer`; tú sostienes los gates y ejecutas los scripts deterministas. **No hagas `Read` ni `cat` del spec** ([[D-031]]/[[D-060]]): lo que necesitas ver te lo devuelve tu delegado. Vale **aunque las tools estén disponibles** — `allowed-tools` es declarativo, no una jaula ([[D-038]]).
 
 La frontera es estricta y no negociable: si la corrección altera lo que el sistema debe hacer (no solo cómo está descrito), esta workflow NO la aplica.
 
-## Paso 1: Parsear argumentos
+---
 
-Extrae:
+## Paso 1: Parsear argumentos
 
 - path del spec (obligatorio, debe terminar en `_spec.md`)
 - `--ca CA-XXX` (obligatorio)
@@ -33,113 +30,93 @@ Extrae:
 Si falta el spec o `--ca`:
 > "Necesito el spec de la feature y el CA que hay que aclarar. Si la duda salió implementando una task, dímelo y lo dejo trazado."
 
-## Paso 2: Verificar archivos y localizar artefactos de la feature
+---
 
-1. Comprueba que el spec existe y que contiene el encabezado `### CA-XXX` (o `#### CA-XXX`). Si el CA no existe, detén: puede ser un comportamiento no especificado → eso es `wf-spec-delta` (añadir) o `wf-bug` con triaje UNSPEC, no una enmienda.
-2. Localiza el plan y las tasks de la feature: subcarpetas de fase primero (`features/<n>/plan/<n>_plan.md`, `features/<n>/tasks/<n>_tasks.md`), raíz plana de la feature como fallback (layout legacy). Que no existan aún no bloquea: la enmienda sobre el spec es válida igualmente (no habrá nada que marcar).
-3. Si se pasó `--from-task`, lee el bloque de esa task en el `_tasks.md` (su DoD, su `Spec CA` y el motivo si está `BLOQUEADA`) como contexto de la ambigüedad.
+## Paso 2: Verificar y localizar
 
-## Paso 3: Recoger la ambigüedad
+```bash
+!test -f "<path_spec>" && grep -c "^#\{3,4\}[[:space:]]*CA-XXX" "<path_spec>"
+```
 
-Construye la descripción del problema desde (en orden): `--reason`, el motivo de la task `BLOQUEADA`, o preguntando al usuario:
+Si el spec no existe → informa la ruta exacta y detén. Si el CA **no aparece**, detén: puede ser un comportamiento no especificado, y eso es evolucionar el spec o tramitarlo como defecto, no enmendarlo.
+
+Localiza plan y tasks de la feature: subcarpetas de fase primero (`features/<n>/plan/<n>_plan.md`, `features/<n>/tasks/<n>_tasks.md`), raíz plana de la feature como fallback (layout legacy). Que no existan aún **no bloquea**: la enmienda sobre el spec es válida igualmente.
+
+---
+
+## Paso 3 (gate): Recoger la ambigüedad
+
+La descripción sale, en orden: de `--reason`; del motivo de la task `BLOQUEADA` si se pasó `--from-task`; o **preguntándosela al usuario** con `AskUserQuestion`:
 > "¿Qué ambigüedad encontraste en CA-XXX? ¿Qué interpretaciones posibles te bloquean?"
 
-No continúes sin una descripción concreta de qué es ambiguo y por qué.
+**No continúes sin una descripción concreta** de qué es ambiguo y por qué. Ahora sí puedes pedirla: estás en el hilo principal.
 
-## Paso 4: Gate de clasificación (el corazón — NO lo bypasses)
+---
 
-Compara el CA actual con la corrección que la ambigüedad pide. Clasifica:
+## Paso 4: Delegar el análisis (tool `Agent`, y esperar)
 
-**ACLARACIÓN** (esta vía) — TODAS estas condiciones a la vez:
-- La intención del GIVEN/WHEN/THEN no cambia: el sistema debe hacer lo mismo antes y después.
-- Solo se precisa texto: concretar un término vago, fijar un dato que el CA ya implicaba, deshacer una redacción con dos lecturas.
-- Ninguna de las interpretaciones posibles contradice el PRD ni mueve exclusiones o alcance.
+Delega con la tool `Agent` ([[D-043]]), `subagent_type: "sdd-spec-writer"` y **`run_in_background: false`**:
 
-**CAMBIO DE COMPORTAMIENTO** — basta UNA de estas:
-- La corrección elige entre interpretaciones que producen comportamientos observables distintos **y el spec/PRD no determina cuál es la correcta** (estás decidiendo producto, no aclarando).
-- Añade, elimina o modifica una rama observable, un límite funcional o una regla de negocio.
-- Afecta a otros CAs o HUs además del indicado.
+  prompt: "Analiza CA-XXX de <path_spec> ante esta ambigüedad: <descripción>. NO escribas nada todavía. Devuélveme: (1) el texto ACTUAL del CA, verbatim; (2) el texto CORREGIDO que propones; (3) una línea de por qué NO cambia el comportamiento; (4) tu clasificación. Clasifica ACLARACIÓN solo si se cumplen las tres: la intención del GIVEN/WHEN/THEN no cambia, solo se precisa texto (concretar un término vago, fijar un dato que el CA ya implicaba, deshacer una redacción con dos lecturas), y ninguna interpretación posible contradice el PRD ni mueve exclusiones o alcance. Clasifica CAMBIO DE COMPORTAMIENTO si basta una: la corrección elige entre interpretaciones con comportamientos observables distintos y el spec/PRD no determina cuál es la correcta; añade, elimina o modifica una rama observable, un límite funcional o una regla de negocio; o afecta a otros CAs o HUs. Ante cualquier duda sobre la frontera, clasifica CAMBIO. Si es CAMBIO, escribe además `<feature>_amend_request.md` junto al spec con la ambigüedad y la decisión pendiente, y dime su path."
 
-Si es CAMBIO DE COMPORTAMIENTO → detén SIN tocar el spec:
-> "Esto no es una aclaración: cambia el comportamiento esperado. Dejo el material del cambio en `<feature>_amend_request.md` para tramitarlo como **evolución del spec**. La task queda BLOQUEADA hasta que se resuelva."
+**Has esperado cuando su informe está en tu contexto como resultado de tu llamada** ([[D-047]]). Si no lo tienes, **paras y lo dices**: no reconstruyes su veredicto leyendo el spec.
 
-Escribe ese archivo (la descripción de la ambigüedad + la decisión pendiente) junto al spec y termina.
+---
 
-Si la respuesta correcta contradice el PRD vigente o mueve algo entre MVP y fase futura → remite a `wf-prd-change` (misma regla que `wf-spec-gap-resolve`).
+## Paso 5 (gate): Clasificación y confirmación del texto
 
-**Caso dudoso = CAMBIO.** Ante cualquier duda sobre la frontera, escala a delta: el coste de un delta innecesario es minutos; el de una enmienda que era un cambio encubierto es un spec que miente.
+**Si clasificó CAMBIO DE COMPORTAMIENTO** → no se toca el spec:
+> "Esto no es una aclaración: cambia el comportamiento esperado. El material del cambio queda en `<path>` para tramitarlo como **evolución del spec**. La task sigue bloqueada hasta que se resuelva."
 
-> **Aquí la anti-fabricación se sostiene con este gate, no con una marca ([[D-063]]).** La regla
-> general —lo que escribas y no trace a lo que te dijeron va anotado como asunción (SSoT:
-> `kb-gap-conventions`)— también rige esta escritura; lo que cambia es **el mecanismo**. En
-> `wf-spec-gap-resolve` hace falta una marca porque completa texto que nadie dictó; aquí no, porque
-> tienes algo más fuerte: **este gate deja fuera todo lo que el spec o el PRD no determinen** (eso
-> es CAMBIO, y se detiene) y el Paso 5 hace que **el humano confirme el texto final palabra por
-> palabra**. Si te descubres a punto de anotar una asunción para poder seguir, no la anotes: es la
-> señal de que esto no era una aclaración.
+Si además contradice el PRD vigente o mueve algo entre MVP y fase futura, dilo: primero hay que formalizar el cambio de producto sobre el PRD.
 
-## Paso 5: Proponer la corrección y confirmar con el humano
+**Si clasificó ACLARACIÓN** → presenta con `AskUserQuestion`, **lado a lado**: el texto actual del CA, el corregido, y la línea de por qué no cambia el comportamiento. **Sin confirmación explícita no hay enmienda** (el dev propone, el humano valida).
 
-Presenta lado a lado:
+- **Confirmado** → sigue al Paso 6.
+- **Corregido por el usuario** → vuelve al Paso 4 con el texto final: la clasificación se re-aplica sobre lo que de verdad se va a escribir, no sobre lo que se propuso.
+- **Declinado** → termina sin tocar nada.
 
-- el texto actual del CA
-- el texto corregido propuesto
-- una línea explicando qué se aclara y por qué NO cambia el comportamiento
+> **Este gate es el corazón de la skill — NO lo bypasees.** El coste de escalar a una evolución innecesaria son minutos; el de una enmienda que era un cambio encubierto es **un spec que miente**.
 
-Pide confirmación explícita al usuario (el dev propone, el humano valida). Sin confirmación no hay enmienda. Si el usuario corrige la propuesta, re-aplica el Paso 4 sobre el texto final antes de continuar.
+---
 
 ## Paso 6: Asignar referencia y marcar el plan (script, no prosa)
 
-La numeración E-00X y la anotación del plan las gestiona **solo** `sdd-amend.py` (autor ≠ marcador). Nunca asignes refs ni escribas/borres anotaciones a mano.
+La numeración `E-00X` y la anotación del plan las gestiona **solo** `sdd-amend.py` (autor ≠ marcador). Nunca asignes refs ni escribas anotaciones a mano.
 
-- **Si el plan de la feature existe** (esté en BORRADOR o VALIDADO):
-  ```
+- **Si el plan existe** (en `BORRADOR` o `VALIDADO`):
+  ```bash
   !python3 .sdd/scripts/sdd-amend.py mark <plan.md> --ca CA-XXX
   ```
-  Usa el `REF: E-00X` que devuelve. El plan conserva su `Estado:`; la anotación `Enmienda pendiente` retiene selectivamente las tasks que referencian ese CA (gate de `wf-task-run --task` + `sdd-task-state.py next`) y bloquea `wf-prepare-tasks` hasta cerrarla.
-- **Si no hay plan aún**: obtén la ref con `!python3 .sdd/scripts/sdd-amend.py next-ref <spec.md>`.
-- Si el script no existe en `.sdd/scripts/`, detén e indica reinstalar con `install.sh` — no improvises el marcado.
+  Usa el `REF: E-00X` que devuelve. El plan conserva su `Estado:`; la anotación retiene selectivamente las tasks que referencian ese CA y bloquea la generación de tasks hasta cerrarla.
+- **Si no hay plan aún**: `!python3 .sdd/scripts/sdd-amend.py next-ref <spec.md>`.
+- **Si falta el script**: detén e indica reinstalar el ecosistema — no improvises el marcado.
 
-## Paso 7: Aplicar la enmienda al spec
+---
 
-Edición quirúrgica, mínima:
+## Paso 7: Delegar la enmienda (tool `Agent`, y esperar)
 
-- Sustituye SOLO el texto del CA confirmado. No reformatees nada más, no renumeres CAs, no toques otras HUs.
-- Tras escribir, **reabre la validación del spec**: `!python3 .sdd/scripts/sdd-seal.py spec "<path_del_spec>" --unseal` ([[D-061]]). Lo que se validó ya no es lo que hay; degradar a `BORRADOR` siempre es seguro. Misma norma que en el PRD, donde un cambio reabre el sello ([[D-028]]).
-- Incrementa la versión menor del spec.
-- Registra en el changelog (orden cronológico inverso):
-  ```
-  - vX.Y (YYYY-MM-DD) — E-00X: aclaración CA-XXX desde T-00X — <qué queda fijado> (ya determinado por <dónde: el CA, otro CA, el PRD>).
-  ```
-  (sin `--from-task`, usa `desde implementación`).
+Misma delegación, con la ref ya asignada:
 
-  **La entrada dice qué se fijó y contra qué traza, no solo que hubo enmienda ([[D-063]]).**
-  *"aclaración CA-004"* no es trazabilidad: no deja comprobar después que era una aclaración y no
-  una decisión. Si al escribir esta línea no sabes nombrar de dónde sale el dato que fijaste,
-  entonces no estaba determinado — y el Paso 4 dice que eso es un CAMBIO, así que vuelve a él.
+  prompt: "Aplica esta enmienda en <path_spec>, edición quirúrgica y mínima. Sustituye SOLO el texto de CA-XXX por: <texto confirmado>. No reformatees nada más, no renumeres CAs, no toques otras HUs. Incrementa la versión menor del spec. Añade al `## Changelog` (orden cronológico inverso) la línea: `- vX.Y (<fecha real de tu contexto>) — E-00X: aclaración CA-XXX desde T-00X — <qué queda fijado> (ya determinado por <dónde: el CA, otro CA, el PRD>).` — sin `--from-task`, usa `desde implementación`. La entrada dice qué se fijó y contra qué traza, no solo que hubo enmienda ([[D-063]]). Después ejecuta `python3 .sdd/scripts/sdd-seal.py spec <path_spec> --unseal` ([[D-061]]): lo que se validó ya no es lo que hay. Confírmame la versión nueva y la línea de changelog."
 
-## Paso 8: Revisión scoped del plan (cerrar el stale puntual)
+---
 
-Si marcaste un plan en el Paso 6, revisa SOLO las secciones del plan que referencian CA-XXX contra el texto aclarado:
+## Paso 8: Cerrar el stale puntual del plan
 
-- **El plan sigue siendo válido** (la aclaración no contradice ninguna decisión técnica de esas secciones) →
-  ```
-  !python3 .sdd/scripts/sdd-amend.py clear <plan.md> --ref E-00X
-  ```
-  y las tasks retenidas quedan liberadas.
-- **El plan contradice el texto aclarado, o tienes dudas** → deja la anotación. Informa qué sección del plan necesita actualizarse; tras editarla, la vía de cierre es `/wf-plan-validate <plan.md>` (el re-sellado absorbe la anotación). **En caso de duda, NO limpies**: una task ejecutada contra un plan desactualizado cuesta más que una re-validación.
+Si marcaste un plan en el Paso 6, la revisión **scoped** de las secciones que referencian CA-XXX contra el texto aclarado la hace tu delegado (no la haces tú leyendo el plan). Con su veredicto:
 
-## Paso 9: Informar resultado y siguiente paso
+- **El plan sigue siendo válido** → `!python3 .sdd/scripts/sdd-amend.py clear <plan.md> --ref E-00X`, y las tasks retenidas quedan liberadas.
+- **El plan contradice el texto aclarado, o hay dudas** → deja la anotación e informa qué sección necesita actualizarse. **En caso de duda, NO limpies**: una task ejecutada contra un plan desactualizado cuesta más que una re-validación.
 
-Reporta:
+---
 
-- spec: nueva versión + entrada E-00X del changelog
-- plan: anotación marcada y si quedó limpiada (revisión scoped OK) o pendiente (qué sección revisar)
-- tasks retenidas, si quedan: `!python3 .sdd/scripts/sdd-task-state.py check <tasks.md>` muestra las `[RETENIDA por enmienda]`
+## Paso 9: Informar
 
-Siguiente paso según el caso:
+- spec: versión nueva + entrada `E-00X` del changelog, y que su validación quedó reabierta.
+- plan: si se marcó y si quedó limpiado o pendiente (qué sección revisar).
+- tasks retenidas, si quedan: `!python3 .sdd/scripts/sdd-task-state.py check <tasks.md>`.
 
-- Enmienda cerrada (anotación limpiada) y la task origen estaba `BLOQUEADA` →
-  > "CA-XXX aclarado (E-00X). Dime cuándo retomamos esa task y sigue por donde estaba — el desbloqueo BLOQUEADA→EN_CURSO se hace solo al reanudarla."
-- Anotación pendiente →
-  > "CA-XXX aclarado (E-00X), pero la sección <X> del plan necesita revisión. Actualízala y pídeme que **re-valide el plan** — al sellarlo absorbe la enmienda y libera las tasks retenidas."
+Siguiente paso, **en lenguaje natural y sin nombrar el workflow**:
+- Enmienda cerrada y la task origen estaba bloqueada → dile que cuando quiera retoma esa task y sigue por donde estaba; el desbloqueo se hace solo al reanudarla.
+- Anotación pendiente → dile que actualice la sección del plan y te pida que **lo re-valides**: al sellarlo se absorbe la enmienda y se liberan las tasks retenidas.

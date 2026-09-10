@@ -444,6 +444,54 @@ class InstallAllTest(InstallBase):
         self.assertNotIn("Los tres gates", kb,
                          "Regla 10 vuelve a enumerar tres gates de sellado (ver D-065)")
 
+    def test_spec_amend_holds_its_two_human_gates_from_main(self):
+        """D-068: los dos gates de amend SON su razon de existir.
+
+        Clasificar aclaracion-vs-cambio y confirmar el texto final palabra por
+        palabra: ninguno es presentable desde un fork. Mientras lo fue, la parte
+        que da valor a la skill no era ejecutable.
+        """
+        self.install("all")
+        body = (self.skill_dir("wf-spec-amend") / "SKILL.md").read_text(encoding="utf-8")
+        fm = body.split("---")[1]
+        self.assertNotIn("context: fork", fm,
+                         "wf-spec-amend vuelve a ser fork: sus gates no serian presentables")
+        self.assertIn("AskUserQuestion", fm,
+                      "wf-spec-amend no declara la tool con la que sostiene sus gates")
+        self.assertIn("run_in_background: false", body,
+                      "wf-spec-amend delega sin pedir sincronia (D-043)")
+        self.assertIn("sdd-amend.py", body,
+                      "la ref E-00X debe seguir viniendo del script (autor != marcador)")
+
+    def test_retired_agent_is_not_installed(self):
+        """D-069: sdd-spec-planner se retiro; su trabajo lo hace el carril eager.
+
+        Backstop contra la reaparicion por copia de una plantilla vieja.
+        """
+        self.install("all")
+        self.assertFalse((self.claude / "agents" / "sdd-spec-planner.md").exists(),
+                         "sdd-spec-planner vuelve a instalarse (retirado en D-069)")
+
+    def test_rootmap_does_not_duplicate_argument_hints(self):
+        """D-069: la columna de argumentos duplicaba el frontmatter y derivaba.
+
+        install.sh siembra este CLAUDE.md como raiz del proyecto cuando se
+        instalan >=2 fases, asi que sus argumentos stale llegaban al contexto
+        del orquestador. Precedente: D-023.
+        """
+        self.install("all")
+        md = (self.claude / "CLAUDE.md").read_text(encoding="utf-8")
+        hdr = "| Intención del usuario | Skill |"
+        self.assertIn(hdr, md, "el rootmap recupera la columna de argumentos (ver D-069)")
+        # Solo la TABLA: la prosa que explica el pipeline sí puede nombrar un flag
+        # al describir un gate; lo que no debe volver es la columna que duplicaba
+        # el `argument-hint` de cada skill.
+        tabla = md[md.index(hdr):md.index("\n## ", md.index(hdr))]
+        self.assertNotIn("--allow", tabla,
+                         "el rootmap vuelve a listar flags: eso lo dice el argument-hint")
+        self.assertNotIn("<prd.md>", tabla,
+                         "el rootmap vuelve a listar argumentos posicionales")
+
     def test_spec_validate_holds_its_gate_from_the_main_thread(self):
         """D-065: el gate de sellado del spec captura quien aprueba, luego es main.
 

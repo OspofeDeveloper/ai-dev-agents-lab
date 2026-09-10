@@ -1,7 +1,7 @@
 ---
 name: wf-prd-sync-impact
 description: "Analiza el impacto de un PRD actualizado sobre los artefactos SDD ya generados (analysis, discovery, features, specs, plan, tasks) y produce un informe de sincronizacion con estado por artefacto y siguientes pasos."
-when_to_use: "Activa en frases como 'que impacto tiene este cambio de PRD', 'que specs han quedado stale', 'analiza sync PRD → specs', 'que artefactos hay que revisar tras cambiar el PRD'."
+when_to_use: "Activa en frases como 'que impacto tiene este cambio de PRD', 'que specs han quedado stale', 'analiza sync PRD → specs', 'que artefactos hay que revisar tras cambiar el PRD'. **Mide** el impacto y produce el informe; no toca ningún spec. Si lo que se quiere es **aplicar** el cambio a los specs, es wf-spec-sync-from-prd."
 argument-hint: "<prd.md>"
 effort: high
 allowed-tools: [Read, Bash]
@@ -30,12 +30,17 @@ En el directorio del PRD, busca si existen:
 - `*_analysis.md`
 - `*_discovery.md`
 - `*_features.md`
-- `features/*/*_spec.md`
-- `features/*/*_plan.md`
-- `features/*/*_tasks.md`
+- `features/*/spec/*_spec.md` (subcarpetas) **y** `features/*/*_spec.md` (plano legacy)
+- `features/*/plan/*_plan.md` (subcarpetas) **y** `features/*/*_plan.md` (plano legacy)
+- `features/*/tasks/*_tasks.md` (subcarpetas) **y** `features/*/*_tasks.md` (plano legacy)
 - `product-changelog.md`
 - `changes/CR-XXX/change-request.md`
 - `changes/CR-XXX/decision.md`
+
+> **Los dos layouts, siempre ([[D-067]]).** Buscar solo el plano legacy es el modo de fallo que
+> [[D-046]] declaró inaceptable: en un proyecto con el layout estándar (subcarpetas por fase) este
+> paso no encontraba **ningún** spec, plan ni tasks, y producía una matriz de impacto vacía que se
+> lee como *"todo sincronizado"*. No falla: miente en silencio.
 
 ## Paso 3: Leer el contexto mínimo necesario
 
@@ -111,6 +116,11 @@ Cada fila debe incluir:
 Mapea cada estado a un siguiente paso:
 
 - `in_sync` → sin acción
-- `needs_review` → `wf-spec-sync-from-prd analyze`
-- `stale` → `wf-spec-sync-from-prd apply` o regeneración explícita
+- `needs_review` → **analizar la sincronización** de esa feature antes de tocar nada
+- `stale` → **aplicar la sincronización** sobre ese spec, o regenerarlo explícitamente
+
+> **En lenguaje natural, no con el nombre del workflow.** Esta columna acaba **dentro del
+> `_sync_report.md`**, que lo lee una persona: describe la acción, no la invocación. El usuario no
+> teclea comandos, te lo pide hablando — y surfacear el nombre le enseña a pasar argumentos a mano
+> saltándose las validaciones (regla de fase, `sdd-spec.md`).
 - `unknown` → revisión manual o análisis de sync

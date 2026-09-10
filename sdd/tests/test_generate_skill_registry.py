@@ -65,6 +65,26 @@ class RegistryTest(unittest.TestCase):
         self.assertRegex(reg, r"\|\s*wf-bar\s*\|.*\|\s*true\s*\|")
         self.assertRegex(reg, r"\|\s*kb-foo\s*\|.*\|\s*false\s*\|")
 
+    def test_check_detects_a_stale_registry(self):
+        """D-069: un generador sin `--check` no delata que lo commiteado esta viejo.
+
+        El registry llevaba la descripcion pre-D-065 de wf-spec-validate y los
+        tests solo comprobaban que el generador funciona, no que el fichero
+        commiteado coincidiera con el arbol.
+        """
+        self._run()
+        reg = self.root / "meta" / "skill-registry.md"
+        reg.write_text(reg.read_text(encoding="utf-8").replace(
+            "Una kb de prueba", "OTRA COSA", 1), encoding="utf-8")
+        r = run_script_at(self.script, "--check")
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        self.assertIn("DESACTUALIZADO", r.stderr)
+
+    def test_check_passes_right_after_regenerating(self):
+        self._run()
+        r = run_script_at(self.script, "--check")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
     def test_idempotent_byte_identical(self):
         self._run()
         first = (self.root / "meta" / "skill-registry.md").read_text(encoding="utf-8")

@@ -158,7 +158,9 @@ Antes de escribir el output, aplica la Prueba de Pureza al spec completo. Consul
 ## Paso 9: Generar artefactos de índice
 
 **README de la feature**: Genera el contenido completo de `features/<capability>/README.md` siguiendo `${CLAUDE_SKILL_DIR}/references/feature_readme_template.md`. Usa los datos del spec recién generado:
-- Feature ID: el siguiente F-NNN libre. **No lo cuentes a mano** (colisión con el índice de features): `!python3 .sdd/scripts/sdd-next-id.py F <ruta_al_features.md>` (emite `F-001` si `_features.md` no existe; ignora `RF-` y `F-C-`, que no son features de producto). Sin python3/script → máximo `F-NNN` del índice + 1
+**Feature ID (solo en modo directo `--capability`)**: el siguiente F-NNN libre. **No lo cuentes a mano** (colisión con el índice de features): `!python3 .sdd/scripts/sdd-next-id.py F <ruta_al_features.md>` (emite `F-001` si `_features.md` no existe; ignora `RF-` y `F-C-`, que no son features de producto). Sin python3/script → máximo `F-NNN` del índice + 1
+
+> **En modo scoped NO lo recalcules ([[D-067]]).** Ahí el `F-00X` ya te lo asignó el discovery y viene en tus argumentos: es la clave con la que el índice cruza discovery↔spec. Pedir "el siguiente libre" produce un README que dice `F-007` sobre un spec que dice `F-003`.
 - Actor principal: extraído del spec
 - Spec monolítico origen: `N/A (fast-track directo)`
 - Artefactos: Spec ✓, Plan —, Tasks — (rutas relativas a la raíz de la feature según su layout: `spec/<nombre>_spec.md` con subcarpetas, `<nombre>_spec.md` si la feature es plana legacy)

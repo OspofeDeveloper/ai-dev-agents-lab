@@ -78,7 +78,14 @@ def render_table(entries: list) -> list:
     return out
 
 
+def _sin_fecha(text: str) -> str:
+    """Quita la linea de fecha: cambia cada dia sin que cambie el contenido."""
+    return "\n".join(l for l in text.splitlines()
+                     if not l.startswith("<!-- Última actualización:"))
+
+
 def main() -> int:
+    check_only = "--check" in sys.argv
     sections = []  # (titulo, entries)
 
     # Meta-ecosistema: meta/skills + bootstrap/skills
@@ -121,7 +128,22 @@ def main() -> int:
         lines += ["", f"## {title}", ""] + render_table(entries)
     lines.append("")
 
-    REGISTRY.write_text("\n".join(lines), encoding="utf-8")
+    content = "\n".join(lines)
+
+    if check_only:
+        # El registry es un artefacto GENERADO y estaba derivando en silencio:
+        # conservaba descripciones de skills que ya habian cambiado. Un generador
+        # sin `--check` no tiene forma de delatar que lo commiteado esta stale.
+        actual = REGISTRY.read_text(encoding="utf-8") if REGISTRY.is_file() else ""
+        if _sin_fecha(actual) == _sin_fecha(content):
+            print(f"skill-registry.md al dia ({total} skills)")
+            return 0
+        sys.stderr.write(
+            f"[skill-registry] DESACTUALIZADO: {REGISTRY} no coincide con el arbol.\n"
+            f"  Regeneralo con: python3 scripts/generate-skill-registry.py\n")
+        return 2
+
+    REGISTRY.write_text(content, encoding="utf-8")
     print(f"skill-registry.md regenerado: {total} skills ({n_wf} wf-*, {n_kb} kb-*) en {REGISTRY}")
     return 0
 

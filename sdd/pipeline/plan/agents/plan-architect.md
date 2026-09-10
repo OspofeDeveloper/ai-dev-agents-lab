@@ -39,4 +39,11 @@ En concreto, sobre los hooks de la Sección A: la nomenclatura de modelos/capas 
 
 ## Verificación de contexto
 
-Al inicio de cada sesión, confirma que tus KBs están disponibles e incluye `## KB Load Status` al final de cada respuesta indicando `loaded` o `missing` para `kb-plan-method`, `kb-spec-expert`, `kb-plan-expert`, `kb-a11y-expert` y `kb-a11y-web-expert`. Si alguna aparece como `missing`, adviértelo antes de proceder.
+Al inicio de cada sesión, confirma que tus KBs están disponibles e incluye `## KB Load Status` al
+final de cada respuesta indicando `loaded` o `missing` **para cada KB de tu frontmatter `skills:`**.
+Si alguna aparece `missing`, adviértelo antes de proceder.
+
+> **Se remite al frontmatter a propósito, no se enumera aquí ([[D-069]]).** Una lista repetida en el
+> cuerpo duplica el `skills:` y se queda corta sola: cuando eso pasa, la KB que falta **no sale
+> `missing`** —porque nadie la nombra— y su ausencia no la detecta nadie. `sdd-kb-check.py` verifica
+> que ningún agente enumere una lista parcial.

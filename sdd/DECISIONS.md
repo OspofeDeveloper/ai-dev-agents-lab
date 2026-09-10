@@ -6,6 +6,93 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-069 — Lo que duplica una fuente de verdad se retira o se respalda; y una lista parcial es peor que ninguna
+
+- **Fecha:** 2026-09-10 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-065]] (la clase de fallo: enumeraciones que gobiernan conducta), [[D-023]] (borrar el rootmap que deriva), [[D-021]]/[[D-022]] (el enrutado vive en las `description`), [[D-055]] (redundancia deliberada, la que NO se toca).
+
+**Contexto.** Cuarta, quinta y sexta aparición de lo que [[D-065]] documentó: material que duplica una fuente de verdad y deriva sin que nada lo note. Medido:
+
+| Duplicado | Estado |
+|---|---|
+| `## Verificación de contexto` de los agentes | **32 KBs sin enumerar en 6 agentes.** Spec no verificaba `kb-spec-characterization` en 2 de 4 |
+| `meta/skill-registry.md` (artefacto **generado**) | Stale: conservaba la descripción pre-[[D-065]] de `wf-spec-validate`. Los tests comprobaban que el generador funciona, no que lo commiteado esté al día |
+| Columna de argumentos del rootmap de `CLAUDE.md` | Stale en 3 de 3 muestreados. `install.sh:407` lo siembra como CLAUDE.md **raíz del proyecto** |
+| `sdd-spec-planner` | Agente instalado que **ninguna workflow declara**; su trabajo lo movieron [[D-021]]/[[D-022]] al carril eager, y solapa con el explorer |
+
+**Decisión.** Cada duplicado se **retira** o se **respalda**, según aporte:
+
+1. **La enumeración de KBs se retira, no se completa.** Los dos arquitectos de Design ya tenían la forma correcta —*"para cada KB de tu frontmatter"*— y por eso eran los únicos que no podían quedarse cortos. Los cuatro agentes con lista parcial adoptan esa forma. `sdd-kb-check.py` gana la regla: **enumera todas o ninguna**; lo que se deniega es la lista **parcial**, que se lee como exhaustiva y no lo es. Remitir en genérico no es hallazgo: es lo preferido.
+2. **`generate-skill-registry.py --check`** + test que falla si lo commiteado no coincide con el árbol (ignorando la línea de fecha, que cambia sola). Un generador sin `--check` no tiene forma de delatar que su salida está vieja.
+3. **La columna de argumentos del rootmap se borra.** El mapa intención→skill es lo que aporta; los argumentos los arma el orquestador leyendo el `argument-hint`, que es la única fuente que no envejece. Precedente literal de [[D-023]].
+4. **`sdd-spec-planner` se retira.** Su caso de uso documentado (petición ambigua que mezcla intenciones) lo absorbe `sdd-spec-explorer`, que ya declaraba la misma salida.
+
+**Lo que NO se toca, y por qué importa distinguirlo.** El contrato del bloque de gap está duplicado a propósito entre `kb-gap-conventions` y las workflows: [[D-055]] mide que una regla de `.claude/rules/` llega **tarde** al `Write`, así que la redundancia es el mecanismo. La frontera es **qué** se duplica: el **contrato** se queda; la **anécdota histórica** que lo justifica, no. Igual con el párrafo del índice de features: lo que se unificó fue el mensaje de fallback —que ya había divergido en tres redacciones— y no la justificación local del fan-out, que es load-bearing donde está.
+
+**Alternativas descartadas.**
+- *Completar las cuatro listas parciales* → mantener cuatro duplicados en vez de tres. Habría hecho falta un backstop **más** estricto para conservar algo que no aporta.
+- *Generar la columna de argumentos del rootmap* → un generador más para un dato que el orquestador ya tiene en el frontmatter de la skill que invoca.
+- *Dejar el planner documentado como "uso ad-hoc"* → es lo que estaba, y el resultado fue un agente que nadie invoca, con siete KBs cargadas, y un README que le asigna la misma salida que al explorer.
+
+**Consecuencias / aprendizaje.** Dos. (a) **La forma correcta ya estaba en el árbol**: los arquitectos de Design remitían al frontmatter mientras el resto enumeraba, y el que no duplicaba era el único inmune. Antes de escribir un backstop conviene mirar si algún sitio ya resolvió el problema por construcción. (b) **Una lista parcial es peor que ninguna**: ninguna te obliga a ir a la fuente; una parcial te convence de que ya la miraste.
+
+**Referencias.** `sdd/scripts/sdd-kb-check.py`, `sdd/scripts/generate-skill-registry.py`, `sdd/CLAUDE.md` (rootmap), los 4 agentes alineados, `sdd/pipeline/spec/agents/sdd-spec-planner.md` (borrado), `sdd/tests/test_sdd_kb_check.py`, `sdd/tests/test_generate_skill_registry.py`, `sdd/tests/test_install_sh.py`.
+
+---
+
+## D-068 — `wf-spec-amend` sale del fork, y el detector de gates pasa a mirar la conducta, no una frase
+
+- **Fecha:** 2026-09-10 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-064]] (que cazó una forma y dejó pasar tres), [[D-045]]/[[D-040]]/[[D-065]] (el mismo movimiento, tres veces antes), [[D-016]] (barrido exhaustivo por construcción), CU-3.q.
+
+**Contexto.** [[D-064]] creó `FORK-CONFIRM-GATE` y lo dejó a 0 hallazgos. Al leer los 13 workflows enteros aparecieron **tres gates más** que la regla no veía, porque preguntan con otras palabras:
+
+| Sitio | Forma |
+|---|---|
+| `wf-spec-discover:137` | *"**Espera respuesta del usuario** antes de continuar"* (ownership checkpoint) |
+| `wf-spec-gap-resolve:73` | *"presenta el comportamiento deducido … **y pregunta**:"* — la confirmación de `[INFERIDO]`, o sea **CU-3.q entero** |
+| `wf-spec-amend:44` y `:89` | *"preguntando al usuario:"* y *"**pide confirmación explícita** al usuario"* |
+
+`wf-spec-amend` es el caso límite: sus **dos gates humanos son su razón de existir** —el Paso 4 se autodescribe *"el corazón — NO lo bypasses"* y el Paso 5 dice *"sin confirmación no hay enmienda"*— y ninguno era ejecutable. La skill entera dependía de algo que su arquitectura impedía.
+
+**Decisión.** (1) **`wf-spec-amend` pasa al hilo principal**, cuarta aplicación del mismo patrón ([[D-040]], [[D-045]], [[D-065]]): orquesta, delega el análisis y la edición al `sdd-spec-writer` con `run_in_background: false`, y sostiene sus dos gates de verdad. `sdd-amend.py` sigue siendo el único que asigna `E-00X`. (2) **`wf-spec-discover` y `wf-spec-gap-resolve` paran y reportan** (`STOP_OWNERSHIP_AMBIGUO`, `STOP_INFERIDO_SIN_CONFIRMAR`); en discover **el contrato correcto ya existía** en `wf-spec-features-first:338`, y solo el fork creía que podía esperar. (3) **`FORK-CONFIRM-GATE` se afila** a las tres formas medidas, más la de esperar — porque ordenar aguardar a una persona tampoco es ejecutable sin turno. Delta: **3 → 0**.
+
+**Alternativas descartadas.**
+- *Que amend siga en fork con los gates convertidos en parada* → parte en dos el único flujo cuyo valor es la conversación dev↔humano sobre el texto de un CA, y multiplica los saltos justo donde hay una persona esperando.
+- *Aflojar la regla para que no case con las notas que citan la frase prohibida* → se resolvió al revés: **la nota se reescribe**. Es la regla de autoría de [[D-045]] §4 (describir la conducta, no reproducir la forma prohibida) aplicada a la prosa explicativa.
+
+**Consecuencias / aprendizaje.** Tres. (a) **Un detector caza la forma que se le enseñó, no la conducta** — [[D-064]] ya lo dijo y aun así su primera versión cubrió una de cuatro variantes. La lección operativa: al escribir la regla, enumerar las formas **observadas en el árbol**, no las imaginadas. (b) **Precisión y recall se pagan por separado**: al ampliarla apareció un falso positivo (`wf-prd-change-cascade` *describiendo* el gate de otra skill para explicar que no puede heredarlo), y el discriminante resultó ser algo tan pequeño como el **dos puntos** que separa la orden de la descripción. (c) Cuarta vez que un gate acaba en main: **el sitio de un gate no es una preferencia de diseño, es una consecuencia de quién puede presentarlo.**
+
+**Referencias.** `sdd/pipeline/spec/skills/wf-spec-amend/SKILL.md` (reescrito), `wf-spec-discover/SKILL.md`, `wf-spec-gap-resolve/SKILL.md`, `sdd/scripts/sdd-structural-lint.py`, `sdd/tests/test_sdd_structural_lint.py`, `sdd/tests/test_install_sh.py`.
+
+---
+
+## D-067 — Cinco invariantes de la fase Spec que se rompían sin ruido
+
+- **Fecha:** 2026-09-10 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-061]] (el sello del spec), [[D-059]] (el informe lo escribe su auditor), [[D-046]] (no encontrarlo no puede ser advertencia blanda), [[D-044]] (no encadenar forks), [[D-054]], CU-3.f / CU-3.h / CU-7.
+
+**Contexto.** Ninguno de los cinco falla de forma visible: los cinco producen artefactos que **parecen correctos**. Salieron de leer los 13 workflows enteros, no de una pasada de conformance.
+
+1. **`wf-spec-sync-from-prd` dejaba specs mintiendo.** Su Paso 4B decía *"siguiendo la misma disciplina que `wf-spec-delta`"* y reimplementaba el apply sin cuatro de sus cinco piezas —reapertura de la validación, versión menor, changelog, índice— y encima escribía `status_sync: in_sync` a mano. Un spec salía **`VALIDADO`, con contenido cambiado y declarándose sincronizado**: el estado exacto que [[D-061]] existe para impedir.
+2. **`wf-spec-delta` hacía que el writer auditara lo que acababa de escribir**, ejecutando `wf-spec-conflict` y **firmando el `_conflict_report.md`**. Rompe autor≠verificador, encadena forks ([[D-044]]) y contradice [[D-059]], cuya copia correcta está a unos ficheros de distancia.
+3. **`wf-prd-sync-impact` era ciego al layout estándar**: buscaba solo `features/*/*_spec.md`. Con subcarpetas por fase reportaba **cero specs, cero planes, cero tasks** — una matriz de impacto vacía que se lee como *"todo in_sync"*. Modo de fallo de [[D-046]].
+4. **`wf-spec-from-code` miraba el sello sobre un path sin resolver**, así que no detectaba como sellado un spec en layout plano y lo pisaba.
+5. **El conjunto de marcadores que bloquean el paso a Plan estaba definido en cuatro sitios y ninguno coincidía con el script.** El peor era la SSoT declarada: `kb-gap-conventions` **omitía `[CRÍTICO]`** en su patrón literal de verificación — el que un auditor copia tal cual.
+
+Más dos verdades duplicadas: la cabecera de caracterización fijaba `Status sync: in_sync` con `PRD origen: N/A`, contra la Regla 3 que exige `unknown`; y `wf-spec-fast-track` pedía "el siguiente `F-NNN` libre" también en modo scoped, donde el ID ya lo asignó el discovery — produciendo un README `F-007` sobre un spec `F-003`.
+
+**Decisión.** Cada invariante vuelve a tener **un solo dueño**: sync-from-prd decide *qué* cambia y **delega el *cómo se escribe*** al delta; delta **reporta** que conviene revisar conflictos y no audita; sync-impact mira los dos layouts; from-code resuelve el path antes de mirar el sello; y el conjunto de marcadores tiene **una definición** en `kb-gap-conventions` —con `[CRÍTICO]` y con la advertencia de que la autoridad es `sdd-seal.py spec --check`— y **tres citas**.
+
+De paso, dos punteros rotos en silencio: `routing.md` atribuía a `kb-spec-expert` una prohibición del modo ligero **que no estaba escrita en ninguna parte** (ahora sí lo está, con su razón: lo que el modo ligero relaja es ceremonia, y un shared model o una entidad nueva no son ceremonia sino contrato con otras features); y `wf-spec-readiness` afirmaba en su regla de oro *"no propone resoluciones"* y *"no modifica artefactos"* mientras su Paso 4c le nombra árbitro y su veredicto es autoritativo para el índice.
+
+**Alternativas descartadas.**
+- *Completar el apply de `sync-from-prd` con las cuatro piezas que le faltan* → dos implementaciones del mismo apply, condenadas a divergir otra vez. La pregunta no era qué le falta, sino por qué hay dos.
+- *Dejar que `delta` avise ejecutando el conflict "en modo informativo"* → el problema no es que bloquee o no: es **quién firma el veredicto** sobre un spec que su propio autor acaba de escribir.
+
+**Consecuencias / aprendizaje.** Dos. (a) **Los defectos que no fallan son los que sobreviven a una campaña de conformance**: los cinco llevaban meses ahí y ninguna pasada los destapó, porque ninguno produce un error — producen un artefacto plausible. Leer el contrato entero encuentra cosas que ejecutarlo no. (b) **Una frase del tipo "siguiendo la misma disciplina que X" es una señal de alarma, no una garantía**: o se delega en X, o se está reimplementando X con menos piezas.
+
+**Referencias.** `wf-spec-sync-from-prd`, `wf-spec-delta`, `wf-prd-sync-impact`, `wf-spec-from-code`, `wf-spec-readiness`, `wf-spec-fast-track`, `kb-gap-conventions`, `kb-traceability-rules`, `kb-spec-expert`, `kb-spec-characterization`, `pipeline/spec/routing.md`.
+
+---
+
 ## D-066 — La cabecera del spec se verifica: el índice omitía en silencio lo que no sabía leer
 
 - **Fecha:** 2026-09-09 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-046]] (no encontrarlo no puede ser advertencia blanda), `sdd-prd-frontmatter.py` (el precedente en PRD), [[D-060]] (main no redacta), CU-3.a.

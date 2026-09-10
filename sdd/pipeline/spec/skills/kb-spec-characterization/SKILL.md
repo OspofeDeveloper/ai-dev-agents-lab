@@ -41,7 +41,7 @@ Los gates del pipeline (gate de plan, sellador) tratan `[INFERIDO]` igual que `[
 > **Estado:** BORRADOR
 > **PRD origen:** N/A (brownfield)
 > **Evidencia base:** commit <SHA corto> (<fecha>)
-> **Status sync:** in_sync
+> **Status sync:** unknown
 ```
 
 > **`Feature ID` y `Origen de alcance` no son decoración ([[D-066]]).** Los leen
@@ -50,6 +50,12 @@ Los gates del pipeline (gate de plan, sellador) tratan `[INFERIDO]` igual que `[
 > prosa de la workflow que la usa—, así que un spec escrito según ella dejaba esos campos vacíos y
 > el índice **omitía la feature en silencio** en vez de fallar ruidosamente ([[D-046]]).
 > `sdd-seal.py spec --check` ahora deniega el sello si faltan.
+
+> **`Status sync: unknown`, nunca `in_sync` ([[D-067]]).** La Regla 3 de `kb-traceability-rules` es
+> explícita: sin metadata de origen, el estado conservador es `unknown` o `needs_review`. Un spec de
+> caracterización declara `PRD origen: N/A (brownfield)` — es por definición ese caso, así que
+> `in_sync` afirmaba una alineación con un PRD que no existe. La plantilla de fast-track ya hacía lo
+> correcto en su modo directo; esta decía lo contrario.
 
 `Estado` nace en `BORRADOR` y **no lo escribes tú** después ([[D-061]]): la promoción a `VALIDADO`
 la hace `sdd-seal.py spec … --seal` tras la validación, y en un spec de caracterización exige

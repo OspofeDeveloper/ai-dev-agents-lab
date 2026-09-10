@@ -202,26 +202,11 @@ sdd-spec-explorer
   → recomienda workflow o agente siguiente
 ```
 
-**Cuándo usarlo**: cuando la duda principal es “qué tengo delante” o “qué workflow corresponde ahora”.
+**Cuándo usarlo**: cuando la duda principal es “qué tengo delante” o “qué workflow corresponde ahora” — incluida la petición ambigua que mezcla varias intenciones (crear, evolucionar, auditar) y hay que separarlas antes de ejecutar nada.
 
 ---
 
-### 7. Planificación del approach sobre specs
-
-La petición es ambigua o mezcla varias intenciones (crear, mejorar, dividir, evolucionar, auditar) y quieres decidir el approach correcto antes de ejecutar nada.
-
-```
-sdd-spec-planner
-  → separa intención
-  → ordena fases
-  → recomienda workflows/agentes
-```
-
-**Cuándo usarlo**: cuando el problema todavía necesita descomposición operativa.
-
----
-
-### 8. Consulta directa sobre qué es un Spec SDD
+### 7. Consulta directa sobre qué es un Spec SDD
 
 Preguntas conceptuales o revisión de un spec a mano, sin pasar por el flujo orquestado.
 
@@ -266,7 +251,6 @@ La lógica exacta de routing y la política de skills viven en [CLAUDE.md](CLAUD
 | Agente | Modos soportados | Invocado desde |
 |--------|-----------------|----------------|
 | `sdd-spec-explorer` | diagnóstico de PRD/spec, análisis de gaps, discovery | `wf-spec-analyze`, `wf-spec-discover`, exploración directa |
-| `sdd-spec-planner` | planificación de approach | uso directo por el orquestador cuando la petición es ambigua |
 | `sdd-spec-writer` | fast-track, delta apply, sync desde PRD, escritura de artefactos | `wf-spec-fast-track`, `wf-spec-delta`, `wf-spec-gap-resolve`, `wf-spec-amend`, `wf-spec-sync-from-prd`, `wf-spec-features-first` |
 | `sdd-spec-auditor` | validate, conflict, readiness, sync impact | `wf-spec-validate`, `wf-spec-conflict`, `wf-spec-readiness`, `wf-prd-sync-impact` |
 
@@ -283,8 +267,8 @@ La lógica exacta de routing y la política de skills viven en [CLAUDE.md](CLAUD
 | `kb-product-change-governance` ⚠ | Reglas para distinguir gap vs. change request y gestionar impacto de negocio | `analyze`, `gap-resolve`, `sync-from-prd`, `sync-impact`, planning |
 
 > ⚠ `kb-prd-expert` y `kb-product-change-governance` viven físicamente en `sdd/pipeline/prd/skills/`. Son kb cross-fase. La carga concreta por agente:
-> - `kb-prd-expert`: `sdd-spec-explorer`, `sdd-spec-writer`, `sdd-spec-planner` (el auditor no la necesita porque audita specs ya escritos).
-> - `kb-product-change-governance`: los 4 agentes Spec.
+> - `kb-prd-expert`: `sdd-spec-explorer` y `sdd-spec-writer` (el auditor no la necesita porque audita specs ya escritos).
+> - `kb-product-change-governance`: los 3 agentes Spec.
 >
 > **`install.sh spec` ya instala automáticamente estas dos kb cross-fase y también `wf-prd-change`, `wf-prd-review` + `prd-expert`,** porque el ecosistema Spec necesita ese handoff cuando una respuesta a un gap se convierte en cambio real de producto o cuando el analyze exige limpiar el PRD antes de continuar.
 
@@ -347,7 +331,6 @@ sdd/pipeline/spec/
 ├── agents/
 │   ├── sdd-spec-auditor.md                    ← L2 worker: auditoría
 │   ├── sdd-spec-explorer.md                   ← L2 worker: diagnóstico
-│   ├── sdd-spec-planner.md                    ← L2 worker: planificación
 │   └── sdd-spec-writer.md                     ← L2 worker: escritura/evolución
 ├── shared/
 │   └── templates/

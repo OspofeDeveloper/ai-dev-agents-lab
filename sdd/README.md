@@ -150,7 +150,6 @@ SPECIFY    kb-decompose-         Diagnóstico               wf-spec-discover
            kb-conflict-         Auditoría                 wf-spec-conflict
            expert                                         wf-spec-readiness
 
-           sdd-spec-planner     Planifica approach
 
            wf-spec-features-first
            Orquesta discover + fast-track en paralelo
@@ -459,7 +458,6 @@ Si te importa el rendimiento del agente, instala solo las fases que necesites. L
 | `kb-tasks-expert` | Knowledge (kb) | Tasks | ✅ Implementado |
 | `prd-expert` | Agente Worker | PRD | ✅ Implementado |
 | `sdd-spec-explorer` | Agente Worker | Specify | ✅ Implementado |
-| `sdd-spec-planner` | Agente Worker | Specify | ✅ Implementado |
 | `sdd-spec-writer` | Agente Worker | Specify | ✅ Implementado |
 | `sdd-spec-auditor` | Agente Worker | Specify | ✅ Implementado |
 | `plan-architect` | Agente Worker | Plan | ✅ Implementado |

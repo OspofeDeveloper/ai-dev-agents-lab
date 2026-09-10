@@ -47,7 +47,7 @@ Si el nombre termina en `_spec.md`, `_plan.md` o `_tasks.md` → informa:
 ```
 !python3 .sdd/scripts/sdd-prd-ready.py "<path>"
 ```
-Si el veredicto es `OPEN_ASSUMPTIONS`/`ASSUMPTION_MISMATCH`, inclúyelo en el informe (Paso 8) como aviso: "el PRD arrastra N `[ASUNCIÓN]` sin confirmar; revísalas con `/wf-prd-review` antes de generar specs — este análisis no las resuelve". Si falta el script, omite el aviso y continúa.
+Si el veredicto es `OPEN_ASSUMPTIONS`/`ASSUMPTION_MISMATCH`, inclúyelo en el informe (Paso 8) como aviso: "el PRD arrastra N `[ASUNCIÓN]` sin confirmar; conviene revisarlas y cerrarlas antes de generar specs — este análisis no las resuelve". Si falta el script, omite el aviso y continúa.
 
 ---
 

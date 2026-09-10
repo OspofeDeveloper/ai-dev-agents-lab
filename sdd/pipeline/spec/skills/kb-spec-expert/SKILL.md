@@ -165,6 +165,22 @@ Para features pequeñas y sprints cortos existe un modo ligero del pipeline. **N
 | conflict / readiness | automáticos en features-first | opcionales si la feature no toca shared models |
 | Versionado del spec | changelog completo | mínimo (versión + fecha) |
 
+### Cuándo el modo ligero se prohíbe solo
+
+El rigor lo elige quien crea el spec, pero **hay features que no admiten ligero**: se fuerza
+`standard` si la feature **toca un shared model**, **introduce una entidad nueva** o **expande el
+alcance comprometido**. La razón es la misma en los tres casos: lo que el modo ligero relaja es
+**ceremonia** (secciones, número de CAs, formato del changelog), y en esas tres situaciones lo que
+está en juego no es ceremonia sino **contrato con otras features** — el ownership de un modelo
+compartido, una entidad que aún no existe en el discovery, o una frontera de producto que el PRD no
+cubre. Un núcleo de 4 con ≥1 CA no basta para dejar eso trazado.
+
+Quien resuelve el rigor **antes** del fan-out aplica esta regla; ante la duda, `standard`.
+
+> **Esta norma no estaba escrita en ninguna parte ([[D-067]]).** `routing.md` se la atribuía a esta
+> KB —*"esas reglas viven en `kb-spec-expert`"*— y aquí no había nada: un puntero roto en silencio,
+> imposible de aplicar porque no existía el texto al que apuntaba.
+
 ### Validación de un spec ligero
 
 Un spec con `Modo: ligero` se valida contra el núcleo de 4 + N/A explícitos: completitud `X/4`, y las secciones omitidas deben decir `N/A — modo ligero` (una sección ausente sin esa marca ES un hallazgo). Pureza y testabilidad se validan igual que en standard.

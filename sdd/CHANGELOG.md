@@ -2,6 +2,20 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.104.0 — 2026-09-10
+
+**Limpieza de la fase Spec: lo que no fallaba pero mentía** — [[DECISIONS D-067]], [[DECISIONS D-068]], [[DECISIONS D-069]]. Lectura completa de los 13 workflows, 6 KBs y 4 agentes de la fase, contra la fase PRD. Los hallazgos no salieron de ejecutar el pipeline sino de leerlo: **ninguno de los cinco defectos falla** — los cinco producen artefactos que parecen correctos.
+
+- 🔴 **`wf-spec-sync-from-prd` dejaba specs `VALIDADO`, con contenido cambiado y declarándose `in_sync`.** Decía *"siguiendo la misma disciplina que `wf-spec-delta`"* y reimplementaba su `apply` sin cuatro de sus cinco piezas, empezando por la reapertura de la validación. Ahora **delega** en vez de describir un segundo apply.
+- 🔴 **`wf-spec-delta` hacía que el writer auditara lo que acababa de escribir** y firmara el `_conflict_report.md`. Autor≠verificador, cascada de forks y [[DECISIONS D-059]], las tres a la vez. Ahora reporta que conviene revisar conflictos, y para ahí.
+- 🔴 **`wf-prd-sync-impact` no veía el layout estándar**: con subcarpetas por fase reportaba cero specs, cero planes y cero tasks — una matriz de impacto vacía que se lee como *"todo sincronizado"*.
+- ⚠ **`wf-spec-from-code` pisaba specs sellados en layout plano** (miraba el estado sobre un path sin resolver), y **`kb-gap-conventions` —la SSoT declarada— omitía `[CRÍTICO]`** en su patrón de verificación, el que un auditor copia tal cual. Cuatro ficheros definían ese conjunto y ninguno coincidía con el sellador: ahora hay **una definición y tres citas**.
+- ⚠ **`wf-spec-amend` al hilo principal.** Sus **dos gates humanos son su razón de existir** —clasificar aclaración-vs-cambio y confirmar el texto final palabra por palabra— y ninguno era ejecutable en fork. Cuarta vez que un gate acaba en main por la misma razón ([[DECISIONS D-040]], [[DECISIONS D-045]], [[DECISIONS D-065]]).
+- ⚠ **`FORK-CONFIRM-GATE` pasa a mirar la conducta, no una frase.** [[DECISIONS D-064]] cazó una forma de preguntar y dejó pasar tres —esperar respuesta, pedir confirmación explícita, dictar un menú—. Delta **3 → 0**. Y al ampliarla apareció un falso positivo cuyo discriminante resultó ser **el dos puntos** que separa ordenar de describir.
+- ⚠ **Se retira `sdd-spec-planner`**: ninguna workflow lo declaraba y su trabajo lo movieron [[DECISIONS D-021]]/[[DECISIONS D-022]] al carril eager.
+- ⚠ **Tres duplicados con backstop o retirados.** Las enumeraciones de KBs de los agentes (**32 sin enumerar en 6 agentes**) adoptan la forma que ya usaba Design —remitir al frontmatter—, y `sdd-kb-check.py` deniega la **lista parcial**; `generate-skill-registry.py` gana `--check` (lo commiteado estaba stale); y el rootmap de `CLAUDE.md` **pierde la columna de argumentos**, que duplicaba a mano el `argument-hint`.
+- **Aprendizaje:** la forma correcta ya estaba en el árbol —los arquitectos de Design remitían al frontmatter mientras el resto enumeraba, y el que no duplicaba era el único inmune—. Y **una lista parcial es peor que ninguna**: ninguna te obliga a ir a la fuente; una parcial te convence de que ya la miraste.
+
 ## 0.103.0 — 2026-09-09
 
 **Revisión PRD↔Spec: tres asimetrías cerradas, y el detector que las encontró** — [[DECISIONS D-064]], [[DECISIONS D-065]], [[DECISIONS D-066]]. Comparando la fase PRD (cerrada) con la fase Spec, norma a norma: qué decisión cita cada fichero, dónde corre cada skill, qué verificador determinista tiene una fase y la otra no.

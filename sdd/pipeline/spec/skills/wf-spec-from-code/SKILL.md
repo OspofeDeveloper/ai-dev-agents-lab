@@ -88,10 +88,11 @@ Layout estándar (mismas reglas que `wf-spec-fast-track`):
 
 1. **Spec**: `<raíz_spec>/features/<nombre>/spec/<nombre>_spec.md` (feature plana legacy existente: en su raíz). El header declara `> Feature ID: F-C-00X` y `> Origen de alcance: characterization` — el índice los deriva de ahí.
 
-   **Si ya existe, mira su estado antes de escribir ([[D-024]]/[[D-062]])** — pisar un borrador no es lo mismo que pisar un spec validado:
+   **Resuelve el path existente y mira su estado antes de escribir ([[D-024]]/[[D-062]])** — pisar un borrador no es lo mismo que pisar un spec validado. **Resuelve primero el layout**: mirar el estado sobre un path sin resolver deja sin detectar un spec sellado en plano legacy y lo pisa ([[D-067]]).
 
    ```bash
-   !grep -Eq '^[[:space:]]*[-*>]?[[:space:]]*\*{0,2}Estado:?\*{0,2}[[:space:]]*:?[[:space:]]*VALIDADO' "<path_existente>" && echo SELLADO || echo DRAFT
+   !python3 .sdd/scripts/sdd-resolve-path.py find spec "<raíz_spec>/features/<nombre>/spec/<nombre>_spec.md"
+   !grep -Eq '^[[:space:]]*[-*>]?[[:space:]]*\*{0,2}Estado:?\*{0,2}[[:space:]]*:?[[:space:]]*VALIDADO' "<path_que_devolvio>" && echo SELLADO || echo DRAFT
    ```
 
    - **`DRAFT`** (o no existe) → reescribe en su ubicación actual y sigue.
@@ -109,7 +110,7 @@ Layout estándar (mismas reglas que `wf-spec-fast-track`):
    ```
 
    Sin discovery (caso brownfield típico), el script construye el índice solo desde los specs presentes — la feature de characterization aparece con su `F-C-00X` y estado derivado de sus marcadores (un `[INFERIDO]` → BLOQUEADA). Si falta el script:
-   > "⚠ Falta `.sdd/scripts/sdd-features-index.py`. Re-ejecuta la instalación del ecosistema (`install.sh`). El índice `_features.md` no se ha regenerado."
+   > "⚠ Falta `.sdd/scripts/sdd-features-index.py`. Re-ejecuta la instalación del ecosistema (`install.sh`) para reponer los scripts de enforcement. El índice `_features.md` no se ha regenerado."
 
 ## Paso 7: Informar
 

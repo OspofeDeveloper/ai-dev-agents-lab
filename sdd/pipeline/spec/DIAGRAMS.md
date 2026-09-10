@@ -54,7 +54,6 @@ flowchart TB
 
     subgraph L2["Agentes worker"]
         A1["sdd-spec-explorer"]
-        A2["sdd-spec-planner"]
         A3["sdd-spec-writer"]
         A4["sdd-spec-auditor"]
     end

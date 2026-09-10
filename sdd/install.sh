@@ -149,7 +149,6 @@ fi
 if has_phase "spec"; then
   install_agent "$PIPELINE_DIR/prd/agents/prd-expert.md" 2>/dev/null || true
   install_agent "$PIPELINE_DIR/spec/agents/sdd-spec-explorer.md"
-  install_agent "$PIPELINE_DIR/spec/agents/sdd-spec-planner.md"
   install_agent "$PIPELINE_DIR/spec/agents/sdd-spec-writer.md"
   install_agent "$PIPELINE_DIR/spec/agents/sdd-spec-auditor.md"
 fi

@@ -37,6 +37,10 @@ skills: {skills_line}
 
 Cuerpo del agente.
 - esto es un bullet del cuerpo, no una skill
+
+## Verificación de contexto
+
+Incluye `## KB Load Status` para cada KB de tu frontmatter `skills:`.
 """
 
 
@@ -50,6 +54,10 @@ skills:
 ---
 
 # demo-agent
+
+## Verificación de contexto
+
+Incluye `## KB Load Status` para cada KB de tu frontmatter `skills:`.
 """
 
 
@@ -79,6 +87,59 @@ class KbCheckTest(unittest.TestCase):
         r = self._run()
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertIn("OK", r.stdout)
+
+    # --- D-069: enumera todas o ninguna; la lista PARCIAL es la que deriva ---
+
+    def _agent_with_section(self, skills_inline, section_body):
+        return (f"---\nname: demo-agent\nskills: {skills_inline}\n---\n\n"
+                f"# Demo\n\n## Verificación de contexto\n\n{section_body}\n")
+
+    def test_partial_enumeration_exit_2(self):
+        """Una lista parcial se lee como exhaustiva y no lo es.
+
+        El `KB Load Status` solo cubre lo enumerado: la KB que falta nunca sale
+        `missing`, ni ahi ni en ningun otro sitio. Es lo que dejo a dos agentes
+        de Spec sin verificar `kb-spec-characterization`.
+        """
+        for kb in ("kb-plan-expert", "kb-a11y-expert"):
+            self._install_kb(kb)
+        write(self.agents / "demo-agent.md", self._agent_with_section(
+            "[kb-plan-expert, kb-a11y-expert]",
+            "Confirma `kb-plan-expert` e incluye `## KB Load Status`."))
+        r = self._run()
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        self.assertIn("kb-a11y-expert", r.stderr)
+        self.assertIn("NO enumeradas", r.stderr)
+
+    def test_full_enumeration_exit_0(self):
+        """El delta: la misma lista, completa, pasa."""
+        for kb in ("kb-plan-expert", "kb-a11y-expert"):
+            self._install_kb(kb)
+        write(self.agents / "demo-agent.md", self._agent_with_section(
+            "[kb-plan-expert, kb-a11y-expert]",
+            "Confirma `kb-plan-expert` y `kb-a11y-expert`, e incluye `## KB Load Status`."))
+        self.assertEqual(self._run().returncode, 0)
+
+    def test_generic_reference_is_not_a_finding(self):
+        """Remitir al frontmatter es la forma PREFERIDA: no duplica, no deriva.
+
+        Es lo que ya hacian los dos arquitectos de Design, y por eso eran los
+        unicos que no podian quedarse cortos.
+        """
+        for kb in ("kb-plan-expert", "kb-a11y-expert"):
+            self._install_kb(kb)
+        write(self.agents / "demo-agent.md", self._agent_with_section(
+            "[kb-plan-expert, kb-a11y-expert]",
+            "Incluye `## KB Load Status` para cada KB de tu frontmatter `skills:`."))
+        r = self._run()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+    def test_missing_section_is_a_finding(self):
+        """Sin seccion de verificacion no hay auto-reporte que valga."""
+        self._install_kb("kb-plan-expert")
+        write(self.agents / "demo-agent.md",
+              "---\nname: demo-agent\nskills: [kb-plan-expert]\n---\n\n# Demo\n")
+        self.assertEqual(self._run().returncode, 2)
 
     def test_missing_kb_exit_2(self):
         self._install_kb("kb-plan-expert")  # kb-a11y-expert NO instalada

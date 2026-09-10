@@ -1,7 +1,7 @@
 ---
 name: wf-spec-sync-from-prd
 description: "Resincroniza specs de feature tras un PRD actualizado. Modo analyze: identifica features afectadas y genera requisitos de sincronizacion por feature; modo apply: integra esos cambios via delta sobre los specs afectados y actualiza su trazabilidad."
-when_to_use: "Activa en frases como 'sincroniza los specs con el PRD', 'aplica el cambio de PRD a las features', 'que specs tengo que actualizar tras cambiar el PRD', 'resincroniza specs desde el PRD'."
+when_to_use: "Activa en frases como 'sincroniza los specs con el PRD', 'aplica el cambio de PRD a las features', 'que specs tengo que actualizar tras cambiar el PRD', 'resincroniza specs desde el PRD'. **Aplica** el cambio sobre los specs. Si solo se quiere saber qué quedó stale sin tocar nada, es wf-prd-sync-impact."
 argument-hint: "analyze <prd.md> | apply <prd.md> --features F-001,F-002,..."
 effort: high
 allowed-tools: [Read, Write, Bash]
@@ -92,9 +92,20 @@ Para cada feature solicitada:
 
 1. localiza `<nombre>_sync_requirements.md`
 2. si no existe, genera uno de forma mínima
-3. aplica una actualización quirúrgica del spec siguiendo la misma disciplina que `wf-spec-delta`
-4. actualiza la metadata de trazabilidad del spec para reflejar la versión actual del PRD (`derived_from_prd_version`, `derived_from_change`, `status_sync: in_sync`)
+3. **la escritura del spec la aplica el delta, no tú ([[D-067]]).** Ejecuta el flujo de
+   `wf-spec-delta apply` sobre ese spec con el `_sync_requirements.md` como entrada de cambios.
+4. actualiza la metadata de trazabilidad para reflejar la versión del PRD:
+   `derived_from_prd_version` y `derived_from_change`. **`status_sync` no lo escribes tú**: el
+   apply reabre la validación del spec (`--unseal`, [[D-061]]) y el sello de deriva lo estampa el
+   script del punto 5. Un spec recién modificado no se declara `in_sync` a mano.
 5. re-sella el hash de deriva ejecutando desde la raíz del proyecto: `python3 .sdd/scripts/sdd-sync-check.py seal <path_del_spec>` — NUNCA edites `derived_from_prd_hash` a mano (separación autor/verificador). Si el script falta, informa (⚠ re-ejecutar `install.sh`) y deja constancia de que el spec queda sin sello de deriva
+
+> **Por qué se delega en vez de describir un segundo apply ([[D-067]]).** Este paso decía *"siguiendo
+> la misma disciplina que `wf-spec-delta`"* y le faltaban cuatro de sus cinco piezas: reapertura de
+> la validación, versión menor, `## Changelog` y regeneración del índice. El resultado era un spec
+> **`VALIDADO`, con contenido cambiado y declarándose sincronizado** — exactamente el estado que
+> [[D-061]] existe para impedir. Lo tuyo es el Paso 4A (decidir **qué** cambia por feature); el
+> **cómo se escribe** tiene ya un dueño.
 
 Si el cambio rebasa un delta razonable, detén esa feature y marca:
 > "Esta feature necesita rediscovery o rediseño de spec; no se aplicó sync automático."
@@ -103,6 +114,6 @@ Si el cambio rebasa un delta razonable, detén esa feature y marca:
 
 Después de cada spec actualizado:
 
-- recomienda `wf-spec-conflict`
-- recomienda `wf-spec-readiness`
+- recomienda **revisar conflictos entre specs**
+- recomienda **medir el readiness** de las features
 - si hay planes existentes para esa feature, marca que deben revisarse

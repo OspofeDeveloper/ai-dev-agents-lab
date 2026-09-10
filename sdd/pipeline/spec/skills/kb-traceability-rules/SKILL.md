@@ -81,13 +81,15 @@ No todo cambio exige regeneración total.
 
 ## Regla 8: Bloqueos recomendados
 
-Debe bloquearse el avance a Plan cuando:
+Lo que **esta** regla gobierna es el bloqueo por **estado de sincronización**:
 
-- el spec tiene HUs `[INCOMPLETO]`
 - el spec está `stale`
 - el spec está `needs_review` por un `SCOPE_CHANGE` o `BEHAVIOR_CHANGE` sin aplicar
+- las tasks se bloquean si el plan está `stale`
 
-Las tasks deberían bloquearse si el plan está `stale`.
+**El bloqueo por marcadores** (`[INCOMPLETO]`, `[CRÍTICO]` abierto, `[INFERIDO]`) es de
+`kb-gap-conventions`, "Reglas de bloqueo para orquestadores" — no lo redefinas aquí ([[D-067]]).
+Y en ambos casos quien lo dictamina es `sdd-seal.py spec --check`, no una lectura.
 
 ## Regla 9: Enmienda de CA y stale puntual (back-edge tasks→spec)
 
