@@ -4,7 +4,7 @@ description: "Genera el plan de QA de una feature: deriva casos de prueba TC-XXX
 when_to_use: "Activa con frases como 'genera el plan de QA', 'deriva los casos de prueba', 'qa plan de la feature', 'qué casos de prueba salen de estos CAs', 'prepara el testing de la feature'. No activa para escribir tests (owner implementador/tester del stack) ni para verificar cobertura tras implementar (usa wf-qa-verify)."
 argument-hint: "generate <feature_spec.md> [--allow-overwrite-qa-plan]"
 effort: medium
-allowed-tools: [Read, Write, Bash, Agent]
+allowed-tools: [Read, Write, Bash]
 context: fork
 agent: qa-engineer
 user-invocable: true

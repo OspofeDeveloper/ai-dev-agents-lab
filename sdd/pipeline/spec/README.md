@@ -10,6 +10,8 @@ La fase `spec` **no arranca desde cero**. Requiere un PRD o documento de requisi
 
 Si todavía no existe ese artefacto, hay que volver a la fase anterior y usar `wf-prd-create` o `wf-prd-review`. Esta fase no debe depender de la fase PRD completa, pero sí instala los handoffs mínimos cross-fase que necesita (`wf-prd-review`, `wf-prd-change`, `prd-expert` y sus kb).
 
+**Excepción brownfield.** Si el sistema **ya existe** y no hay PRD que lo describa, la fase tiene una segunda entrada: `wf-spec-from-code` (caso 2.b), donde la fuente de verdad es el código y el producto son specs de **caracterización**. No exige PRD, ni `analyze`, ni discovery de PRD.
+
 ---
 
 ## Casos de uso
@@ -98,6 +100,37 @@ Quieres documentar solo una capacidad concreta sin pasar por el spec monolítico
 ```
 
 **Cuándo usarlo**: cuando el documento de entrada ya describe una sola capacidad acotada y no necesitas documentar el sistema completo. El spec resultante puede tener `## Items Pendientes` si hay gaps críticos, y `## Asunciones Aplicadas` si se resolvieron gaps informativos con asunciones razonables.
+
+---
+
+### 2.b. Sistema existente sin PRD (Brownfield) — specs de caracterización
+
+No hay PRD y el software ya está en producción. La fuente de verdad es el código, y el spec no describe lo que el sistema *debería* hacer sino lo que **hace hoy**, con evidencia por criterio.
+
+```
+/wf-spec-from-code discover backend/ --scope src/billing
+  → explora entrypoints, tests, modelos persistentes y permisos
+  → genera <scope>_code_discovery.md: capacidades F-C-00X con actor, superficie,
+    punteros de evidencia y nota de confianza (alta / media / baja)
+  → SE DETIENE SIEMPRE: el mapa lo valida un humano antes de generar ningún spec
+
+[confirmas, corriges o descartas capacidades — las descartadas se marcan, no se borran]
+
+/wf-spec-from-code generate backend/ --feature F-C-001
+  → genera features/<nombre>/spec/<nombre>_spec.md con Origen: characterization
+  → cada CA lleva su campo Evidencia (archivo:línea, test::nombre)
+  → lo que no se observó directamente entra como CA [INFERIDO]
+  → lo que parece un defecto se documenta tal cual + [SOSPECHA_BUG]
+
+/wf-spec-gap-resolve features/<nombre>/spec/<nombre>_spec.md
+  → confirma los [INFERIDO] uno a uno; eso es lo que desbloquea el spec
+```
+
+**Cuándo usarlo**: para documentar un legacy antes de tocarlo, o para dar entrada al pipeline a un sistema que nunca tuvo PRD. La regla que gobierna estos specs vive en `kb-spec-characterization`: **un CA sin evidencia no existe**.
+
+**Cuándo NO**: si existe un PRD, la entrada es `wf-spec-features-first` (casos 1 y 1.b). Y si lo que quieres es **cambiar** el comportamiento, no documentarlo, eso es `wf-spec-delta` sobre el spec de caracterización ya generado.
+
+**Bloqueo**: los `[INFERIDO]` se tratan como `[INCOMPLETO]` y bloquean `wf-prepare-plan` hasta confirmarse.
 
 ---
 
@@ -223,7 +256,7 @@ sdd-spec-explorer
 La fase `spec` se apoya en tres tipos de piezas:
 
 - `wf-*`: puntos de entrada operativos. Parsean argumentos, validan precondiciones y delegan el trabajo.
-- agentes: workers especializados por tipo de razonamiento (`explorer`, `planner`, `writer`, `auditor`).
+- agentes: workers especializados por tipo de razonamiento (`explorer` diagnostica, `writer` escribe, `auditor` verifica).
 - `kb-*`: conocimiento de fondo cargado por los agentes como contexto reusable.
 
 La lógica exacta de routing y la política de skills viven en [CLAUDE.md](CLAUDE.md). Este README mantiene solo el mapa funcional de la fase.
@@ -237,6 +270,7 @@ La lógica exacta de routing y la política de skills viven en [CLAUDE.md](CLAUD
 | `wf-spec-features-first` | `/wf-spec-features-first [--features F-XXX,...] [--allow-open-critical-gaps] [--allow-derived-scope-from-analysis] [--all-features]` | `_discovery.md`, `_features.md` (Project Hub incremental con estados canónicos y trazabilidad de gobernanza), `features/<x>/spec/<x>_spec.md` |
 | `wf-spec-discover` | `/wf-spec-discover [--analysis <analysis.md>] [--allow-derived-scope-from-analysis]` | `_discovery.md` con mapa de features y metadata de gobernanza |
 | `wf-spec-fast-track` | `/wf-spec-fast-track` | `features/<x>/spec/<x>_spec.md` directamente, con marca de origen de alcance si aplica |
+| `wf-spec-from-code` | `/wf-spec-from-code discover \| generate` | `_code_discovery.md` (mapa de capacidades con evidencia) y specs de caracterización `F-C-00X` |
 | `wf-spec-conflict` | `/wf-spec-conflict` | `_conflict_report.md` |
 | `wf-spec-delta` | `/wf-spec-delta` | `_delta_analysis.md` (analyze), spec actualizado (apply) |
 | `wf-spec-gap-resolve` | `/wf-spec-gap-resolve` | spec actualizado desde `_analysis.md` |
@@ -251,7 +285,7 @@ La lógica exacta de routing y la política de skills viven en [CLAUDE.md](CLAUD
 | Agente | Modos soportados | Invocado desde |
 |--------|-----------------|----------------|
 | `sdd-spec-explorer` | diagnóstico de PRD/spec, análisis de gaps, discovery | `wf-spec-analyze`, `wf-spec-discover`, exploración directa |
-| `sdd-spec-writer` | fast-track, delta apply, sync desde PRD, escritura de artefactos | `wf-spec-fast-track`, `wf-spec-delta`, `wf-spec-gap-resolve`, `wf-spec-amend`, `wf-spec-sync-from-prd`, `wf-spec-features-first` |
+| `sdd-spec-writer` | fast-track, delta apply, sync desde PRD, caracterización desde código, escritura de artefactos | `wf-spec-fast-track`, `wf-spec-delta`, `wf-spec-gap-resolve`, `wf-spec-amend`, `wf-spec-sync-from-prd`, `wf-spec-from-code`, `wf-spec-features-first` |
 | `sdd-spec-auditor` | validate, conflict, readiness, sync impact | `wf-spec-validate`, `wf-spec-conflict`, `wf-spec-readiness`, `wf-prd-sync-impact` |
 
 ### Knowledge bases
@@ -263,6 +297,7 @@ La lógica exacta de routing y la política de skills viven en [CLAUDE.md](CLAUD
 | `kb-conflict-expert` | 5 reglas de detección de conflictos entre specs | `conflict` |
 | `kb-gap-conventions` | SSoT de convenciones de gaps | Todos los modos que generen o verifiquen gaps |
 | `kb-traceability-rules` | Trazabilidad entre PRD, specs, plan y tasks | `gap-resolve`, `sync-from-prd`, `readiness`, `sync-impact` |
+| `kb-spec-characterization` | Specs brownfield: evidencia obligatoria por CA, `[INFERIDO]`, `[SOSPECHA_BUG]` | `from-code`, `gap-resolve`, y todo diagnóstico o auditoría de un spec `Origen: characterization` |
 | `kb-prd-expert` ⚠ | Reglas del PRD (cargada por agentes Spec para leer el PRD de entrada) | `analyze`, `discover`, `fast-track`, exploración |
 | `kb-product-change-governance` ⚠ | Reglas para distinguir gap vs. change request y gestionar impacto de negocio | `analyze`, `gap-resolve`, `sync-from-prd`, `sync-impact`, planning |
 
@@ -281,6 +316,7 @@ proyecto/
 ├── prd.md                                    ← Input
 ├── prd_analysis.md                           ← /wf-spec-analyze (recomendado)
 ├── prd_discovery.md                          ← /wf-spec-discover
+├── <scope>_code_discovery.md                 ← /wf-spec-from-code discover (brownfield)
 ├── prd_features.md                           ← /wf-spec-features-first — PROJECT HUB (index + trazabilidad + estado)
 ├── prd_sync_report.md                        ← /wf-prd-sync-impact
 ├── prd_conflict_report.md                    ← /wf-spec-features-first (automático) o /wf-spec-conflict
@@ -319,58 +355,22 @@ El pipeline nunca es completamente automático. Estos son los momentos donde el 
 | Tras `features-first` | Revisar `_conflict_report.md` si hay conflictos `ALTA` | No — pero pueden propagarse problemas al plan |
 | Tras `wf-prd-sync-impact` | Revisar artefactos `stale` o `needs_review` y decidir qué features resincronizar | Sí — bloquea avanzar con specs desalineados |
 | Tras `delta analyze` | Responder gaps `[CRÍTICO]` con `_(pendiente)_` en `_delta_analysis.md` | Sí — `delta apply` no avanza |
+| Tras `from-code discover` | Confirmar, corregir o descartar las capacidades del `_code_discovery.md` | Sí — `generate --feature` no arranca sin ese mapa validado |
+| Tras `from-code generate` | Confirmar los CAs `[INFERIDO]` uno a uno (vía `wf-spec-gap-resolve`) y decidir qué hacer con los `[SOSPECHA_BUG]` | Sí — los `[INFERIDO]` bloquean `prepare-plan` igual que un `[INCOMPLETO]` |
 
 ---
 
 ## Estructura de directorios
 
-```
-sdd/pipeline/spec/
-├── CLAUDE.md                                  ← orquestador local de la fase Spec
-├── README.md                                  ← este archivo
-├── agents/
-│   ├── sdd-spec-auditor.md                    ← L2 worker: auditoría
-│   ├── sdd-spec-explorer.md                   ← L2 worker: diagnóstico
-│   └── sdd-spec-writer.md                     ← L2 worker: escritura/evolución
-├── shared/
-│   └── templates/
-│       ├── feature_readme_template.md
-│       └── feature_spec_template.md
-└── skills/
-    ├── kb-conflict-expert/
-    │   └── SKILL.md
-    ├── kb-decompose-expert/
-    │   └── SKILL.md
-    ├── kb-gap-conventions/
-    │   └── SKILL.md
-    ├── kb-spec-expert/
-    │   └── SKILL.md
-    ├── kb-traceability-rules/
-    │   └── SKILL.md
-    ├── wf-prd-sync-impact/
-    │   └── SKILL.md
-    ├── wf-spec-analyze/
-    │   ├── SKILL.md
-    │   └── output_template.md
-    ├── wf-spec-conflict/
-    │   └── SKILL.md
-    ├── wf-spec-delta/
-    │   └── SKILL.md
-    ├── wf-spec-discover/
-    │   └── SKILL.md
-    ├── wf-spec-fast-track/
-    │   └── SKILL.md
-    ├── wf-spec-features-first/
-    │   └── SKILL.md
-    ├── wf-spec-gap-resolve/
-    │   └── SKILL.md
-    ├── wf-spec-readiness/
-    │   └── SKILL.md
-    ├── wf-spec-sync-from-prd/
-    │   └── SKILL.md
-    └── wf-spec-validate/
-        └── SKILL.md
-```
+La fase se organiza en las tres piezas del mapa de componentes: `agents/` (los tres workers),
+`skills/` (las `wf-*` y las `kb-*` de la fase) y `shared/templates/`. Junto a este README están
+`CLAUDE.md` (orquestador local), [routing.md](routing.md) (precondiciones, desambiguación y
+fronteras) y [DIAGRAMS.md](DIAGRAMS.md).
+
+> El listado exacto de ficheros **no se copia aquí**: un árbol mantenido a mano duplica lo que
+> `ls` ya dice y deriva en silencio en cuanto se añade o se retira una pieza (precedente:
+> [[D-023]]). Lo que este README mantiene es el mapa funcional — qué existe y para qué —, no el
+> inventario.
 
 ---
 

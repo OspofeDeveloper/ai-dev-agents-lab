@@ -4,7 +4,7 @@ description: "Evoluciona un DESIGN.md existente de forma incremental. Modo 'anal
 when_to_use: "Activa en frases como 'actualiza el DESIGN.md con estos cambios visuales', 'cambia el style_family del sistema', 'anade tokens para esta feature', 'evoluciona el sistema visual'. No activa para regenerar DESIGN.md desde cero (eso es wf-design-system)."
 argument-hint: "analyze <DESIGN.md> --new-reqs <cambios.md> [--brief <DESIGN_BRIEF.md>] | apply <DESIGN.md> <delta_analysis.md>"
 effort: high
-allowed-tools: [Read, Write, Bash, Agent]
+allowed-tools: [Read, Write, Bash]
 context: fork
 agent: design-system-architect
 user-invocable: true
@@ -50,11 +50,11 @@ Si no hay argumento o el modo no es valido, informa:
 
 Lee todos los archivos relevantes (DESIGN.md, brief si existe, requisitos o delta analysis).
 
-## Paso 4: Delegar al agente design-system-architect
+## Paso 4: Analizar el delta y aplicarlo
 
 ### Modo `analyze`
 
-Invoca al agente con este prompt:
+Aplica **tú** este contrato (eres el `agent:` de esta skill, [[D-070]]):
 
 ```text
 Modo: design-delta-analyze
@@ -86,7 +86,7 @@ Escribe el output del agente en `<basename>_delta_analysis.md` junto al `DESIGN.
 
 ### Modo `apply`
 
-Invoca al agente con este prompt:
+Aplica **tú** este contrato (eres el `agent:` de esta skill, [[D-070]]):
 
 ```text
 Modo: design-delta-apply

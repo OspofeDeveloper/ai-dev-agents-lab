@@ -4,7 +4,7 @@ description: "Captura feedback no estructurado de stakeholders (cliente, PM, dev
 when_to_use: "Activa en frases como 'incorpora este feedback del cliente', 'tengo comentarios del PM sobre el design', 'el cliente dice que no le gusta el color de los botones', 'procesa este feedback de stitch'."
 argument-hint: "capture <feedback.md|input> [--source <cliente|pm|dev|qa|stitch|otro>] [--feature <feature_spec.md>] | triage <feedback_capture.md>"
 effort: medium
-allowed-tools: [Read, Write, Agent]
+allowed-tools: [Read, Write]
 context: fork
 agent: design-feature-architect
 user-invocable: true
@@ -90,9 +90,9 @@ Ejecutar `/wf-design-feedback triage <este_archivo>` para clasificar y proponer 
 - Localizar `DESIGN.md` y `DESIGN_BRIEF.md` del producto.
 - Leerlos completos para contextualizar el triage.
 
-### 3.3 Delegar al agente para razonamiento
+### 3.3 Triaje razonado del feedback
 
-Invocar al agente `design-feature-architect` con este prompt:
+Aplica **tu** este contrato — `design-feature-architect` es el `agent:` de esta skill e invocarlo forkearia un clon tuyo ([[D-070]]):
 
 ```text
 Modo: design-feedback-triage

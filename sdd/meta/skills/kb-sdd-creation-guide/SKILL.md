@@ -127,6 +127,15 @@ El linter aplica esto como blocking: `FORK-ASKUSER-CONFLICT`.
 
 `context: fork` es para **workers**: skills que hacen su trabajo y le reportan a quien las llamó. Esas declaran `agent:` y no delegan. Una skill sin `agent:` que delega es un orquestador, y su sitio es main.
 
+> **Y "no delegan" incluye no delegar en sí mismas ([[D-070]]).** `agent:` es el destino de
+> inyección del fork: el cuerpo del `SKILL.md` **ya corre como ese agente**, con su contexto y sus
+> KBs. Un paso que dice *"Invoca el agente `X`"* —o *"Invoca al agente"* a secas, o *"delegas esto
+> al agente `X`"* en la frase de rol— forkea un **clon suyo**, con el coste de [[D-044]]. El prompt
+> de delegación se convierte en **el contrato que la skill aplica**. Esta norma llevaba escrita
+> desde [[D-044]] y no la medía nadie: al mecanizarla salieron **35 sitios en 15 workflows** de
+> cinco áreas, incluidos los cuatro que empiezan diciendo "Tu rol es de orquestador puro" siendo
+> el agente. Lo caza `FORK-SELF-DELEGATION`.
+
 **Delegación: un solo mecanismo, y el resultado se recibe, no se deduce ([[D-043]], corregida por [[D-045]]).** Una `wf-*` que delega **nombra la tool exacta en cada punto de delegación**, no "invoca `/wf-x`": un hueco lo rellena el agente en ejecución y elige mal — y `allowed-tools` no lo impide, porque **no es enforcement duro** ([[D-038]]). Si dentro de una misma skill hay varios puntos de delegación, todos usan **el mismo** mecanismo; prescribir la tool en uno y dejar "invoca" en los de al lado es la forma exacta del hueco.
 
 - **Si delega por la tool `Agent`, pide `run_in_background: false`** — es la vía que devuelve el informe dentro de la propia llamada. **Donde hay barrera, es obligatorio y se dice por qué** ([[D-047]]): un fan-out de N delegados seguido de un paso que lee lo que escribieron **todos** (regenerar un índice, auditar el conjunto) solo se sostiene con **las N llamadas en un único mensaje + el flag**, que juntos dan una sola barrera para toda la tanda. Mensajes separados **serializan** el fan-out en cuanto el flag surte efecto.
@@ -135,7 +144,7 @@ El linter aplica esto como blocking: `FORK-ASKUSER-CONFLICT`.
 - **Da la salida sancionada, no solo la prohibición.** Prohibir sin decir qué hacer cuando el agente se ve sin resultado es invitarle a improvisar: entre "prohibido" y "tarea imposible", elige violar la prohibición. La salida es **parar y decirlo**, nunca reconstruir. Y **nunca presentar como dicho por el delegado un dato obtenido por cuenta propia** — sube con la misma apariencia de verdad y el error deja de notarse.
 - **El delegado ejecuta la sub-skill; no la re-despacha ([[D-044]]).** Si el prompt dice *"Ejecuta el skill `/wf-X`"*, el delegado usará el `Skill` tool — y como toda `wf-*` worker lleva `context: fork`, eso **forkea un subagente más**. Cuando la sub-skill declara `agent:` y ese agente es el `subagent_type` que acabas de lanzar, el fork es un **clon del delegado**: un envoltorio que solo recibe el reporte del de abajo y lo re-emite. Medido: ~210 KB de contexto duplicado **por delegación**, y el salto extra vuelve a ser asíncrono. El prompt correcto le dice que **lea el `SKILL.md` y ejecute sus pasos él mismo**, le prohíbe el `Skill` tool, le resuelve `${CLAUDE_SKILL_DIR}` a `.claude/skills/<skill>/` y le pide qué informar al terminar.
 
-El linter aplica esto como blocking: `FORK-ORCHESTRATOR`, `AGENT-DISPATCH-UNSYNCED` y `AGENT-PROMPT-REDISPATCH`.
+El linter aplica esto como blocking: `FORK-ORCHESTRATOR`, `FORK-SELF-DELEGATION`, `AGENT-DISPATCH-UNSYNCED` y `AGENT-PROMPT-REDISPATCH`.
 
 **El primer plano se habilita en el proyecto, y solo se fija lo contrario ([[D-050]]).** El `settings.json` del ecosistema declara `CLAUDE_CODE_FORK_SUBAGENT=0`. Con fork mode activo —el default interactivo— el harness lanza los subagentes en segundo plano y **no evalúa ninguna petición de primer plano**: ni `run_in_background: false` en la llamada ni `background:` en el frontmatter del agente. Apagándolo, esas dos palancas vuelven a aplicar.
 

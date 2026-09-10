@@ -4,7 +4,7 @@ description: "Orquestador SDD para crear un nuevo agente dentro del ecosistema. 
 when_to_use: "Activa con frases como 'crea un agente para X', 'necesito un agente que haga Y', 'añade un agente Z a la fase', 'quiero un agente especializado en'. No activa para crear skills (usa wf-skill-create), ni para generar skills o agentes del pipeline SDD (usa las wf-* de fase correspondiente)."
 argument-hint: "<nombre> --phase <prd|spec|design|plan|tasks|tech/<stack>|global> --skills <kb1,kb2,...> [--description <desc>] [--model <modelo>] [--effort high] [--read-only]"
 effort: medium
-allowed-tools: [Read, Write, Bash, Agent]
+allowed-tools: [Read, Write, Bash]
 context: fork
 agent: sdd-author
 user-invocable: true
@@ -12,7 +12,7 @@ user-invocable: true
 
 # wf-agent-create — Orquestador de Creacion de Agentes
 
-Tu rol es de **orquestador puro**: parseas los argumentos, verificas precondiciones, buscas duplicados, validas las KBs y delegas la creacion al agente `sdd-author`. No generas el contenido del agente directamente.
+Tu rol: parseas los argumentos, verificas precondiciones, buscas duplicados, validas las KBs y **redactas tu mismo** el agente. Corres como `sdd-author` —es el `agent:` de esta skill—, asi que la creacion es trabajo tuyo, no de un delegado ([[D-070]]).
 
 ---
 
@@ -130,10 +130,11 @@ Skills cargadas: <lista de KBs o "ninguna especificada">
 Descripcion del dominio cognitivo: <--description o "no proporcionada">
 ```
 
-Invoca el agente `sdd-author`. Su trabajo es **editar** el archivo ya
-scaffoldeado: reemplazar el cuerpo-esqueleto `TODO` por el system prompt real
-del agente y afinar la `description` del frontmatter si procede. NO debe alterar
-los campos estructurales del frontmatter (`name`, `skills`, `model`, `color`,
+Aplica ese contrato **tu**: `sdd-author` es el `agent:` de esta skill, asi que
+invocarlo forkearia un clon tuyo ([[D-070]]). Tu trabajo ahora es **editar** el
+archivo ya scaffoldeado: reemplazar el cuerpo-esqueleto `TODO` por el system
+prompt real del agente y afinar la `description` del frontmatter si procede. NO
+alteres los campos estructurales del frontmatter (`name`, `skills`, `model`, `color`,
 `permissionMode`, `effort`/`disallowedTools`) salvo necesidad justificada — los
 puso el scaffold segun los criterios derivados y el gate del Paso 8 verifica `name`.
 

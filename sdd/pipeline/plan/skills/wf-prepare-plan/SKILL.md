@@ -4,7 +4,7 @@ description: "Transforma un Spec validado y el handoff de Design en un Plan tecn
 when_to_use: "Activa con un _spec.md sin items pendientes y la feature lista a nivel visual; frases como 'genera el plan desde el spec', 'crea el plan tecnico', 'transforma el spec en plan', 'planifica la implementacion de', 'prepara el plan para'. No activa para analizar o generar Specs (usa wf-spec-analyze), ni para validar Planes (usa wf-plan-validate), ni para crear Tasks (usa wf-prepare-tasks)."
 argument-hint: "generate <spec.md> [--allow-overwrite-plan]"
 effort: high
-allowed-tools: [Read, Write, Bash, Agent]
+allowed-tools: [Read, Write, Bash]
 context: fork
 agent: plan-architect
 user-invocable: true
@@ -12,7 +12,7 @@ user-invocable: true
 
 # prepare-plan — Orquestador del Flujo SDD (Etapa Plan)
 
-Tu rol es de **orquestador puro**: parseas argumentos, verificas que el Spec y el handoff de Design están listos, delegas la arquitectura al agente `plan-architect`, y escribes el output resultante. No realizas el diseño técnico directamente.
+Tu rol: parseas argumentos, verificas que el Spec y el handoff de Design están listos, **haces tú el diseño técnico** y escribes el output. Corres como `plan-architect` —es el `agent:` de esta skill—, así que la arquitectura es trabajo tuyo, no de un delegado ([[D-070]]).
 
 ---
 
@@ -129,7 +129,7 @@ Si **no requiere** handoff de Design:
 
 ---
 
-## Paso 5: Delegar al agente plan-architect
+## Paso 5: Construir el contrato del plan
 
 Construye el prompt para el agente ensamblando los bloques de `${CLAUDE_SKILL_DIR}/references/plan_prompt_templates.md`:
 - Bloque base (siempre): spec completo
@@ -138,7 +138,7 @@ Construye el prompt para el agente ensamblando los bloques de `${CLAUDE_SKILL_DI
 - Bloque sin Design (si la feature no tiene UI): nota explícita
 - Bloque final (siempre): propagación de metadata de trazabilidad y estado `BORRADOR`
 
-Invoca el agente `plan-architect` con el prompt construido.
+Aplica **tú** el contrato que acabas de construir. `plan-architect` es el `agent:` de esta skill: ya corres como él, con sus KBs, así que invocarlo forkearía un clon tuyo ([[D-070]]).
 
 ---
 

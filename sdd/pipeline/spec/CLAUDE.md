@@ -10,7 +10,7 @@ Guía de la etapa de **Spec** dentro del pipeline SDD: análisis del PRD, discov
 
 ## Lo que escribes en un artefacto lo lee una persona
 
-Los artefactos de esta fase —`_analysis.md`, `_discovery.md`, `_spec.md`, `_conflict_report.md`, `_readiness_report.md`, `_features.md`— **los lee el usuario**, no solo el pipeline. Ahí dentro rige la misma frontera que en el chat (SSoT: `sdd-orchestration.md`, "Comunicación con el usuario"):
+Los artefactos de esta fase —`_analysis.md`, `_discovery.md`, `_code_discovery.md`, `_spec.md`, `_conflict_report.md`, `_readiness_report.md`, `_features.md`— **los lee el usuario**, no solo el pipeline. Ahí dentro rige la misma frontera que en el chat (SSoT: `sdd-orchestration.md`, "Comunicación con el usuario"):
 
 - **Estado y procedencia se quedan como están**: marcadores (`[CRÍTICO]`, `[INCOMPLETO]`, `[INFERIDO]`), veredictos (`LISTO_PARA_SPECS`, `PENDIENTE_GENERACIÓN`), IDs (`P-XXX`, `F-00X`, `CF-001`) y cabeceras de procedencia (`Generado por: wf-spec-discover`) son **contrato**: los parsean los scripts y los gates.
 - **Las recomendaciones y los siguientes pasos van en lenguaje natural**: *"formalizar el cambio en el PRD antes de seguir"*, *"pedir que se aclare el CA-004"*. **No** se nombra el workflow que lo hace —ni `wf-spec-delta`, ni `/wf-spec-amend`, ni con barra ni sin ella—: el usuario no invoca comandos, te lo pide hablando, y surfacearlos le enseña a teclear argumentos a mano saltándose las validaciones.

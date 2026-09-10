@@ -4,7 +4,7 @@ description: "Permite el A/B testing visual de una feature. Genera dos o mas var
 when_to_use: "Activa en frases como 'quiero probar dos versiones del checkout', 'haz un A/B del onboarding', 'compara variantes de esta feature'."
 argument-hint: "create <feature_spec.md> --variants <A,B,...> [--hypothesis <texto>] | compare <feature_variants.md>"
 effort: medium
-allowed-tools: [Read, Write, Agent]
+allowed-tools: [Read, Write]
 context: fork
 agent: design-feature-architect
 user-invocable: true
@@ -58,7 +58,7 @@ Si el usuario no proporciona hipotesis clara, deten:
 Por cada variante (`A`, `B`, ...):
 
 1. Pedir al usuario una descripcion corta de en que difiere de las demas (1-2 frases).
-2. Delegar al agente con este prompt:
+2. Aplica **tú** este contrato (eres el `agent:` de esta skill, [[D-070]]):
    ```text
    Modo: design-variant-generate
    Path del spec: <path>

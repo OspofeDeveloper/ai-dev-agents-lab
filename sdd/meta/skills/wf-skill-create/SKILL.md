@@ -4,7 +4,7 @@ description: "Orquestador SDD para crear una nueva skill (kb-* o wf-*) en el eco
 when_to_use: "Activa con frases como 'crea una kb de X', 'necesito un nuevo workflow para Y', 'añade una knowledge base de', 'crea la skill wf-Z', 'quiero un workflow que haga'. No activa para crear agentes (usa wf-agent-create), ni para refactorizar skills existentes."
 argument-hint: "<kb|wf> <nombre> --phase <prd|spec|design|plan|tasks|tech/<stack>|global> [--description <desc>] [--agent <nombre>] [--effort <low|medium|high>]"
 effort: medium
-allowed-tools: [Read, Write, Bash, Agent]
+allowed-tools: [Read, Write, Bash]
 context: fork
 agent: sdd-author
 user-invocable: true
@@ -12,7 +12,7 @@ user-invocable: true
 
 # wf-skill-create — Orquestador de Creacion de Skills
 
-Tu rol es de **orquestador puro**: parseas los argumentos, verificas precondiciones, buscas duplicados y delegas la creacion al agente `sdd-author`. No generas el contenido de la skill directamente.
+Tu rol: parseas los argumentos, verificas precondiciones, buscas duplicados y **redactas tu mismo** la skill. Corres como `sdd-author` —es el `agent:` de esta skill—, asi que la creacion es trabajo tuyo, no de un delegado ([[D-070]]).
 
 ---
 
@@ -131,9 +131,10 @@ Descripcion del dominio: <--description o "no proporcionada">
 Agente destino (solo wf): <--agent o "ninguno">
 ```
 
-Invoca el agente `sdd-author`. Su trabajo es **editar** el archivo ya
-scaffoldeado: reemplazar el cuerpo-esqueleto `TODO` por el contenido real y
-afinar la `description` del frontmatter si procede. NO debe alterar los campos
+Aplica ese contrato **tu**: `sdd-author` es el `agent:` de esta skill, asi que
+invocarlo forkearia un clon tuyo ([[D-070]]). Tu trabajo ahora es **editar** el
+archivo ya scaffoldeado: reemplazar el cuerpo-esqueleto `TODO` por el contenido
+real y afinar la `description` del frontmatter si procede. NO alteres los campos
 estructurales del frontmatter (`name`, `user-invocable`, `effort`,
 `allowed-tools`, `context`, `agent`) salvo necesidad justificada — los puso el
 scaffold y el gate del Paso 9 los verifica.

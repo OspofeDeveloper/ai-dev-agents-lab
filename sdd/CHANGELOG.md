@@ -2,6 +2,17 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.105.0 — 2026-09-10
+
+**El onramp brownfield se engancha a su fase, y 15 workflows dejan de forkearse un clon de sí mismas** — [[DECISIONS D-070]], [[DECISIONS D-071]]. Salió de mapear qué hace cada agente de Spec, qué skills usa y qué casos cubre: el mapa dejó ver lo que no estaba enlazado.
+
+- 🔴 **`wf-spec-from-code` estaba enrutado pero no documentado en su fase.** Cero menciones en el `README.md` de Spec: ni caso de uso, ni fila en la tabla de workflows, ni `kb-spec-characterization` en la de KBs. Como el enrutado funciona, nada lo delataba — y lo que se degrada es todo lo que se deriva del mapa.
+- 🔴 **`sdd-spec-explorer` no cargaba `kb-spec-characterization`**, siendo el agente de **diagnóstico** de la fase (writer y auditor sí la llevan). Un spec de caracterización juzgado sin esas reglas produce hallazgos **falsos**: ahí los `[INFERIDO]` y el campo `Evidencia` son lo correcto, no defectos.
+- ⚠ El README de Spec seguía nombrando a **`sdd-spec-planner`**, retirado el día anterior, y su árbol de directorios estaba stale en cinco entradas: **se borra** el árbol (duplicaba un `ls`, mismo criterio que [[DECISIONS D-023]]).
+- 🔴 **Regla nueva `FORK-SELF-DELEGATION` (blocking): 35 sitios en 15 workflows.** Una `wf-*` con `context: fork` y `agent: X` **ya corre como X**; decir *"Invoca el agente `X`"* forkea un clon suyo, con el coste que [[DECISIONS D-044]] midió (~210 KB duplicados por delegación + un salto asíncrono). La norma estaba escrita desde [[DECISIONS D-044]] y no la medía nadie. Delta **35 → 0**, en `meta`, Design, Plan, Tasks y Spec — incluidos cuatro workflows que abrían declarando *"Tu rol es de orquestador puro"* siendo el agente.
+- ⚠ **17 frontmatter pierden el `Agent` sobre-declarado** en `allowed-tools`: declarar la tool es lo que invita al clon. El único fork que la conserva es `wf-task-run`, que delega de verdad y en otros agentes (los owners del stack).
+- **Aprendizaje:** cambiar `context:`/`agent:` cambia el modelo de ejecución y **la prosa no se entera**. *"Tu rol es de orquestador puro"* no es una frase de estilo: afirma dónde corre la skill, y contradecía a su propio frontmatter. Y, tercera vez en la campaña: **un detector caza la forma que se le enseñó** — `FORK-ORCHESTRATOR` vigilaba el nombre de la tool `Agent`, que estos 35 sitios no escriben nunca.
+
 ## 0.104.0 — 2026-09-10
 
 **Limpieza de la fase Spec: lo que no fallaba pero mentía** — [[DECISIONS D-067]], [[DECISIONS D-068]], [[DECISIONS D-069]]. Lectura completa de los 13 workflows, 6 KBs y 4 agentes de la fase, contra la fase PRD. Los hallazgos no salieron de ejecutar el pipeline sino de leerlo: **ninguno de los cinco defectos falla** — los cinco producen artefactos que parecen correctos.

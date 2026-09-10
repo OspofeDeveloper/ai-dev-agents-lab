@@ -6,6 +6,58 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-071 — Un carril que se declara en el enrutado pero no en el mapa de su fase queda medio enganchado
+
+- **Fecha:** 2026-09-10 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-070]] (salió de esta misma lectura), [[D-069]] (el planner retirado que el README seguía nombrando), [[D-023]] (borrar el inventario que duplica un `ls`), [[D-022]] (el enrutado vive en las `description`).
+
+**Contexto.** `wf-spec-from-code` —el onramp brownfield de la fase Spec— estaba declarado donde hace falta para que **funcione**: el rootmap de `CLAUDE.md`, la regla eager `sdd-routing.md` y su propia `description`. Y no estaba en ninguno de los sitios donde hace falta para que **se mantenga**. El `README.md` de la fase, que es el mapa funcional que lee cualquiera que vaya a tocarla, tenía **cero menciones**: ni caso de uso, ni fila en la tabla de workflows, ni `kb-spec-characterization` en la tabla de KBs, ni `wf-spec-from-code` en la lista de "invocado desde" de `sdd-spec-writer`.
+
+Como el enrutado sí funciona, nada lo delata: la skill se invoca, hace su trabajo y nadie descubre que media fase no sabe que existe. Lo que sí se degrada es todo lo que se deriva del mapa. Tres consecuencias medidas en la misma lectura:
+
+- **`sdd-spec-explorer` no cargaba `kb-spec-characterization`.** Es el agente de **diagnóstico** de la fase, y los otros dos sí la llevan. Un spec `Origen: characterization` diagnosticado sin esas reglas se juzga con la vara de un spec greenfield — y ahí los `[INFERIDO]` y el campo `Evidencia` **son lo correcto**, no defectos. El hallazgo falso lo produce el que no tiene la KB.
+- **El README seguía nombrando a `sdd-spec-planner`** (`explorer`, `planner`, `writer`, `auditor`) el día después de retirarlo en [[D-069]]. La retirada tocó `install.sh`, `CLAUDE.md`, `DIAGRAMS.md` y dos READMEs; el bullet del mapa de componentes no era una referencia al fichero y se salvó del barrido.
+- **Su árbol de directorios estaba stale en cinco entradas** (le faltaban `routing.md`, `DIAGRAMS.md`, `kb-spec-characterization/`, `wf-spec-amend/` y `wf-spec-from-code/`).
+
+**Decisión.** El carril se engancha en los cuatro sitios que lo mantienen: caso de uso propio (2.b, con el ciclo completo `discover` → gate humano → `generate` → confirmación de `[INFERIDO]`), fila en la tabla de workflows, fila de `kb-spec-characterization` en la de KBs, la excepción brownfield en la precondición de la fase, y dos filas en checkpoints humanos. `sdd-spec-explorer` **gana `kb-spec-characterization`** y la enumera en su verificación de contexto. Y el **árbol de directorios se borra**: duplicaba a mano lo que `ls` ya dice, con el mismo criterio de [[D-023]] — el README mantiene el mapa funcional, no el inventario.
+
+**Alternativas descartadas.**
+- *Dejar el brownfield fuera del README porque el rootmap ya lo enruta* → confunde las dos audiencias. El rootmap lo lee el orquestador para **invocar**; el README lo lee quien va a **tocar** la fase, y lo que no está ahí no entra en el barrido de la siguiente revisión. Los tres hallazgos derivados salieron precisamente de esa ausencia.
+- *Añadir `kb-spec-characterization` solo al auditor* → ya la tenía. El que diagnostica es el explorer, y era el único de los tres sin ella.
+- *Actualizar el árbol de directorios en vez de borrarlo* → volvería a quedarse viejo en la siguiente pieza que se añada. Lo mismo que ya se decidió en [[D-023]] para el rootmap de las reglas de fase.
+
+**Consecuencias / aprendizaje.** **Enrutar una pieza y documentarla son cosas distintas, y solo la primera se nota si falta.** Una skill mal enrutada no se invoca nunca: el fallo es inmediato y ruidoso. Una skill enrutada pero ausente del mapa de su fase funciona perfectamente y se degrada en silencio — no hereda las revisiones, no aparece en los barridos, y sus agentes se quedan sin las KBs que su dominio exige. El criterio operativo al añadir un carril: **el enrutado lo hace funcionar hoy; el mapa de la fase lo hace sobrevivir a la próxima revisión.**
+
+**Referencias.** `sdd/pipeline/spec/README.md`, `sdd/pipeline/spec/agents/sdd-spec-explorer.md`, `sdd/pipeline/spec/skills/wf-spec-from-code/SKILL.md`, `sdd/CHANGELOG.md`.
+
+---
+
+## D-070 — Una `wf-*` con `context: fork` que delega en su propio `agent:` se forkea un clon de sí misma
+
+- **Fecha:** 2026-09-10 · **Estado:** Adoptada (regla blocking del linter; conducta pendiente de medir en transcripts). · **Relacionada:** [[D-044]] (midió el coste del clon, en la capa de arriba), [[D-068]] (misma clase: el detector vigila la cita, no la conducta), [[D-045]] (dónde corre cada skill), [[D-071]] (salió de la misma lectura), [[D-038]] (`allowed-tools` no es enforcement).
+
+**Contexto.** Al enganchar `wf-spec-from-code` ([[D-071]]) apareció que su Paso 5 decía *"Invoca el agente `sdd-spec-writer`"* — siendo `sdd-spec-writer` el `agent:` de su propio frontmatter. `agent:` es el **destino de inyección del fork**: el cuerpo de esa skill ya corre como ese agente, con su contexto y sus KBs. Pedirle que lo invoque forkea un **clon suyo**, el mismo envoltorio inútil que [[D-044]] midió una capa más arriba (~210 KB de contexto duplicado por delegación, y un salto que vuelve a ser asíncrono).
+
+La norma **ya estaba escrita** desde [[D-044]], en `kb-sdd-creation-guide`: *"`context: fork` es para workers: esas declaran `agent:` y no delegan"*. No la medía nadie. Al mecanizarla salieron **35 sitios en 15 workflows** de cinco áreas —`meta`, Design, Plan, Tasks y el de Spec—, incluidos **cuatro que abren declarando *"Tu rol es de orquestador puro… delegas al agente `X`"*** siendo `X` el agente que son. Ninguno de los 15 declara `AskUserQuestion`: no son orquestadores mal colocados, son **workers con la prosa del modelo anterior**.
+
+**Por qué no lo cazaba `FORK-ORCHESTRATOR`.** Ese check busca el nombre de la **tool** (`Agent(`, "tool `Agent`"). Estos 35 delegan en **prosa** y no la nombran nunca. Tercera vez que la misma forma de ceguera aparece en esta campaña, después de `FORK-ASKUSER-CONFLICT` ([[D-064]]) y del propio `FORK-CONFIRM-GATE` ([[D-068]]).
+
+**Decisión.** Regla **`FORK-SELF-DELEGATION` [blocking]**: en una `wf-*` con `context: fork` y `agent: X`, el cuerpo no puede ordenar delegar en `X`. Caza sus dos formas —la **nombrada** (*"Invoca el agente `X`"*, *"delegas la arquitectura al agente `X`"*) y la **anónima** (*"Invoca al agente con este prompt"*, que en un fork con `agent:` no puede referirse a otro)—, y excluye la negación en la misma línea para que la nota que prohíbe el patrón no case con el patrón. Delta medido: **35 → 0**.
+
+Los 35 sitios se arreglan **convirtiendo el prompt de delegación en el contrato que la skill aplica**: el contenido del prompt ya era el contrato, solo estaba envuelto en un imperativo hacia un tercero que no existe. En la misma pasada, **17 frontmatter pierden el `Agent` sobre-declarado** en `allowed-tools` (declararlo es lo que invita al clon); el único fork que conserva la tool es `wf-task-run`, que delega de verdad y en **otros** agentes: los owners del overlay de stack.
+
+**Alternativas descartadas.**
+- *Pasarlas al hilo principal, como [[D-065]] hizo con `wf-spec-validate`* → ese movimiento es para skills que **sostienen gates humanos**, y ninguna de las 15 declara `AskUserQuestion`. Son workers: lo que sobra es la delegación, no el fork.
+- *Dejar la regla en warning y arreglar solo la fase Spec* → una regla que no llega a cero deja de gobernar (es lo que acababa de pasar con la norma en prosa: escrita desde [[D-044]], incumplida en 35 sitios). Y el defecto es **idéntico** en las cinco áreas: arreglar una y documentar las otras cuatro reproduce exactamente el problema que la regla existe para cerrar.
+- *Ampliar `AGENT_DISPATCH_RE` para que `FORK-ORCHESTRATOR` viera también la prosa* → mezcla dos defectos distintos con arreglos opuestos: delegar en **otro** agente desde un fork se arregla moviendo la skill a main; delegar en **sí misma** se arregla quitando la delegación. Un solo tipo de finding con dos remedios contrarios no orienta a quien lo lee.
+
+**Consecuencias / aprendizaje.** Dos. (a) **Cambiar el frontmatter cambia el modelo de ejecución, y la prosa no se entera.** Estos cuerpos se escribieron cuando la skill era un orquestador; el día que ganaron `context: fork` + `agent:` pasaron a **ser** el agente, y las frases de rol se quedaron describiendo el mundo anterior. *"Tu rol es de orquestador puro"* no es una frase de estilo: es una **afirmación sobre dónde corre la skill**, y contradecía a su propio frontmatter. Al tocar `context:`/`agent:` hay que releer el cuerpo entero, no solo el paso que se cambia. (b) La otra mitad de la lección de [[D-068]], confirmada: **un detector caza la forma que se le enseñó**, y aquí la forma enseñada era el nombre de una tool que estos 35 sitios nunca escriben.
+
+**Deuda declarada.** Los 15 workflows conservan prosa **descriptiva** del modelo viejo (*"escribe el output del agente"*, *"si el agente devuelve `DESIGN_GAP`"*). No es ejecutable —ya no hay orden de delegar— pero lee raro. Se cierra en la revisión de cada fase, no aquí: Design tiene además al menos un fork que entrevista al usuario (`wf-design-moodboard`), que es un problema de [[D-002]] y merece su propio bloque.
+
+**Referencias.** `sdd/scripts/sdd-structural-lint.py` (`check_fork_self_delegation`), `sdd/tests/test_sdd_structural_lint.py` (7 tests), `sdd/meta/skills/kb-sdd-creation-guide/SKILL.md`, los 15 `SKILL.md` de `meta/`, Design, Plan, Tasks y Spec, `sdd/CHANGELOG.md`.
+
+---
+
 ## D-069 — Lo que duplica una fuente de verdad se retira o se respalda; y una lista parcial es peor que ninguna
 
 - **Fecha:** 2026-09-10 · **Estado:** Adoptada (pendiente de medir). · **Relacionada:** [[D-065]] (la clase de fallo: enumeraciones que gobiernan conducta), [[D-023]] (borrar el rootmap que deriva), [[D-021]]/[[D-022]] (el enrutado vive en las `description`), [[D-055]] (redundancia deliberada, la que NO se toca).

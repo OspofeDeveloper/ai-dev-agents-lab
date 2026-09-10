@@ -4,7 +4,7 @@ description: "Orquestador SDD para refactorizar una skill (kb-* o wf-*) o agente
 when_to_use: "Activa con frases como 'refactoriza esta skill', 'esta kb es demasiado ancha', 'separa esta skill en dos', 'esta wf mezcla responsabilidades', 'extrae una SSoT de', 'actualiza el frontmatter de', 'corrige la estructura de este agente'. No activa para crear piezas nuevas (usa wf-skill-create, wf-agent-create) ni para auditar el ecosistema en general (usa wf-sdd-audit)."
 argument-hint: "<path-skill-o-agente> [--reason <motivo>]"
 effort: medium
-allowed-tools: [Read, Write, Bash, Agent]
+allowed-tools: [Read, Write, Bash]
 context: fork
 agent: sdd-author
 user-invocable: true
@@ -12,7 +12,7 @@ user-invocable: true
 
 # wf-sdd-refactor — Orquestador de Refactorizacion de Skills y Agentes
 
-Tu rol es de **orquestador puro**: lees el artefacto existente, recopilas el contexto necesario y delegas el diagnostico y la refactorizacion al agente `sdd-author`. No ejecutas la refactorizacion directamente.
+Tu rol: lees el artefacto existente, recopilas el contexto necesario y **diagnosticas y refactorizas tu mismo**. Corres como `sdd-author` —es el `agent:` de esta skill—, asi que no hay a quien delegarle esto ([[D-070]]).
 
 ---
 
@@ -71,7 +71,7 @@ Lee el contenido de las piezas relacionadas encontradas.
 
 ---
 
-## Paso 4: Delegar al agente sdd-author
+## Paso 4: Diagnosticar y proponer la refactorizacion
 
 Construye el prompt para el agente con:
 
@@ -93,7 +93,7 @@ Path: <path>
 INSTRUCCION: Diagnostica el problema, propone el cambio (extension, particion o correccion de frontmatter/estructura) y aplica solo lo que sea seguro sin eliminar reglas que sean SSoT de otras piezas. Si la refactorizacion implica crear nuevas piezas, descríbelas pero no las crees: informa al usuario para que use wf-skill-create o wf-agent-create.
 ```
 
-Invoca el agente `sdd-author` con ese prompt.
+Aplica **tú** ese contrato. `sdd-author` es el `agent:` de esta skill: ya corres como él, con sus KBs, así que invocarlo forkearía un clon tuyo ([[D-070]]).
 
 ---
 

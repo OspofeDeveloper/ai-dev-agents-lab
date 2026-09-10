@@ -28,6 +28,7 @@ Checks (cada finding: severidad, tipo, archivo:linea, mensaje):
   AGENT-TOOL-CLASH       [blocking]  wf cuyo allowed-tools declara una tool que su `agent:` tiene en disallowedTools: manda el agente, la declaracion no habilita nada.
   AGENT-DISPATCH-UNSYNCED [blocking] wf que delega por la tool `Agent` sin `run_in_background: false`: los subagentes corren en background por defecto y la peticion de sincronia no se hace.
   FORK-ORCHESTRATOR      [blocking]  wf con context: fork cuyo cuerpo delega por la tool `Agent`: un fork no puede presentar gates ni conseguir el primer plano para sus delegados.
+  FORK-SELF-DELEGATION   [blocking]  wf con context: fork que ordena delegar en SU PROPIO `agent:`: ya corre como el, asi que eso forkea un clon suyo.
   AGENT-PROMPT-REDISPATCH [blocking] prompt de delegacion que pide "Ejecuta el skill /wf-X": el delegado re-despacha con `Skill`, forkea un clon de si mismo y reintroduce la asincronia.
   DESCRIPTION-TOO-LONG   [warning]   description del frontmatter > 220 chars.
   USER-INVOCABLE-MISSING [warning]   wf sin user-invocable; kb sin user-invocable: false.
@@ -150,6 +151,22 @@ SYNC_FLAG = "run_in_background: false"
 # otro subagente —un clon, si la sub-skill declara ese mismo `agent:`— y el salto
 # extra vuelve a ser asincrono. Se escribe en imperativo dirigido al delegado.
 REDISPATCH_RE = re.compile(r"[Ee]jecuta\s+el\s+skill\s+`?/wf-")
+# La orden de delegar EN EL PROPIO `agent:` del fork (D-070). El nombre del agente
+# se inyecta por skill, asi que la regex es especifica de cada fichero: lo que se
+# caza no es "delegar", es "delegar en TI MISMO".
+SELF_DELEGATION_TMPL = (
+    r"(?:invoca(?:r|ndo)?|delega(?:r|s|ndo)?)\b[^.\n]{0,90}?\bagente\s+`%s`")
+# La misma orden SIN nombrar al agente ("Invoca al agente con este prompt"). En un
+# fork que declara `agent:` no hay otro agente al que referirse: "el agente" es el
+# que la skill ya es. Se exige adyacencia para no cazar prosa que hable de agentes
+# ajenos ("pasalo al agente de la fase siguiente" lleva nombre o complemento).
+SELF_DELEGATION_ANON_RE = re.compile(
+    r"(?:invoca(?:r|ndo)?|delega(?:r|s|ndo)?)\s+(?:al?|el)\s+agente\b(?!\s*`)",
+    re.IGNORECASE)
+# Negaciones que convierten la orden en su descripcion prohibida ("no delegues en
+# el agente `X`", "invocarlo te forkearia"). Se miran en la MISMA linea, antes del
+# verbo: describir la prohibicion no es prescribirla ([[D-045]] §4).
+SELF_DELEGATION_NEG_RE = re.compile(r"\b(?:no|nunca|jam[aá]s|sin|evita)\b", re.IGNORECASE)
 
 
 class Finding:
@@ -984,6 +1001,63 @@ def check_fork_orchestrator(findings):
                 "para decidirlo en su propio bloque, no se arrastra aqui."))
 
 
+def check_fork_self_delegation(findings):
+    """FORK-SELF-DELEGATION — una `wf-*` con `context: fork` y `agent: X` cuyo
+       cuerpo ordena delegar en `X`, que es el agente que ella misma ya es (D-070).
+
+       `agent:` es el destino de inyeccion del fork: el cuerpo del SKILL.md YA
+       corre como ese agente, con su contexto y sus KBs. Pedirle que lo invoque
+       forkea un CLON suyo — un envoltorio que solo recibe el reporte del de abajo
+       y lo re-emite —, con el coste medido en [[D-044]]: ~210 KB de contexto
+       duplicado por delegacion, y un salto que vuelve a ser asincrono.
+
+       La norma ya existia y no la medía nadie: `kb-sdd-creation-guide` dice que
+       `context: fork` es para WORKERS, que "declaran `agent:` y no delegan". Esta
+       regla es su backstop.
+
+       Por que no lo cazaba FORK-ORCHESTRATOR: ese check busca el nombre de la
+       TOOL (`Agent(`, "tool `Agent`"). Estas nueve delegaban en PROSA — "Invoca
+       el agente `X`" — sin nombrar la tool nunca. Misma leccion que [[D-068]]: un
+       detector que vigila la cita no ve la conducta.
+
+       Precision: la negacion en la misma linea excluye el hallazgo, para que la
+       NOTA que prohibe el patron no case con el patron que prohibe.
+    """
+    for skill_md in sorted(SDD_ROOT.rglob("SKILL.md")):
+        if is_excluded(skill_md):
+            continue
+        if not skill_md.parent.name.startswith("wf-"):
+            continue
+        try:
+            text = skill_md.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        fm, body, body_start = split_frontmatter(text)
+        if CONTEXT_FORK_RE.search(fm) is None:
+            continue
+        am = re.search(r"^agent:\s*(?P<name>\S+)\s*$", fm, re.MULTILINE)
+        if am is None:
+            continue
+        agent = am.group("name").strip("`\"'")
+        pattern = re.compile(SELF_DELEGATION_TMPL % re.escape(agent), re.IGNORECASE)
+        for offset, line_text in enumerate(body.split("\n")):
+            m = pattern.search(line_text) or SELF_DELEGATION_ANON_RE.search(line_text)
+            if m is None:
+                continue
+            if SELF_DELEGATION_NEG_RE.search(line_text[:m.start()]):
+                continue
+            findings.append(Finding(
+                "blocking", "FORK-SELF-DELEGATION", relpath(skill_md),
+                body_start + offset,
+                f"Ordena delegar en `{agent}`, que es su propio `agent:`: el cuerpo "
+                f"de esta skill YA corre como ese agente, asi que invocarlo forkea "
+                f"un clon suyo — un envoltorio que recibe el reporte del de abajo y "
+                f"lo re-emite (~210 KB duplicados por delegacion, y el salto vuelve "
+                f"a ser asincrono, D-044). `context: fork` es para workers: declaran "
+                f"`agent:`, hacen su trabajo y reportan (kb-sdd-creation-guide). "
+                f"Convierte el prompt de delegacion en el contrato que aplicas tu."))
+
+
 def check_agent_prompt_redispatch(findings):
     """AGENT-PROMPT-REDISPATCH — prompt de delegacion que le pide al delegado
        "Ejecuta el skill /wf-X" en vez de ejecutarlo el mismo (D-044).
@@ -1090,6 +1164,7 @@ def run_all():
     check_user_facing_commands(findings)
     check_agent_dispatch(findings)
     check_fork_orchestrator(findings)
+    check_fork_self_delegation(findings)
     check_agent_prompt_redispatch(findings)
     check_reference_paths(findings)
     # Orden estable: severidad (blocking primero), tipo, path, linea.

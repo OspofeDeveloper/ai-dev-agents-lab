@@ -66,11 +66,27 @@ class WfScaffoldTest(ScaffoldBase):
         self.assertIn("user-invocable: true", fm)
         self.assertIn("allowed-tools: [Read, Write]", fm)
 
-    def test_wf_with_agent_adds_agent_and_tool(self):
+    def test_wf_worker_with_agent_does_not_get_the_agent_tool(self):
+        # Un fork con `agent:` SERA ese agente: no delega, y no lleva `Agent` en
+        # allowed-tools — declararlo es lo que invita al clon de si misma (D-070).
         self.scaffold("wf", "gen-plan", "--phase", "plan", "--agent", "plan-architect")
         fm = self.read("pipeline/plan/skills/wf-gen-plan/SKILL.md")
         self.assertIn("agent: plan-architect", fm)
-        self.assertIn("Agent", fm)  # allowed-tools incluye Agent
+        self.assertIn("context: fork", fm)
+        self.assertIn("allowed-tools: [Read, Write]", fm)
+        self.assertNotIn("Agent,", fm)
+        self.assertNotIn(", Agent]", fm)
+        self.assertNotIn("Delega la ejecucion", fm)
+
+    def test_wf_interactive_with_agent_keeps_the_agent_tool(self):
+        # El caso contrario: interactiva = hilo principal, sin fork. Ahi delegar
+        # por la tool `Agent` es exactamente lo correcto (D-045/D-065).
+        self.scaffold("wf", "cierra-algo", "--phase", "plan",
+                      "--agent", "plan-auditor", "--interactive")
+        fm = self.read("pipeline/plan/skills/wf-cierra-algo/SKILL.md")
+        self.assertIn("allowed-tools: [Read, Write, Agent, AskUserQuestion]", fm)
+        self.assertNotIn("context: fork", fm)
+        self.assertIn("Delega el trabajo pesado al agente `plan-auditor`", fm)
 
     def test_tech_stack_phase(self):
         self.scaffold("wf", "kmm-thing", "--phase", "tech/kmm")

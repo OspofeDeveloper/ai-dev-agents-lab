@@ -472,6 +472,75 @@ class StructuralLintTest(unittest.TestCase):
         _, types = types_in(self.root)
         self.assertNotIn("FORK-ORCHESTRATOR", types)
 
+    # === FORK-SELF-DELEGATION (D-070) =====================================
+
+    def test_fork_ordering_delegation_to_its_own_agent_is_blocking(self):
+        # El caso real: `agent: X` en el frontmatter y "Invoca el agente `X`" en
+        # el cuerpo. El fork YA corre como X, asi que eso forkea un clon suyo.
+        write(self.root / "spec" / "skills" / "wf-clon" / "SKILL.md",
+              skill_md("wf-clon", "Invoca el agente `sdd-spec-writer` con ese prompt.",
+                       extra_fm="context: fork\nagent: sdd-spec-writer\n"))
+        r, types = types_in(self.root)
+        self.assertIn("FORK-SELF-DELEGATION", types)
+        self.assertIn("blocking", r.stdout)
+
+    def test_fork_self_delegation_catches_the_role_statement(self):
+        # La misma confusion en forma descriptiva: "delegas X al agente `Y`".
+        write(self.root / "plan" / "skills" / "wf-rol" / "SKILL.md",
+              skill_md("wf-rol",
+                       "Tu rol es de orquestador puro: delegas la arquitectura al "
+                       "agente `plan-architect`, y escribes el output.",
+                       extra_fm="context: fork\nagent: plan-architect\n"))
+        _, types = types_in(self.root)
+        self.assertIn("FORK-SELF-DELEGATION", types)
+
+    def test_fork_self_delegation_catches_the_unnamed_form(self):
+        # "Invoca al agente con este prompt": en un fork con `agent:` no hay otro
+        # agente al que referirse, asi que la forma sin nombre es la misma orden.
+        write(self.root / "design" / "skills" / "wf-anon" / "SKILL.md",
+              skill_md("wf-anon", "Invoca al agente con este prompt:",
+                       extra_fm="context: fork\nagent: design-system-architect\n"))
+        _, types = types_in(self.root)
+        self.assertIn("FORK-SELF-DELEGATION", types)
+
+    def test_fork_delegating_to_a_different_agent_not_flagged_here(self):
+        # Delegar en OTRO agente es otro problema (FORK-ORCHESTRATOR), no este:
+        # esta regla es especifica del clon de si mismo.
+        write(self.root / "tasks" / "skills" / "wf-otro" / "SKILL.md",
+              skill_md("wf-otro", "Invoca el agente `kmm-implementer` con ese prompt.",
+                       extra_fm="context: fork\nagent: task-generator\n"))
+        _, types = types_in(self.root)
+        self.assertNotIn("FORK-SELF-DELEGATION", types)
+
+    def test_main_thread_delegating_to_its_agent_not_flagged(self):
+        # Sin `context: fork` no hay inyeccion: `agent:` no se usa y delegar por
+        # la tool `Agent` es exactamente lo correcto (wf-spec-validate, D-065).
+        write(self.root / "spec" / "skills" / "wf-main" / "SKILL.md",
+              skill_md("wf-main", "Invoca el agente `sdd-spec-auditor` con ese prompt.",
+                       extra_fm="agent: sdd-spec-auditor\n"))
+        _, types = types_in(self.root)
+        self.assertNotIn("FORK-SELF-DELEGATION", types)
+
+    def test_describing_the_self_delegation_prohibition_is_not_an_order(self):
+        # La NOTA que prohibe el patron no puede casar con el patron: la negacion
+        # en la misma linea excluye el hallazgo (D-045 seccion 4).
+        write(self.root / "spec" / "skills" / "wf-nota" / "SKILL.md",
+              skill_md("wf-nota",
+                       "Redactalo tu: no invoques el agente `sdd-spec-writer`, que "
+                       "es el tuyo, porque forkearia un clon.",
+                       extra_fm="context: fork\nagent: sdd-spec-writer\n"))
+        _, types = types_in(self.root)
+        self.assertNotIn("FORK-SELF-DELEGATION", types)
+
+    def test_kb_describing_the_clone_antipattern_not_flagged(self):
+        # Una kb-* que documenta el anti-patron lo describe, no lo prescribe.
+        write(self.root / "meta" / "skills" / "kb-guia-clon" / "SKILL.md",
+              skill_md("kb-guia-clon",
+                       "Si el cuerpo dice invoca el agente `sdd-author`, forkea un clon.",
+                       extra_fm="context: fork\nagent: sdd-author\n"))
+        _, types = types_in(self.root)
+        self.assertNotIn("FORK-SELF-DELEGATION", types)
+
     # === AGENT-PROMPT-REDISPATCH (D-044) ==================================
     def test_agent_prompt_redispatch_flagged(self):
         # "Ejecuta el skill /wf-X" hace que el delegado use el Skill tool, que

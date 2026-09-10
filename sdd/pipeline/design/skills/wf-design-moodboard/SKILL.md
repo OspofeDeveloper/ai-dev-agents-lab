@@ -4,7 +4,7 @@ description: "Captura inspiracion visual no estructurada antes del discovery: el
 when_to_use: "Activa con frases como 'quiero capturar inspiración visual', 'crea un moodboard', 'tengo referencias de estilo', 'quiero definir vibes antes del brief', 'captura referencias de diseño'. No activa para cerrar el brief formal (usa wf-design-intake) ni para generar el sistema visual (usa wf-design-system)."
 argument-hint: "<feature_spec.md> [--prd <prd.md>] [--output <path>] [--mode interactive|auto]"
 effort: high
-allowed-tools: [Read, Write, Bash, Agent, WebSearch]
+allowed-tools: [Read, Write, Bash, WebSearch]
 context: fork
 agent: design-system-architect
 user-invocable: true
@@ -12,7 +12,7 @@ user-invocable: true
 
 # design-moodboard — Captura de inspiracion visual
 
-Tu rol como orquestador es facilitar la captura de inspiracion del usuario y delegar al agente `design-system-architect` la articulacion del material crudo en candidatos visuales concretos (familia, adjetivos, atmosfera, paleta intuitiva traducida al taxonomy). No interpretas las respuestas del usuario tu mismo; tu trabajo es recogerlas con fidelidad y pasarselas al agente, que aplicara `kb-design-style-taxonomy` y `kb-design-style-decision-tree` para producir el mood board.
+Tu rol es recoger la inspiracion del usuario **con fidelidad** y articular ese material crudo en candidatos visuales concretos (familia, adjetivos, atmosfera, paleta intuitiva traducida al taxonomy) aplicando `kb-design-style-taxonomy` y `kb-design-style-decision-tree`. Corres como `design-system-architect` —es el `agent:` de esta skill—, asi que esa articulacion es trabajo tuyo ([[D-070]]). Lo que no haces es **sustituir** lo que dijo el usuario por tu propio criterio: sus palabras entran tal cual y la traduccion al taxonomy se justifica.
 
 ## Paso 1: Parsear argumentos
 
@@ -61,7 +61,7 @@ Permite respuestas vacias ("no se", "no me importa"). No fuerces decisiones. Rec
 
 No preguntes al usuario. Pasa el spec y PRD al agente con la senal de modo `auto` para que derive el mood directamente del material funcional.
 
-## Paso 6: Delegar al agente design-system-architect
+## Paso 6: Articular el mood board
 
 Construye el prompt para el agente con:
 
@@ -88,7 +88,7 @@ INSTRUCCION:
 - Genera el contenido del moodboard segun la plantilla. No escribas el archivo: devuelvelo para que el orquestador lo escriba.
 ```
 
-Invoca el agente `design-system-architect`.
+Aplica **tú** ese contrato. `design-system-architect` es el `agent:` de esta skill: ya corres como él, con sus KBs, así que invocarlo forkearía un clon tuyo ([[D-070]]).
 
 ## Paso 7: Escribir el mood board
 

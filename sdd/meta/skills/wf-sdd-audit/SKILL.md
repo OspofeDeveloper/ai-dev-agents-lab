@@ -4,7 +4,7 @@ description: "Audita el ecosistema SDD detectando referencias rotas, skills huer
 when_to_use: "Activa con frases como 'audita el ecosistema', 'revisa que las skills sean SSoT', 'comprueba si hay contradicciones', 'verifica single responsibility', 'busca inconsistencias en las skills', 'chequea el estado del ecosistema'. No activa para crear o modificar skills (usa wf-skill-create, wf-agent-create) ni para auditar artefactos del pipeline SDD como specs o planes (usa wf-spec-validate, wf-plan-validate)."
 argument-hint: "<structural|content|full> [--phase <prd|spec|design|plan|tasks|tech/<stack>|global>]"
 effort: high
-allowed-tools: [Read, Bash, Agent]
+allowed-tools: [Read, Bash]
 context: fork
 agent: sdd-auditor
 user-invocable: true
@@ -12,7 +12,7 @@ user-invocable: true
 
 # wf-sdd-audit — Orquestador de Auditoria del Ecosistema SDD
 
-Tu rol es de **orquestador puro**: parseas el modo y el alcance, recopilas los archivos a auditar, construyes el contexto para el agente y escribes el reporte final. No ejecutas la logica de auditoria directamente.
+Tu rol: parseas el modo y el alcance, recopilas los archivos a auditar, **auditas** y escribes el reporte final. Corres como `sdd-auditor` —es el `agent:` de esta skill—, asi que el juicio experto es tuyo ([[D-070]]); lo que no haces es re-derivar por prosa lo que el validador determinista ya afirma (Paso 3).
 
 ---
 
@@ -69,7 +69,7 @@ Para los modos `content` y `full`: leer el cuerpo completo de cada skill y agent
 
 ## Paso 3.5: Lint estructural determinista (modos `structural` y `full`)
 
-Antes de delegar al agente, ejecuta el validador estructural determinista. Caza los problemas **mecanizables** que la auditoria por prosa no detecta de forma fiable (citas a reglas inexistentes, paths absolutos, frontmatter↔body de `allowed-tools`, `description` larga, `user-invocable` ausente, refs a skills inexistentes en docs):
+Antes del juicio experto, ejecuta el validador estructural determinista. Caza los problemas **mecanizables** que la auditoria por prosa no detecta de forma fiable (citas a reglas inexistentes, paths absolutos, frontmatter↔body de `allowed-tools`, `description` larga, `user-invocable` ausente, refs a skills inexistentes en docs):
 
 ```bash
 python3 sdd/scripts/sdd-structural-lint.py --json
@@ -83,7 +83,7 @@ En modo `content` puro, omite este paso (el lint es estructural).
 
 ---
 
-## Paso 4: Delegar al agente sdd-auditor
+## Paso 4: Construir el contexto de auditoria
 
 Construye el prompt para el agente con:
 
@@ -122,7 +122,7 @@ Path: <path>
 ---
 ```
 
-Invoca el agente `sdd-auditor` con ese prompt.
+Aplica **tú** ese contrato. `sdd-auditor` es el `agent:` de esta skill: ya corres como él, con sus KBs, así que invocarlo forkearía un clon tuyo ([[D-070]]).
 
 ---
 

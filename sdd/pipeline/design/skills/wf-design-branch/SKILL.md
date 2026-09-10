@@ -4,7 +4,7 @@ description: Permite explorar variantes paralelas del sistema visual sin comprom
 when_to_use: "Activa en frases como 'explora una variante mas brand-forward del sistema', 'crea una rama del DESIGN con dark mode prominente', 'compara estas dos versiones del DESIGN.md', 'haz un branch para probar otra familia'."
 argument-hint: "create <branch-name> | list | compare <branch-a> <branch-b> | merge <branch> --into <target> | discard <branch>"
 effort: medium
-allowed-tools: [Read, Write, Bash, Agent]
+allowed-tools: [Read, Write, Bash]
 context: fork
 agent: design-system-architect
 user-invocable: true
@@ -75,7 +75,7 @@ Argumentos: `<branch-a> <branch-b>`. Cualquiera puede ser `main` para referirse 
 Pasos:
 1. Resolver paths reales: `main` → `DESIGN.md`, otros → `DESIGN.<branch>.md`.
 2. Leer ambos.
-3. Delegar al agente con prompt que incluya los contenidos de ambos branches más la instrucción de comparación estructurada de `${CLAUDE_SKILL_DIR}/references/compare_prompt_template.md`.
+3. Compara **tú** ambos branches (eres el `agent:` de esta skill, [[D-070]]) siguiendo la instrucción de comparación estructurada de `${CLAUDE_SKILL_DIR}/references/compare_prompt_template.md`.
 4. Escribir output en `<dir_producto>/DESIGN_compare_<a>_vs_<b>_<fecha>.md`.
 5. Informar al usuario del path y del resumen.
 

@@ -125,7 +125,9 @@ def gen_wf(name, description, when_to_use, argument_hint, effort, agent,
         tools = allowed_tools
     elif agent:
         # Interactiva + delega: necesita AskUserQuestion (hilo principal) y Agent.
-        tools = "[Read, Write, Agent, AskUserQuestion]" if interactive else "[Read, Write, Agent]"
+        # No interactiva: es un fork que SERA ese agente, asi que no delega y
+        # no lleva `Agent` — declararlo es lo que invita al clon (D-070).
+        tools = "[Read, Write, Agent, AskUserQuestion]" if interactive else "[Read, Write]"
     elif interactive:
         tools = "[Read, Write, AskUserQuestion]"
     else:
@@ -151,7 +153,9 @@ def gen_wf(name, description, when_to_use, argument_hint, effort, agent,
         deleg = (f"\nCorre en el hilo principal (pregunta al usuario con `AskUserQuestion`). "
                  f"Delega el trabajo pesado al agente `{agent}` via la tool `Agent`.\n")
     elif agent:
-        deleg = f"\nDelega la ejecucion al agente `{agent}`.\n"
+        deleg = (f"\nCorres como `{agent}` —es tu `agent:`—, con su contexto y sus KBs: "
+                 f"haz el trabajo TU y reporta a quien te llamo. No lo delegues en `{agent}`, "
+                 f"que forkearia un clon tuyo ([[D-070]]).\n")
     else:
         deleg = ""
     body = [
@@ -229,7 +233,9 @@ def build_parser():
     wf.add_argument("--allowed-tools", default="")
     wf.add_argument("--interactive", action="store_true",
                     help="La skill pregunta al usuario (AskUserQuestion): corre en el hilo "
-                         "principal, SIN context: fork. La delegacion a agente sigue por Agent.")
+                         "principal, SIN context: fork, y ahi SI delega por la tool Agent. "
+                         "Sin este flag la skill es un worker: fork + agent:, hace el trabajo "
+                         "ella misma y no lleva Agent (D-070).")
 
     ag = sub.add_parser("agent", parents=[common])
     ag.add_argument("--skills", default="")

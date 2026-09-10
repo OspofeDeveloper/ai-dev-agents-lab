@@ -4,7 +4,7 @@ description: "Transforma Planes tecnicos validados en Tasks de implementacion. U
 when_to_use: "Activa en frases como 'genera las tasks del plan', 'trocea el plan en tasks', 'crea el listado de implementacion', 'prepara las tasks para', '¿que tasks tengo que hacer?'. No activa para generar Specs (usa wf-spec-analyze), ni para generar Planes (usa wf-prepare-plan), ni para validar Planes (usa wf-plan-validate)."
 argument-hint: "generate <plan.md> [--allow-overwrite-tasks]"
 effort: high
-allowed-tools: [Read, Write, Bash, Agent]
+allowed-tools: [Read, Write, Bash]
 context: fork
 agent: task-generator
 user-invocable: true
@@ -12,7 +12,7 @@ user-invocable: true
 
 # prepare-tasks — Orquestador del Flujo SDD (Etapa Tasks)
 
-Tu rol es de **orquestador puro**: parseas argumentos, verificas que el Plan está listo, delegas la descomposición al agente `task-generator`, y escribes el output resultante. No realizas la descomposición directamente.
+Tu rol: parseas argumentos, verificas que el Plan está listo, **haces tú la descomposición** y escribes el output. Corres como `task-generator` —es el `agent:` de esta skill—, así que descomponer es trabajo tuyo, no de un delegado ([[D-070]]).
 
 ---
 
@@ -68,9 +68,9 @@ Lee el `_plan.md` en su totalidad.
 
 ---
 
-## Paso 4: Delegar al agente task-generator
+## Paso 4: Descomponer el plan en tasks
 
-Invoca al agente `task-generator` con el siguiente prompt:
+Aplica **tú** este contrato — `task-generator` es el `agent:` de esta skill e invocarlo forkearía un clon tuyo ([[D-070]]):
 
 ```text
 Path del plan: <path_completo>
@@ -82,7 +82,7 @@ INSTRUCCIÓN: El Plan ya viene validado. Si declara metadata de trazabilidad (`S
 INSTRUCCIÓN: Si el Plan declara `## Deuda técnica asumida`, propaga la deuda a las tasks afectadas: cada task cuyo componente aparezca en `Componentes afectados` de una `TD-00X` lleva en su bloque la línea `- **Deuda asumida:** TD-00X — <título corto de la deuda>`. El owner implementará respetando esa decisión documentada, sin "resolver" la limitación por su cuenta.
 ```
 
-Espera a que el agente complete su ejecución y recibe su output.
+No hay a quién esperar: eres `task-generator` ([[D-070]]). Cuando tengas la descomposición completa, pasa al Paso 5.
 
 ---
 

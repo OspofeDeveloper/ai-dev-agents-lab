@@ -4,7 +4,7 @@ description: Audita la accesibilidad de un DESIGN.md (y opcionalmente un *_views
 when_to_use: "Activa en frases como 'valida la accesibilidad', 'audit a11y del DESIGN.md', 'comprueba contraste WCAG'. Complementa a wf-design-validate (auditoría general); no activa para regenerar el DESIGN.md (usa wf-design-delta)."
 argument-hint: "<DESIGN.md> [--views <feature_views.md>] [--brief <DESIGN_BRIEF.md>] [--target AA|AAA] [--lenient]"
 effort: medium
-allowed-tools: [Read, Write, Bash, Agent]
+allowed-tools: [Read, Write, Bash]
 context: fork
 agent: design-system-architect
 user-invocable: true
@@ -160,9 +160,9 @@ Aplica `kb-a11y-web-expert`. Sobre el DESIGN.md y, si se pasó `--views`, sobre 
 - **Focus visible / order / not-obscured (Regla 6)**: indicador de foco visible con contraste 3:1; foco no obstruido por headers sticky; orden de foco lógico al abrir/cerrar modales. Indicador de foco eliminado sin reemplazo → `[CRITICO]`; foco obstruido por header sticky → `[ALTO]`.
 - **Estructura semántica (Regla 7)**: el DESIGN.md o las vistas declaran landmarks, skip-link, page title y `lang`. Ausencia de landmarks/skip-link en un producto web → `[MEDIO]`.
 
-## Paso 8: Delegar al agente (opcional, para razonamiento avanzado)
+## Paso 8: Razonamiento contextual sobre los hallazgos (opcional)
 
-Si los pasos 3-7b producen hallazgos que requieren razonamiento contextual (ej. evaluar si un focus order tiene sentido en una vista compleja, o si un reflow degrada operabilidad), delegar al agente `design-system-architect` cargando `kb-a11y-expert` y, cuando el target sea web/desktop, también `kb-a11y-web-expert`.
+Si los pasos 3-7b producen hallazgos que requieren razonamiento contextual (ej. evaluar si un focus order tiene sentido en una vista compleja, o si un reflow degrada operabilidad), resuélvelos **tú** con `kb-a11y-expert` y, cuando el target sea web/desktop, también con `kb-a11y-web-expert`. Corres como `design-system-architect` y esas KBs ya están en tu contexto: no hay a quién delegárselo ([[D-070]]).
 
 ## Paso 9: Producir reporte
 

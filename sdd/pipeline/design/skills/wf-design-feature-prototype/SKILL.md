@@ -4,7 +4,7 @@ description: "Deriva flows, views y un prompt de ensamblaje tool-agnostic (targe
 when_to_use: "Activa en frases como 'genera las vistas para Stitch', 'crea el prototipo de la feature', 'prepara flows y prompt de diseno', 'deriva las pantallas desde el spec'. No activa para modificar el spec, ni para generar plan o tasks."
 argument-hint: "generate <feature_spec.md> [--design-file DESIGN.md] [--brief DESIGN_BRIEF.md] [--no-brief] [--allow-overwrite-prototype]"
 effort: high
-allowed-tools: [Read, Write, Bash, Agent]
+allowed-tools: [Read, Write, Bash]
 context: fork
 agent: design-feature-architect
 user-invocable: true
@@ -12,7 +12,7 @@ user-invocable: true
 
 # design-feature-prototype — Orquestador del Flujo SDD (Etapa Design)
 
-Tu rol es de **orquestador puro**: parseas argumentos, verificas que el Spec y el `DESIGN.md` estan listos, delegas la derivacion de artefactos al agente `design-feature-architect`, y escribes los resultados.
+Tu rol: parseas argumentos, verificas que el Spec y el `DESIGN.md` estan listos, **derivas tu mismo** los artefactos de feature y los escribes. Corres como `design-feature-architect` —es el `agent:` de esta skill—, asi que la derivacion es trabajo tuyo ([[D-070]]).
 
 ## Paso 1: Parsear argumentos
 
@@ -128,9 +128,9 @@ Antes de delegar, busca otras features ya prototipadas en el directorio hermano:
 - Si las hay, lee los `_views.md` y `_flows.md` de hasta 3 features previas (las mas recientes) y pasalos al agente para que aplique `kb-design-conflict-expert`.
 - Si es la primera feature del producto, no hace falta este chequeo.
 
-## Paso 5: Delegar al agente design-feature-architect
+## Paso 5: Derivar los artefactos de feature
 
-Invoca al agente siguiendo la **Regla 3** de `kb-design-expert` (orden de derivación), las **Reglas 1, 2, 3 y 7** de `kb-design-feature-artifacts` (trazabilidad de cada vista, flows como secuencia, views como SSoT de pantalla, ui_prompt que ensambla sin redefinir) y la **Regla 6** de `kb-design-system-contract` (los artefactos materializan el brief sin reabrirlo), mas la jerarquia de fuentes definida en `kb-design-brief` Regla 10: `flows` describen secuencia y navegacion, `views` son la SSoT de la pantalla, `ui_prompt` debe ensamblar sin volver a definir, y el brief gobierna las decisiones cerradas.
+Deriva los artefactos siguiendo la **Regla 3** de `kb-design-expert` (orden de derivación), las **Reglas 1, 2, 3 y 7** de `kb-design-feature-artifacts` (trazabilidad de cada vista, flows como secuencia, views como SSoT de pantalla, ui_prompt que ensambla sin redefinir) y la **Regla 6** de `kb-design-system-contract` (los artefactos materializan el brief sin reabrirlo), mas la jerarquia de fuentes definida en `kb-design-brief` Regla 10: `flows` describen secuencia y navegacion, `views` son la SSoT de la pantalla, `ui_prompt` debe ensamblar sin volver a definir, y el brief gobierna las decisiones cerradas.
 
 Usa este prompt:
 

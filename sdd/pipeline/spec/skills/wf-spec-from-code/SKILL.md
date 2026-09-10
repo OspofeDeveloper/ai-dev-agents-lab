@@ -4,7 +4,7 @@ description: "Ingeniería inversa de specs desde código existente (brownfield):
 when_to_use: "Activa en frases como 'genera specs del código existente', 'documenta lo que hace este sistema', 'specs de este proyecto legacy', 'ingeniería inversa de specs', 'caracteriza este módulo'. No activa si existe un PRD como fuente (usa wf-spec-features-first), ni para cambiar comportamiento (usa wf-spec-delta sobre el spec de caracterización)."
 argument-hint: "discover <path_codigo> [--scope <subdir>] | generate <path_codigo> --feature <F-C-00X> [--discovery <file>] [--allow-overwrite-sealed-spec] | generate <path_codigo> --capability <nombre> --scope <subdir> [--allow-overwrite-sealed-spec]"
 effort: high
-allowed-tools: [Read, Write, Bash, Grep, Glob, Agent]
+allowed-tools: [Read, Write, Bash, Grep, Glob]
 context: fork
 agent: sdd-spec-writer
 user-invocable: true
@@ -12,7 +12,7 @@ user-invocable: true
 
 # spec-from-code — Specs de caracterización desde código
 
-Tu rol: explorar el código con rigor de evidencia y delegar la redacción. La regla central viene de `kb-spec-characterization` (en el contexto del agente escritor): **un CA sin evidencia no existe**. Tú recolectas la evidencia; el agente redacta sin inventar.
+Tu rol: explorar el código con rigor de evidencia y redactar **solo** lo que esa evidencia sostiene. La regla central viene de `kb-spec-characterization`, que ya tienes cargada —eres `sdd-spec-writer`—: **un CA sin evidencia no existe**. Recolectas la evidencia y redactas con ella; no inventas para rellenar.
 
 ---
 
@@ -44,10 +44,12 @@ Agrupa en capacidades funcionales (`F-C-001`, `F-C-002`...) con: nombre, actor (
 
 Escribe `<nombre_proyecto|scope>_code_discovery.md` en el directorio raíz de artefactos spec (regla de layout: `artifacts.spec` de `.sdd/project-init.json` si está declarado; si no, el directorio actual). Incluye header con `Evidencia base: commit <SHA corto>` (`git rev-parse --short HEAD`).
 
-**Detente SIEMPRE aquí.** Presenta el mapa (ID, nombre, actor, superficie, confianza) y pide al usuario que confirme/corrija/descarte capacidades:
-> "Este mapa es lo que el código evidencia — revísalo antes de generar specs. ¿Qué capacidades son reales y cuáles quieres caracterizar? Dime cuáles y genero su spec."
+**Detente SIEMPRE aquí**, con veredicto operativo `STOP_CODE_DISCOVERY_SIN_VALIDAR`. Devuelve el mapa (ID, nombre, actor, superficie, confianza) y el bloqueo:
+> "El mapa de capacidades está en `<path>`: es lo que el código evidencia, y **nadie lo ha validado todavía**. Generar specs sobre un mapa sin validar caracteriza como comportamiento lo que puede ser código muerto o una lectura equivocada. No he generado ninguno. Lo que falta es que una persona confirme, corrija o descarte capacidades — y eso lo presenta quien me invocó."
 
-Las correcciones del usuario se aplican al `_code_discovery.md` (marca las descartadas como `DESCARTADA — <motivo>`, no las borres).
+**No esperes respuesta**: corres en `context: fork` y no tienes turno donde recibirla ([[D-045]]); el gate lo presenta quien puede preguntar ([[D-026]]/[[D-064]]). Cuando vuelvan con las capacidades elegidas, llegarán como una invocación nueva.
+
+Las correcciones que traiga esa invocación se aplican al `_code_discovery.md` (marca las descartadas como `DESCARTADA — <motivo>`, no las borres).
 
 ## Paso 4 (generate): Recolectar el dossier de evidencia
 
@@ -61,26 +63,22 @@ Para la capacidad elegida, relee a fondo su superficie declarada en el discovery
 
 Construye un **dossier**: lista de comportamientos observados, cada uno con su puntero (`archivo:línea`, `test path::nombre`). Lo que deduzcas sin observación directa va en una sección separada `INFERIDOS` con la razón de la inferencia. No mezcles.
 
-## Paso 5 (generate): Delegar la redacción a sdd-spec-writer
+## Paso 5 (generate): Redactar el spec de caracterización
 
-Invoca el agente `sdd-spec-writer` con:
+Redáctalo **tú**. `sdd-spec-writer` es el `agent:` de tu frontmatter, así que ya corres con su
+contexto y sus KBs: pedirle a ese agente que lo escriba te forkearía en un **clon tuyo** —un
+envoltorio que solo re-emite el reporte del de abajo ([[D-044]])—. La norma de la fase lo dice
+sin ambigüedad: una `wf-*` con `context: fork` **hace su trabajo y reporta; no delega**
+(`kb-sdd-creation-guide`, "Regla de resolución de agentes").
 
-```
-Redacta un SPEC DE CARACTERIZACIÓN para la capacidad <nombre> (F-C-00X).
-Aplica kb-spec-characterization estrictamente: header obligatorio (Origen:
-characterization, PRD origen: N/A, Evidencia base: commit <SHA>), cada CA con
-campo Evidencia, comportamientos del bloque INFERIDOS como CAs [INFERIDO] con
-su Confirmación pendiente. No añadas NINGÚN comportamiento que no esté en el
-dossier. Comportamiento sospechoso de defecto → documenta lo actual + [SOSPECHA_BUG].
+Aplica `kb-spec-characterization` estrictamente:
 
-DOSSIER DE EVIDENCIA:
-<comportamientos observados con punteros>
-
-INFERIDOS:
-<deducciones con su razón>
-
-CONTEXTO: <actor, superficie, modelos del discovery>
-```
+- **Header obligatorio**: `Origen: characterization`, `PRD origen: N/A`, `Evidencia base: commit <SHA>`.
+- **Cada CA con su campo `Evidencia`**, tomado del dossier del Paso 4 (`archivo:línea`, `test path::nombre`).
+- **Los comportamientos del bloque `INFERIDOS`** entran como CAs `[INFERIDO]` con su `Confirmación pendiente`.
+- **No añadas NINGÚN comportamiento que no esté en el dossier**, ni para completar una simetría aparente.
+- **Comportamiento sospechoso de defecto** → documenta lo actual y márcalo `[SOSPECHA_BUG]`; no lo "arregles" en el spec.
+- El **contexto** (actor, superficie, modelos) sale del discovery, no de tu criterio.
 
 ## Paso 6 (generate): Escribir artefactos
 

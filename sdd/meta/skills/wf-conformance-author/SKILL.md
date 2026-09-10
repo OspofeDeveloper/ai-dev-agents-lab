@@ -4,7 +4,7 @@ description: "Audita la cobertura de conformance de una skill (o de una fase ent
 when_to_use: "Activa con frases como 'escribe los casos de conformance de wf-spec-delta', 'audita la cobertura de conformidad de esta skill', 'que escenarios CU le faltan a la fase plan', 'completa los huecos del ROADMAP de conformance', 'deriva los 4 ejes de esta skill'. No activa para auditar el ecosistema en busca de SSoT/referencias rotas (usa wf-sdd-audit) ni para ver la cobertura sin escribir (usa wf-conformance-status). Tampoco para QA de un spec de producto (usa wf-qa-plan/wf-qa-verify)."
 argument-hint: "<skill-name|phase> [--cu <cu-NN>]"
 effort: high
-allowed-tools: [Read, Write, Bash, Agent]
+allowed-tools: [Read, Write, Bash]
 context: fork
 agent: sdd-conformance
 user-invocable: true
@@ -12,7 +12,7 @@ user-invocable: true
 
 # wf-conformance-author — Autoría de escenarios de conformance
 
-Tu rol es de **orquestador puro**: parseas el objetivo, localizas el/los `SKILL.md` + los `cu-NN` que lo tocan + su fila del ROADMAP, construyes el contexto para el agente y dejas que escriba. No derivas los ejes ni redactas escenarios directamente: eso lo hace el agente `sdd-conformance` con `kb-sdd-conformance` cargada.
+Tu rol: parseas el objetivo, localizas el/los `SKILL.md` + los `cu-NN` que lo tocan + su fila del ROADMAP, y **escribes los escenarios que falten**. Corres como `sdd-conformance` —es el `agent:` de esta skill—, con `kb-sdd-conformance` cargada: derivar los ejes y redactar los escenarios es trabajo tuyo ([[D-070]]).
 
 ---
 
@@ -67,7 +67,7 @@ Lee también el `SKILL.md` objetivo completo (frontmatter + pasos + gates + flag
 
 ---
 
-## Paso 4: Delegar al agente sdd-conformance
+## Paso 4: Escribir los escenarios que faltan
 
 Construye el prompt:
 
@@ -99,7 +99,7 @@ correcto continuando la secuencia de letras, y actualiza la fila del ROADMAP (ej
 lo ejercitan, Estado, Huecos detectados). Recalcula el contador de progreso.
 ```
 
-Invoca el agente `sdd-conformance` con ese prompt. El agente escribe directamente en los `cu-NN` y en `ROADMAP.md`.
+Aplica **tú** ese contrato. `sdd-conformance` es el `agent:` de esta skill: ya corres como él, con sus KBs, así que invocarlo forkearía un clon tuyo ([[D-070]]). Escribe directamente en los `cu-NN` y en `ROADMAP.md`.
 
 ---
 

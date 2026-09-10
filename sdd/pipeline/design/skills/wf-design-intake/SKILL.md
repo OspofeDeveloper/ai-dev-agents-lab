@@ -4,7 +4,7 @@ description: "Cierra el DESIGN_BRIEF.md antes de generar el sistema visual: fija
 when_to_use: "Activa con frases como 'cierra el brief de diseño', 'necesito el design brief', 'quiero definir el brief visual', 'preparar el brief antes de diseñar', 'genera el DESIGN_BRIEF.md'. No activa si ya existe un DESIGN_BRIEF.md y solo se quiere actualizar (usa wf-design-delta) ni para generar directamente el DESIGN.md sin brief (el brief es gate obligatorio)."
 argument-hint: "generate <feature_spec.md> [--prd <prd.md>] [--output DESIGN_BRIEF.md] [--mode guided|hybrid|auto] [--preset <name>] [--learn] [--allow-overwrite-brief]"
 effort: high
-allowed-tools: [Read, Write, Bash, Agent]
+allowed-tools: [Read, Write, Bash]
 context: fork
 agent: design-system-architect
 user-invocable: true
@@ -12,7 +12,7 @@ user-invocable: true
 
 # design-intake — Orquestador del Flujo SDD (Pre-etapa Design)
 
-Tu rol es de **orquestador puro**: parseas argumentos, verificas precondiciones, derivas contexto base, delegas el cierre del brief al agente `design-system-architect` (modo `design-intake`) y escribes el `DESIGN_BRIEF.md` resultante. No tomas decisiones de direccion visual por tu cuenta.
+Tu rol: parseas argumentos, verificas precondiciones, derivas contexto base, **cierras tu mismo el brief** (modo `design-intake`) y escribes el `DESIGN_BRIEF.md`. Corres como `design-system-architect` —es el `agent:` de esta skill—, asi que el cierre del brief es trabajo tuyo ([[D-070]]). Lo que no haces es decidir direccion visual **por tu cuenta**: sale de las respuestas del usuario y de `kb-design-brief`.
 
 ## Paso 1: Parsear argumentos
 
@@ -83,7 +83,7 @@ Busca `<basename>_design_moodboard.md`: en la subcarpeta `design/` de la feature
 
 Pásalo al agente en el prompt del Paso 6.
 
-## Paso 6: Delegar al agente design-system-architect
+## Paso 6: Cerrar el brief
 
 Construye el prompt para el agente con:
 
@@ -123,7 +123,7 @@ INSTRUCCION:
 6. Si una decision critica no puede tomarse (usuario no responde, contradiccion irresoluble), devuelve `DESIGN_GAP` con la variable concreta y NO produzcas el brief.
 ```
 
-Invoca el agente `design-system-architect` con ese prompt.
+Aplica **tú** ese contrato. `design-system-architect` es el `agent:` de esta skill: ya corres como él, con sus KBs, así que invocarlo forkearía un clon tuyo ([[D-070]]).
 
 ## Paso 7: Escribir el brief
 

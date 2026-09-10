@@ -48,8 +48,9 @@ flowchart TB
         W2["wf-spec-discover"]
         W3["wf-spec-fast-track"]
         W4["wf-spec-features-first"]
-        W5["wf-spec-delta apply / gap-resolve / sync-from-prd"]
+        W5["wf-spec-delta apply / gap-resolve / sync-from-prd / amend"]
         W6["wf-spec-validate / conflict / readiness / sync-impact"]
+        W7["wf-spec-from-code (brownfield)"]
     end
 
     subgraph L2["Agentes worker"]
@@ -65,6 +66,7 @@ flowchart TB
         K4["kb-gap-conventions"]
         K5["kb-traceability-rules"]
         K6["kb-prd-expert<br/>kb-product-change-governance"]
+        K7["kb-spec-characterization"]
     end
 
     W1 --> A1
@@ -73,6 +75,7 @@ flowchart TB
     W4 --> A3
     W5 --> A3
     W6 --> A4
+    W7 --> A3
     L3 -.-> L2
 ```
 
