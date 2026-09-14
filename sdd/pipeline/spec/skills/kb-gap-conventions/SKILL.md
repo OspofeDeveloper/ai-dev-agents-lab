@@ -312,7 +312,7 @@ porque nadie lo planteó. Se surfacean **siempre**, aunque la persona decline re
 `## Asunciones Aplicadas` no es un trámite de la generación: es el invariante de que **nada de lo
 que dice el spec fue decidido en silencio**. Y un invariante que mantiene *un* workflow no es un
 invariante del artefacto — hay que preguntarse **quién más escribe ese fichero** ([[D-039]], que
-aprendió esto en el PRD). Sobre un spec escriben cuatro:
+aprendió esto en el PRD). Sobre un spec escriben **seis**:
 
 | Escritor | Cuándo | Qué debe marcar |
 |---|---|---|
@@ -320,8 +320,15 @@ aprendió esto en el PRD). Sobre un spec escriben cuatro:
 | `wf-spec-delta` | al evolucionarlo | ídem, en `## Asunciones Aplicadas (vX.Y)` |
 | `wf-spec-gap-resolve` | al integrar una respuesta | **lo que complete más allá de lo que la respuesta dice** |
 | `wf-spec-amend` | al aclarar un CA | **el dato que fije y que el CA no determinaba** |
+| `wf-spec-sync-from-prd` | al aplicar la resincronización | **lo que añada para dejar el spec coherente** y que el requisito de sync no pedía |
+| `wf-spec-from-code` | al caracterizar código | lo que **no observó** en el código va `[INFERIDO]`, no como asunción: en un spec `Origen: characterization` la contrapartida es la evidencia, y su SSoT es `kb-spec-characterization` |
 
-Los dos últimos son los que se olvidan, porque no "generan": integran. Pero una respuesta a un gap
+> **El criterio, por si aparece un séptimo: si escribes un `_spec.md`, estás en esta tabla.** Los
+> dos últimos llevaban fuera desde que se escribió ([[D-074]]) — la tabla decía "cuatro" y ya eran
+> seis —, así que el invariante anti-fabricación tenía **dos escritores sin cubrir**. Es el modo de
+> fallo que esta sección existe para impedir, cometido sobre la sección misma.
+
+Los del medio son los que se olvidan, porque no "generan": integran. Pero una respuesta a un gap
 casi nunca trae todo lo que hace falta para cerrar una HU, y lo que falte lo pone quien escribe.
 **Si lo pusiste tú y no sale de lo que te dijeron, es una asunción y va anotada** — con su
 `[A-00X]`, citando de dónde sale (el gap, la respuesta, la enmienda). Numera continuando desde el

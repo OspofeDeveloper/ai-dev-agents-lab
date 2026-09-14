@@ -1,8 +1,8 @@
 ---
 name: wf-spec-retire
-description: "Da de baja el spec de una feature que el producto deja de contemplar: audita quien depende de ella, presenta el impacto y sella el spec como RETIRADO con la traza del cambio que lo decide."
-when_to_use: "Activa en frases como 'esta feature ya no va', 'damos de baja X', 'quitamos esa capacidad del producto', 'retira el spec de X'. Exige que el cambio este formalizado antes en el PRD. No activa para posponer una feature a una fase futura —eso no la retira, sigue comprometida—, ni para eliminar una HU o un CA sueltos, que es wf-spec-delta."
-argument-hint: "<feature_spec.md> --change CR-XXX [--reason 'texto']"
+description: "Gestiona la vigencia de una feature: la da de baja cuando el producto deja de contemplarla —auditando quien depende de ella y sellando el spec como RETIRADO con su traza— y la reactiva si se revierte."
+when_to_use: "Activa en frases como 'esta feature ya no va', 'damos de baja X', 'quitamos esa capacidad del producto', y tambien en las inversas: 'recupera la feature X', 'vuelve a activar X', 'al final si la hacemos'. Retirar exige que el cambio este formalizado antes en el PRD. No activa para posponer una feature a una fase futura —eso no la retira, sigue comprometida—, ni para eliminar una HU o un CA sueltos, que es wf-spec-delta."
+argument-hint: "<feature_spec.md> --change CR-XXX [--reason 'texto'] | reactivate <feature_spec.md>"
 effort: medium
 allowed-tools: [Bash, Agent, AskUserQuestion]
 user-invocable: true
@@ -12,6 +12,8 @@ user-invocable: true
 
 Tu rol es de **orquestador puro**: compruebas la traza del cambio, delegas el diagnóstico de impacto al agente `sdd-spec-auditor`, presentas ese impacto en un gate y dejas que el sellador determinista escriba la baja. **No escribes el spec** ni decides tú si la feature se retira.
 
+**Dos modos, uno por dirección.** Sin modo explícito, o con `retire`, das de baja (Pasos 1-7). Con **`reactivate <spec.md>`**, deshaces una baja (Paso R). Las dos direcciones viven aquí porque la responsabilidad es la misma —**la vigencia de la feature**— y porque una reversión que no tiene vía sancionada no es reversible: es una promesa. Hasta [[D-074]] el modo existía en el sellador y no lo alcanzaba nadie.
+
 Este workflow corre en el **hilo principal** por la misma razón que `wf-spec-validate` ([[D-065]]) y `wf-spec-delta` ([[D-073]]): dar de baja una feature es una **decisión de producto con coste irreversible** —hay specs, planes y tasks construidos encima—, y una decisión así se presenta a quien puede tomarla. Ningún fork retira nada: los que detectan el caso (`wf-prd-sync-impact`, `wf-spec-sync-from-prd`) lo **reportan** y terminan aquí.
 
 **Regla de oro:** no hagas `Read` ni `cat` del spec. Lo que necesitas sale del informe de tu delegado y de los scripts ([[D-031]]/[[D-060]]). El único contacto directo con el fichero es un `grep` de una línea de cabecera: extracción determinista y acotada ([[D-048]]), no lectura del artefacto.
@@ -20,10 +22,12 @@ Este workflow corre en el **hilo principal** por la misma razón que `wf-spec-va
 
 ## Paso 1: Parsear argumentos y exigir la traza
 
-De `$ARGUMENTS` extrae el path del spec, `--change CR-XXX` y el `--reason` opcional.
+De `$ARGUMENTS` extrae **el modo** (`reactivate` si aparece como primer token; en cualquier otro caso, dar de baja), el path del spec, `--change CR-XXX` y el `--reason` opcional.
+
+**Si el modo es `reactivate`, salta directamente al Paso R**: no aplica nada de lo que sigue —ni la traza, ni el diagnóstico, ni el gate—, porque deshacer una baja no destruye nada.
 
 Sin path:
-> "Necesito saber qué feature quieres dar de baja."
+> "Necesito saber qué feature quieres dar de baja, o cuál quieres recuperar."
 
 **Sin `--change`**, o con un `CR-XXX` cuyo directorio no existe: **detente**. Retirar una capacidad sin el cambio de producto detrás es cancelar producto sin registro, y quien lo vea dentro de tres meses no sabrá quién lo decidió ni por qué.
 
@@ -113,6 +117,30 @@ Si el spec no dice `RETIRADO` o el índice no dice `RETIRADA`, **dilo**: no des 
 
 ---
 
+## Paso R (modo `reactivate`): Deshacer una baja
+
+La dirección inversa es **la segura** —nada se destruye: el spec vuelve a `BORRADOR`, que es donde estaría un spec sin validar— así que no lleva gate propio ni exige un `CR-XXX` nuevo. Lo que sí lleva es **decir la verdad de lo que queda**.
+
+1. Verifica que el spec existe y que está dado de baja:
+   ```bash
+   !test -f "<path>" && grep -m1 -E '^\s*>?\s*\**Estado' "<path>"
+   ```
+   Si no dice `RETIRADO` → informa de que esa feature ya está vigente y termina. No toques nada.
+
+2. Deshaz la baja y regenera el índice:
+   ```bash
+   !python3 .sdd/scripts/sdd-seal.py spec "<path>" --unretire
+   !python3 .sdd/scripts/sdd-features-index.py "<raíz_de_artefactos_spec>"
+   ```
+   El script devuelve el spec a `BORRADOR` y **retira la línea `Retirada:`**: una traza que afirma una baja que ya no existe la lee tanto el índice como una persona.
+
+3. **Informa de lo que NO se ha restaurado**, que es lo que importa:
+   - El spec vuelve a `BORRADOR`, **no a validado**: hay que volver a validarlo antes de planificar sobre él. La reactivación no reabre un sello, lo deja pendiente.
+   - Si la feature tenía plan, ese plan sigue en `BORRADOR` desde la baja: también hay que revalidarlo.
+   - **Y el aviso de fondo**: si el PRD sigue sin contemplar esa capacidad, el spec que acabas de reactivar contradice al PRD vigente. Dilo — reactivar un spec no reactiva la decisión de producto, y esa se formaliza en el PRD.
+
+---
+
 ## Paso 7: Informar
 
 En lenguaje natural, sin nombrar workflows:
@@ -121,4 +149,4 @@ En lenguaje natural, sin nombrar workflows:
 - que su **Feature ID se conserva y no se reutiliza** (`kb-traceability-rules` Regla 12): la siguiente feature toma el siguiente número libre, no el hueco;
 - que a partir de ahora no se puede planificar sobre ella, ni generarle tareas, ni ejecutarlas;
 - **qué queda en pie**: si había release, que el código sigue entregado y retirarlo es otra conversación; si deja shared models huérfanos, qué features hay que revisar;
-- y que, si la decisión cambia, se puede reactivar — volvería a `BORRADOR` y habría que validarla de nuevo.
+- y que, si la decisión cambia, **puedes pedirme que la recuperes**: volvería a `BORRADOR` y habría que validarla de nuevo. Descríbeselo como acción, no como comando.

@@ -2,6 +2,16 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.108.2 — 2026-09-14
+
+**Una reversión sin vía sancionada no es reversible: es una promesa** — residuo de [[DECISIONS D-074]]. El repaso de la fase con la skill nueva dentro destapó cuatro cosas, y la primera la había creado yo dos días antes, con la forma exacta del defecto que ese commit venía a arreglar.
+
+- 🔴 **`--unretire` no lo alcanzaba nadie.** El sellador tenía el modo, `kb-traceability-rules` lo documentaba y `wf-spec-retire` le prometía al usuario que *"si la decisión cambia, se puede reactivar"* — pero **ningún workflow lo exponía**: ni rootmap, ni enrutado, ni invocación. Exactamente `DEPRECATION` otra vez, con el agravante de una promesa explícita delante. `wf-spec-retire` gana el modo **`reactivate`**: sin gate —es la dirección segura, no destruye nada— pero diciendo lo que **no** restaura: el spec vuelve a `BORRADOR` y no a validado, el plan sigue degradado, y si el PRD sigue sin contemplar la capacidad, **el spec reactivado contradice al PRD vigente**. Reactivar un spec no reactiva la decisión de producto.
+- 🔴 **El censo de escritores del spec decía "cuatro" y eran seis.** Faltaban `wf-spec-from-code` (escribe specs de caracterización) y `wf-spec-sync-from-prd` (los reescribe al aplicar), así que el invariante anti-fabricación de [[DECISIONS D-063]] tenía **dos escritores sin cubrir**. Es el modo de fallo que esa sección existe para impedir, cometido sobre la sección misma. Añadido el criterio: si escribes un `_spec.md`, estás en la tabla.
+- ⚠ **`sdd-spec-writer` se contradecía dentro de su propio contexto**: decía que escribe *"partes estructuradas del índice `_features.md`"* y su `kb-decompose-expert` —que carga en la línea 1— dice que **ningún workflow lo compone**. Las dos le llegaban a la vez. Y su lista de modos ignoraba la caracterización desde código y la enmienda quirúrgica.
+- ⚠ **La norma de "esto lo lee una persona" cubría 7 de 10 artefactos.** Faltaban `_delta_analysis.md`, `_sync_requirements.md` y `_sync_report.md` — los tres los escribe un agente, los lee el usuario, y son justo donde se cuelan los nombres de workflow que la norma prohíbe. Ahora la regla es del **tipo de contenido**, no de una lista de ficheros.
+- **Aprendizaje:** el ecosistema ya sabía que una etiqueta sin consumidor es una promesa — lo escribió al cerrar `DEPRECATION`. Dos días después volvió a producir una, en la misma pieza. Saber nombrar un patrón no basta para no repetirlo: lo que lo evita es **preguntarse quién invoca lo que acabas de escribir**, y eso hay que hacerlo en cada pasada.
+
 ## 0.108.1 — 2026-09-14
 
 **La pieza número seis dejó cortas cinco enumeraciones** — residuo de [[DECISIONS D-074]]. Al mapear la fase Spec con `wf-spec-retire` ya dentro, lo que falló no fue el mecanismo: fueron las listas que lo rodean.

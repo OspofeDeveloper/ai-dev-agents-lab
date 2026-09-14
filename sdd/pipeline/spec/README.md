@@ -225,7 +225,15 @@ Si el cambio no mueve una capacidad sino que la **saca del producto**, sus specs
 
 **Cuándo NO**: si la capacidad solo se pospone a una fase futura, **no** se retira — sigue comprometida, y eso es un cambio de prioridad. Y si lo que desaparece es una HU o un CA concretos dentro de una feature que sigue viva, eso es `wf-spec-delta`, que los marca como tombstone.
 
-**Si la decisión cambia**: se puede reactivar; el spec vuelve a `BORRADOR` y hay que validarlo de nuevo.
+**Si la decisión cambia**:
+
+```
+/wf-spec-retire reactivate features/pagos/spec/pagos_spec.md
+  → el spec vuelve a BORRADOR y se retira la traza `Retirada:`
+  → el índice deja de marcarla RETIRADA y los gates vuelven a dejarla pasar
+```
+
+No lleva gate: es la dirección segura, no destruye nada. Lo que **no** restaura es el sello — ni el del spec ni el del plan, que sigue en `BORRADOR` desde la baja: los dos hay que validarlos otra vez. Y si el PRD sigue sin contemplar la capacidad, el spec reactivado **contradice al PRD vigente**: reactivar un spec no reactiva la decisión de producto.
 
 ---
 
@@ -309,7 +317,7 @@ La lógica exacta de routing y la política de skills viven en [CLAUDE.md](CLAUD
 | `wf-spec-conflict` | `/wf-spec-conflict` | `_conflict_report.md` |
 | `wf-spec-delta` | `/wf-spec-delta` | `_delta_analysis.md` (analyze), spec actualizado (apply) |
 | `wf-spec-gap-resolve` | `/wf-spec-gap-resolve` | spec actualizado desde `_analysis.md` |
-| `wf-spec-retire` | `/wf-spec-retire --change CR-XXX` | Spec sellado `Estado: RETIRADO` + `Retirada: CR-XXX`; el índice pasa la feature a `RETIRADA` |
+| `wf-spec-retire` | `/wf-spec-retire --change CR-XXX \| reactivate` | Spec sellado `Estado: RETIRADO` + `Retirada: CR-XXX`; el índice pasa la feature a `RETIRADA`. El modo `reactivate` lo deshace, devolviéndolo a `BORRADOR` |
 | `wf-spec-amend` | `/wf-spec-amend --ca CA-XXX [--from-task T-00X]` | CA aclarado con changelog `E-00X`, anotación `Enmienda pendiente` en el `_plan.md` (vía `sdd-amend.py`) |
 | `wf-prd-change` | `/wf-prd-change` | PRD actualizado, `product-changelog.md`, `changes/CR-XXX/change-request.md`, `changes/CR-XXX/decision.md` |
 | `wf-prd-sync-impact` | `/wf-prd-sync-impact` | `_sync_report.md` |

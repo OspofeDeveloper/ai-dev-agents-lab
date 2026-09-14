@@ -56,7 +56,7 @@
 | wf-spec-from-code | Ingeniería inversa de specs desde código existente (brownfield): descubre capacidades con evidencia (archivo:línea, rutas, tests) y genera specs de caracteriza… | true | pipeline/spec/skills/wf-spec-from-code/SKILL.md |
 | wf-spec-gap-resolve | Completa HUs y CAs [INCOMPLETO] desde respuestas ya escritas en un _analysis.md y confirma CAs [INFERIDO] de specs de caracterizacion | true | pipeline/spec/skills/wf-spec-gap-resolve/SKILL.md |
 | wf-spec-readiness | Genera un informe de readiness desde los artefactos post-spec (specs, READMEs, _features.md, _conflict_report.md): que features estan listas para plan, cuales… | true | pipeline/spec/skills/wf-spec-readiness/SKILL.md |
-| wf-spec-retire | Da de baja el spec de una feature que el producto deja de contemplar: audita quien depende de ella, presenta el impacto y sella el spec como RETIRADO con la tr… | true | pipeline/spec/skills/wf-spec-retire/SKILL.md |
+| wf-spec-retire | Gestiona la vigencia de una feature: la da de baja cuando el producto deja de contemplarla —auditando quien depende de ella y sellando el spec como RETIRADO co… | true | pipeline/spec/skills/wf-spec-retire/SKILL.md |
 | wf-spec-sync-from-prd | Resincroniza specs de feature tras un PRD actualizado | true | pipeline/spec/skills/wf-spec-sync-from-prd/SKILL.md |
 | wf-spec-validate | Audita un _spec.md ya generado para detectar regresiones de pureza, testabilidad o completitud, y sella su estado operativo registrando quien lo aprobo | true | pipeline/spec/skills/wf-spec-validate/SKILL.md |
 
