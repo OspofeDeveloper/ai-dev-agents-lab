@@ -27,12 +27,28 @@ Todo cambio debe clasificarse antes de decidir el workflow.
 
 - `CLARIFICATION`: aclara una ambigüedad sin cambiar alcance ni prioridad comprometida.
 - `BEHAVIOR_CHANGE`: cambia una regla funcional o comportamiento esperado.
-- `SCOPE_CHANGE`: mueve algo entre dentro/fuera de alcance, MVP/fase futura, o añade/elimina capacidad.
+- `SCOPE_CHANGE`: **añade** una capacidad, o mueve una ya comprometida entre MVP y fase futura.
 - `PRIORITY_CHANGE`: no cambia la funcionalidad, pero sí su orden o fase de entrega.
-- `DEPRECATION`: una capacidad deja de ser vigente.
+- `DEPRECATION`: una capacidad **ya comprometida sale del producto** y deja de ser vigente.
 
 Si un cambio entra en dos categorías, prima la de mayor impacto:
-`SCOPE_CHANGE` > `BEHAVIOR_CHANGE` > `CLARIFICATION`.
+`DEPRECATION` > `SCOPE_CHANGE` > `BEHAVIOR_CHANGE` > `PRIORITY_CHANGE` > `CLARIFICATION`.
+
+> **Por qué `DEPRECATION` va arriba, y por qué ya no se solapa con `SCOPE_CHANGE` ([[D-074]]).**
+> Hasta ahora `SCOPE_CHANGE` decía *"añade/elimina capacidad"* y `DEPRECATION` *"deja de ser
+> vigente"*: dos etiquetas para el mismo hecho, y **ninguna de las dos aparecía en la cadena de
+> precedencia** — un cambio que retiraba algo no tenía clasificación estable. Ahora la frontera es
+> nítida: **mover a fase futura no retira** (la capacidad sigue comprometida, solo llega más
+> tarde); retirar es sacarla del producto. Y `DEPRECATION` encabeza la cadena porque es la única
+> que **termina** algo ya derivado —las demás lo modifican—, así que es la de coste irreversible:
+> hay specs, planes y tasks construidos sobre una capacidad que deja de existir.
+>
+> **Un `DEPRECATION` no se resincroniza: se da de baja.** Sus derivados no se ponen al día con un
+> PRD que ya no los contempla. El spec de cada feature retirada se sella `Estado: RETIRADO` con la
+> traza del `CR-XXX` que lo decide, y a partir de ahí el índice de features la marca `RETIRADA`,
+> el readiness la saca del orden de implementación y los gates deniegan planificarla, generarle
+> tasks o ejecutarlas. Esa baja **la decide una persona en un gate**, nunca un cambio de PRD por
+> sí solo: el `CR-XXX` la autoriza, no la ejecuta.
 
 ## Regla 3: Cuándo basta con `_analysis.md`
 
@@ -131,8 +147,13 @@ Hay que evaluar impacto sobre:
 - `features/*_spec.md`
 - `*_plan.md`
 - `*_tasks.md`
+- `*_qa_plan.md`, `*_qa_report.md`, `*_release.md`, `*_bugs.md`
 
 El PRD se actualiza primero. La resincronización de derivados va después.
+
+> Las cuatro últimas faltaban ([[D-074]]). La Regla 11 de `kb-traceability-rules` las cuenta como
+> parte de la cadena `CA → TC → task → commit → release`, y con una retirada importan: un plan de
+> QA sigue derivando casos de prueba de los CAs de una capacidad cancelada.
 
 ## Regla 7: Heurística operativa
 

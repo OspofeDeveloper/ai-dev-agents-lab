@@ -188,5 +188,76 @@ class FailOpenTest(unittest.TestCase):
         self.assertEqual(r.stdout.strip(), "")
 
 
+class RetiredFeatureTest(unittest.TestCase):
+    """Una feature dada de baja se deniega en los tres frentes (D-074).
+
+    Asimetria deliberada con `Enmienda pendiente`, que retiene SOLO las tasks del
+    CA enmendado: la baja cancela la feature entera, asi que no queda subconjunto
+    que tenga sentido ejecutar.
+    """
+
+    SPEC_RETIRADO = ("# Spec: Pagos\n> Estado: RETIRADO\n"
+                     "> Retirada: CR-007 — ya no se cobra\n> Feature ID: F-002\n"
+                     "### CA-001: ok ← HU-1\n")
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.dir = Path(self.tmp.name)
+        self.spec = write(self.dir / "pagos_spec.md", self.SPEC_RETIRADO)
+        self.plan = write(self.dir / "pagos_plan.md",
+                          "# Plan: Pagos\n> Estado: VALIDADO\n"
+                          "> Spec origen: pagos_spec.md\n## Checklist de Trazabilidad\n- CA-001\n")
+        self.tasks = write(self.dir / "pagos_tasks.md",
+                           "# Tasks: Pagos\n> Plan origen: pagos_plan.md\n"
+                           "## T-001: hacer\n- **Spec CA**: CA-001\n")
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _run(self, skill, path):
+        return run_script("sdd-gate-check.py", stdin=hook_payload(skill, str(path)))
+
+    def test_prepare_plan_denied(self):
+        r = self._run("wf-prepare-plan", self.spec)
+        self.assertEqual(is_deny(r.stdout), "deny")
+        self.assertIn("RETIRADO", r.stdout)
+
+    def test_qa_plan_denied(self):
+        self.assertEqual(is_deny(self._run("wf-qa-plan", self.spec).stdout), "deny")
+
+    def test_prepare_tasks_denied_via_spec_origen(self):
+        r = self._run("wf-prepare-tasks", self.plan)
+        self.assertEqual(is_deny(r.stdout), "deny")
+        self.assertIn("RETIRADO", r.stdout)
+
+    def test_task_run_denied_for_the_whole_feature(self):
+        r = self._run("wf-task-run", self.tasks)
+        self.assertEqual(is_deny(r.stdout), "deny")
+        self.assertIn("RETIRADO", r.stdout)
+
+    def test_retirement_is_reported_before_open_gaps(self):
+        """Decirle que responda criticos de una feature cancelada le manda a trabajar
+        en lo que ya no existe."""
+        write(self.spec, self.SPEC_RETIRADO + "\n### [P-001][CRÍTICO] gap\n"
+              "- **Respuesta**: _(pendiente)_\n")
+        r = self._run("wf-prepare-plan", self.spec)
+        self.assertIn("RETIRADO", r.stdout)
+        self.assertNotIn("sin responder", r.stdout)
+
+    def test_a_live_feature_still_passes(self):
+        """Guarda de vacuidad: el gate no deniega por existir, deniega por la baja."""
+        vivo = write(self.dir / "login_spec.md",
+                     "# Spec: Login\n> Estado: VALIDADO\n> Feature ID: F-001\n"
+                     "### CA-001: ok ← HU-1\n")
+        self.assertEqual(self._run("wf-prepare-plan", vivo).stdout.strip(), "")
+
+    def test_unresolvable_spec_origen_stays_conservative(self):
+        """Politica del hook: sin evidencia positiva de violacion, se permite."""
+        plan = write(self.dir / "otro_plan.md",
+                     "# Plan: Otro\n> Estado: VALIDADO\n"
+                     "> Spec origen: no_existe_spec.md\n")
+        self.assertEqual(self._run("wf-prepare-tasks", plan).stdout.strip(), "")
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -67,7 +67,8 @@ import sys
 import tempfile
 from pathlib import Path
 
-CANON_STATES = ("LISTA", "BLOQUEADA", "PENDIENTE_GENERACIÓN", "REQUIERE_CAMBIO_PRD")
+CANON_STATES = ("LISTA", "BLOQUEADA", "PENDIENTE_GENERACIÓN", "REQUIERE_CAMBIO_PRD",
+                "RETIRADA")
 # ROADMAP 11.10: esta nota va DENTRO de `_features.md`, que lo lee una persona.
 # Describe el estado y la accion en lenguaje natural; el `F-00X` se queda porque es
 # el identificador con el que el usuario nombra la feature, no una invocacion.
@@ -306,6 +307,8 @@ def parse_spec(path: Path, features_root: Path) -> dict | None:
         "fid": fid,
         "title": title,
         "relpath": relpath,
+        "estado": header_field(text, "Estado"),
+        "retirada": header_field(text, "Retirada"),
         "status_sync": header_field(text, "status_sync"),
         "origen": header_field(text, "Origen de alcance"),
         "gobernanza": header_field(text, "Avisos de gobernanza"),
@@ -348,6 +351,12 @@ def has_gobernanza(value: str | None) -> bool:
 def derive_state(spec: dict | None, verdict: dict | None) -> tuple[str, str]:
     if spec is None:
         return "PENDIENTE_GENERACIÓN", "—"
+    # La baja manda sobre todo lo demas ([[D-074]]). Va ANTES del veredicto del
+    # readiness a proposito: una feature que el producto ya no contempla no es
+    # "BLOQUEADA" —no hay nada que desbloquear— y ningun informe puede resucitarla.
+    # El unico escritor de `Estado: RETIRADO` es `sdd-seal.py --retire`.
+    if (spec.get("estado") or "").strip().upper() == "RETIRADO":
+        return "RETIRADA", (spec.get("retirada") or "dada de baja").strip()
     if verdict:
         return verdict["estado"], verdict.get("bloqueantes", "—")
     if spec["has_marker"]:

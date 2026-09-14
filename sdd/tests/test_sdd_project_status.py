@@ -195,5 +195,57 @@ class UsageTest(unittest.TestCase):
         self.assertEqual(r.returncode, 1)
 
 
+class RetiradaTest(unittest.TestCase):
+    """Una feature dada de baja (D-074): visible, sin accion y fuera del foco."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.dir = Path(self.tmp.name)
+        write(self.dir / "prj_features.md",
+              "# Features Index: MiProducto\n\n## Resumen de estado\n\n"
+              "| Feature | Estado | Bloqueantes |\n|---|---|---|\n"
+              "| F-001: Login | LISTA | — |\n"
+              "| F-002: Pagos | RETIRADA | CR-007 — ya no se cobra |\n")
+        write(self.dir / "features" / "Login" / "spec" / "login_spec.md", spec("F-001", "Login"))
+        f = self.dir / "features" / "Pagos"
+        write(f / "spec" / "pagos_spec.md",
+              spec("F-002", "Pagos").replace("> Feature ID: F-002",
+                                             "> Estado: RETIRADO\n> Feature ID: F-002"))
+        # Artefactos downstream que la cascada de fases pintaria como "en marcha".
+        write(f / "plan" / "pagos_plan.md", "# Plan: Pagos\n> Estado: VALIDADO\n")
+        write(f / "tasks" / "pagos_tasks.md", "# Tasks: Pagos\n## T-001: hacer\n")
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _out(self):
+        r = run_script("sdd-project-status.py", self.dir)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        return r.stdout
+
+    def test_retired_feature_is_listed_not_dropped(self):
+        out = self._out()
+        self.assertIn("F-002: Pagos", out,
+                      "un estado no reconocido la haria desaparecer del informe")
+        self.assertIn("RETIRADA", out)
+
+    def test_retirement_beats_the_phase_cascade(self):
+        """Tiene plan y tasks en disco: sin la rama de baja se pintaria como fase Tasks."""
+        fila = [l for l in self._out().splitlines() if "F-002: Pagos" in l][0]
+        self.assertIn("| Retirada |", fila)
+        self.assertNotIn("Tasks", fila)
+
+    def test_retired_feature_asks_for_nothing(self):
+        fila = [l for l in self._out().splitlines() if "F-002: Pagos" in l][0]
+        self.assertTrue(fila.rstrip().endswith("| — |"),
+                        f"una feature de baja no tiene siguiente accion: {fila}")
+
+    def test_retired_feature_is_out_of_the_focus_list(self):
+        out = self._out()
+        foco = out.split("## Siguiente foco", 1)[1]
+        self.assertNotIn("F-002", foco)
+        self.assertIn("F-001", foco, "las vivas siguen en el foco")
+
+
 if __name__ == "__main__":
     unittest.main()

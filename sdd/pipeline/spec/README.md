@@ -74,6 +74,7 @@ Tienes un PRD que cubre todo el producto pero solo quieres generar las specs de 
   → prd_features.md indexa TODAS las features:
       · las generadas en esta iteración → LISTA / BLOQUEADA / REQUIERE_CAMBIO_PRD
       · las que aún no se han procesado → PENDIENTE_GENERACIÓN
+      · las que el producto dio de baja → RETIRADA
   → conflict + readiness se ejecutan sobre el subset
 
 # Más adelante, cuando quieras la siguiente fase:
@@ -202,6 +203,30 @@ Si la "respuesta" realmente cambia el alcance o el roadmap del producto:
 
 **Cuándo usarlo**: cuando el producto vigente cambia de verdad, por ejemplo mover una capacidad de fase 2 a MVP.
 
+#### El producto retira una capacidad (dar de baja una feature)
+
+Si el cambio no mueve una capacidad sino que la **saca del producto**, sus specs no se resincronizan: se dan de baja. No hay con qué poner al día un spec cuyo referente desapareció, y regenerarlo lo volvería a escribir.
+
+```
+/wf-prd-change prd.md --new-reqs retirada.md
+  → clasificación DEPRECATION confirmada en su gate; el change-request nombra
+    las features afectadas
+
+/wf-spec-retire features/pagos/spec/pagos_spec.md --change CR-007 --reason "..."
+  → audita quién depende de la feature: shared models que posee, features que la
+    declaran dependencia, conflictos abiertos y artefactos ya generados
+  → te presenta ese impacto y te pregunta; si hay release, te dice que el código
+    sigue entregado y que darlo de baja aquí no lo retira
+  → sella el spec `Estado: RETIRADO` + `Retirada: CR-007 — <razón> (<fecha>)`
+  → degrada el plan a BORRADOR y regenera el índice: la feature pasa a RETIRADA
+```
+
+**Qué cambia a partir de ahí**: readiness la saca del orden de implementación, el estado del proyecto deja de pedir trabajo sobre ella, y los gates deniegan planificarla, generarle tareas o ejecutarlas. Su `F-00X` **se conserva y no se reutiliza** (`kb-traceability-rules` Regla 12): la siguiente feature toma el siguiente número libre, no el hueco.
+
+**Cuándo NO**: si la capacidad solo se pospone a una fase futura, **no** se retira — sigue comprometida, y eso es un cambio de prioridad. Y si lo que desaparece es una HU o un CA concretos dentro de una feature que sigue viva, eso es `wf-spec-delta`, que los marca como tombstone.
+
+**Si la decisión cambia**: se puede reactivar; el spec vuelve a `BORRADOR` y hay que validarlo de nuevo.
+
 ---
 
 ### 4. Validar un spec tras edición manual
@@ -284,6 +309,7 @@ La lógica exacta de routing y la política de skills viven en [CLAUDE.md](CLAUD
 | `wf-spec-conflict` | `/wf-spec-conflict` | `_conflict_report.md` |
 | `wf-spec-delta` | `/wf-spec-delta` | `_delta_analysis.md` (analyze), spec actualizado (apply) |
 | `wf-spec-gap-resolve` | `/wf-spec-gap-resolve` | spec actualizado desde `_analysis.md` |
+| `wf-spec-retire` | `/wf-spec-retire --change CR-XXX` | Spec sellado `Estado: RETIRADO` + `Retirada: CR-XXX`; el índice pasa la feature a `RETIRADA` |
 | `wf-spec-amend` | `/wf-spec-amend --ca CA-XXX [--from-task T-00X]` | CA aclarado con changelog `E-00X`, anotación `Enmienda pendiente` en el `_plan.md` (vía `sdd-amend.py`) |
 | `wf-prd-change` | `/wf-prd-change` | PRD actualizado, `product-changelog.md`, `changes/CR-XXX/change-request.md`, `changes/CR-XXX/decision.md` |
 | `wf-prd-sync-impact` | `/wf-prd-sync-impact` | `_sync_report.md` |
@@ -374,6 +400,7 @@ El pipeline nunca es completamente automático. Estos son los momentos donde el 
 | Tras `discover` (modo iterativo) | Elegir los Feature IDs que entran en la próxima iteración | Sí — `wf-spec-features-first --features` los necesita |
 | Tras `features-first` | Revisar `_features.md` y validar la partición de features | No — pero afecta la calidad del plan |
 | Tras `features-first` | Revisar `_conflict_report.md` si hay conflictos `ALTA` | No — pero pueden propagarse problemas al plan |
+| Al dar de baja una feature | Confirmar la baja con el impacto delante: qué artefactos derivados quedan sin origen y qué otras features se quedan sin el shared model que esta poseía | Sí — es la única vía: no hay override, y sin confirmación no se retira nada |
 | Tras `validate` con veredicto `APROBADO` | Dar el nombre de quien aprueba: el sellador lo estampa en la cabecera (`Estado: VALIDADO`, `Aprobado por:`) | No — pero el spec se queda sin constancia de quién lo dio por bueno y sin la protección que obliga a `--allow-overwrite-sealed-spec` para regenerarlo |
 | Tras `wf-prd-sync-impact` | Revisar artefactos `stale` o `needs_review` y decidir qué features resincronizar | Sí — bloquea avanzar con specs desalineados |
 | Durante `delta analyze` | Decidir si el cambio es de producto (va antes al PRD) y, si el requisito es ambiguo, cuál es la lectura | Sí — sin decisión, la ambigüedad se marca como gap `[D-XXX]` y el delta no la resuelve |

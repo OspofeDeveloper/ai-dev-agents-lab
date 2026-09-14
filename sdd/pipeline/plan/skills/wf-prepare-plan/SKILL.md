@@ -45,6 +45,10 @@ Antes de verificar el Spec, determina el contexto técnico del proyecto. Busca `
 1. Verifica que el archivo existe.
 2. Lee el archivo completo.
 3. Comprueba si contiene HUs incompletas, items pendientes o señales de desincronización:
+   - Si la cabecera declara `Estado: RETIRADO` → **detén la ejecución antes que nada** ([[D-074]]):
+     > "❌ Esa feature está dada de baja: el producto dejó de contemplar esa capacidad. No hay plan que hacer sobre ella."
+
+     Va primero a propósito. Un spec retirado puede tener además gaps abiertos, y decirle al usuario que responda tres críticos sobre una feature cancelada es mandarle a trabajar en lo que ya no existe. El gate mecánico (`sdd-gate-check.py`) también lo deniega; esta comprobación es la que dice **por qué**.
    - Si hay HUs marcadas `[INCOMPLETO]` → lista cuáles, los gaps que las bloquean, y **detén la ejecución**:
      > "❌ El Spec tiene X HUs marcadas `[INCOMPLETO]`. No se puede generar el Plan hasta completarlas. Responde los gaps pendientes en el `_analysis.md` y ejecuta `/wf-spec-gap-resolve` para integrar las respuestas."
    - Si hay `[CRÍTICO]_(pendiente)_` → lista cuáles y **detén la ejecución**:

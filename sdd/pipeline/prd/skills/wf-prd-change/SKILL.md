@@ -141,6 +141,11 @@ Verifica el resultado y quédate con el veredicto para el informe:
 
   No presentes las asunciones como una pega del cambio ni las resuelvas por tu cuenta: son el registro honesto de lo inferido, y el gate del review es su sitio.
 
+- Si la clasificación confirmada fue **`DEPRECATION`** ([[D-074]]) — una capacidad comprometida sale del producto:
+  > "El PRD se actualizó y se registró la retirada. El sello quedó reabierto: pídeme que lo re-apruebe contigo y que mida después qué artefactos derivados quedan afectados. Las features que especifican esa capacidad **no se resincronizan: se dan de baja**, una a una y confirmándolo, porque hay planes y tareas construidos encima."
+
+  Y **nombra en el `change-request.md` las features afectadas** (Paso 6.C): la baja se ejecuta feature a feature, con su gate, y quien la ejecute necesita saber cuáles son. Tú no retiras nada aquí: esta fase decide el producto, no toca los specs.
+
 - Si hubo cambio de producto **sin** asunciones (todo trazaba a la petición y al gate):
   > "El PRD se actualizó y se registró el cambio. Re-aprueba con `wf-prd-review` (el sello quedó reabierto) y ejecuta `wf-prd-sync-impact <prd.md>` para medir qué artefactos derivados han quedado desincronizados."
 

@@ -49,6 +49,7 @@ Si buscas mejor rendimiento y menos carga de contexto, instala y usa el `CLAUDE.
 | Aplicar un delta analysis a un spec | `/wf-spec-delta` |
 | Completar HUs incompletas (gaps respondidos en analysis) | `/wf-spec-gap-resolve` |
 | Aclarar un CA ambiguo descubierto al implementar (back-edge) | `/wf-spec-amend` |
+| Dar de baja una feature que el producto deja de contemplar | `/wf-spec-retire` |
 | Cerrar el brief visual y policy de autonomia del producto | `/wf-design-intake` |
 | Descubrir apps de referencia con research validado por el usuario | `/wf-design-discover` |
 | Crear o actualizar el sistema visual del producto desde un feature spec | `/wf-design-system` |

@@ -148,7 +148,7 @@ La trazabilidad funcional encadena `CA → TC → task → commit (T-00X) → ve
 - **Granularidad por feature**: cada feature se releasa por su cuenta (continuous delivery). El agregado "qué se entregó" lo da `wf-project-status`, no un ledger separado.
 - El **tagging/versionado de release** es competencia exclusiva de esta regla y `wf-release`; `kb-delivery-discipline` (empaquetado de commits/PRs) lo excluye y apunta aquí.
 
-## Regla 12: Los IDs de CA y HU son inmutables — tombstone, nunca renumeración
+## Regla 12: Los IDs son inmutables — tombstone, nunca renumeración
 
 Esta regla es la **SSoT** de la estabilidad de identificadores en la cadena de trazabilidad. Los IDs de CA (`CA-XXX`) y de HU **nunca se reutilizan ni se renumeran**. Son la coordenada estable a la que apuntan las tasks (`Spec CA`, Reglas 6 y 9), los casos de prueba (`TC → CA`), los gates de sellado y los commits (`T-00X [CA-XXX]`, Regla 11). Renumerar para "cerrar huecos" desplaza esos IDs y corrompe silenciosamente toda referencia downstream: una task o un TC pasan a apuntar a un CA distinto del que verificaban.
 
@@ -162,3 +162,11 @@ Esta regla es la **SSoT** de la estabilidad de identificadores en la cadena de t
 - **Consistente con CR-XXX y E-00X**: los cambios de producto (`CR-XXX`, gobernanza de PRD) y las enmiendas (`E-00X`, Regla 9) ya se tratan así — numeración monótona, sin reutilización. Los CA y HU siguen el mismo principio: el identificador es permanente una vez asignado.
 - **Renumeración de cara a una nueva feature (decompose)**: cuando una feature spec **nace** renumerando sus CAs desde `CA-001` a partir de un spec monolítico (decomposición inicial, antes de que existan tasks/TCs que apunten a ella), eso **no** viola esta regla: no hay referencias downstream que romper porque la feature aún no las tiene. La inmutabilidad rige desde que el spec entra en el pipeline (existen derivados que lo referencian), no durante su construcción inicial.
 - **Único momento en que un CA cambia de texto sin cambiar de ID**: la aclaración quirúrgica de `wf-spec-amend` (Regla 9) sustituye el texto del CA preservando su número. Eso es lo correcto; renumerar sería lo prohibido.
+- **Y rige igual un nivel más arriba: los `F-00X` de feature ([[D-074]])**. Cuando el producto retira una capacidad entera, su Feature ID **se conserva y no se reutiliza**: la siguiente feature toma el siguiente número libre, nunca el hueco. Lo que cambia respecto a un CA es **dónde vive el tombstone**. Una feature no se tacha en el cuerpo de ningún artefacto, porque el índice `_features.md` es generado y se reescribe entero en cada pasada: la baja vive en la **cabecera de su spec**, que es lo único persistente que el índice lee.
+
+  ```
+  > Estado: RETIRADO
+  > Retirada: CR-007 — <razón> (<YYYY-MM-DD>)
+  ```
+
+  Único escritor: `sdd-seal.py spec <path> --retire --change CR-XXX` (mismo reparto autor/sellador que el resto de esta regla). De ahí se deriva el estado `RETIRADA` del índice — no se anota a mano, se reescribiría en la siguiente regeneración. Deshacerlo es explícito (`--unretire`, que devuelve el spec a `BORRADOR` y retira la traza): nunca un efecto colateral de otra operación.

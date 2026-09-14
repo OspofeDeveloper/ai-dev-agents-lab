@@ -6,6 +6,50 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-074 — El pipeline no sabía terminar una feature: la retirada existía como etiqueta y no como estado
+
+- **Fecha:** 2026-09-14 · **Estado:** Adoptada (sin medir en conducta: `wf-spec-retire` nace `PENDIENTE` en el instrumento). · **Relacionada:** [[D-061]]/[[D-065]] (`Estado:` lo escribe solo el sellador), [[D-069]] (enumeraciones que duplican una fuente de verdad), [[D-046]] (el artefacto parcial con apariencia de completo), [[D-026]] (el override es para lo que no puede preguntar), [[D-045]]/[[D-073]] (el gate vive donde puede presentarse), [[D-059]] (autor≠verificador), Regla 12 de `kb-traceability-rules`.
+
+**Contexto.** Repasando la fase Spec agente por agente apareció una casuística sin cubrir: **el PRD deja de contemplar una capacidad ya especificada**. El ecosistema sabía *nombrarla* y no sabía hacer nada con ella.
+
+`kb-product-change-governance` Regla 2 definía `DEPRECATION` —*"una capacidad deja de ser vigente"*— y `wf-prd-change` la clasificaba en su gate. Ahí se acababa: `grep DEPRECATION` daba **tres sitios funcionales** —la KB que la define, el workflow que la clasifica y un nodo de diagrama— y **cero consumidores**. Peor: la misma Regla 2 metía *"añade/**elimina** capacidad"* dentro de `SCOPE_CHANGE`, y **la cadena de precedencia no incluía ni `DEPRECATION` ni `PRIORITY_CHANGE`**, así que un cambio que retiraba algo no tenía siquiera clasificación estable.
+
+Aguas abajo no había nada, y lo que parecía la ruta genérica tampoco lo era: `sdd-sync-check.py --mark` **nunca escribe `stale`** (solo degrada a `needs_review`), y las acciones de `wf-spec-sync-from-prd` son `delta | manual_review | rediscover` — ninguna es "darla de baja". El resultado medido sobre un fixture: un spec cuya capacidad ya no existe **está limpio** —nadie lo ha tocado—, así que `derive_state()` lo daba **`LISTA`**, `wf-prepare-plan` pasaba el gate y el estado del proyecto lo ponía en «Siguiente foco» pidiendo que se planificara.
+
+**Decisión.** La baja es un **estado terminal del spec**, no un marcador ni una anotación del índice:
+
+```
+> Estado: RETIRADO
+> Retirada: CR-007 — <razón> (<YYYY-MM-DD>)
+```
+
+- **Vive en la cabecera del spec** porque `_features.md` es **función pura** de (discovery, specs, readiness) y se reescribe entera: un estado anotado ahí se pierde en la siguiente regeneración. El spec es lo único persistente que el índice lee.
+- **Lo escribe solo `sdd-seal.py spec … --retire --change CR-XXX`**, que es ya el único escritor de `Estado:` ([[D-061]]/[[D-065]]). No exige las condiciones de sellado —se retira igual un spec roto que uno sano— pero **sí exige la traza**: retirar sin `CR-XXX` es cancelar producto sin registro.
+- **La decide una persona**, en `wf-spec-retire`, que corre en el hilo principal con la misma forma que `wf-spec-validate`: main pregunta, `sdd-spec-auditor` diagnostica el impacto (qué shared models quedan huérfanos, quién la declara dependencia, qué artefactos ya existen) y el script estampa. **Sin flag de override**: los `--allow-*` existen para lo que no puede preguntar ([[D-026]]), y este workflow puede — el gate **es** el mecanismo.
+- **Ningún fork retira nada.** `wf-prd-sync-impact` lo señala en su columna de acción, `wf-spec-sync-from-prd` gana la cuarta acción `retire` y **se salta esas features reportándolas**, y el cascade las manda siempre al conjunto STOP.
+- **El bloqueo es real, no documental**: el hook `sdd-gate-check.py` deniega planificar, generar tasks y ejecutarlas, resolviendo el `Spec origen` del plan y el `Plan origen` del tasks.
+
+Y la Regla 2 deja de solaparse: `SCOPE_CHANGE` **añade** o mueve entre MVP y fase futura —**mover a fase futura no retira**, la capacidad sigue comprometida—; `DEPRECATION` es salir del producto, y encabeza la cadena `DEPRECATION > SCOPE_CHANGE > BEHAVIOR_CHANGE > PRIORITY_CHANGE > CLARIFICATION` por ser la única que **termina** algo ya derivado.
+
+**Alternativas descartadas.**
+- *Un marcador `[RETIRADO]` en el cuerpo, como `[INCOMPLETO]`* → un marcador de `kb-gap-conventions` señala **algo que falta por resolver** en un artefacto vigente. Una feature de baja no tiene nada que resolver. Además habría entrado en los conteos de los selladores y bloqueado por el motivo equivocado.
+- *Un modo `retire` dentro de `wf-spec-delta`* → delta ya corre en main y ya es dueño de los tombstones de HU/CA, pero su `description` pasaría a prometer dos acciones distintas, que es justo lo que prohíbe `kb-sdd-creation-guide`. Retirar no es evolucionar: una conserva el spec vivo, la otra lo termina.
+- *Un quinto estado de sincronización* (junto a `in_sync`/`needs_review`/`stale`/`unknown`) → confunde dos ejes. El sync mide **alineación de contenido** con el PRD; la baja es **vigencia del producto**. La Regla 2 de `kb-traceability-rules` sigue cerrada en cuatro.
+- *Cubrir también la feature sin spec* (`PENDIENTE_GENERACIÓN`) → no hay cabecera que estampar; vive solo en el discovery, que no es determinista. Anotado, no hecho.
+
+**Consecuencias / aprendizaje.** **Una etiqueta sin consumidor no es una capacidad: es una promesa.** `DEPRECATION` llevaba meses en la KB, se clasificaba correctamente, el usuario la confirmaba en un gate — y no pasaba nada. Nadie lo notó porque el fallo no es ruidoso: el pipeline sigue proponiendo construir lo que se acaba de cancelar, y desde abajo esa feature **no se distingue de una lista para empezar**. El modo de fallo de [[D-046]] otra vez: apariencia de correcto.
+
+Dos cosas más que salieron al implementarlo, las dos del mismo tipo —**una transición que deshace lo que no debe**—:
+
+- El sellado fallido degrada a `BORRADOR` por diseño; sobre un spec retirado eso lo **resucitaba en silencio**. Deshacer una baja tiene que ser explícito (`--unretire`), nunca efecto colateral de otra operación.
+- Y `--unretire` dejaba la línea `Retirada:` colgando: una traza que afirma una baja que ya no existe, y la leen tanto el índice como una persona. La traza se va con el estado.
+
+**Y el colateral, que resultó mayor de lo diagnosticado.** `CA_DEF_RE`/`CA_HU_RE` casaban `### CA-003 [ELIMINADO en v1.4: razón]` como un CA vigente. Se buscaba un solo síntoma —el plan tenía que "cubrir" un CA eliminado— y había dos: el spec **tampoco se podía sellar**, porque a un tombstone se le exigía declarar HU padre. O sea: **aplicar la Regla 12, que este mismo ecosistema sanciona como la forma correcta de eliminar, dejaba el spec y su plan insellables**. Una regla y su verificador escritos por separado, sin nadie que los enfrentara.
+
+**Pendiente de medir.** `wf-spec-retire` nace **sin pasada de conformance**: la fila entra `PENDIENTE` y los escenarios de `DEPRECATION` en CU-7 están escritos pero no ejercitados. Además el bloqueo aguas abajo **no se puede medir sobre el proyecto de CU-7**, que arranca sin plan ni tasks: necesita el de CU-6.
+
+---
+
 ## D-073 — El último fork que decidía por el usuario: `wf-spec-delta` al hilo principal, con la ambigüedad marcada en vez de resuelta
 
 - **Fecha:** 2026-09-14 · **Estado:** Adoptada (pendiente de medir en CU-3.h/CU-3.p). · **Relacionada:** [[D-040]] (el precedente en PRD, cuya segunda mitad faltaba), [[D-045]]/[[D-002]] (el gate vive donde puede presentarse), [[D-065]]/[[D-068]]/[[D-072]] (mismo movimiento en Spec y Design), [[D-026]] (el override lo arma el usuario), [[D-042]] (el recuento sale del script), [[D-063]] (sin humano no se decide, se marca), ROADMAP 13.6.

@@ -26,6 +26,12 @@ Gates (tabla GATES):
                                 con `--task T-00X`, la task no referencia (Spec CA) un CA
                                 con `Enmienda pendiente` en el plan (retencion selectiva)
   wf-qa-plan                  → idem gate de spec fiable (un QA plan de un spec inestable nace muerto)
+
+Retirada de feature (D-074): un spec con `Estado: RETIRADO` deniega los tres frentes
+—planificar, generar tasks y ejecutarlas—, resolviendo el `Spec origen` del plan y el
+`Plan origen` del tasks. A diferencia de `Enmienda pendiente`, que retiene SOLO las
+tasks que citan el CA enmendado, la baja cancela la feature entera: no queda
+subconjunto que siga teniendo sentido ejecutar.
 """
 import hashlib
 import json
@@ -34,9 +40,11 @@ import sys
 from pathlib import Path
 
 ESTADO_RE = re.compile(
-    r"^\s*(?:[-*>]\s*)?\**Estado:?\**\s*:?\s*(?P<value>BORRADOR|VALIDADO)\s*\**\s*$",
+    r"^\s*(?:[-*>]\s*)?\**Estado:?\**\s*:?\s*(?P<value>BORRADOR|VALIDADO|RETIRADO)\s*\**\s*$",
     re.MULTILINE,
 )
+SPEC_ORIGEN_RE = re.compile(r"Spec origen(?:\*\*)?\s*:?\**\s*`?(?P<path>[^`\s|]+)`?",
+                            re.IGNORECASE)
 # Anotacion de enmienda pendiente en el plan (unico escritor: sdd-amend.py)
 AMEND_RE = re.compile(
     r"^[ \t]*(?:[-*>][ \t]*)?\**Enmienda pendiente:?\**[ \t]*:?[ \t]*"
@@ -60,6 +68,25 @@ def read(path: Path):
         return None
 
 
+def spec_origen_retirado(text: str, base: Path):
+    """Devuelve el path del `Spec origen` si esta RETIRADO; None en cualquier otro caso.
+
+    Politica conservadora del hook: si el header no esta, no resuelve o no es legible,
+    NO se bloquea — el gate es una red de seguridad, no un parser de toda sintaxis.
+    """
+    m = SPEC_ORIGEN_RE.search(text)
+    if m is None:
+        return None
+    sp = Path(m.group("path"))
+    if not sp.is_absolute():
+        sp = (base.parent / sp).resolve()
+    spec_text = read(sp)
+    if spec_text is None:
+        return None
+    e = ESTADO_RE.search(spec_text)
+    return sp if e and e.group("value") == "RETIRADO" else None
+
+
 def gate_plan_validado(args: str):
     plan_path = find_md_arg(args, "_plan")
     if plan_path is None:
@@ -70,6 +97,10 @@ def gate_plan_validado(args: str):
     m = ESTADO_RE.search(text)
     if m is None:
         return f"'{plan_path}' no tiene linea `Estado:` reconocible — no parece un plan SDD sellable. Pide que se valide el plan primero."
+    retirado = spec_origen_retirado(text, plan_path)
+    if retirado:
+        return (f"El spec origen de '{plan_path}' esta RETIRADO ('{retirado}'): esa feature se dio "
+                f"de baja y ya no forma parte del producto. No generes tasks para construirla.")
     if m.group("value") != "VALIDADO":
         return f"El plan '{plan_path}' esta en Estado: {m.group('value')}. Pide que se valide el plan y resuelve sus hallazgos antes de generar tasks."
     amends = AMEND_RE.findall(text)
@@ -141,6 +172,16 @@ def gate_spec_fiable(args: str):
     text = read(spec_path)
     if text is None:
         return f"El spec '{spec_path}' no existe o no es legible."
+    # La baja se reporta primero: un spec retirado puede tener ademas gaps abiertos, y
+    # decir "responde estos 3 criticos" sobre una feature cancelada manda a trabajar
+    # en lo que ya no existe.
+    m_ret = ESTADO_RE.search(text)
+    if m_ret and m_ret.group("value") == "RETIRADO":
+        ret = re.search(r"^\s*(?:[-*>]\s*)?\**Retirada:?\**\s*:?\s*(?P<v>[^\n]*)$",
+                        text, re.MULTILINE)
+        detalle = f" ({ret.group('v').strip()})" if ret and ret.group("v").strip() else ""
+        return (f"El spec '{spec_path}' esta RETIRADO{detalle}: esa feature se dio de baja y ya "
+                f"no forma parte del producto. Si la decision cambio, hay que reactivarla antes.")
     n_inc = len(re.findall(r"\[INCOMPLETO\]", text))
     if n_inc:
         return f"El spec '{spec_path}' tiene {n_inc} HU(s) [INCOMPLETO]. Responde los gaps que las bloquean —en el `_analysis.md` o en la seccion `Items Pendientes` del propio spec, segun donde esten definidos— y pide que se completen esas historias."
@@ -177,9 +218,8 @@ def gate_spec_fiable(args: str):
     # Estado del spec (D-061): cada fase consume artefactos sellados de la anterior.
     # Solo se exige si el spec DECLARA el estado — un spec legacy sin la linea no
     # se bloquea (misma politica conservadora que `status_sync`).
-    estado = re.search(r"^\s*(?:[-*>]\s*)?\**Estado:?\**\s*:?\s*(BORRADOR|VALIDADO)\s*\**\s*$",
-                       text, re.MULTILINE)
-    if estado and estado.group(1) == "BORRADOR":
+    estado = m_ret
+    if estado and estado.group("value") == "BORRADOR":
         return (f"El spec '{spec_path}' esta en BORRADOR: nadie lo ha validado todavia. "
                 f"Pide que se valide antes de planificar sobre el.")
     return None
@@ -202,6 +242,11 @@ def gate_tasks_plan_vigente(args: str):
     plan_text = read(plan_path)
     if plan_text is None:
         return f"El `Plan origen` de '{tasks_path}' no resuelve ('{plan_path}'). Corrige el header antes de ejecutar tasks."
+    retirado = spec_origen_retirado(plan_text, plan_path)
+    if retirado:
+        return (f"El spec origen de '{plan_path}' esta RETIRADO ('{retirado}'): la feature se dio "
+                f"de baja. No se ejecuta ninguna de sus tasks — a diferencia de una enmienda, que "
+                f"retiene solo las del CA afectado, aqui no queda nada que construir.")
     pm = ESTADO_RE.search(plan_text)
     if pm and pm.group("value") != "VALIDADO":
         return (f"El plan origen '{plan_path}' esta en Estado: {pm.group('value')} — fue degradado tras generar las tasks. "

@@ -108,9 +108,15 @@ La feature owner **define** el modelo completo en su Plan. Las features que lo r
 
 - sin spec → `PENDIENTE_GENERACIÓN`
 - con spec y con veredicto en el readiness report → ese veredicto (autoridad)
+- con spec `Estado: RETIRADO` → `RETIRADA`, **por encima de todo lo demás** (ni el readiness la resucita: una feature que el producto ya no contempla no está "bloqueada", no hay nada que desbloquear)
+- con spec y con veredicto en el readiness report → ese veredicto (autoridad)
 - con spec, sin readiness → provisional: marcador presente → `BLOQUEADA`; avisos de gobernanza ≠ ninguno → `REQUIERE_CAMBIO_PRD`; limpio → `LISTA`
 
-Estados canónicos (sin variantes): `LISTA`, `BLOQUEADA`, `PENDIENTE_GENERACIÓN`, `REQUIERE_CAMBIO_PRD`.
+Estados canónicos (sin variantes): `LISTA`, `BLOQUEADA`, `PENDIENTE_GENERACIÓN`, `REQUIERE_CAMBIO_PRD`, `RETIRADA`.
+
+> Esta lista es una **copia** de `CANON_STATES` en `sdd-features-index.py`, y un test las compara
+> ([[D-069]]): si divergen, el estado que falte aquí no se pinta mal — la feature **desaparece**
+> del informe de estado del proyecto, que es el modo de fallo que [[D-046]] declaró inaceptable.
 
 **Regenerar** (desde la raíz del proyecto, el directorio que contiene `.sdd/`):
 
@@ -139,7 +145,7 @@ Lo invocan `wf-spec-fast-track` y `wf-spec-from-code` (tras escribir un spec), `
 - **Modelos compartidos (owner)**: [del discovery]
 - **Modelos compartidos (ref)**: [del discovery]
 - **Ruta spec**: features/[nombre]/spec/[nombre]_spec.md  [o "(pendiente de generación)"]
-- **Estado**: [LISTA | BLOQUEADA | PENDIENTE_GENERACIÓN | REQUIERE_CAMBIO_PRD]
+- **Estado**: [LISTA | BLOQUEADA | PENDIENTE_GENERACIÓN | REQUIERE_CAMBIO_PRD | RETIRADA]
 - **Origen de alcance**: [del spec o del discovery]
 - **Avisos de gobernanza**: [del spec o del discovery]
 

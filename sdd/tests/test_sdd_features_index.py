@@ -14,13 +14,14 @@ raíz spec — el índice debe encontrarlo por `.sdd/project-init.json` o por
 from __future__ import annotations
 
 import json
+import re
 import sys
 import tempfile
 import unittest
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
-from _helpers import run_script, write  # noqa: E402
+from _helpers import SDD_ROOT, run_script, write  # noqa: E402
 
 
 DISCOVERY = """\
@@ -282,6 +283,89 @@ class FeaturesIndexTest(unittest.TestCase):
               spec("F-001", "Login"))
         r = self._run()
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+
+class RetiradaTest(unittest.TestCase):
+    """El quinto estado (D-074): derivado del spec, y por encima del readiness."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.dir = Path(self.tmp.name)
+        write(self.dir / "prj_discovery.md", DISCOVERY)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _spec(self, extra_header="", marker=""):
+        text = spec("F-001", "Login", marker).replace(
+            "> Feature ID: F-001", "> Estado: RETIRADO\n> Retirada: CR-007 — ya no va\n"
+                                  "> Feature ID: F-001" + extra_header)
+        return write(self.dir / "features" / "login" / "spec" / "login_spec.md", text)
+
+    def _index(self):
+        r = run_script("sdd-features-index.py", self.dir)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        return (self.dir / "prj_features.md").read_text(encoding="utf-8")
+
+    def test_retired_spec_yields_retirada(self):
+        self._spec()
+        out = self._index()
+        self.assertIn("| F-001: Login | RETIRADA |", out)
+        self.assertIn("CR-007", out, "la columna de bloqueantes lleva el cambio que la retira")
+
+    def test_retirada_wins_over_the_readiness_verdict(self):
+        """El readiness es autoritativo para todo... menos para resucitar una baja."""
+        self._spec()
+        write(self.dir / "prj_readiness_report.md",
+              "## Matriz de readiness\n\n| Feature | Estado | Bloqueantes |\n"
+              "|---|---|---|\n| F-001: Login | LISTA | — |\n")
+        self.assertIn("| F-001: Login | RETIRADA |", self._index())
+
+    def test_retirada_wins_over_markers(self):
+        """Una feature retirada no esta BLOQUEADA: no hay nada que desbloquear."""
+        self._spec(marker="\n[INCOMPLETO] falta decidir\n")
+        self.assertIn("| F-001: Login | RETIRADA |", self._index())
+
+    def test_still_idempotent_with_a_retired_feature(self):
+        self._spec()
+        first = self._index()
+        self.assertEqual(first, self._index())
+
+
+class CanonStatesBackstopTest(unittest.TestCase):
+    """Las copias del vocabulario de estados no divergen ([[D-069]]).
+
+    `CANON_STATES` vive en `sdd-features-index.py`. Cuando una copia se queda
+    corta el sintoma no es cosmetico: `sdd-project-status.py` filtra por su propia
+    tupla y la feature con un estado que no reconoce **desaparece** del informe.
+    Este test existe porque la lista se quedo corta seis veces en dos dias.
+    """
+
+    def _canon(self):
+        text = (SDD_ROOT / "scripts" / "sdd-features-index.py").read_text(encoding="utf-8")
+        m = re.search(r"CANON_STATES\s*=\s*\((?P<body>.*?)\)", text, re.DOTALL)
+        assert m, "no se encuentra CANON_STATES"
+        return set(re.findall(r'"([A-ZÓ_]+)"', m.group("body")))
+
+    def test_project_status_knows_every_canonical_state(self):
+        canon = self._canon()
+        text = (SDD_ROOT / "scripts" / "sdd-project-status.py").read_text(encoding="utf-8")
+        m = re.search(r'if fm and cells\[1\] in \((?P<body>.*?)\):', text, re.DOTALL)
+        self.assertIsNotNone(m, "no se encuentra el filtro de estados de features_resumen()")
+        copia = set(re.findall(r'"([A-ZÓ_]+)"', m.group("body")))
+        self.assertEqual(canon, copia,
+                         "sdd-project-status.py filtra por una copia de CANON_STATES: "
+                         "un estado que le falte hace DESAPARECER la feature del informe")
+
+    def test_the_canonical_prose_enumerates_every_state(self):
+        canon = self._canon()
+        kb = (SDD_ROOT / "pipeline" / "spec" / "skills" / "kb-decompose-expert"
+              / "SKILL.md").read_text(encoding="utf-8")
+        linea = [l for l in kb.splitlines() if l.startswith("Estados canónicos")]
+        self.assertEqual(len(linea), 1, "se espera una sola linea canonica en kb-decompose-expert")
+        prosa = set(re.findall(r"`([A-ZÓ_]+)`", linea[0]))
+        self.assertEqual(canon, prosa,
+                         "la enumeracion en prosa de kb-decompose-expert diverge de CANON_STATES")
 
 
 if __name__ == "__main__":

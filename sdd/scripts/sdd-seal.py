@@ -2,8 +2,8 @@
 """Sellador determinista de artefactos SDD (Fase 1.2 del ROADMAP).
 
 Separa el AUTOR del SELLADOR: el agente auditor emite su veredicto experto,
-pero el estado operativo (`Estado: BORRADOR|VALIDADO`) solo lo escribe este
-script, y solo si las condiciones verificables mecanicamente se cumplen.
+pero el estado operativo (`Estado: BORRADOR|VALIDADO|RETIRADO`) solo lo escribe
+este script, y solo si las condiciones verificables mecanicamente se cumplen.
 Un veredicto `OK` de un agente ya no es suficiente para sellar.
 
 Uso:
@@ -12,8 +12,19 @@ Uso:
     sdd-seal.py <plan|spec> <archivo.md> --seal --approved-by "Nombre (Rol) (fecha)"
                                                    # ademas estampa `Aprobado por:` (Regla 10)
     sdd-seal.py <plan|spec> <archivo.md> --unseal   # fuerza Estado: BORRADOR (downgrade siempre permitido)
+    sdd-seal.py spec <archivo.md> --retire --change CR-XXX [--reason "texto"]
+                                                   # da de baja la feature: Estado: RETIRADO (D-074)
+    sdd-seal.py spec <archivo.md> --unretire       # deshace la baja: vuelve a BORRADOR
 
 Exit codes: 0 = OK / sellado; 1 = error de uso o IO; 2 = condiciones no cumplidas.
+
+Retirada (D-074): `RETIRADO` es el estado terminal de una feature que el producto
+deja de contemplar. No es un veredicto de calidad, asi que `--retire` NO exige las
+condiciones de sellado — se retira igual un spec roto que uno sano; lo que exige es
+la traza del cambio que lo decide (`--change CR-XXX`). Un spec RETIRADO no se puede
+sellar (`--seal` sale 2) y degrada el plan que deriva de el. La decision de retirar
+es humana y vive en `wf-spec-retire`, que corre en el hilo principal; aqui solo se
+estampa lo ya decidido — mismo reparto que `--approved-by` (D-065).
 
 Condiciones verificadas para `plan`:
   1. El archivo parece un Plan SDD (tiene linea `Estado:` y `Checklist de Trazabilidad`).
@@ -67,17 +78,23 @@ que quedan absorbidas. `--check` nunca las toca ni bloquea por ellas.
 import hashlib
 import re
 import sys
+from datetime import date
 from pathlib import Path
 
 GAP_LINES = ("DESIGN_GAPs", "TECH_GAPs", "TRACE_GAPs", "PLAN_GAPs")
 # Tolera variantes de formato: `Estado: X`, `**Estado:** X`, `**Estado**: X`,
 # `- Estado: X`, `**Estado: X**` — preservando el formato al reescribir.
 ESTADO_RE = re.compile(
-    r"^(?P<prefix>\s*(?:[-*>]\s*)?\**Estado:?\**\s*:?\s*)(?P<value>BORRADOR|VALIDADO)(?P<suffix>\s*\**\s*)$",
+    r"^(?P<prefix>\s*(?:[-*>]\s*)?\**Estado:?\**\s*:?\s*)(?P<value>BORRADOR|VALIDADO|RETIRADO)(?P<suffix>\s*\**\s*)$",
     re.MULTILINE,
 )
 SPEC_ORIGEN_RE = re.compile(r"Spec origen(?:\*\*)?\s*:?\**\s*`?(?P<path>[^`\s|]+)`?", re.IGNORECASE)
-CA_DEF_RE = re.compile(r"^#{2,4}\s*(?P<ca>CA-\d{3,4})\b", re.MULTILINE)
+# Un CA con tombstone (`### CA-003 [ELIMINADO en v1.4: razon]`) NO es un CA vigente:
+# kb-traceability-rules Regla 12 lo sanciona como la forma correcta de eliminar
+# conservando el ID, asi que exigirle cobertura en el plan —o HU padre en el spec—
+# convertia la regla en un bloqueo. El lookahead lo excluye de los dos checks.
+TOMBSTONE = r"(?![^\n]*\[ELIMINAD[OA])"
+CA_DEF_RE = re.compile(r"^#{2,4}\s*(?P<ca>CA-\d{3,4})\b" + TOMBSTONE, re.MULTILINE)
 # Entradas de deuda tecnica asumida (kb-plan-expert, "Deuda tecnica asumida")
 TD_HEADER_RE = re.compile(r"^#{2,4}\s*(?P<td>TD-\d{3,4})\b", re.MULTILINE)
 TD_FIELDS = ("Decisión", "A pesar de", "Riesgo asumido", "Queda pendiente",
@@ -90,6 +107,15 @@ TD_FIELDS = ("Decisión", "A pesar de", "Riesgo asumido", "Queda pendiente",
 APROBADO_RE = re.compile(
     r"^(?P<prefix>\s*(?:[-*>]\s*)?\**Aprobado por:?\**\s*:?\s*)(?P<value>[^\n]*)$",
     re.MULTILINE)
+# Traza de la baja (D-074): `Retirada: CR-007 — <razon> (<fecha>)`. Mismo reparto que
+# `Aprobado por:` — el dato lo decide un humano, lo escribe el script.
+RETIRADA_RE = re.compile(
+    r"^(?P<prefix>\s*(?:[-*>]\s*)?\**Retirada:?\**\s*:?\s*)(?P<value>[^\n]*)$",
+    re.MULTILINE)
+CR_RE = re.compile(r"^CR-\d{3,4}$")
+# Variante de linea completa, para poder retirarla al deshacer la baja.
+RETIRADA_LINE_RE = re.compile(
+    r"^[ \t]*(?:[-*>][ \t]*)?\**Retirada:?\**[ \t]*:?[^\n]*$\n?", re.MULTILINE)
 AMEND_LINE_RE = re.compile(
     r"^[ \t]*(?:[-*>][ \t]*)?\**Enmienda pendiente:?\**[ \t]*:?[ \t]*"
     r"(?P<ca>CA-\d{3,4})[ \t]*\([ \t]*(?P<ref>E-\d{3,4})[^)\n]*\)[ \t]*$\n?",
@@ -147,6 +173,15 @@ def check_plan(plan_path: Path):
         add(True, f"Spec origen legible: {spec_path}")
     except OSError:
         add(False, f"Spec origen NO legible: {spec_path}")
+        return checks, False
+
+    # 4b. El spec origen no esta dado de baja (D-074). Un plan validado de una
+    # feature que el producto ya no contempla es justo lo que no debe quedar en pie:
+    # `wf-prepare-tasks` y `wf-task-run` lo consumen sin saber que su origen murio.
+    spec_estado = ESTADO_RE.search(spec_text)
+    if spec_estado and spec_estado.group("value") == "RETIRADO":
+        add(False, f"El spec origen esta RETIRADO ({spec_path}) — la feature se dio de baja; "
+                   "no hay plan que validar sobre ella")
         return checks, False
 
     # 5. Spec sin [INCOMPLETO], [CRÍTICO] ni [INFERIDO] abiertos
@@ -222,7 +257,8 @@ def check_plan(plan_path: Path):
 
 GAP_CRIT_RE = re.compile(r"^#{2,4}\s*\[(?P<id>[PD]-\d{3,4})\]\s*\[CR[IÍ]TICO\]", re.MULTILINE)
 PENDIENTE_RE = re.compile(r"\*\*Respuesta\*\*\s*:\s*_\(pendiente\)_")
-CA_HU_RE = re.compile(r"^#{2,4}\s*(?P<ca>CA-\d{3,4})\b(?P<rest>[^\n]*)$", re.MULTILINE)
+CA_HU_RE = re.compile(r"^#{2,4}\s*(?P<ca>CA-\d{3,4})\b" + TOMBSTONE + r"(?P<rest>[^\n]*)$",
+                      re.MULTILINE)
 GAP_INFO_RE = re.compile(r"^#{2,4}\s*\[(?P<id>[PD]-\d{3,4})\]\s*\[INFORMATIVO\]", re.MULTILINE)
 # `## Asunciones Aplicadas`, y la variante versionada que escribe wf-spec-delta:
 # `## Asunciones Aplicadas (v1.1)`. Puede haber varias en un spec con historia.
@@ -326,6 +362,16 @@ def check_spec(spec_path: Path):
                "El archivo parece un Spec SDD (linea `Estado:` + HUs/CAs)"):
         return checks, False
 
+    # 1b. Lo que esta de baja no se valida (D-074). `VALIDADO` afirma que alguien
+    # dio por bueno este spec para construir sobre el; sobre una feature retirada esa
+    # afirmacion no significa nada. Para deshacerlo: `--unretire`, que vuelve a BORRADOR.
+    m_estado = ESTADO_RE.search(text)
+    if m_estado and m_estado.group("value") == "RETIRADO":
+        ret = RETIRADA_RE.search(text)
+        detalle = f" ({ret.group('value').strip()})" if ret and ret.group("value").strip() else ""
+        add(False, f"El spec esta RETIRADO{detalle} — una feature dada de baja no se valida")
+        return checks, False
+
     # 2. HUs completas.
     n_inc = len(re.findall(r"\[INCOMPLETO\]", text))
     add(n_inc == 0, f"Sin HUs [INCOMPLETO] (encontradas: {n_inc})")
@@ -413,20 +459,21 @@ def write_estado(plan_path: Path, new_state: str) -> bool:
     return True
 
 
-def write_aprobado(path: Path, valor: str) -> bool:
-    """Estampa `Aprobado por: <valor>` en la cabecera; la crea junto a `Estado:` si falta.
+def write_header_line(path: Path, label: str, line_re, valor: str) -> bool:
+    """Estampa `<label>: <valor>` en la cabecera; la crea junto a `Estado:` si falta.
 
-    Solo se llama tras un sellado con exito: un artefacto que no pasa las condiciones
-    no tiene aprobacion que registrar.
+    La usan `Aprobado por:` (D-065, tras un sellado con exito) y `Retirada:` (D-074,
+    al dar de baja). Las dos comparten el problema dificil —calcar el formato exacto
+    de la cabecera— y por eso comparten implementacion.
     """
     text = path.read_text(encoding="utf-8")
-    m = APROBADO_RE.search(text)
+    m = line_re.search(text)
     if m is not None:
         new_text = text[:m.start()] + m.group("prefix") + valor + text[m.end():]
     else:
         e = ESTADO_RE.search(text)
         if e is None:
-            print("ERROR: no hay linea `Estado:` junto a la que estampar `Aprobado por:`",
+            print(f"ERROR: no hay linea `Estado:` junto a la que estampar `{label}:`",
                   file=sys.stderr)
             return False
         # La linea nueva se CALCA de la de `Estado:` (blockquote, bullet o negrita)
@@ -440,43 +487,125 @@ def write_aprobado(path: Path, valor: str) -> bool:
         nl = text.find("\n", pos)
         end = len(text) if nl == -1 else nl
         estado_line = text[line_start:end]
-        line = estado_line.replace("Estado", "Aprobado por", 1)
+        line = estado_line.replace("Estado", label, 1)
         line = line.replace(e.group("value"), valor, 1)
         new_text = text[:end] + "\n" + line + text[end:]
     path.write_text(new_text, encoding="utf-8")
-    print(f"Aprobado por: {valor} — escrito en {path}")
+    print(f"{label}: {valor} — escrito en {path}")
     return True
+
+
+def _current_estado(path: Path) -> str | None:
+    try:
+        m = ESTADO_RE.search(path.read_text(encoding="utf-8"))
+    except OSError:
+        return None
+    return m.group("value") if m else None
+
+
+def take_value(args, flag):
+    """Extrae `--flag valor` de args; devuelve (args_sin_flag, valor|None, error|None)."""
+    if flag not in args:
+        return args, None, None
+    i = args.index(flag)
+    if i + 1 >= len(args) or args[i + 1].startswith("--"):
+        return args, None, f"`{flag}` necesita un valor entre comillas"
+    return args[:i] + args[i + 2:], args[i + 1], None
+
+
+MODES = ("--check", "--seal", "--unseal", "--retire", "--unretire")
+
+
+def do_retire(spec_path: Path, cr: str, reason: str | None) -> int:
+    """Estampa la baja: `Estado: RETIRADO` + la traza del cambio que la decide.
+
+    No verifica condiciones de sellado a proposito: una feature se retira este su
+    spec sano o roto. Lo unico exigible es la traza — retirar sin `CR-XXX` es
+    cancelar producto sin registro.
+    """
+    try:
+        text = spec_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        print(f"ERROR: no se puede leer el spec: {exc}", file=sys.stderr)
+        return 1
+    m = ESTADO_RE.search(text)
+    if m is None:
+        print("ERROR: no se encuentra la linea `Estado:` — no parece un Spec SDD",
+              file=sys.stderr)
+        return 1
+    if m.group("value") == "RETIRADO":
+        print(f"El spec ya estaba RETIRADO; sin cambios. ({spec_path})")
+        return 0
+    valor = f"{cr} — {reason} ({date.today().isoformat()})" if reason \
+        else f"{cr} ({date.today().isoformat()})"
+    if not write_estado(spec_path, "RETIRADO"):
+        return 1
+    if not write_header_line(spec_path, "Retirada", RETIRADA_RE, valor):
+        return 1
+    print(f"RESULTADO: feature dada de baja. El ID de feature se conserva y no se reutiliza "
+          f"(kb-traceability-rules Regla 12).")
+    return 0
 
 
 def main() -> int:
     args = sys.argv[1:]
-    aprobado = None
-    if "--approved-by" in args:
-        i = args.index("--approved-by")
-        if i + 1 >= len(args):
-            return fail_usage("`--approved-by` necesita un valor entre comillas")
-        aprobado = args[i + 1]
-        args = args[:i] + args[i + 2:]
-    if (len(args) != 3 or args[0] not in ("plan", "spec")
-            or args[2] not in ("--check", "--seal", "--unseal")):
+    args, aprobado, err = take_value(args, "--approved-by")
+    if err:
+        return fail_usage(err)
+    args, cambio, err = take_value(args, "--change")
+    if err:
+        return fail_usage(err)
+    args, razon, err = take_value(args, "--reason")
+    if err:
+        return fail_usage(err)
+    if (len(args) != 3 or args[0] not in ("plan", "spec") or args[2] not in MODES):
         return fail_usage("argumentos invalidos")
     kind = args[0]
     plan_path = Path(args[1])
     mode = args[2]
     if aprobado is not None and mode != "--seal":
         return fail_usage("`--approved-by` solo aplica con `--seal`")
+    if (cambio is not None or razon is not None) and mode != "--retire":
+        return fail_usage("`--change` y `--reason` solo aplican con `--retire`")
+    if mode in ("--retire", "--unretire") and kind != "spec":
+        return fail_usage(f"`{mode}` solo aplica a un spec: la baja es de la feature")
 
-    if mode == "--unseal":
+    if mode == "--retire":
+        if not cambio:
+            return fail_usage(
+                "`--retire` necesita `--change CR-XXX`: la baja de una feature se apoya "
+                "en el cambio de producto que la decide")
+        if not CR_RE.match(cambio):
+            return fail_usage(f"`--change` espera un ID de cambio `CR-XXX` (recibido: {cambio})")
+        return do_retire(plan_path, cambio, razon)
+
+    if mode in ("--unseal", "--unretire"):
         # Downgrade siempre permitido: volver a BORRADOR es la direccion segura.
-        return 0 if write_estado(plan_path, "BORRADOR") else 1
+        # `--unretire` no salta a VALIDADO: revalidar exige pasar su gate otra vez.
+        if not write_estado(plan_path, "BORRADOR"):
+            return 1
+        if mode == "--unretire":
+            # La traza se va con el estado: una linea `Retirada:` sobre un spec vigente
+            # afirma una baja que ya no existe, y la leen tanto el indice como una persona.
+            text = plan_path.read_text(encoding="utf-8")
+            nuevo = RETIRADA_LINE_RE.sub("", text)
+            if nuevo != text:
+                plan_path.write_text(nuevo, encoding="utf-8")
+                print("Traza `Retirada:` retirada — la feature vuelve a estar vigente.")
+        return 0
 
     checks, sellable = check_plan(plan_path) if kind == "plan" else check_spec(plan_path)
     print(f"=== sdd-seal {kind} {'(check)' if mode == '--check' else '(seal)'} — {plan_path} ===")
     for ok, desc in checks:
         print(f"  {'✓' if ok else '✗'} {desc}")
     if not sellable:
-        print(f"RESULTADO: condiciones NO cumplidas — el {kind} no es sellable. Estado queda/vuelve a BORRADOR.")
-        if mode == "--seal":
+        # Un sellado que falla devuelve el artefacto a BORRADOR... salvo que este
+        # RETIRADO: ahi el fallo ES la baja, y degradar lo resucitaria en silencio.
+        # Deshacer una retirada es explicito (`--unretire`), nunca efecto colateral.
+        retirado = mode == "--seal" and _current_estado(plan_path) == "RETIRADO"
+        print(f"RESULTADO: condiciones NO cumplidas — el {kind} no es sellable."
+              + ("" if retirado else " Estado queda/vuelve a BORRADOR."))
+        if mode == "--seal" and not retirado:
             write_estado(plan_path, "BORRADOR")
         return 2
 
@@ -495,7 +624,7 @@ def main() -> int:
 
     if not write_estado(plan_path, "VALIDADO"):
         return 1
-    if aprobado and not write_aprobado(plan_path, aprobado):
+    if aprobado and not write_header_line(plan_path, "Aprobado por", APROBADO_RE, aprobado):
         return 1
     return 0
 

@@ -7,7 +7,7 @@ para garantizar que ningún skill se queda sin casos en los cuatro ejes de prueb
 
 ## Alcance
 
-- **Solo `wf-*` del core** (48 skills). Agentes, scripts (`sdd-*.py`) y `kb-*` se anotan como cobertura
+- **Solo `wf-*` del core** (49 skills). Agentes, scripts (`sdd-*.py`) y `kb-*` se anotan como cobertura
   *derivada* en la columna Mecanismo cuando un `wf-*` los ejercita; no tienen fila propia.
 - **Overlay KMM diferido** a un track aparte (8 `wf-kmm-*` + kb anidadas). CU-12 ya lo cubre parcialmente.
 
@@ -22,7 +22,12 @@ para garantizar que ningún skill se queda sin casos en los cuatro ejes de prueb
 
 ## Progreso
 
-**Revisadas: 48 / 48** ✅ · Completadas: 48 · Revisadas sin huecos: 0 · Con huecos: 0 · Pendientes: 0
+**Revisadas: 48 / 49** · Completadas: 48 · Revisadas sin huecos: 0 · Con huecos: 0 · **Pendientes: 1**
+
+> ⏱ **`wf-spec-retire` nace sin medir** ([[D-074]], 2026-09-14). Los escenarios están escritos
+> (CU-7.o/p/q) pero no ejercitados: la fila es `PENDIENTE` y no se marca de otra forma hasta que
+> haya pasada. Además, **CU-7 no puede medir el bloqueo aguas abajo**: su proyecto arranca sin plan
+> ni tasks, así que la denegación de generar y ejecutar tareas necesita el proyecto de CU-6.
 
 > **Auditoría completa.** Todas las fases del core revisadas: bootstrap (2) · prd (4) · spec (13) ·
 > design (14) · plan (2) · tasks (7) · meta (6). Las skills meta entran en la batería vía
@@ -71,8 +76,9 @@ para garantizar que ningún skill se queda sin casos en los cuatro ejes de prueb
 | wf-spec-readiness | `<path/features/>` | sdd-spec-auditor; kb-gap-conventions; `sdd-features-index.py`; lee los `_conflict_report.md` **de la raíz y de cada feature**, en ambos layouts ([[D-046]]) y **arbitra** las divergencias entre auditores sin cerrarlas por mayoría ([[D-047]]) | CU-3.f/o · CU-13.b/g | ✅ | ✅ | ✅ | 🟡 | COMPLETADO | — |
 | wf-spec-delta | `analyze <spec.md> --new-reqs <desc.md> \| apply <spec.md> <delta_analysis.md> [--allow-open-critical-gaps]` | **hilo principal** ([[D-073]]): sostiene **tres gates** —delta vs cambio de producto, cuál de las lecturas si el requisito es ambiguo, y aplicar o no con críticos abiertos— y delega análisis e integración a sdd-spec-writer; kb-spec-expert; `sdd-analysis-gaps.py --check` (el recuento sale del script); `sdd-seal.py --unseal`; `sdd-features-index.py` | CU-3.h/p · CU-13.b/g · CU-15.d | ✅ | ✅ | ✅ | ✅ | COMPLETADO | CU-3.h y CU-3.p **cambian de forma** con [[D-073]]: el `AMBIGUO` que antes se resolvía solo ahora se presenta, y *"no lo decido ahora"* tiene que **marcar** un gap `[D-XXX]`, no elegir |
 | wf-spec-gap-resolve | `<feature_spec.md> [--analysis <analysis.md>]` | sdd-spec-writer; kb-spec-characterization; `sdd-analysis-gaps.py --check`; los `[INFERIDO]` **paran** con `STOP_INFERIDO_SIN_CONFIRMAR` y las tres vías las presenta quien invoca ([[D-068]]) | CU-3.g/p/q · CU-4.c · CU-13.b/g | ✅ | ✅ | ✅ | 🟡 | COMPLETADO | CU-3.q mide **dos turnos** desde [[D-068]]: parada + material verbatim, y después las decisiones aplicadas tal cual |
+| wf-spec-retire | `<feature_spec.md> --change CR-XXX [--reason 'texto']` | **hilo principal** ([[D-074]]): exige la traza del `CR-XXX`, delega el diagnóstico de impacto a sdd-spec-auditor (shared models huérfanos, dependencias, artefactos ya generados) y sostiene **un gate sin override** — no hay `--allow-*` porque puede preguntar; `sdd-seal.py --retire` es el único escritor de la baja, `--unseal` degrada el plan, `sdd-features-index.py` deriva `RETIRADA`; el bloqueo lo aplica `sdd-gate-check.py` en los tres frentes | CU-7.o/p/q | ❌ | ❌ | ❌ | ❌ | PENDIENTE | nace sin pasada; el bloqueo aguas abajo necesita el proyecto de CU-6, no el de CU-7 |
 | wf-spec-amend | `<feature_spec.md> --ca CA-XXX [--from-task T-00X] [--reason 'texto']` | **hilo principal** ([[D-068]]): sostiene sus **dos gates** con `AskUserQuestion` —clasificar aclaración-vs-cambio de comportamiento, y confirmar el texto final palabra por palabra— y delega el análisis y la edición quirúrgica a sdd-spec-writer; `sdd-amend.py` es el único que asigna `E-00X` y marca el plan | CU-8.d/e · CU-13.b/g | ✅ | ✅ | ✅ | ✅ | COMPLETADO | los dos gates son **su razón de existir**: una pasada que no los vea presentados es FALLO, no matiz |
-| wf-spec-sync-from-prd | `analyze <prd.md> \| apply <prd.md> --features F-001,F-002,...` | sdd-spec-writer; `sdd-sync-check.py seal`; el `apply` **lo delega a `wf-spec-delta apply`** en vez de reimplementarlo — antes se dejaba fuera el `--unseal`, la versión menor, el changelog y el índice ([[D-067]]) | CU-7.l/m · CU-13.b · CU-15.a | ✅ | ✅ | ✅ | ✅ | COMPLETADO | — |
+| wf-spec-sync-from-prd | `analyze <prd.md> \| apply <prd.md> --features F-001,F-002,...` | sdd-spec-writer; `sdd-sync-check.py seal`; el `apply` ejecuta el **contrato de integración** del delta —no invoca el workflow, que desde [[D-073]] vive en main ([[D-070]])— con `--unseal`, versión menor, changelog e índice ([[D-067]]); cuarta acción `retire`, que **se salta y reporta**: un fork no da de baja nada ([[D-074]]) | CU-7.l/m/q · CU-13.b · CU-15.a | ✅ | ✅ | ✅ | ✅ | COMPLETADO | — |
 | wf-prd-sync-impact | `<prd.md>` | sdd-spec-auditor (`[Read, Bash]`: escribe su informe por redirección, **nunca lo delega a main** — [[D-051]]); `sdd-sync-check.py`; `derived_from_prd_hash` | CU-7.d/e · CU-13.b · CU-15.a | ✅ | ✅ | ✅ | — | COMPLETADO | informe **efímero** (cabecera `Vigente para: PRD v<X.Y>`); ofrece no volcarlo si el derivado se regenera acto seguido |
 
 ---

@@ -118,6 +118,7 @@ Mapea cada estado a un siguiente paso:
 - `in_sync` → sin acción
 - `needs_review` → **analizar la sincronización** de esa feature antes de tocar nada
 - `stale` → **aplicar la sincronización** sobre ese spec, o regenerarlo explícitamente
+- `stale` **porque la capacidad ya no está en el PRD** → ni sincronizar ni regenerar: **dar la feature de baja** ([[D-074]]). Dilo así en la columna, y nombra el `CR-XXX` que la retira. Las otras dos acciones son falsas aquí — no hay con qué poner al día un spec cuyo referente desapareció, y regenerarlo lo volvería a escribir. La baja la confirma una persona; tú solo la señalas
 
 > **En lenguaje natural, no con el nombre del workflow.** Esta columna acaba **dentro del
 > `_sync_report.md`**, que lo lee una persona: describe la acción, no la invocación. El usuario no

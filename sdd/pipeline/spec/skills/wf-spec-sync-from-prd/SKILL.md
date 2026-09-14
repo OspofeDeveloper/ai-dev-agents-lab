@@ -62,6 +62,7 @@ Para cada feature potencialmente afectada:
   - `delta`
   - `manual_review`
   - `rediscover`
+  - `retire` — la capacidad que esta feature especifica **ya no está en el PRD** ([[D-074]]). No es una deriva que se pueda cerrar: es una feature que el producto retiró
 
 ### Paso 4A: Generar requisitos de sync por feature
 
@@ -114,6 +115,9 @@ Para cada feature solicitada:
 
 Si el cambio rebasa un delta razonable, detén esa feature y marca:
 > "Esta feature necesita rediscovery o rediseño de spec; no se aplicó sync automático."
+
+**Las features con `acción: retire` se saltan siempre, y se reportan.** No les apliques nada: ni delta, ni regeneración, ni el sello de sync. Dar de baja una feature es una decisión de producto con coste irreversible —hay planes y tareas construidos encima— y **corres en un fork: no tienes turno para preguntarla** ([[D-045]]). Márcalas así y termina:
+> "Esta feature especifica una capacidad que el PRD ya no contempla. No se ha tocado: su baja se confirma aparte, con el impacto delante."
 
 ### Paso 5B: Post-proceso
 

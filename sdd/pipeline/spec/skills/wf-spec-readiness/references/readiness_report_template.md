@@ -25,6 +25,7 @@
 | F-003: [nombre] | BLOQUEADA | 0 | 1 | conflictos: CF-001 |
 | F-004: [nombre] | BLOQUEADA | 0 | 0 | dependencias: F-002 |
 | F-005: [nombre] | REQUIERE_CAMBIO_PRD | 0 | 0 | gobernanza: alcance derivado desde P-007 |
+| F-006: [nombre] | RETIRADA | — | — | CR-007 — [razón de la baja] |
 
 <!-- Ordenar por Feature ID. Mostrar todos los bloqueos de cada feature si tiene varios. -->
 

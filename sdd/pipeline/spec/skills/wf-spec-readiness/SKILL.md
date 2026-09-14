@@ -146,10 +146,13 @@ Para cada feature, asigna un estado:
 | `BLOQUEADA` | Tiene HUs `[INCOMPLETO]`, conflictos ALTA, dependencias bloqueantes o artefactos ambiguos que impiden decidir con seguridad |
 | `PENDIENTE_GENERACIÓN` | Identificada en el discovery pero aún no se ha generado spec (no se ha incluido en ninguna iteración de `wf-spec-features-first`). No es un bloqueo accionable — refleja que el humano aún no ha pedido procesarla. |
 | `REQUIERE_CAMBIO_PRD` | El spec o `_features.md` declara alcance derivado desde analysis que debería consolidarse primero en PRD, o el artefacto explicita un aviso de gobernanza pendiente |
+| `RETIRADA` | El spec declara `Estado: RETIRADO`: el producto dio de baja esa capacidad ([[D-074]]). **No es un bloqueo**, es un final — no lleva bloqueantes que resolver, y va en la columna el `CR-XXX` que la decidió |
 
 Una feature puede tener múltiples bloqueos simultáneos. En ese caso, listar todos los motivos en la columna de bloqueantes. La prioridad de display es: CAMBIO_PRD > GAPS > CONFLICTOS > DEPENDENCIAS > AMBIGÜEDAD_DE_ARTEFACTO.
 
 **Nota importante**: el readiness report usa solo estados canónicos. El detalle fino se expresa en la columna `Bloqueantes`, no creando variantes de estado adicionales.
+
+**Nota sobre `RETIRADA`**: igual que las `PENDIENTE_GENERACIÓN`, **no participan del topological sort ni del orden de implementación** — pero por el motivo opuesto: no es que todavía no haya spec, es que ya no hay feature. Si otra feature declara una dependencia sobre una `RETIRADA`, eso **sí** se reporta como bloqueante de la que depende: se quedó apuntando a algo que el producto retiró.
 
 **Nota sobre `PENDIENTE_GENERACIÓN`**: estas features se incluyen en el `_features.md` y en el informe de readiness como visibilidad del backlog, pero no participan del topological sort ni del orden de implementación — no hay spec con dependencias declaradas hasta que se generen. Si otra feature ya generada declara una dependencia sobre una `PENDIENTE_GENERACIÓN`, esa dependencia se reporta como "dependencia hacia feature no generada todavía" (no bloquea readiness de la feature ya generada, pero sí señala al usuario qué generar a continuación).
 

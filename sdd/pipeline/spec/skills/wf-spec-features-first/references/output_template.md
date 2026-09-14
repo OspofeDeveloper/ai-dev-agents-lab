@@ -9,6 +9,7 @@ Indica el modo: "Iteración sobre subset `[F-001, F-002, ...]`" o "Generación c
 | F-001: [nombre] | Esta iteración | ✓ / ✗ | [N] | [LISTA / BLOQUEADA / REQUIERE_CAMBIO_PRD] |
 | F-002: [nombre] | Iteración previa | ✓ | [N] | [LISTA / BLOQUEADA / REQUIERE_CAMBIO_PRD] |
 | F-003: [nombre] | — | — | — | PENDIENTE_GENERACIÓN |
+| F-004: [nombre] | Iteración previa | ✓ | — | RETIRADA |
 
 ## Artefactos
 

@@ -439,5 +439,109 @@ class SealSpecTest(unittest.TestCase):
         self.assertEqual(self.run_seal(p, "--check").returncode, 0)
         self.assertEqual(p.read_text(encoding="utf-8"), before)
 
+class RetireTest(unittest.TestCase):
+    """Retirada de una feature (D-074): `Estado: RETIRADO` y sus transiciones."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.dir = Path(self.tmp.name)
+        self.spec = write(self.dir / "login_spec.md",
+                          "# Spec: Login\n> Estado: BORRADOR\n> Feature ID: F-001\n"
+                          "> Origen de alcance: PRD\n\n### HU-1: hu\n\n"
+                          "### CA-001: ca ← HU-1\nDado a, cuando b, entonces c.\n")
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _retire(self, *extra):
+        return run_script("sdd-seal.py", "spec", self.spec, "--retire", *extra)
+
+    def test_retire_writes_state_and_trace(self):
+        r = self._retire("--change", "CR-007", "--reason", "ya no se cobra")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        text = self.spec.read_text(encoding="utf-8")
+        self.assertIn("Estado: RETIRADO", text)
+        self.assertRegex(text, r"Retirada: CR-007 — ya no se cobra \(\d{4}-\d{2}-\d{2}\)")
+
+    def test_retire_requires_the_change_that_decides_it(self):
+        r = self._retire()
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("--change", r.stderr)
+        self.assertIn("Estado: BORRADOR", self.spec.read_text(encoding="utf-8"),
+                      "sin traza no se escribe nada")
+
+    def test_retire_rejects_a_malformed_change_id(self):
+        r = self._retire("--change", "el-cambio-ese")
+        self.assertEqual(r.returncode, 1)
+        self.assertIn("CR-XXX", r.stderr)
+
+    def test_retire_is_idempotent(self):
+        self._retire("--change", "CR-007")
+        before = self.spec.read_text(encoding="utf-8")
+        r = self._retire("--change", "CR-009")
+        self.assertEqual(r.returncode, 0)
+        self.assertEqual(self.spec.read_text(encoding="utf-8"), before,
+                         "una feature ya retirada no se vuelve a estampar")
+
+    def test_a_retired_spec_is_not_sealable(self):
+        self._retire("--change", "CR-007")
+        r = run_script("sdd-seal.py", "spec", self.spec, "--check")
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("RETIRADO", r.stdout)
+
+    def test_a_failed_seal_does_not_undo_a_retirement(self):
+        """El downgrade automatico del sellado fallido resucitaria la feature."""
+        self._retire("--change", "CR-007")
+        run_script("sdd-seal.py", "spec", self.spec, "--seal")
+        self.assertIn("Estado: RETIRADO", self.spec.read_text(encoding="utf-8"))
+
+    def test_unretire_clears_state_and_trace(self):
+        self._retire("--change", "CR-007", "--reason", "motivo")
+        r = run_script("sdd-seal.py", "spec", self.spec, "--unretire")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        text = self.spec.read_text(encoding="utf-8")
+        self.assertIn("Estado: BORRADOR", text, "nunca salta directo a VALIDADO")
+        self.assertNotIn("Retirada:", text, "la traza se va con el estado")
+
+    def test_retire_only_applies_to_a_spec(self):
+        r = run_script("sdd-seal.py", "plan", self.spec, "--retire", "--change", "CR-007")
+        self.assertEqual(r.returncode, 1)
+
+    def test_a_plan_whose_spec_is_retired_is_not_sealable(self):
+        self._retire("--change", "CR-007")
+        plan = write(self.dir / "login_plan.md",
+                     plan_text(spec_rel="login_spec.md"))
+        r = run_script("sdd-seal.py", "plan", plan, "--check")
+        self.assertEqual(r.returncode, 2)
+        self.assertIn("RETIRADO", r.stdout)
+
+
+class TombstoneTest(unittest.TestCase):
+    """Regla 12: un CA con tombstone no es un CA vigente, y no puede bloquear sellos."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.dir = Path(self.tmp.name)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    TOMB = "\n### CA-003 [ELIMINADO en v1.4: la capacidad se retiro]\n"
+
+    def test_spec_with_a_tombstoned_ca_is_sealable(self):
+        spec = write(self.dir / "login_spec.md",
+                     "# Spec: Login\n> Estado: BORRADOR\n> Feature ID: F-001\n"
+                     "> Origen de alcance: PRD\n\n### HU-001: hu\n\n"
+                     "### CA-001: ca ← HU-001\nDado a, cuando b, entonces c.\n" + self.TOMB)
+        r = run_script("sdd-seal.py", "spec", spec, "--check")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+    def test_plan_need_not_cover_a_tombstoned_ca(self):
+        write(self.dir / "login_spec.md", SPEC_CLEAN + self.TOMB)
+        plan = write(self.dir / "login_plan.md", plan_text())
+        r = run_script("sdd-seal.py", "plan", plan, "--check")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()

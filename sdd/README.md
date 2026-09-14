@@ -278,6 +278,7 @@ project-root/
 # → Genera specs solo para las features indicadas
 # → prd_features.md marca el resto como PENDIENTE_GENERACIÓN
 # → las generadas quedan como LISTA, BLOQUEADA o REQUIERE_CAMBIO_PRD
+# → y las que el producto retire quedan como RETIRADA
 # Más tarde:  /wf-spec-features-first prd.md --features F-004,F-005
 
 # [HUMANO] Revisar prd_features.md: ajustar scope si es necesario

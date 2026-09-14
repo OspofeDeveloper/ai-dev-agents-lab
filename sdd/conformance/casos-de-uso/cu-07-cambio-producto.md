@@ -21,7 +21,7 @@ la cascada son juicio del agente → **manuales**.
 ## 🧪 Qué se prueba aquí (por componente)
 
 CU-7 es un **objetivo de usuario** (cambiar el producto y propagar el cambio), no una
-sola skill: sus escenarios ejercitan **4 componentes** del subsistema de cambio de
+sola skill: sus escenarios ejercitan **5 componentes** del subsistema de cambio de
 producto. Marca cada escenario al ejecutarlo. El estado de cobertura autoritativo (ejes
 happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es la
 **transpuesta** para leer/ejecutar el CU.
@@ -31,6 +31,17 @@ happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es
 - [ ] CU-7.b — Un cambio de producto real + reapertura del sello (D-028)
 - [ ] CU-7.c — Expansión de capacidad disfrazada de aclaración (Regla 4.1)
 - [ ] CU-7.n — El gate del cambio: clasificación confirmada y bifurcación resuelta por el humano (D-040)
+- [ ] CU-7.o — Una capacidad sale del producto: `DEPRECATION`, no `SCOPE_CHANGE` (D-074)
+
+### `wf-spec-retire` — dar de baja la feature (2) ⏱ **sin pasada**
+- [ ] CU-7.p — La baja se confirma con el impacto delante, y el estado lo estampa el script (D-074)
+- [ ] CU-7.q — Nadie retira desde un fork: sync-from-prd lo señala y no lo aplica (D-074)
+
+> ⏱ **`wf-spec-retire` nace sin medir** ([[D-074]]). Estos tres escenarios están escritos y **no
+> ejecutados**; la fila del ROADMAP es `PENDIENTE`. Y ojo con el alcance: **CU-7.p no puede medir
+> aquí el bloqueo aguas abajo** —el proyecto de CU-7 arranca sin plan ni tasks—, así que la
+> denegación de generar y ejecutar tareas sobre una feature retirada se mide sobre el proyecto de
+> CU-6, donde sí hay cadena completa.
 
 > ⚠ **[[D-040]] reinicia el recuento conductual de este bloque (2026-07-30).** `wf-prd-change` deja de
 > ser `context: fork` y pasa al hilo principal con **gate obligatorio**; el `prd-expert` analiza
@@ -525,3 +536,97 @@ apply Paso 4B detiene la feature que rebasa delta).
 **Resultado:** PASS si clasifica por severidad y detiene las features que rebasan delta · FALLO si
 fuerza un delta sobre un cambio estructural, o auto-aplica un rediscover.
 **Desviación → reportar:** issue citando `CU-7.m`.
+
+### CU-7.o — Una capacidad sale del producto (`DEPRECATION`, no `SCOPE_CHANGE`)
+
+**Precondición:** un PRD sellado con varias capacidades comprometidas y specs derivados de al menos
+dos de ellas.
+**Mecanismo:** `wf-prd-change` (hilo principal) → `prd-expert` clasifica read-only → gate del Paso 5.
+
+1. Le dices, hablando, que el producto deja de contemplar una de las capacidades — que se cae, que
+   ya no va.
+   → **Esperado:** el experto la clasifica **`DEPRECATION`**, no `SCOPE_CHANGE`. Es FALLO
+     clasificarla `SCOPE_CHANGE`: desde [[D-074]] esa etiqueta es para **añadir** o mover entre MVP
+     y fase futura, y la frontera importa porque decide si los derivados se resincronizan o se dan
+     de baja.
+2. Observas el gate.
+   → **Esperado:** presenta la clasificación **con su consecuencia práctica** —que las features que
+     especifican esa capacidad no se resincronizan, se retiran— y espera. No la da por buena.
+3. Le dices, en cambio, que esa capacidad **se pospone a la fase 2**.
+   → **Esperado:** eso **no** es `DEPRECATION`: la capacidad sigue comprometida, solo llega más
+     tarde. FALLO si propone retirar nada.
+4. Miras el `changes/CR-XXX/change-request.md`.
+   → **Esperado:** **nombra las features afectadas**, porque la baja se ejecuta feature a feature y
+     quien la ejecute necesita saber cuáles son. Y el PRD queda con el sello reabierto.
+
+**Resultado:** PASS si distingue retirar de posponer, presenta la consecuencia en el gate y deja las
+features nombradas en la traza · FALLO si colapsa `DEPRECATION` en `SCOPE_CHANGE`, si retira un
+aplazamiento, o si **toca algún spec** desde aquí (esta fase decide producto, no edita derivados).
+**Desviación → reportar:** issue citando `CU-7.o`.
+
+---
+
+### CU-7.p — La baja se confirma con el impacto delante, y la estampa el script
+
+**Precondición:** el `CR-XXX` de CU-7.o ya registrado, y la feature afectada con su spec
+`Estado: VALIDADO`. Si además posee un shared model que otra feature referencia, mejor: es el caso
+que importa.
+**Mecanismo:** `wf-spec-retire` (hilo principal) → `sdd-spec-auditor` diagnostica → gate →
+`sdd-seal.py --retire` + `sdd-features-index.py`.
+
+1. Le pides dar de baja esa feature, hablando.
+   → **Esperado:** antes de preguntar nada, **presenta el impacto**: qué shared models quedan sin
+     dueño y qué features los referencian, quién la declara dependencia, y qué artefactos derivados
+     existen ya. Es FALLO presentar el gate **sin** ese diagnóstico: un gate sin el impacto delante
+     es la firma de algo que no se ha visto.
+2. Observas la pregunta.
+   → **Esperado:** un `AskUserQuestion` con retirar / no retirar. **No hay flag de override**, y es
+     FALLO que se ofrezca uno o que se invente un `--allow-*`: este workflow puede preguntar, así
+     que el gate es el mecanismo ([[D-026]]).
+3. Confirmas la baja. Miras la cabecera del spec.
+   → **Esperado:** `Estado: RETIRADO` y `Retirada: CR-XXX — <razón> (<fecha>)`, escritas **por el
+     script**. FALLO si las escribe el orquestador a mano ([[D-060]]).
+4. Miras `_features.md` y el estado del proyecto.
+   → **Esperado:** la feature figura como **`RETIRADA`**, con el `CR-XXX` como motivo, y **no
+     aparece en «Siguiente foco»** ni pide ninguna acción. FALLO si desaparece del informe: eso
+     significa que una copia del vocabulario de estados se quedó corta.
+5. Le pides ahora que planifique esa feature.
+   → **Esperado:** **se deniega**, y el mensaje dice que está dada de baja — no que le falten gaps
+     por responder.
+6. Pruebas a retirarla otra vez.
+   → **Esperado:** informa de que ya estaba retirada y no vuelve a preguntar ni a estampar.
+
+**Resultado:** PASS si el impacto precede al gate, el script estampa, el índice deriva `RETIRADA` y
+planificar queda denegado · FALLO si retira sin preguntar, si acepta hacerlo sin `CR-XXX`, o si el
+estado lo escribe alguien que no es el sellador.
+**Desviación → reportar:** issue citando `CU-7.p`.
+
+> ⏱ **Los pasos 5-6 solo miden el primer frente.** Generar tareas y ejecutarlas sobre una feature
+> retirada **también** debe denegarse, pero eso exige plan y tasks ya generados: se mide sobre el
+> proyecto de CU-6, no aquí.
+
+---
+
+### CU-7.q — Nadie retira desde un fork
+
+**Precondición:** el PRD ya actualizado con la retirada y specs derivados sin tocar.
+**Mecanismo:** `wf-prd-sync-impact` y `wf-spec-sync-from-prd` (los dos `context: fork`).
+
+1. Le pides medir el impacto del cambio de PRD.
+   → **Esperado:** para la feature cuya capacidad ya no está en el PRD, la acción recomendada dice
+     **darla de baja**. Es FALLO recomendar "aplicar la sincronización" o "regenerarla": las dos son
+     falsas —no hay con qué poner al día un spec cuyo referente desapareció, y regenerarlo lo
+     volvería a escribir.
+2. Le pides analizar la resincronización.
+   → **Esperado:** esa feature sale clasificada con `acción: retire`.
+3. Le pides **aplicar** la resincronización incluyéndola.
+   → **Esperado:** **no la toca**. Ni delta, ni regeneración, ni sello de sync: la reporta como
+     pendiente de una baja que se confirma aparte. FALLO si le aplica cualquier cosa, y FALLO
+     también si **promete** retirarla — un fork no tiene turno para preguntarlo.
+4. Ejecutas la cascada completa sobre ese cambio.
+   → **Esperado:** la feature entra en el conjunto **STOP**, nunca en AUTO-APPLY, por baja que sea
+     su severidad.
+
+**Resultado:** PASS si los tres forks señalan la baja y ninguno la ejecuta · FALLO si alguno
+resincroniza, regenera o estampa el estado de una feature retirada.
+**Desviación → reportar:** issue citando `CU-7.q`.

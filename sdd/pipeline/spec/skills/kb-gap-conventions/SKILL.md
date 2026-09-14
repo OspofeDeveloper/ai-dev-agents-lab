@@ -208,6 +208,13 @@ Formato completo: `[P-002][INFORMATIVO]` o `[D-002][INFORMATIVO]`
 
 El marcador `_(pendiente)_` se inserta en el campo **"Respuesta"** de cada gap hasta que el humano lo reemplaza con su respuesta real.
 
+> **La retirada de una feature NO es un marcador de gap ([[D-074]]).** No existe `[RETIRADO]` ni
+> nada equivalente, y no hay que inventarlo. Un marcador de esta KB señala **algo que falta por
+> resolver** dentro de un artefacto vigente; una feature dada de baja no tiene nada que resolver
+> —dejó de formar parte del producto—. Su estado vive en la **cabecera del spec**
+> (`Estado: RETIRADO` + `Retirada: CR-XXX`), lo escribe solo `sdd-seal.py --retire`, y quien lo
+> consume son el índice de features y los gates. SSoT: `kb-traceability-rules` Regla 12.
+
 ### Formato de un gap en un informe de análisis
 
 ```markdown

@@ -60,7 +60,6 @@ Espera a que termine y lee su veredicto:
 
 Si NO se pasó `--new-reqs`: verifica que existe `product-changelog.md` o `changes/` junto al PRD. Si no existe ninguno → **DETENTE** e informa: no hay constancia de un cambio gestionado; arranca con `--new-reqs <cambio.md>` o ejecuta `wf-prd-change` primero. Si existe → continúa.
 
-> Este es el primer checkpoint humano: la aprobación del cambio la materializa `wf-prd-change`. El cascade no la salta.
 
 ---
 
@@ -86,9 +85,11 @@ Genera los `<nombre>_sync_requirements.md` por feature afectada. Cada feature tr
 ### 5b — Particionar las features afectadas
 Usando la clasificación del analyze, parte las features en dos conjuntos:
 - **Conjunto AUTO-APPLY** = features con `acción: delta` **Y** `severidad: minor` (cambios inequívocos).
-- **Conjunto STOP** = features con `severidad: major` **O** `acción: manual_review` **O** `acción: rediscover`.
+- **Conjunto STOP** = features con `severidad: major` **O** `acción: manual_review` **O** `acción: rediscover` **O** `acción: retire`.
 
-Si el conjunto STOP **no** está vacío → preséntalo al usuario como features que **NO se resincronizan solas** y requieren decisión humana: para cada una indica severidad/acción y recomienda `wf-spec-delta` (para los `major` o cambios de comportamiento), revisión manual, o `wf-spec-discover` (para los `rediscover`). **No las apliques.** Este es un checkpoint humano real, pero **NO aborta el cascade**: continúa aplicando el conjunto AUTO-APPLY.
+  `retire` nunca entra en AUTO-APPLY, por severidad que traiga: dar de baja una feature es irreversible en la práctica —hay planes y tareas encima— y su gate necesita el impacto delante ([[D-074]]).
+
+Si el conjunto STOP **no** está vacío → preséntalo al usuario como features que **NO se resincronizan solas** y requieren decisión humana: para cada una indica severidad/acción y recomienda `wf-spec-delta` (para los `major` o cambios de comportamiento), revisión manual, `wf-spec-discover` (para los `rediscover`) o `wf-spec-retire` (para los `retire`, que además exige el `CR-XXX` de la retirada). **No las apliques.** Este es un checkpoint humano real, pero **NO aborta el cascade**: continúa aplicando el conjunto AUTO-APPLY.
 
 ### 5c — Apply (o parada conservadora)
 - Si se pasó `--review-before-apply` **O** `--dry-run` → **NO apliques nada**; presenta la clasificación completa (AUTO-APPLY + STOP). En `--dry-run`, salta al Paso 8 con el análisis como salida. Con `--review-before-apply`, informa el comando para aplicar manualmente (`wf-spec-sync-from-prd apply <prd.md> --features ...`).

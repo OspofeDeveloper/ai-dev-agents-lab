@@ -50,7 +50,7 @@ RELEASE_SHA_RE = re.compile(r"Commit/SHA:\**\s*`?[0-9a-f]+`?\s*\(`?([0-9a-f]+)`?
 RELEASE_TAG_RE = re.compile(r"Tag:\**\s*`([^`]+)`")
 
 # Orden de fases (índice = "lo lejos que ha llegado")
-PHASE_ORDER = ["PENDIENTE", "Spec", "Plan", "Tasks", "QA", "Cerrada"]
+PHASE_ORDER = ["PENDIENTE", "Spec", "Plan", "Tasks", "QA", "Cerrada", "Retirada"]
 
 
 def read_text(path: Path) -> str:
@@ -97,8 +97,11 @@ def features_resumen(features_md: str) -> dict:
         if len(cells) < 2 or all(set(c) <= {"-", ":", " "} for c in cells):
             continue
         fm = FID_RE.search(cells[0])
+        # Los estados canonicos los define `sdd-features-index.py` (CANON_STATES);
+        # esta tupla es su copia del lado lector y el test las compara ([[D-069]]).
+        # Un estado fuera de ella no se pinta mal: la feature DESAPARECE del informe.
         if fm and cells[1] in ("LISTA", "BLOQUEADA", "PENDIENTE_GENERACIÓN",
-                               "REQUIERE_CAMBIO_PRD"):
+                               "REQUIERE_CAMBIO_PRD", "RETIRADA"):
             out[fm.group(0)] = {
                 "estado": cells[1],
                 "bloqueantes": cells[-1] if len(cells) >= 3 else "—",
@@ -154,6 +157,19 @@ def analyze_feature(fdir: Path, resumen: dict) -> dict:
 
     rmeta = resumen.get(fid, {})
     n_bugs = len(BUG_RE.findall(read_text(bugs))) if bugs else 0
+
+    # ── Dada de baja ([[D-074]]) ──
+    # Va ANTES de la cascada de fases: una feature retirada suele tener plan o tasks
+    # en disco, y la cascada la pintaria como si siguiera en marcha. No pide accion
+    # y no entra en el siguiente foco — que es justo el punto de retirarla.
+    estado_idx = rmeta.get("estado")
+    retirada = estado_idx == "RETIRADA" or (
+        spec and (header_field(read_text(spec), "Estado") or "").strip().upper() == "RETIRADO")
+    if retirada:
+        motivo = rmeta.get("bloqueantes") if estado_idx == "RETIRADA" else None
+        if not motivo or motivo == "—":
+            motivo = (header_field(read_text(spec), "Retirada") if spec else "") or "dada de baja"
+        return _row(fid, name, "Retirada", "RETIRADA", motivo, "—", n_bugs)
 
     # ── QA alcanzada ──
     if qa:
@@ -284,7 +300,7 @@ def build(directory: Path) -> str:
     out.append("")
 
     # Siguiente foco: features accionables que no están cerradas ni pendientes
-    actionable = [r for r in rows if r["fase"] not in ("Cerrada", "PENDIENTE")]
+    actionable = [r for r in rows if r["fase"] not in ("Cerrada", "PENDIENTE", "Retirada")]
     if actionable:
         out.append("## Siguiente foco")
         out.append("")

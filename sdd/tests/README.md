@@ -47,7 +47,7 @@ python3 -m unittest discover -s sdd/tests -p 'test_sdd_seal.py' -v
 | `sdd-gate-check.py` | `test_sdd_gate_check.py` | precondicion OK -> permite; fallida -> deny con motivo; fail-open (stdin ilegible, skill sin gate, path no resoluble) |
 | `sdd-task-state.py` | `test_sdd_task_state.py` | init + tabla Progreso; transiciones validas/invalidas; bloqueo por deps; persistencia; idempotencia; BLOQUEADA exige motivo; reapertura con `--force` |
 | `merge-claude-settings.py` | `test_merge_claude_settings.py` | dest inexistente -> copia; merge conserva claves del proyecto; idempotente; no duplica matchers; elimina hooks deprecated |
-| `sdd-features-index.py` | `test_sdd_features_index.py` | genera `_features.md`; idempotente byte-identico; `--check` 0/2; `--stdout`; layout subcarpeta y plano legacy; estados (PENDIENTE_GENERACIÓN, BLOQUEADA, LISTA); readiness autoritativo |
+| `sdd-features-index.py` | `test_sdd_features_index.py` | genera `_features.md`; idempotente byte-identico; `--check` 0/2; `--stdout`; layout subcarpeta y plano legacy; los 5 estados canonicos (incl. RETIRADA, que gana al readiness); readiness autoritativo; las copias de CANON_STATES no divergen |
 | `sdd-structural-lint.py` | `test_sdd_structural_lint.py` | los 10 tipos de finding (plantado vs limpio); exit codes 0/1/2; forma de `--json`; `--severity`; los 2 edge-cases criticos (description-provenance, fork-pattern) |
 | `generate-skill-registry.py` | `test_generate_skill_registry.py` | escaneo correcto; idempotencia byte-identica; nueva skill aparece tras regenerar |
 | `sdd-amend.py` | `test_sdd_amend.py` | mark/clear/list/next-ref; numeracion E-NNN; roundtrip mark->clear |
