@@ -41,11 +41,18 @@ CU-4 es un **objetivo de usuario** (caracterizar código existente en specs), no
 
 1. Le pides generar specs a partir de ese código ("saca los specs de este módulo").
    → **Esperado:** explora el código, escribe el `_code_discovery.md` (mapa: ID,
-     nombre, actor, superficie, confianza) y **se detiene SIEMPRE** presentándote el
-     mapa para que **confirmes/corrijas/descartes** capacidades antes de generar nada.
+     nombre, actor, superficie, confianza) y **se detiene SIEMPRE** con veredicto
+     operativo `STOP_CODE_DISCOVERY_SIN_VALIDAR`, devolviendo el mapa. Quien lo invocó
+     te lo presenta para que **confirmes/corrijas/descartes** capacidades; las elegidas
+     vuelven en una invocación nueva ([[D-071]]).
+   → **FALLO adicional:** que el subagente dicte la pregunta y **prometa continuar**
+     cuando respondas ("dime cuáles y genero su spec"). Corre en `context: fork`: no
+     tiene turno donde recibir esa respuesta ([[D-045]]).
 2. Le pides `generate --feature F-C-00X` sin haber hecho el discover.
-   → **Esperado:** se detiene con *"No hay `_code_discovery.md`. Ejecuta primero
-     `/wf-spec-from-code discover <path>`…"* — el mapa validado es el gate del flujo.
+   → **Esperado:** se detiene diciendo que **falta el mapa de capacidades y que ese
+     mapa, validado por una persona, es el gate del flujo**. En **lenguaje natural**:
+     el mensaje **no debe contener el slash-command** — los nombres de workflow son
+     internos y surfacearlos es su propia desviación (`sdd-orchestration.md`).
 
 **Resultado:** PASS si descubre y para en el gate humano · FALLO si genera specs sin
 pasar por la confirmación del mapa.

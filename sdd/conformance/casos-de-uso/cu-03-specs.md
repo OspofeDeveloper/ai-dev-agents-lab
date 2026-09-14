@@ -49,7 +49,7 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 
 ### `wf-spec-gap-resolve` — completar incompletos y confirmar inferidos (`sdd-spec-writer`) (2)
 - [ ] CU-3.g — Completar HUs incompletas (gap-resolve)
-- [ ] CU-3.q — Gap-resolve: confirmación de `[INFERIDO]` (tres vías)
+- [ ] CU-3.q — Gap-resolve: confirmación de `[INFERIDO]` (dos turnos, tres vías)
 
 ### `wf-spec-delta` — evolución incremental del spec (`sdd-spec-writer`) (1)
 - [ ] CU-3.h — Evolucionar un spec con requisitos nuevos (delta)
@@ -328,6 +328,15 @@ las respuestas, y recibe el informe de su delegado en la propia llamada · FALLO
 analyze, avanza con críticos sin elección explícita, decide por lectura propia, toca el
 informe a mano, espera a mano, o **reporta como del delegado un dato que reconstruyó él**.
 **Desviación → reportar:** issue citando `CU-3.a`.
+
+> **⏱ El recuento vuelve a 0/3 desde v0.104.0 (2026-09-10).** Las tres pasadas limpias que exige
+> el sellado tienen que ser **sobre el mismo árbol**, y entre 0.104.0 y 0.106.0 cambió la ruta que
+> este escenario mide: `wf-spec-discover` y `wf-spec-gap-resolve` pasaron a parar con veredicto en
+> vez de preguntar ([[D-068]]), `wf-spec-analyze` perdió su confirmación de regenerado ([[D-064]]),
+> `wf-spec-delta` cambió de reparto ([[D-067]]) y `wf-spec-amend` y `wf-spec-validate` se movieron
+> al hilo principal ([[D-065]]/[[D-068]]). Las pasadas anteriores **siguen siendo evidencia
+> histórica** —de ahí salieron nueve decisiones— pero **no cuentan para el sello**: las tres
+> arrancan de cero sobre 0.106.0 o posterior.
 
 > **Pasada 1 (2026-08-02, v0.76.0) — PASS en el paso 1; origen de [[D-042]].** El analyze
 > corrió primero y el flujo **se detuvo** con `spec/features/` intacto; pureza `APROBADO`
@@ -1375,22 +1384,40 @@ gap" (gap-resolve) que en realidad mueve alcance, exclusión o regla de negocio 
 FALLO si integran la expansión/contradicción como delta o gap normal.
 **Desviación → reportar:** issue citando `CU-3.p`.
 
-## CU-3.q — Gap-resolve: confirmación de `[INFERIDO]` (tres vías)
+## CU-3.q — Gap-resolve: confirmación de `[INFERIDO]` (dos turnos, tres vías)
 
 **Precondición:** un spec de caracterización con CAs `[INFERIDO]` sin confirmar.
-**Mecanismo:** skill `wf-spec-gap-resolve` → `sdd-spec-writer` (Paso 3, caso `[INFERIDO]`). La fuente
-de confirmación es **el usuario**, no un `_analysis.md`.
+**Mecanismo:** skill `wf-spec-gap-resolve` → `sdd-spec-writer`, en `context: fork` (Paso 3, caso
+`[INFERIDO]`). La fuente de confirmación es **el usuario**, no un `_analysis.md` — y como un fork no
+puede preguntar ([[D-002]]/[[D-045]]), el escenario tiene **dos turnos**: el subagente **para** con
+veredicto `STOP_INFERIDO_SIN_CONFIRMAR` y devuelve el material; **quien lo invocó presenta las tres
+vías**; las decisiones vuelven en una invocación nueva, que las aplica tal cual ([[D-068]]).
 
-1. Pides confirmar los `[INFERIDO]` y respondes **"Confirmado"**.
+> **Esto cambió de forma.** Hasta [[D-068]] el escenario se escribía como un diálogo dentro del
+> workflow. Si una pasada ve al subagente conduciendo la conversación —o diciendo que "esperará tu
+> respuesta"— eso **es el FALLO**, no el PASS.
+
+**Turno 1 — la parada**
+
+1. Pides confirmar los `[INFERIDO]` del spec.
+   → **Esperado:** el subagente **no decide ninguno**. Para y devuelve, **por cada CA**: su ID, el
+     comportamiento deducido **verbatim**, su `Confirmación pendiente` y la evidencia parcial que
+     tenga. El hilo principal te presenta las tres vías (una elección por CA, no un texto libre).
+
+**Turno 2 — las tres vías, ya con el usuario**
+
+2. Respondes **"Confirmado"**.
    → **Esperado:** elimina el marcador y actualiza `Evidencia:` a `confirmado por <usuario> el <fecha>`
      (mantiene la evidencia parcial original); no lo resuelve desde un `_analysis.md`.
-2. Respondes **"Incorrecto"** con el comportamiento real.
+3. Respondes **"Incorrecto"** con el comportamiento real.
    → **Esperado:** corrige el CA con ese comportamiento (o lo elimina si la capacidad no existe).
-3. Respondes **"No lo sé"**.
+4. Respondes **"No lo sé"**.
    → **Esperado:** el marcador `[INFERIDO]` **se queda** y ese CA **sigue bloqueando** `wf-prepare-plan`.
 
-**Resultado:** PASS si las tres respuestas se tratan distinto y "No lo sé" mantiene el bloqueo · FALLO
-si confirma un `[INFERIDO]` desde el analysis, o lo da por resuelto sin confirmación humana.
+**Resultado:** PASS si (a) el primer turno **para sin decidir** y entrega el material verbatim, y
+(b) las tres respuestas se tratan distinto y "No lo sé" mantiene el bloqueo · FALLO si confirma un
+`[INFERIDO]` desde el analysis, si lo da por resuelto sin confirmación humana, o si el subagente
+**dicta la pregunta y da por hecho que recibirá la respuesta** en el mismo turno.
 **Desviación → reportar:** issue citando `CU-3.q`.
 
 ## CU-3.r — El rigor (standard/ligero) se elige al crear el spec, no en el init (D-006)
