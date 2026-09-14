@@ -2,6 +2,17 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.108.1 — 2026-09-14
+
+**La pieza número seis dejó cortas cinco enumeraciones** — residuo de [[DECISIONS D-074]]. Al mapear la fase Spec con `wf-spec-retire` ya dentro, lo que falló no fue el mecanismo: fueron las listas que lo rodean.
+
+- 🔴 **El explorer no podía recomendar la retirada.** Su «Responsabilidad principal» enumeraba siete workflows y la fase tiene catorce: faltaban `amend`, `from-code`, `sync-from-prd` y `retire`. No es cosmético — el explorer **es** el agente al que se enruta *"¿qué hago ahora?"*, y **una vía que no está en su lista es una vía que no propone**. Ahora razona por **tipo de vía**, no por inventario de nombres, que además es como debe llegarle al usuario.
+- ⚠ **El auditor no sabía que tiene un modo nuevo.** Diagnosticar el impacto de una baja —shared models que quedan sin dueño, quién la declara dependencia, artefactos ya generados— no figuraba entre sus responsabilidades. Y se escribe con lo que es: **el insumo de un gate humano**, no un informe de calidad; sin él, quien confirma la baja lo hace a ciegas.
+- ⚠ **`kb-decompose-expert` nombraba cinco invocadores del índice y son seis.** Sustituido por el criterio: lo invoca toda skill que acabe de cambiar algo que el índice deriva, inmediatamente después. Y su **tabla de SSoT** ahora dice que el spec es también la fuente de la **vigencia** de la feature, que es de donde sale `RETIRADA`.
+- ⚠ **El diagrama de mantenimiento** —cuya pregunta declarada es *"¿qué rutas existen cuando el spec ya está creado?"*— listaba cinco y faltaban dos: `retire` (de ayer) y `amend` (de mucho antes). Seis rutas llevan al spec actualizado y **una no**: la baja es la única salida terminal.
+- ⚠ **`routing.md` desambigua *"quita esta feature"***, que son tres cosas distintas con las mismas palabras: retirar la capacidad, **posponerla** (que no retira nada) o eliminar una HU o un CA sueltos. Confundir posponer con retirar **destruye trabajo que seguía siendo válido**.
+- **Aprendizaje:** añadir una pieza es barato; el coste está en las listas que la nombran. Cinco de las seis derivas no existían hace dos días — las creó la propia skill nueva al aparecer. Por eso el criterio derivable no es estilo: es lo único que sobrevive al crecimiento de la fase.
+
 ## 0.108.0 — 2026-09-14
 
 **El pipeline aprende a terminar una feature** — [[DECISIONS D-074]]. Faltaba la casuística inversa a todas las demás: el PRD **deja de contemplar** una capacidad ya especificada. El ecosistema sabía nombrarla y no sabía hacer nada con ella.

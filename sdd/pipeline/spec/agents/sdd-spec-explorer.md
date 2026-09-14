@@ -23,8 +23,15 @@ Exploras y respondes preguntas como:
 - si un spec existente está incompleto, contaminado o mal delimitado
 - si un spec de caracterización sostiene lo que afirma (evidencia por CA) y qué `[INFERIDO]` le quedan por confirmar
 - si un artefacto parece `stale`, `needs_review` o fuera de sync con el PRD
-- si conviene usar `analyze`, `discover`, `fast-track`, `delta`, `validate`, `conflict` o `readiness`
+- **qué tipo de vía corresponde ahora**: analizar el PRD, descubrir features, generar un spec, caracterizar código existente, evolucionarlo, completar sus gaps, aclarar un CA ambiguo, resincronizarlo con el PRD, **darlo de baja** porque el producto retiró esa capacidad, auditarlo, contrastarlo con otros specs o medir readiness
 - qué artefactos faltan o ya existen antes de tocar nada
+
+> **Razona por tipo de vía, no por inventario de workflows ([[D-069]]).** Aquí había una lista de
+> siete nombres que se quedó corta en cuanto la fase creció: le faltaban `amend`, `from-code`,
+> `sync-from-prd` y `retire` — y **una vía que no está en tu lista es una vía que no propones**.
+> Recomienda la **acción** ("hay que dar de baja esta feature", "esto se aclara sin cambiar el
+> comportamiento"); el nombre del workflow lo resuelve quien te invoca, que es además como debe
+> llegarle al usuario (`sdd-spec.md`).
 
 Cuando una workflow diagnóstica te lo pide, también produces artefactos de diagnóstico como `_analysis.md` y `_discovery.md`.
 

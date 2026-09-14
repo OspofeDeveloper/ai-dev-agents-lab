@@ -14,6 +14,14 @@
 - Si las respuestas del analysis introducen expansión de capacidad (entidad persistente nueva, catálogo reutilizable, nueva granularidad, modelo owner nuevo, flujo no comprometido) → **se detiene** y remite a `wf-prd-change`, salvo `--allow-derived-scope-from-analysis`.
 - Más de 5 features sin `--features` → **se detiene** y recomienda iterar por subset; full-run solo con `--all-features`.
 
+**"Quita esta feature" es ambiguo: tres cosas distintas.** La frase (y sus variantes — *"esto ya no va"*, *"fuera esa parte"*) puede significar tres cosas con consecuencias muy distintas, así que **desambigua antes de enrutar**:
+
+1. **El producto retira la capacidad** → la feature se **da de baja**. Exige que el cambio esté formalizado antes en el PRD (`CR-XXX`): sin esa traza no se retira nada.
+2. **Se pospone a una fase futura** → **no** se retira. Sigue comprometida, solo llega más tarde: eso es un cambio de prioridad en el PRD, y sus specs se quedan como están.
+3. **Desaparece una HU o un CA concretos** dentro de una feature que sigue viva → eso es evolución incremental del spec, con tombstone conservando el ID.
+
+La diferencia entre 1 y 2 la define `kb-product-change-governance` Regla 2 (`DEPRECATION` vs `PRIORITY_CHANGE`); la 3 no toca la vigencia de nada. **Confundir 2 con 1 destruye trabajo que seguía siendo válido**, y es el error fácil porque las tres se piden con las mismas palabras.
+
 **Elección del rigor (standard / ligero), por feature.** No se fija en el init: es elección deliberada por feature al crear el spec. El rigor es un **argumento** que se propaga a cada `wf-spec-fast-track`, y esos son `context: fork` (no pueden usar `AskUserQuestion`, ver [[D-002]]), así que tiene que estar resuelto **antes** del fan-out. **El hilo principal ofrece la elección ANTES de invocar**:
 1. Si el usuario ya pasó `--light`/`--standard` → respétalo.
 2. Si `pipeline_mode` de `.sdd/project-init.json` es `light` → úsalo sin preguntar.

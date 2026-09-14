@@ -101,7 +101,7 @@ La feature owner **define** el modelo completo en su Plan. Las features que lo r
 | Fuente | SSoT de |
 |---|---|
 | `_discovery.md` | universo de features (todas las F-XXX, incluidas las aún no generadas), shared models + ownership, mapeo RF→Feature |
-| `features/<n>/spec/<n>_spec.md` | que la feature **está generada** + su estado real (marcadores `[INCOMPLETO]`/`[CRÍTICO]`/`[INFERIDO]`), `Feature ID`, HUs y CAs |
+| `features/<n>/spec/<n>_spec.md` | que la feature **está generada**, su **vigencia** (`Estado: RETIRADO` + `Retirada:` cuando el producto la dio de baja — [[D-074]]) y su estado real (marcadores `[INCOMPLETO]`/`[CRÍTICO]`/`[INFERIDO]`), `Feature ID`, HUs y CAs |
 | `_readiness_report.md` (opcional) | veredicto refinado por feature (conflictos ALTA, dependencias) — su `## Matriz de readiness` |
 
 **Derivación de Estado por feature** (la calcula el script, no se escribe a mano):
@@ -124,7 +124,11 @@ Estados canónicos (sin variantes): `LISTA`, `BLOQUEADA`, `PENDIENTE_GENERACIÓN
 python3 .sdd/scripts/sdd-features-index.py <raíz_spec>
 ```
 
-Lo invocan `wf-spec-fast-track` y `wf-spec-from-code` (tras escribir un spec), `wf-spec-features-first` (pasada autoritativa final), `wf-spec-readiness` (tras escribir su report) y `wf-spec-delta` (tras aplicar). La salida es función pura de las entradas (sin timestamp de reloj) → idempotente.
+**Lo invoca toda skill que acabe de cambiar algo que el índice deriva** — escribir un spec, aplicarle un cambio, dar la feature de baja o emitir el readiness report —, **inmediatamente después de hacerlo**. La salida es función pura de las entradas (sin timestamp de reloj) → idempotente, así que invocarlo de más no cuesta nada; invocarlo de menos deja el índice mintiendo hasta la siguiente pasada.
+
+> **El criterio sustituye a la lista ([[D-069]]).** Aquí había cinco nombres, y al aparecer el sexto
+> —la baja de una feature— se quedó corta sola. Quién lo invoca es derivable: mira qué skills
+> escriben un `_spec.md` o su cabecera de estado.
 
 **Estructura emitida** (no editar; documentada solo para lectores):
 

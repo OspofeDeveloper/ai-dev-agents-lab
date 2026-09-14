@@ -122,15 +122,19 @@ flowchart TD
 
     ChangeType -->|Nueva necesidad incremental| Delta["wf-spec-delta"]
     ChangeType -->|HU incompleta por gap pendiente| Gap["wf-spec-gap-resolve"]
+    ChangeType -->|CA ambiguo descubierto al implementar| Amend["wf-spec-amend"]
     ChangeType -->|Edicion manual a revisar| Validate["wf-spec-validate"]
     ChangeType -->|Posible solapamiento entre features| Conflict["wf-spec-conflict"]
     ChangeType -->|Cambio real en el PRD| Sync["wf-spec-sync-from-prd"]
+    ChangeType -->|El producto retira la capacidad| Retire["wf-spec-retire"]
 
     Delta --> Updated[spec actualizado]
     Gap --> Updated
+    Amend --> Updated
     Validate --> Updated
     Conflict --> Updated
     Sync --> Updated
+    Retire --> Retired["spec RETIRADO — fin de la feature"]
 ```
 
-**Mensaje clave:** no todo cambio se resuelve regenerando desde cero; `spec` tiene caminos quirurgicos para evolucion y sync.
+**Mensaje clave:** no todo cambio se resuelve regenerando desde cero; `spec` tiene caminos quirurgicos para evolucion, sync y cierre. **Seis llevan al spec actualizado y una no**: la baja es la unica salida terminal del diagrama, y el ID de la feature se conserva sin reutilizarse.

@@ -322,7 +322,7 @@ La lógica exacta de routing y la política de skills viven en [CLAUDE.md](CLAUD
 |--------|------------|-----------------|
 | `sdd-spec-explorer` | diagnóstico de PRD/spec, análisis de gaps, discovery | los `wf-*` que **diagnostican** antes de tocar nada, y la exploración directa en conversación |
 | `sdd-spec-writer` | fast-track, delta, sync desde PRD, caracterización desde código, resolución de gaps | los `wf-*` que **escriben o evolucionan** un artefacto de Spec |
-| `sdd-spec-auditor` | validate, conflict, readiness, sync impact | los `wf-*` que **verifican lo que otro escribió** (autor≠verificador, [[D-059]]) |
+| `sdd-spec-auditor` | validate, conflict, readiness, sync impact, impacto de una baja | los `wf-*` que **verifican lo que otro escribió** (autor≠verificador, [[D-059]]) |
 
 > **El binding exacto no se lista aquí ([[D-069]]).** Un `wf-*` que corre en fork lo declara en su
 > `agent:`; uno que corre en el hilo principal, en el `subagent_type` de cada delegación. Enumerarlo

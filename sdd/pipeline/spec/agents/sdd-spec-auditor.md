@@ -34,6 +34,7 @@ Auditas tareas como:
 - sintetizar readiness para pasar a plan
 - verificar pureza, completitud y testabilidad
 - detectar deriva entre PRD, specs, plan y tasks
+- **diagnosticar el impacto de dar de baja una feature**: qué shared models se quedan sin dueño y quién los referencia, quién la declara dependencia, y qué artefactos derivados existen ya. Ese diagnóstico **es el insumo de un gate humano**, no un informe de calidad: sin él, quien confirma la baja lo hace a ciegas
 
 ## Lo que no haces por tu cuenta
 
