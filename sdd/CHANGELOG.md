@@ -2,6 +2,16 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.107.0 — 2026-09-14
+
+**El último fork que decidía por el usuario** — [[DECISIONS D-073]]. `wf-spec-delta` era el único workflow del ecosistema que sostenía decisiones humanas desde un `context: fork`. Al abrirlo no había una decisión escondida: había **tres**.
+
+- 🔴 **Delta vs cambio de producto lo clasificaba el fork solo.** La parada existía —*"si redefine el alcance del MVP, detén y remite"*—, pero el juicio era suyo. Equivocarse hacia *"esto es un delta"* hornea en el spec un cambio de alcance que nadie formalizó, **y no deja rastro**: el delta se aplica limpiamente.
+- 🔴 **La ambigüedad se resolvía en silencio.** Faltaba literalmente la segunda mitad de [[DECISIONS D-040]]: *sin humano, la ambigüedad se marca en vez de decidirse*. Si el documento de cambios admitía dos lecturas funcionales, el escritor elegía una y el informe salía sin rastro de la bifurcación. Ahora el delegado **enumera las lecturas y no elige**, y el gate tiene una salida que no existía: **"no lo decido ahora"** deja un gap `[D-XXX]` `[CRÍTICO]` con las opciones dentro.
+- 🔴 **Aplicar con gaps `[CRÍTICO]` abiertos era *"informa y continúa"***, dos veces y en negrita — la misma situación que `wf-spec-features-first` presenta como gate. El coste se cobra dos fases después: las HUs `[INCOMPLETO]` bloquean el plan cuando ya nadie recuerda que hubo una elección. Ahora se presenta, con `--allow-open-critical-gaps` para el usuario que ya eligió, y **el recuento lo da el script**, no la lectura del orquestador ([[DECISIONS D-042]]).
+- ⚠ **`wf-spec-sync-from-prd` deja de apuntar al workflow y apunta al contrato.** Delegaba en *"el flujo de `wf-spec-delta apply`"*; como es `sdd-spec-writer` —el mismo agente al que delta delega esa parte— ejecuta el contrato de integración directamente ([[DECISIONS D-070]]). Invocar el workflow ahora sería invocar un orquestador de main desde un fork.
+- **Aprendizaje:** el coste de un gate ausente se paga donde no se ve. Los tres huecos comparten forma —el workflow decide, informa de lo que decidió, y el artefacto sale correcto—; el tercero ni siquiera miente, avisa. Pero el aviso va al informe de un turno y el bloqueo aparece dos fases más tarde. **Un gate es el único momento en que la decisión y su coste están juntos delante del usuario.**
+
 ## 0.106.0 — 2026-09-10
 
 **Design: cuatro conversaciones que vivían donde no se puede conversar** — [[DECISIONS D-072]]. Cerrando el residuo anotado en 13.11 apareció el bloque entero: la fase Design tenía cuatro workflows que le piden material al usuario escritos como `context: fork`.

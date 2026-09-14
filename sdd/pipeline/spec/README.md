@@ -141,11 +141,17 @@ El software ya existe, hay un `_spec.md` en producción y quieres añadir o modi
 ```
 /wf-spec-delta analyze features/auth/spec/auth_spec.md --new-reqs new_auth_requirements.md
   → genera features/auth/spec/auth_delta_analysis.md con HUs/CAs añadidos, modificados, eliminados
+  → si el cambio redefine alcance del producto, te pregunta antes: formalizarlo en el PRD o
+    tratarlo como delta de esta feature
+  → si el requisito admite varias lecturas, te las presenta; "no lo decido ahora" deja un gap
+    [D-XXX] con las opciones dentro, en vez de elegir por ti
 
 [revisa el delta, responde gaps [CRÍTICO]]
 
 /wf-spec-delta apply features/auth/spec/auth_spec.md features/auth/spec/auth_delta_analysis.md
-  → actualiza auth_spec.md (versión 1.0 → 1.1) con sección Changelog
+  → si quedan gaps [CRÍTICO] sin responder, te pregunta: responderlos primero o aplicar aceptando
+    HUs [INCOMPLETO] (que bloquearán el plan)
+  → actualiza auth_spec.md (versión 1.0 → 1.1) con sección Changelog y reabre su validación
 ```
 
 **Cuándo usarlo**: cuando el spec ya existe y el cambio es incremental (nueva HU, modificación de un comportamiento, eliminación de una funcionalidad deprecada). El delta es quirúrgico: no toca lo que no cambia.
@@ -354,7 +360,8 @@ El pipeline nunca es completamente automático. Estos son los momentos donde el 
 | Tras `features-first` | Revisar `_features.md` y validar la partición de features | No — pero afecta la calidad del plan |
 | Tras `features-first` | Revisar `_conflict_report.md` si hay conflictos `ALTA` | No — pero pueden propagarse problemas al plan |
 | Tras `wf-prd-sync-impact` | Revisar artefactos `stale` o `needs_review` y decidir qué features resincronizar | Sí — bloquea avanzar con specs desalineados |
-| Tras `delta analyze` | Responder gaps `[CRÍTICO]` con `_(pendiente)_` en `_delta_analysis.md` | Sí — `delta apply` no avanza |
+| Durante `delta analyze` | Decidir si el cambio es de producto (va antes al PRD) y, si el requisito es ambiguo, cuál es la lectura | Sí — sin decisión, la ambigüedad se marca como gap `[D-XXX]` y el delta no la resuelve |
+| Tras `delta analyze` | Responder gaps `[CRÍTICO]` con `_(pendiente)_` en `_delta_analysis.md` | Sí — `delta apply` pregunta antes de seguir, y aplicar igualmente deja HUs `[INCOMPLETO]` que bloquean `prepare-plan` |
 | Tras `from-code discover` | Confirmar, corregir o descartar las capacidades del `_code_discovery.md` | Sí — `generate --feature` no arranca sin ese mapa validado |
 | Tras `from-code generate` | Confirmar los CAs `[INFERIDO]` uno a uno (vía `wf-spec-gap-resolve`) y decidir qué hacer con los `[SOSPECHA_BUG]` | Sí — los `[INFERIDO]` bloquean `prepare-plan` igual que un `[INCOMPLETO]` |
 

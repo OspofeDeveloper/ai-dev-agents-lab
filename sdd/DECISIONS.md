@@ -6,6 +6,42 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-073 — El último fork que decidía por el usuario: `wf-spec-delta` al hilo principal, con la ambigüedad marcada en vez de resuelta
+
+- **Fecha:** 2026-09-14 · **Estado:** Adoptada (pendiente de medir en CU-3.h/CU-3.p). · **Relacionada:** [[D-040]] (el precedente en PRD, cuya segunda mitad faltaba), [[D-045]]/[[D-002]] (el gate vive donde puede presentarse), [[D-065]]/[[D-068]]/[[D-072]] (mismo movimiento en Spec y Design), [[D-026]] (el override lo arma el usuario), [[D-042]] (el recuento sale del script), [[D-063]] (sin humano no se decide, se marca), ROADMAP 13.6.
+
+**Contexto.** Con `wf-spec-amend` y `wf-spec-validate` en main ([[D-065]]/[[D-068]]) y las cuatro conversaciones de Design movidas ([[D-072]]), `wf-spec-delta` quedaba como **el único workflow del ecosistema que sostenía decisiones humanas desde un `context: fork`**. El ítem 13.6 lo tenía anotado con una razón: es el `wf-prd-change` de la fase Spec, y [[D-040]] movió aquel a main porque *"un cambio de producto exige decisiones que solo el humano puede tomar —cómo se clasifica y, cuando la petición admite varias lecturas de alcance, cuál es"*.
+
+Al abrirlo aparecieron **tres** decisiones, no la que estaba anotada:
+
+1. **Delta vs cambio de producto.** El Paso 7A decía *"si el supuesto nuevo requisito redefine el alcance del MVP, una exclusión del PRD o una regla transversal, detén el delta y remite"*. La parada existía; **la clasificación la hacía el fork solo**. Equivocarse hacia "esto es un delta" hornea en el spec un cambio de alcance que nadie formalizó — y no deja rastro, porque el delta se aplica limpiamente.
+2. **La ambigüedad del requisito nuevo.** Aquí faltaba literalmente la segunda mitad de [[D-040]]: *sin humano, la ambigüedad se marca en vez de decidirse*. El Paso 5A clasificaba HUs añadidas/modificadas/eliminadas leyendo el documento de cambios; si ese documento admitía dos lecturas funcionales, **el escritor elegía una** y el informe salía sin rastro de que hubo una bifurcación.
+3. **Aplicar con gaps `[CRÍTICO]` sin responder** — el hallazgo que no estaba previsto. Los Pasos 2.3 y 4B decían *"informa al usuario qué HUs se marcarán `[INCOMPLETO]`"* y **`Continúa.`**, dos veces y en negrita. Esa misma situación **es un gate** en `wf-spec-features-first` (se detiene salvo `--allow-open-critical-gaps`). Aquí se resolvía informando y siguiendo, que es decidir por el usuario sin decírselo — y el coste se cobra tarde y lejos: las HUs `[INCOMPLETO]` bloquean `wf-prepare-plan` dos fases después.
+
+**Decisión.** `wf-spec-delta` pasa al hilo principal (fuera `context: fork` y `agent:`, `allowed-tools: [Bash, Agent, AskUserQuestion]`), con el reparto ya establecido: main sostiene los tres gates y **delega dos veces** en `sdd-spec-writer` con `run_in_background: false` — el análisis (que **escribe** el `_delta_analysis.md`) y la integración (que escribe el spec, lo des-sella, versiona, encadena el changelog y regenera el índice). Main no lee el spec ni el informe ([[D-031]]) y no escribe ningún artefacto ([[D-060]]): comprueba con `grep`/`--check` que el resultado está y, si no, lo reporta en vez de arreglarlo.
+
+Lo que cambia de fondo, más allá de dónde corre:
+
+- El delegado **clasifica y devuelve un veredicto** (`DELTA_PURO` / `POSIBLE_CAMBIO_DE_PRODUCTO` / `AMBIGUO`), pero **no decide**: en `AMBIGUO` enumera las lecturas con lo que implica cada una.
+- El gate de ambigüedad tiene una salida que antes no existía: **"no lo decido ahora"**, que no elige — manda registrar un gap `[D-XXX]` `[CRÍTICO]` con las lecturas como opciones y `_(pendiente)_` como respuesta. Es [[D-063]] aplicado a la evolución del spec: *si no puedes preguntar, no puedes decidir*; ahora **sí** se puede preguntar, y aun así la no-respuesta se marca en vez de resolverse.
+- El recuento de críticos pendientes lo da `sdd-analysis-gaps.py --check --json` ([[D-042]]): el orquestador no abre el informe para contarlos.
+- `wf-spec-sync-from-prd`, que es un fork y delegaba su escritura en *"el flujo de `wf-spec-delta apply`"*, pasa a **citar el contrato de integración** en vez de al workflow: es `sdd-spec-writer`, o sea el mismo agente al que delta delega esa parte, así que ejecuta el contrato directamente ([[D-070]]). Invocar el workflow ahora sería invocar un orquestador de main desde un fork.
+
+**Alternativas descartadas.**
+- *Dejarlo en fork y añadir solo la cláusula de marcar la ambigüedad* → arregla la decisión (2) y deja (1) y (3) igual. La clasificación seguiría siendo de nadie, y "informa y continúa" seguiría siendo una decisión tomada por el workflow.
+- *Un `--allow-*` para cada uno de los tres* → convierte gates en flags que el usuario tiene que conocer de antemano. [[D-026]] es explícito: el override existe para **registrar una elección ya hecha**, no para sustituir la pregunta. Solo (3) lo lleva, porque `wf-spec-features-first` ya lo tenía y la simetría importa.
+- *Medir primero y mover después* (la opción que este mismo ROADMAP recomendaba) → se descarta por lo que apareció al leerlo: los tres huecos **no producen fallo visible**, así que una pasada los habría dado por PASS. Medir un defecto que no se ve no informa nada.
+
+**Consecuencias / aprendizaje.** **El coste de un gate ausente se paga donde no se ve.** Los tres huecos comparten forma: el workflow decide, informa de lo que decidió, y el artefacto sale correcto. El que aplica con críticos abiertos ni siquiera miente — avisa —, pero el aviso va al informe de un turno y el bloqueo aparece dos fases después, en `wf-prepare-plan`, cuando ya nadie recuerda que hubo una elección. Un gate no es una cortesía: es el único momento en que la decisión y su coste están juntos delante del usuario.
+
+Y, cerrando 13.6: **la anotación se quedó corta**. Decía "no heredó [[D-040]]" y apuntaba a una decisión; eran tres. Al heredar una norma hay que leer al destinatario entero, no solo la parte que el precedente ilumina — la misma lección que [[D-063]] ya había dejado escrita.
+
+**Pendiente de medir.** CU-3.h y CU-3.p **cambian de forma**: el `AMBIGUO` que antes se resolvía solo ahora se presenta, y "no lo decido ahora" tiene que dejar un gap marcado. Se mide en las pasadas de CU-3.
+
+**Referencias.** `sdd/pipeline/spec/skills/wf-spec-delta/SKILL.md`, `sdd/pipeline/spec/skills/wf-spec-sync-from-prd/SKILL.md`, `sdd/conformance/ROADMAP.md`, `sdd/docs/ROADMAP.md` (13.6), `sdd/CHANGELOG.md`.
+
+---
+
 ## D-072 — Cuatro conversaciones de Design vivían dentro de forks; sin turno, el riesgo no es pararse, es rellenar
 
 - **Fecha:** 2026-09-10 · **Estado:** Adoptada (regla ampliada + cuatro workflows movidos; conducta pendiente de medir). · **Relacionada:** [[D-002]] (fork ⊥ preguntar), [[D-045]] (el gate vive donde puede presentarse), [[D-064]] (la forma parar-y-reportar), [[D-065]]/[[D-068]] (el mismo movimiento en Spec), [[D-070]] (misma lectura), [[D-026]] (el override lo arma el usuario), [[D-069]] (la enumeración de skills de main que derivó seis veces).

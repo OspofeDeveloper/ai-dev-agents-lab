@@ -92,17 +92,22 @@ Para cada feature solicitada:
 
 1. localiza `<nombre>_sync_requirements.md`
 2. si no existe, genera uno de forma mínima
-3. **la escritura del spec la aplica el delta, no tú ([[D-067]]).** Ejecuta el flujo de
-   `wf-spec-delta apply` sobre ese spec con el `_sync_requirements.md` como entrada de cambios.
+3. **la escritura del spec sigue el contrato de integración del delta, no uno tuyo ([[D-067]]).**
+   Aplica el del Paso 4B de `wf-spec-delta` —reglas de
+   `wf-spec-delta/references/spec_delta_integration_rules.md`, reapertura de la validación
+   (`--unseal`), versión menor, `## Changelog` y regeneración del índice— sobre ese spec, con el
+   `_sync_requirements.md` como entrada de cambios. **Eres `sdd-spec-writer`, que es justo el agente
+   al que ese workflow delega esa parte** ([[D-070]]): ejecutas el contrato, no invocas el workflow
+   —desde [[D-073]] corre en el hilo principal y sostiene gates que tú no puedes presentar—.
 4. actualiza la metadata de trazabilidad para reflejar la versión del PRD:
    `derived_from_prd_version` y `derived_from_change`. **`status_sync` no lo escribes tú**: el
    apply reabre la validación del spec (`--unseal`, [[D-061]]) y el sello de deriva lo estampa el
    script del punto 5. Un spec recién modificado no se declara `in_sync` a mano.
 5. re-sella el hash de deriva ejecutando desde la raíz del proyecto: `python3 .sdd/scripts/sdd-sync-check.py seal <path_del_spec>` — NUNCA edites `derived_from_prd_hash` a mano (separación autor/verificador). Si el script falta, informa (⚠ re-ejecutar `install.sh`) y deja constancia de que el spec queda sin sello de deriva
 
-> **Por qué se delega en vez de describir un segundo apply ([[D-067]]).** Este paso decía *"siguiendo
-> la misma disciplina que `wf-spec-delta`"* y le faltaban cuatro de sus cinco piezas: reapertura de
-> la validación, versión menor, `## Changelog` y regeneración del índice. El resultado era un spec
+> **Por qué se cita el contrato en vez de describir un segundo apply ([[D-067]]).** Este paso decía
+> *"siguiendo la misma disciplina que `wf-spec-delta`"* y le faltaban cuatro de sus cinco piezas:
+> reapertura de la validación, versión menor, `## Changelog` y regeneración del índice. El resultado era un spec
 > **`VALIDADO`, con contenido cambiado y declarándose sincronizado** — exactamente el estado que
 > [[D-061]] existe para impedir. Lo tuyo es el Paso 4A (decidir **qué** cambia por feature); el
 > **cómo se escribe** tiene ya un dueño.

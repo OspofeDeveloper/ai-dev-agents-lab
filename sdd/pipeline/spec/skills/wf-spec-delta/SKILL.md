@@ -2,19 +2,35 @@
 name: wf-spec-delta
 description: "Evoluciona un Spec de feature de forma incremental. Modo 'analyze' genera un informe delta con HUs y CAs anadidos, modificados y eliminados; modo 'apply' integra los cambios validados en el spec."
 when_to_use: "Activa en frases como 'quiero anadir funcionalidad al spec', 'actualiza el spec con estos requisitos nuevos', 'evoluciona el spec con este cambio', 'genera el delta del spec'. No activa para completar HUs [INCOMPLETO] desde un _analysis.md (usa wf-spec-gap-resolve)."
-argument-hint: "analyze <spec.md> --new-reqs <desc.md> | apply <spec.md> <delta.md>"
+argument-hint: "analyze <spec.md> --new-reqs <desc.md> | apply <spec.md> <delta.md> [--allow-open-critical-gaps]"
 effort: high
-allowed-tools: [Read, Write, Bash]
-context: fork
-agent: sdd-spec-writer
+allowed-tools: [Bash, Agent, AskUserQuestion]
 user-invocable: true
 ---
 
 # Workflow: DELTA
 
-Tu objetivo es gestionar la evolución controlada de un Spec SDD existente. Usa `kb-spec-expert` para asegurarte de que los cambios propuestos y el spec resultante mantienen la pureza funcional y los 8 elementos SDD.
+**Corres en el hilo principal.** Evolucionar un spec sostiene **tres decisiones que son del
+usuario**, y ninguna es presentable desde un `context: fork` ([[D-002]]/[[D-045]]):
 
-**Regla de oro:** El delta nunca reescribe la historia del spec — solo la extiende. Los cambios deben ser mínimos y quirúrgicos. Si el documento de nuevos requisitos describe en realidad un cambio de scope, prioridad o exclusión del producto, indícalo explícitamente y remite a `wf-prd-change` antes de seguir.
+1. **¿Esto es un delta o es un cambio de producto?** La frontera es de juicio, y equivocarse hacia
+   "es un delta" hornea en el spec un cambio de alcance que nadie formalizó en el PRD.
+2. **Cuando el requisito nuevo admite varias lecturas, ¿cuál?** Es exactamente lo que [[D-040]]
+   fijó para `wf-prd-change`: *sin humano, la ambigüedad **se marca**, no se decide*.
+3. **¿Se aplica con gaps `[CRÍTICO]` sin responder?** Esa misma situación es un gate en
+   `wf-spec-features-first`; aquí se continuaba en silencio marcando `[INCOMPLETO]`.
+
+Tu rol es de **orquestador**: parseas argumentos, verificas precondiciones **mecánicamente**,
+sostienes esos tres gates con `AskUserQuestion`, y **delegas** el análisis y la integración en
+`sdd-spec-writer` con la tool `Agent` y **`run_in_background: false`** ([[D-043]]).
+
+**No leas el spec, ni los requisitos, ni el delta analysis** ([[D-031]]): pasas **paths**, y quien
+los lee es tu delegado, que tiene las `kb-*` para interpretarlos. **Y no escribes ningún artefacto**
+([[D-060]]): los redacta y los escribe el agente, que es su autor. Vale **aunque las tools estuvieran
+disponibles** ([[D-038]]).
+
+**Regla de oro (la que gobierna al delegado):** el delta nunca reescribe la historia del spec — solo
+la extiende. Los cambios son mínimos y quirúrgicos.
 
 ---
 
@@ -28,8 +44,10 @@ Extrae de `$ARGUMENTS`:
 - En modo `apply`:
   - **Path del spec existente**: el segundo argumento
   - **Path del delta analysis**: el tercer argumento
+  - **`--allow-open-critical-gaps`** (opcional): salta el gate del Paso 5. Solo llega armado porque
+    el usuario lo eligió en un gate anterior ([[D-026]]); no te lo auto-suministres.
+
 Si no hay argumento o el modo no es válido, informa al usuario:
-> "Uso:"
 > "Puedo hacer dos cosas: **analizar** el cambio sobre el spec (te digo qué HUs y CAs habría que añadir, modificar o eliminar, sin tocar nada), o **aplicar** un análisis de cambio que ya hayas revisado. Dime cuál, el spec, y dónde está la descripción del cambio."
 
 Ejemplos:
@@ -41,139 +59,191 @@ Si el usuario intenta usar `resolve`, remítele a:
 
 ---
 
-## Paso 2: Verificar archivos
+## Paso 2: Verificar archivos (mecánico, sin leerlos)
+
+```bash
+!test -f "<path_spec>" && echo EXISTE || echo NO_EXISTE
+```
 
 **Modo `analyze`:**
-1. Verifica que el spec existe y termina en `_spec.md`. Si no → informa: "El primer argumento debe ser un spec SDD (`_spec.md`). Si lo que quieres es un spec nuevo, pídemelo y lo analizamos desde el documento de origen."
-2. Verifica que el archivo de nuevos requisitos existe. Si no → informa con la ruta exacta y detén.
+1. El spec debe existir y terminar en `_spec.md`. Si no → informa: "El primer argumento debe ser un spec SDD (`_spec.md`). Si lo que quieres es un spec nuevo, pídemelo y lo analizamos desde el documento de origen."
+2. El archivo de nuevos requisitos debe existir. Si no → informa con la ruta exacta y detén.
 
 **Modo `apply`:**
-1. Verifica que el spec existe y termina en `_spec.md`.
-2. Verifica que el delta analysis existe y termina en `_delta_analysis.md`. Si no → informa: "El segundo argumento debe ser un delta analysis (`_delta_analysis.md`); pídeme que analice antes los cambios sobre el spec y te lo genero."
-3. Lee el delta analysis y comprueba si hay gaps `[CRÍTICO]` con `_(pendiente)_` sin respuesta. Si los hay → informa al usuario: "Hay X gaps **críticos** sin responder. Las HUs afectadas se marcarán como `[INCOMPLETO]`." **Continúa.**
+1. El spec debe existir y terminar en `_spec.md`.
+2. El delta analysis debe existir y terminar en `_delta_analysis.md`. Si no → informa: "El segundo argumento debe ser un delta analysis (`_delta_analysis.md`); pídeme que analice antes los cambios sobre el spec y te lo genero."
 
----
-
-## Paso 3: Leer el contenido
-
-Lee ambos archivos en su totalidad.
+La valoración de si el contenido es utilizable **no la haces tú**: la hace tu delegado, que es quien
+lo lee con las `kb-*` en contexto.
 
 ---
 
 ## Submodo ANALYZE
 
-### Paso 4A: Inventariar el spec existente
+### Paso 3A: Delegar el análisis del delta
 
-Extrae y lista internamente (no en el output):
-- Todos los actores con sus capacidades
-- Todas las HUs con sus IDs y títulos
-- Todos los CAs con sus IDs, HU padre y GIVEN/WHEN/THEN
-- Todos los Journeys con sus IDs
-- Todas las Instrucciones Inambiguas (reglas de comportamiento)
-- La sección Fuera de Alcance
+Delega con la tool `Agent` ([[D-043]]), `subagent_type: "sdd-spec-writer"` y
+**`run_in_background: false`**:
 
-### Paso 5A: Analizar los nuevos requisitos
+```
+Modo: spec-delta-analyze
+Path del spec existente: <path>
+Path de los nuevos requisitos: <path>
+Plantilla del informe: ${CLAUDE_SKILL_DIR}/references/delta_analysis_template.md
 
-Lee el documento de nuevos requisitos e identifica, consultando `kb-spec-expert` para verificar pureza funcional:
+INSTRUCCION:
+1. Inventaria el spec existente (actores y capacidades, HUs con ID y titulo, CAs con su HU padre
+   y su GIVEN/WHEN/THEN, Journeys, Instrucciones Inambiguas y la seccion Fuera de Alcance). El
+   inventario es trabajo interno: no va al informe.
+2. Analiza los nuevos requisitos contra ese inventario, consultando `kb-spec-expert` para pureza
+   funcional, e identifica:
+   - **HUs ANADIDAS**: mismo actor (o actor nuevo) con objetivo funcional no cubierto por ninguna HU existente.
+   - **HUs MODIFICADAS**: funcionalidad existente cuyo comportamiento, actor o valor cambia. Cita la HU original.
+   - **HUs ELIMINADAS**: las que los nuevos requisitos eliminan o reemplazan explicitamente. Cita cual.
+   - **CAs AFECTADOS**: por cada HU anadida o modificada, los CAs nuevos o los cambios a los existentes.
+   - **Reglas de comportamiento**: nuevas, modificadas y las que quedan obsoletas.
+   - **Impacto en Fuera de Alcance**: lo que entra o sale del alcance.
+3. **Prueba de Pureza** (`kb-spec-expert`): si un requisito trae tecnologia (frameworks, APIs,
+   patrones de implementacion), propon la reescritura funcional equivalente.
+4. **Gaps** (`kb-gap-conventions`): IDs `[D-XXX]` (prefijo D = Delta), severidades y marcador
+   `_(pendiente)_`.
+5. **Clasifica el cambio y dilo en tu informe, con una linea por veredicto**:
+   - `DELTA_PURO` — evoluciona la feature sin tocar el producto comprometido.
+   - `POSIBLE_CAMBIO_DE_PRODUCTO` — redefine el alcance del MVP, una exclusion del PRD o una regla
+     transversal. **No decidas tu**: nombra QUE lo redefine y devuelvelo.
+   - `AMBIGUO` — el requisito admite **mas de una lectura funcional**. Enumera las lecturas, cada
+     una con lo que implicaria en HUs y CAs. **No elijas**: elegir por el usuario es fabricar
+     alcance ([[D-039]]/[[D-063]]).
+6. **Escribe tu el informe** en `<mismo directorio que el spec>/<basename>_delta_analysis.md`
+   (ej.: `features/auth/spec/auth_spec.md` → `features/auth/spec/auth_delta_analysis.md`) e informa
+   del path: eres su autor ([[D-059]]/[[D-060]]). No toques el spec: `analyze` no escribe specs.
+```
 
-- **HUs AÑADIDAS**: funcionalidades que no existen en el spec actual. Una nueva HU es: mismo actor (o actor nuevo) con objetivo funcional no cubierto por ninguna HU existente.
-- **HUs MODIFICADAS**: funcionalidades existentes cuyo comportamiento, actor o valor cambia. Cita la HU original.
-- **HUs ELIMINADAS**: funcionalidades del spec actual que los nuevos requisitos explícitamente eliminan o reemplazan. Cita la HU a eliminar.
-- **CAs AFECTADOS**: para cada HU añadida/modificada, identifica los CAs nuevos o los cambios a CAs existentes (GIVEN/WHEN/THEN).
-- **Reglas de comportamiento**: nuevas reglas, modificaciones a reglas existentes, reglas que quedan obsoletas.
-- **Impacto en Fuera de Alcance**: si los nuevos requisitos mueven algo de fuera a dentro del alcance, o viceversa.
+### Paso 4A: Los dos gates de clasificación (aquí, con `AskUserQuestion`)
 
-### Paso 6A: Aplicar la Prueba de Pureza
+Según el veredicto que devuelva el agente:
 
-Consulta `kb-spec-expert` para verificar que cada cambio propuesto está libre de contaminación técnica. Si un nuevo requisito contiene tech (frameworks, APIs, patrones de implementación), propón la reescritura funcional equivalente.
+- **`DELTA_PURO`** → sigue al Paso 5A sin preguntar nada. El consentimiento ya está en la petición.
+- **`POSIBLE_CAMBIO_DE_PRODUCTO`** → **presenta la elección**, con lo que el agente identificó como
+  redefinido delante:
+  - **Formalizar el cambio en el PRD primero (recomendado)** → para aquí y remite a la gobernanza de
+    cambio de producto. El delta se retoma después, contra el PRD ya actualizado.
+  - **Tratarlo como delta de esta feature** → continúa, y el informe queda con el aviso de
+    gobernanza puesto por el agente. Es una decisión del usuario, y queda registrada como tal.
+- **`AMBIGUO`** → presenta las lecturas que devolvió el agente, **una opción por lectura**, más la
+  salida honesta:
+  - Cada lectura, con lo que implica en HUs y CAs.
+  - **"No lo decido ahora"** → la ambigüedad **se marca**, no se resuelve: vuelve a delegar pidiendo
+    que registre un gap `[D-XXX]` `[CRÍTICO]` con las lecturas como opciones y `_(pendiente)_` como
+    respuesta. Eso es la segunda mitad de [[D-040]] aplicada aquí: **sin humano, se marca**.
 
-### Paso 7A: Detectar gaps funcionales en los nuevos requisitos
+### Paso 5A: Informar
 
-Aplica la misma lógica que el modo ANALYZE estándar sobre los nuevos requisitos en el contexto del spec existente. Consulta `kb-gap-conventions` para el formato de IDs `[D-XXX]` (prefijo D = Delta), las definiciones de severidad y el marcador `_(pendiente)_`.
-
-Si el supuesto "nuevo requisito" en realidad redefine el alcance del MVP, una exclusión del PRD o una regla transversal del producto, detén el delta y remite a `wf-prd-change`.
-
-### Paso 8A: Formato del informe delta
-
-Usa `${CLAUDE_SKILL_DIR}/references/delta_analysis_template.md` para estructurar el informe.
+Path del delta generado, impacto (HUs añadidas/modificadas/eliminadas, CAs afectados), nº de gaps
+`[CRÍTICO]` e `[INFORMATIVO]` pendientes y el veredicto de clasificación. Siguiente paso, en lenguaje
+natural: responder los gaps críticos en el informe y pedirte que **apliques el delta al spec**.
 
 ---
 
 ## Submodo APPLY
 
-### Paso 4B: Segunda verificación de gaps críticos
+### Paso 3B: Gaps críticos sin responder — el gate que faltaba
 
-Si hay gaps `[CRÍTICO]` con `_(pendiente)_` en el delta analysis → informa al usuario qué HUs se marcarán `[INCOMPLETO]` y **continúa**. (Coherente con el Paso 2.)
+El recuento **sale del script, no de tu lectura** ([[D-042]]):
 
-### Paso 5B: Integrar los cambios
-
-Aplica los cambios siguiendo las reglas de `${CLAUDE_SKILL_DIR}/references/spec_delta_integration_rules.md` (no interpretar, no ampliar, no inferir; reglas por tipo: HUs añadidas/modificadas/eliminadas, CAs, Journeys, Instrucciones Inambiguas, Fuera de Alcance).
-
-### Paso 6B: Actualizar versionado y Changelog
-
-> **Al modificar un spec, su validación se reabre ([[D-061]]).** Tras escribir, ejecuta:
-> ```bash
-> !python3 .sdd/scripts/sdd-seal.py spec "<path_del_spec>" --unseal
-> ```
-> Degradar a `BORRADOR` siempre es seguro y siempre es correcto: lo que se validó ya no es lo que
-> hay. Es la misma norma que en el PRD, donde un cambio reabre el sello ([[D-028]]).
-
-Incrementar la versión en el header del spec (1.0 → 1.1, 1.2 → 1.3, 2.0 → 2.1).
-
-Añadir o actualizar `## Changelog` al final del spec (orden cronológico inverso) siguiendo la plantilla de `${CLAUDE_SKILL_DIR}/references/changelog_template.md`. Si se aplicaron asunciones `[INFORMATIVO]`, añadir también `## Asunciones Aplicadas (v[X.Y])` antes del Changelog.
-
-### Paso 6B.5: Regenerar `_features.md` (si existe)
-
-`_features.md` es un índice **generado**: no se edita a mano y ningún workflow lo compone escribiendo texto. Por qué, qué deriva de dónde y quién lo regenera: `kb-decompose-expert`, "Reparto de SSoT" ([[D-069]]). Tras escribir, regenéralo desde la raíz del proyecto (el directorio que contiene `.sdd/`):
-
-```
-python3 .sdd/scripts/sdd-features-index.py <raíz_spec>
+```bash
+!python3 .sdd/scripts/sdd-analysis-gaps.py "<path_delta_analysis>" --check --json
 ```
 
-`<raíz_spec>` es el directorio que contiene `features/` y `_features.md` (si el spec está en `features/<nombre>/` —directamente o en `spec/`— es el directorio que contiene `features/`; en otro caso, el del propio spec). Si no existe `_features.md` ni discovery, o falta el script, omitir silenciosamente (el delta del spec ya está aplicado).
+- **0 críticos pendientes** → continúa.
+- **≥1 crítico pendiente** y **sin** `--allow-open-critical-gaps` → **presenta la elección** con
+  `AskUserQuestion`, nombrando cuántos son y qué HUs quedarían `[INCOMPLETO]`:
+  - **Responderlos primero (recomendado)** → para aquí. Se responden en el `_delta_analysis.md` y se
+    vuelve a pedir el apply.
+  - **Aplicar igualmente** → continúa; las HUs afectadas se marcan `[INCOMPLETO]` y **bloquearán el
+    plan** hasta resolverse.
+- **Con `--allow-open-critical-gaps`** → continúa sin preguntar: el usuario ya eligió ([[D-026]]).
+
+> **Por qué esto es un gate y antes no lo era.** Aplicar con críticos abiertos no es un detalle de
+> forma: mete en el spec HUs incompletas que bloquean `wf-prepare-plan` más adelante, lejos de aquí.
+> La misma situación **ya se presentaba** en `wf-spec-features-first`; este workflow la resolvía
+> informando y continuando, que es decidir por el usuario sin decírselo.
+
+### Paso 4B: Delegar la integración
+
+Delega con la tool `Agent`, `subagent_type: "sdd-spec-writer"` y **`run_in_background: false`**:
+
+```
+Modo: spec-delta-apply
+Path del spec: <path>
+Path del delta analysis: <path>
+Reglas de integracion: ${CLAUDE_SKILL_DIR}/references/spec_delta_integration_rules.md
+Plantilla de changelog: ${CLAUDE_SKILL_DIR}/references/changelog_template.md
+Gaps criticos sin responder: <n> (el usuario eligio aplicar igualmente | no habia ninguno)
+
+INSTRUCCION:
+1. Integra los cambios siguiendo las reglas de integracion (no interpretar, no ampliar, no inferir;
+   reglas por tipo: HUs anadidas/modificadas/eliminadas, CAs, Journeys, Instrucciones Inambiguas,
+   Fuera de Alcance). Las HUs afectadas por un gap `[CRITICO]` sin responder se marcan `[INCOMPLETO]`.
+2. **Al modificar un spec, su validacion se reabre** ([[D-061]]). Tras escribir:
+   `python3 .sdd/scripts/sdd-seal.py spec "<path_del_spec>" --unseal`
+   Degradar a `BORRADOR` siempre es seguro y siempre es correcto: lo que se valido ya no es lo que
+   hay. Misma norma que en el PRD, donde un cambio reabre el sello ([[D-028]]).
+3. Incrementa la version en el header del spec (1.0 → 1.1, 1.2 → 1.3, 2.0 → 2.1) y anade o actualiza
+   `## Changelog` al final (orden cronologico inverso) con la plantilla. Si aplicaste asunciones
+   `[INFORMATIVO]`, anade ademas `## Asunciones Aplicadas (v[X.Y])` antes del Changelog.
+4. **Regenera `_features.md` si existe.** Es un indice **generado**: no se edita a mano y ningun
+   workflow lo compone escribiendo texto (por que y quien regenera que: `kb-decompose-expert`,
+   "Reparto de SSoT", [[D-069]]). Desde la raiz del proyecto (el directorio que contiene `.sdd/`):
+   `python3 .sdd/scripts/sdd-features-index.py <raiz_spec>`
+   `<raiz_spec>` es el directorio que contiene `features/` y `_features.md` (si el spec esta en
+   `features/<nombre>/` —directamente o en `spec/`— es el que contiene `features/`; en otro caso, el
+   del propio spec). Si no existe `_features.md` ni discovery, o falta el script, omitelo en silencio:
+   el delta del spec ya esta aplicado.
+5. **Prueba de Pureza sobre el spec resultante** (`kb-spec-expert`): si queda contaminacion tecnica,
+   senalala en tu informe.
+6. **Auto-verifica el checklist**: el spec resultante sigue teniendo los 8 elementos SDD. El que
+   haya quedado incompleto se marca `[ ]` en el checklist del spec.
+7. Informa del path, la version nueva y el resumen de cambios (HUs/CAs).
+```
+
+### Paso 5B: Comprobar el resultado
+
+```bash
+!grep -m1 -E '^\s*>?\s*\**Version\**\s*:?' "<path_spec>"
+!python3 .sdd/scripts/sdd-seal.py spec "<path_spec>" --check
+```
+
+Si la versión no subió o el spec sigue sellado como `VALIDADO`, **no lo arregles tú** ([[D-060]]):
+reporta que la integración no dejó el spec en el estado que dice y para. Que el informe del delegado
+diga que lo hizo no es que esté hecho ([[D-047]]).
 
 ---
 
-### Paso 7B: Aplicar la Prueba de Pureza al spec resultante
+## Paso 6B: Conflictos tras el apply (informativo, no bloqueante)
 
-Consulta `kb-spec-expert` y verifica que el spec final no tiene contaminación técnica. Si la hay, señálala en el output.
+**Ni tú ni tu delegado chequeáis los conflictos, y menos aún firmáis el informe ([[D-067]]).** El
+spec lo acaba de escribir `sdd-spec-writer`: auditarlo él rompe autor≠verificador, y el
+`_conflict_report.md` **lo escribe el auditor que lo produce**, nunca otro ([[D-059]]).
 
-### Paso 8B: Auto-verificar el checklist
+Comprueba si hay índice de features:
 
-Revisa que el spec resultante sigue teniendo los 8 elementos SDD. Si alguno ha quedado incompleto, márcalo como `[ ]` en el checklist del spec.
+```bash
+!ls "<raíz_spec>"/*_features.md 2>/dev/null | head -1
+```
 
----
-
-## Paso N-1: Escribir el resultado
-
-- **Modo `analyze`**: mismo directorio que el spec + nombre base + `_delta_analysis.md`
-  - Ejemplo: `features/auth/spec/auth_spec.md` → `features/auth/spec/auth_delta_analysis.md`
-- **Modo `apply`**: sobreescribe el spec existente con la versión actualizada
-
----
-
-## Paso N-0.5: Verificación de conflictos tras apply (no bloqueante)
-
-Solo en modo `apply`. Busca si existe un `_features.md` en el proyecto (si el spec está dentro de `features/<nombre>/` — directamente o en su subcarpeta `spec/` — búscalo en el directorio que contiene `features/`; en otro caso, en el mismo directorio):
-
-**Tú no chequeas los conflictos, y menos aún firmas el informe ([[D-067]]).** Acabas de escribir
-este spec: auditarlo tú rompe autor≠verificador, y el `_conflict_report.md` **lo escribe el auditor
-que lo produce**, nunca otro ([[D-059]]).
-
-- **Si existe `_features.md`** → dilo en tu informe final: *"este spec ha cambiado; conviene
-  revisar si choca con el resto antes de planificar"*. Nombra el spec y para ahí.
-- **Si no existe `_features.md`** → omite este paso.
-
-Este aviso es **informativo y no bloquea** el flujo.
-
-> **Por qué no lo ejecutas tú.** Además del reparto autor/verificador, `wf-spec-conflict` corre en
-> `context: fork`: invocarla desde otro fork encadena subagentes ([[D-044]]) y ninguno de los dos
-> puede presentar nada. Quien te lanzó decide si toca revisión de conflictos y con qué auditor.
+- **Si existe** → dilo al informar: *"este spec ha cambiado; conviene revisar si choca con el resto
+  antes de planificar"*. Nombra el spec y para ahí — la revisión de conflictos se pide aparte, y la
+  hace un auditor.
+- **Si no existe** → omite este paso.
 
 ---
 
-## Paso N: Informar al usuario
+## Paso 7: Informar al usuario
 
-**Tras analyze:** path del delta generado, impacto (HUs añadidas/modificadas/eliminadas, CAs afectados), nº de gaps `[CRÍTICO]` e `[INFORMATIVO]` pendientes. Siguiente paso: responder los gaps críticos y pedirme que **aplique el delta al spec**.
+**Tras `analyze`:** lo del Paso 5A.
 
-**Tras apply:** path del spec actualizado, nueva versión, resumen de cambios (HUs/CAs). Si se actualizó `_features.md`: indicar "✓ Trazabilidad actualizada". Si hay conflictos: referenciar `_conflict_report.md`. Siguiente paso: pedirme que **valide el spec actualizado**.
+**Tras `apply`:** path del spec actualizado, nueva versión, resumen de cambios (HUs/CAs), y si
+quedaron HUs `[INCOMPLETO]` por gaps críticos que el usuario decidió no responder. Si se regeneró
+`_features.md`: "✓ Trazabilidad actualizada". Siguiente paso, en lenguaje natural: **validar el spec
+actualizado** — su validación se reabrió al modificarlo.
