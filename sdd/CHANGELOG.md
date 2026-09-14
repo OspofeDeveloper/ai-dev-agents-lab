@@ -2,6 +2,17 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.107.1 — 2026-09-14
+
+**El mapa de la fase Spec deja de mantener a mano lo que ya está escrito en otro sitio** — aplicación de [[DECISIONS D-069]] y [[DECISIONS D-070]] al `README.md` de la fase. Salió de recorrer agente por agente qué hace, qué KBs usa y qué casos cubre: lo que no encajaba no era el pipeline, era su documentación.
+
+- ⚠ **La tabla de KBs pierde la columna "usado en modos".** Seis de sus ocho filas ya no coincidían con el árbol: `kb-conflict-expert` decía *"solo conflict"* y `readiness` la usa; `kb-traceability-rules` listaba dos workflows que no la citan y **omitía `wf-spec-validate`**, que sí. El error de fondo es la columna misma: una `kb-*` la carga el **agente** vía su frontmatter `skills:`, no el workflow — el agente entra con todas cargadas, ejecute el modo que ejecute. La columna fingía una precisión que el mecanismo no tiene.
+- ⚠ **La tabla de agentes cambia la enumeración por el criterio.** Las filas del explorer y del auditor se habían quedado sin `wf-spec-features-first`, que es quien más los invoca (a los tres). El binding real vive en el `agent:` de cada fork y en el `subagent_type` de cada delegación de main.
+- 🔴 **"Cómo extender el sistema" fabricaba el defecto que [[DECISIONS D-073]] acababa de cerrar.** Su paso 1 mandaba crear todo workflow *"con el `agent:` especializado correcto"*. Aplicado a un modo que necesita preguntar, eso lo hace nacer en fork decidiendo por el usuario. Ahora la primera decisión al extender la fase es **dónde corre** — y la pregunta que la resuelve no es *"¿tiene gates?"* sino *"¿necesita algo que solo el usuario sabe?"*.
+- ⚠ **`wf-spec-validate` seguía descrito como si no tocara nada** (*"imprime informe, no genera archivo"*), prosa anterior a [[DECISIONS D-065]]. Sella: captura quién aprueba y el script estampa `Estado: VALIDADO` / `Aprobado por:`. Y la tabla de **checkpoints humanos no tenía fila para ese sello** — el único checkpoint de la fase que deja constancia de una persona no figuraba entre los checkpoints.
+- ⚠ **`sdd-spec-explorer` deja de enumerar sus 8 KBs en el cuerpo** y remite al frontmatter, como ya hacían el writer y el auditor. Las dos formas pasan `sdd-kb-check.py` ("todas o ninguna"), pero convivían dos convenciones para lo mismo.
+- **Aprendizaje:** las cuatro derivas son la misma — un dato mantenido a mano junto a la fuente que lo genera. Ninguna rompe nada al ejecutar; todas mienten al que lee el mapa para decidir. La documentación de una fase no es un espejo del árbol: es lo que **no** se puede derivar de él.
+
 ## 0.107.0 — 2026-09-14
 
 **El último fork que decidía por el usuario** — [[DECISIONS D-073]]. `wf-spec-delta` era el único workflow del ecosistema que sostenía decisiones humanas desde un `context: fork`. Al abrirlo no había una decisión escondida: había **tres**.

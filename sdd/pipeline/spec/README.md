@@ -210,10 +210,14 @@ Editas manualmente un `_spec.md` y quieres verificar que no introdujiste contami
 
 ```
 /wf-spec-validate features/auth/spec/auth_spec.md
-  → imprime informe APROBADO / REQUIERE_REVISIÓN (no genera archivo)
+  → audita el spec (pureza, testabilidad, completitud) y presenta el informe
+  → veredicto APROBADO / REQUIERE_REVISIÓN
+  → si aprueba, te pregunta quién lo aprueba y sella el estado operativo del spec
+    (`Estado: VALIDADO`, `Aprobado por: <nombre> (<fecha>)`) — el sello lo estampa el
+    script, no el informe
 ```
 
-**Cuándo usarlo**: después de cualquier edición manual a un spec. También útil como gate antes de ejecutar `/wf-prepare-plan`.
+**Cuándo usarlo**: después de cualquier edición manual a un spec. También como gate antes de planificar: el sello es lo que deja constancia de **quién** dio por bueno el spec, y a partir de ahí regenerarlo exige `--allow-overwrite-sealed-spec`.
 
 ---
 
@@ -272,7 +276,7 @@ La lógica exacta de routing y la política de skills viven en [CLAUDE.md](CLAUD
 | Skill | Comando | Produce |
 |-------|---------|---------|
 | `wf-spec-analyze` | `/wf-spec-analyze` | `_analysis.md` (mapa Spec, pureza del PRD, gaps de negocio) |
-| `wf-spec-validate` | `/wf-spec-validate` | Informe inline (sin archivo) |
+| `wf-spec-validate` | `/wf-spec-validate` | Informe de auditoría inline + sello del estado operativo en el propio spec (`Estado:`, `Aprobado por:`) |
 | `wf-spec-features-first` | `/wf-spec-features-first [--features F-XXX,...] [--allow-open-critical-gaps] [--allow-derived-scope-from-analysis] [--all-features]` | `_discovery.md`, `_features.md` (Project Hub incremental con estados canónicos y trazabilidad de gobernanza), `features/<x>/spec/<x>_spec.md` |
 | `wf-spec-discover` | `/wf-spec-discover [--analysis <analysis.md>] [--allow-derived-scope-from-analysis]` | `_discovery.md` con mapa de features y metadata de gobernanza |
 | `wf-spec-fast-track` | `/wf-spec-fast-track` | `features/<x>/spec/<x>_spec.md` directamente, con marca de origen de alcance si aplica |
@@ -288,28 +292,39 @@ La lógica exacta de routing y la política de skills viven en [CLAUDE.md](CLAUD
 
 ### Agentes
 
-| Agente | Modos soportados | Invocado desde |
-|--------|-----------------|----------------|
-| `sdd-spec-explorer` | diagnóstico de PRD/spec, análisis de gaps, discovery | `wf-spec-analyze`, `wf-spec-discover`, exploración directa |
-| `sdd-spec-writer` | fast-track, delta apply, sync desde PRD, caracterización desde código, escritura de artefactos | `wf-spec-fast-track`, `wf-spec-delta`, `wf-spec-gap-resolve`, `wf-spec-amend`, `wf-spec-sync-from-prd`, `wf-spec-from-code`, `wf-spec-features-first` |
-| `sdd-spec-auditor` | validate, conflict, readiness, sync impact | `wf-spec-validate`, `wf-spec-conflict`, `wf-spec-readiness`, `wf-prd-sync-impact` |
+| Agente | Qué razona | Quién lo invoca |
+|--------|------------|-----------------|
+| `sdd-spec-explorer` | diagnóstico de PRD/spec, análisis de gaps, discovery | los `wf-*` que **diagnostican** antes de tocar nada, y la exploración directa en conversación |
+| `sdd-spec-writer` | fast-track, delta, sync desde PRD, caracterización desde código, resolución de gaps | los `wf-*` que **escriben o evolucionan** un artefacto de Spec |
+| `sdd-spec-auditor` | validate, conflict, readiness, sync impact | los `wf-*` que **verifican lo que otro escribió** (autor≠verificador, [[D-059]]) |
+
+> **El binding exacto no se lista aquí ([[D-069]]).** Un `wf-*` que corre en fork lo declara en su
+> `agent:`; uno que corre en el hilo principal, en el `subagent_type` de cada delegación. Enumerarlo
+> en este README era una tercera copia del mismo dato, y derivó: se quedó sin
+> `wf-spec-features-first` —que invoca a los tres— en las filas del explorer y del auditor.
 
 ### Knowledge bases
 
-| Skill | Tipo | Usado en modos |
-|-------|------|----------------|
-| `kb-spec-expert` | Conocimiento SDD (8 elementos, Prueba de Pureza, Testabilidad) | Todos |
-| `kb-decompose-expert` | Partición de features, shared models, ownership | `discover`, `fast-track` |
-| `kb-conflict-expert` | 5 reglas de detección de conflictos entre specs | `conflict` |
-| `kb-gap-conventions` | SSoT de convenciones de gaps | Todos los modos que generen o verifiquen gaps |
-| `kb-traceability-rules` | Trazabilidad entre PRD, specs, plan y tasks | `gap-resolve`, `sync-from-prd`, `readiness`, `sync-impact` |
-| `kb-spec-characterization` | Specs brownfield: evidencia obligatoria por CA, `[INFERIDO]`, `[SOSPECHA_BUG]` | `from-code`, `gap-resolve`, y todo diagnóstico o auditoría de un spec `Origen: characterization` |
-| `kb-prd-expert` ⚠ | Reglas del PRD (cargada por agentes Spec para leer el PRD de entrada) | `analyze`, `discover`, `fast-track`, exploración |
-| `kb-product-change-governance` ⚠ | Reglas para distinguir gap vs. change request y gestionar impacto de negocio | `analyze`, `gap-resolve`, `sync-from-prd`, `sync-impact`, planning |
+| Skill | Qué aporta |
+|-------|------------|
+| `kb-spec-expert` | Conocimiento SDD: los 8 elementos, la Prueba de Pureza, la testabilidad |
+| `kb-decompose-expert` | Partición en features, shared models, ownership y el índice `_features.md` |
+| `kb-conflict-expert` | Las 5 reglas de detección de conflictos entre specs |
+| `kb-gap-conventions` | SSoT de gaps y marcadores: formatos de ID, severidades y reglas de bloqueo |
+| `kb-traceability-rules` | Trazabilidad PRD → spec → plan → tasks y estados de sincronización |
+| `kb-spec-characterization` | Specs brownfield: evidencia obligatoria por CA, `[INFERIDO]`, `[SOSPECHA_BUG]` |
+| `kb-prd-expert` ⚠ | Reglas del PRD, para leer con criterio el documento de entrada |
+| `kb-product-change-governance` ⚠ | Gap vs. change request, e impacto de negocio de una respuesta |
 
-> ⚠ `kb-prd-expert` y `kb-product-change-governance` viven físicamente en `sdd/pipeline/prd/skills/`. Son kb cross-fase. La carga concreta por agente:
-> - `kb-prd-expert`: `sdd-spec-explorer` y `sdd-spec-writer` (el auditor no la necesita porque audita specs ya escritos).
-> - `kb-product-change-governance`: los 3 agentes Spec.
+> **Quién carga cada una no se enumera aquí ([[D-069]]).** Una `kb-*` la carga el **agente**, no el
+> workflow: vive en su frontmatter `skills: [...]` y el harness la inyecta en el contexto del
+> subagente. Una columna "usado en modos" en este README es una tercera copia de ese dato, y además
+> finge una precisión que el mecanismo no tiene —el agente entra con todas sus KBs cargadas, ejecute
+> el modo que ejecute—. Derivó como era de esperar: en la revisión de v0.107.0, **seis de sus ocho
+> filas** ya no coincidían con el árbol. El reparto real se lee en los tres `agents/*.md`, y
+> `sdd-kb-check.py` verifica que ningún agente enumere una lista parcial.
+
+> ⚠ `kb-prd-expert` y `kb-product-change-governance` viven físicamente en `sdd/pipeline/prd/skills/`: son kb cross-fase.
 >
 > **`install.sh spec` ya instala automáticamente estas dos kb cross-fase y también `wf-prd-change`, `wf-prd-review` + `prd-expert`,** porque el ecosistema Spec necesita ese handoff cuando una respuesta a un gap se convierte en cambio real de producto o cuando el analyze exige limpiar el PRD antes de continuar.
 
@@ -359,6 +374,7 @@ El pipeline nunca es completamente automático. Estos son los momentos donde el 
 | Tras `discover` (modo iterativo) | Elegir los Feature IDs que entran en la próxima iteración | Sí — `wf-spec-features-first --features` los necesita |
 | Tras `features-first` | Revisar `_features.md` y validar la partición de features | No — pero afecta la calidad del plan |
 | Tras `features-first` | Revisar `_conflict_report.md` si hay conflictos `ALTA` | No — pero pueden propagarse problemas al plan |
+| Tras `validate` con veredicto `APROBADO` | Dar el nombre de quien aprueba: el sellador lo estampa en la cabecera (`Estado: VALIDADO`, `Aprobado por:`) | No — pero el spec se queda sin constancia de quién lo dio por bueno y sin la protección que obliga a `--allow-overwrite-sealed-spec` para regenerarlo |
 | Tras `wf-prd-sync-impact` | Revisar artefactos `stale` o `needs_review` y decidir qué features resincronizar | Sí — bloquea avanzar con specs desalineados |
 | Durante `delta analyze` | Decidir si el cambio es de producto (va antes al PRD) y, si el requisito es ambiguo, cuál es la lectura | Sí — sin decisión, la ambigüedad se marca como gap `[D-XXX]` y el delta no la resuelve |
 | Tras `delta analyze` | Responder gaps `[CRÍTICO]` con `_(pendiente)_` en `_delta_analysis.md` | Sí — `delta apply` pregunta antes de seguir, y aplicar igualmente deja HUs `[INCOMPLETO]` que bloquean `prepare-plan` |
@@ -385,9 +401,20 @@ fronteras) y [DIAGRAMS.md](DIAGRAMS.md).
 
 Para añadir un nuevo modo al pipeline:
 
-1. **Crea el workflow** en `skills/wf-spec-<nombre>/SKILL.md` con el `agent:` especializado correcto (`sdd-spec-explorer`, `sdd-spec-writer` o `sdd-spec-auditor`). Aquí van las instrucciones paso a paso de qué debe hacer el agente.
-2. **Crea o reutiliza una `kb-*`** solo si el modo necesita reglas transversales reutilizables por varios workflows o agentes.
-3. **Registra el knowledge en el agente correcto**: añádelo al frontmatter `skills: [...]` y documenta su responsabilidad.
-4. **Registra en `CLAUDE.md` y en este README** solo los entrypoints y handoffs que cambien el mapa funcional de la fase.
+1. **Decide antes que nada dónde corre** ([[D-045]], [[D-070]]). ¿El modo necesita una decisión del
+   usuario en algún punto — clasificar, elegir entre lecturas, confirmar algo irreversible, registrar
+   quién aprueba?
+   - **Sí** → va en el **hilo principal**: sin `context: fork`, con `AskUserQuestion` en
+     `allowed-tools`, y el trabajo se **delega** con la tool `Agent` al agente que toque. Un fork no
+     tiene turno: un gate escrito ahí dentro no se presenta, se decide solo — y el artefacto sale
+     con pinta de correcto, así que nadie se entera.
+   - **No** → es un worker `context: fork` con su `agent:` especializado (`sdd-spec-explorer`
+     diagnostica, `sdd-spec-writer` escribe, `sdd-spec-auditor` verifica). Un worker **no delega**:
+     ya *es* su agente, y invocarlo forkearía un clon suyo ([[D-044]]). Si en ejecución aparece una
+     decisión humana, para con un veredicto `STOP_*` y deja que la presente quien te invocó ([[D-064]]).
+2. **Escribe el workflow** en `skills/wf-spec-<nombre>/SKILL.md`: ahí van las instrucciones paso a paso.
+3. **Crea o reutiliza una `kb-*`** solo si el modo necesita reglas transversales reutilizables por varios workflows o agentes.
+4. **Registra el knowledge en el agente correcto**: añádelo al frontmatter `skills: [...]` y documenta su responsabilidad.
+5. **Registra en `CLAUDE.md` y en este README** solo los entrypoints y handoffs que cambien el mapa funcional de la fase.
 
 La política transversal para diseñar skills y agentes no vive ya en este README. Debe mantenerse como SSoT fuera de la fase, para evitar que `spec` replique reglas globales de frontmatter o arquitectura.
