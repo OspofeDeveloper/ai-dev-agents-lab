@@ -123,6 +123,25 @@ Complementa con el `_features.md`: si una feature referencia un shared model cuy
 
 Construye la lista unificada de dependencias para cada feature.
 
+### 4e — Sello del spec
+
+De la cabecera de cada `*_spec.md`, extrae la línea `Estado:` — **con `grep`, no de tu
+lectura** (extracción determinista y acotada, [[D-048]]):
+
+```bash
+!grep -m1 -E '^\s*>?\s*\**Estado' "<path_del_spec>"
+```
+
+- `VALIDADO` → el sello está puesto; no aporta bloqueante.
+- `BORRADOR` → clasifica la feature como **BLOQUEADA** con el bloqueante
+  *"pendiente de validación"* ([[D-061]]/[[D-077]]). Es el estado de un spec recién
+  generado y el de cualquiera al que un delta, una enmienda o una resincronización le
+  reabrieron la validación.
+- `RETIRADO` → `RETIRADA` (ver Paso 6); no se mezcla con los demás bloqueantes.
+- **Sin línea `Estado:`** → no concluyas nada. Un spec legacy anterior a [[D-061]] no la
+  lleva, y el gate tampoco lo bloquea por eso: misma política conservadora que
+  `status_sync`. Sigue con el resto de criterios.
+
 ---
 
 ## Paso 5: Construir el grafo de dependencias
@@ -142,15 +161,40 @@ Para cada feature, asigna un estado:
 
 | Estado | Condición |
 |--------|-----------|
-| `LISTA` | Sin `[INCOMPLETO]`, sin conflictos ALTA, sin artefactos ambiguos y sin dependencias bloqueantes |
-| `BLOQUEADA` | Tiene HUs `[INCOMPLETO]`, conflictos ALTA, dependencias bloqueantes o artefactos ambiguos que impiden decidir con seguridad |
+| `LISTA` | Sin `[INCOMPLETO]`, sin conflictos ALTA, sin artefactos ambiguos, sin dependencias bloqueantes **y con el spec sellado `Estado: VALIDADO`** |
+| `BLOQUEADA` | Tiene HUs `[INCOMPLETO]`, conflictos ALTA, dependencias bloqueantes, artefactos ambiguos que impiden decidir con seguridad, **o el spec sigue en `Estado: BORRADOR`** (bloqueante: *"pendiente de validación"*) |
 | `PENDIENTE_GENERACIÓN` | Identificada en el discovery pero aún no se ha generado spec (no se ha incluido en ninguna iteración de `wf-spec-features-first`). No es un bloqueo accionable — refleja que el humano aún no ha pedido procesarla. |
 | `REQUIERE_CAMBIO_PRD` | El spec o `_features.md` declara alcance derivado desde analysis que debería consolidarse primero en PRD, o el artefacto explicita un aviso de gobernanza pendiente |
 | `RETIRADA` | El spec declara `Estado: RETIRADO`: el producto dio de baja esa capacidad ([[D-074]]). **No es un bloqueo**, es un final — no lleva bloqueantes que resolver, y va en la columna el `CR-XXX` que la decidió |
 
-Una feature puede tener múltiples bloqueos simultáneos. En ese caso, listar todos los motivos en la columna de bloqueantes. La prioridad de display es: CAMBIO_PRD > GAPS > CONFLICTOS > DEPENDENCIAS > AMBIGÜEDAD_DE_ARTEFACTO.
+Una feature puede tener múltiples bloqueos simultáneos. En ese caso, listar todos los motivos en la columna de bloqueantes. La prioridad de display es: CAMBIO_PRD > GAPS > CONFLICTOS > DEPENDENCIAS > AMBIGÜEDAD_DE_ARTEFACTO > SIN_VALIDAR.
+
+> **`SIN_VALIDAR` va el último de la lista a propósito ([[D-077]]).** Un spec con gaps o
+> conflictos abiertos **no se puede validar** —`sdd-seal.py spec --check` lo rechaza—, así que
+> encabezar con *"pendiente de validación"* manda a un callejón sin salida. Primero el motivo
+> que sí se puede resolver; el sello queda como lo que es, el último paso antes de planificar.
 
 **Nota importante**: el readiness report usa solo estados canónicos. El detalle fino se expresa en la columna `Bloqueantes`, no creando variantes de estado adicionales.
+
+> **`LISTA` significa "el gate de la fase siguiente la deja pasar" ([[D-077]]).** No es una
+> valoración de la calidad del spec: es una **predicción**, y el que la verifica es
+> `gate_spec_fiable`. Por eso el sello entra en la condición — desde [[D-061]] ese gate
+> deniega `wf-prepare-plan` sobre un spec en `BORRADOR`, y un spec recién generado **nace en
+> borrador**. Hasta [[D-077]] la rúbrica no lo miraba: el recorrido normal de la fase
+> terminaba con un informe diciendo `LISTA` y un gate denegando, y el usuario se enteraba al
+> pedir el plan. Lo mide `CU-3.o` punto 4.
+>
+> **Dilo como lo que es.** El bloqueante se escribe *"pendiente de validación"*, no como si el
+> spec tuviera un defecto: falta un paso del proceso, y su contenido puede estar impecable.
+> Las features en ese estado **sí participan** del orden de implementación — a diferencia de
+> `PENDIENTE_GENERACIÓN` y `RETIRADA` —, porque lo que les falta es una firma, no trabajo.
+
+> **Un conflicto ALTA bloquea en este informe y en ningún otro sitio ([[D-077]]).** Ningún gate
+> mecánico lee los `_conflict_report.md`, y **no debe leerlos**: la severidad la asigna un
+> juicio experto y los auditores del fan-out se contradicen sobre el mismo par por diseño
+> ([[D-047]]). `wf-prepare-plan` **avisa y continúa**. Así que tu `BLOQUEADA` por conflicto es
+> lo único que se interpone: escribe el bloqueante para que se entienda **qué hay que acordar
+> y con quién**, no como un trámite que alguien vaya a destrabar por ti.
 
 **Nota sobre `RETIRADA`**: igual que las `PENDIENTE_GENERACIÓN`, **no participan del topological sort ni del orden de implementación** — pero por el motivo opuesto: no es que todavía no haya spec, es que ya no hay feature. Si otra feature declara una dependencia sobre una `RETIRADA`, eso **sí** se reporta como bloqueante de la que depende: se quedó apuntando a algo que el producto retiró.
 

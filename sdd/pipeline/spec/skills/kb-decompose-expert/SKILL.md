@@ -107,10 +107,29 @@ La feature owner **define** el modelo completo en su Plan. Las features que lo r
 **Derivación de Estado por feature** (la calcula el script, no se escribe a mano):
 
 - sin spec → `PENDIENTE_GENERACIÓN`
-- con spec y con veredicto en el readiness report → ese veredicto (autoridad)
 - con spec `Estado: RETIRADO` → `RETIRADA`, **por encima de todo lo demás** (ni el readiness la resucita: una feature que el producto ya no contempla no está "bloqueada", no hay nada que desbloquear)
-- con spec y con veredicto en el readiness report → ese veredicto (autoridad)
-- con spec, sin readiness → provisional: marcador presente → `BLOQUEADA`; avisos de gobernanza ≠ ninguno → `REQUIERE_CAMBIO_PRD`; limpio → `LISTA`
+- con spec y con veredicto en el readiness report → ese veredicto (autoridad), **con una excepción**: un `LISTA` sobre un spec en `Estado: BORRADOR` baja a `BLOQUEADA` con el motivo *"pendiente de validación"* ([[D-077]])
+- con spec, sin readiness → provisional: marcador presente → `BLOQUEADA`; avisos de gobernanza ≠ ninguno → `REQUIERE_CAMBIO_PRD`; `Estado: BORRADOR` → `BLOQUEADA` *"pendiente de validación"*; limpio **y sellado** → `LISTA`
+
+> **Por qué el sello desmiente a `LISTA`, y solo a `LISTA` ([[D-077]]).** Un spec en
+> `BORRADOR` no se puede planificar: `gate_spec_fiable` lo deniega desde [[D-061]]. Un índice
+> que lo diera por `LISTA` prometería algo que el gate incumple una fase más tarde, y el
+> usuario se entera al pedir el plan, no antes. Puede desmentir al readiness —que en todo lo
+> demás es autoridad— porque el sello es un **hecho mecánico de la cabecera, no un juicio**, y
+> la cabecera es **más fresca que el informe**: un delta o una resincronización posteriores la
+> desellan (`--unseal`) sin que nadie regenere el readiness. Los demás veredictos se respetan
+> tal cual: ya no prometen nada, y su motivo es más informativo que "falta validar".
+>
+> **Pero va el último de los motivos provisionales**, después de marcadores y gobernanza. No
+> es orden estético: un spec con marcadores abiertos **no se puede validar** —`sdd-seal.py
+> spec --check` lo rechaza—, así que decirle a alguien *"pendiente de validación"* cuando el
+> sellador va a negarse es mandarlo a un callejón sin salida. Primero el motivo que sí puede
+> resolver.
+>
+> Que quede `BLOQUEADA` y no un estado propio es deliberado: el bloqueo es real y la columna
+> de bloqueantes dice que es **un paso del proceso que falta**, no un defecto del contenido
+> del spec. Añadir un sexto estado canónico obligaría a tocar `sdd-project-status.py`, la
+> plantilla del readiness y todo lo que consume la lista.
 
 Estados canónicos (sin variantes): `LISTA`, `BLOQUEADA`, `PENDIENTE_GENERACIÓN`, `REQUIERE_CAMBIO_PRD`, `RETIRADA`.
 

@@ -73,6 +73,23 @@ Si el usuario intenta usar `resolve`, remítele a:
 1. El spec debe existir y terminar en `_spec.md`.
 2. El delta analysis debe existir y terminar en `_delta_analysis.md`. Si no → informa: "El segundo argumento debe ser un delta analysis (`_delta_analysis.md`); pídeme que analice antes los cambios sobre el spec y te lo genero."
 
+**En los dos modos: una feature dada de baja no se evoluciona ([[D-078]]).**
+
+```bash
+!grep -Eq '^[[:space:]]*[-*>]?[[:space:]]*\*{0,2}Estado:?\*{0,2}[[:space:]]*:?[[:space:]]*RETIRADO' "<path_spec>" && echo RETIRADO || echo VIGENTE
+```
+
+`RETIRADO` → **detente sin tocar nada** e informa de que el producto retiró esa capacidad, con la
+traza `Retirada:` delante. No hay flag que lo cruce: volver a contemplarla es una decisión de
+producto y se toma aparte — evolucionar el spec no la toma por nadie. Si el usuario dice que la
+decisión cambió, lo que toca primero es reactivarla.
+
+> `sdd-gate-check.py` ya deniega esta invocación antes de que llegues aquí. Esta comprobación es el
+> backstop para cuando el hook no está activo, y sobre todo el **motivo**: el `--unseal` con el que
+> cierra el Paso 4B movía `RETIRADO` a `BORRADOR`, así que un delta sobre una feature cancelada la
+> reactivaba en silencio — gates reabiertos e índice devolviéndola a viva, sin CR y sin que nadie
+> lo decidiera.
+
 La valoración de si el contenido es utilizable **no la haces tú**: la hace tu delegado, que es quien
 lo lee con las `kb-*` en contexto.
 

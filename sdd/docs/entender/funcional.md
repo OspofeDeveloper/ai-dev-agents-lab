@@ -163,7 +163,10 @@ cubre los flujos que representan el trabajo real de una empresa:
     specs de *characterization* ("esto es lo que el sistema hace hoy, verificado
     contra el código") con CAs derivados de comportamiento observable. El espejo en
     Design es `wf-design-extract` (deriva el `DESIGN.md` de la UI en producción).
-    Ambos **se detienen en un gate humano** tras descubrir, antes de generar.
+    Ambos **se detienen en un gate humano** tras descubrir, antes de generar. Y lo que
+    decides en ese gate —qué capacidades confirmas, corriges o descartas— **queda dentro
+    del mapa**: una segunda pasada no lo rehace por detrás, y lo descartado no se
+    caracteriza aunque se pida.
 
 === "Iteración por subset"
 
@@ -175,8 +178,10 @@ cubre los flujos que representan el trabajo real de una empresa:
 
     Un cambio de scope entra por `wf-prd-change`, mide impacto con
     `wf-prd-sync-impact` y resincroniza specs con `wf-spec-sync-from-prd`. Para
-    encadenar toda la cascada en un comando, parando solo en los checkpoints
-    humanos reales: `wf-prd-change-cascade`.
+    encadenar toda la cascada en un comando, preguntando en los checkpoints
+    humanos reales —clasificación del cambio, features no triviales, decisiones de
+    diseño, revalidación de plan—: `wf-prd-change-cascade`. Las specs que
+    resincroniza vuelven a `BORRADOR`: reabrir la validación es parte del cambio.
 
 === "Mantenimiento (bugs)"
 

@@ -11,7 +11,8 @@ Uso:
     sdd-seal.py <plan|spec> <archivo.md> --seal     # verifica y sella VALIDADO si pasa
     sdd-seal.py <plan|spec> <archivo.md> --seal --approved-by "Nombre (Rol) (fecha)"
                                                    # ademas estampa `Aprobado por:` (Regla 10)
-    sdd-seal.py <plan|spec> <archivo.md> --unseal   # fuerza Estado: BORRADOR (downgrade siempre permitido)
+    sdd-seal.py <plan|spec> <archivo.md> --unseal   # fuerza Estado: BORRADOR (downgrade permitido
+                                                   # desde VALIDADO; desde RETIRADO sale 2, D-078)
     sdd-seal.py spec <archivo.md> --retire --change CR-XXX [--reason "texto"]
                                                    # da de baja la feature: Estado: RETIRADO (D-074)
     sdd-seal.py spec <archivo.md> --unretire       # deshace la baja: vuelve a BORRADOR
@@ -25,6 +26,13 @@ la traza del cambio que lo decide (`--change CR-XXX`). Un spec RETIRADO no se pu
 sellar (`--seal` sale 2) y degrada el plan que deriva de el. La decision de retirar
 es humana y vive en `wf-spec-retire`, que corre en el hilo principal; aqui solo se
 estampa lo ya decidido — mismo reparto que `--approved-by` (D-065).
+
+RETIRADO es terminal en las dos direcciones (D-078): tampoco `--unseal` lo mueve.
+Volver a BORRADOR desde VALIDADO es la direccion segura, pero desde RETIRADO es una
+reactivacion — reabre los gates y devuelve la feature al producto. Como `--unseal`
+es la coletilla de todo flujo que evoluciona un spec, sin esta guarda un delta sobre
+una feature dada de baja la resucitaba en silencio. Se sale de RETIRADO por un solo
+sitio: `--unretire`.
 
 Condiciones verificadas para `plan`:
   1. El archivo parece un Plan SDD (tiene linea `Estado:` y `Checklist de Trazabilidad`).
@@ -582,6 +590,22 @@ def main() -> int:
     if mode in ("--unseal", "--unretire"):
         # Downgrade siempre permitido: volver a BORRADOR es la direccion segura.
         # `--unretire` no salta a VALIDADO: revalidar exige pasar su gate otra vez.
+        #
+        # Salvo desde RETIRADO (D-078): ahi BORRADOR no es un downgrade, es una
+        # REACTIVACION. Reabre los tres gates de sdd-gate-check.py, devuelve la
+        # feature al indice como viva, y deja la traza `Retirada:` afirmando una
+        # baja que el estado ya niega. Y `--unseal` es la coletilla de todo flujo
+        # que evoluciona un spec (wf-spec-delta, -amend, -gap-resolve,
+        # -sync-from-prd), asi que un delta sobre una feature dada de baja la
+        # resucitaba sin que nadie lo decidiera. Deshacer una retirada es
+        # explicito (`--unretire`), nunca efecto colateral — el mismo criterio
+        # que ya aplicaba el `--seal` fallido de mas abajo.
+        if mode == "--unseal" and _current_estado(plan_path) == "RETIRADO":
+            print(f"ERROR: el {kind} esta RETIRADO ({plan_path}): la feature se dio de baja "
+                  f"y reabrir su validacion la reactivaria. No se ha tocado nada. Si la "
+                  f"decision de producto cambio, hay que reactivarla explicitamente antes "
+                  f"de evolucionarla.", file=sys.stderr)
+            return 2
         if not write_estado(plan_path, "BORRADOR"):
             return 1
         if mode == "--unretire":

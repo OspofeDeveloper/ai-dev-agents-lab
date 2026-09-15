@@ -33,9 +33,10 @@ happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es
 - [ ] CU-7.n — El gate del cambio: clasificación confirmada y bifurcación resuelta por el humano (D-040)
 - [ ] CU-7.o — Una capacidad sale del producto: `DEPRECATION`, no `SCOPE_CHANGE` (D-074)
 
-### `wf-spec-retire` — dar de baja la feature (2) ⏱ **sin pasada**
+### `wf-spec-retire` — dar de baja la feature (3) ⏱ **sin pasada**
 - [ ] CU-7.p — La baja se confirma con el impacto delante, y el estado lo estampa el script (D-074)
 - [ ] CU-7.q — Nadie retira desde un fork: sync-from-prd lo señala y no lo aplica (D-074)
+- [ ] CU-7.s — Volver: la reactivación es la única vuelta atrás, y no restaura sellos (D-074/D-078)
 
 > ⏱ **`wf-spec-retire` nace sin medir** ([[D-074]]). Estos tres escenarios están escritos y **no
 > ejecutados**; la fila del ROADMAP es `PENDIENTE`. Y ojo con el alcance: **CU-7.p no puede medir
@@ -45,7 +46,9 @@ happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es
 
 > ⚠ **[[D-040]] reinicia el recuento conductual de este bloque (2026-07-30).** `wf-prd-change` deja de
 > ser `context: fork` y pasa al hilo principal con **gate obligatorio**; el `prd-expert` analiza
-> read-only y escribe por delegación; la cascada la invoca con `--defer-decisions`. Las pasadas de
+> read-only y escribe por delegación; la cascada, que entonces no podía heredar el gate, la invocaba
+> con `--defer-decisions` —flag **retirado en [[D-075]]**, porque desde que la cascada corre en el
+> hilo principal el gate se presenta dentro de ella—. Las pasadas de
 > CU-7.b hechas antes (1 y 2, 2026-07-30) midieron la **arquitectura vieja**: quién clasifica, quién
 > pregunta y quién llama a `--reopen` son otros ahora, así que su evidencia conductual **no cuenta**.
 > Lo único que sobrevive es la del probe **2bis** ([[D-039]]), porque marcar las inferencias lo hace el
@@ -56,13 +59,14 @@ happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es
 - [ ] CU-7.d — Matriz de impacto por artefacto
 - [ ] CU-7.e — Criterio conservador
 
-### `wf-prd-change-cascade` — propagar el cambio por el pipeline (6)
+### `wf-prd-change-cascade` — propagar el cambio por el pipeline (7)
 - [ ] CU-7.f — Cascada normal (auto + paradas reales)
 - [ ] CU-7.g — La cascada con un cambio que es solo aclaración
 - [ ] CU-7.h — Cascada sin un cambio que propagar
 - [ ] CU-7.i — Features no triviales en el conjunto STOP
 - [ ] CU-7.j — `--dry-run` / `--review-before-apply` no escriben
 - [ ] CU-7.k — Profundidad adaptativa y degradación con gracia
+- [ ] CU-7.r — El cascade no redacta el informe de sus delegados ni enseña comandos (D-060/D-075)
 
 ### `wf-spec-sync-from-prd` — resincronizar specs tras el cambio (2)
 - [ ] CU-7.l — Analizar y aplicar la resincronización de specs
@@ -329,22 +333,22 @@ escribía sin punto de intervención humana.
      bifurcaciones planteadas con cuál se eligió y por qué**.
    → **FALLO:** una traza que no permita distinguir una decisión humana de una del agente.
 
-**G — `--defer-decisions`: sin humano se marca, no se decide**
-   → **Precondición:** invocación desde la cascada (`wf-prd-change-cascade`, que es subagente).
-   → **Esperado:** se omite el gate; cada bifurcación se resuelve por la lectura **más
-     conservadora** y **queda marcada `[ASUNCIÓN]`** con las alternativas en
-     `change-request.md`; la clasificación se registra como **no confirmada por humano**; el PRD
-     sale `OPEN_ASSUMPTIONS` y el informe dice que la decisión está **aplazada** al gate del
-     review, no perdida.
-   → **FALLO:** decidir la bifurcación en silencio sin marcarla (es el fallo de [[D-039]] con
-     otro disfraz), o dejar el PRD sellable sin pasar por review.
-   → **FALLO grave:** usar `--defer-decisions` en una invocación **conversacional**, con el
-     usuario delante.
+**G — el gate no tiene modo de escape ([[D-075]])**
+   → **Precondición:** invocación **desde la cascada** (`wf-prd-change-cascade`), que desde
+     v0.109.0 corre en el hilo principal.
+   → **Esperado:** el gate se presenta **igual que en una invocación conversacional** — las
+     instrucciones de esta skill entran en la misma conversación que la cascada, así que el
+     `AskUserQuestion` llega al usuario. No hay diferencia observable entre venir del cascade y
+     venir de una petición directa.
+   → **FALLO:** que exista cualquier vía de omitir el Paso 5 (un flag, una rama "si me invoca
+     otro workflow"), o que la clasificación se dé por confirmada sin que nadie la confirme.
+   → **Nota de historia:** hasta v0.108.x existía `--defer-decisions` para esto, porque la
+     cascada era un fork sin turno. Si lo ves reaparecer en el árbol, es una regresión.
 
 **Resultado:** PASS si (A) el análisis no escribe, (B) hay un gate único en main, (C) salta
 siempre, (D) el humano decide y main no reclasifica, (E) main no toca el fichero salvo por
-script, (F) la traza distingue decisión humana de decisión del agente, y (G) el modo sin gate
-marca en vez de decidir · FALLO ante gate ausente u opcional, PRD editado antes del gate,
+script, (F) la traza distingue decisión humana de decisión del agente, y (G) el gate llega igual
+cuando quien invoca es el cascade · FALLO ante gate ausente u opcional, PRD editado antes del gate,
 main reescribiendo, o bifurcación resuelta en silencio. Conductual → validar ×3 (Regla 9).
 **Desviación → reportar:** issue citando `CU-7.n`.
 
@@ -389,38 +393,47 @@ sincronía sin poder demostrarla.
 
 ## `wf-prd-change-cascade` — propagar el cambio por el pipeline
 
-> ⚠ **Corrección de premisa por [[D-040]] (2026-07-30).** La cascada declaraba como **primer
-> checkpoint humano** "aprobar el cambio de producto (`wf-prd-change`)". **Nunca fue un checkpoint:**
-> la cascada es `context: fork` e invocaba otra skill que también era fork — no había nadie a quien
-> preguntar. Ahora invoca `wf-prd-change` con **`--defer-decisions`**: las bifurcaciones se resuelven
-> por la lectura más conservadora y **quedan marcadas `[ASUNCIÓN]`**, la clasificación se registra como
-> *no confirmada por humano*, el PRD sale `OPEN_ASSUMPTIONS` y la decisión queda **aplazada** al gate de
-> `wf-prd-review`, que **no** forma parte de este cascade. Al probar CU-7.f–k: el paso del cambio **no**
-> debe presentarse como parada humana, y el reporte final debe decir cuántas asunciones quedaron
-> abiertas y que el PRD no puede re-sellarse sin pasar por review. Lección transversal: **un checkpoint
-> declarado en prosa no es un checkpoint si la arquitectura no puede sostenerlo** — al auditar paradas,
-> comprobar quién puede preguntar, no qué dice el documento.
+> ⚠ **Este bloque se reescribió dos veces por la misma causa, y la segunda la cerró ([[D-040]]
+> 2026-07-30 → [[D-075]] 2026-09-14).** La cascada declaraba cuatro **checkpoints humanos** siendo
+> `context: fork`: ninguno era presentable. D-040 solo pudo desmentir el primero —el cambio pasó a
+> invocarse con `--defer-decisions`, aplazando la decisión— porque arreglar el resto exigía sacar la
+> cascada del fork, y eso quedó anotado allí mismo como *candidato aparte*. **D-075 lo ejecuta:** la
+> cascada corre en el hilo principal, delega los workers por la tool `Agent` y sostiene sus gates con
+> `AskUserQuestion`. Al re-probar CU-7.f–k, lo que cambia de forma: los checkpoints **se preguntan**
+> (antes, en el mejor de los casos, se reportaban), el gate de clasificación de `wf-prd-change` llega
+> al usuario **dentro** de la pasada, y **no hay `_cascade_report.md`**. Lección transversal, ahora
+> con dos iteraciones de evidencia: **un checkpoint declarado en prosa no es un checkpoint si la
+> arquitectura no puede sostenerlo** — al auditar paradas, comprobar quién puede preguntar.
 
-> **Mecanismo común:** skill `wf-prd-change-cascade` → **sin agente** (orquestador
-> puro, `context: fork`). Invoca en orden `wf-prd-change` → `wf-prd-sync-impact` →
-> `wf-spec-sync-from-prd analyze/apply` → `wf-spec-conflict` + `wf-spec-readiness` →
-> `wf-design-sync` → reporte plan/tasks. Output: `<basename>_cascade_report.md`.
-> Flags: `--review-before-apply`, `--dry-run`, `--features`, `--skip-design`.
+> **Mecanismo común:** skill `wf-prd-change-cascade` → **orquestador en el hilo principal**
+> (sin `context: fork`, con `AskUserQuestion`; [[D-075]]). Invoca `wf-prd-change` con el
+> `Skill` tool —corre en main igual que ella, así que su gate se presenta— y delega los
+> workers por la tool `Agent` con `run_in_background: false`: `wf-prd-sync-impact` y
+> `wf-spec-conflict`/`wf-spec-readiness` en `sdd-spec-auditor`, `wf-spec-sync-from-prd`
+> analyze/apply en `sdd-spec-writer`, `wf-design-sync` en `design-system-architect`.
+> **Sin artefacto de salida propio:** el resumen por fase se presenta en la conversación
+> ([[D-060]]). Flags: `--review-before-apply`, `--dry-run`, `--features`, `--skip-design`.
 
 ### CU-7.f — Cascada normal (auto + paradas reales)
 
 **Precondición:** un cambio de producto real para propagar.
 **Mecanismo:** `wf-prd-change-cascade`.
 
-1. Le pides propagar el cambio por todo el pipeline en un comando.
+1. Le pides propagar el cambio por todo el pipeline, hablando.
    → **Esperado:** corre lo mecánico read-only, **auto-aplica** los deltas inequívocos
-     (`severidad: minor` + `acción: delta`), y se detiene solo en los 4 checkpoints
-     humanos (aprobación del cambio, features no triviales, decisiones de Design,
-     revalidación de plan). Produce `<basename>_cascade_report.md` distinguiendo
-     ejecutado / parado / omitido.
+     (`severidad: minor` + `acción: delta`), y **pregunta** en los checkpoints humanos que
+     apliquen: clasificación del cambio (la sostiene `wf-prd-change` dentro de la misma
+     conversación), features no triviales, decisiones de Design, revalidación de plan. Cada
+     pregunta llega como `AskUserQuestion` y **se resuelve en el mismo turno**: no hay
+     relanzado ni "vuelve a pedírmelo con el flag".
+   → **Esperado (cierre):** presenta un resumen por fase distinguiendo ejecutado / parado /
+     omitido, y dice **qué specs quedaron en `BORRADOR`** por haberse resincronizado.
+   → **FALLO adicional:** que aparezca un `<basename>_cascade_report.md` en disco — el
+     orquestador no redacta el informe de sus delegados ([[D-060]], y ver CU-7.r).
 
-**Resultado:** PASS si auto-aplica solo lo inequívoco y para en los checkpoints reales
-· FALLO si aplica cambios `major` solos, o no para en un checkpoint real.
+**Resultado:** PASS si auto-aplica solo lo inequívoco y **pregunta** en los checkpoints reales
+· FALLO si aplica cambios `major` solos, si no para en un checkpoint real, o si un checkpoint
+se "presenta" como texto informativo sin preguntar nada.
 **Desviación → reportar:** issue citando `CU-7.f`.
 
 ### CU-7.g — La cascada con un cambio que es solo aclaración
@@ -454,12 +467,20 @@ propagar.
 **Mecanismo:** `wf-prd-change-cascade`.
 
 1. Lanzas una cascada donde algunas features cambian de forma no trivial.
-   → **Esperado:** esas features se **presentan al usuario** (recomendando
-     `wf-spec-delta` / revisión / `wf-spec-discover`) y **no se aplican**, pero el
-     cascade **no aborta**: sigue aplicando el conjunto AUTO-APPLY.
+   → **Esperado:** esas features se **preguntan** con `AskUserQuestion`, con la lista delante
+     (ID, nombre, severidad y por qué no es automática) y dos salidas: continuar con el resto,
+     o parar aquí. **No se aplican.** Si el usuario elige continuar, el cascade **no aborta**:
+     sigue con el conjunto AUTO-APPLY.
+   → **Esperado (forma):** lo que necesita cada feature se describe en **lenguaje natural**
+     —evolucionar el spec, revisarlo a mano, rehacer su partición, darla de baja—, sin nombrar
+     workflows ni comandos ([[D-019]]).
+   → **Por qué este escenario cambió de forma ([[D-075]]):** antes pedía que se "presentaran al
+     usuario" desde un fork, que no tiene turno. Era inejecutable, y pasaba por interpretación
+     benévola de un reporte. Ahora se mide lo que dice: **si no hay pregunta, es FALLO.**
 
-**Resultado:** PASS si presenta las no triviales sin aplicarlas y continúa con el
-resto · FALLO si las aplica solas, o aborta todo el cascade por ellas.
+**Resultado:** PASS si pregunta por las no triviales sin aplicarlas y continúa con el
+resto · FALLO si las aplica solas, si aborta todo el cascade por ellas, o si se limita a
+listarlas sin preguntar.
 **Desviación → reportar:** issue citando `CU-7.i`.
 
 ### CU-7.j — `--dry-run` / `--review-before-apply` no escriben
@@ -469,8 +490,8 @@ resto · FALLO si las aplica solas, o aborta todo el cascade por ellas.
 
 1. Lanzas la cascada con `--dry-run` (o con `--review-before-apply`).
    → **Esperado:** **no escribe nada**: `--dry-run` solo diagnostica;
-     `--review-before-apply` para antes de aplicar incluso los `minor` e informa el
-     comando manual.
+     `--review-before-apply` para antes de aplicar incluso los `minor` y te ofrece aplicarlos
+     cuando lo confirmes — **en lenguaje natural, sin dictarte el comando** ([[D-019]]).
 
 **Resultado:** PASS si no aplica ningún delta · FALLO si aplica algo con cualquiera de
 los dos flags.
@@ -485,11 +506,49 @@ instalado o falla.
 1. Lanzas la cascada en un proyecto sin Design (o con un sub-workflow caído).
    → **Esperado:** omite Design si no aplica; un sub-workflow ausente/fallido se
      registra como `no disponible` y el cascade **continúa** con las fases
-     independientes (salvo prerequisito duro). Todo queda reflejado en el reporte.
+     independientes (salvo prerequisito duro). Todo queda reflejado en el **resumen que
+     presenta al cerrar** — que es donde vive, porque no escribe informe.
 
 **Resultado:** PASS si degrada con gracia y lo refleja · FALLO si aborta por una fase
 opcional ausente, o silencia la omisión.
 **Desviación → reportar:** issue citando `CU-7.k`.
+
+### CU-7.r — El cascade no redacta el informe de sus delegados ni enseña comandos
+
+**Precondición:** una pasada de cascade que haya llegado al final (sirve la de CU-7.f).
+**Mecanismo:** `wf-prd-change-cascade` en el hilo principal ([[D-060]]/[[D-019]]/[[D-075]]).
+
+1. Tras la pasada, busca el informe consolidado en disco:
+   ```bash
+   ls *_cascade_report.md 2>/dev/null | wc -l
+   ```
+   → **Esperado: 0.** El resumen por fase se presenta en la conversación. Consolidar en un
+     fichero lo que produjeron sus delegados es redactar un artefacto ajeno: cada informe
+     (`_sync_report.md`, `_conflict_report.md`, `_readiness_report.md`) tiene un autor
+     declarado, y esa autoría es lo que lo hace auditable.
+   → **Por qué se mide:** medido en CU-3.a pasada 13, el orquestador consolidó cuatro informes
+     de conflicto y, al transcribir contenido que no había producido, **adjudicó un hallazgo al
+     auditor equivocado**. El fichero no era el problema: era la transcripción.
+
+2. Revisa el resumen que presentó y los mensajes de sus gates.
+   → **Esperado:** ningún nombre de workflow ni slash-command (`wf-…`, `/wf-…`) en lo que lee
+     el usuario — ni en las opciones del `AskUserQuestion`, ni en el cierre. Lo que hay que
+     hacer después se describe hablando ("cuando quieras revalidamos los specs que han
+     cambiado").
+   → **Excepción que NO es fuga:** el usuario pidió explícitamente el nombre técnico.
+
+3. Comprueba que los artefactos que sí existen los escribió quien tocaba:
+   ```bash
+   grep -l "Generado por:" *_sync_report.md features/*/spec/*_conflict_report.md 2>/dev/null
+   ```
+   → **Esperado:** cada uno declara su procedencia, y el cascade no figura como autor de
+     ninguno.
+
+**Resultado:** PASS si no hay informe consolidado, la procedencia de cada artefacto apunta a su
+autor real y nada de lo que lee el usuario contiene un nombre de workflow · FALLO si el cascade
+escribe un `_cascade_report.md`, si consolida hallazgos ajenos en su respuesta atribuyéndolos
+mal, o si surfacea comandos.
+**Desviación → reportar:** issue citando `CU-7.r`.
 
 ---
 
@@ -513,10 +572,24 @@ opcional ausente, o silencia la omisión.
    → **Esperado:** `apply` integra esos cambios **vía delta** sobre los specs afectados
      y actualiza su trazabilidad (incluido el sello PRD→spec), solo en las features
      indicadas.
+   → **Esperado (sello):** cada spec tocado sale con su **validación reabierta** —
+     `Estado: BORRADOR`, vía `sdd-seal.py --unseal` ([[D-061]])— y el informe **lo dice**:
+     lo que alguien validó ya no es lo que hay. Es el mismo invariante que CU-7.b mide sobre
+     el PRD.
+   → **FALLO:** un spec con contenido cambiado que siga declarándose `VALIDADO`, o que salga
+     en borrador **sin que nadie lo mencione**.
+   → **Por qué el aviso es lo único que protege aquí ([[D-077]]):** este FALLO decía
+     *"(el readiness lo bloqueará y el usuario no sabrá por qué)"*, y **no lo bloquea** —
+     su veredicto `LISTA` no mira el sello (`kb-decompose-expert`, derivación de Estado),
+     así que un spec recién desellado sale `LISTA` en el informe y en `_features.md`. Quien
+     lo deniega es `gate_spec_fiable`, **una fase más tarde**, al pedir el plan. Si el apply
+     no menciona la reapertura, entre el desello y la denegación no hay nada que se lo diga
+     al usuario — que era justo lo que esta línea creía tener cubierto. La coherencia
+     informe↔gate la mide `CU-3.o` punto 4.
 
-**Resultado:** PASS si analyze diagnostica por feature y apply integra vía delta solo
-el subset · FALLO si apply toca features fuera del subset, o resincroniza sin
-diagnóstico previo.
+**Resultado:** PASS si analyze diagnostica por feature, apply integra vía delta solo
+el subset y deja constancia de la reapertura · FALLO si apply toca features fuera del
+subset, resincroniza sin diagnóstico previo, o conserva el sello sobre contenido nuevo.
 **Desviación → reportar:** issue citando `CU-7.l`.
 
 ### CU-7.m — Resincronización que rebasa un delta razonable
@@ -528,13 +601,24 @@ apply Paso 4B detiene la feature que rebasa delta).
 
 1. Le pides analizar la resincronización.
    → **Esperado:** clasifica por feature `severidad: minor|major|structural` y
-     `acción: delta|manual_review|rediscover`; las `structural`/`rediscover` no se marcan como auto-aplicables.
+     `acción: delta|manual_review|repartition|retire`; las `structural`/`repartition` no se marcan
+     como auto-aplicables.
 2. Le pides aplicar (`apply`) una feature cuyo cambio es estructural.
-   → **Esperado:** **no fuerza un delta**: detiene esa feature y marca que necesita rediscovery o
-     rediseño de spec; no aplica un sync automático que falsee la trazabilidad.
+   → **Esperado:** **no fuerza un delta**: detiene esa feature y dice que el cambio **mueve su
+     frontera**; no aplica un sync automático que falsee la trazabilidad.
+3. **La recomendación tiene que ser ejecutable** ([[D-075]]).
+   → **Esperado:** lo que propone para esa feature son **vías que existen**, descritas en lenguaje
+     natural: evolucionar con un delta la parte que sigue viva (tombstones, IDs no reutilizados),
+     dar de baja la capacidad que sale del producto, y especificar aparte la que emerge —con el
+     siguiente `F-00X` libre—.
+   → **FALLO:** recomendar *"rehacer el discovery"* / *"rediscovery"*. **No hay vía que lo
+     ejecute**: regenerar el `_discovery.md` renumera los `F-00X` que los specs ya citan, y el
+     propio `wf-spec-discover` se detiene por eso. Una acción recomendada que ninguna vía puede
+     cumplir es una promesa, no un siguiente paso.
 
-**Resultado:** PASS si clasifica por severidad y detiene las features que rebasan delta · FALLO si
-fuerza un delta sobre un cambio estructural, o auto-aplica un rediscover.
+**Resultado:** PASS si clasifica por severidad, detiene las features que rebasan delta y propone
+solo vías ejecutables · FALLO si fuerza un delta sobre un cambio estructural, auto-aplica una
+repartición, o remite a re-correr el discovery sobre un sistema ya especificado.
 **Desviación → reportar:** issue citando `CU-7.m`.
 
 ### CU-7.o — Una capacidad sale del producto (`DEPRECATION`, no `SCOPE_CHANGE`)
@@ -630,3 +714,51 @@ estado lo escribe alguien que no es el sellador.
 **Resultado:** PASS si los tres forks señalan la baja y ninguno la ejecuta · FALLO si alguno
 resincroniza, regenera o estampa el estado de una feature retirada.
 **Desviación → reportar:** issue citando `CU-7.q`.
+
+---
+
+### CU-7.s — Volver: la reactivación es la única vuelta atrás, y no restaura sellos ⏱ **sin pasada**
+
+**Precondición:** la feature dada de baja en `CU-7.p`, con `Estado: RETIRADO`, su traza
+`Retirada: CR-XXX` y su plan degradado a `BORRADOR` en la misma pasada. El PRD sigue **sin**
+contemplar la capacidad.
+**Mecanismo:** `wf-spec-retire` modo `reactivate` → `sdd-seal.py --unretire` (único camino de
+salida de `RETIRADO`) + `sdd-features-index.py`.
+
+1. Le dices que al final sí la hacéis ("recupera la feature de pagos", "vuelve a activarla").
+   → **Esperado:** la reactiva. **No lleva gate**: es la dirección segura, no destruye nada — y es
+     FALLO exigir aquí una confirmación que la baja sí exige, o pedir un `CR-XXX` para volver.
+2. Miras la cabecera del spec.
+   → **Esperado:** `Estado: BORRADOR`, **no `VALIDADO`** — la reactivación deja el sello
+     **pendiente**, no lo reabre— y la línea `Retirada:` **ha desaparecido**. FALLO encontrar el
+     spec vigente con una traza de baja todavía puesta: afirma una retirada que el estado ya
+     niega, y la leen tanto el índice como una persona.
+3. Miras el plan de esa feature.
+   → **Esperado:** **sigue en `BORRADOR`** desde la baja, y te lo dice: también hay que
+     revalidarlo. FALLO que la reactivación le devuelva el sello — nadie lo ha vuelto a auditar.
+4. Miras `_features.md` y el estado del proyecto.
+   → **Esperado:** deja de figurar `RETIRADA` y vuelve a pedir trabajo. Su `F-00X` **es el mismo
+     de siempre**: no se renumera ni se le asigna uno nuevo ([[D-074]], Regla 12).
+5. Le pides ahora el plan de esa feature.
+   → **Esperado:** ya no se deniega **por la baja** — pero sí **por el sello**, que quedó
+     pendiente (`CU-9.n`). FALLO que pase directo a planificar: la reactivación no revalida nada.
+6. **La contradicción que nadie resuelve sola.** Le preguntas cómo queda respecto al PRD.
+   → **Esperado:** te dice que el PRD vigente **sigue sin contemplar** esa capacidad, así que el
+     spec reactivado lo contradice: reactivar un spec **no reactiva la decisión de producto**, y
+     eso se formaliza aparte. FALLO callarlo, y FALLO también decir que "ya está todo alineado".
+7. **La vuelta que NO existe.** Sobre otra feature aún retirada, le pides evolucionarla en vez de
+   reactivarla.
+   → **Esperado:** deniega y te remite a reactivarla primero — nunca la devuelve al producto como
+     efecto colateral de escribir en su spec ([[D-078]]). El detalle del gate se mide en `CU-9.o`;
+     aquí lo que importa es que **el journey solo tiene una puerta de vuelta**.
+
+**Resultado:** PASS si reactiva sin gate, devuelve a `BORRADOR` sin restaurar ningún sello, retira
+la traza, conserva el `F-00X` y avisa de que el PRD sigue sin contemplarla · FALLO si sella el spec
+o el plan, si deja la traza `Retirada:` puesta, si renumera la feature, si oculta la contradicción
+con el PRD, o si alguna vía distinta de la reactivación la devuelve viva.
+**Desviación → reportar:** issue citando `CU-7.s`.
+
+> **Por qué se escribe ahora.** El ROADMAP ya anotaba que *"el modo `reactivate` tampoco tiene
+> escenario"* desde [[D-074]] — lo que faltaba era el punto 7, que llegó con [[D-078]]: la salida
+> de `RETIRADO` tenía una **segunda puerta no sancionada**, el `--unseal` de los flujos de
+> evolución. Cerrada esa, el journey queda con una sola, y esta es la que la mide.

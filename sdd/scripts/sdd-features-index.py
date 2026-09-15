@@ -22,11 +22,14 @@ cambios en las fuentes produce bytes idénticos → idempotente, sin churn de gi
 
 Derivación de Estado por feature (prioridad):
     sin spec ......................... PENDIENTE_GENERACIÓN
-    con spec y veredicto en readiness  el del readiness report (autoridad)
+    spec `Estado: RETIRADO` .......... RETIRADA (por encima de todo, D-074)
+    con spec y veredicto en readiness  el del readiness report (autoridad), salvo
+                                       un LISTA sobre spec en BORRADOR → BLOQUEADA (D-077)
     con spec, sin readiness ...........  marcador-based provisional:
         [INCOMPLETO]/[CRÍTICO]/[INFERIDO] → BLOQUEADA
         avisos de gobernanza != ninguno   → REQUIERE_CAMBIO_PRD
-        limpio                            → LISTA
+        `Estado: BORRADOR`                → BLOQUEADA, pendiente de validacion (D-077)
+        limpio y sellado                  → LISTA
 
 Uso:
     sdd-features-index.py <dir>            # regenera <base>_features.md en <dir>
@@ -39,9 +42,22 @@ viven `_features.md` / `_readiness_report.md`.
 
 Dónde se busca el discovery (en orden, primera coincidencia gana):
   1. `--discovery <path>` explícito.
-  2. `*_discovery.md` dentro de <dir>.
+  2. `*_discovery.md` dentro de <dir>, EXCLUYENDO `*_code_discovery.md`.
   3. Los demás directorios de `artifacts` de `.sdd/project-init.json` (buscado
-     hacia arriba desde <dir>), empezando por `prd`.
+     hacia arriba desde <dir>), empezando por `prd`, con la misma exclusión.
+
+La exclusión no es cosmética (D-083): `<scope>_code_discovery.md` es el mapa de
+CAPACIDADES del onramp brownfield (`wf-spec-from-code discover`), no el universo
+de features de un PRD, y encaja en el glob por puro sufijo. En una adopción
+(D-079) los dos conviven en la misma raíz y `sorted()` decide por orden
+alfabético: `billing_code_discovery.md` gana a `prd_discovery.md` y el índice
+sale con el universo equivocado — y, si aún no había índice previo del que
+heredar el nombre, también con el nombre equivocado
+(`billing_code_features.md`). En brownfield puro el daño es menor y también
+real: el mapa tiene otro formato, así que la feature se indexa sin nombre y las
+fuentes declaran `discovery=sí` sobre un discovery que no existe. Sin mapa como
+discovery, el índice se construye desde los specs — que es justo lo que
+`wf-spec-from-code` promete para ese caso.
 
 El paso 3 existe porque el discovery lo genera `wf-spec-discover` a partir del
 PRD y se llama `<basename_prd>_discovery.md`: en topología `authoring`
@@ -95,6 +111,23 @@ def first_glob(directory: Path, pattern: str) -> Path | None:
     return matches[0] if matches else None
 
 
+def is_code_discovery(path: Path) -> bool:
+    """`<scope>_code_discovery.md`: el mapa de capacidades del onramp brownfield.
+
+    Encaja en el glob `*_discovery.md` por sufijo y NO es un discovery de
+    features (ver la nota de D-083 en el docstring del módulo).
+    """
+    return path.name.endswith("_code_discovery.md")
+
+
+def first_discovery(directory: Path) -> Path | None:
+    """Primer `*_discovery.md` de <dir> que sea de verdad un discovery."""
+    for cand in sorted(directory.glob("*_discovery.md")):
+        if not is_code_discovery(cand):
+            return cand
+    return None
+
+
 def sibling_artifact_dirs(directory: Path) -> list[Path]:
     """Directorios de artefactos declarados en `.sdd/project-init.json`, salvo <dir>.
 
@@ -139,17 +172,21 @@ def find_discovery(directory: Path, explicit: str | None) -> tuple[Path | None, 
     `<base_discovery>_features.md` solo cuando ambos comparten directorio; si el
     discovery vive en otra raíz (topología `authoring`), el índice conserva el
     nombre derivado de <dir> y no importa el basename del PRD.
+
+    El barrido automático descarta los `*_code_discovery.md` (D-083); un
+    `--discovery <path>` explícito se respeta tal cual: es una orden de quien
+    invoca, y el filtro existe para el descubrimiento, no para vetar una vía.
     """
     if explicit:
         cand = Path(explicit).expanduser()
         if cand.is_file():
             return cand, cand.parent.resolve() != directory
         return None, False
-    local = first_glob(directory, "*_discovery.md")
+    local = first_discovery(directory)
     if local:
         return local, False
     for sib in sibling_artifact_dirs(directory):
-        cand = first_glob(sib, "*_discovery.md")
+        cand = first_discovery(sib)
         if cand:
             return cand, True
     return None, False
@@ -348,6 +385,19 @@ def has_gobernanza(value: str | None) -> bool:
     return v not in ("", "ninguno", "ninguna", "n/a", "—", "-")
 
 
+SIN_VALIDAR_MOTIVO = "pendiente de validación (el spec sigue en BORRADOR)"
+
+
+def _sin_validar(spec: dict) -> bool:
+    """El spec DECLARA `Estado: BORRADOR` (D-061/D-077).
+
+    Conservador, igual que `gate_spec_fiable` y que `status_sync`: un spec legacy
+    sin la linea `Estado:` NO cuenta como sin validar — devuelve False y sigue el
+    camino de siempre. Solo bloquea lo que se afirma, nunca lo que se omite.
+    """
+    return (spec.get("estado") or "").strip().upper() == "BORRADOR"
+
+
 def derive_state(spec: dict | None, verdict: dict | None) -> tuple[str, str]:
     if spec is None:
         return "PENDIENTE_GENERACIÓN", "—"
@@ -357,12 +407,26 @@ def derive_state(spec: dict | None, verdict: dict | None) -> tuple[str, str]:
     # El unico escritor de `Estado: RETIRADO` es `sdd-seal.py --retire`.
     if (spec.get("estado") or "").strip().upper() == "RETIRADO":
         return "RETIRADA", (spec.get("retirada") or "dada de baja").strip()
+    # `LISTA` es el unico veredicto que el sello puede desmentir (D-077). Un spec en
+    # BORRADOR no se puede planificar —`gate_spec_fiable` lo deniega (D-061)—, asi que
+    # un informe que lo declare LISTA promete algo que el gate incumple una fase mas
+    # tarde. El sello es un hecho mecanico de la cabecera, no un juicio, y la cabecera
+    # es mas fresca que el informe: un delta o una resincronizacion posteriores desellan
+    # (`--unseal`) sin que nadie regenere el readiness.
     if verdict:
+        if verdict["estado"] == "LISTA" and _sin_validar(spec):
+            return "BLOQUEADA", SIN_VALIDAR_MOTIVO
         return verdict["estado"], verdict.get("bloqueantes", "—")
     if spec["has_marker"]:
         return "BLOQUEADA", "marcadores [INCOMPLETO]/[CRÍTICO]/[INFERIDO] en el spec"
     if has_gobernanza(spec.get("gobernanza")):
         return "REQUIERE_CAMBIO_PRD", f"gobernanza: {spec['gobernanza']}"
+    # Va DESPUES de marcadores y gobernanza a proposito: los dos son motivos mas
+    # concretos, y ademas un spec con marcadores abiertos NO se puede validar
+    # (`sdd-seal.py spec --check` lo deniega). Decirle a alguien "falta validarlo"
+    # cuando el sellador va a rechazarlo es mandarlo a un callejon sin salida.
+    if _sin_validar(spec):
+        return "BLOQUEADA", SIN_VALIDAR_MOTIVO
     return "LISTA", "—"
 
 

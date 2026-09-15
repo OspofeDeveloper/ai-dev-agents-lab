@@ -98,7 +98,7 @@ cambio entra por la puerta de gobernanza.
 > *"Propaga este cambio por todo el pipeline."*
 
 **`/wf-prd-change-cascade <prd.md> --new-reqs <cambio.md>`** encadena toda la
-cascada y se detiene **solo en los 4 checkpoints humanos reales**:
+cascada y **te pregunta** en los 4 checkpoints humanos reales:
 
 ```mermaid
 flowchart LR
@@ -108,10 +108,16 @@ flowchart LR
     style C1 fill:#fff3e0,stroke:#f57c00
 ```
 
-Auto-aplica los deltas de spec inequívocos (`minor`); lista sin aplicar los que
-necesitan tu criterio (`major`). Flags útiles: `--review-before-apply` (parada
-conservadora antes de cualquier escritura), `--dry-run` (solo diagnostica),
-`--features F-001,...` (acota), `--skip-design`.
+Cada checkpoint se resuelve **en la misma conversación**: eliges y sigue, sin
+relanzar nada. Auto-aplica los deltas de spec inequívocos (`minor`); no aplica los
+que necesitan tu criterio (`major`) — esos te los pregunta. Flags útiles:
+`--review-before-apply` (parada conservadora antes de cualquier escritura),
+`--dry-run` (solo diagnostica), `--features F-001,...` (acota), `--skip-design`.
+
+!!! warning "Las specs que se resincronizan vuelven a borrador"
+    Aplicar un cambio sobre una spec **reabre su validación**: lo que alguien
+    aprobó ya no es lo que hay. Al terminar, el cascade te dice cuáles quedaron en
+    `BORRADOR` — hay que revalidarlas antes de planificar sobre ellas.
 
 ---
 

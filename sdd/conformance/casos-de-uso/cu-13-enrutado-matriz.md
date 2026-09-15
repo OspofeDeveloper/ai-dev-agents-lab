@@ -72,6 +72,12 @@ happy/edge/harness/args) vive en [`ROADMAP.md`](../ROADMAP.md) — esta vista es
 | "propaga este cambio de PRD por todo el pipeline" | `wf-prd-change-cascade` | cambio aislado (`wf-prd-change`) · medir sin aplicar (`wf-prd-sync-impact`) · solo specs (`wf-spec-sync-from-prd`) |
 | "¿qué debe llevar un PRD?" / "ayúdame a estructurar/pensar este PRD" (duda conceptual, sin `wf-*` exacta) | delega al agente **`prd-expert`** | responderla el hilo principal **a pelo** (debe delegar, `prd-expert` ya carga `kb-prd-expert`) |
 
+> ⚠ **El ✓ de este escenario cubre 3 de sus 5 filas.** La pasada de 2026-07-10 midió "crea un
+> PRD", "revisa mi PRD" y la duda conceptual; las filas de **`wf-prd-change`** y del
+> **cascade** nunca se ejercitaron. No se desmarca —lo medido sigue valiendo— pero el sello
+> promete más cobertura de la que tiene, y el cascade **cambió de arquitectura** en [[D-075]]
+> (sigue enrutándose igual: su `description` y su `when_to_use` no se tocaron).
+
 **Resultado:** PASS si cada frase enruta a su skill y respeta los negativos, y una duda
 conceptual de PRD se **delega a `prd-expert`** en vez de responderla a pelo · FALLO si
 confunde change con cascade, crea con revisa, o teoriza sobre PRDs sin delegar.
@@ -96,9 +102,22 @@ confunde change con cascade, crea con revisa, o teoriza sobre PRDs sin delegar.
 | "qué specs han quedado stale tras cambiar el PRD" | `wf-prd-sync-impact` | aplicar (`wf-spec-sync-from-prd`) · todo el cascade (`wf-prd-change-cascade`) |
 | "genera specs del código existente" / "caracteriza este módulo" | `wf-spec-from-code` | si hay PRD (`wf-spec-features-first`) |
 | "este CA es ambiguo, aclara CA-XXX" | `wf-spec-amend` | cambia comportamiento (`wf-spec-delta`) · bug (`wf-bug`) · `[INCOMPLETO]` (`wf-spec-gap-resolve`) |
+| "esta feature ya no va" / "damos de baja X" / "quitamos esa capacidad del producto" | `wf-spec-retire` | **posponerla** a otra fase (no se retira: es prioridad en el PRD) · quitar una HU o un CA sueltos (`wf-spec-delta`) |
+| "recupera la feature X" / "al final sí la hacemos" | `wf-spec-retire reactivate` | regenerar el spec desde cero (`wf-spec-fast-track`) — y desde [[D-080]] esa confusión además **no cuela**: el escritor para con `STOP_SPEC_RETIRADO` en vez de pisarlo, así que el error de enrutado se ve en el momento |
+| "¿en qué estado están mis specs?" / "¿cuál es el siguiente paso?" / "¿qué es un Spec SDD?" (duda de estado o conceptual, sin `wf-*` exacta) ⏱ **sin pasada** | delega al agente **`sdd-spec-explorer`** | responderla el hilo principal **a pelo** (tiene prohibida la lectura cualitativa del artefacto, [[D-031]]) · forzar una `wf-*` que no aplica · `wf-spec-readiness`, que mide readiness de features ya generadas, no "qué tengo delante" |
 
-**Resultado:** PASS si cada frase enruta a su skill y respeta los negativos · FALLO en
-cualquier confusión (sobre todo "crea las specs" → discover).
+> **La fila diagnóstica de Spec faltaba, y la de PRD lleva medida desde julio ([[D-077]]).**
+> `CU-13.a` cerró ese hueco para el PRD (*"duda conceptual → `prd-expert`"*, ✓ 2026-07-10,
+> 3/3) y el equivalente en Spec nunca se abrió, pese a que el README de la fase lo declara
+> como dos de sus siete casos de uso y `CU-11.e` lo mide de forma transversal. La diferencia
+> con el PRD es que aquí, además, **falta el portador**: `pipeline/spec/routing.md` no nombra
+> la petición diagnóstica, así que la regla eager `sdd-routing.md` —que se ensambla desde los
+> `routing.md` de las fases instaladas— tampoco. Espera un FALLO la primera vez que se corra.
+
+**Resultado:** PASS si cada frase enruta a su skill y respeta los negativos, y una petición
+diagnóstica se **delega a `sdd-spec-explorer`** en vez de resolverla a pelo · FALLO en
+cualquier confusión (sobre todo "crea las specs" → discover, y "quita esta feature" resuelto sin
+desambiguar — ver CU-13.g punto 8).
 **Desviación → reportar:** issue citando `CU-13.b`.
 
 ## CU-13.c — Fase Design
@@ -226,7 +245,8 @@ es **citable como `CU-13.g`** y conviene probarla aparte:
 4. **Familia "cambiar un spec"** → aclarar un CA ambiguo (mismo comportamiento) =
    `wf-spec-amend`; completar `[INCOMPLETO]` con respuestas del analysis =
    `wf-spec-gap-resolve`; añadir/cambiar funcionalidad = `wf-spec-delta`; defecto de
-   código contra el CA = `wf-bug`; cambio que baja del PRD = `wf-spec-sync-from-prd`.
+   código contra el CA = `wf-bug`; cambio que baja del PRD = `wf-spec-sync-from-prd`;
+   **la feature entera deja de estar en el producto = `wf-spec-retire`**.
 5. **"qué está listo / estado"** → delivery del proyecto = `wf-project-status`;
    readiness **funcional** de specs = `wf-spec-readiness`; inventario del **ecosistema**
    = `wf-sdd-status` (meta-skill).
@@ -235,7 +255,23 @@ es **citable como `CU-13.g`** y conviene probarla aparte:
 7. **Diseño: desde cero vs UI existente** → greenfield (desde spec) = `wf-design-system`;
    UI **ya en producción** (ingeniería inversa) = `wf-design-extract`.
 
-**Resultado:** PASS si el orquestador acierta cada desambiguación (y, en la #2, pide
+8. **"Quita esta feature" → tres cosas distintas, y hay que preguntar cuál** ([[D-074]]). Las
+   variantes (*"esto ya no va"*, *"fuera esa parte"*) se piden con las mismas palabras y tienen
+   consecuencias opuestas:
+   - **el producto retira la capacidad** → baja de la feature (`wf-spec-retire`), y exige que el
+     cambio esté formalizado antes en el PRD con su `CR-XXX`;
+   - **se pospone a una fase futura** → **no se retira nada**: sigue comprometida y sus specs se
+     quedan como están. Es un cambio de prioridad en el PRD;
+   - **desaparece una HU o un CA concretos** de una feature que sigue viva → evolución incremental
+     (`wf-spec-delta`), con tombstone conservando el ID.
+   → **Esperado:** ante la frase cruda, el orquestador **desambigua antes de enrutar**; no elige.
+   → **FALLO grave:** tratar un aplazamiento como una baja. **Destruye trabajo que seguía siendo
+     válido** y el spec retirado contradice a un PRD que sí contempla la capacidad. Es el error
+     fácil: la diferencia la define `kb-product-change-governance` Regla 2 (`DEPRECATION` vs
+     `PRIORITY_CHANGE`), no las palabras del usuario.
+
+**Resultado:** PASS si el orquestador acierta cada desambiguación (y, en la #2 y la #8, pide
 aclaración si el matiz no es claro) · FALLO si cae en la confusión obvia — especialmente
-"crea las specs" → discover, o "actualiza el DESIGN" → la opción equivocada sin preguntar.
+"crea las specs" → discover, "actualiza el DESIGN" → la opción equivocada sin preguntar, o
+posponer tratado como retirar.
 **Desviación → reportar:** issue citando `CU-13.g`.

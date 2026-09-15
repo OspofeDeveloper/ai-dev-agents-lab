@@ -102,7 +102,7 @@ permissionMode: acceptEdits
 <small>`spec/agents/sdd-spec-writer.md`</small>
 
 Por eso `description`s precisas son críticas: son el **único coste fijo** del
-catálogo (131 skills hoy) y lo que permite el matching semántico del orquestador
+catálogo (135 skills hoy) y lo que permite el matching semántico del orquestador
 sin cargar cuerpos. El linter estructural penaliza `description`s >220 caracteres
 por esta razón.
 

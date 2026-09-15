@@ -147,6 +147,6 @@ En lenguaje natural, sin nombrar workflows:
 
 - qué feature se ha dado de baja y con qué cambio de producto;
 - que su **Feature ID se conserva y no se reutiliza** (`kb-traceability-rules` Regla 12): la siguiente feature toma el siguiente número libre, no el hueco;
-- que a partir de ahora no se puede planificar sobre ella, ni generarle tareas, ni ejecutarlas;
+- que a partir de ahora no se puede planificar sobre ella, ni generarle tareas, ni ejecutarlas — **ni volver a escribir su spec** ([[D-080]]): las vías que lo evolucionan se deniegan y las que lo regeneran paran sin tocarlo, así que la baja no se deshace por accidente desde ningún lado;
 - **qué queda en pie**: si había release, que el código sigue entregado y retirarlo es otra conversación; si deja shared models huérfanos, qué features hay que revisar;
 - y que, si la decisión cambia, **puedes pedirme que la recuperes**: volvería a `BORRADOR` y habría que validarla de nuevo. Descríbeselo como acción, no como comando.

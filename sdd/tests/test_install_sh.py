@@ -582,6 +582,37 @@ class InstallAllTest(InstallBase):
         self.assertIn("[--allow-overwrite-sealed-spec]", ft,
                       "wf-spec-fast-track no declara el flag en su argument-hint")
 
+    def test_spec_generators_stop_on_a_retired_feature(self):
+        """D-080: `Estado:` tiene TRES valores y el sondeo los partia en dos.
+
+        D-078 cerro la baja para los flujos que MODIFICAN un spec, con un gate
+        determinista que resuelve el spec desde los argumentos. Los que lo
+        REGENERAN no reciben el spec como argumento —reciben el PRD o un path de
+        codigo—, asi que el invariante vive en el cuerpo de la skill. Un
+        `RETIRADO` leido como "no es VALIDADO" cae en la rama del borrador: la
+        que se reescribe sin preguntar, resucitando la feature sin CR ni gate.
+
+        Y este STOP_* no lo cierra ningun flag: recuperar la feature es una
+        decision de producto, no un permiso de escritura.
+        """
+        self.install("all")
+        ft = (self.skill_dir("wf-spec-fast-track") / "SKILL.md").read_text(encoding="utf-8")
+        fc = (self.skill_dir("wf-spec-from-code") / "SKILL.md").read_text(encoding="utf-8")
+        ff = (self.skill_dir("wf-spec-features-first") / "SKILL.md").read_text(encoding="utf-8")
+        for name, body in (("wf-spec-fast-track", ft), ("wf-spec-from-code", fc)):
+            self.assertIn("STOP_SPEC_RETIRADO", body,
+                          f"{name} no para ante una feature dada de baja (ver D-080)")
+            self.assertIn("Ningún flag lo cierra", body,
+                          f"{name} deja entender que un override reabre una baja (ver D-078/D-080)")
+        # El orquestador no puede parar: clasifica y excluye, nombrandolas.
+        self.assertIn("RETIRADA", ff,
+                      "features-first no clasifica las features dadas de baja (ver D-080)")
+        # Los tres leen el campo entero, no solo VALIDADO.
+        for name, body in (("wf-spec-fast-track", ft), ("wf-spec-from-code", fc),
+                           ("wf-spec-features-first", ff)):
+            self.assertIn("BORRADOR|VALIDADO|RETIRADO", body,
+                          f"{name} vuelve al sondeo binario del `Estado:` (ver D-080)")
+
     def test_gap_id_ranges_are_dealt_by_the_orchestrator(self):
         """D-056: en un fan-out los IDs los reparte quien lanza, no el escritor.
 
@@ -1025,23 +1056,42 @@ class InstallAllTest(InstallBase):
                          "main no debe declarar Write: la escritura es del prd-expert (D-038)")
         self.assertIn("Siempre, sin excepción por trivialidad", skill,
                       "el gate no puede saltar segun el criterio del agente (D-040)")
-        self.assertIn("--defer-decisions", skill,
-                      "wf-prd-change pierde el modo sin gate para la cascada (D-040)")
-        self.assertIn("la ambigüedad se marca", skill,
-                      "el modo sin gate pierde su invariante: marcar en vez de decidir (D-040)")
+        # D-075: el modo sin gate se retira. Su unico consumidor era la cascada,
+        # que era un fork; desde que corre en main, el gate se presenta de verdad.
+        # Un modo que nadie alcanza no es una capacidad, es una promesa.
+        self.assertNotIn("--defer-decisions", head,
+                         "el flag se retiro del contrato de entrada al salir la cascada del fork (D-075)")
+        self.assertIn("No hay modo sin gate", skill,
+                      "la retirada del modo sin gate tiene que quedar escrita, no solo borrada (D-075)")
+        self.assertIn("el Paso 5 no tiene excepciones", skill,
+                      "sin el flag, el gate tiene que quedar declarado sin escapatoria (D-075)")
 
-    def test_prd_change_cascade_defers_decisions(self):
-        # D-040: la cascada es un fork y no puede heredar el gate de wf-prd-change,
-        # asi que la invoca con --defer-decisions. Su "checkpoint humano (1) aprobar el
-        # cambio de producto" nunca fue un checkpoint: era un fork invocando a un fork.
+    def test_prd_change_cascade_runs_in_main_and_delegates(self):
+        # D-075: la cascada sale del fork. Era la unica skill del ecosistema que
+        # declaraba `Skill` en allowed-tools, encadenaba seis workflows desde un
+        # subagente y declaraba cuatro "checkpoints humanos" que ningun fork puede
+        # presentar. D-040 ya lo dejo escrito como candidato: "sacar tambien la
+        # cascada del fork heredaria el gate de verdad".
         self.install("all")
         skill = (self.skill_dir("wf-prd-change-cascade") / "SKILL.md").read_text(encoding="utf-8")
-        self.assertIn("--defer-decisions", skill,
-                      "la cascada debe invocar wf-prd-change con --defer-decisions (D-040)")
-        self.assertIn("decisión aplazada", skill,
-                      "la cascada debe dejar de llamar checkpoint humano al paso 3 (D-040)")
-        self.assertIn("wf-prd-review", skill,
-                      "la cascada debe remitir la decision aplazada al gate del review (D-040)")
+        head = skill.split("---")[1]
+        self.assertNotIn("context: fork", head,
+                         "la cascada no puede seguir siendo un fork: sus gates no se presentan (D-075)")
+        self.assertIn("AskUserQuestion", head,
+                      "la cascada necesita AskUserQuestion para sostener sus gates (D-075)")
+        self.assertIn("Agent", head,
+                      "la cascada delega los workers por la tool Agent (D-043/D-075)")
+        # El flag puede nombrarse al explicar por que ya no se usa; lo que no puede
+        # es seguir viajando en la invocacion.
+        self.assertNotIn("--new-reqs <cambio.md> --defer-decisions", skill,
+                         "sin fork no hay nada que aplazar: el gate de wf-prd-change se presenta (D-075)")
+        # El informe consolidado desaparece: cada artefacto tiene su autor (D-060).
+        self.assertNotIn("Escribe `<basename>_cascade_report.md", skill,
+                         "el orquestador no redacta el informe de sus delegados (D-060/D-075)")
+        # Y los specs resincronizados salen en BORRADOR: callarlo deja al usuario
+        # con un readiness que los bloquea sin explicar por que (D-061).
+        self.assertIn("BORRADOR", skill,
+                      "la cascada debe avisar de que el apply reabre la validacion (D-061/D-075)")
 
     def test_prd_review_uses_dependency_graph(self):
         # D-029/Q2a: el gate de asunciones carga el grafo determinista de
@@ -1135,6 +1185,21 @@ class InstallAllTest(InstallBase):
         # dual-audience
         self.assertNotIn("Eres el **orquestador**", routing)
         self.assertIn("Audiencia.", routing)
+
+    def test_routing_rule_carries_the_spec_fork_gate_paragraph(self):
+        # D-075 (residuo): Design tenia escrito desde D-072 que sus gates no se dictan
+        # desde un fork, y Spec no — pese a emitir siete veredictos STOP_* desde forks.
+        # La cadena "STOP_" no aparecia en NINGUNA regla eager: la convencion que usan
+        # 10 skills de 5 fases no estaba nombrada en nada que el hilo principal cargue.
+        self.install("all")
+        routing = (self.claude / "rules" / "sdd-routing.md").read_text(encoding="utf-8")
+        spec_section = routing.split("## Fase Spec")[1].split("## Fase Design")[0]
+        self.assertIn("STOP_", spec_section,
+                      "la seccion Spec debe nombrar el veredicto STOP_* (D-064/D-072)")
+        self.assertIn("presentarlo es cosa tuya", spec_section,
+                      "tiene que decir QUIEN presenta el bloqueo, no solo que el worker para")
+        # Y los dos STOP_* que ningun --allow-* cierra: esperan confirmacion, no permiso.
+        self.assertIn("no se cierran con ningún flag", spec_section)
 
     def test_routing_rule_is_scoped(self):
         # Topology-gating por fase: la desambiguación de una fase solo aparece si
@@ -1418,6 +1483,49 @@ class ProjectRootTest(InstallBase):
         self.assertFalse((subdir / ".sdd").exists())
         # las skills (.claude) si van junto al cwd (no usan SDD_PROJECT_ROOT)
         self.assertTrue((subdir / ".claude" / "skills" / "kb-tasks-expert").exists())
+
+
+class KbSpecExpertContentTest(unittest.TestCase):
+    """Backstop de contenido del kb-spec-expert (D-076): el umbral del veredicto de
+    la fase Spec, espejo del que D-035 fijo para el PRD. Como alli, parte del insumo
+    es cualitativo y no hay script que lo mecanice: se fijan las cadenas clave."""
+
+    KB = SDD_ROOT / "pipeline" / "spec" / "skills" / "kb-spec-expert"
+    WF = SDD_ROOT / "pipeline" / "spec" / "skills" / "wf-spec-validate"
+
+    def _skill(self):
+        return (self.KB / "SKILL.md").read_text(encoding="utf-8")
+
+    def test_threshold_is_defined_and_closed(self):
+        # D-076: "hallazgo bloqueante" gobierna el sello, asi que no puede quedar a
+        # juicio de cada pasada. Los tres tipos que degradan estan enumerados.
+        s = self._skill()
+        self.assertIn("El umbral del veredicto", s)
+        self.assertIn("Es bloqueante, y solo esto", s)
+
+    def test_threshold_names_what_does_not_degrade(self):
+        # La mitad que de verdad falta cuando el umbral no esta escrito: lo que se
+        # reporta SIN bajar el veredicto. Sin esta lista, el juicio se va a estricto.
+        s = self._skill()
+        self.assertIn("No degrada el veredicto", s)
+        self.assertIn("materia de Plan", s)
+
+    def test_threshold_defers_the_mechanical_half_to_the_script(self):
+        # Ortogonalidad con sdd-seal.py --check: incompletos, criticos, inferidos y
+        # asunciones sin rastro los dictamina el script, no la lectura del auditor.
+        s = self._skill()
+        self.assertIn("sdd-seal.py spec --check", s)
+        self.assertIn("necesario y no suficiente", s)
+
+    def test_validate_restates_the_threshold(self):
+        # Restatement en el workflow que sella: el prompt del auditor lleva el umbral
+        # y el paso del sello remite a la SSoT en vez de re-definirlo.
+        s = (self.WF / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("no lo decides aquí", s)
+        self.assertIn("kb-spec-expert", s)
+        tpl = (self.WF / "references" / "output_template.md").read_text(encoding="utf-8")
+        self.assertIn("Hallazgos BLOQUEANTES", tpl)
+        self.assertIn("Notas NO bloqueantes", tpl)
 
 
 class KbPrdExpertContentTest(unittest.TestCase):

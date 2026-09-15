@@ -115,7 +115,14 @@ No hay PRD y el software ya está en producción. La fuente de verdad es el cód
     punteros de evidencia y nota de confianza (alta / media / baja)
   → SE DETIENE SIEMPRE: el mapa lo valida un humano antes de generar ningún spec
 
-[confirmas, corriges o descartas capacidades — las descartadas se marcan, no se borran]
+[confirmas, corriges o descartas capacidades: eso vuelve por --capabilities, no en texto libre]
+
+/wf-spec-from-code discover backend/ --capabilities 'F-C-001=confirmada;
+    F-C-002=descartada: código muerto, ninguna ruta lo alcanza;
+    F-C-003=corregida: el actor es admin, no usuario'
+  → aplica esas decisiones al mapa SIN re-explorar el código
+  → las descartadas se marcan DESCARTADA — <motivo>, no se borran
+  → el mapa queda `Validación: <fecha>` solo si no quedó ninguna sin decidir
 
 /wf-spec-from-code generate backend/ --feature F-C-001
   → genera features/<nombre>/spec/<nombre>_spec.md con Origen: characterization
@@ -125,6 +132,8 @@ No hay PRD y el software ya está en producción. La fuente de verdad es el cód
 
 /wf-spec-gap-resolve features/<nombre>/spec/<nombre>_spec.md
   → confirma los [INFERIDO] uno a uno; eso es lo que desbloquea el spec
+  → son DOS turnos: el worker para y devuelve el material (no puede preguntar),
+    se eligen las tres vías con el usuario, y las decisiones vuelven en `--inferred`
 ```
 
 **Cuándo usarlo**: para documentar un legacy antes de tocarlo, o para dar entrada al pipeline a un sistema que nunca tuvo PRD. La regla que gobierna estos specs vive en `kb-spec-characterization`: **un CA sin evidencia no existe**.
@@ -132,6 +141,35 @@ No hay PRD y el software ya está en producción. La fuente de verdad es el cód
 **Cuándo NO**: si existe un PRD, la entrada es `wf-spec-features-first` (casos 1 y 1.b). Y si lo que quieres es **cambiar** el comportamiento, no documentarlo, eso es `wf-spec-delta` sobre el spec de caracterización ya generado.
 
 **Bloqueo**: los `[INFERIDO]` se tratan como `[INCOMPLETO]` y bloquean `wf-prepare-plan` hasta confirmarse.
+
+---
+
+### 2.c. El sistema caracterizado adquiere un PRD (adopción)
+
+Secuencia normal en una adopción sobre producto vivo: primero se documenta el legacy (caso 2.b), y **más tarde** se escribe el PRD del producto. Entonces el discovery de ese PRD saca `F-00X` que solapan con los `F-C-00X` ya caracterizados, y hay que decidir qué pasa con cada uno.
+
+**No hay workflow que lo automatice, y es deliberado**: la correspondencia entre "lo que el código hace" y "lo que el producto dice querer" es un juicio humano capacidad por capacidad. Lo que sí hay es una regla que gobierna las cuatro casuísticas — `kb-traceability-rules` Regla 13 ([[D-079]]) — y el orden correcto de operaciones:
+
+```
+[el PRD ya existe y está revisado]
+
+/wf-spec-discover prd.md
+  → mapa de F-00X del producto, que aún no sabe nada de los F-C-00X en disco
+
+[pon los dos mapas uno al lado del otro y decide, feature a feature:]
+  · F-00X que ya está caracterizado  → se ADOPTA el spec existente como línea base:
+                                       toma el F-00X, conserva sus CAs con Evidencia y su
+                                       changelog, y pasa a declarar PRD origen
+  · el PRD quiere algo distinto      → eso NO es la adopción: es evolución incremental
+                                       del spec adoptado, aparte y con su changelog
+  · F-00X sin código detrás          → feature nueva, camino normal (caso 1.b)
+  · F-C-00X que nadie reclama        → el código hace algo que el PRD no contempla:
+                                       decisión de producto, nunca baja automática
+```
+
+**Los dos atajos son errores caros.** Regenerar las features desde el PRD **tira la evidencia** que costó levantar del código —y con ella los `[INFERIDO]` ya confirmados uno a uno—. Dejar los dos juegos conviviendo produce dos specs vivos para la misma capacidad, que es exactamente lo que `wf-spec-conflict` va a reportar como HU duplicada y scope overlap.
+
+**Cuándo NO**: si el "PRD" que aparece describe solo un cambio sobre lo ya caracterizado, no hay adopción que hacer — eso es evolución del spec existente.
 
 ---
 
@@ -223,6 +261,8 @@ Si el cambio no mueve una capacidad sino que la **saca del producto**, sus specs
 
 **Qué cambia a partir de ahí**: readiness la saca del orden de implementación, el estado del proyecto deja de pedir trabajo sobre ella, y los gates deniegan planificarla, generarle tareas o ejecutarlas. Su `F-00X` **se conserva y no se reutiliza** (`kb-traceability-rules` Regla 12): la siguiente feature toma el siguiente número libre, no el hueco.
 
+**Y tampoco se vuelve a escribir su spec** ([[D-080]]). La baja es terminal en las tres direcciones: no se evoluciona (delta, enmienda y resolución de gaps se deniegan), no se **regenera** —fast-track, caracterización desde código y la generación por feature la dejan fuera y lo dicen— y no compite en el análisis de conflictos. Su `F-00X` sigue apareciendo en el `_discovery.md`, que no se regenera, así que **volverá a aparecer en cada pasada posterior**: eso es lo esperado, no una anomalía. La única vuelta es la reactivación.
+
 **Cuándo NO**: si la capacidad solo se pospone a una fase futura, **no** se retira — sigue comprometida, y eso es un cambio de prioridad. Y si lo que desaparece es una HU o un CA concretos dentro de una feature que sigue viva, eso es `wf-spec-delta`, que los marca como tombstone.
 
 **Si la decisión cambia**:
@@ -264,6 +304,8 @@ Quieres verificar que los specs de las diferentes features del proyecto son cohe
 ```
 
 **Cuándo usarlo**: después de modificar un spec existente o añadir una nueva feature con fast-track o delta, para verificar que el cambio no choca con el resto del sistema. También se ejecuta automáticamente al final de `/wf-spec-features-first` (modo no bloqueante).
+
+**Cómo se cierra un conflicto** ([[D-082]]): decidiendo qué feature manda y **aplicando el cambio sobre el spec que toque** por las vías de evolución — que reabren su validación—. No editando el spec a mano: una edición manual **conserva el sello**, así que el spec seguiría diciendo `Estado: VALIDADO` con un contenido que ya no es el auditado, y el gate de planificación lo dejaría pasar. Los specs de features dadas de baja quedan **fuera** de la comparación ([[D-080]]): un choque contra algo que no se va a implementar no es un conflicto.
 
 ---
 
@@ -313,10 +355,10 @@ La lógica exacta de routing y la política de skills viven en [CLAUDE.md](CLAUD
 | `wf-spec-features-first` | `/wf-spec-features-first [--features F-XXX,...] [--allow-open-critical-gaps] [--allow-derived-scope-from-analysis] [--all-features]` | `_discovery.md`, `_features.md` (Project Hub incremental con estados canónicos y trazabilidad de gobernanza), `features/<x>/spec/<x>_spec.md` |
 | `wf-spec-discover` | `/wf-spec-discover [--analysis <analysis.md>] [--allow-derived-scope-from-analysis]` | `_discovery.md` con mapa de features y metadata de gobernanza |
 | `wf-spec-fast-track` | `/wf-spec-fast-track` | `features/<x>/spec/<x>_spec.md` directamente, con marca de origen de alcance si aplica |
-| `wf-spec-from-code` | `/wf-spec-from-code discover \| generate` | `_code_discovery.md` (mapa de capacidades con evidencia) y specs de caracterización `F-C-00X` |
+| `wf-spec-from-code` | `/wf-spec-from-code discover [--capabilities '…'] \| generate` | `_code_discovery.md` (mapa de capacidades con evidencia; el mapa que ya existe no se rehace sin `--allow-overwrite-code-discovery`) y specs de caracterización `F-C-00X`. La validación humana del mapa vuelve por `--capabilities`, y una capacidad `DESCARTADA` no se caracteriza |
 | `wf-spec-conflict` | `/wf-spec-conflict` | `_conflict_report.md` |
 | `wf-spec-delta` | `/wf-spec-delta` | `_delta_analysis.md` (analyze), spec actualizado (apply) |
-| `wf-spec-gap-resolve` | `/wf-spec-gap-resolve` | spec actualizado desde `_analysis.md` |
+| `wf-spec-gap-resolve` | `/wf-spec-gap-resolve [--analysis <analysis.md>] [--inferred 'CA-XXX=confirmado; …']` | spec actualizado desde `_analysis.md`; los `[INFERIDO]` se confirman en dos turnos y las decisiones vuelven por `--inferred` |
 | `wf-spec-retire` | `/wf-spec-retire --change CR-XXX \| reactivate` | Spec sellado `Estado: RETIRADO` + `Retirada: CR-XXX`; el índice pasa la feature a `RETIRADA`. El modo `reactivate` lo deshace, devolviéndolo a `BORRADOR` |
 | `wf-spec-amend` | `/wf-spec-amend --ca CA-XXX [--from-task T-00X]` | CA aclarado con changelog `E-00X`, anotación `Enmienda pendiente` en el `_plan.md` (vía `sdd-amend.py`) |
 | `wf-prd-change` | `/wf-prd-change` | PRD actualizado, `product-changelog.md`, `changes/CR-XXX/change-request.md`, `changes/CR-XXX/decision.md` |
@@ -374,7 +416,7 @@ proyecto/
 ├── <scope>_code_discovery.md                 ← /wf-spec-from-code discover (brownfield)
 ├── prd_features.md                           ← /wf-spec-features-first — PROJECT HUB (index + trazabilidad + estado)
 ├── prd_sync_report.md                        ← /wf-prd-sync-impact
-├── prd_conflict_report.md                    ← /wf-spec-features-first (automático) o /wf-spec-conflict
+├── prd_conflict_report.md                    ← /wf-spec-conflict sobre el directorio entero (consolidado)
 ├── prd_readiness_report.md                   ← /wf-spec-readiness
 └── features/
     └── <nombre-feature>/
@@ -383,7 +425,7 @@ proyecto/
         │   ├── <nombre>_spec.md              ← /wf-spec-fast-track
         │   ├── <nombre>_delta_analysis.md    ← /wf-spec-delta analyze
         │   ├── <nombre>_sync_requirements.md ← /wf-spec-sync-from-prd analyze
-        │   └── <nombre>_conflict_report.md   ← /wf-spec-conflict
+        │   └── <nombre>_conflict_report.md   ← /wf-spec-conflict sobre un spec, y el fan-out de /wf-spec-features-first
         ├── design/                           ← etapa Design (flows, views, ui_prompt)
         ├── plan/
         │   └── <nombre>_plan.md              ← /wf-prepare-plan (etapa siguiente)
@@ -413,7 +455,7 @@ El pipeline nunca es completamente automático. Estos son los momentos donde el 
 | Tras `wf-prd-sync-impact` | Revisar artefactos `stale` o `needs_review` y decidir qué features resincronizar | Sí — bloquea avanzar con specs desalineados |
 | Durante `delta analyze` | Decidir si el cambio es de producto (va antes al PRD) y, si el requisito es ambiguo, cuál es la lectura | Sí — sin decisión, la ambigüedad se marca como gap `[D-XXX]` y el delta no la resuelve |
 | Tras `delta analyze` | Responder gaps `[CRÍTICO]` con `_(pendiente)_` en `_delta_analysis.md` | Sí — `delta apply` pregunta antes de seguir, y aplicar igualmente deja HUs `[INCOMPLETO]` que bloquean `prepare-plan` |
-| Tras `from-code discover` | Confirmar, corregir o descartar las capacidades del `_code_discovery.md` | Sí — `generate --feature` no arranca sin ese mapa validado |
+| Tras `from-code discover` | Confirmar, corregir o descartar las capacidades del `_code_discovery.md` — las decisiones vuelven por `--capabilities`, que las aplica al mapa sin re-explorar | Sí — `generate --feature` no arranca sin ese mapa, y no caracteriza una capacidad `DESCARTADA` |
 | Tras `from-code generate` | Confirmar los CAs `[INFERIDO]` uno a uno (vía `wf-spec-gap-resolve`) y decidir qué hacer con los `[SOSPECHA_BUG]` | Sí — los `[INFERIDO]` bloquean `prepare-plan` igual que un `[INCOMPLETO]` |
 
 ---

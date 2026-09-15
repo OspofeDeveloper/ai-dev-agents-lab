@@ -125,8 +125,12 @@ flowchart TD
     ChangeType -->|CA ambiguo descubierto al implementar| Amend["wf-spec-amend"]
     ChangeType -->|Edicion manual a revisar| Validate["wf-spec-validate"]
     ChangeType -->|Posible solapamiento entre features| Conflict["wf-spec-conflict"]
-    ChangeType -->|Cambio real en el PRD| Sync["wf-spec-sync-from-prd"]
+    ChangeType -->|Cambio real en el PRD| Impact["wf-prd-sync-impact<br/>(mide: que quedo stale)"]
     ChangeType -->|El producto retira la capacidad| Retire["wf-spec-retire"]
+
+    Impact --> Decide{"¿Que features<br/>resincronizar?"}
+    Decide -->|las afectadas| Sync["wf-spec-sync-from-prd<br/>(aplica)"]
+    Decide -->|el PRD ya no la contempla| Retire
 
     Delta --> Updated[spec actualizado]
     Gap --> Updated
@@ -135,6 +139,18 @@ flowchart TD
     Conflict --> Updated
     Sync --> Updated
     Retire --> Retired["spec RETIRADO — fin de la feature"]
+
+    Retired -.->|"la decision se revierte<br/>(wf-spec-retire reactivate)"| Existing
 ```
 
-**Mensaje clave:** no todo cambio se resuelve regenerando desde cero; `spec` tiene caminos quirurgicos para evolucion, sync y cierre. **Seis llevan al spec actualizado y una no**: la baja es la unica salida terminal del diagrama, y el ID de la feature se conserva sin reutilizarse.
+**Mensaje clave:** no todo cambio se resuelve regenerando desde cero; `spec` tiene caminos quirurgicos para evolucion, sync y cierre. **Seis llevan al spec actualizado y una no**: la baja es la unica salida terminal, y el ID de la feature se conserva sin reutilizarse.
+
+**Tres aristas que el diagrama tiene implicitas y conviene no saltarse:**
+
+- **Medir antes de aplicar.** Un cambio de PRD no entra directo en `wf-spec-sync-from-prd`: primero `wf-prd-sync-impact` dice **que** quedo `stale` o `needs_review`, y revisar ese informe es un checkpoint humano bloqueante. Es tambien donde se separan las dos salidas: una feature afectada se resincroniza, una que el PRD ya no contempla se da de baja — y esa segunda no se decide en un fork.
+- **La baja cierra tambien la puerta que este diagrama no dibuja ([[D-080]]).** Aqui solo entran las
+  vias que arrancan **desde un spec existente**. Las que lo **regeneran** arrancan desde el PRD o
+  desde el codigo —fast-track, caracterizacion, generacion por feature— y aterrizan en el mismo
+  fichero: tambien paran ante un `RETIRADO`, lo dicen y no lo pisan. Y un spec retirado queda fuera
+  del analisis de conflictos: un choque contra algo que no se va a implementar no es un conflicto.
+- **La reactivacion es la unica vuelta atras, y no restaura sellos.** Devuelve el spec a `BORRADOR`, no a `VALIDADO`; el plan sigue en `BORRADOR` desde la baja. Ningun otro camino sale de `RETIRADO`: desde [[D-078]], tampoco el `--unseal` con el que cierran delta, amend y gap-resolve.

@@ -1,7 +1,7 @@
 # SDD Skill Registry
 <!-- Auto-generado por scripts/generate-skill-registry.py. No editar manualmente. -->
 <!-- Total: 135 skills | 59 wf-* (user-invocable) | 76 kb-* -->
-<!-- Última actualización: 2026-09-14 -->
+<!-- Última actualización: 2026-09-15 -->
 
 ## Meta-Ecosistema (meta/)
 
@@ -31,7 +31,7 @@
 | kb-prd-expert | Experto en Product Requirements Documents (PRD) para el pipeline SDD | false | pipeline/prd/skills/kb-prd-expert/SKILL.md |
 | kb-product-change-governance | Reglas de gobernanza para cambios de producto en el ecosistema SDD | false | pipeline/prd/skills/kb-product-change-governance/SKILL.md |
 | wf-prd-change | Gestiona cambios de producto sobre un PRD existente: clasifica el cambio (aclaracion vs change request), actualiza el PRD si corresponde y deja trazabilidad co… | true | pipeline/prd/skills/wf-prd-change/SKILL.md |
-| wf-prd-change-cascade | Orquesta en un solo comando la propagacion de un cambio de PRD por el pipeline (change → sync-impact → spec-sync → conflict → readiness → design-sync → reporte… | true | pipeline/prd/skills/wf-prd-change-cascade/SKILL.md |
+| wf-prd-change-cascade | Propaga un cambio de PRD por el pipeline en una conversacion: change → sync-impact → spec-sync → conflict → readiness → design-sync → reporte de plan/tasks sta… | true | pipeline/prd/skills/wf-prd-change-cascade/SKILL.md |
 | wf-prd-create | Crea un PRD inicial guiado para el pipeline SDD | true | pipeline/prd/skills/wf-prd-create/SKILL.md |
 | wf-prd-review | Revision rapida de un PRD o documento de requisitos antes de entrar en la fase Spec | true | pipeline/prd/skills/wf-prd-review/SKILL.md |
 

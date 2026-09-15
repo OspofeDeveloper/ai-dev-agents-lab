@@ -35,8 +35,18 @@ Si no hay argumento, informa al usuario:
 
 1. Verifica que el spec objetivo existe.
 2. Busca todos los archivos `*_spec.md` dentro del directorio `--features-dir`, cubriendo ambos layouts de feature: `features/*/spec/*_spec.md` (subcarpetas) y `features/*/*_spec.md` (plano legacy).
-3. Si no hay specs en el directorio → informa: "No se encontraron specs en `<features-dir>`. Comprueba la ruta, o genera antes los specs por feature."
-4. Si solo hay 1 spec en total (contando el objetivo) → informa: "Solo hay 1 spec. Se necesitan al menos 2 specs para verificar conflictos."
+3. **Descarta los specs de features dadas de baja** ([[D-080]]) — los que llevan `Estado: RETIRADO` en cabecera:
+
+   ```bash
+   !for p in <specs encontrados>; do
+     e=$(sed -nE 's/^[[:space:]]*[-*>]?[[:space:]]*\*{0,2}Estado:?\*{0,2}[[:space:]]*:?[[:space:]]*(BORRADOR|VALIDADO|RETIRADO).*/\1/p' "$p" | head -1)
+     [ "$e" = RETIRADO ] && echo "EXCLUIDO $p"
+   done
+   ```
+
+   Una feature retirada no se va a implementar, así que un choque contra ella **no es un conflicto**: es ruido que otro auditor tendrá que arbitrar y que puede acabar bloqueando a una feature viva por solaparse con una que ya no existe. **Dilo en el informe** (qué specs excluiste y por qué): excluir en silencio es la otra mitad del fallo. Si el spec **objetivo** es el retirado, no compares nada — informa de la baja con su traza `Retirada:` delante y termina.
+4. Si no hay specs en el directorio → informa: "No se encontraron specs en `<features-dir>`. Comprueba la ruta, o genera antes los specs por feature."
+5. Si solo hay 1 spec vigente en total (contando el objetivo) → informa: "Solo hay 1 spec. Se necesitan al menos 2 specs para verificar conflictos."
 
 ---
 
@@ -107,8 +117,20 @@ Usa `${CLAUDE_SKILL_DIR}/references/conflict_report_template.md` para estructura
 Determina el path de salida:
 - Si se verificó un spec específico: mismo directorio del spec objetivo + `<nombre_base>_conflict_report.md`
   - Ejemplo: `features/auth/spec/auth_spec.md` → `features/auth/spec/auth_conflict_report.md`
-- Si se verificaron todos los specs del directorio: raíz del directorio de features + `_conflict_report.md`
-  - Ejemplo: `features/` → `features/_conflict_report.md`
+- Si se verificaron todos los specs del directorio: **directorio padre** del de features —la raíz de
+  artefactos del proyecto, donde ya viven `_features.md` y `_readiness_report.md`— con el mismo
+  `<nombre_base>` que ellos: `<nombre_base>_conflict_report.md`.
+  - Ejemplo: `docs/features/` junto a `docs/prd_features.md` → `docs/prd_conflict_report.md`
+  - Si no hay `*_features.md` del que tomar el nombre, usa el basename del directorio padre.
+
+> **El consolidado va fuera de `features/`, y no es cosmético.** Aquí ponía
+> `features/_conflict_report.md`, **dentro** del directorio — y el único consumidor de este informe,
+> la medición de readiness, busca el consolidado en el padre (donde están los demás artefactos de
+> proyecto) y el resto por feature en `features/*/spec/`. Ni uno ni otro alcanza la raíz de
+> `features/`: el informe se escribía donde nadie lo lee, y como la ausencia de informe solo produce
+> una advertencia **no bloqueante**, el readiness se declaraba "sin análisis de conflictos" teniendo
+> uno en disco. Es el mismo modo de fallo que [[D-047]] arregló para el fan-out por feature, en la
+> otra rama del mismo paso.
 
 **Si ya existe, sobreescríbelo sin preguntar ([[D-064]]).** Un informe de conflicto es un artefacto
 **derivado**: no guarda ninguna decisión humana dentro, y quien lanza el flujo lo regenera en
@@ -135,5 +157,5 @@ Escribe el informe en el archivo correspondiente.
 - Resumen: estado general (SIN_CONFLICTOS o CONFLICTOS_DETECTADOS)
 - Si hay conflictos: cuántos de severidad ALTA y cuántos MEDIA
 - Siguiente paso:
-  - Sin conflictos: "Los specs están listos para pasar a planificación cuando quieras."
-  - Con conflictos ALTA: "Resuelve los conflictos marcados como ALTA antes de planificar. Edita los specs afectados y pídeme una nueva revisión de conflictos para verificarlo."
+  - Sin conflictos: "No he encontrado choques entre estos specs." **No prometas planificación** ([[D-077]]/[[D-082]]): que no haya conflictos no hace fiable un spec — el gate de planificación exige además que esté **validado**, y un spec recién generado nace en borrador. Si ves que alguno sigue sin sellar, ofrécete a validarlo.
+  - Con conflictos ALTA: "Hay [N] choques de severidad alta entre features. Dime qué feature manda en cada uno y **aplico el cambio sobre el spec que toque**; luego vuelvo a revisarlo." **No le mandes editar los specs a mano** ([[D-082]]): un spec editado fuera de las vías de evolución conserva su sello `VALIDADO` aunque su contenido ya no sea el que se auditó, y el gate de planificación lo deja pasar — la corrección tiene que reabrir la validación, y eso solo pasa si la aplica quien sabe desellar. Descríbeselo como acción, sin nombrar el workflow.

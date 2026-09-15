@@ -6,6 +6,306 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-083 — El gate humano del brownfield: sin puerta de vuelta y con el mapa desprotegido
+
+- **Fecha:** 2026-09-15 · **Estado:** Adoptada (reglas escritas + backstop determinista con 6 tests; conducta **sin medir** — CU-4.g y CU-4.h nacen `⏱ sin pasada`). · **Relacionada:** [[D-081]] (el `_discovery.md` que ya existe se reutiliza), [[D-082]] (un `STOP_*` que espera respuesta declara su argumento), [[D-062]] (qué artefacto lleva gate de sobreescritura y cuál no), [[D-080]] (una decisión humana registrada no se pisa regenerando).
+
+**Contexto.** [[D-081]] y [[D-082]] se escribieron el mismo día sobre la mitad greenfield de la fase y las dos dejaron fuera al **mismo fichero**: el `_code_discovery.md` del onramp brownfield. Son dos agujeros del mismo gate, el del Paso 3 de `wf-spec-from-code`, que **para siempre** para que una persona confirme, corrija o descarte capacidades:
+
+1. **El mapa no estaba protegido.** `discover` escribía el `_code_discovery.md` sin comprobar si ya existía — ni `STOP_ARTEFACTO_EXISTE` ni override. Y es, por construcción, un artefacto **con trabajo humano dentro**: el gate existe precisamente para depositarlo ahí. La petición que lo destruye es la normal —*"mira también el módulo de facturación"*, *"vuelve a pasar por el código"*—: la segunda pasada reescribía el mapa entero, borraba los descartes razonados (que vuelven a proponerse como candidatas, como si nadie los hubiera mirado) y podía renumerar los `F-C-00X` que las cabeceras de los specs ya generados citan. Es literalmente el daño que [[D-081]] describió para el `_discovery.md`, en el fichero gemelo.
+2. **El gate no declaraba canal de vuelta.** El Paso 3 decía que *"las correcciones que traiga esa invocación se aplican al `_code_discovery.md`"* sin que hubiera **por dónde**: el `argument-hint` no tenía nada donde cupiera una decisión por capacidad. La vuelta quedaba a que el texto libre de la re-invocación se pareciera lo suficiente — el mismo modo de fallo que [[D-082]] acababa de cerrar para los `[INFERIDO]`.
+3. **Y un tercero que apareció al revisar los consumidores del fichero:** `sdd-features-index.py` busca el discovery con el glob `*_discovery.md`, y `<scope>_code_discovery.md` **encaja por puro sufijo**. En una adopción ([[D-079]]) los dos conviven en la misma raíz de artefactos y `sorted()` decide por orden alfabético: `billing_code_discovery.md` gana a `prd_discovery.md`, así que el índice salía con el universo de features equivocado —capacidades brownfield en vez de las del PRD—, y además con el nombre equivocado (`billing_code_features.md`) **cuando aún no había índice previo**: si lo hay, el script reutiliza ese fichero como salida y el daño es solo el universo, que es la mitad que nadie mira. En brownfield puro el daño es menor y también real: el mapa tiene otro formato, así que la feature se indexaba **sin nombre** (`F-C-001: F-C-001`) y la cabecera declaraba `discovery=sí` sobre un discovery que no existe.
+
+**Decisión.**
+
+- **El mapa se protege como cualquier artefacto con trabajo humano dentro** ([[D-062]]). `discover` resuelve el path y comprueba existencia **antes de explorar** (no después: parar tras diez minutos de exploración es un gate que cuesta lo mismo que no tenerlo), para con `STOP_ARTEFACTO_EXISTE` y solo reescribe con `--allow-overwrite-code-discovery` armado por el usuario. El bloqueo **nombra las dos salidas buenas** —aplicarle la validación, o generar el spec de una capacidad que ya está dentro— y no solo el override, que es la lección exacta de [[D-081]].
+- **La validación humana vuelve por `--capabilities`**, con las tres vías como valores exactos: `F-C-00X=confirmada`, `descartada: <motivo>`, `corregida: <texto>`. Es un **segundo turno que no explora**: registra decisiones sobre el mapa existente. Lo que no se decide sigue sin validar y se nombra; lo mal escrito se rechaza en vez de traducirse a la vía más parecida; una `F-C-00X` que no está en el mapa no se inventa. El header pasa a `Validación: <fecha>` solo cuando no queda ninguna pendiente.
+- **Un descarte es terminal mientras esté en el mapa.** `generate --feature` sobre una capacidad `DESCARTADA` para con `STOP_CAPACIDAD_DESCARTADA` y no escribe nada: caracterizarla reintroduce por la puerta de atrás justo lo que el gate dejó fuera. No lo cierra ningún flag —lo que corresponde es revisar el mapa, no saltárselo—, así que el párrafo de gates de `routing.md` pasa de tres `STOP_*` sin escotilla a cuatro.
+- **El mapa no es un discovery, y quien lo busca por glob tiene que saberlo.** `sdd-features-index.py` descarta los `*_code_discovery.md` en su **barrido automático** (local y cruce de frontera de topología); un `--discovery <path>` explícito se respeta tal cual, porque es una orden de quien invoca y el filtro existe para el descubrimiento, no para vetar una vía. Sin mapa-como-discovery, el brownfield puro cae en la rama "sin discovery" y construye el índice **desde los specs**, que es exactamente lo que `wf-spec-from-code` promete para ese caso.
+- **Y los demás que globean por sufijo, con él.** `sdd-resolve-path.py` aplica la misma exclusión a su kind `discovery` —hoy sin consumidor, mina puesta para el primero que lo use— y los dos sitios que enumeran en prosa los derivados del PRD (`wf-prd-sync-impact` Paso 2 y `kb-product-change-governance` Regla 6) dicen ahora que el mapa **no entra**: no deriva del PRD sino del código, así que medir su deriva contra un cambio de producto es declarar `stale` lo que ningún cambio de PRD afecta.
+- **Backstop determinista `HUMAN-GATE-UNPROTECTED` (blocking, 6 tests)** en `sdd-structural-lint.py`: una `wf-*` que para con un `STOP_*_SIN_VALIDAR` sobre un artefacto que ella misma escribe y no nombra `STOP_ARTEFACTO_EXISTE` en ninguna parte del fichero. La señal es el **veredicto**, no el defecto: si paras para que alguien valide lo que acabas de escribir, ese fichero tendrá trabajo humano dentro en cuanto el gate se cierre. Aquí tampoco hay `PreToolUse` posible —estos flujos reciben un path de **código** o de **UI** y derivan el nombre del artefacto de su scope, así que ningún gate lo resuelve desde los argumentos—, y por eso el backstop es estructural. Sobre el árbol actual da exactamente dos sujetos: `wf-spec-from-code` (el defecto) y `wf-design-extract` (que ya cumplía).
+
+**Alternativas descartadas.**
+
+- **Exigir `Validación:` estampada para poder generar.** Convertiría en gate duro lo que hoy es una confirmación implícita legítima: pedir *"genera el spec de F-C-001"* **es** validar esa capacidad. Habría roto el flujo normal de quien no usa el argumento nuevo, a cambio de nada — lo que hace daño no es generar sin sello, es generar lo que alguien ya descartó.
+- **Un check genérico de "escribe un artefacto y no tiene gate de sobreescritura".** Sin lista mantenida a mano no se distingue estructuralmente de los informes derivados a los que [[D-062]] **quitó** el gate por no proteger nada, y con lista es la tercera copia de un inventario que deriva ([[D-069]]). El `STOP_*_SIN_VALIDAR` es la señal que sí distingue las dos clases, porque la declara el propio autor.
+- **Aplicar las decisiones en `generate` en vez de en `discover`.** Deja las capacidades **descartadas** sin sitio donde registrarse: solo se anotaría lo que se genera, y el resultado más valioso del gate —un descarte razonado— no llegaría nunca al fichero.
+
+**Consecuencias y aprendizaje.**
+
+- **Un nombre de fichero que encaja en un glob ajeno es un acoplamiento que nadie declaró.** El mapa brownfield no se llamó `_code_discovery.md` para que el índice lo leyera — se llamó así porque describe un descubrimiento. Basta el sufijo compartido para que otra pieza lo trague, y el fallo no es ruidoso: produce un índice completo, bien formado y equivocado.
+- **Una decisión que arregla un patrón solo lo arregla donde miraste.** [[D-081]] y [[D-082]] describieron los dos defectos con precisión y los cerraron en la mitad greenfield; el onramp brownfield tiene los mismos ficheros con otro nombre (`_code_discovery.md` por `_discovery.md`, capacidades por features) y no entró en el barrido. La pregunta que lo caza: *¿cuál es el gemelo de este fichero en la otra entrada del pipeline, y también lo arreglé?*
+- **Un artefacto que existe para ser validado por una persona es, desde ese momento, el más caro de recuperar.** Un spec se regenera del PRD y un informe de la pasada siguiente; el juicio de quien miró el código y dijo *"esto es código muerto"* no se regenera con nada.
+- **Un gate bien diseñado en la ida puede estar sin terminar en la vuelta**, y se nota poco porque la ida es la que se prueba: el fork para, devuelve el material y el informe se ve completo.
+
+**Referencias.** `pipeline/spec/skills/wf-spec-from-code/SKILL.md` (frontmatter y Pasos 1, 2, 3, 3b y 4), `pipeline/spec/routing.md`, `pipeline/spec/README.md` (caso 2.b, tabla de workflows, checkpoints humanos), `pipeline/orchestration.md` (familia `--allow-overwrite-*`), `scripts/sdd-structural-lint.py` (`HUMAN-GATE-UNPROTECTED`), `scripts/sdd-features-index.py` (`first_discovery`/`is_code_discovery`), `scripts/sdd-resolve-path.py` (`GLOB_EXCLUDE`), `pipeline/spec/skills/wf-prd-sync-impact/SKILL.md` (Paso 2), `pipeline/prd/skills/kb-product-change-governance/SKILL.md` (Regla 6), `tests/test_sdd_structural_lint.py`, `tests/test_sdd_features_index.py`, `tests/test_sdd_resolve_path.py`, `conformance/casos-de-uso/cu-04-brownfield.md` (CU-4.a, CU-4.b, CU-4.e, CU-4.g, CU-4.h), `conformance/ROADMAP.md`, `docs/entender/funcional.md`.
+
+---
+
+## D-082 — Un hallazgo sin vía de salida, y un bloqueo sin puerta de vuelta
+
+- **Fecha:** 2026-09-15 · **Estado:** Adoptada (reglas escritas; conducta **sin medir** — CU-3.w nace `⏱ sin pasada` y CU-3.q gana un punto). · **Relacionada:** [[D-068]] (el `STOP_INFERIDO_SIN_CONFIRMAR` y sus tres vías), [[D-059]] (autor≠verificador), [[D-061]] (el sello del spec), [[D-077]] (lo que promete el informe vs. lo que exige el gate).
+
+**Contexto.** Los dos son el mismo defecto en sitios distintos: **una pieza que termina su trabajo señalando algo, sin que exista la vía por la que ese algo se resuelve.**
+
+1. **El informe de conflictos.** `kb-conflict-expert` define cinco reglas de detección y una tabla de severidad, y termina en "Qué NO es un conflicto": no dice en ninguna línea **qué se hace** con un conflicto detectado. La única indicación de salida de toda la fase estaba en el último paso de `wf-spec-conflict`: *"Resuelve los conflictos marcados como ALTA antes de planificar. **Edita los specs afectados** y pídeme una nueva revisión"*. Y esa frase manda exactamente a donde no hay que ir — una edición a mano **conserva el sello**: el spec sigue diciendo `Estado: VALIDADO` con un contenido que ya no es el que se auditó, y `gate_spec_fiable` lo deja pasar. Las vías de evolución existen precisamente porque desellan al tocar.
+2. **La vuelta del `[INFERIDO]`.** [[D-068]] partió la confirmación en dos turnos: el fork para con `STOP_INFERIDO_SIN_CONFIRMAR` y devuelve el material; el hilo principal presenta las tres vías; **las decisiones vuelven en una invocación nueva**. El texto de `wf-spec-gap-resolve` decía *"si vienen decididos, aplícalas tal cual"* — y no había **por dónde** vinieran: su Paso 1 parseaba `<spec>` y `--analysis`, y su `argument-hint` no tenía nada donde cupiera una decisión por CA. El segundo turno dependía de que el texto libre de la invocación se pareciera lo suficiente.
+
+**Decisión.**
+
+- **El conflicto se corrige por las vías que desellan, y quien lo dice es el informe.** El último paso de `wf-spec-conflict` deja de mandar a editar a mano: ofrece **aplicar el cambio sobre el spec que toque** —descrito como acción, sin nombrar el workflow— y advierte de que la corrección reabre la validación. Misma corrección en la plantilla de salida de `wf-spec-features-first`.
+- **Y deja de prometer planificación.** *"Los specs están listos para pasar a planificación"* era la misma promesa que [[D-077]] retiró del readiness, viva en la otra rama: que no haya conflictos no hace fiable un spec — el gate exige además el sello, y uno recién generado nace en borrador.
+- **Un `STOP_*` que espera respuesta declara el argumento por el que esa respuesta entra.** `wf-spec-gap-resolve` gana `--inferred 'CA-XXX=confirmado; CA-YYY=incorrecto: <texto>; CA-ZZZ=no-lo-se'`, con las tres vías de [[D-068]] como valores exactos. Un `CA-XXX` que no esté `[INFERIDO]` no se toca; una vía mal escrita **no se interpreta** —`no-lo-se` no es `incorrecto`—; y los `[INFERIDO]` que no aparezcan siguen sin confirmar y vuelven a devolverse.
+
+**Alternativas descartadas.**
+
+- **Dejar que el conflicto lo resuelva quien quiera y como quiera.** Es lo que había, y el coste no se ve: el spec editado a mano pasa el gate, así que el fallo aparece dos fases más abajo, en un plan construido sobre un spec que nadie auditó.
+- **Que `wf-spec-conflict` corrija lo que encuentra.** Rompe autor≠verificador ([[D-059]]) y además no puede: el auditor tiene `Write`/`Edit` prohibidos por norma ([[D-051]]).
+- **Pasar las decisiones de los `[INFERIDO]` en el texto libre de la invocación.** Es lo que había de facto. Funciona cuando el que invoca y el que ejecuta comparten conversación, y falla en el caso normal —sesión nueva, otro día— exactamente igual que falló [[D-051]] con las respuestas de los gaps.
+
+**Consecuencias y aprendizaje.**
+
+- **Un detector sin vía de salida no está terminado.** Escribir las cinco reglas de detección es la mitad visible del trabajo; la otra es decir qué se hace con lo detectado, y es la que se olvida porque el informe ya "se ve completo".
+- **Un protocolo de dos turnos necesita el canal del segundo.** [[D-068]] diseñó bien la ida —qué material devuelve el fork, quién presenta las tres vías— y dejó la vuelta sin contrato. Un bloqueo que espera una respuesta y no declara por dónde entra solo se cierra por casualidad.
+- La pregunta que caza a los dos: *¿por dónde vuelve lo que acabo de pedir, y existe?*
+
+**Referencias.** `pipeline/spec/skills/wf-spec-conflict/SKILL.md` (Pasos 2 y 9), `pipeline/spec/skills/wf-spec-gap-resolve/SKILL.md` (frontmatter y Pasos 1 y 3), `pipeline/spec/skills/wf-spec-features-first/references/output_template.md`, `pipeline/spec/routing.md`, `conformance/casos-de-uso/cu-03-specs.md` (CU-3.w, CU-3.q punto 5).
+
+---
+
+## D-081 — Tres puntos ciegos del orquestador: el gate que no viaja, el artefacto que ya estaba y el `STOP_*` sin rama
+
+- **Fecha:** 2026-09-15 · **Estado:** Adoptada (reglas escritas; conducta **sin medir** — CU-3.u y CU-3.v nacen `⏱ sin pasada`). · **Relacionada:** [[D-045]] (los gates de features-first viven en main), [[D-026]] (los `--allow-*` los arma el usuario), [[D-064]] (un worker para y reporta), [[D-053]] (una decisión, una pregunta).
+
+**Contexto.** `wf-spec-features-first` delega cinco veces y sostiene cuatro gates. Los tres defectos son de la **costura** entre esas dos mitades, no de ninguna de ellas:
+
+1. **La decisión del gate de alcance no bajaba al fan-out.** El Paso 2.5 presenta el gate de expansión de producto y, si el usuario elige *continuar con alcance derivado*, eso equivale a `--allow-derived-scope-from-analysis`. El flag se propagaba al discover y **no al prompt de los escritores** — cuya lista de argumentos lo omitía—. Y como cada escritor recibe `--analysis`, **vuelve a evaluar** las mismas respuestas y se detiene con `STOP_REQUIERE_PRD_CHANGE`: la pasada entera se para levantando N veces una pregunta ya contestada, dentro de forks que no pueden presentarla.
+2. **El Caso B del discovery no miraba si ya existía.** Sin `--features`, el workflow delegaba el discovery **siempre**. El worker se detiene por su cuenta si el artefacto está en disco —con razón: regenerarlo renumera los `F-00X` que los specs ya citan—, pero el único camino que su bloqueo nombra es `--allow-overwrite-discovery`, que es el peligroso. La salida correcta, reutilizar, solo estaba escrita en el Caso A, **detrás de `--features`**. Un usuario que primero pregunta *"¿qué features tiene este PRD?"* y luego dice *"genéralas"* llegaba por la puerta sin salida buena.
+3. **Un `STOP_*` de un delegado no tenía rama.** El Paso 5 pedía registrar "si se completó con éxito o falló". Un `STOP_*` no es un fallo: es un bloqueo con nombre que alguien tiene que presentar.
+
+**Decisión.**
+
+- **Lo que se decide en un gate viaja con el encargo.** El prompt del fan-out lleva `--allow-derived-scope-from-analysis` cuando el Paso 2.5 lo dejó decidido —de entrada o por elección del usuario—. Lo que no cambia es [[D-026]]: el orquestador **transporta** el override que el usuario armó, nunca lo arma él.
+- **Un `_discovery.md` que existe se reutiliza.** El Caso B comprueba primero, con la misma búsqueda del Caso A, y lo dice en el informe. La regla sube además a `routing.md`, porque aplica al hilo principal fuera de este workflow.
+- **Cada `STOP_*` esperable tiene su rama.** El Paso 3 distingue `STOP_OWNERSHIP_AMBIGUO` de `STOP_ARTEFACTO_EXISTE`; el Paso 5 enumera los tres que puede devolver un escritor y qué hacer con cada uno, dejando claro que los demás escritores siguen siendo válidos y que un `STOP_*` **no se entierra como error genérico** ni se relanza con un `--allow-*` de cosecha propia.
+
+**Alternativas descartadas.**
+
+- **Que el escritor no reevalúe el alcance si ya viene un analysis respondido.** Quitaría el guardrail justo donde escribe el spec, que es el último sitio donde el alcance derivado se puede marcar. El problema no era que evaluara: era que no le llegaba la decisión.
+- **Que el Caso B relance el discover con `--allow-overwrite-discovery` al ver el `STOP_*`.** Es auto-armar un override ([[D-026]]) y, encima, el override equivocado: renumera los `F-00X`.
+- **Tratar cualquier retorno raro de un delegado como "falló esa feature".** Es lo que había, y convierte un bloqueo accionable en una línea de error en el resumen final.
+
+**Consecuencias y aprendizaje.**
+
+- **Un gate solo sirve si su decisión llega a donde se aplica.** Decidir en el hilo principal y ejecutar en un fork es el reparto correcto ([[D-045]]), pero abre una costura nueva: **lo decidido tiene que viajar en el prompt**, que es el único canal entre las dos mitades. Un gate contestado que no viaja es peor que no tenerlo — se vuelve a preguntar donde nadie puede contestar.
+- **Una salida segura escrita en una sola rama no existe en las demás.** Reutilizar el discovery estaba bien resuelto en el Caso A; el Caso B llegaba al mismo artefacto sin esa opción. La pregunta que lo caza: *¿esta rama tiene las mismas salidas que su hermana?*
+
+**Referencias.** `pipeline/spec/skills/wf-spec-features-first/SKILL.md` (Pasos 3, 4b y 5), `pipeline/spec/routing.md`, `conformance/casos-de-uso/cu-03-specs.md` (CU-3.u, CU-3.v), `conformance/ROADMAP.md` (fila de `wf-spec-features-first`).
+
+---
+
+## D-080 — `RETIRADO` era terminal para quien evoluciona un spec, no para quien lo regenera
+
+- **Fecha:** 2026-09-15 · **Estado:** Adoptada (regla escrita + backstop determinista `SPEC-RETIRED-BLIND` con 6 tests; conducta **sin medir** — CU-3.t y CU-4.f nacen `⏱ sin pasada`). · **Relacionada:** [[D-074]] (la baja de una feature), [[D-078]] (`--unseal` la resucitaba), [[D-062]] (regenerar se pondera por el estado), [[D-061]] (`Estado: VALIDADO` como línea objetiva).
+
+**Contexto.** [[D-078]] cerró la puerta lateral: los cuatro flujos que **modifican** un spec (delta, amend, gap-resolve, el apply de sync-from-prd) desellaban un `RETIRADO` a `BORRADOR` y lo devolvían vivo. Se arregló con `gate_spec_vigente` y su aprendizaje quedó escrito: *"un estado terminal hay que cerrarlo en las dos direcciones"*.
+
+Faltaba una tercera. Los flujos que **regeneran** un spec —`wf-spec-fast-track`, `wf-spec-from-code generate` y el Paso 4b de `wf-spec-features-first`— no modifican: **sobreescriben**. Y los tres clasificaban el spec preexistente con el mismo sondeo binario:
+
+```
+grep -Eq '…Estado…VALIDADO' "$p" && echo SELLADO || echo DRAFT
+```
+
+`Estado:` tiene **tres** valores. Un spec `RETIRADO` no es `VALIDADO`, así que caía en `DRAFT` — la rama que se reescribe sin preguntar, o con un gate ligero que pregunta *"ya tienen un spec en borrador, ¿lo regenero?"* sobre una feature que el producto canceló. El resultado: se pierde la traza `Retirada: CR-XXX`, `sdd-features-index.py` la deriva otra vez a estado vivo, y **el único gate de la fase sin escotilla** —la baja, que [[D-074]] dejó deliberadamente sin `--allow-*`— queda evitado sin que nadie lo vea.
+
+Y la ruta de llegada es la normal, no una rebuscada: el `_discovery.md` **no se regenera** (lo protege su propio bloqueo), así que sigue listando el `F-00X` de la feature retirada —cuyo ID además se conserva sin reutilizarse (`kb-traceability-rules` Regla 12)—, y cualquier pasada posterior de la generación por feature lo mete en el subset.
+
+**Decisión.**
+
+- **El campo `Estado:` se lee entero, con sus tres valores**, en los tres escritores. El sondeo binario se sustituye por una extracción del valor.
+- **`RETIRADO` para el trabajo, y ningún flag lo cierra.** Los dos workers (`fast-track`, `from-code`) devuelven un veredicto operativo nuevo, `STOP_SPEC_RETIRADO`, sin escribir nada; el orquestador de features-first clasifica esas features como `RETIRADA`, **las deja fuera del fan-out y las nombra en el informe** con su traza. No se ofrece gate: la pregunta insinuaría una salida que no existe. La única vuelta sigue siendo la reactivación, que es una decisión de producto y devuelve el spec a `BORRADOR` ([[D-078]]).
+- **Backstop determinista.** `sdd-structural-lint.py` gana el check **blocking `SPEC-RETIRED-BLIND`**: una `wf-spec-*` que sondea `Estado:` contra `VALIDADO` y no nombra `RETIRADO` en ninguna parte del fichero. No hay gate `PreToolUse` posible aquí —`gate_spec_vigente` resuelve el spec **desde los argumentos**, y estos flujos no lo reciben como argumento: reciben el PRD o un path de código y derivan el destino—, así que el backstop es estructural, sobre el texto de la skill.
+- **Y el auditor deja de comparar contra difuntos**: `wf-spec-conflict` excluye los specs `RETIRADO` del conjunto y lo dice en su informe. Un choque contra una feature que no se va a implementar no es un conflicto; es ruido que puede acabar bloqueando a una viva.
+
+**Alternativas descartadas.**
+
+- **Extender `gate_spec_vigente` a los tres escritores.** No alcanza: el gate necesita el path del spec en los argumentos y estos flujos lo derivan de la capability y de la raíz de artefactos. Un gate que solo funciona a veces es peor que uno que no existe, porque se confía en él.
+- **Tratar el `RETIRADO` como un `SELLADO` más** (confirmar y dejar regenerar con `--allow-overwrite-sealed-spec`). Convierte una decisión de producto en un override de escritura, y el flag diría que se descarta "trabajo de validación" cuando lo que se descarta es una **baja formalizada con su `CR`**.
+- **Reactivar automáticamente al detectar que el discovery aún la lista.** El discovery es viejo por construcción; que siga nombrando la feature no es una señal de producto.
+
+**Consecuencias y aprendizaje.**
+
+- **El aprendizaje de [[D-078]] era correcto y se aplicó una vez menos de lo necesario.** *"¿Qué operaciones tocan este campo, y cuáles no saben que este estado existe?"* se respondió con las que lo **modifican**, y quedaron fuera las que lo **sobreescriben** — que ni siquiera leen el estado para decidir: lo leen para decidir **otra cosa** (si hay que confirmar antes de pisar).
+- **Un valor nuevo en un enum no lo entienden los sitios que preguntan por un valor concreto.** El sondeo `== VALIDADO` no se rompe al añadir `RETIRADO`: sigue funcionando, y manda el caso nuevo a la rama por defecto. Por eso no lo destapa ninguna pasada — no falla, **acierta en la rama equivocada**.
+- La pregunta que lo caza, y que el nuevo check automatiza: *¿quién parte este campo en dos ramas, y cuántos valores tiene de verdad?*
+
+**Referencias.** `pipeline/spec/skills/wf-spec-fast-track/SKILL.md`, `pipeline/spec/skills/wf-spec-from-code/SKILL.md`, `pipeline/spec/skills/wf-spec-features-first/SKILL.md` (Paso 4b), `pipeline/spec/skills/wf-spec-conflict/SKILL.md` (Paso 2), `pipeline/spec/routing.md`, `scripts/sdd-structural-lint.py` (`SPEC-RETIRED-BLIND`), `tests/test_sdd_structural_lint.py`, `conformance/casos-de-uso/cu-03-specs.md` (CU-3.t), `conformance/casos-de-uso/cu-04-brownfield.md` (CU-4.f).
+
+---
+
+## D-079 — El brownfield tenía entrada al pipeline y no tenía forma de volver al producto
+
+- **Fecha:** 2026-09-14 · **Estado:** Adoptada (regla escrita; conducta **sin medir** — CU-4.e nace `⏱ sin pasada`). · **Relacionada:** [[D-078]] (el mismo barrido), `kb-spec-characterization` (la evidencia por CA), `kb-product-change-governance` Regla 2 (`DEPRECATION` vs `PRIORITY_CHANGE`), [[D-074]] (los IDs de feature no se reutilizan).
+
+**Contexto.** `wf-spec-from-code` es el onramp brownfield: sin PRD, el código es la fuente de verdad y el producto son specs de caracterización con `PRD origen: N/A`, `Evidencia base: commit <SHA>` y Feature IDs en un namespace propio, `F-C-00X`, deliberadamente aislado del `F-00X` de producto (`sdd-next-id.py` no los mezcla).
+
+Lo que no existía es **la vuelta**. La secuencia natural de una adopción sobre producto vivo es: se documenta el legacy, y más tarde se escribe el PRD. En ese momento el discovery del PRD produce `F-00X` que solapan con los `F-C-00X` que ya están en disco, y no había ninguna pieza que dijera qué hacer: `kb-traceability-rules` no mencionaba `characterization` en ninguna línea, `wf-spec-sync-from-prd` opera sobre los `F-00X` del índice y nunca ve a los otros, y el README listaba el caso 2.b como entrada alternativa pero no como **estado del que se sale**. El brownfield entraba al pipeline y se quedaba fuera de la trazabilidad de producto para siempre.
+
+**Decisión.** `kb-traceability-rules` gana la **Regla 13**, que cubre las dos mitades:
+
+1. **La trazabilidad de un spec de caracterización mientras no hay PRD.** `PRD origen: N/A` y `status_sync: unknown` son **correctos**, no una carencia — y por eso no bloquean ningún sello (Regla 3). Su deriva no se mide contra un PRD sino contra el código: lo que caduca son los punteros `archivo:línea`, no la sincronía con producto. Un `derived_from_prd_hash` ausente **nunca** se rellena a mano para dejarlo verde.
+2. **La adopción cuando el PRD aparece**, en cuatro casuísticas: el `F-00X` ya caracterizado **adopta** el spec existente como línea base (conserva sus CAs con `Evidencia` y su changelog, y pasa a declarar `PRD origen`); la diferencia entre lo que el código hace y lo que el PRD quiere es **evolución aparte**, no parte de la adopción; el `F-00X` sin código detrás es feature nueva; y el `F-C-00X` que nadie reclama **no se retira automáticamente** — que el PRD no lo contemple puede ser un olvido del PRD, y esa diferencia la decide producto.
+
+**No se automatiza con un workflow, y es deliberado.** La correspondencia entre "lo que el sistema hace" y "lo que el producto dice querer" es un juicio humano capacidad por capacidad; un fork que lo resolviera solo produciría exactamente el artefacto con pinta de correcto que es el modo de fallo caro de esta fase. Lo que sí se hace es ponerlo en el enrutado (`pipeline/spec/routing.md`), para que el hilo principal no confunda esta petición con "crea las specs".
+
+**Alternativas descartadas.**
+
+- **Regenerar las features desde el PRD y olvidar los `F-C-00X`.** Tira la evidencia que costó levantar del código, y con ella los `[INFERIDO]` que alguien confirmó uno a uno. Es el atajo que parece limpio.
+- **Dejar los dos juegos conviviendo.** Produce dos specs vivos para la misma capacidad — justo lo que `kb-conflict-expert` reporta como HU duplicada y scope overlap. El conflicto se detectaría, pero después de haber escrito el doble.
+- **Reutilizar el `F-C-00X` como si fuera un `F-00X`.** Rompe el namespace que `sdd-next-id.py` mantiene separado a propósito, y hace que el índice cuente como features de producto capacidades que aún no lo son.
+
+**Consecuencias y aprendizaje.**
+
+- **Una entrada alternativa a un pipeline necesita su salida documentada, o es un callejón.** El onramp estaba completo hacia dentro —discovery con gate humano, specs con evidencia, `[INFERIDO]` bloqueando el plan— y el hueco estaba en el único sitio donde no se mira: qué pasa cuando el proyecto **deja de ser** el caso que justificó la entrada.
+- **Un `[SOSPECHA_BUG]` sobrevive a la adopción.** Que aparezca un PRD no convierte en intencionado lo que el código hacía raro: o el PRD lo confirma, o pasa a ser defecto contra el CA adoptado. Es el detalle que se pierde si la adopción se hace regenerando.
+
+**Referencias.** `pipeline/spec/skills/kb-traceability-rules/SKILL.md` (Regla 13), `pipeline/spec/routing.md`, `pipeline/spec/README.md` (caso 2.c), `scripts/sdd-next-id.py`, `conformance/casos-de-uso/cu-04-brownfield.md` (CU-4.e), `conformance/ROADMAP.md` (fila de `wf-spec-from-code`).
+
+---
+
+## D-078 — La retirada de una feature era reversible por efecto colateral: `--unseal` la resucitaba
+
+- **Fecha:** 2026-09-14 · **Estado:** Adoptada (guarda en el script + gate preventivo, con tests; **capa determinista cubierta por CI, conductual sin medir** — CU-9.o y CU-7.s nacen `⏱ sin pasada`). · **Relacionada:** [[D-074]] (la retirada como estado terminal), [[D-061]] (el estado operativo del spec), [[D-073]] (`wf-spec-delta` al hilo principal), [[D-026]] (los overrides los arma el usuario), CU-3.s · CU-7.s · CU-9.o.
+
+**Contexto.** [[D-074]] hizo de `RETIRADO` un estado terminal y lo cableó entero **aguas abajo**: `sdd-gate-check.py` deniega planificar, generar tasks y ejecutarlas resolviendo el `Spec origen` del plan y el `Plan origen` del tasks; `sdd-seal.py --seal` se niega a validar una feature dada de baja y, cuando el sellado falla, **no** la degrada —con el razonamiento escrito en el propio script: *"degradar lo resucitaría en silencio; deshacer una retirada es explícito (`--unretire`), nunca efecto colateral"*—; el índice y el estado de proyecto la muestran `RETIRADA`.
+
+Lo que quedó abierto es **la evolución lateral dentro de la propia fase Spec**. Los cuatro flujos que modifican un spec —delta, amend, gap-resolve y el apply de sync-from-prd— cierran ejecutando `sdd-seal.py spec <path> --unseal`, porque lo que se validó ya no es lo que hay. Y esa rama del script movía el estado a `BORRADOR` **sin mirar de dónde venía**: `RETIRADO` está en el mismo enum, así que se pisaba igual. La línea `Retirada: CR-007` no se iba con él (solo `--unretire` la retira), de modo que el spec quedaba afirmando dos cosas contradictorias a la vez.
+
+El encadenado completo, con una petición de lo más ordinaria —*"añade esto al spec de pagos"* sobre una feature retirada—: delta aplica → `--unseal` → el índice deja de verla `RETIRADA` porque compara contra `RETIRADO` → los tres gates se reabren → se puede planificar, trocear y ejecutar una capacidad que el producto canceló. Sin `CR`, sin gate, y sin que nadie se entere. **Ninguna de las cuatro skills comprobaba el estado antes de arrancar**, y el gate mecánico no las cubría: `GATES` solo tenía entradas aguas abajo.
+
+**Decisión.** Dos capas, porque el fallo tenía dos.
+
+1. **`RETIRADO` es terminal en las dos direcciones.** `--unseal` sobre un spec retirado no escribe nada y sale `2` con motivo accionable. Volver a `BORRADOR` es la dirección segura **desde `VALIDADO`**; desde `RETIRADO` no es un downgrade, es una **reactivación**. Se sale de `RETIRADO` por un solo sitio: `--unretire`, que es lo que ejecuta la reactivación con su gate delante.
+2. **Gate preventivo `gate_spec_vigente`** para `wf-spec-delta`, `wf-spec-amend` y `wf-spec-gap-resolve`, para que ni siquiera arranquen. Mira **solo la vigencia**: un spec con `[INCOMPLETO]` o `[CRÍTICO]` abiertos es justo lo que estos flujos existen para arreglar, así que reusar `gate_spec_fiable` habría roto gap-resolve. `wf-spec-sync-from-prd` no entra en la tabla porque recibe el PRD, no el spec — su salvaguarda sigue siendo la prosa, que ya se salta las features con acción `retire`.
+
+Y las tres skills documentan la precondición en su propio Paso 2, como backstop para cuando el hook no esté activo y, sobre todo, para dejar escrito **el motivo**. `wf-spec-validate` gana además su propia excepción: su rama de `exit 2` mandaba ejecutar `--unseal` ante **cualquier** `✗`, y `RETIRADO` es uno de ellos — el script ya se niega, pero informar de que "se ha reabierto la validación" de algo que no se reabrió es la mitad del fallo que sigue siendo de la skill.
+
+**Alternativas descartadas.**
+
+- **Que `--unseal` limpie también la traza `Retirada:`.** Arregla la contradicción del artefacto y **empeora** el fondo: convierte la resurrección silenciosa en una resurrección limpia y bien formateada.
+- **Un `--allow-*` para forzarlo.** No hay nada que forzar: reactivar una feature ya tiene vía sancionada, con su gate. Un override aquí sería un segundo camino para la misma decisión, uno de ellos sin preguntar ([[D-026]]).
+- **Cubrirlo solo con el gate, sin tocar el script.** El gate es un hook: no está activo en todas las instalaciones, y el `--unseal` lo ejecutan **subagentes** dentro de la skill, donde ningún `PreToolUse` de `Skill` los ve.
+- **Cubrirlo solo con el script, sin gate.** Dejaría el flujo entero corriendo —delegación, edición del spec, changelog— para fallar en el último paso, con el spec ya modificado.
+
+**Consecuencias y aprendizaje.**
+
+- **Un estado terminal hay que cerrarlo en las dos direcciones, y la segunda es la que se olvida.** [[D-074]] razonó con cuidado sobre quién **consume** una feature retirada y no sobre quién la **escribe**. La pregunta que lo caza: *¿qué operaciones tocan este campo, y cuáles de ellas no saben que este estado existe?*
+- **El razonamiento correcto estaba escrito veinte líneas más abajo, en el mismo fichero.** La rama del `--seal` fallido tenía el comentario exacto sobre la resurrección silenciosa; la rama del `--unseal`, justo encima, hacía precisamente eso. Un invariante escrito en el sitio donde te acordaste no protege el sitio donde no.
+- **Un test que se llama `always` fija como contrato una vacuidad.** `test_unseal_always_downgrades` y `test_unseal_always_allowed` solo probaban el caso `VALIDADO`; el nombre prometía universalidad y nadie fue a comprobar el resto del enum. Renombrados a `_from_validado`, que es lo que miden.
+
+**Referencias.** `scripts/sdd-seal.py` (rama `--unseal`), `scripts/sdd-gate-check.py` (`gate_spec_vigente`, `_retirado`), `tests/test_sdd_seal.py` (`RetireTest.test_unseal_does_not_undo_a_retirement`), `tests/test_sdd_gate_check.py` (`RetiredFeatureTest.test_lateral_evolution_denied` / `_ignores_open_gaps`), `pipeline/spec/skills/wf-spec-{delta,amend,gap-resolve,validate}/SKILL.md`, `conformance/casos-de-uso/cu-09-gates.md` (CU-9.o, nueva sección «Gate de spec vigente»), `cu-07-cambio-producto.md` (CU-7.s), `cu-03-specs.md` (CU-3.s), `conformance/ROADMAP.md` (filas de `wf-spec-retire`, `-delta`, `-amend`, `-gap-resolve`, `-validate`, `-conflict`, `-readiness`).
+
+---
+
+## D-077 — El informe decía «lista» de lo que el gate iba a denegar, y un CU lo daba por cubierto
+
+- **Fecha:** 2026-09-14 · **Estado:** Adoptada (conformance escrita; conducta **sin medir** — los escenarios nacen `⏱ sin pasada`). · **Relacionada:** [[D-061]] (el sello del spec y el gate que lo exige), [[D-047]] (los auditores de conflicto se contradicen por diseño), [[D-031]] (el hilo principal no diagnostica leyendo), [[D-019]] (los comandos son internos), [[D-024]]/[[D-069]] (la propagación diferida que no se propaga), CU-3.e/f/o · CU-6.a · CU-7.l · CU-9.n · CU-13.b.
+
+**Contexto.** Un repaso del enlazado de la fase Spec —agentes, workflows, KBs, scripts de enforcement y reglas eager— buscando qué promete una pieza que otra no cumple. La fase está bien cableada en lo mecánico: la retirada ([[D-074]]) y la enmienda están enteras de punta a punta, y `sdd-structural-lint.py` mecaniza los invariantes de arquitectura. El hueco está **en el eje del sello**, y lo abrió la propia [[D-061]].
+
+[[D-061]] añadió `Estado: BORRADOR|VALIDADO` al spec y lo metió en `gate_spec_fiable`: pedir el plan de un spec sin validar se deniega. Lo que no tocó fue **el veredicto que el usuario lee antes de pedirlo**. `wf-spec-readiness`, la derivación de estado de `kb-decompose-expert` y `derive_state` de `sdd-features-index.py` calculan `LISTA` con los criterios pre-[[D-061]] —sin marcadores, sin conflictos `ALTA`, sin dependencias abiertas—, y **el sello no entra**. Como un spec nace en `BORRADOR` y `wf-spec-features-first` no valida en ningún paso, el recorrido normal de la fase termina con un informe que dice `LISTA` y un gate que deniega. Las *Referencias* de [[D-061]] no nombran ninguna de las tres piezas: es la propagación diferida que ella misma le reprochaba a [[D-024]], repetida dentro de su propio cambio.
+
+**Y el catálogo de conformance no solo no lo cubría: lo daba por cubierto.** El FALLO de `CU-7.l` decía que un spec desellado que salga en borrador sin avisar es malo *"(el readiness lo bloqueará y el usuario no sabrá por qué)"*. El readiness **no lo bloquea**. Un CU que afirma un mecanismo inexistente es peor que un hueco: un hueco se ve al contar, una creencia falsa se lee como cobertura.
+
+**Decisión.**
+
+1. **El veredicto no puede prometer lo que el gate incumple.** `CU-3.o` gana el punto 4: un spec limpio en `BORRADOR` no sale del readiness con una afirmación de "se puede planificar". Lo que se mide es la **coherencia informe↔gate**, no un literal concreto — que se resuelva con otro estado, con el motivo en bloqueantes o con una nota es decisión de implementación.
+2. **`CU-9.n`**, el gemelo que faltaba. `gate_spec_fiable` deniega por siete razones; CU-9 medía cinco y `RETIRADO` se mide desde CU-7. El sello se quedó sin escenario aunque su gemelo para el plan (`CU-9.c`) existía desde el principio.
+3. **`CU-7.l` se corrige y se dice por qué** (Regla 9 punto 4 de `kb-sdd-conformance`: corrige el CU **y** registra la decisión; nunca relajes el criterio en silencio).
+4. **`CU-3.e` gana la frontera fast-track → validate**, espejo de `CU-2.a` punto 2 en el PRD. Fast-track es donde el spec nace en borrador y era el único de los tres escritores que no lo decía al cerrar.
+5. **`CU-13.b` gana la fila diagnóstica** (*"¿en qué estado están mis specs?"* → `sdd-spec-explorer`), espejo de la de `CU-13.a` para `prd-expert`, medida desde 2026-07-10. Aquí falta además el **portador**: `pipeline/spec/routing.md` no nombra la petición diagnóstica, así que la regla eager tampoco. El escenario nace esperando FALLO.
+
+**Y una que se decide en negativo: el conflicto `ALTA` NO se convierte en gate.**
+
+Un conflicto `ALTA` marca la feature `BLOQUEADA` en el readiness y **ningún gate lo lee**. La tentación es cerrar la asimetría metiéndolo en `gate_spec_fiable`. No se hace, por cuatro razones: la severidad la asigna un **juicio experto**, y sería el único gate del ecosistema que se fía del veredicto de un agente; los auditores del fan-out **se contradicen sobre el mismo par por diseño** ([[D-047]]), así que un `ALTA` minoritario bloquearía trabajo que el arbitraje ya resolvió, sin vía de cierre; la **ausencia** del informe no significa nada (existe `--skip-conflict`, y una feature sola no genera informe), de modo que exigirlo convierte un flag opcional en obligatorio; y sobre todo, **el riesgo real no es que se planifique, es que el usuario crea que no puede**. Lo que se arregla es la honestidad del veredicto (`CU-3.o` punto 5) y el aviso en el momento de planificar (`CU-6.a` punto 2: advierte y continúa, como ya hace con los `[INFORMATIVO]` y con el drift de fuentes).
+
+**Alternativas descartadas.**
+
+- **Quitar `BORRADOR` de `gate_spec_fiable`** para que informe y gate cuadren por abajo. Cuadrarían mintiendo los dos: [[D-061]] existe porque nada distinguía un spec validado de uno que no había mirado nadie.
+- **Validar automáticamente al final de `wf-spec-features-first`.** Autor≠verificador ([[D-059]]) y, sobre todo, [[D-065]]: el sello registra **quién** aprueba, y eso exige preguntar.
+- **Dejarlo en documentación sin escenario.** Es lo que ya estaba pasando: la asimetría llevaba escrita en el gate desde [[D-061]] y nadie la cruzó con el catálogo.
+
+**Consecuencias y aprendizaje.**
+
+- **Los huecos se ven comparando dos piezas que nadie lee juntas.** [[D-061]] lo dijo para las fases ("aparecieron al poner las tres columnas al lado") y aquí vale para **informe vs gate**: dentro de `wf-spec-readiness` todo es coherente consigo mismo, y dentro de `sdd-gate-check.py` también.
+- **Un CU puede codificar una creencia falsa, y entonces es peor que un hueco.** `CU-7.l` afirmaba un bloqueo inexistente: al leerla, la asimetría parecía cubierta. Conviene mirar con lupa los Esperado que describen lo que hará **otra** pieza, porque nadie los verifica contra ella.
+- **Estos cinco hallazgos no salieron de una pasada, salieron de revisión estática.** La Regla 9 punto 5 (*"congela la frase que falló"*) no aplica: no hay frase de usuario que congelar, hay que inventarla — y eso es lo que `CU-9.n` y la fila de `CU-13.b` tienen que aportar para ser ejecutables.
+
+**Referencias.** `conformance/casos-de-uso/cu-03-specs.md` (CU-3.e punto 2, CU-3.f punto 3, CU-3.o puntos 4-5), `cu-06-entrega.md` (CU-6.a), `cu-07-cambio-producto.md` (CU-7.l), `cu-09-gates.md` (CU-9.n), `cu-13-enrutado-matriz.md` (CU-13.b), `conformance/ROADMAP.md` (filas de `wf-spec-readiness`, `wf-spec-fast-track`, `wf-spec-conflict`, `wf-spec-sync-from-prd`, `wf-prepare-plan`), `scripts/sdd-gate-check.py` (`gate_spec_fiable`), `scripts/sdd-features-index.py` (`derive_state`).
+
+---
+
+## D-076 — "Hallazgo bloqueante" gobernaba el sello del spec y no estaba definido en ninguna parte
+
+- **Fecha:** 2026-09-14 · **Estado:** Adoptada (espejo de [[D-035]], que fijó lo mismo para el PRD). · **Relacionada:** [[D-035]] (el umbral del PRD y el titubeo que lo motivó), [[D-061]] (el spec gana estado operativo), [[D-065]] (quién captura y quién estampa el sello), [[D-063]] (el backstop mecánico de `sdd-seal.py spec --check`), CU-3.f/m, CU-2.f.
+
+**Contexto.** `wf-spec-validate` bifurca el sellado en dos ramas —*"con hallazgos bloqueantes"* reabre y detiene, *"sin hallazgos bloqueantes"* comprueba el script y sella— y `kb-traceability-rules` ata el sello a la misma condición. La palabra aparece tres veces como bisagra y **no está definida en ninguna kb**: `kb-spec-expert` define veredictos por check (`Pureza: APROBADO/CONTAMINADO`, `Testabilidad: APROBADO/REQUIERE_MEJORA`) y nunca los mapea al umbral. Si la testabilidad sale `REQUIERE_MEJORA` porque un CA está mal redactado pero es perfectamente ejecutable, que eso selle o no lo decide el auditor de esa pasada.
+
+Es la **misma indefinición que [[D-035]] midió en el PRD**, con la misma forma: la etiqueta gobierna el sello, parte del insumo es cualitativo, y el gate mecánico es ortogonal y no cubre este hueco. Allí produjo dos etiquetas distintas para el mismo estado limpio en corridas distintas. Aquí no se ha medido todavía porque la única pasada registrada (CU-3.f, 2026-08-27) **salió bien** — el auditor distinguió lo bloqueante de lo no bloqueante y dejó una ambigüedad real fuera del veredicto. Pero eso fue juicio de esa corrida: una garantía que depende de que el agente acierte no es una garantía, que es literalmente el aprendizaje de [[D-040]].
+
+**Decisión.** Fijar el umbral en `kb-spec-expert`, como **Paso 4 de «Cómo validar un Spec»** (la SSoT que cargan los tres agentes de la fase), y **restatearlo** en `wf-spec-validate` —prompt del auditor y paso del sello— más su plantilla de informe, que pasa a separar *Hallazgos BLOQUEANTES (degradan)* de *Notas NO bloqueantes (no cambian el veredicto)*.
+
+Bloquean **tres cosas y solo tres**: (1) falta un elemento obligatorio —los 8 en `standard`, el núcleo de 4 en `ligero`, o una sección omitida **sin** su marca `N/A — modo ligero`, que es omisión disfrazada—; (2) `Pureza: CONTAMINADO`, es decir una fila de `prohibited_items.md`; (3) un CA que **no se puede verificar tal como está escrito**. El corte del tercero es **ejecutabilidad, no elegancia**: si alguien puede montar la prueba con lo que hay, no bloquea.
+
+**No degradan, y esa mitad es la que de verdad faltaba**: sugerencias de redacción, notas *borderline* documentadas como aceptables, y **huecos que son materia de Plan** —que el spec no diga con qué se implementa es exactamente lo que debe pasar—. Se añade una cuarta, que en el PRD no hacía falta: **lo que ya dictamina `sdd-seal.py spec --check`** (HUs `[INCOMPLETO]`, gaps `[CRÍTICO]`, CAs `[INFERIDO]`, asunciones sin rastro, deriva del PRD) **no lo cuenta el auditor como hallazgo suyo**. Duplicarlo no añade rigor: compite con el veredicto bueno y deja al workflow eligiendo entre dos fuentes.
+
+**No se numera la regla.** `kb-spec-expert` no usa numeración `Regla N` —a diferencia de `kb-prd-expert`, donde el umbral es la Regla 14— y el check `CITED-RULE-MISSING` del linter revienta ante una cita `Regla N de kb-spec-expert` que no exista. Se referencia por nombre de sección.
+
+**Alternativas descartadas.**
+- *Dejarlo al juicio del auditor* → es la fuente exacta del titubeo que D-035 documentó, y aquí el veredicto gobierna el sello igual que allí.
+- *Mecanizarlo con un script* → parte del insumo (contaminación dura, CA verificable) es cualitativo. El gate mecánico duro ya existe (`sdd-seal.py spec --check`) y es **ortogonal**: cada uno ve lo que el otro no. La palanca correcta es afilar la kb.
+- *Numerarlo como `Regla N` para parecerse a `kb-prd-expert`* → obligaría a numerar retroactivamente toda la kb, y la simetría cosmética no vale el riesgo de citas rotas.
+- *Escribirlo solo en `wf-spec-validate`* → deja fuera al auditor cuando trabaja desde otro workflow, y repite el patrón de norma que vive donde no la lee quien decide.
+
+**Consecuencias / aprendizaje.** **Una pasada que sale bien no prueba que el contrato exista.** CU-3.f PASS quedó registrado con el elogio *"distinguió bien lo no bloqueante de lo bloqueante"* — y esa frase, leída un mes después, es justo la señal de alarma: lo que se estaba celebrando no lo garantizaba ningún documento. Cuando un informe de conformance elogia un juicio en vez de constatar el cumplimiento de una regla citable, ahí falta la regla.
+
+**Referencias.** `sdd/pipeline/spec/skills/kb-spec-expert/SKILL.md` (Paso 4 + plantilla de output), `sdd/pipeline/spec/skills/wf-spec-validate/SKILL.md` (Pasos 3 y 5), `sdd/pipeline/spec/skills/wf-spec-validate/references/output_template.md`, `sdd/pipeline/spec/skills/kb-traceability-rules/SKILL.md` (tabla de sellos), `sdd/tests/test_install_sh.py` (`KbSpecExpertContentTest`), `sdd/conformance/casos-de-uso/cu-03-specs.md` (CU-3.f punto 1, CU-3.m punto 3), `sdd/conformance/ROADMAP.md`, `sdd/CHANGELOG.md`.
+
+---
+
+## D-075 — El último orquestador que corría en un fork, y el linter que no podía verlo
+
+- **Fecha:** 2026-09-14 · **Estado:** Adoptada (candidato que [[D-040]] dejó escrito y no ejecutó). · **Relacionada:** [[D-040]] (la mitad que sí se pudo cerrar entonces), [[D-045]]/[[D-064]]/[[D-072]]/[[D-073]] (el gate vive donde puede presentarse), [[D-044]] (el delegado ejecuta, no re-despacha), [[D-060]] (el orquestador no redacta artefactos), [[D-061]] (aplicar reabre el sello), [[D-019]] (los comandos son internos), CU-7.f–k/**r**.
+
+**Contexto.** El repaso de la fase Spec contra las reglas que el ecosistema ya había fijado en PRD dejó ver que `wf-prd-change-cascade` seguía siendo lo que todas las demás dejaron de ser. Era `context: fork`, encadenaba **seis** workflows con el `Skill` tool y declaraba cuatro *"checkpoints humanos"* que ningún fork puede presentar. [[D-040]] ya lo había diagnosticado —*"era un fork invocando a otro fork, sin nadie a quien preguntar"*— pero solo pudo desmentir el primero, con `--defer-decisions`; sacar la cascada entera del fork quedó anotado allí mismo como **candidato aparte**, con su motivo: *"invoca 6 workflows y obligaría a re-probar CU-7.f–k enteras"*. Los otros tres checkpoints se quedaron escritos donde no eran ejecutables, un año de versiones.
+
+Tres agravantes, y el tercero es el que importa:
+
+- **El informe que consolidaba lo ajeno.** Su Paso 9 escribía `_cascade_report.md` juntando lo que habían producido sus delegados, declarándose "orquestador puro" dos párrafos antes. Es el caso literal de [[D-060]], cuyo daño medido fue adjudicar un hallazgo al auditor equivocado al transcribir lo que no había escrito.
+- **Los specs salían desellados y nadie lo decía.** El apply de sync reabre la validación ([[D-061]]); el Paso 3 avisaba de la reapertura del sello del PRD y ningún paso avisaba de la de los specs. El readiness del paso siguiente los reportaba bloqueados sin que el usuario supiera por qué.
+- **El linter no lo veía, y creíamos que sí.** `FORK-ORCHESTRATOR` caza `context: fork` + delegación **por la tool `Agent`**. La cascada orquestaba con el `Skill` tool y **no mencionaba `Agent` ni una vez**: cero hallazgos sobre el fichero. El validador estructural existe justo para que un defecto conocido no reaparezca en silencio, y este llevaba dentro desde el día que se escribió.
+
+**Decisión.** Sacar la cascada al **hilo principal**, con el modelo ya rodado cinco veces ([[D-045]], [[D-065]], [[D-068]], [[D-072]], [[D-073]]): fuera `context: fork`, `allowed-tools: [Bash, Agent, AskUserQuestion, Skill]`, y los cuatro gates presentados con `AskUserQuestion` en el momento. Los cinco workers se delegan por la tool `Agent` con `run_in_background: false` y la fórmula canónica —*"lee el SKILL.md y ejecuta sus pasos TÚ MISMO"*— para no forkear un clon ([[D-044]]).
+
+**`wf-prd-change` se sigue invocando con el `Skill` tool, y eso no es una excepción a [[D-044]]:** corre en el hilo principal igual que la cascada, así que sus instrucciones entran en **la misma conversación** y su gate se presenta de verdad. No hay fork, no hay clon, no hay asincronía. Por eso **`--defer-decisions` se retira**: su único consumidor era la cascada-fork, y un modo que nadie alcanza no es una capacidad — es una promesa, el patrón que este repo ya se cobró dos veces en v0.108.
+
+**Y el Paso 9 deja de escribir.** El resumen por fase se presenta en la conversación, como `wf-spec-validate` hace con el informe del auditor. Lo que hay que conservar ya está escrito, cada cosa por quien la hizo.
+
+**El backstop es un check nuevo: `FORK-SKILL-DISPATCH`** (blocking), que caza `context: fork` con `Skill` en `allowed-tools` o con la orden de invocar con el `Skill` tool en el cuerpo. Dos señales de alta precisión: al escribirlo, **ninguna otra skill del ecosistema declaraba `Skill`**, y ningún fork lo nombraba salvo para prohibirlo en un prompt de delegación.
+
+**Alternativas descartadas.**
+- *Dejarlo como estaba, dado que `--defer-decisions` tapaba el checkpoint 1* → tapaba uno de cuatro. Los otros tres seguían siendo texto que describe una parada que no ocurre, que es peor que no tenerla: parece que hay un humano mirando.
+- *Que la cascada deje de invocar `wf-prd-change` y pase a ser precondición* → ya descartada en [[D-040]] por la misma razón: rompe la promesa de "propaga todo en un comando", que es su razón de existir.
+- *Mantener el `Skill` tool para los cinco workers ahora que corre en main* → funcionaría para los gates, pero no paraleliza ni devuelve handle síncrono, y sobre una sub-skill con `agent:` forkea un subagente encima. La tool `Agent` es el mecanismo nombrado ([[D-043]]).
+- *Conservar `_cascade_report.md` escrito por un delegado* → nadie es su autor natural: ningún agente ejecutó todas las fases. Un informe cuyo autor habría que inventar es la señal de que no debe existir.
+- *Ampliar `FORK-ORCHESTRATOR` en vez de crear un check* → son señales distintas (tool `Agent` vs `Skill`) con mensajes de arreglo distintos; fundirlas habría dado un finding que no dice qué cambiar.
+
+**Consecuencias / aprendizaje.** Dos, y las dos sobre el instrumento. (a) **Una alternativa descartada "por coste de re-probar" es deuda con fecha de vencimiento, no una decisión.** D-040 la escribió honestamente —"queda como candidato aparte"— y el coste que la frenó (re-probar CU-7.f–k) hubo que pagarlo igual, con año y medio de artefactos generados encima. (b) **Un check de lint define su cobertura por la señal que mira, no por el defecto que nombra.** `FORK-ORCHESTRATOR` se llama "orchestrator" y solo veía una de las dos formas de orquestar; el fichero más obviamente culpable del ecosistema pasaba limpio, y la limpieza se leía como conformidad. Al añadir un check, preguntar **de cuántas maneras se escribe** lo que se quiere cazar.
+
+**Referencias.** `sdd/pipeline/prd/skills/wf-prd-change-cascade/SKILL.md` (reescrita), `sdd/pipeline/prd/skills/wf-prd-change/SKILL.md` (retirada del modo sin gate), `sdd/scripts/sdd-structural-lint.py` (`FORK-SKILL-DISPATCH`), `sdd/tests/test_sdd_structural_lint.py` (4 casos), `sdd/tests/test_install_sh.py` (`test_prd_change_cascade_runs_in_main_and_delegates`), `sdd/conformance/casos-de-uso/cu-07-cambio-producto.md` (CU-7.f/i/j/k/l/n reescritos, **CU-7.r** nueva), `sdd/conformance/ROADMAP.md`, `sdd/docs/guias/producto.md`, `sdd/docs/entender/funcional.md`, `sdd/CHANGELOG.md`.
+
+---
+
 ## D-074 — El pipeline no sabía terminar una feature: la retirada existía como etiqueta y no como estado
 
 - **Fecha:** 2026-09-14 · **Estado:** Adoptada (sin medir en conducta: `wf-spec-retire` nace `PENDIENTE` en el instrumento). · **Relacionada:** [[D-061]]/[[D-065]] (`Estado:` lo escribe solo el sellador), [[D-069]] (enumeraciones que duplican una fuente de verdad), [[D-046]] (el artefacto parcial con apariencia de completo), [[D-026]] (el override es para lo que no puede preguntar), [[D-045]]/[[D-073]] (el gate vive donde puede presentarse), [[D-059]] (autor≠verificador), Regla 12 de `kb-traceability-rules`.

@@ -2,7 +2,7 @@
 name: wf-prd-change
 description: "Gestiona cambios de producto sobre un PRD existente: clasifica el cambio (aclaracion vs change request), actualiza el PRD si corresponde y deja trazabilidad con matriz de impacto sobre specs, plan y tasks."
 when_to_use: "Activa en frases como 'cambia el alcance del PRD', 'esto pasa de fase 2 a MVP', 'actualiza el PRD con esta decision', 'gestiona este cambio de producto', 'abre un change request sobre el PRD'."
-argument-hint: "<prd.md> --new-reqs <cambio.md|texto> [--defer-decisions]"
+argument-hint: "<prd.md> --new-reqs <cambio.md|texto>"
 effort: high
 allowed-tools: [Bash, Agent, AskUserQuestion]
 user-invocable: true
@@ -24,7 +24,6 @@ Extrae de `$ARGUMENTS`:
 
 - path del `PRD.md`
 - **el cambio propuesto**, en cualquiera de sus dos formas: `--new-reqs <archivo.md>` o **el texto del cambio inline** (lo que el usuario dijo en la conversación). Las dos son válidas: exigir un fichero te obligaría a **escribirlo tú**, y en el hilo principal no escribes ficheros. Lo que importa no es que el cambio llegue como fichero, sino que su **texto literal quede recogido** en `changes/CR-XXX/change-request.md` (Paso 6) — ahí es donde se convierte en trazabilidad.
-- `--defer-decisions` (opcional): desactiva el gate del Paso 5. Ver «Modo sin gate» al final.
 
 Si falta el PRD o el cambio:
 > "Uso: `/wf-prd-change <prd.md> --new-reqs <cambio.md>` (o descríbeme el cambio directamente)"
@@ -149,21 +148,10 @@ Verifica el resultado y quédate con el veredicto para el informe:
 - Si hubo cambio de producto **sin** asunciones (todo trazaba a la petición y al gate):
   > "El PRD se actualizó y se registró el cambio. Re-aprueba con `wf-prd-review` (el sello quedó reabierto) y ejecuta `wf-prd-sync-impact <prd.md>` para medir qué artefactos derivados han quedado desincronizados."
 
-## Modo sin gate — `--defer-decisions`
+## No hay modo sin gate ([[D-075]])
 
-Para invocaciones **desde otro workflow** que corre como subagente y por tanto no puede preguntar: hoy, `wf-prd-change-cascade` ([[D-040]]).
+Hasta la v0.109.0 existía `--defer-decisions`, que **omitía el Paso 5** para invocaciones desde un subagente que no podía preguntar — en la práctica, una sola: `wf-prd-change-cascade`, que era `context: fork`. Desde que la cascada corre en el hilo principal, tus instrucciones entran en **su misma conversación** y el gate se presenta de verdad, así que el rodeo se quedó sin consumidor.
 
-Con `--defer-decisions` se **omite el Paso 5** y rige un invariante duro:
+**Un modo que nadie alcanza no es una capacidad: es una promesa** — el patrón que este ecosistema ya se cobró dos veces ([[D-074]] con `DEPRECATION`, y su propio residuo con `--unretire`). Por eso el flag se retira en vez de quedarse por si acaso.
 
-> **Sin humano, la ambigüedad se marca — nunca se decide.**
-
-Es decir:
-
-- **cada bifurcación de alcance** que el experto surfacee en el Paso 4 se resuelve por la lectura **más conservadora** (la que menos alcance añade) **y esa elección se marca `[ASUNCIÓN]`** con las alternativas anotadas en `change-request.md`;
-- **toda afirmación que no trace** se marca, como siempre (Paso 6.B);
-- **la clasificación** es la del experto, se **reporta** sin confirmar, y queda registrada como *no confirmada por humano* en `change-request.md`;
-- el PRD queda `OPEN_ASSUMPTIONS`, y el informe dice explícitamente que **la decisión no se ha perdido: está aplazada** al gate de `wf-prd-review`, que la resolverá una a una.
-
-Lo que **no** cambia con este flag: la reapertura del sello (Paso 7) y la traza (Paso 6.C). Un cambio aplicado sin gate sigue sin poder quedar `approved`.
-
-**No uses `--defer-decisions` en una invocación conversacional.** Si el usuario está delante, el gate existe y es obligatorio.
+Lo que eso significa hoy, sin ambigüedad: **el Paso 5 no tiene excepciones.** Si alguien te invoca desde un contexto que no puede preguntar, la respuesta correcta **no** es decidir en solitario ni inventarse un flag: es **parar y devolver el bloqueo** a quien pueda presentarlo ([[D-026]]/[[D-064]]).

@@ -40,6 +40,17 @@ Si falta el spec o `--ca`:
 
 Si el spec no existe → informa la ruta exacta y detén. Si el CA **no aparece**, detén: puede ser un comportamiento no especificado, y eso es evolucionar el spec o tramitarlo como defecto, no enmendarlo.
 
+**Si el spec declara `Estado: RETIRADO`, tampoco se enmienda ([[D-078]]):**
+
+```bash
+!grep -Eq '^[[:space:]]*[-*>]?[[:space:]]*\*{0,2}Estado:?\*{0,2}[[:space:]]*:?[[:space:]]*RETIRADO' "<path_spec>" && echo RETIRADO || echo VIGENTE
+```
+
+`RETIRADO` → detén e informa con la traza `Retirada:` delante. Aclarar el texto de un CA de una
+feature cancelada no desbloquea nada —sus tasks están denegadas por la baja, no por la ambigüedad—
+y el `--unseal` del Paso 7 la reactivaría en silencio. Si la decisión de producto cambió, primero se
+reactiva la feature; la enmienda viene después.
+
 Localiza plan y tasks de la feature: subcarpetas de fase primero (`features/<n>/plan/<n>_plan.md`, `features/<n>/tasks/<n>_tasks.md`), raíz plana de la feature como fallback (layout legacy). Que no existan aún **no bloquea**: la enmienda sobre el spec es válida igualmente.
 
 ---

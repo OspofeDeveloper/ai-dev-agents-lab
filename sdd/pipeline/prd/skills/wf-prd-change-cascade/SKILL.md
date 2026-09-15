@@ -1,21 +1,39 @@
 ---
 name: wf-prd-change-cascade
-description: "Orquesta en un solo comando la propagacion de un cambio de PRD por el pipeline (change → sync-impact → spec-sync → conflict → readiness → design-sync → reporte de plan/tasks stale): corre lo mecanico read-only, auto-aplica los deltas de spec inequivocos (minor) y para solo en los checkpoints humanos. Profundidad adaptativa."
+description: "Propaga un cambio de PRD por el pipeline en una conversacion: change → sync-impact → spec-sync → conflict → readiness → design-sync → reporte de plan/tasks stale. Auto-aplica los deltas inequivocos y sostiene sus gates."
 when_to_use: "Activa en frases como 'propaga este cambio de PRD por todo el pipeline', 'haz todo el cascade tras el cambio', 'resincroniza todo lo que cuelga del PRD', 'corre la cadena completa de sync post-cambio', 'no quiero encadenar a mano change → sync-impact → spec-sync → conflict → readiness'. No activa para gestionar un cambio aislado sin propagar (usa wf-prd-change), ni para medir impacto sin aplicar (usa wf-prd-sync-impact), ni para resincronizar solo specs (usa wf-spec-sync-from-prd)."
 argument-hint: "<prd.md> [--new-reqs <cambio.md>] [--features F-001,F-002,...] [--review-before-apply] [--skip-design] [--dry-run]"
 effort: high
-allowed-tools: [Read, Write, Bash, Skill]
-context: fork
+allowed-tools: [Bash, Agent, AskUserQuestion, Skill]
 user-invocable: true
 ---
 
-# Workflow: PRD-CHANGE-CASCADE (Orquestador)
+# Workflow: PRD-CHANGE-CASCADE (Orquestador, hilo principal)
 
-Tu objetivo es ejecutar de principio a fin la cadena de propagación de un cambio de PRD, que hoy el usuario encadena a mano: gestionar el cambio, medir su impacto, resincronizar specs, revalidar conflictos y readiness, sincronizar diseño y reportar qué planes y tasks quedaron stale.
+Tu objetivo es ejecutar de principio a fin la cadena de propagación de un cambio de PRD, que de otro modo el usuario encadena a mano: gestionar el cambio, medir su impacto, resincronizar specs, revalidar conflictos y readiness, sincronizar diseño y reportar qué planes y tasks quedaron stale.
 
-**Regla de oro:** eres un orquestador puro. No clasificas el cambio, no analizas impacto, no editas specs ni mides deriva tú mismo. Invocas los workflows existentes en el orden correcto, consolidas sus salidas y **paras solo en los checkpoints humanos reales**. Cada workflow invocado ya delega a su agente y carga sus KBs; tú no duplicas ese conocimiento.
+**Regla de oro:** eres un orquestador puro. No clasificas el cambio, no analizas impacto, no editas specs ni mides deriva tú mismo. Cada workflow que orquestas ya tiene su agente y sus KBs; tú no duplicas ese conocimiento, y **no escribes ningún artefacto** ([[D-060]]).
 
-**Filosofía de paradas:** corre sin fricción todo lo mecánico y read-only (medición de impacto, conflict, readiness, design-sync, reporte de stale) **Y aplica automáticamente los deltas de spec inequívocos** (severidad `minor` + acción `delta`). Detente únicamente donde una persona debe decidir: (1) ~~aprobar el cambio de producto~~ — **corregido por [[D-040]]:** este paso **no** es un checkpoint humano y nunca lo fue (eras un fork invocando a otro fork, sin nadie a quien preguntar). El cambio se aplica con `--defer-decisions` y su decisión queda **aplazada** al gate de `wf-prd-review`, fuera de este cascade; (2) features con cambio no trivial (`major` / `manual_review` / `rediscover`), que NO se resincronizan solas, (3) decisiones visuales de Design (diagnóstico de `wf-design-sync` → el usuario decide), (4) revalidación de plan y aprobación de deuda. El checkpoint de features no triviales **no aborta el cascade**: se presentan al usuario y se continúa aplicando los deltas inequívocos. `--review-before-apply` restaura la parada conservadora antes de cualquier apply (incluso los `minor`).
+> **Corres en el hilo principal, y por eso tus paradas existen ([[D-045]]/[[D-075]]).** Hasta la
+> v0.109.0 esta skill era `context: fork` e invocaba los demás workflows con el `Skill` tool.
+> Declaraba cuatro *"checkpoints humanos"* que **ningún fork puede presentar**: un gate escrito
+> donde no hay turno no se presenta, se decide solo — y el pipeline entero salía con pinta de
+> correcto. Ahora preguntas tú, en el momento, y continúas en el mismo turno con lo que el usuario
+> elija.
+
+> **Cómo orquestas — dos mecanismos, y ninguno es intercambiable.**
+> - **Los workers de otras fases se delegan con la tool `Agent`** ([[D-043]]), con el
+>   `subagent_type` que indica cada paso y **`run_in_background: false`**. Son `context: fork` con
+>   su `agent:` declarado: el delegado **ejecuta** los pasos de esa skill, no la invoca ([[D-044]]).
+> - **`wf-prd-change` se invoca con el `Skill` tool**, y es la única. Corre en el hilo principal
+>   igual que tú: sus instrucciones entran en **esta misma conversación**, así que su gate se
+>   presenta de verdad. No hay fork, no hay clon, no hay asincronía.
+>
+> **Esperar es que te entreguen el informe** ([[D-047]]): vale el `tool_result` de tu llamada o la
+> notificación de fin del agente. Nunca mires si el fichero aparece en disco ni relances un segundo
+> delegado. Si no tienes el informe, **paras y lo dices**.
+
+**Filosofía de paradas:** corre sin fricción todo lo mecánico y read-only (medición de impacto, conflict, readiness, design-sync, reporte de stale) **Y aplica automáticamente los deltas de spec inequívocos** (severidad `minor` + acción `delta`). Detente donde una persona debe decidir: (1) la clasificación del cambio de producto y sus bifurcaciones de alcance —que sostiene `wf-prd-change` dentro de tu propio turno—, (2) features con cambio no trivial (`major` / `manual_review` / `repartition`), que NO se resincronizan solas, (3) decisiones visuales de Design (diagnóstico de `wf-design-sync` → el usuario decide), (4) revalidación de plan y aprobación de deuda. El checkpoint de features no triviales **no aborta el cascade**: se preguntan y se continúa aplicando los deltas inequívocos. `--review-before-apply` restaura la parada conservadora antes de cualquier apply (incluso los `minor`).
 
 ---
 
@@ -37,7 +55,12 @@ Si no hay PRD → informa el uso con todos los flags y detén.
 
 Verifica que el PRD existe; si no → informa con la ruta exacta y detén.
 
-Lee `.sdd/project-init.json` si existe para resolver:
+```bash
+!test -f "<prd.md>" && echo "EXISTE" || echo "NO_EXISTE"
+!test -f .sdd/project-init.json && cat .sdd/project-init.json
+```
+
+De `.sdd/project-init.json`, si existe, resuelve:
 - `phases` instaladas (decide qué fases del cascade aplican: `design`, `plan`, `tasks`).
 - `artifacts.spec` / `artifacts.design` (raíces de artefactos; si no están declaradas, usa el directorio del PRD).
 
@@ -45,105 +68,180 @@ Esta resolución gobierna la **profundidad adaptativa**: una fase no instalada n
 
 ---
 
-## Paso 3 (decisión aplazada): Gestionar el cambio de producto
+## Paso 3 (gate de clasificación): Gestionar el cambio de producto
 
-**Solo si se pasó `--new-reqs`.** Invoca con el Skill tool, **siempre con `--defer-decisions`**:
-> `wf-prd-change <prd.md> --new-reqs <cambio.md> --defer-decisions`
+**Solo si se pasó `--new-reqs`.** Invoca con el `Skill` tool:
+> `wf-prd-change <prd.md> --new-reqs <cambio.md>`
 
-**Por qué el flag ([[D-040]]).** `wf-prd-change` corre en el hilo principal y tiene un **gate obligatorio**: confirmar la clasificación y resolver las bifurcaciones de alcance preguntando al usuario. Tú eres un subagente y **no puedes presentar preguntas al usuario**, así que **tampoco puedes heredar su gate**. `--defer-decisions` omite ese gate bajo un invariante duro: **sin humano, la ambigüedad se marca, nunca se decide** — cada bifurcación se resuelve por la lectura más conservadora y queda marcada `[ASUNCIÓN]`, con las alternativas anotadas en `change-request.md`.
+**Por qué con el `Skill` tool y sin flag de aplazamiento ([[D-075]]).** `wf-prd-change` corre en el hilo principal y tiene un **gate obligatorio**: confirmar la clasificación del cambio y resolver las bifurcaciones de alcance preguntando al usuario ([[D-040]]). Tú también corres en el hilo principal, así que **ese gate se presenta dentro de tu turno** y el usuario lo responde aquí mismo. Mientras fuiste un fork esto era imposible y el cambio se aplicaba con `--defer-decisions`, dejando el PRD `OPEN_ASSUMPTIONS` y la decisión aplazada a una revisión posterior; ese rodeo ya no hace falta y el flag se retiró.
 
-**La decisión humana no desaparece: se aplaza.** El PRD sale `OPEN_ASSUMPTIONS` y quien la resuelve, una a una, es el gate de `wf-prd-review` — que **no** forma parte de este cascade. Por eso este paso ya no se llama "checkpoint humano": aquí no hay humano, y llamarlo así era falso desde el principio (un fork invocando a un fork, sin nadie a quien preguntar).
+Cuando termine, lee su veredicto:
+- Si clasificó el cambio como **solo `CLARIFICATION`** (no reescribió el PRD) → **DETENTE** e informa: el cambio no altera el producto comprometido, así que no hay nada que propagar. Dile, en lenguaje natural, que lo que corresponde es **completar los huecos del spec afectado o evolucionarlo**, según el artefacto, y termina.
+- Si hubo **cambio de producto** (PRD actualizado, `changes/CR-XXX/` registrado) → continúa al Paso 4.
 
-Espera a que termine y lee su veredicto:
-- Si clasificó el cambio como **solo `CLARIFICATION`** (no reescribió el PRD) → **DETENTE** e informa: el cambio no altera el producto comprometido; el cascade de sync no aplica. Recomienda `wf-spec-gap-resolve` o `wf-spec-delta` según el artefacto afectado, y termina. Añade que la clasificación **no la confirmó un humano**, así que si no está de acuerdo puede rehacer el cambio con `wf-prd-change` a solas (que sí abre el gate).
-- Si hubo **cambio de producto** (PRD actualizado, `changes/CR-XXX/` registrado) → continúa al Paso 4. **Informa en el reporte final** cuántas asunciones quedaron abiertas y que el PRD **no puede volver a sellarse** hasta pasar por `wf-prd-review`.
-
-Si NO se pasó `--new-reqs`: verifica que existe `product-changelog.md` o `changes/` junto al PRD. Si no existe ninguno → **DETENTE** e informa: no hay constancia de un cambio gestionado; arranca con `--new-reqs <cambio.md>` o ejecuta `wf-prd-change` primero. Si existe → continúa.
-
+Si NO se pasó `--new-reqs`: verifica que existe `product-changelog.md` o `changes/` junto al PRD. Si no existe ninguno → **DETENTE** e informa: no hay constancia de un cambio gestionado; hay que **formalizar antes el cambio sobre el PRD** o volver a lanzarlo indicando el documento del cambio. Si existe → continúa.
 
 ---
 
 ## Paso 4: Medir el impacto (read-only)
 
-Invoca con el Skill tool:
-> `wf-prd-sync-impact <prd.md>`
+Delega con la tool `Agent` ([[D-043]]) y **espera su informe**:
 
-Produce `<basename>_sync_report.md` con el estado por artefacto (`in_sync` / `needs_review` / `stale` / `unknown`). Lee el reporte y extrae:
+```
+Agent(
+  subagent_type: "sdd-spec-auditor",
+  run_in_background: false,
+  prompt: "Lee `.claude/skills/wf-prd-sync-impact/SKILL.md` y ejecuta sus pasos TÚ MISMO sobre estos argumentos: <prd.md>. NO uses el `Skill` tool: ya eres el agente al que esa skill delega (`agent: sdd-spec-auditor`), así que invocarla te forkearía en un clon tuyo. Dentro de ese SKILL.md, `${CLAUDE_SKILL_DIR}` es `.claude/skills/wf-prd-sync-impact/`. Al terminar, informa del path exacto del `_sync_report.md` y del estado por artefacto (`in_sync` / `needs_review` / `stale` / `unknown`)."
+)
+```
+
+Del **informe del delegado** (no del disco) extrae:
 - Features con specs marcados `needs_review` o `stale` (entran a resincronización).
-- Si todo está `in_sync` → no hay nada que propagar: salta al Paso 8 (reporte final) e informa que el pipeline ya estaba sincronizado.
+- Si todo está `in_sync` → no hay nada que propagar: salta al Paso 9 e informa que el pipeline ya estaba sincronizado.
 
 ---
 
-## Paso 5 (checkpoint humano): Resincronizar specs
+## Paso 5 (gate): Resincronizar specs
 
 ### 5a — Analyze (read-only)
-Invoca con el Skill tool:
-> `wf-spec-sync-from-prd analyze <prd.md>`
 
-Genera los `<nombre>_sync_requirements.md` por feature afectada. Cada feature trae su clasificación: `severidad: minor|major|structural` y `acción: delta|manual_review|rediscover`.
+```
+Agent(
+  subagent_type: "sdd-spec-writer",
+  run_in_background: false,
+  prompt: "Lee `.claude/skills/wf-spec-sync-from-prd/SKILL.md` y ejecuta sus pasos TÚ MISMO en modo `analyze` sobre estos argumentos: analyze <prd.md>. NO uses el `Skill` tool: ya eres el agente al que esa skill delega (`agent: sdd-spec-writer`), así que invocarla te forkearía en un clon tuyo. Dentro de ese SKILL.md, `${CLAUDE_SKILL_DIR}` es `.claude/skills/wf-spec-sync-from-prd/`. Al terminar, dame por cada feature afectada: su ID, el path de su `_sync_requirements.md`, su `severidad` (minor|major|structural) y su `acción` (delta|manual_review|repartition|retire)."
+)
+```
 
 ### 5b — Particionar las features afectadas
+
 Usando la clasificación del analyze, parte las features en dos conjuntos:
 - **Conjunto AUTO-APPLY** = features con `acción: delta` **Y** `severidad: minor` (cambios inequívocos).
-- **Conjunto STOP** = features con `severidad: major` **O** `acción: manual_review` **O** `acción: rediscover` **O** `acción: retire`.
+- **Conjunto STOP** = features con `severidad: major` **O** `acción: manual_review` **O** `acción: repartition` **O** `acción: retire`.
 
   `retire` nunca entra en AUTO-APPLY, por severidad que traiga: dar de baja una feature es irreversible en la práctica —hay planes y tareas encima— y su gate necesita el impacto delante ([[D-074]]).
 
-Si el conjunto STOP **no** está vacío → preséntalo al usuario como features que **NO se resincronizan solas** y requieren decisión humana: para cada una indica severidad/acción y recomienda `wf-spec-delta` (para los `major` o cambios de comportamiento), revisión manual, `wf-spec-discover` (para los `rediscover`) o `wf-spec-retire` (para los `retire`, que además exige el `CR-XXX` de la retirada). **No las apliques.** Este es un checkpoint humano real, pero **NO aborta el cascade**: continúa aplicando el conjunto AUTO-APPLY.
+Si el conjunto STOP **no** está vacío → **pregunta con `AskUserQuestion`**, con la lista delante (una feature por línea: ID, nombre, severidad y por qué no es automática):
+- *Continuar con el resto* (recomendada) — se aplican solo las inequívocas; las del conjunto STOP quedan intactas y se recogen en el resumen final.
+- *Parar aquí* — no se aplica nada y el usuario decide feature por feature antes de seguir.
+
+En la pregunta, describe lo que necesita cada una **en lenguaje natural** —evolucionar el spec con el cambio, revisarlo a mano, rehacer su partición, darla de baja— y **no nombres el workflow** ([[D-019]]). Este es un checkpoint humano real y ahora puedes sostenerlo: **no lo bypasees** aplicando el conjunto STOP por tu cuenta.
 
 ### 5c — Apply (o parada conservadora)
-- Si se pasó `--review-before-apply` **O** `--dry-run` → **NO apliques nada**; presenta la clasificación completa (AUTO-APPLY + STOP). En `--dry-run`, salta al Paso 8 con el análisis como salida. Con `--review-before-apply`, informa el comando para aplicar manualmente (`wf-spec-sync-from-prd apply <prd.md> --features ...`).
-- Caso normal → aplica automáticamente el conjunto AUTO-APPLY. Invoca con el Skill tool:
-  > `wf-spec-sync-from-prd apply <prd.md> --features <IDs minor+delta>`
 
-  Si en el Paso 1 se recibió `--features`, usa la **intersección** de ese subset con el conjunto AUTO-APPLY. Espera a que termine.
+- Si se pasó `--review-before-apply` **O** `--dry-run` → **NO apliques nada**; presenta la clasificación completa (AUTO-APPLY + STOP). En `--dry-run`, salta al Paso 9 con el análisis como salida.
+- Caso normal → aplica el conjunto AUTO-APPLY:
+
+```
+Agent(
+  subagent_type: "sdd-spec-writer",
+  run_in_background: false,
+  prompt: "Lee `.claude/skills/wf-spec-sync-from-prd/SKILL.md` y ejecuta sus pasos TÚ MISMO en modo `apply` sobre estos argumentos: apply <prd.md> --features <IDs minor+delta>. NO uses el `Skill` tool: ya eres el agente al que esa skill delega (`agent: sdd-spec-writer`), así que invocarla te forkearía en un clon tuyo. Dentro de ese SKILL.md, `${CLAUDE_SKILL_DIR}` es `.claude/skills/wf-spec-sync-from-prd/`. Al terminar, dime por cada spec tocado: su path, la versión nueva y que su validación quedó reabierta."
+)
+```
+
+  Si en el Paso 1 se recibió `--features`, usa la **intersección** de ese subset con el conjunto AUTO-APPLY.
+
+> **Cada spec que se aplica sale de aquí en `BORRADOR`, y eso se dice ([[D-061]]).** El apply
+> reabre la validación (`--unseal`): lo que alguien validó ya no es lo que hay. No es un efecto
+> secundario que se pueda callar —el readiness del Paso 6 los verá bloqueados y el usuario no
+> sabrá por qué—, así que **anótalo para el resumen final**: cada spec resincronizado necesita
+> volver a validarse. Es el mismo aviso que el Paso 3 deja sobre el PRD cuando su sello se reabre.
 
 ---
 
 ## Paso 6: Revalidar conflictos y readiness (read-only)
 
-Solo si en el Paso 5c se aplicó al menos un spec:
-- Invoca `wf-spec-conflict` para cada spec resincronizado contra el directorio de features (o `wf-spec-features-first` lo hace en bloque si prefieres; aquí invoca conflict directamente por spec). Consolida `_conflict_report.md` si hay conflictos.
-- Invoca `wf-spec-readiness <features_dir>/` para regenerar `_readiness_report.md` y el estado por feature.
+Solo si en el Paso 5c se aplicó al menos un spec.
+
+**Conflictos** — por cada spec resincronizado, delega un auditor, y **emite las N llamadas en un único mensaje**: con el flag, ese mensaje no vuelve hasta que han terminado todas, y esa es la barrera que necesita el readiness ([[D-047]]).
+
+```
+Agent(
+  subagent_type: "sdd-spec-auditor",
+  run_in_background: false,
+  prompt: "Lee `.claude/skills/wf-spec-conflict/SKILL.md` y ejecuta sus pasos TÚ MISMO sobre estos argumentos: <spec.md> --features-dir <features_dir>. NO uses el `Skill` tool ([[D-044]]): ya eres su agente y te forkearía en un clon. Dentro de ese SKILL.md, `${CLAUDE_SKILL_DIR}` es `.claude/skills/wf-spec-conflict/`. Al terminar, dime el path del informe y los conflictos de severidad ALTA, si los hay."
+)
+```
+
+**El informe lo escribe cada auditor**, junto a su spec: tú no escribes ninguno ni los consolidas ([[D-059]]/[[D-060]]).
+
+**Readiness** — después de la barrera:
+
+```
+Agent(
+  subagent_type: "sdd-spec-auditor",
+  run_in_background: false,
+  prompt: "Lee `.claude/skills/wf-spec-readiness/SKILL.md` y ejecuta sus pasos TÚ MISMO sobre estos argumentos: <features_dir>/. NO uses el `Skill` tool ([[D-044]]): ya eres su agente y te forkearía en un clon. Dentro de ese SKILL.md, `${CLAUDE_SKILL_DIR}` es `.claude/skills/wf-spec-readiness/`. Al terminar, dime el path del `_readiness_report.md` y qué features quedan bloqueadas y por qué."
+)
+```
 
 Si no se aplicó ningún spec, omite este paso e indícalo.
 
 ---
 
-## Paso 7: Sincronizar Design (adaptativo)
+## Paso 7 (gate si hay decisiones visuales): Sincronizar Design (adaptativo)
 
 Aplica profundidad adaptativa:
 - Si se pasó `--skip-design`, o la fase `design` no está instalada, o **no existe `DESIGN.md`** en la raíz de diseño → omite esta fase y repórtala como "no aplica".
-- Si existe `DESIGN.md` → invoca con el Skill tool:
-  > `wf-design-sync <DESIGN.md>`
+- Si existe `DESIGN.md` → delega:
 
-  Produce `<basename>_design_sync_report.md` con flows/views/ui_prompt/exports stale. **No regeneres** los artefactos de diseño: este paso solo diagnostica; las acciones recomendadas las ejecuta el usuario después.
+```
+Agent(
+  subagent_type: "design-system-architect",
+  run_in_background: false,
+  prompt: "Lee `.claude/skills/wf-design-sync/SKILL.md` y ejecuta sus pasos TÚ MISMO sobre estos argumentos: <DESIGN.md>. NO uses el `Skill` tool: ya eres el agente al que esa skill delega (`agent: design-system-architect`), así que invocarla te forkearía en un clon tuyo. Dentro de ese SKILL.md, `${CLAUDE_SKILL_DIR}` es `.claude/skills/wf-design-sync/`. Al terminar, dime el path del informe y qué flows/views/ui_prompt/exports quedaron stale."
+)
+```
 
----
-
-## Paso 8: Reportar planes y tasks stale (adaptativo, read-only)
-
-Para cada feature resincronizada, comprueba mecánicamente si existen artefactos aguas abajo (`Bash`/`Read`):
-- `features/<nombre>/plan/<nombre>_plan.md` (o layout plano legacy)
-- `features/<nombre>/tasks/<nombre>_tasks.md`
-
-Si las fases `plan`/`tasks` no están instaladas o no hay artefactos → repórtalo como "sin derivados aguas abajo". Si existen → **márcalos como candidatos a revisión** (no los regeneres): un spec que cambió invalida potencialmente su plan y sus tasks. Recomienda `wf-plan-validate` y, si procede, regenerar con `wf-prepare-plan` / `wf-prepare-tasks`.
+  **No regeneres** los artefactos de diseño: este paso solo diagnostica. Si el informe deja decisiones visuales abiertas, **preséntalas con `AskUserQuestion`** —regenerar ahora lo que quedó stale, o dejarlo para una pasada de diseño aparte— y respeta la elección.
 
 ---
 
-## Paso 9: Consolidar el reporte de cascade
+## Paso 8 (gate si hay derivados): Reportar planes y tasks stale (adaptativo, read-only)
 
-Escribe `<basename>_cascade_report.md` junto al PRD con una fila por fase: fase · ejecutada/omitida/parada · artefacto producido · estado · siguiente acción pendiente. Diferencia explícitamente:
+Para cada feature resincronizada, comprueba mecánicamente si existen artefactos aguas abajo:
+
+```bash
+!test -f "features/<nombre>/plan/<nombre>_plan.md" && echo "PLAN" || echo "SIN_PLAN"
+!test -f "features/<nombre>/tasks/<nombre>_tasks.md" && echo "TASKS" || echo "SIN_TASKS"
+```
+
+Si las fases `plan`/`tasks` no están instaladas o no hay artefactos → repórtalo como "sin derivados aguas abajo". Si existen → **márcalos como candidatos a revisión** (no los regeneres): un spec que cambió invalida potencialmente su plan y sus tasks. Con derivados delante, **pregunta con `AskUserQuestion`** si quiere revalidarlos ahora o dejarlos anotados como deuda; descríbelo en lenguaje natural, sin nombrar el workflow.
+
+---
+
+## Paso 9: Presentar el resumen del cascade
+
+**No escribes ningún informe** ([[D-060]]). El resumen es un diagnóstico para el usuario, no un artefacto del proyecto: lo presentas en la conversación, con una fila por fase —fase · ejecutada/parada/omitida · artefacto producido (el path que te dio su autor) · estado · qué queda pendiente—, diferenciando:
 - fases ejecutadas automáticamente,
-- checkpoints donde se detuvo esperando decisión humana,
+- gates donde paraste y qué eligió el usuario,
 - fases omitidas por profundidad adaptativa (no instalada, sin `DESIGN.md`, sin derivados).
+
+> **Por qué ya no se escribe un `_cascade_report.md`.** Consolidar en un fichero lo que produjeron
+> tus delegados es redactar un artefacto que no es tuyo: cada informe tiene un autor declarado, y
+> esa autoría es lo que lo hace auditable ([[D-060]]). Medido: el orquestador consolidó cuatro
+> informes de conflicto y, al transcribir contenido que no había producido, **adjudicó un hallazgo
+> al auditor equivocado**. Lo que el usuario necesita saber cabe en tu respuesta; lo que hay que
+> conservar ya está escrito, cada cosa por quien la hizo.
+
+---
 
 ## Paso 10: Degradación con gracia
 
-Si cualquier sub-workflow invocado **no está instalado** (el Skill tool no lo encuentra) o falla:
-- no abortes todo el cascade: registra esa fase como `no disponible` con el motivo, continúa con las fases independientes posibles y refléjalo en el reporte de cascade.
+Si cualquier sub-workflow invocado **no está instalado** o falla:
+- no abortes todo el cascade: registra esa fase como `no disponible` con el motivo, continúa con las fases independientes posibles y refléjalo en el resumen.
 - Si la fase fallida es un prerequisito duro de las siguientes (p. ej. el apply de specs falló), detén las dependientes e indícalo.
+
+---
 
 ## Paso 11: Informar al usuario
 
-Presenta el resumen del cascade: qué se ejecutó, dónde se paró y por qué, qué quedó pendiente de decisión humana y cuál es el siguiente comando recomendado. Si el cascade se detuvo en un checkpoint, deja claro el comando exacto para reanudar.
+Cierra con lo que pasó y lo que queda, **en lenguaje natural y sin nombrar workflows ni comandos** ([[D-019]]):
+
+- qué se propagó y hasta dónde;
+- **qué specs quedaron en borrador** por haberse resincronizado, y que hay que revalidarlos antes de planificar sobre ellos;
+- qué features no se tocaron y qué necesita cada una;
+- si hay planes o tareas que revisar.
+
+Ofrécete a continuar con lo siguiente que corresponda ("cuando quieras revalidamos los specs que han cambiado"), en vez de dictarle un comando para que lo teclee.

@@ -187,6 +187,83 @@ class FeaturesIndexTest(unittest.TestCase):
         self.assertEqual(len(out), 1)
         self.assertIn("F-001", out[0].read_text(encoding="utf-8"))
 
+    # === D-083: el mapa brownfield NO es un discovery ======================
+    CODE_DISCOVERY = """\
+# Mapa de capacidades: billing
+
+> Evidencia base: commit abc1234
+> Validación: pendiente
+
+## Capacidades
+
+### F-C-001: Cobro de suscripcion
+- **Actor**: sistema
+- **Superficie**: POST /billing/charge
+"""
+
+    def test_code_discovery_is_not_taken_as_discovery(self):
+        """Adopcion (D-079): el mapa brownfield y el discovery del PRD conviven.
+
+        `sorted()` daba el mapa por orden alfabetico (`billing_code_discovery.md`
+        < `prd_discovery.md`), y el indice salia con el universo equivocado y el
+        nombre equivocado.
+        """
+        write(self.dir / "billing_code_discovery.md", self.CODE_DISCOVERY)
+        write(self.dir / "prj_discovery.md", DISCOVERY)
+        write(self.dir / "features" / "login" / "spec" / "login_spec.md",
+              spec("F-001", "Login"))
+        r = self._run()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertTrue((self.dir / "prj_features.md").exists(),
+                        "el indice debe nombrarse por el discovery del PRD")
+        self.assertFalse((self.dir / "billing_code_features.md").exists(),
+                         "el mapa de capacidades no da nombre al indice")
+        text = (self.dir / "prj_features.md").read_text(encoding="utf-8")
+        self.assertIn("### F-002: Perfil", text, "el universo sale del discovery del PRD")
+        self.assertNotIn("F-C-001", text)
+
+    def test_only_code_discovery_falls_back_to_specs(self):
+        """Brownfield puro: sin discovery de features, el indice sale de los specs."""
+        write(self.dir / "billing_code_discovery.md", self.CODE_DISCOVERY)
+        write(self.dir / "features" / "cobro" / "spec" / "cobro_spec.md",
+              spec("F-C-001", "Cobro de suscripcion"))
+        r = self._run()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertFalse((self.dir / "billing_code_features.md").exists())
+        out = next(self.dir.glob("*_features.md"))
+        text = out.read_text(encoding="utf-8")
+        self.assertIn("discovery=no", text,
+                      "declarar `discovery=sí` sobre el mapa era declarar un discovery que no existe")
+        self.assertIn("F-C-001", text)
+
+    def test_adoption_keeps_existing_index_name_but_prd_universe(self):
+        """Adopcion real: ya hay indice del brownfield cuando llega el PRD.
+
+        El nombre de salida se hereda del indice existente —eso no cambia—; lo
+        que no puede heredarse es el universo, que pasa a ser el del PRD.
+        """
+        write(self.dir / "billing_code_discovery.md", self.CODE_DISCOVERY)
+        write(self.dir / "billing_code_features.md", "# indice viejo del brownfield\n")
+        write(self.dir / "prj_discovery.md", DISCOVERY)
+        write(self.dir / "features" / "login" / "spec" / "login_spec.md",
+              spec("F-001", "Login"))
+        r = self._run()
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertFalse((self.dir / "prj_features.md").exists(),
+                         "no se crea un indice paralelo: se reescribe el que hay")
+        text = (self.dir / "billing_code_features.md").read_text(encoding="utf-8")
+        self.assertIn("### F-002: Perfil", text, "el universo sale del discovery del PRD")
+        self.assertNotIn("F-C-001", text)
+
+    def test_explicit_discovery_flag_is_respected(self):
+        """El filtro es del barrido automatico: un `--discovery` explicito manda."""
+        write(self.dir / "billing_code_discovery.md", self.CODE_DISCOVERY)
+        write(self.dir / "features" / "cobro" / "spec" / "cobro_spec.md",
+              spec("F-C-001", "Cobro de suscripcion"))
+        r = self._run("--discovery", str(self.dir / "billing_code_discovery.md"))
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertTrue((self.dir / "billing_code_features.md").exists())
+
     def test_not_a_directory_exit_1(self):
         r = run_script("sdd-features-index.py", self.dir / "no_existe")
         self.assertEqual(r.returncode, 1)
@@ -330,6 +407,90 @@ class RetiradaTest(unittest.TestCase):
         self._spec()
         first = self._index()
         self.assertEqual(first, self._index())
+
+
+class SinValidarTest(unittest.TestCase):
+    """El sello desmiente a LISTA, y solo a LISTA (D-077).
+
+    `gate_spec_fiable` deniega el plan de un spec en BORRADOR (D-061). Un indice
+    que lo diera por LISTA prometeria lo que el gate incumple una fase mas tarde.
+    """
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.dir = Path(self.tmp.name)
+        write(self.dir / "prj_discovery.md", DISCOVERY)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _spec(self, estado=None, marker=""):
+        text = spec("F-001", "Login", marker)
+        if estado is not None:
+            text = text.replace("> Feature ID: F-001",
+                                f"> Estado: {estado}\n> Feature ID: F-001")
+        return write(self.dir / "features" / "login" / "spec" / "login_spec.md", text)
+
+    def _readiness(self, estado, bloqueantes="—"):
+        write(self.dir / "prj_readiness_report.md",
+              "## Matriz de readiness\n\n| Feature | Estado | Bloqueantes |\n"
+              f"|---|---|---|\n| F-001: Login | {estado} | {bloqueantes} |\n")
+
+    def _index(self):
+        r = run_script("sdd-features-index.py", self.dir)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        return (self.dir / "prj_features.md").read_text(encoding="utf-8")
+
+    def test_borrador_limpio_no_sale_lista(self):
+        self._spec(estado="BORRADOR")
+        out = self._index()
+        self.assertIn("| F-001: Login | BLOQUEADA |", out)
+        self.assertIn("pendiente de validación", out,
+                      "el motivo dice que falta un paso, no que el spec este mal")
+
+    def test_validado_limpio_sale_lista(self):
+        self._spec(estado="VALIDADO")
+        self.assertIn("| F-001: Login | LISTA |", self._index())
+
+    def test_spec_legacy_sin_linea_estado_no_se_bloquea(self):
+        """Politica conservadora: solo bloquea lo que se afirma (misma que status_sync)."""
+        self._spec(estado=None)
+        self.assertIn("| F-001: Login | LISTA |", self._index())
+
+    def test_borrador_desmiente_un_readiness_que_dice_lista(self):
+        """La cabecera del spec es mas fresca que el informe: un delta lo desella despues."""
+        self._spec(estado="BORRADOR")
+        self._readiness("LISTA")
+        out = self._index()
+        self.assertIn("| F-001: Login | BLOQUEADA |", out)
+        self.assertIn("pendiente de validación", out)
+
+    def test_borrador_respeta_los_demas_veredictos_del_readiness(self):
+        """REQUIERE_CAMBIO_PRD ya no promete nada, y su motivo es mas informativo."""
+        self._spec(estado="BORRADOR")
+        self._readiness("REQUIERE_CAMBIO_PRD", "gobernanza: alcance derivado")
+        out = self._index()
+        self.assertIn("| F-001: Login | REQUIERE_CAMBIO_PRD |", out)
+        self.assertIn("gobernanza: alcance derivado", out)
+
+    def test_marcadores_ganan_al_sello_como_motivo(self):
+        """Un spec con marcadores Y en borrador reporta los marcadores: es mas concreto."""
+        self._spec(estado="BORRADOR", marker="\n[INCOMPLETO] falta decidir\n")
+        out = self._index()
+        self.assertIn("| F-001: Login | BLOQUEADA |", out)
+        self.assertIn("marcadores", out)
+
+    def test_retirada_gana_al_sello(self):
+        """RETIRADO manda sobre todo (D-074), incluido el sello."""
+        text = spec("F-001", "Login").replace(
+            "> Feature ID: F-001",
+            "> Estado: RETIRADO\n> Retirada: CR-007 — ya no va\n> Feature ID: F-001")
+        write(self.dir / "features" / "login" / "spec" / "login_spec.md", text)
+        self.assertIn("| F-001: Login | RETIRADA |", self._index())
+
+    def test_sigue_siendo_idempotente(self):
+        self._spec(estado="BORRADOR")
+        self.assertEqual(self._index(), self._index())
 
 
 class CanonStatesBackstopTest(unittest.TestCase):

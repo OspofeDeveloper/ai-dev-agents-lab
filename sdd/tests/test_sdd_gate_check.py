@@ -235,6 +235,27 @@ class RetiredFeatureTest(unittest.TestCase):
         self.assertEqual(is_deny(r.stdout), "deny")
         self.assertIn("RETIRADO", r.stdout)
 
+    def test_lateral_evolution_denied(self):
+        """D-078: los tres flujos que evolucionan el spec cierran con `--unseal`,
+        que reactivaba la feature en silencio. El gate corta antes de llegar ahi."""
+        for skill in ("wf-spec-delta", "wf-spec-amend", "wf-spec-gap-resolve"):
+            with self.subTest(skill=skill):
+                r = self._run(skill, self.spec)
+                self.assertEqual(is_deny(r.stdout), "deny")
+                self.assertIn("RETIRADO", r.stdout)
+
+    def test_lateral_evolution_ignores_open_gaps(self):
+        """Guarda de vacuidad: resolver gaps es justo lo que gap-resolve existe para
+        hacer. El gate lateral solo mira la vigencia, no la completitud."""
+        vivo = write(self.dir / "login_spec.md",
+                     "# Spec: Login\n> Estado: BORRADOR\n> Feature ID: F-001\n"
+                     "### HU-1: [INCOMPLETO] entrar\n"
+                     "### [P-001][CRÍTICO] gap\n- **Respuesta**: _(pendiente)_\n")
+        for skill in ("wf-spec-delta", "wf-spec-amend", "wf-spec-gap-resolve"):
+            with self.subTest(skill=skill):
+                self.assertEqual(self._run(skill, vivo).stdout.strip(), "",
+                                 "un spec incompleto pero vigente sigue siendo evolucionable")
+
     def test_retirement_is_reported_before_open_gaps(self):
         """Decirle que responda criticos de una feature cancelada le manda a trabajar
         en lo que ya no existe."""

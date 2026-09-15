@@ -37,8 +37,31 @@ Indica el modo: "Iteración sobre subset `[F-001, F-002, ...]`" o "Generación c
 > gaps en `<path>_analysis.md` y dímelo para retomarlo."
 
 **Si hay conflictos de severidad ALTA:**
-> "Se detectaron conflictos entre features. Revisa `<path>_conflict_report.md` y resuélvelos
-> antes de planificar."
+> "Se detectaron conflictos entre features. Están en `<path>_conflict_report.md`: léelo, dime
+> qué feature manda en cada choque y **aplico el cambio sobre el spec que toque** — cada
+> corrección reabre su validación, así que después los revalidamos."
+
+> Ofrecer el cambio, y no *"edítalos tú"*, es deliberado ([[D-082]]): un spec editado a mano
+> conserva su sello aunque su contenido ya no sea el auditado, y el gate de planificación lo
+> deja pasar.
+
+**Si el subset incluía features dadas de baja:**
+> "Estas features ya no están en el producto: [lista con su `CR-XXX`]. No les he tocado el
+> spec. Si alguna vuelve al alcance, dímelo y la recupero — volvería en borrador, para
+> validarla otra vez."
+
+> No se pisan ni se saltan calladas ([[D-080]]): su `F-00X` sigue en el discovery, que no se
+> regenera, así que aparecerán en cada pasada posterior mientras el mapa no cambie.
+
+**Si hay features `BLOQUEADA` por «pendiente de validación» (el caso normal de una pasada recién generada):**
+> "Los specs recién generados quedan en borrador, sin auditar: [lista]. Cuando quieras los
+> valido —de uno en uno o de golpe— y, ya sellados, pasamos a planificar."
+
+> Esto sale **siempre** tras generar specs nuevos y no es un problema: un spec nace en
+> `Estado: BORRADOR` ([[D-061]]) y la validación es un gate humano que registra **quién**
+> aprueba ([[D-065]]), así que no se puede auto-resolver aquí. Lo que no vale es callarlo:
+> hasta [[D-077]] esta plantilla saltaba de "generadas" a "pueden avanzar a planificación" y
+> el paso que falta solo aparecía como una denegación, dos pasos después.
 
 **Si hay features LISTA:**
 > "Las features marcadas como LISTA pueden avanzar a planificación: [lista]. Dime cuál quieres
@@ -48,5 +71,6 @@ Indica el modo: "Iteración sobre subset `[F-001, F-002, ...]`" o "Generación c
 > "Quedan [N] features identificadas en el discovery que aún no se han procesado: [lista de
 > IDs]. Cuando quieras generarlas, dímelo indicando cuáles."
 
-**Si todo está listo y no hay pendientes:**
+**Si todo está listo y no hay pendientes** (es decir: los specs están además **validados** —
+recién generados no lo están):
 > "Todas las features están listas para planificar. Dime por cuál empezamos."

@@ -86,6 +86,16 @@ PRODUCT_KINDS = {
     "design-brief": ("fixed", "DESIGN_BRIEF.md"),
 }
 
+# Ficheros que encajan en un glob de producto por SUFIJO y no son ese artefacto
+# (D-083). `<scope>_code_discovery.md` es el mapa de capacidades del onramp
+# brownfield (`wf-spec-from-code discover`), no el discovery de features de un
+# PRD: en una adopción los dos conviven en la misma raíz y `sorted()` decidiría
+# por orden alfabético. Mismo filtro que `first_discovery()` en
+# `sdd-features-index.py`.
+GLOB_EXCLUDE = {
+    "discovery": ("_code_discovery.md",),
+}
+
 PHASE_DIRS = {"spec", "plan", "tasks", "design"}
 
 # Todos los sufijos conocidos, del más largo al más corto (para derivar el base
@@ -202,7 +212,9 @@ def resolve_find(kind: str, input_path: Path) -> Path | None:
         if mode == "fixed":
             cand = root / pat
             return cand if cand.is_file() else None
-        matches = sorted(root.glob(pat))
+        excluded = GLOB_EXCLUDE.get(kind, ())
+        matches = [m for m in sorted(root.glob(pat))
+                   if not m.name.endswith(excluded)] if excluded else sorted(root.glob(pat))
         return matches[0] if matches else None
 
     raise ValueError(f"kind desconocido: '{kind}'")

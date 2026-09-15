@@ -617,6 +617,53 @@ class StructuralLintTest(unittest.TestCase):
         self.assertNotIn("FORK-SELF-DELEGATION", types)
 
     # === AGENT-PROMPT-REDISPATCH (D-044) ==================================
+    def test_fork_skill_dispatch_flagged_by_declaration(self):
+        # D-075: `Skill` en allowed-tools de un fork. Es la senal declarativa, y
+        # la que tenia `wf-prd-change-cascade`: encadenaba seis workflows sin
+        # mencionar la tool `Agent` ni una vez, asi que FORK-ORCHESTRATOR no veia
+        # nada y el fichero salia limpio.
+        write(self.root / "prd" / "skills" / "wf-casc" / "SKILL.md",
+              skill_md("wf-casc", "Encadena la propagacion del cambio.\n",
+                       extra_fm="allowed-tools: [Read, Write, Bash, Skill]\n"
+                                "context: fork\n"))
+        r, types = types_in(self.root, "--severity", "blocking")
+        self.assertIn("FORK-SKILL-DISPATCH", types, r.stdout)
+
+    def test_fork_skill_dispatch_flagged_by_prose(self):
+        # La senal prescriptiva: el cuerpo ordena encadenar con el Skill tool.
+        write(self.root / "prd" / "skills" / "wf-casc2" / "SKILL.md",
+              skill_md("wf-casc2",
+                       "## Paso 3\n\nInvoca con el `Skill` tool:\n"
+                       "> `wf-prd-sync-impact <prd.md>`\n",
+                       extra_fm="allowed-tools: [Read, Bash]\ncontext: fork\n"))
+        r, types = types_in(self.root, "--severity", "blocking")
+        self.assertIn("FORK-SKILL-DISPATCH", types, r.stdout)
+
+    def test_main_thread_skill_dispatch_not_flagged(self):
+        # Sin `context: fork` no hay defecto: un orquestador en el hilo principal
+        # SI puede invocar otra skill de main —sus instrucciones entran en la misma
+        # conversacion y su gate se presenta de verdad (D-075)—.
+        write(self.root / "prd" / "skills" / "wf-main" / "SKILL.md",
+              skill_md("wf-main",
+                       "## Paso 3\n\nInvoca con el `Skill` tool:\n"
+                       "> `wf-prd-change <prd.md> --new-reqs <cambio.md>`\n",
+                       extra_fm="allowed-tools: [Bash, Agent, AskUserQuestion, Skill]\n"))
+        r, types = types_in(self.root)
+        self.assertNotIn("FORK-SKILL-DISPATCH", types, r.stdout)
+
+    def test_fork_prohibiting_the_skill_tool_not_flagged(self):
+        # El falso positivo obvio: la formula canonica de delegacion dice al
+        # delegado "NO uses el `Skill` tool". Describir la prohibicion no es
+        # prescribirla (mismo criterio que FORK-SELF-DELEGATION).
+        write(self.root / "spec" / "skills" / "wf-worker" / "SKILL.md",
+              skill_md("wf-worker",
+                       "Ejecutas el contrato tu mismo: no invoques con el `Skill` "
+                       "tool, que te forkearia un clon.\n",
+                       extra_fm="allowed-tools: [Read, Write, Bash]\n"
+                                "context: fork\nagent: sdd-spec-writer\n"))
+        r, types = types_in(self.root)
+        self.assertNotIn("FORK-SKILL-DISPATCH", types, r.stdout)
+
     def test_agent_prompt_redispatch_flagged(self):
         # "Ejecuta el skill /wf-X" hace que el delegado use el Skill tool, que
         # forkea otro subagente (un clon suyo si la sub-skill declara ese agent:).
@@ -649,6 +696,124 @@ class StructuralLintTest(unittest.TestCase):
                        "el delegado re-despacha con el `Skill` tool."))
         _, types = types_in(self.root)
         self.assertNotIn("AGENT-PROMPT-REDISPATCH", types)
+
+    # === SPEC-RETIRED-BLIND ===============================================
+    PROBE = ("!grep -Eq '^[[:space:]]*\\*{0,2}Estado:?\\*{0,2}[[:space:]]*:?"
+             "[[:space:]]*VALIDADO' \"$p\" && echo SELLADO || echo DRAFT")
+
+    def test_spec_retired_blind_flagged(self):
+        """El sondeo binario VALIDADO/else sin RETIRADO en el fichero: bloqueante."""
+        write(self.root / "spec" / "skills" / "wf-spec-regenera" / "SKILL.md",
+              skill_md("wf-spec-regenera",
+                       "Si el spec ya existe, mira su estado:\n\n"
+                       f"```bash\n{self.PROBE}\n```\n\n"
+                       "- `DRAFT` -> reescribe en su sitio y sigue."))
+        _, types = types_in(self.root)
+        self.assertIn("SPEC-RETIRED-BLIND", types)
+
+    def test_spec_retired_blind_not_flagged_when_state_is_read_whole(self):
+        """Nombrar RETIRADO da el sondeo por informado."""
+        write(self.root / "spec" / "skills" / "wf-spec-regenera" / "SKILL.md",
+              skill_md("wf-spec-regenera",
+                       "Si el spec ya existe, mira su estado:\n\n"
+                       f"```bash\n{self.PROBE}\n```\n\n"
+                       "- `RETIRADO` -> para sin escribir: la feature esta dada de baja.\n"
+                       "- `DRAFT` -> reescribe en su sitio y sigue."))
+        _, types = types_in(self.root)
+        self.assertNotIn("SPEC-RETIRED-BLIND", types)
+
+    def test_spec_retired_blind_ignores_skills_of_other_phases(self):
+        """El sondeo sobre un PLAN no es este defecto: un plan nunca es RETIRADO."""
+        write(self.root / "plan" / "skills" / "wf-prepare-tasks" / "SKILL.md",
+              skill_md("wf-prepare-tasks",
+                       "Comprueba que el plan esta sellado:\n\n"
+                       f"```bash\n{self.PROBE}\n```\n"))
+        _, types = types_in(self.root)
+        self.assertNotIn("SPEC-RETIRED-BLIND", types)
+
+    def test_spec_retired_blind_ignores_a_kb(self):
+        """La regla es para quien ESCRIBE, no para la kb que documenta el campo."""
+        write(self.root / "spec" / "skills" / "kb-estados" / "SKILL.md",
+              skill_md("kb-estados",
+                       f"El sello se lee asi:\n\n```bash\n{self.PROBE}\n```\n"))
+        _, types = types_in(self.root)
+        self.assertNotIn("SPEC-RETIRED-BLIND", types)
+
+    def test_spec_retired_blind_reports_once_per_file(self):
+        """Un fichero con dos sondeos da UN hallazgo, no dos."""
+        write(self.root / "spec" / "skills" / "wf-spec-regenera" / "SKILL.md",
+              skill_md("wf-spec-regenera",
+                       f"Primero:\n\n```bash\n{self.PROBE}\n```\n\n"
+                       f"Y en el otro layout:\n\n```bash\n{self.PROBE}\n```\n"))
+        r = run_script("sdd-structural-lint.py", "--root", self.root, "--json")
+        blind = [f for f in json.loads(r.stdout) if f["type"] == "SPEC-RETIRED-BLIND"]
+        self.assertEqual(len(blind), 1, r.stdout)
+
+    def test_spec_retired_blind_is_blocking(self):
+        write(self.root / "spec" / "skills" / "wf-spec-regenera" / "SKILL.md",
+              skill_md("wf-spec-regenera",
+                       f"```bash\n{self.PROBE}\n```\n"))
+        r = run_script("sdd-structural-lint.py", "--root", self.root, "--json")
+        blind = [f for f in json.loads(r.stdout) if f["type"] == "SPEC-RETIRED-BLIND"]
+        self.assertTrue(blind and all(f["severity"] == "blocking" for f in blind), r.stdout)
+
+    # === HUMAN-GATE-UNPROTECTED ===========================================
+    GATE = ("**Detente SIEMPRE aqui**, con veredicto operativo "
+            "`STOP_MAPA_SIN_VALIDAR`. Devuelve el inventario y el bloqueo.")
+
+    def test_human_gate_unprotected_flagged(self):
+        """Para para que un humano valide lo que escribe, y no protege el fichero."""
+        write(self.root / "spec" / "skills" / "wf-spec-inventario" / "SKILL.md",
+              skill_md("wf-spec-inventario",
+                       "Escribe `<scope>_inventario.md` con lo que evidencia el codigo.\n\n"
+                       f"{self.GATE}\n"))
+        _, types = types_in(self.root)
+        self.assertIn("HUMAN-GATE-UNPROTECTED", types)
+
+    def test_human_gate_protected_not_flagged(self):
+        """Nombrar STOP_ARTEFACTO_EXISTE da la escritura por protegida."""
+        write(self.root / "spec" / "skills" / "wf-spec-inventario" / "SKILL.md",
+              skill_md("wf-spec-inventario",
+                       "Si el fichero ya existe, para con `STOP_ARTEFACTO_EXISTE`: "
+                       "lleva dentro lo que una persona decidio.\n\n"
+                       f"{self.GATE}\n"))
+        _, types = types_in(self.root)
+        self.assertNotIn("HUMAN-GATE-UNPROTECTED", types)
+
+    def test_human_gate_unprotected_ignores_a_kb(self):
+        """La regla es para quien ESCRIBE el artefacto, no para la kb que lo documenta."""
+        write(self.root / "spec" / "skills" / "kb-gates" / "SKILL.md",
+              skill_md("kb-gates",
+                       f"Un gate humano se declara asi:\n\n{self.GATE}\n"))
+        _, types = types_in(self.root)
+        self.assertNotIn("HUMAN-GATE-UNPROTECTED", types)
+
+    def test_human_gate_unprotected_ignores_other_stop_verdicts(self):
+        """Un STOP_* que no es de validacion no dispara la regla."""
+        write(self.root / "spec" / "skills" / "wf-spec-otra" / "SKILL.md",
+              skill_md("wf-spec-otra",
+                       "Si quedan criticos abiertos, para con "
+                       "`STOP_DELTA_CON_CRITICOS_ABIERTOS` y devuelve el bloqueo.\n"))
+        _, types = types_in(self.root)
+        self.assertNotIn("HUMAN-GATE-UNPROTECTED", types)
+
+    def test_human_gate_unprotected_reports_once_per_file(self):
+        """Dos menciones del veredicto dan UN hallazgo, no dos."""
+        write(self.root / "spec" / "skills" / "wf-spec-inventario" / "SKILL.md",
+              skill_md("wf-spec-inventario",
+                       f"{self.GATE}\n\nY en el otro modo:\n\n{self.GATE}\n"))
+        r = run_script("sdd-structural-lint.py", "--root", self.root, "--json")
+        hits = [f for f in json.loads(r.stdout)
+                if f["type"] == "HUMAN-GATE-UNPROTECTED"]
+        self.assertEqual(len(hits), 1, r.stdout)
+
+    def test_human_gate_unprotected_is_blocking(self):
+        write(self.root / "spec" / "skills" / "wf-spec-inventario" / "SKILL.md",
+              skill_md("wf-spec-inventario", f"{self.GATE}\n"))
+        r = run_script("sdd-structural-lint.py", "--root", self.root, "--json")
+        hits = [f for f in json.loads(r.stdout)
+                if f["type"] == "HUMAN-GATE-UNPROTECTED"]
+        self.assertTrue(hits and all(f["severity"] == "blocking" for f in hits), r.stdout)
 
     # === REFERENCE-PATH-MISSING ===========================================
     def test_reference_path_missing_flagged(self):

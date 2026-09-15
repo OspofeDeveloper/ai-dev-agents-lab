@@ -61,7 +61,9 @@ Para cada feature potencialmente afectada:
 - decide acción recomendada:
   - `delta`
   - `manual_review`
-  - `rediscover`
+  - `repartition` — el cambio **mueve la frontera entre features** (una se parte, dos se funden).
+    No es una acción que ejecute nadie de una pieza: se resuelve **componiendo** las vías que sí
+    existen, y por eso siempre va al conjunto de decisión humana (ver la nota de abajo)
   - `retire` — la capacidad que esta feature especifica **ya no está en el PRD** ([[D-074]]). No es una deriva que se pueda cerrar: es una feature que el producto retiró
 
 ### Paso 4A: Generar requisitos de sync por feature
@@ -79,7 +81,22 @@ Debe contener:
 
 ### Paso 5A: Salida
 
-Resume qué features pueden resolverse con delta y cuáles necesitan rediscovery o revisión manual.
+Resume qué features pueden resolverse con delta y cuáles necesitan revisión manual o repartición.
+
+> **`repartition` no se despacha re-corriendo el discovery ([[D-075]]).** Es tentador decir
+> *"esto necesita rediscovery"* y quedarse tan ancho, pero **no hay vía que lo ejecute**:
+> regenerar el `_discovery.md` **renumera los `F-00X`**, y los specs ya generados los citan en su
+> cabecera — la trazabilidad acabaría apuntando a otra feature. El propio `wf-spec-discover` se
+> detiene por eso. Lo que sí existe, y es lo que tienes que recomendar en concreto:
+>
+> - **la feature que sigue viva** se evoluciona con un delta, marcando como tombstone las HUs y
+>   CAs que se van (los IDs no se reutilizan, Regla 12 de `kb-traceability-rules`);
+> - **la capacidad que sale del producto** se da de baja, con su `CR-XXX` y su gate de impacto;
+> - **la feature nueva que emerge** se genera desde cero y **toma el siguiente `F-00X` libre**,
+>   no el hueco de ninguna retirada.
+>
+> Descríbelo así —qué le pasa a cada feature—, en lenguaje natural y sin nombrar workflows
+> ([[D-019]]): quien te invocó sabe enrutarlo.
 
 ## Submodo APPLY
 
@@ -114,7 +131,7 @@ Para cada feature solicitada:
 > **cómo se escribe** tiene ya un dueño.
 
 Si el cambio rebasa un delta razonable, detén esa feature y marca:
-> "Esta feature necesita rediscovery o rediseño de spec; no se aplicó sync automático."
+> "El cambio rebasa lo que un delta quirúrgico puede integrar en esta feature: mueve su frontera. No se ha tocado nada. Lo que corresponde es decidir, con una persona delante, qué parte sigue viva y se evoluciona, qué parte sale del producto y qué capacidad nueva hay que especificar aparte."
 
 **Las features con `acción: retire` se saltan siempre, y se reportan.** No les apliques nada: ni delta, ni regeneración, ni el sello de sync. Dar de baja una feature es una decisión de producto con coste irreversible —hay planes y tareas construidos encima— y **corres en un fork: no tienes turno para preguntarla** ([[D-045]]). Márcalas así y termina:
 > "Esta feature especifica una capacidad que el PRD ya no contempla. No se ha tocado: su baja se confirma aparte, con el impacto delante."

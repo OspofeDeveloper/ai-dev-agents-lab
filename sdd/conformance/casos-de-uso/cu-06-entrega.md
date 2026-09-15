@@ -70,7 +70,9 @@ el CU.
 
 ## CU-6.a — Generar el plan técnico desde el spec
 
-**Precondición:** `_spec.md` validado, sin `[INCOMPLETO]`/`[CRÍTICO]`/`[INFERIDO]`.
+**Precondición:** `_spec.md` sellado **`Estado: VALIDADO`** ([[D-061]]: el sello es parte de
+la precondición, no solo la limpieza de marcadores), sin `[INCOMPLETO]`/`[CRÍTICO]`/`[INFERIDO]`.
+El negativo —pedir el plan con el spec en `BORRADOR`— se mide en `CU-9.n`.
 **Mecanismo:** skill `wf-prepare-plan generate` → subagente **`plan-architect`**.
 Output: `features/<n>/plan/<n>_plan.md`.
 
@@ -78,9 +80,20 @@ Output: `features/<n>/plan/<n>_plan.md`.
    → **Esperado:** `plan-architect` traduce el "qué funcional" del spec al "cómo
      técnico" fundamentado en el repo; genera `_plan.md` en estado **BORRADOR** (no se
      autovalida).
+2. La feature tiene un `_conflict_report.md` con un conflicto `ALTA` abierto contra otra
+   feature ⏱ **sin pasada**.
+   → **Esperado:** lo **advierte y continúa** ([[D-077]]), nombrando el conflicto y la otra
+     feature — igual que ya hace con los `[INFORMATIVO]` sin responder y con el drift de
+     fuentes externas. Un conflicto entre specs no es una precondición mecánica: no lo mira
+     ningún gate, y la severidad la asignó un juicio experto que otro auditor puede no
+     compartir ([[D-047]]).
+   → **FALLO:** generar el plan **sin mencionarlo** (el usuario planifica sobre un solape que
+     alguien ya había levantado), o **detenerse** como si fuera un gate — eso convertiría el
+     veredicto de un agente en un candado y dejaría el trabajo sin vía de cierre.
 
-**Resultado:** PASS si genera el plan en BORRADOR cubriendo los CAs · FALLO si nace
-`VALIDADO` por su cuenta, o mete decisiones sin base en el repo.
+**Resultado:** PASS si genera el plan en BORRADOR cubriendo los CAs y avisa de los conflictos
+abiertos sin frenar por ellos · FALLO si nace `VALIDADO` por su cuenta, mete decisiones sin
+base en el repo, silencia un conflicto `ALTA` o lo trata como bloqueo.
 **Desviación → reportar:** issue citando `CU-6.a`.
 
 ## CU-6.b — Validar el plan (gate formal + deuda asumida)

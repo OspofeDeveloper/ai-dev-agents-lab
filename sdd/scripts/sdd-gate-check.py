@@ -27,11 +27,22 @@ Gates (tabla GATES):
                                 con `Enmienda pendiente` en el plan (retencion selectiva)
   wf-qa-plan                  → idem gate de spec fiable (un QA plan de un spec inestable nace muerto)
 
+  wf-spec-delta               → el `*_spec.md` del arg no esta RETIRADO (solo vigencia:
+  wf-spec-amend                 los gaps abiertos son lo que estos flujos arreglan)
+  wf-spec-gap-resolve
+
 Retirada de feature (D-074): un spec con `Estado: RETIRADO` deniega los tres frentes
 —planificar, generar tasks y ejecutarlas—, resolviendo el `Spec origen` del plan y el
 `Plan origen` del tasks. A diferencia de `Enmienda pendiente`, que retiene SOLO las
 tasks que citan el CA enmendado, la baja cancela la feature entera: no queda
 subconjunto que siga teniendo sentido ejecutar.
+
+Y tambien deniega la evolucion LATERAL del propio spec (D-078): delta, amend y
+gap-resolve. Cubrir solo aguas abajo dejaba el agujero por arriba — esos tres flujos
+cierran con `sdd-seal.py --unseal`, que movia RETIRADO a BORRADOR y reactivaba la
+feature sin gate, sin CR y sin que nadie se enterara. `wf-spec-sync-from-prd` no esta
+en la tabla porque recibe el PRD, no el spec: su salvaguarda es la prosa del workflow
+(se salta las features con accion `retire` y las reporta).
 """
 import hashlib
 import json
@@ -163,6 +174,44 @@ def open_critical_gaps(text: str):
     return abiertos
 
 
+def _retirado(spec_path: Path, text: str, cola: str):
+    """Mensaje de denegacion si el spec esta RETIRADO; None si sigue vigente.
+
+    Lo comparten los dos gates que miran la vigencia —el de consumo aguas abajo
+    (gate_spec_fiable) y el de evolucion lateral (gate_spec_vigente)—, que solo
+    se diferencian en que se le propone hacer a la feature dada de baja.
+    """
+    m = ESTADO_RE.search(text)
+    if not (m and m.group("value") == "RETIRADO"):
+        return None
+    ret = re.search(r"^\s*(?:[-*>]\s*)?\**Retirada:?\**\s*:?\s*(?P<v>[^\n]*)$",
+                    text, re.MULTILINE)
+    detalle = f" ({ret.group('v').strip()})" if ret and ret.group("v").strip() else ""
+    return (f"El spec '{spec_path}' esta RETIRADO{detalle}: esa feature se dio de baja y ya "
+            f"no forma parte del producto. {cola}")
+
+
+def gate_spec_vigente(args: str):
+    """Evolucion lateral dentro de la propia fase Spec (D-078).
+
+    Solo mira la vigencia, nada mas: un spec con [INCOMPLETO] o gaps [CRITICO]
+    abiertos es justo lo que estos flujos existen para arreglar, asi que aqui no
+    bloquean. Lo unico que no tiene sentido evolucionar es una feature que el
+    producto ya no contempla — y el riesgo no era academico: estos flujos cierran
+    con `sdd-seal.py --unseal`, que antes de D-078 movia RETIRADO a BORRADOR y
+    reactivaba la feature en silencio.
+    """
+    spec_path = find_md_arg(args, "_spec")
+    if spec_path is None:
+        return None  # p. ej. wf-spec-sync-from-prd, que recibe el PRD: politica conservadora
+    text = read(spec_path)
+    if text is None:
+        return None  # no es precondicion de estos flujos: que lo diga el workflow
+    return _retirado(spec_path, text,
+                     "Evolucionarla no la devuelve al producto: esa decision es aparte. "
+                     "Si la decision cambio, hay que reactivarla antes.")
+
+
 def gate_spec_fiable(args: str):
     # Nota: el DESIGN_BRIEF.md no se verifica aqui (su ubicacion es ambigua
     # desde los args); ese gate sigue siendo de la prosa del workflow.
@@ -175,13 +224,10 @@ def gate_spec_fiable(args: str):
     # La baja se reporta primero: un spec retirado puede tener ademas gaps abiertos, y
     # decir "responde estos 3 criticos" sobre una feature cancelada manda a trabajar
     # en lo que ya no existe.
-    m_ret = ESTADO_RE.search(text)
-    if m_ret and m_ret.group("value") == "RETIRADO":
-        ret = re.search(r"^\s*(?:[-*>]\s*)?\**Retirada:?\**\s*:?\s*(?P<v>[^\n]*)$",
-                        text, re.MULTILINE)
-        detalle = f" ({ret.group('v').strip()})" if ret and ret.group("v").strip() else ""
-        return (f"El spec '{spec_path}' esta RETIRADO{detalle}: esa feature se dio de baja y ya "
-                f"no forma parte del producto. Si la decision cambio, hay que reactivarla antes.")
+    retirado = _retirado(spec_path, text,
+                         "Si la decision cambio, hay que reactivarla antes.")
+    if retirado:
+        return retirado
     n_inc = len(re.findall(r"\[INCOMPLETO\]", text))
     if n_inc:
         return f"El spec '{spec_path}' tiene {n_inc} HU(s) [INCOMPLETO]. Responde los gaps que las bloquean —en el `_analysis.md` o en la seccion `Items Pendientes` del propio spec, segun donde esten definidos— y pide que se completen esas historias."
@@ -218,7 +264,7 @@ def gate_spec_fiable(args: str):
     # Estado del spec (D-061): cada fase consume artefactos sellados de la anterior.
     # Solo se exige si el spec DECLARA el estado — un spec legacy sin la linea no
     # se bloquea (misma politica conservadora que `status_sync`).
-    estado = m_ret
+    estado = ESTADO_RE.search(text)
     if estado and estado.group("value") == "BORRADOR":
         return (f"El spec '{spec_path}' esta en BORRADOR: nadie lo ha validado todavia. "
                 f"Pide que se valide antes de planificar sobre el.")
@@ -283,6 +329,9 @@ GATES = {
     "wf-design-feature-prototype": gate_spec_fiable,
     "wf-task-run": gate_tasks_plan_vigente,
     "wf-qa-plan": gate_spec_fiable,
+    "wf-spec-delta": gate_spec_vigente,
+    "wf-spec-amend": gate_spec_vigente,
+    "wf-spec-gap-resolve": gate_spec_vigente,
 }
 
 

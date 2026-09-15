@@ -247,5 +247,93 @@ class RetiradaTest(unittest.TestCase):
         self.assertIn("F-001", foco, "las vivas siguen en el foco")
 
 
+class SinValidarTest(unittest.TestCase):
+    """El sello del spec tambien decide aqui (D-077).
+
+    `gate_spec_fiable` deniega el plan de un spec en BORRADOR (D-061), asi que
+    anunciar "LISTA → /wf-prepare-plan" manda al usuario contra el gate.
+    """
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.dir = Path(self.tmp.name)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _build(self, estado_spec=None, estado_idx="LISTA", marker=""):
+        write(self.dir / "prj_features.md",
+              "# Features Index: MiProducto\n\n## Resumen de estado\n\n"
+              "| Feature | Estado | Bloqueantes |\n|---|---|---|\n"
+              f"| F-001: Login | {estado_idx} | — |\n")
+        text = spec("F-001", "Login") + marker
+        if estado_spec is not None:
+            text = text.replace("> Feature ID: F-001",
+                                f"> Estado: {estado_spec}\n> Feature ID: F-001")
+        write(self.dir / "features" / "login" / "spec" / "login_spec.md", text)
+
+    def _fila(self):
+        r = run_script("sdd-project-status.py", self.dir)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        filas = [l for l in r.stdout.splitlines()
+                 if l.startswith("| F-001:") and "|" in l[8:]]
+        self.assertTrue(filas, f"sin fila para F-001 en:\n{r.stdout}")
+        return filas[0]
+
+    def test_borrador_no_se_anuncia_como_lista(self):
+        self._build(estado_spec="BORRADOR")
+        fila = self._fila()
+        self.assertIn("BLOQUEADA", fila)
+        self.assertIn("pendiente de validación", fila)
+        self.assertNotIn("/wf-prepare-plan", fila,
+                         "anunciar el plan sobre un spec sin sellar manda contra el gate")
+
+    def test_la_accion_es_validar_no_responder_gaps(self):
+        """Sin gaps que responder, mandar a resolverlos es un callejon sin salida."""
+        self._build(estado_spec="BORRADOR")
+        self.assertIn("/wf-spec-validate", self._fila())
+
+    def test_validado_sigue_anunciando_el_plan(self):
+        self._build(estado_spec="VALIDADO")
+        fila = self._fila()
+        self.assertIn("LISTA", fila)
+        self.assertIn("/wf-prepare-plan", fila)
+
+    def test_spec_legacy_sin_estado_no_cambia(self):
+        """Politica conservadora: solo bloquea lo que se afirma."""
+        self._build(estado_spec=None)
+        self.assertIn("/wf-prepare-plan", self._fila())
+
+    def test_marcadores_mandan_sobre_el_sello(self):
+        """Con gaps abiertos la accion sigue siendo resolverlos: validar lo rechazaria."""
+        self._build(estado_spec="BORRADOR", estado_idx="BLOQUEADA",
+                    marker="\n[INCOMPLETO] falta decidir\n")
+        fila = self._fila()
+        self.assertIn("BLOQUEADA", fila)
+        self.assertIn("gap", fila)
+
+
+class SinValidarMotivoBackstopTest(unittest.TestCase):
+    """Los dos scripts escriben la MISMA cadena de motivo (D-077, precedente D-069).
+
+    `sdd-features-index.py` la escribe en `_features.md`; `sdd-project-status.py`
+    la busca ahi para elegir la accion. Si divergen, el estado se sigue pintando
+    bien y la accion vuelve en silencio a "responder gaps" — el callejon sin salida
+    que este motivo existe para evitar.
+    """
+
+    def _const(self, script):
+        import re
+        text = (Path(__file__).resolve().parent.parent / "scripts" / script
+                ).read_text(encoding="utf-8")
+        m = re.search(r'^SIN_VALIDAR_MOTIVO\s*=\s*"(?P<v>[^"]+)"', text, re.MULTILINE)
+        assert m, f"no se encuentra SIN_VALIDAR_MOTIVO en {script}"
+        return m.group("v")
+
+    def test_las_dos_copias_coinciden(self):
+        self.assertEqual(self._const("sdd-features-index.py"),
+                         self._const("sdd-project-status.py"))
+
+
 if __name__ == "__main__":
     unittest.main()

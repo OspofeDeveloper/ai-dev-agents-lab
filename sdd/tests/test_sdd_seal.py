@@ -85,7 +85,8 @@ class SealableTest(unittest.TestCase):
         self.assertEqual(first, self.plan.read_text(encoding="utf-8"),
                          "re-sellar un plan ya VALIDADO debe ser byte-identico")
 
-    def test_unseal_always_downgrades(self):
+    def test_unseal_downgrades_from_validado(self):
+        """"Siempre" no: desde RETIRADO se deniega (ver RetireTest, D-078)."""
         run_script("sdd-seal.py", "plan", self.plan, "--seal")
         r = run_script("sdd-seal.py", "plan", self.plan, "--unseal")
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
@@ -428,7 +429,8 @@ class SealSpecTest(unittest.TestCase):
         self.assertEqual(r.returncode, 2)
         self.assertIn("CA-002", r.stdout)
 
-    def test_unseal_always_allowed(self):
+    def test_unseal_allowed_from_validado(self):
+        """"Siempre" no: desde RETIRADO se deniega (ver RetireTest, D-078)."""
         p = self.spec(estado="VALIDADO")
         self.assertEqual(self.run_seal(p, "--unseal").returncode, 0)
         self.assertIn("Estado: BORRADOR", p.read_text(encoding="utf-8"))
@@ -494,6 +496,20 @@ class RetireTest(unittest.TestCase):
         self._retire("--change", "CR-007")
         run_script("sdd-seal.py", "spec", self.spec, "--seal")
         self.assertIn("Estado: RETIRADO", self.spec.read_text(encoding="utf-8"))
+
+    def test_unseal_does_not_undo_a_retirement(self):
+        """D-078: `--unseal` es la coletilla de todo flujo que evoluciona un spec
+        (delta, amend, gap-resolve, sync-from-prd). Si moviera RETIRADO a BORRADOR,
+        un delta sobre una feature dada de baja la reactivaria en silencio: gates
+        reabiertos, indice devolviendola a viva, y la traza `Retirada:` intacta
+        contradiciendo al estado."""
+        self._retire("--change", "CR-007", "--reason", "motivo")
+        before = self.spec.read_text(encoding="utf-8")
+        r = run_script("sdd-seal.py", "spec", self.spec, "--unseal")
+        self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+        self.assertIn("RETIRADO", r.stderr)
+        self.assertEqual(self.spec.read_text(encoding="utf-8"), before,
+                         "no se toca nada: se sale de RETIRADO solo por --unretire")
 
     def test_unretire_clears_state_and_trace(self):
         self._retire("--change", "CR-007", "--reason", "motivo")

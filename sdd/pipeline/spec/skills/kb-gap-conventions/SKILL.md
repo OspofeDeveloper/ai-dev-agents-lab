@@ -212,8 +212,9 @@ El marcador `_(pendiente)_` se inserta en el campo **"Respuesta"** de cada gap h
 > nada equivalente, y no hay que inventarlo. Un marcador de esta KB señala **algo que falta por
 > resolver** dentro de un artefacto vigente; una feature dada de baja no tiene nada que resolver
 > —dejó de formar parte del producto—. Su estado vive en la **cabecera del spec**
-> (`Estado: RETIRADO` + `Retirada: CR-XXX`), lo escribe solo `sdd-seal.py --retire`, y quien lo
-> consume son el índice de features y los gates. SSoT: `kb-traceability-rules` Regla 12.
+> (`Estado: RETIRADO` + `Retirada: CR-XXX`), lo escribe solo `sdd-seal.py --retire`, y quién lo
+> honra —los que la consumen, los que la evolucionan y los que regenerarían su spec— lo enumera su
+> SSoT: `kb-traceability-rules` Regla 12.
 
 ### Formato de un gap en un informe de análisis
 

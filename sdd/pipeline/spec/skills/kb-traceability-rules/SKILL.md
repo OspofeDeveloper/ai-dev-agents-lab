@@ -124,7 +124,7 @@ Aprobado por: <nombre> [(<rol>)] (<YYYY-MM-DD>)
 | Gate | Workflow | Default rol | Se escribe cuando | NO se escribe cuando |
 |---|---|---|---|---|
 | PRD | `wf-prd-review` | `PM` / `Product Owner` | veredicto `LISTO` | `LISTO_CON_AJUSTES`, `NO_LISTO` |
-| Spec | `wf-spec-validate` | `Product Owner` / `Analista` | `sdd-seal.py spec --check` exit 0 y sin hallazgos bloqueantes del auditor | exit 2, o hallazgos bloqueantes (`BORRADOR`) |
+| Spec | `wf-spec-validate` | `Product Owner` / `Analista` | `sdd-seal.py spec --check` exit 0 y sin hallazgos bloqueantes del auditor (umbral cerrado en `kb-spec-expert`, Paso 4 de «Cómo validar un Spec» — [[D-076]]) | exit 2, o hallazgos bloqueantes (`BORRADOR`) |
 | Plan | `wf-plan-validate` | `Tech Lead` | `sdd-seal.py --seal` exit 0 (plan `VALIDADO`) | exit 2 (`BORRADOR`) |
 | QA | `wf-qa-verify` | `QA` | veredicto `APTO` o `APTO_CON_RESERVAS` | `NO_APTO` |
 
@@ -170,3 +170,23 @@ Esta regla es la **SSoT** de la estabilidad de identificadores en la cadena de t
   ```
 
   Único escritor: `sdd-seal.py spec <path> --retire --change CR-XXX` (mismo reparto autor/sellador que el resto de esta regla). De ahí se deriva el estado `RETIRADA` del índice — no se anota a mano, se reescribiría en la siguiente regeneración. Deshacerlo es explícito (`--unretire`, que devuelve el spec a `BORRADOR` y retira la traza): nunca un efecto colateral de otra operación.
+
+  **Y `RETIRADO` obliga a todo el que toca ese fichero, no solo al que lo lee ([[D-080]]).** El estado es terminal en las tres direcciones: quien **consume** la feature la salta (índice, readiness, estado del proyecto) y los gates la deniegan aguas abajo; quien la **evoluciona** se detiene antes de arrancar; y quien **regenera** su spec desde el PRD o desde el código para sin escribir, porque sobreescribirlo la devolvería al producto sin `CR` ni gate. Un sondeo que parta el campo en "validado / lo demás" manda la baja a la rama que se reescribe — por eso el valor se lee entero, y hay un check estructural que lo verifica.
+
+## Regla 13: Specs de caracterización — trazabilidad sin PRD, y su adopción cuando aparece uno ([[D-079]])
+
+Un spec generado desde código (`Origen: characterization`, Feature IDs `F-C-00X`) **no tiene PRD del que derivar**: declara `PRD origen: N/A` y su ancla de verdad es `Evidencia base: commit <SHA>`. Eso es correcto, no una carencia — y por eso su `status_sync` legítimo es `unknown` (Regla 3), que **no bloquea** ningún sello.
+
+- **Su deriva no se mide contra un PRD, se mide contra el código.** Si el commit de evidencia queda muy atrás respecto a `HEAD`, lo que puede haber caducado son los punteros `archivo:línea` de cada CA, no la sincronía con producto. Un `derived_from_prd_hash` ausente en estos specs **nunca** se rellena a mano para "dejarlo verde".
+- **El namespace `F-C-` está deliberadamente separado del `F-`** y ningún generador de IDs los mezcla. Un `F-C-003` no es el tercer feature del producto: es la tercera capacidad observada en el código.
+
+**Cuando el sistema caracterizado adquiere después un PRD** —secuencia normal: se documenta el legacy, y más tarde se escribe el producto— el discovery de ese PRD produce `F-00X` que **solapan** con los `F-C-00X` ya existentes. Ese solape no se resuelve solo, y los dos atajos son errores caros: regenerar las features desde el PRD **tira la evidencia** que costó levantar del código, y dejar los dos juegos conviviendo produce dos specs vivos para la misma capacidad, que es justo lo que detecta `kb-conflict-expert`.
+
+La adopción es una **decisión humana, capacidad por capacidad**, y se toma con el mapa delante antes de escribir nada:
+
+1. **`F-00X` que describe una capacidad ya caracterizada** → el spec de caracterización es su **línea base**: se adopta, no se regenera. Toma el `F-00X` del producto, conserva su `## Changelog` y sus CAs con `Evidencia`, y pasa a declarar `PRD origen` y `derived_from_prd_version`. El `F-C-00X` queda como tombstone en su changelog (Regla 12: el ID no se reutiliza, y la capacidad no desaparece — cambia de sistema de coordenadas).
+2. **Diferencia entre lo que el código hace y lo que el PRD quiere** → eso **no** es parte de la adopción: es evolución incremental del spec adoptado, con su propio changelog. Mezclarlas hace imposible saber después qué era comportamiento observado y qué comportamiento pedido.
+3. **`F-00X` sin capacidad correspondiente en el código** → es feature nueva, camino normal.
+4. **`F-C-00X` sin `F-00X` que lo reclame** → el código hace algo que el PRD no contempla. **No se retira automáticamente**: puede ser una capacidad viva que el PRD olvidó, o una que el producto ya no quiere. La diferencia la decide producto (`kb-product-change-governance` Regla 2), y solo entonces se da de baja con su `CR-XXX`.
+
+Un `[SOSPECHA_BUG]` heredado del código **sobrevive a la adopción**: que ahora exista un PRD no lo convierte en comportamiento pretendido. O el PRD lo confirma como intencionado —y deja de ser sospecha—, o pasa a ser defecto contra el CA adoptado.

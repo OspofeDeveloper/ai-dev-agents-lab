@@ -187,6 +187,26 @@ class FindTest(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stderr)
         self.assertEqual(r.stdout.strip(), "myprd_features.md")
 
+    def test_find_discovery_skips_the_brownfield_map(self):
+        """D-083: `*_code_discovery.md` encaja en el glob y NO es un discovery.
+
+        En una adopcion los dos conviven y el orden alfabetico daba el mapa.
+        """
+        write(self.root / "features/login/spec/login_spec.md", "# spec")
+        write(self.root / "billing_code_discovery.md", "# mapa de capacidades")
+        write(self.root / "prd_discovery.md", "# discovery de features")
+        r = self.find("discovery", "features/login/spec/login_spec.md")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        self.assertEqual(r.stdout.strip(), "prd_discovery.md")
+
+    def test_find_discovery_missing_when_only_the_map_exists(self):
+        """Solo el mapa = no hay discovery: exit 3, no un falso positivo."""
+        write(self.root / "features/login/spec/login_spec.md", "# spec")
+        write(self.root / "billing_code_discovery.md", "# mapa de capacidades")
+        r = self.find("discovery", "features/login/spec/login_spec.md")
+        self.assertEqual(r.returncode, 3)
+        self.assertEqual(r.stdout.strip(), "")
+
     def test_find_product_missing_exit_3(self):
         write(self.root / "features/login/spec/login_spec.md", "# spec")
         r = self.find("design-doc", "features/login/spec/login_spec.md")

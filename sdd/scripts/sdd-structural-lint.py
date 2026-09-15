@@ -29,7 +29,10 @@ Checks (cada finding: severidad, tipo, archivo:linea, mensaje):
   AGENT-DISPATCH-UNSYNCED [blocking] wf que delega por la tool `Agent` sin `run_in_background: false`: los subagentes corren en background por defecto y la peticion de sincronia no se hace.
   FORK-ORCHESTRATOR      [blocking]  wf con context: fork cuyo cuerpo delega por la tool `Agent`: un fork no puede presentar gates ni conseguir el primer plano para sus delegados.
   FORK-SELF-DELEGATION   [blocking]  wf con context: fork que ordena delegar en SU PROPIO `agent:`: ya corre como el, asi que eso forkea un clon suyo.
+  FORK-SKILL-DISPATCH    [blocking]  wf con context: fork que orquesta con el `Skill` tool (lo declara o lo prescribe): delegacion invisible a FORK-ORCHESTRATOR, que solo mira la tool `Agent`.
   AGENT-PROMPT-REDISPATCH [blocking] prompt de delegacion que pide "Ejecuta el skill /wf-X": el delegado re-despacha con `Skill`, forkea un clon de si mismo y reintroduce la asincronia.
+  SPEC-RETIRED-BLIND     [blocking]  wf-spec-* que clasifica un spec por su `Estado:` mirando solo VALIDADO: un spec RETIRADO cae en la rama "no sellado" y se pisa.
+  HUMAN-GATE-UNPROTECTED [blocking]  wf que para con un `STOP_*_SIN_VALIDAR` sobre un artefacto que el mismo escribe, y no protege ese artefacto con `STOP_ARTEFACTO_EXISTE`: la siguiente pasada borra la validacion humana que el gate produjo.
   DESCRIPTION-TOO-LONG   [warning]   description del frontmatter > 220 chars.
   USER-INVOCABLE-MISSING [warning]   wf sin user-invocable; kb sin user-invocable: false.
 
@@ -162,6 +165,13 @@ SYNC_FLAG = "run_in_background: false"
 # otro subagente —un clon, si la sub-skill declara ese mismo `agent:`— y el salto
 # extra vuelve a ser asincrono. Se escribe en imperativo dirigido al delegado.
 REDISPATCH_RE = re.compile(r"[Ee]jecuta\s+el\s+skill\s+`?/wf-")
+# La orden de orquestar OTRA skill con el `Skill` tool desde dentro de un fork
+# (D-075). FORK-ORCHESTRATOR solo mira la tool `Agent`, asi que esta via era
+# invisible: `wf-prd-change-cascade` encadenaba seis workflows y no daba finding.
+SKILL_DISPATCH_RE = re.compile(
+    r"(?:invoca(?:r|ndo)?|llama(?:r|ndo)?|lanza(?:r|ndo)?)\b[^.\n]{0,40}?"
+    r"(?:con\s+el\s+)?`?Skill`?\s+tool",
+    re.IGNORECASE)
 # La orden de delegar EN EL PROPIO `agent:` del fork (D-070). El nombre del agente
 # se inyecta por skill, asi que la regex es especifica de cada fichero: lo que se
 # caza no es "delegar", es "delegar en TI MISMO".
@@ -1069,6 +1079,192 @@ def check_fork_self_delegation(findings):
                 f"Convierte el prompt de delegacion en el contrato que aplicas tu."))
 
 
+def check_spec_retired_blind(findings):
+    """SPEC-RETIRED-BLIND — una `wf-spec-*` que sondea el `Estado:` de un spec
+       contra VALIDADO y no nombra RETIRADO en ninguna parte del fichero (D-080).
+
+       `Estado:` tiene TRES valores (BORRADOR | VALIDADO | RETIRADO) y el sondeo
+       tipico los parte en dos: "es VALIDADO" / "todo lo demas". Un spec RETIRADO
+       no es VALIDADO, asi que cae en la rama del borrador — la que se reescribe
+       sin preguntar. El resultado es que regenerar un spec DEVUELVE VIVA una
+       feature dada de baja: se pierde la traza `Retirada: CR-XXX`, el indice la
+       deriva otra vez a estado vivo y el unico gate de la fase sin escotilla
+       (la baja) queda evitado en silencio.
+
+       Por que no lo cazaba nadie: [[D-078]] cerro esta puerta en los flujos que
+       EVOLUCIONAN un spec (delta, amend, gap-resolve, validate) con el gate
+       `gate_spec_vigente` de `sdd-gate-check.py`. Pero ese gate resuelve el spec
+       DESDE LOS ARGUMENTOS, y los flujos que lo REGENERAN no reciben el spec como
+       argumento: reciben el PRD (`wf-spec-fast-track`, `wf-spec-features-first`) o
+       un path de codigo (`wf-spec-from-code`), y derivan el destino de la
+       capability. No hay gate determinista posible ahi, asi que el invariante vive
+       en el cuerpo de la skill — y esta regla es su backstop.
+
+       La senal es deliberadamente la del SONDEO, no la del defecto: si un fichero
+       se molesta en leer `Estado:` para decidir si escribe encima, tiene que saber
+       que existe un tercer valor. Nombrar RETIRADO en cualquier parte del fichero
+       basta para dar el sondeo por informado.
+    """
+    probe_re = re.compile(r"(?:grep|sed|awk|rg)\b.*Estado.*VALIDADO", re.IGNORECASE)
+    for skill_md in sorted(SDD_ROOT.rglob("SKILL.md")):
+        if is_excluded(skill_md):
+            continue
+        if not skill_md.parent.name.startswith("wf-spec-"):
+            continue
+        try:
+            text = skill_md.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        if "RETIRADO" in text:
+            continue
+        _fm, body, body_start = split_frontmatter(text)
+        for offset, line_text in enumerate(body.split("\n")):
+            if probe_re.search(line_text) is None:
+                continue
+            findings.append(Finding(
+                "blocking", "SPEC-RETIRED-BLIND", relpath(skill_md),
+                body_start + offset,
+                "Clasifica un spec por su `Estado:` mirando solo VALIDADO, y el "
+                "fichero no nombra RETIRADO en ninguna parte. `Estado:` tiene tres "
+                "valores: un spec RETIRADO no es VALIDADO, asi que cae en la rama "
+                "'borrador' y se reescribe sin preguntar — eso devuelve viva una "
+                "feature dada de baja, sin CR y sin gate, y borra su traza "
+                "`Retirada:` (D-078/D-080). Lee el campo entero y trata RETIRADO "
+                "como terminal: se para, no se pisa."))
+            break
+
+
+def check_human_gate_unprotected(findings):
+    """HUMAN-GATE-UNPROTECTED — una `wf-*` que se detiene con un veredicto
+       `STOP_*_SIN_VALIDAR` sobre un artefacto que ella misma escribe, y que no
+       nombra `STOP_ARTEFACTO_EXISTE` en ninguna parte del fichero (D-083).
+
+       La senal es de alta precision porque el propio veredicto declara el
+       invariante: si paras para que una persona VALIDE lo que acabas de
+       escribir, ese fichero contiene —por construccion— trabajo humano en
+       cuanto el gate se cierra: capacidades confirmadas, corregidas o
+       descartadas, inventarios depurados. Es exactamente la clase que D-062
+       manda proteger con gate de sobreescritura, frente a los informes
+       derivados (`_conflict_report.md`, `_readiness_report.md`) a los que el
+       gate se les QUITO porque no protegian nada.
+
+       Sin esa proteccion, la segunda invocacion del mismo modo —"vuelve a mirar
+       el codigo", "anade este modulo"— reescribe el artefacto desde cero y
+       borra el resultado del gate, que es el trabajo mas caro de recuperar: los
+       descartes razonados no dejan rastro y la siguiente pasada vuelve a
+       proponer lo mismo. Y si los IDs del artefacto los citan artefactos
+       derivados (`F-C-00X` en la cabecera de los specs de caracterizacion), la
+       reescritura ademas los renumera.
+
+       Por que no hay gate determinista posible: estos flujos reciben un path de
+       CODIGO o de UI y derivan el nombre del artefacto de su scope, asi que
+       ningun `PreToolUse` lo resuelve desde los argumentos. El invariante vive
+       en el cuerpo de la skill, y esta regla es su backstop.
+    """
+    stop_re = re.compile(r"STOP_[A-Z_]*SIN_VALIDAR")
+    for skill_md in sorted(SDD_ROOT.rglob("SKILL.md")):
+        if is_excluded(skill_md):
+            continue
+        if not skill_md.parent.name.startswith("wf-"):
+            continue
+        try:
+            text = skill_md.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        if "STOP_ARTEFACTO_EXISTE" in text:
+            continue
+        _fm, body, body_start = split_frontmatter(text)
+        for offset, line_text in enumerate(body.split("\n")):
+            if stop_re.search(line_text) is None:
+                continue
+            findings.append(Finding(
+                "blocking", "HUMAN-GATE-UNPROTECTED", relpath(skill_md),
+                body_start + offset,
+                "Para con un `STOP_*_SIN_VALIDAR` sobre un artefacto que escribe "
+                "este mismo flujo, y el fichero no nombra `STOP_ARTEFACTO_EXISTE`. "
+                "Un artefacto que existe para que una persona lo valide lleva "
+                "trabajo humano dentro en cuanto el gate se cierra (capacidades "
+                "confirmadas, corregidas o descartadas): rehacerlo lo borra sin "
+                "avisar, y renumera los IDs que los artefactos derivados ya citan "
+                "(D-062/D-083). Protege la escritura con gate de sobreescritura y "
+                "nombra en el bloqueo la salida buena, no solo el `--allow-*`."))
+            break
+
+
+def check_fork_skill_dispatch(findings):
+    """FORK-SKILL-DISPATCH — una `wf-*` con `context: fork` que orquesta otras
+       skills con el `Skill` tool (D-075).
+
+       Es el mismo defecto que FORK-ORCHESTRATOR y no lo cazaba nadie: ese check
+       mira la tool `Agent`, y un fork puede encadenar workflows enteros con el
+       `Skill` tool sin mencionarla ni una vez. Medido: `wf-prd-change-cascade`
+       encadenaba SEIS workflows asi —change, sync-impact, spec-sync, conflict,
+       readiness, design-sync—, declaraba cuatro "checkpoints humanos" que ningun
+       fork puede presentar, y el linter daba cero hallazgos sobre el fichero.
+
+       Por que es peor que delegar por `Agent`:
+
+       1. NO PUEDE PREGUNTAR, igual que FORK-ORCHESTRATOR. Un encadenador tiene
+          gates por construccion (que se aplica solo, que necesita decision).
+       2. INVOCAR UNA SKILL NO ES DELEGAR. El `Skill` tool carga instrucciones en
+          ESTE contexto: no paraleliza, no devuelve un handle sincrono, y si la
+          sub-skill declara `agent:` el salto forkea otro subagente encima (D-044).
+       3. SI LA SUB-SKILL CORRE EN MAIN, SU GATE MUERE. Invocar desde un fork una
+          skill que sostiene `AskUserQuestion` no presenta nada: el gate se evapora
+          en el eslabon de arriba, y el artefacto sale con pinta de correcto.
+
+       Dos senales, ambas de alta precision. Declarativa: `Skill` en
+       `allowed-tools` junto a `context: fork` — ninguna otra skill del ecosistema
+       lo declara. Prescriptiva: el cuerpo ordena invocar con el `Skill` tool.
+       Un main-thread que diga "NO uses el `Skill` tool" en un prompt de delegacion
+       no dispara: no es fork.
+    """
+    for skill_md in sorted(SDD_ROOT.rglob("SKILL.md")):
+        if is_excluded(skill_md):
+            continue
+        if not skill_md.parent.name.startswith("wf-"):
+            continue
+        try:
+            text = skill_md.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        fm, body, body_start = split_frontmatter(text)
+        if CONTEXT_FORK_RE.search(fm) is None:
+            continue
+
+        at_m = ALLOWED_TOOLS_RE.search(fm)
+        tools = {t.strip() for t in at_m.group(1).split(",") if t.strip()} if at_m else set()
+        if "Skill" in tools:
+            line = next((i + 1 for i, ln in enumerate(fm.splitlines())
+                         if ln.startswith("allowed-tools:")), 1)
+            findings.append(Finding(
+                "blocking", "FORK-SKILL-DISPATCH", relpath(skill_md), line,
+                "`allowed-tools` declara `Skill` en una skill `context: fork`: un "
+                "fork que encadena otras skills es un orquestador sin turno — no "
+                "puede presentar sus gates, y si la sub-skill los sostiene en main, "
+                "invocarla desde aqui los evapora (D-075). Quita `context: fork`: el "
+                "orquestador corre en el hilo principal y delega los workers por la "
+                "tool `Agent` con `run_in_background: false`."))
+            continue
+
+        m = SKILL_DISPATCH_RE.search(body)
+        if m is None:
+            continue
+        line_start = body.rfind("\n", 0, m.start()) + 1
+        line_end = body.find("\n", m.start())
+        line_text = body[line_start:line_end if line_end != -1 else len(body)]
+        if SELF_DELEGATION_NEG_RE.search(line_text[:m.start() - line_start]):
+            continue
+        findings.append(Finding(
+            "blocking", "FORK-SKILL-DISPATCH", relpath(skill_md),
+            body_start + body[:m.start()].count("\n"),
+            "Ordena orquestar con el `Skill` tool desde un `context: fork`: el "
+            "`Skill` tool carga instrucciones en este contexto (no paraleliza ni "
+            "devuelve un handle sincrono) y, si la sub-skill declara `agent:`, "
+            "forkea otro subagente encima (D-044/D-075). Un orquestador corre en "
+            "el hilo principal; un worker `context: fork` no encadena workflows."))
+
+
 def check_agent_prompt_redispatch(findings):
     """AGENT-PROMPT-REDISPATCH — prompt de delegacion que le pide al delegado
        "Ejecuta el skill /wf-X" en vez de ejecutarlo el mismo (D-044).
@@ -1176,6 +1372,9 @@ def run_all():
     check_agent_dispatch(findings)
     check_fork_orchestrator(findings)
     check_fork_self_delegation(findings)
+    check_fork_skill_dispatch(findings)
+    check_spec_retired_blind(findings)
+    check_human_gate_unprotected(findings)
     check_agent_prompt_redispatch(findings)
     check_reference_paths(findings)
     # Orden estable: severidad (blocking primero), tipo, path, linea.

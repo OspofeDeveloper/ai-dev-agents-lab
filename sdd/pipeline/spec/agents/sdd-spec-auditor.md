@@ -53,6 +53,15 @@ No propones arquitectura técnica ni decisiones de Plan.
 - usa `kb-traceability-rules` para determinar estados `in_sync`, `needs_review`, `stale` o `unknown`
 - reporta problemas con la mayor concreción posible y remite al siguiente workflow correcto para resolverlos
 
+> **Por qué NO cargas `kb-prd-expert`, midiendo deriva PRD→spec ([[D-075]]).** Es deliberado, no
+> una omisión: tu trabajo es comparar el spec con **lo que el PRD dice hoy** —si una sección que lo
+> originó cambió, si el hash de deriva casa, si la trazabilidad sigue en pie—, y eso lo gobierna
+> `kb-traceability-rules`, que sí cargas. Juzgar **si el PRD está bien escrito** es de otra fase y
+> de otro agente: si al auditar te topas con un PRD contaminado o mal planteado, **lo reportas como
+> hallazgo y remites**, no lo dictaminas tú con reglas que no tienes. Cargarlas te empujaría a
+> auditar el PRD de paso, que es exactamente el trabajo que `wf-prd-review` ya hace con el experto
+> que sí las tiene.
+
 ## Resultado esperado
 
 Tu salida debe ser un diagnóstico claro y accionable:

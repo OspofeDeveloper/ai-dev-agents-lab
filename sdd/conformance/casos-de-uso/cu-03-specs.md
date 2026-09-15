@@ -33,19 +33,24 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 - [ ] CU-3.c — Discovery: mapa de features y elección de subset
 - [ ] CU-3.i — Discovery: ownership ambiguo de shared model para en checkpoint humano
 
-### `wf-spec-features-first` — orquestador del flujo features-first (2)
+### `wf-spec-features-first` — orquestador del flujo features-first (4)
 - [ ] CU-3.d — Generación por feature (features-first) en paralelo
 - [ ] CU-3.l — Features-first: `--features` con IDs inexistentes en el discovery
+- [ ] CU-3.u — Features-first: la decisión de alcance viaja al fan-out y un `STOP_*` se presenta (D-081) ⏱ **sin pasada**
+- [ ] CU-3.v — Features-first: un discovery que ya existe se reutiliza, no se regenera (D-081) ⏱ **sin pasada**
 
-### `wf-spec-fast-track` — spec directo de una feature (`sdd-spec-writer`) (2)
+### `wf-spec-fast-track` — spec directo de una feature (`sdd-spec-writer`) (3)
 - [ ] CU-3.e — Spec directo de una feature (fast-track)
 - [ ] CU-3.j — Fast-track: documento multi-feature, pares de flags y feature ID inexistente
+- [ ] CU-3.t — Regenerar el spec de una feature dada de baja: los escritores paran (D-080) ⏱ **sin pasada**
 
-### `sdd-spec-auditor` — validate / conflict / readiness (read-only) (4)
+### `sdd-spec-auditor` — validate / conflict / readiness (read-only) (6)
 - [ ] CU-3.f — Validar, conflictos y readiness
 - [ ] CU-3.m — Validate en modo ligero: proporcionalidad sin relajar invariantes
 - [ ] CU-3.n — Conflict: precondición de specs insuficientes
 - [ ] CU-3.o — Readiness: sin índice, ciclos de dependencia y scope derivado
+- [ ] CU-3.s — Conflict sobre el directorio entero: el consolidado se escribe donde el readiness lo busca ⏱ **sin pasada**
+- [ ] CU-3.w — Conflict: la salida del hallazgo es una vía que desella, y las retiradas no compiten (D-082) ⏱ **sin pasada**
 
 ### `wf-spec-gap-resolve` — completar incompletos y confirmar inferidos (`sdd-spec-writer`) (2)
 - [ ] CU-3.g — Completar HUs incompletas (gap-resolve)
@@ -1123,9 +1128,24 @@ subset pedido, o deja un índice parcial con apariencia de completo.
      (el modo ligero mantiene los invariantes, solo ajusta proporción). Si **no** pasas
      flag, la elección del rigor la **ofrece el orquestador** al crear el spec (CU-3.r),
      no el init.
+2. Tras generarlo, observa qué hace el orquestador a continuación (**frontera
+   fast-track → validate**) ⏱ **sin pasada**.
+   → **Esperado:** dice que el spec **nace sin validar** (`Estado: BORRADOR`, [[D-061]]) y
+     ofrece validarlo como siguiente paso, en lenguaje natural y sin nombrar el workflow
+     ([[D-019]]). Es el mismo movimiento que `CU-2.a` punto 2 mide en la frontera
+     create → review del PRD.
+   → **Por qué importa aquí y no en otro sitio.** Fast-track es **donde el spec nace en
+     borrador**, y el gate que exige el sello está dos fases más allá (`CU-9.n`). Si el
+     cierre no lo menciona, entre generar el spec y que le denieguen el plan no hay nada
+     que se lo diga al usuario. `wf-spec-delta` y `wf-spec-gap-resolve` ya cierran así —
+     *"su validación se reabrió"*, *"si quieres, lo valido antes de seguir"*—; fast-track
+     era el único de los tres que no.
+   → **FALLO:** rematar con los paths generados y nada más, o —peor— proponer planificar
+     directamente sobre un spec que nadie ha validado.
 
-**Resultado:** PASS si genera un spec válido de la feature · FALLO si relaja
-invariantes en `--light`, o mete tecnología.
+**Resultado:** PASS si genera un spec válido de la feature y remata diciendo que queda por
+validar · FALLO si relaja invariantes en `--light`, mete tecnología, o cierra sin nombrar
+que el spec nace en borrador.
 **Desviación → reportar:** issue citando `CU-3.e`.
 
 ## CU-3.f — Validar, conflictos y readiness
@@ -1137,12 +1157,29 @@ subagente **`sdd-spec-auditor`**.
 1. Le pides validar un spec.
    → **Esperado:** lo audita contra el contrato de Spec y reporta OK o los items a
      corregir, sin reescribirlo a su cosecha.
+   → **Esperado (umbral del veredicto, [[D-076]]):** el informe separa **hallazgos
+     bloqueantes** de **notas no bloqueantes**, y solo los primeros degradan a
+     `REQUIERE_REVISIÓN`. Bloquean exactamente tres cosas: un elemento obligatorio ausente,
+     contaminación **dura** (fila de `prohibited_items.md`) y un CA que no se puede verificar
+     tal como está escrito. **No** bloquean: una sugerencia de redacción, una nota *borderline*
+     documentada, ni un hueco que es materia de Plan.
+   → **FALLO:** degradar el veredicto por una nota no bloqueante (fricción falsa: el spec era
+     sellable), o sellar con contaminación dura delante. **Conductual → validar ×3** (Regla 9):
+     lo que se mide es que el **mismo** spec dé el **mismo** veredicto en las tres.
+   → **Por qué se fija ([[D-035]] es el espejo):** en la pasada 1 de abajo el auditor distinguió
+     bien lo bloqueante de lo no bloqueante — pero el umbral no estaba escrito en ninguna parte,
+     así que eso era juicio de esa corrida, no contrato. En el PRD la misma indefinición dio dos
+     etiquetas distintas para el mismo estado limpio.
 2. Le pides detectar conflictos entre features.
    → **Esperado:** con `--features-dir` reporta HUs duplicadas, CAs contradictorios,
      solapes de scope y shared models inconsistentes; no redefine specs.
 3. Le pides saber qué está listo / en qué orden implementar.
    → **Esperado:** produce `_readiness_report.md` con estado por feature y orden de
      implementación.
+   → **Esperado (qué promete cada estado, [[D-077]]):** `LISTA` no puede afirmar lo que el
+     gate de la fase siguiente va a denegar —empezando por el sello del spec—, y `BLOQUEADA`
+     por conflicto `ALTA` es un veredicto de informe, no una denegación mecánica. Los dos
+     límites se miden en detalle en `CU-3.o` puntos 4 y 5.
    → **Los informes del fan-out se leen ([[D-046]]).** Tras un `wf-spec-features-first` con
      ≥2 specs nuevos hay **un `_conflict_report.md` por feature**, junto a cada spec
      (`features/<nombre>/spec/<nombre>_conflict_report.md`), no uno consolidado en la raíz.
@@ -1330,9 +1367,17 @@ no-núcleo omitida **con** `N/A — modo ligero` y otra omitida **sin** esa marc
 2. El spec ligero tiene un CA sin GIVEN/WHEN/THEN completo.
    → **Esperado:** el Check 3 lo reporta — la testabilidad es **idéntica** en ambos modos;
      el modo ligero ajusta proporción, no relaja invariantes.
+3. **El umbral tampoco se relaja en ligero** ([[D-076]]).
+   → **Esperado:** la sección omitida **sin** la marca `N/A — modo ligero` es un **hallazgo
+     bloqueante** (es un elemento obligatorio ausente, no una elección declarada), y el CA sin
+     GIVEN/WHEN/THEN completo también. Ambos degradan a `REQUIERE_REVISIÓN`.
+   → **FALLO:** tratar cualquiera de los dos como "nota" por estar en modo ligero. Lo que el
+     modo ligero recorta es **ceremonia**; el umbral del veredicto es el mismo.
 
-**Resultado:** PASS si respeta el núcleo de 4, exige la marca `N/A` y mantiene los invariantes ·
-FALLO si marca como error una omisión legítima, deja pasar una sección sin marca, o tolera un CA no testable en ligero.
+**Resultado:** PASS si respeta el núcleo de 4, exige la marca `N/A`, mantiene los invariantes y
+aplica el mismo umbral que en standard · FALLO si marca como error una omisión legítima, deja
+pasar una sección sin marca, tolera un CA no testable en ligero, o baja a "nota" un bloqueante
+por estar en modo ligero.
 **Desviación → reportar:** issue citando `CU-3.m`.
 
 ## CU-3.n — Conflict: precondición de specs insuficientes
@@ -1349,11 +1394,228 @@ FALLO si marca como error una omisión legítima, deja pasar una sección sin ma
 <2 specs, o falla sin explicar qué falta.
 **Desviación → reportar:** issue citando `CU-3.n`.
 
-## CU-3.o — Readiness: sin índice, ciclos de dependencia y scope derivado
+## CU-3.s — Conflict sobre el directorio entero: el consolidado se escribe donde el readiness lo busca ⏱ **sin pasada**
+
+**Precondición:** un proyecto con ≥3 features ya generadas en `features/`, y el índice
+`<basename>_features.md` en el directorio padre (la raíz de artefactos). Sin ningún
+`_conflict_report.md` previo en disco.
+**Mecanismo:** `wf-spec-conflict` modo directorio (Paso 8, rama *consolidado*) →
+`sdd-spec-auditor`, y `wf-spec-readiness` (Paso 2.4) como **único consumidor** del informe.
+
+1. Le pides verificar los conflictos **de todo el proyecto de una vez**, no de una feature.
+   → **Esperado:** compara todos los specs entre sí y escribe **un solo** informe consolidado.
+     (Es el modo que el fan-out de la generación por feature **no** ejercita: allí cada auditor
+     escribe junto a su spec.)
+2. Miras **dónde** lo ha dejado.
+   → **Esperado:** en la **raíz de artefactos** —el directorio padre de `features/`, junto a
+     `_features.md` y al informe de readiness— y con **el mismo basename** que ellos
+     (`prd_conflict_report.md` si el índice es `prd_features.md`). FALLO encontrarlo **dentro**
+     de `features/`: ahí no lo busca nadie.
+3. Le pides ahora medir el readiness del proyecto.
+   → **Esperado:** el informe de readiness **usa** el consolidado: cita sus hallazgos y clasifica
+     las features afectadas en consecuencia. FALLO que diga que **no encontró ningún análisis de
+     conflictos** teniendo uno recién escrito en disco.
+4. **Y esa es la trampa: el fallo es mudo.** Comprueba si la ausencia se reporta como algo grave.
+   → **Esperado:** cuando de verdad no hay informe, la advertencia es **no bloqueante** y el
+     readiness continúa — eso es correcto. Por eso mismo un informe escrito en el sitio
+     equivocado **no produce ningún error visible**: el readiness sigue, declarándose sin
+     análisis de conflictos, y nadie se entera. FALLO cualquier variante en la que el informe
+     exista y el readiness lo ignore **sin decirlo**.
+5. Repites con el layout **plano legacy** (los artefactos de cada feature directamente en
+   `features/<n>/`, sin subcarpeta `spec/`).
+   → **Esperado:** mismo resultado: el consolidado sigue yendo a la raíz de artefactos, y el
+     readiness lo encuentra igual. El layout de feature no cambia dónde vive un artefacto **de
+     proyecto**.
+6. **La otra rama, para contraste.** Le pides los conflictos de **un spec concreto** contra los
+   demás.
+   → **Esperado:** ese informe sí va **junto a su spec** (`features/<n>/spec/<n>_conflict_report.md`).
+     Las dos rutas son distintas a propósito y el readiness busca en las dos.
+
+**Resultado:** PASS si el consolidado aterriza en la raíz de artefactos con el basename del
+proyecto, el readiness lo consume, y el informe por spec sigue yendo junto a su spec · FALLO si el
+consolidado cae dentro de `features/`, si el readiness se declara sin análisis de conflictos
+teniendo uno, o si las dos rutas se colapsan en una.
+**Desviación → reportar:** issue citando `CU-3.s`.
+
+> **Por qué faltaba.** El ROADMAP ya anotaba *"`.` sobre directorio (todos los specs) sin caso
+> propio"* como hueco de `wf-spec-conflict`, y ese hueco escondía uno real: el escritor dejaba el
+> consolidado **dentro** de `features/` y su único lector lo buscaba en el **padre**. Ninguna de
+> las dos rutas de búsqueda del readiness alcanza la raíz de `features/`. Es el mismo modo de fallo
+> que [[D-047]] arregló para el fan-out por feature —informe en disco, readiness declarándose sin
+> análisis— en la otra rama del mismo paso, y se mantuvo invisible porque la advertencia de
+> ausencia **no bloquea**. Este escenario **nace sin pasada**.
+
+## CU-3.t — Regenerar el spec de una feature dada de baja: los escritores paran ⏱ **sin pasada**
+
+**Precondición:** un proyecto con ≥3 features generadas, **una de ellas dada de baja** (`Estado:
+RETIRADO` + `Retirada: CR-XXX — <razón> (<fecha>)`), y el `_discovery.md` original en disco —que
+sigue listando su `F-00X`, porque el discovery no se regenera—.
+**Mecanismo:** `wf-spec-fast-track` (Paso 10, sondeo de estado) y `wf-spec-features-first` (Paso 4b,
+clasificación del subset). Backstop estructural: `SPEC-RETIRED-BLIND` de `sdd-structural-lint.py`.
+
+1. **La vía directa.** Le pides regenerar el spec de esa feature concreta.
+   → **Esperado:** el escritor **no escribe nada** y devuelve `STOP_SPEC_RETIRADO` citando la traza
+     `Retirada:`. El hilo principal te lo presenta como lo que es —una feature fuera del producto—
+     y **no ofrece ningún flag**. FALLO sobreescribirla, y FALLO presentarla como "un borrador que
+     puedo regenerar".
+2. **La vía en lote, que es la que de verdad ocurre.** Le pides generar las specs de todo el PRD,
+   sin mencionar la baja (puedes no saberla).
+   → **Esperado:** la clasificación del subset la marca `RETIRADA`, la deja **fuera del fan-out** y
+     la nombra en el resumen final con su `CR-XXX`. FALLO el gate ligero de borrador —*"ya tienen
+     un spec en borrador, ¿los regenero?"*— sobre una feature cancelada: esa pregunta ofrece una
+     salida que no existe, y un "sí" distraído borra la baja.
+3. Miras el spec y el índice después.
+   → **Esperado:** el spec intacto con su `Estado: RETIRADO`; el índice regenerado la sigue
+     mostrando `RETIRADA`. FALLO que el índice la devuelva a un estado vivo — esa es la señal de
+     que alguien la pisó.
+4. **La trampa: lo que no falla.** Comprueba si en algún punto aparece un error.
+   → **Esperado:** ninguno, y ese es justo el riesgo. El sondeo `Estado == VALIDADO` **no se rompe**
+     con un `RETIRADO`: acierta en la rama equivocada y sigue. Si la pasada solo mira "¿ha habido
+     errores?", este defecto pasa entero. Se comprueba mirando el **fichero**, no el informe.
+5. **Contraste**, para que no se convierta en "parar siempre": repites con una feature vigente en
+   borrador, y con una vigente sellada.
+   → **Esperado:** la de borrador se regenera (con gate ligero si la petición era ambigua); la
+     sellada pide confirmación y, si el usuario acepta, se regenera con el override correspondiente.
+     Las tres ramas siguen siendo distintas.
+6. **El backstop, sin ejecutar nada.** Sobre el repo del ecosistema: `python3
+   sdd/scripts/sdd-structural-lint.py --check --severity blocking`.
+   → **Esperado:** `0 blocking`. Y si se quita la rama `RETIRADO` de cualquiera de los tres
+     escritores, aparece `SPEC-RETIRED-BLIND` señalando el sondeo. FALLO que el linter dé limpio con
+     un escritor ciego al tercer valor.
+
+**Resultado:** PASS si las dos vías paran sin escribir, el índice conserva la baja y las features
+vigentes siguen regenerándose con normalidad · FALLO si el spec retirado cambia, si se ofrece un
+flag para pisarlo, o si la baja desaparece del índice.
+**Desviación → reportar:** issue citando `CU-3.t`.
+
+> **Por qué faltaba ([[D-080]]).** [[D-078]] cerró el paso a los flujos que **modifican** un spec
+> —con `gate_spec_vigente`, que resuelve el spec desde los argumentos— y los que lo **regeneran** no
+> reciben el spec como argumento: reciben el PRD y derivan el destino de la capability. Ahí no hay
+> gate determinista posible, así que el invariante vive en el cuerpo de la skill y su backstop es
+> estructural. Este escenario **nace sin pasada**.
+
+## CU-3.u — Features-first: la decisión de alcance viaja al fan-out y un `STOP_*` se presenta ⏱ **sin pasada**
+
+**Precondición:** un PRD con su `_analysis.md` **respondido**, donde al menos una respuesta marcada
+`[PUEDE_REQUERIR_CR]` introduce expansión de capacidad (entidad persistente nueva o modelo owner
+nuevo), y ≥3 features en el discovery.
+**Mecanismo:** `wf-spec-features-first` en el hilo principal (Paso 2.5 punto 8 → Paso 5), con
+`wf-spec-fast-track` (Paso 5 punto 5) como quien vuelve a evaluar el alcance dentro del fork.
+
+1. Le pides generar las specs.
+   → **Esperado:** presenta **una vez** el gate de expansión —qué respuesta introduce qué señal,
+     citando al delegado— con las dos vías: formalizar el cambio en el PRD (recomendada) o continuar
+     con alcance derivado.
+2. Eliges **continuar con alcance derivado**.
+   → **Esperado:** el fan-out arranca y **los specs se generan**. FALLO que los escritores se
+     detengan uno a uno pidiendo lo mismo que acabas de decidir: eso es la decisión que no viajó.
+     La señal exacta del defecto es ver `STOP_REQUIERE_PRD_CHANGE` **después** de haber contestado
+     el gate.
+3. Miras los artefactos generados.
+   → **Esperado:** los specs y el índice marcan `Origen de alcance: PRD + analysis respondido` y
+     dejan sus `Avisos de gobernanza`. El alcance derivado **se marca**, no se olvida por haber
+     seguido.
+4. **La otra mitad: un `STOP_*` que sí debe llegar.** Repites la pasada con una feature cuyo spec
+   está **sellado** y sin haber pasado por el gate de sellados (fuerza el caso, p. ej. pidiendo esa
+   feature concreta).
+   → **Esperado:** el orquestador **presenta** el bloqueo con sus opciones y deja al resto de
+     escritores seguir su curso. FALLO enterrarlo como *"esa feature falló"* en el resumen, FALLO
+     relanzarla con un `--allow-*` que nadie eligió, y FALLO detener toda la pasada por una.
+5. Eliges **formalizar el cambio en el PRD** en una pasada nueva.
+   → **Esperado:** el flujo se detiene sin generar nada y remite a formalizarlo, en lenguaje natural
+     y sin nombrar el workflow.
+
+**Resultado:** PASS si el gate se pregunta una vez, la decisión llega hasta los escritores, el
+alcance derivado queda marcado y un `STOP_*` se presenta sin tumbar la pasada · FALLO si la pregunta
+reaparece dentro del fan-out, si el orquestador arma un override por su cuenta, o si un bloqueo se
+reporta como error genérico.
+**Desviación → reportar:** issue citando `CU-3.u`.
+
+> **Por qué faltaba ([[D-081]]).** El gate estaba bien escrito y bien situado —en el hilo principal,
+> que es el único sitio donde se puede presentar ([[D-045]])—, pero el prompt del fan-out no llevaba
+> el flag correspondiente. Y como cada escritor recibe `--analysis`, **reevalúa** por su cuenta: el
+> defecto no se manifiesta como un olvido, sino como la misma pregunta repetida N veces donde nadie
+> puede contestarla. Este escenario **nace sin pasada**.
+
+## CU-3.v — Features-first: un discovery que ya existe se reutiliza, no se regenera ⏱ **sin pasada**
+
+**Precondición:** un PRD con su `_analysis.md` respondido y un `<basename>_discovery.md` **ya en
+disco**, con al menos un spec generado que cita su `F-00X` en la cabecera.
+**Mecanismo:** `wf-spec-features-first` Paso 3 Caso B, y `wf-spec-discover` (Paso de escritura) como
+worker que se detiene si el artefacto existe.
+
+1. Primero preguntas *"¿qué features tiene este PRD?"* sobre un proyecto limpio y dejas que genere
+   el discovery. Después, en la misma conversación o en otra, le dices *"vale, genera las specs"*
+   **sin nombrar features concretas**.
+   → **Esperado:** **reutiliza** el discovery existente y lo dice ("reutilizo el mapa de features
+     que ya había"). FALLO relanzar el descubrimiento, y FALLO quedarse atascado en el bloqueo del
+     worker sin ofrecer la reutilización.
+2. Miras los `F-00X` del discovery y las cabeceras de los specs ya generados.
+   → **Esperado:** coinciden. FALLO cualquier renumeración: un `F-002` que pasa a nombrar otra
+     feature deja la trazabilidad de los specs viejos apuntando a algo que no es.
+3. **La trampa.** Si aun así el worker devuelve `STOP_ARTEFACTO_EXISTE` (porque resolvió otro path),
+   miras qué hace el orquestador.
+   → **Esperado:** te dice qué fichero encontró y **pregunta**: reutilizar ese mapa (recomendada) o
+     regenerarlo asumiendo la renumeración. FALLO relanzar con `--allow-overwrite-discovery` por
+     iniciativa propia — es auto-armar un override ([[D-026]]) y, encima, el que rompe la
+     trazabilidad.
+4. **Contraste:** el mismo flujo sobre un proyecto **sin** discovery.
+   → **Esperado:** lo genera con normalidad y sigue. La comprobación no añade fricción cuando no
+     hay nada que reutilizar.
+
+**Resultado:** PASS si reutiliza, lo dice, y los `F-00X` no se mueven · FALLO si regenera el
+discovery sin que el usuario lo pida, si renumera, o si el flujo se queda bloqueado sin ofrecer la
+salida buena.
+**Desviación → reportar:** issue citando `CU-3.v`.
+
+> **Por qué faltaba ([[D-081]]).** La reutilización estaba escrita **solo** en el Caso A —el que
+> exige `--features`—, y el Caso B llegaba al mismo artefacto sin esa salida. El bloqueo del worker
+> nombra únicamente el camino de regenerar, que es el peligroso. Este escenario **nace sin pasada**.
+
+## CU-3.w — Conflict: la salida del hallazgo es una vía que desella, y las retiradas no compiten ⏱ **sin pasada**
+
+**Precondición:** un proyecto con ≥3 features, dos de ellas con un conflicto real de severidad
+`ALTA` (HU duplicada o CAs contradictorios), **al menos un spec `VALIDADO`**, y una cuarta feature
+**dada de baja** cuyo spec solapa a propósito con una viva.
+**Mecanismo:** `wf-spec-conflict` → `sdd-spec-auditor` (Pasos 2 y 9).
+
+1. Le pides verificar los conflictos.
+   → **Esperado:** el informe recoge el choque entre las dos vivas y **no** cuenta el solape con la
+     retirada. Dice **qué specs excluyó y por qué**. FALLO reportar un conflicto contra una feature
+     dada de baja (es ruido que puede acabar bloqueando a una viva), y FALLO excluirla en silencio.
+2. Lees lo que te propone hacer con los `ALTA`.
+   → **Esperado:** te ofrece **aplicar el cambio sobre el spec que toque** y avisa de que eso
+     reabre su validación. FALLO *"edita los specs afectados"*: una edición a mano **conserva el
+     sello**, así que el spec sigue diciendo `VALIDADO` con un contenido que ya no es el auditado y
+     el gate de planificación lo deja pasar.
+3. **La comprobación que lo demuestra.** Editas a mano uno de los specs sellados y pides planificar.
+   → **Esperado:** el gate lo deja pasar — el sello sigue ahí. Eso es exactamente lo que la
+     recomendación anterior provocaba, y por eso la vía correcta es la que desella.
+4. Miras el cierre cuando **no** hay conflictos.
+   → **Esperado:** dice que no encontró choques y **no promete planificación** si los specs siguen
+     en borrador; si ve alguno sin sellar, ofrece validarlo. FALLO *"los specs están listos para
+     pasar a planificación"* sobre borradores: es la promesa que [[D-077]] retiró del readiness,
+     viva en la otra rama.
+5. **Ningún nombre de workflow** en lo que te dice ni en el informe.
+   → **Esperado:** las acciones van en lenguaje natural. (Backstop: la V1 transversal de este CU.)
+
+**Resultado:** PASS si excluye las retiradas diciéndolo, ofrece la vía que desella y no promete
+planificación sobre borradores · FALLO si manda editar a mano, si cuenta conflictos contra features
+de baja, o si declara listos unos specs que el gate va a denegar.
+**Desviación → reportar:** issue citando `CU-3.w`.
+
+> **Por qué faltaba ([[D-082]]).** `kb-conflict-expert` define las cinco reglas de detección y la
+> tabla de severidad, y termina sin decir **qué se hace** con un conflicto: la única indicación de
+> salida de la fase estaba en el último paso de esta skill, y mandaba justo a donde no hay que ir.
+> Un detector sin vía de salida se lee como completo porque el informe se ve completo. Este
+> escenario **nace sin pasada**.
+
+## CU-3.o — Readiness: sin índice, ciclos, scope derivado, sello y alcance del veredicto
 
 **Precondición:** según el sub-escenario: (1) directorio de features sin `_features.md`;
 (2) features con dependencias en ciclo; (3) una feature con alcance derivado del analysis no
-consolidado en el PRD.
+consolidado en el PRD; (4) una feature limpia cuyo spec sigue en `Estado: BORRADOR`;
+(5) una feature con un `_conflict_report.md` que levanta un conflicto `ALTA`.
 **Mecanismo:** skill `wf-spec-readiness` → `sdd-spec-auditor` (Pasos 2, 5, 6). Solo lee y sintetiza.
 
 1. Le pides el readiness sin que exista `_features.md`.
@@ -1363,9 +1625,35 @@ consolidado en el PRD.
      pero **no aborta** el resto del informe.
 3. Una feature declara alcance derivado del analysis sin consolidar en PRD.
    → **Esperado:** la clasifica `REQUIERE_CAMBIO_PRD`, **no** `LISTA`.
+4. Una feature **limpia** —sin marcadores, sin conflictos, sin dependencias abiertas— cuyo
+   spec sigue en `Estado: BORRADOR` porque nadie lo ha validado todavía ⏱ **sin pasada**.
+   → **Esperado:** el veredicto **no afirma que se pueda planificar**. `LISTA` significa
+     *lista para el siguiente paso*, y el siguiente paso de un spec sin validar es validarlo:
+     `gate_spec_fiable` va a denegar el plan ([[D-061]]), así que un informe que la dé por
+     `LISTA` a secas está prometiendo algo que el gate incumple una fase más tarde.
+   → **Lo que se mide es la coherencia, no el literal.** No importa si se resuelve con un
+     estado distinto, con el motivo en la columna de bloqueantes o con una nota: importa que
+     **el informe y el gate digan lo mismo**. El mismo invariante, visto desde el gate, es
+     `CU-9.n` punto 3.
+   → **FALLO:** `LISTA` sin mención del sello sobre un spec en `BORRADOR` — el usuario lee
+     "puedes planificar", pide el plan, y se lo deniegan sin que nada se lo hubiera avisado.
+5. Una feature con un conflicto `ALTA` abierto en su `_conflict_report.md`.
+   → **Esperado:** la clasifica `BLOQUEADA` nombrando el conflicto y la otra feature.
+   → **Esperado (alcance del veredicto, [[D-077]]):** ese `BLOQUEADA` es un **veredicto de
+     informe**, no una denegación mecánica: ningún gate lee los `_conflict_report.md`, y
+     `wf-prepare-plan` **avisa pero no para** por un conflicto abierto. El informe no debe
+     dar a entender que el pipeline lo impedirá por sí solo.
+   → **Por qué se deja así y no se convierte en gate.** La severidad `ALTA` la asigna un
+     juicio experto, y los auditores del fan-out se contradicen sobre el mismo par por diseño
+     ([[D-047]], `CU-3.f` punto 4). Un gate mecánico que leyera ese informe sería el único del
+     ecosistema que se fía del veredicto de un agente, y el `ALTA` de un auditor minoritario
+     bloquearía trabajo que el arbitraje ya resolvió, sin vía de cierre.
 
-**Resultado:** PASS si para sin índice, reporta el ciclo sin abortar y marca el scope derivado ·
-FALLO si fabrica el índice, aborta todo el informe por un ciclo, o marca `LISTA` una feature con scope sin consolidar.
+**Resultado:** PASS si para sin índice, reporta el ciclo sin abortar, marca el scope derivado,
+no promete planificación sobre un spec sin validar y acota qué significa `BLOQUEADA` ·
+FALLO si fabrica el índice, aborta todo el informe por un ciclo, marca `LISTA` una feature con
+scope sin consolidar o con el spec en `BORRADOR`, o presenta un conflicto `ALTA` como si
+fuese a bloquear el pipeline por su cuenta.
 **Desviación → reportar:** issue citando `CU-3.o`.
 
 ## CU-3.p — Delta / gap-resolve: un cambio de producto encubierto detiene y remite a wf-prd-change
@@ -1414,10 +1702,24 @@ vías**; las decisiones vuelven en una invocación nueva, que las aplica tal cua
 4. Respondes **"No lo sé"**.
    → **Esperado:** el marcador `[INFERIDO]` **se queda** y ese CA **sigue bloqueando** `wf-prepare-plan`.
 
-**Resultado:** PASS si (a) el primer turno **para sin decidir** y entrega el material verbatim, y
-(b) las tres respuestas se tratan distinto y "No lo sé" mantiene el bloqueo · FALLO si confirma un
-`[INFERIDO]` desde el analysis, si lo da por resuelto sin confirmación humana, o si el subagente
-**dicta la pregunta y da por hecho que recibirá la respuesta** en el mismo turno.
+5. **Por dónde vuelven las decisiones** ([[D-082]]). Mira la invocación del segundo turno en el
+   transcript.
+   → **Esperado:** las decisiones viajan en el argumento `--inferred`, con las tres vías como
+     valores exactos (`confirmado` / `incorrecto: <texto>` / `no-lo-se`) y un CA por entrada.
+     FALLO que la decisión llegue **solo** como prosa en el prompt: ahí el segundo turno se cierra
+     por parecido, no por contrato, y es el caso normal —sesión nueva, otro día— el que lo rompe.
+6. **Decisión parcial**, que es lo que de verdad pasa: respondes dos de los cuatro `[INFERIDO]`.
+   → **Esperado:** aplica esos dos y **vuelve a devolver** los otros dos con el mismo veredicto. Los
+     que no aparecen en `--inferred` **no se dan por resueltos**. FALLO cerrarlos por arrastre, y
+     FALLO también inventarse una vía si el valor viene mal escrito: eso se rechaza y se pide
+     reformular, no se interpreta.
+
+**Resultado:** PASS si (a) el primer turno **para sin decidir** y entrega el material verbatim,
+(b) las tres respuestas se tratan distinto y "No lo sé" mantiene el bloqueo, y (c) las decisiones
+entran por `--inferred` y las omitidas siguen abiertas · FALLO si confirma un `[INFERIDO]` desde el
+analysis, si lo da por resuelto sin confirmación humana, si el subagente **dicta la pregunta y da
+por hecho que recibirá la respuesta** en el mismo turno, o si una decisión no nombrada se cierra
+sola.
 **Desviación → reportar:** issue citando `CU-3.q`.
 
 ## CU-3.r — El rigor (standard/ligero) se elige al crear el spec, no en el init (D-006)

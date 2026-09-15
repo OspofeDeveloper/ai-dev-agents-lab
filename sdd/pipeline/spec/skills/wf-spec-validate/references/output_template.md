@@ -6,6 +6,18 @@
 ## Resultado: [APROBADO | REQUIERE_REVISIÓN]
 > [1-2 frases del estado. Si REQUIERE_REVISIÓN: menciona los bloqueantes principales.]
 
+<!-- El umbral NO es de juicio: lo fija `kb-spec-expert` (Paso 4 de «Cómo validar un
+     Spec»). REQUIERE_REVISIÓN exige al menos un bloqueante de los tres tipos. Una
+     nota no bloqueante NUNCA degrada el veredicto. -->
+
+### Hallazgos BLOQUEANTES (degradan el veredicto)
+<!-- Si no hay ninguno, escribe "Ninguno". Nunca lo dejes vacío: el silencio no se
+     distingue de haberlo olvidado, y este bloque decide si el spec se sella. -->
+1. [elemento obligatorio ausente | contaminación dura citada | CA no verificable]
+
+### Notas NO bloqueantes (no cambian el veredicto)
+- [borderline aceptable, con el porqué | sugerencia de redacción | materia de Plan]
+
 ---
 
 ## Completitud: X/8 elementos presentes

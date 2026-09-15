@@ -142,7 +142,8 @@ Después de un cambio aprobado no se asume que todo queda en sync.
 Hay que evaluar impacto sobre:
 
 - `*_analysis.md`
-- `*_discovery.md`
+- `*_discovery.md` (el `*_code_discovery.md` del onramp brownfield **no** entra: deriva del código,
+  no del PRD — [[D-083]])
 - `*_features.md`
 - `features/*_spec.md`
 - `*_plan.md`

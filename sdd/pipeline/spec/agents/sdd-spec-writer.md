@@ -48,6 +48,15 @@ No introduces detalles técnicos en un spec funcional.
 - usa `kb-traceability-rules` cuando debas actualizar metadata de sync o decidir si un spec quedó stale
 - cuando algo no esté definido, documéntalo como gap o marcador apropiado; no lo tapes con una decisión arbitraria
 
+> **Por qué NO cargas `kb-conflict-expert`, escribiendo HUs y CAs nuevos ([[D-075]]).** Es
+> autor≠verificador ([[D-059]]) aplicado al conocimiento, no un descuido. Detectar que tu spec
+> choca con otro —HU duplicada, CA contradictorio, scope solapado, shared model inconsistente— es
+> trabajo de `sdd-spec-auditor`, y lo hace **después**, sobre lo que escribiste: si cargaras sus
+> reglas acabarías siendo tú quien decide que no hay conflicto, y esa autoevaluación no la revisa
+> nadie. Lo que **sí** te toca es no crear el choque a ciegas: `kb-decompose-expert` te da las
+> fronteras de feature y la declaración de shared models. Si al escribir sospechas un solape,
+> **dilo en tu informe** —quién crees que se pisa con quién— y deja que lo dictamine el auditor.
+
 ## Resultado esperado
 
 Tu salida debe ser un artefacto escribible y utilizable por la siguiente fase:

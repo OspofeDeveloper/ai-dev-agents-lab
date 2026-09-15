@@ -2,7 +2,7 @@
 name: wf-spec-gap-resolve
 description: "Completa HUs y CAs [INCOMPLETO] desde respuestas ya escritas en un _analysis.md y confirma CAs [INFERIDO] de specs de caracterizacion. Via recomendada para resolver gaps sin tratarlos como delta funcional amplio."
 when_to_use: "Activa en frases como 'resuelve estos gaps del spec', 'completa incompletos desde el analysis', 'aplica respuestas del analysis al spec', 'cerrar HUs incompletas', 'confirma los inferidos del spec'."
-argument-hint: "<feature_spec.md> [--analysis <analysis.md>]"
+argument-hint: "<feature_spec.md> [--analysis <analysis.md>] [--inferred 'CA-XXX=confirmado; CA-YYY=incorrecto: <comportamiento real>; CA-ZZZ=no-lo-se']"
 effort: high
 allowed-tools: [Read, Write, Bash]
 context: fork
@@ -29,6 +29,21 @@ Extrae:
 
 - path del spec
 - `--analysis <analysis.md>` opcional
+- `--inferred '<decisiones>'` opcional — las decisiones **ya tomadas con el usuario** sobre los CAs
+  `[INFERIDO]`, que es como vuelve la segunda mitad de este flujo ([[D-068]]/[[D-082]]). Formato:
+  entradas `CA-XXX=<vía>` separadas por `;`, con una de las tres vías exactas —`confirmado`,
+  `incorrecto: <comportamiento real>`, `no-lo-se`—. Ejemplo:
+  `--inferred 'CA-003=confirmado; CA-005=incorrecto: reintenta 3 veces antes de fallar; CA-007=no-lo-se'`
+
+  > **Por qué el contrato existe ([[D-082]]).** Este paso decía *"si vienen decididos, aplícalas tal
+  > cual"* y no había **por dónde** vinieran: ni argumento que las transportara ni formato que las
+  > nombrara. La vuelta del bloqueo quedaba a que el texto libre de la invocación se pareciera lo
+  > suficiente. Un `STOP_*` que espera una respuesta necesita el canal por el que esa respuesta
+  > entra, o el flujo solo se cierra por casualidad.
+  >
+  > **Un `CA-XXX` que no esté `[INFERIDO]` en el spec no se toca**: dilo y sigue con los demás. Y
+  > una vía mal escrita **no se interpreta** —`no-lo-se` no es `incorrecto`—: para y pide que se
+  > reformule. Adivinar aquí es decidir por el usuario sobre comportamiento de producción.
 
 Si falta el spec:
 > "Necesito el spec cuyas historias incompletas hay que completar."
@@ -36,6 +51,16 @@ Si falta el spec:
 ## Paso 2: Verificar archivos
 
 Comprueba que el spec existe y termina en `_spec.md`.
+
+**Y que la feature sigue viva ([[D-078]]):**
+
+```bash
+!grep -Eq '^[[:space:]]*[-*>]?[[:space:]]*\*{0,2}Estado:?\*{0,2}[[:space:]]*:?[[:space:]]*RETIRADO' "<path_spec>" && echo RETIRADO || echo VIGENTE
+```
+
+`RETIRADO` → detén sin tocar nada e informa con la traza `Retirada:` delante. Los gaps de una feature
+dada de baja no bloquean nada que vaya a ejecutarse, y el `--unseal` del Paso 6 la devolvería al
+producto en silencio. Reactivarla es una decisión aparte; completar sus HUs no la toma.
 
 Si no se proporcionó `--analysis`, auto-descubre el `_analysis.md` en el directorio base del proyecto. **Que no haya ninguno no es un error**: un spec de modo directo o de caracterización no tiene analysis, y sus gaps viven en su propia sección.
 
@@ -74,7 +99,7 @@ Los `[INFERIDO]` no se resuelven desde un `_analysis.md`: la fuente de confirmac
 evidencia nueva que aporte). **Tú no puedes recogerla**: corres en `context: fork` y no tienes turno
 en el que preguntar ([[D-068]]).
 
-**Si el spec tiene CAs `[INFERIDO]` sin confirmar y no vienen decididos en tu invocación**, aplica
+**Si el spec tiene CAs `[INFERIDO]` sin confirmar y no vienen decididos en `--inferred`**, aplica
 todo lo demás que sí puedas resolver y **cierra devolviendo el bloqueo** con veredicto operativo
 `STOP_INFERIDO_SIN_CONFIRMAR`. Por cada uno, dale a quien te lanzó lo que necesita para presentarlo:
 el ID del CA, el comportamiento deducido **verbatim**, su `Confirmación pendiente` y la evidencia
@@ -84,8 +109,11 @@ parcial que tenga. **Las tres vías las presenta quien puede preguntar**, no tú
 - **Incorrecto** → el CA se corrige con el comportamiento real que indique el usuario (con su nueva evidencia si la aporta), o se elimina si la capacidad no existe.
 - **No lo sé** → el marcador se queda; ese CA sigue bloqueando el plan (regla de `kb-spec-characterization`).
 
-**Si vienen decididos** (quien te lanza ya los resolvió con el usuario y te pasa la decisión de cada
-uno), aplícalas tal cual. Lo que **nunca** haces es decidir tú: si no puedes preguntar, no puedes
+**Si vienen decididos en `--inferred`** (quien te lanza ya los resolvió con el usuario), aplica cada
+vía tal cual sobre el CA que nombra, y **enumera en tu informe qué hiciste con cada uno** — incluidos
+los `no-lo-se`, que siguen bloqueando. Los `[INFERIDO]` que **no** aparezcan en `--inferred` siguen
+sin confirmar: vuelve a devolverlos con el mismo veredicto, no los des por resueltos porque la
+invocación traía otros. Lo que **nunca** haces es decidir tú: si no puedes preguntar, no puedes
 decidir — el mismo invariante que rige la anti-fabricación ([[D-063]]).
 
 ## Paso 4: Validar que sigue siendo un gap y no un change request

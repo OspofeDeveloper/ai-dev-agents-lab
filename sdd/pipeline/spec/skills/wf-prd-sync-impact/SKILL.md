@@ -28,7 +28,9 @@ Si falta:
 En el directorio del PRD, busca si existen:
 
 - `*_analysis.md`
-- `*_discovery.md`
+- `*_discovery.md` — **no** los `*_code_discovery.md` ([[D-083]]): el mapa de capacidades del
+  onramp brownfield encaja en ese glob por sufijo y **no deriva del PRD**, sino del código. Medir
+  su deriva contra un cambio de producto es declarar `stale` lo que ningún cambio de PRD afecta
 - `*_features.md`
 - `features/*/spec/*_spec.md` (subcarpetas) **y** `features/*/*_spec.md` (plano legacy)
 - `features/*/plan/*_plan.md` (subcarpetas) **y** `features/*/*_plan.md` (plano legacy)

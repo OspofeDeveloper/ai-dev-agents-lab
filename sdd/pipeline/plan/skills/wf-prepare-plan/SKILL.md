@@ -55,6 +55,30 @@ Antes de verificar el Spec, determina el contexto técnico del proyecto. Busca `
      > "❌ El Spec tiene X items [CRÍTICO] sin resolver. Responde los gaps críticos antes de generar el Plan."
    - Si el spec declara `status_sync: stale` o `status_sync: needs_review` → **detén la ejecución**:
      > "❌ El Spec no está sincronizado con la versión vigente del PRD. Ejecuta `wf-prd-sync-impact` o `wf-spec-sync-from-prd` antes de generar el Plan."
+   - Si la cabecera declara `Estado: BORRADOR` → **detén la ejecución** ([[D-061]]):
+     > "❌ Ese Spec está en borrador: nadie lo ha validado todavía. Pídeme que lo valide y, cuando quede sellado, lo planificamos."
+
+     **Dilo como lo que es, no como un defecto del spec** ([[D-077]]). Los demás motivos de
+     esta lista son problemas del **contenido** —falta información, hay contradicción, está
+     desincronizado—; este es un **paso del proceso que falta**, y el contenido puede estar
+     impecable. Confundirlos manda al usuario a corregir un spec que no tiene nada que
+     corregir. Es además el estado **normal** de un spec recién generado y el de cualquiera al
+     que un delta, una enmienda o una resincronización le reabrieron la validación, así que
+     vas a emitirlo a menudo. El gate mecánico (`sdd-gate-check.py`) también lo deniega; esta
+     comprobación es la que dice **por qué**.
+   - Busca el informe de conflictos de esta feature **en los dos sitios donde se escribe**
+     (puede no existir, y eso no es un problema): junto al spec
+     (`<feature>/spec/*_conflict_report.md`, o `<feature>/*_conflict_report.md` en layout
+     plano legacy) y el consolidado del directorio padre de `features/`. Si alguno tiene un
+     conflicto de severidad **ALTA** que involucre a esta feature sin resolver →
+     **advierte y continúa** ([[D-077]]):
+     > "⚠ Esta feature tiene un conflicto ALTA abierto con `<otra feature>` (`<CF-XXX>`): `<qué choca>`. Puedo planificar igualmente, pero ese solape hay que acordarlo antes de implementar."
+
+     **No es un gate y no debe serlo.** La severidad la asigna un juicio experto, y los
+     auditores del fan-out se contradicen sobre el mismo par por diseño ([[D-047]]): frenar
+     aquí convertiría el veredicto de un agente en un candado, y el `ALTA` de un auditor
+     minoritario bloquearía trabajo que el arbitraje del readiness ya resolvió. Lo que no
+     vale es **callarlo**: alguien levantó ese solape y quien planifica tiene que saberlo.
    - Si hay `[INFORMATIVO]_(pendiente)_` pero no `[INCOMPLETO]` ni `[CRÍTICO]` → advierte pero **continúa**:
      > "⚠ El Spec tiene X items [INFORMATIVO] sin responder. Se usarán los valores por defecto. Puedes responderlos después si quieres más precisión."
 4. Verifica que el archivo parece un Spec validado (contiene "Criterios de Aceptación" e "Historias de Usuario"). Si parece un PRD sin procesar → informa:

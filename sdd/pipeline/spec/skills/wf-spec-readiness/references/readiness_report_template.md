@@ -26,6 +26,7 @@
 | F-004: [nombre] | BLOQUEADA | 0 | 0 | dependencias: F-002 |
 | F-005: [nombre] | REQUIERE_CAMBIO_PRD | 0 | 0 | gobernanza: alcance derivado desde P-007 |
 | F-006: [nombre] | RETIRADA | — | — | CR-007 — [razón de la baja] |
+| F-007: [nombre] | BLOQUEADA | 0 | 0 | pendiente de validación (el spec sigue en BORRADOR) |
 
 <!-- Ordenar por Feature ID. Mostrar todos los bloqueos de cada feature si tiene varios. -->
 
@@ -41,6 +42,7 @@
 |---------|--------|------------------|
 | F-001: [nombre] | LISTA | Lista para planificar |
 | F-005: [nombre] | REQUIERE_CAMBIO_PRD | Consolidar el cambio en PRD y resincronizar derivados antes de planificar |
+| F-007: [nombre] | BLOQUEADA | Validar el spec: su contenido está completo, solo falta que alguien lo dé por bueno |
 
 ### Fase 2 (depende de Fase 1)
 

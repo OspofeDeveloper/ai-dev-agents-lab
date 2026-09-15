@@ -225,6 +225,15 @@ Antes de escribir, verifica si el archivo ya existe:
 > presentarle una elección al usuario: la instrucción que este paso tenía antes no era
 > ejecutable ([[D-045]]). Paras y reportas; el gate lo presenta quien puede ([[D-026]]).
 
+> **Y por qué re-correrte casi nunca es la respuesta ([[D-075]]).** Cuando un cambio de producto
+> mueve la frontera entre features, es tentador tratarlo como "hay que rehacer el discovery".
+> **No lo es:** el `--allow-overwrite-discovery` existe para un discovery que aún no tiene specs
+> colgando, no para re-particionar un sistema ya especificado — ahí hace exactamente el daño que
+> describe el bloqueo de arriba. La re-partición se compone de vías que ya existen: **delta** con
+> tombstones sobre la feature que sigue viva, **baja** de la capacidad que sale del producto, y un
+> **spec nuevo** para la que emerge, con el siguiente `F-00X` libre. Si te invocan para eso,
+> dilo en tu informe en vez de renumerar.
+
 Escribe el artefacto generado en ese path.
 
 ---

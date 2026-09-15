@@ -249,6 +249,44 @@ Consulta `${CLAUDE_SKILL_DIR}/references/error_patterns.md` para recorrer los pa
 ### Paso 3: Check de Testabilidad
 Cada CA en GIVEN/WHEN/THEN debe poder verificarse de forma objetiva e independiente.
 
+### Paso 4: El umbral del veredicto (qué degrada y qué no)
+
+Los tres checks anteriores dan tres resultados; lo que **sella o no sella el spec** es una sola
+cosa: si hay **hallazgos bloqueantes**. Esa palabra no puede quedar a juicio de cada pasada —
+gobierna el sello, y un umbral que se decide sobre la marcha produce veredictos distintos para el
+mismo spec ([[D-035]] lo fijó para el PRD tras medirlo: la misma clase de hallazgo etiquetada de
+dos formas en dos corridas).
+
+**Es bloqueante, y solo esto:**
+
+1. **Falta un elemento obligatorio.** En `standard`, cualquiera de los 8. En `ligero`, cualquiera
+   del núcleo de 4 — o una sección ausente **sin** su marca `N/A — modo ligero`, que es una omisión
+   disfrazada, no una elección declarada.
+2. **Pureza `CONTAMINADO`**: hay al menos una frase que cae en una fila de
+   `references/prohibited_items.md`. La contaminación **dura** degrada siempre, por pequeña que
+   parezca la frase.
+3. **Un CA que no se puede verificar tal como está escrito**: le falta parte del GIVEN/WHEN/THEN,
+   no referencia HU padre, o su resultado no es observable objetivamente. El corte es
+   **ejecutabilidad**, no elegancia: si alguien puede montar la prueba con lo que hay, no bloquea.
+
+**No degrada el veredicto** —se reporta, y el spec se sella igual—:
+
+- **Sugerencias de mejora**: redacción, orden, granularidad, un CA correcto que quedaría mejor
+  reformulado.
+- **Notas *borderline* documentadas como aceptables**: la frase roza un patrón de
+  `error_patterns.md` pero no cae en ninguna fila prohibida, y dices por qué.
+- **Huecos que son materia de Plan.** El *cómo* técnico no es un defecto del spec: que no diga con
+  qué se implementa es exactamente lo que debe pasar. Confundirlo con incompletitud devuelve al
+  spec trabajo de otra fase.
+- **Lo que ya gobierna el verificador mecánico.** HUs `[INCOMPLETO]`, gaps `[CRÍTICO]` abiertos,
+  CAs `[INFERIDO]`, asunciones sin rastro en `## Asunciones Aplicadas`, deriva del PRD: eso lo
+  dictamina `sdd-seal.py spec --check`, no tu lectura. No lo cuentes como hallazgo tuyo —
+  duplicarlo no añade rigor y compite con el veredicto bueno.
+
+> **Tu veredicto es necesario y no suficiente.** Aunque no encuentres nada bloqueante, el sello
+> solo se estampa si el verificador mecánico también pasa: son ortogonales a propósito, y cada uno
+> ve lo que el otro no.
+
 ### Formato de output para revisiones:
 
 ```
@@ -271,11 +309,12 @@ Contaminación encontrada:
 ### Testabilidad: APROBADO / REQUIERE_MEJORA
 - CA-00X: [problema] → Reformulación sugerida: GIVEN / WHEN / THEN
 
-### Problemas a resolver antes del Plan:
-1. ...
+### Hallazgos BLOQUEANTES (degradan el veredicto):
+1. [elemento obligatorio ausente | contaminación dura citada | CA no verificable]
+   (si no hay ninguno, escribe "Ninguno" — no lo dejes vacío)
 
-### Sugerencias de mejora:
-...
+### Notas NO bloqueantes (no cambian el veredicto):
+- [borderline aceptable, con el porqué | sugerencia de redacción | materia de Plan]
 ```
 
 ---

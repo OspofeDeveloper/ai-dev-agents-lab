@@ -15,7 +15,7 @@ El objetivo de esta etapa no es generar Specs ni tomar decisiones técnicas. Su 
 | Skill | Tipo | Rol |
 |---|---|---|
 | `kb-prd-expert` | Knowledge base | Reglas de qué debe y qué no debe contener un PRD |
-| `kb-product-change-governance` | Knowledge base (cross-fase) | Reglas de gobernanza, clasificación y trazabilidad de cambios de producto. Vive aquí pero la cargan también los 3 agentes Spec. Instalar `sdd/pipeline/spec/` sin esta kb deja a sus agentes sin reglas para distinguir gaps de change requests. Nota: `kb-prd-expert` también es cross-fase (la cargan `sdd-spec-explorer`, `sdd-spec-writer` y `sdd-spec-planner` para leer el PRD de entrada). |
+| `kb-product-change-governance` | Knowledge base (cross-fase) | Reglas de gobernanza, clasificación y trazabilidad de cambios de producto. Vive aquí pero la cargan también los 3 agentes Spec. Instalar `sdd/pipeline/spec/` sin esta kb deja a sus agentes sin reglas para distinguir gaps de change requests. Nota: `kb-prd-expert` también es cross-fase — la cargan los agentes de Spec que **leen el PRD como documento de entrada**; quiénes son exactamente se lee en su frontmatter `skills:`, no aquí ([[D-069]]). El `sdd-spec-auditor` **no** la carga a propósito: mide deriva PRD→spec con `kb-traceability-rules`, y juzgar el PRD es de otra fase (lo explica su propio fichero). |
 | `prd-expert` | Agente worker | Ayuda a redactar, reorganizar y revisar PRDs con guía |
 | `wf-prd-create` | Workflow | Genera un `prd.md` inicial a partir de notas o brief |
 | `wf-prd-review` | Workflow | Revisión rápida de limpieza y procesabilidad antes de entrar en `spec` |

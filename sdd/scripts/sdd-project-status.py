@@ -35,6 +35,10 @@ from pathlib import Path
 
 FID_RE = re.compile(r"\bF-(?:C-)?\d+\b")
 MARKER_RE = re.compile(r"\[(?:INCOMPLETO|CR[IÍ]TICO|INFERIDO)\]")
+# Copia literal de `sdd-features-index.py::SIN_VALIDAR_MOTIVO` (D-077). Los dos
+# scripts derivan el mismo estado desde fuentes distintas —el indice desde el spec,
+# este desde el indice— y un test compara las dos cadenas.
+SIN_VALIDAR_MOTIVO = "pendiente de validación (el spec sigue en BORRADOR)"
 PLAN_ESTADO_RE = re.compile(
     r"^\s*(?:[-*>]\s*)?\**Estado:?\**\s*:?\s*(BORRADOR|VALIDADO)\b", re.MULTILINE
 )
@@ -222,14 +226,31 @@ def analyze_feature(fdir: Path, resumen: dict) -> dict:
     # ── Solo Spec ──
     if spec:
         estado = rmeta.get("estado")
+        # El sello entra en el fallback igual que en `sdd-features-index.py::derive_state`
+        # (D-077): `gate_spec_fiable` deniega el plan de un spec en BORRADOR (D-061), asi
+        # que anunciar "LISTA → /wf-prepare-plan" manda al usuario contra el gate. Los
+        # marcadores van primero: son el motivo mas concreto, y un spec con marcadores
+        # abiertos tampoco se puede validar.
+        spec_text = read_text(spec)
+        sin_validar = (header_field(spec_text, "Estado") or "").strip().upper() == "BORRADOR"
         if not estado:
-            estado = "BLOQUEADA" if MARKER_RE.search(read_text(spec)) else "LISTA"
+            if MARKER_RE.search(spec_text):
+                estado = "BLOQUEADA"
+            elif sin_validar:
+                estado, rmeta = "BLOQUEADA", {**rmeta, "bloqueantes": SIN_VALIDAR_MOTIVO}
+            else:
+                estado = "LISTA"
+        elif estado == "LISTA" and sin_validar:
+            estado, rmeta = "BLOQUEADA", {**rmeta, "bloqueantes": SIN_VALIDAR_MOTIVO}
         if estado == "LISTA":
             return _row(fid, name, "Spec", "LISTA", "—", "/wf-prepare-plan", n_bugs)
         if estado == "BLOQUEADA":
-            return _row(fid, name, "Spec", "BLOQUEADA",
-                        rmeta.get("bloqueantes", "marcadores en el spec"),
-                        "responder gaps + /wf-spec-gap-resolve", n_bugs)
+            bloqueantes = rmeta.get("bloqueantes") or "marcadores en el spec"
+            # La accion depende del motivo: mandar a "responder gaps" a quien solo tiene
+            # el spec sin sellar es un callejon sin salida — no hay gap que responder.
+            accion = ("/wf-spec-validate" if SIN_VALIDAR_MOTIVO.split(" (")[0] in bloqueantes
+                      else "responder gaps + /wf-spec-gap-resolve")
+            return _row(fid, name, "Spec", "BLOQUEADA", bloqueantes, accion, n_bugs)
         if estado == "REQUIERE_CAMBIO_PRD":
             return _row(fid, name, "Spec", "REQUIERE_CAMBIO_PRD",
                         "alcance derivado sin consolidar", "/wf-prd-change", n_bugs)

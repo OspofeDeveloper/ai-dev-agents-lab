@@ -327,6 +327,19 @@ El `_discovery.md` **debe existir previamente** (los IDs `F-XXX` solo tienen sen
   > "Has indicado features concretas, pero todavía no existe `<path>_discovery.md`. Las features no están en el PRD: se identifican descubriéndolas. Déjame descubrirlas primero, revisas el mapa, y me dices qué IDs quieres de esa lista."
 
 **Caso B — `--features` no está presente**:
+
+**Mira primero si ya existe**, con la misma búsqueda del Caso A ([[D-081]]). Un `_discovery.md` en
+disco **se reutiliza**, no se regenera: los `F-00X` son la trazabilidad que los specs ya citan en su
+cabecera, y volver a descubrir puede renumerarlos. Si existe → continúa al Paso 4 reutilizándolo, y
+dilo en el informe ("reutilizo el mapa de features que ya había"). Si no existe → delégalo.
+
+> **Por qué esto estaba mal, y era invisible ([[D-081]]).** Este caso delegaba el discovery
+> **siempre**, y el worker se detiene por sí mismo cuando el artefacto existe — con razón, es su
+> trabajo. Pero el único camino que su bloqueo nombra es regenerarlo pisando lo anterior, que es
+> justo el peligroso, mientras que la salida correcta —reutilizar— solo estaba escrita en el Caso A,
+> detrás de `--features`. Un usuario que primero pregunta *"¿qué features tiene este PRD?"* y luego
+> dice *"vale, genéralas"* llegaba aquí por la puerta sin salida buena.
+
 Delega el discovery con la tool `Agent` ([[D-043]]):
 ```
 Agent(
@@ -335,15 +348,19 @@ Agent(
   prompt: "Lee `.claude/skills/wf-spec-discover/SKILL.md` y ejecuta sus pasos TÚ MISMO sobre estos argumentos: <prd.md> [--analysis <analysis.md>] [--allow-derived-scope-from-analysis si aplica]. NO uses el `Skill` tool: ya eres el agente al que esa skill delega (`agent: sdd-spec-explorer`), así que invocarla te forkearía en un clon tuyo. Dentro de ese SKILL.md, `${CLAUDE_SKILL_DIR}` es `.claude/skills/wf-spec-discover/`. Al terminar, informa del path exacto del `_discovery.md`, la lista de features (ID + nombre + actor), los shared models y si te detuviste por ambigüedad."
 )
 ```
-Espera su resultado (el de la tool, no el del disco) y obtén de él el path del `_discovery.md`. Si el discover se detuvo por shared models ambiguos → transmite el mensaje al usuario y espera resolución.
+Espera su resultado (el de la tool, no el del disco) y obtén de él el path del `_discovery.md`.
+
+**Si volvió con un `STOP_*` en vez de con el discovery, no lo interpretes: preséntalo** ([[D-026]]/[[D-081]]). Son dos, y no se resuelven igual:
+- **`STOP_OWNERSHIP_AMBIGUO`** (shared models con dueño empatado) → transmite la tabla que te dio y **espera la decisión del usuario**; sin ella no hay discovery que reutilizar.
+- **`STOP_ARTEFACTO_EXISTE`** → no debería ocurrir si hiciste la comprobación de arriba, y si ocurre es que el worker resolvió otro path que tú. **No lo relances con `--allow-overwrite-discovery` por tu cuenta**: regenerar renumera los `F-00X`. Di qué path encontró él, y pregunta con `AskUserQuestion` si reutilizar ese mapa (recomendada) o regenerarlo asumiendo la renumeración.
 
 ---
 
 ## Paso 4: Determinar el subset a procesar
 
 Necesitas la lista de features (ID + nombre kebab-case) y su total `N_total`. **No hagas `Read` del `_discovery.md`** (Regla de oro):
-- **Discovery recién generado (Caso B)** → la lista viene en el **informe del delegado**, que la reporta explícitamente.
-- **Discovery reutilizado (Caso A)** → extráela con una consulta **acotada** por `Bash`, no cargando el documento:
+- **Discovery recién generado** (Caso B cuando no existía) → la lista viene en el **informe del delegado**, que la reporta explícitamente.
+- **Discovery reutilizado** (Caso A, y Caso B cuando ya existía) → extráela con una consulta **acotada** por `Bash`, no cargando el documento:
   ```
   !grep -nE "^### F-[0-9]{3}:" "<path>_discovery.md"
   ```
@@ -370,16 +387,21 @@ Si hay gaps `[CRÍTICO]` abiertos, dilo aquí también: indica qué features que
 
 Un spec que ya existe **no se pisa en silencio, pero tampoco se salta en silencio**. Lo que decide
 no es "existe / no existe" sino **cuánto trabajo hay que perder**, y desde [[D-061]] esa línea es
-objetiva: `Estado: VALIDADO` en la cabecera del spec.
+objetiva: el campo `Estado:` de la cabecera del spec. Se lee **entero**, con sus tres valores
+([[D-080]]): un `RETIRADO` leído como "no está validado" cae en la clase que se regenera.
 
 Clasifica **todas** las features del subset de una vez (una sola llamada, no una por feature):
 
 ```bash
 !for f in <capabilities del subset, separadas por espacio>; do
   p=$(python3 .sdd/scripts/sdd-resolve-path.py find spec "<raíz_spec>/features/$f/spec/${f}_spec.md" 2>/dev/null)
-  if [ -z "$p" ]; then echo "$f NO_EXISTE";
-  elif grep -Eq '^[[:space:]]*[-*>]?[[:space:]]*\*{0,2}Estado:?\*{0,2}[[:space:]]*:?[[:space:]]*VALIDADO' "$p"; then echo "$f SELLADO $p";
-  else echo "$f DRAFT $p"; fi
+  if [ -z "$p" ]; then echo "$f NO_EXISTE"; continue; fi
+  e=$(sed -nE 's/^[[:space:]]*[-*>]?[[:space:]]*\*{0,2}Estado:?\*{0,2}[[:space:]]*:?[[:space:]]*(BORRADOR|VALIDADO|RETIRADO).*/\1/p' "$p" | head -1)
+  case "$e" in
+    RETIRADO) echo "$f RETIRADA $p" ;;
+    VALIDADO) echo "$f SELLADO $p" ;;
+    *)        echo "$f DRAFT $p" ;;
+  esac
 done
 ```
 
@@ -392,6 +414,19 @@ preguntar feature a feature por un lote de nueve es justo el *nagging* que [[D-0
 evitar.
 
 - **`NO_EXISTE`** → van al fast-track (Paso 5), como siempre.
+
+- **`RETIRADA`** → **fuera del fast-track, y no hay gate que ofrecer** ([[D-078]]/[[D-080]]). Esa
+  feature la sacó del producto un cambio formalizado con su `CR-XXX`; regenerarle el spec la
+  devolvería viva sin `CR`, sin el gate de impacto y sin que nadie lo vea. **Pero no la saltes en
+  silencio**: nómbrala en el informe del Paso 9, con su traza `Retirada:`, y di que si el producto
+  la recupera eso se decide aparte —y la deja en borrador, pendiente de validar otra vez—. No
+  preguntes aquí si regenerarla: la pregunta insinúa una salida que no existe.
+
+  > **Por qué sigue apareciendo en el subset.** El `_discovery.md` **no se regenera** (lo protege su
+  > propio bloqueo: renumerar los `F-00X` rompería la trazabilidad de los specs que ya los citan),
+  > así que sigue listando el `F-00X` de una feature dada de baja — y su ID **se conserva sin
+  > reutilizarse** (`kb-traceability-rules` Regla 12). Que llegue hasta aquí es lo normal, no una
+  > anomalía del proyecto.
 
 - **`SELLADO`** → **siempre** confirma, y el mensaje **avisa del descarte**, con independencia de lo
   explícito que fuera la petición. Un solo `AskUserQuestion` **nombrando las features selladas**:
@@ -414,7 +449,7 @@ evitar.
     - **Regenerar** → entran al fast-track (no hace falta flag: un draft no está sellado).
 
 Informa al usuario: N_total totales, N_subset a procesar, N_a_generar nuevas, N_conservadas
-(distinguiendo selladas de draft), N_pendientes futuras.
+(distinguiendo selladas de draft), **N_retiradas** (nombrándolas) y N_pendientes futuras.
 
 > **Por qué esto cambió** (ver `DECISIONS.md` [[D-062]]): antes este paso **excluía del fast-track
 > cualquier spec preexistente**, sellado o borrador, sin preguntar. Preservar trabajo es el default
@@ -460,9 +495,18 @@ Para cada feature F-00X a generar, lanza un subagente con el `Agent` tool usando
 Agent(
   subagent_type: "sdd-spec-writer",
   run_in_background: false,
-  prompt: "Lee `.claude/skills/wf-spec-fast-track/SKILL.md` y ejecuta sus pasos TÚ MISMO sobre estos argumentos: <prd.md> --scope-from <discovery.md> --feature F-00X --gap-id-start P-0NN [--light|--standard si se pasó o si project-init declara pipeline_mode] [--analysis <analysis.md> si disponible] [--allow-overwrite-sealed-spec **solo** si el usuario eligió regenerar esa feature sellada en el gate del Paso 4b]. NO uses el `Skill` tool: esa skill es `context: fork` y invocarla te forkearía otro subagente en cascada. Dentro de ese SKILL.md, `${CLAUDE_SKILL_DIR}` es `.claude/skills/wf-spec-fast-track/`. Al terminar, informa del path del spec generado, nº de gaps `[CRÍTICO]`, nº de asunciones aplicadas y los IDs de gap que hayas usado."
+  prompt: "Lee `.claude/skills/wf-spec-fast-track/SKILL.md` y ejecuta sus pasos TÚ MISMO sobre estos argumentos: <prd.md> --scope-from <discovery.md> --feature F-00X --gap-id-start P-0NN [--light|--standard si se pasó o si project-init declara pipeline_mode] [--analysis <analysis.md> si disponible] [--allow-derived-scope-from-analysis **si el Paso 2.5 lo dejó decidido**, sea porque vino de entrada o porque el usuario eligió continuar con alcance derivado en su gate] [--allow-overwrite-sealed-spec **solo** si el usuario eligió regenerar esa feature sellada en el gate del Paso 4b]. NO uses el `Skill` tool: esa skill es `context: fork` y invocarla te forkearía otro subagente en cascada. Dentro de ese SKILL.md, `${CLAUDE_SKILL_DIR}` es `.claude/skills/wf-spec-fast-track/`. Al terminar, informa del path del spec generado, nº de gaps `[CRÍTICO]`, nº de asunciones aplicadas y los IDs de gap que hayas usado."
 )
 ```
+
+> **La decisión de alcance viaja con el encargo, no se queda en tu contexto ([[D-081]]).** El
+> escritor recibe `--analysis`, así que **vuelve a evaluar** las respuestas por su cuenta y se
+> detiene con `STOP_REQUIERE_PRD_CHANGE` en cuanto una expande el producto — es su trabajo, y lo
+> hace bien. Si el usuario ya resolvió eso arriba y el flag no baja hasta aquí, la pasada entera se
+> para levantando N veces una pregunta **ya contestada**, dentro de forks que no pueden
+> presentarla. Un gate que se decide en un sitio y se aplica en otro solo sirve si la decisión
+> **viaja**. Lo que sigue prohibido es lo de siempre: **tú no armas un `--allow-*`** ([[D-026]]) —
+> aquí solo transportas el que el usuario ya eligió.
 
 **CRÍTICO: emite TODOS los `Agent` tool calls en un único mensaje** — no esperes entre ellos. Cada subagente es completamente independiente. Si hay 6 features a generar, tu respuesta debe contener 6 llamadas al `Agent` tool simultáneas, todas con `subagent_type: sdd-spec-writer`.
 
@@ -487,6 +531,11 @@ Espera a que **todas** terminen según el criterio de arriba: tienes el informe 
 - Path del spec generado
 - Número de gaps `[CRÍTICO]` encontrados (si los hay)
 - Número de asunciones aplicadas
+
+**Si alguno vuelve con un veredicto `STOP_*` en vez de con su spec, esa feature no se ha generado — y eso no es "falló"** ([[D-081]]). Un `STOP_*` es un bloqueo con nombre, y presentarlo es tuyo ([[D-026]]/[[D-064]]): **no lo relances con un `--allow-*` por tu cuenta, ni lo entierres como error genérico en el resumen**. Los demás escritores siguen siendo válidos: continúa con ellos al Paso 6 y trata los parados aparte.
+- **`STOP_REQUIERE_PRD_CHANGE`** → si llega **después** de que el Paso 2.5 resolviera el alcance, revisa primero si se te olvidó pasarle el flag; si el alcance no estaba decidido, preséntalo con `AskUserQuestion` (formalizar el cambio en el PRD, recomendada / continuar con alcance derivado) y relanza **solo esas** features con lo que elija.
+- **`STOP_SPEC_SELLADO`** → no debería llegar: el Paso 4b ya clasificó y armó el flag. Si llega, preséntalo como el gate de sellados de ese paso, sin decidir tú.
+- **`STOP_SPEC_RETIRADO`** → tampoco debería llegar (el Paso 4b las excluye) y **ningún flag lo cierra**: nómbrala como retirada en el informe y sigue.
 
 Si el subset está vacío tras filtrar specs preexistentes (todas las features pedidas ya tenían spec), salta al Paso 6 con el conjunto vacío de "recién generadas".
 
@@ -556,4 +605,4 @@ Delega con la tool `Agent` ([[D-043]]), `subagent_type: "sdd-spec-auditor"` y `r
 
 ## Paso 9: Informar al usuario
 
-Presenta el resumen siguiendo la plantilla de `${CLAUDE_SKILL_DIR}/references/output_template.md` (consúltala por `Bash`; es material **del skill**, no un artefacto del proyecto — la Regla de oro habla de PRD, analysis y specs). Diferencia features procesadas en esta iteración vs preexistentes de iteraciones anteriores vs pendientes de futura generación. Incluye los bloques condicionales de siguientes pasos (gaps críticos, conflictos, features listas, features PENDIENTE_GENERACIÓN).
+Presenta el resumen siguiendo la plantilla de `${CLAUDE_SKILL_DIR}/references/output_template.md` (consúltala por `Bash`; es material **del skill**, no un artefacto del proyecto — la Regla de oro habla de PRD, analysis y specs). Diferencia features procesadas en esta iteración vs preexistentes de iteraciones anteriores vs pendientes de futura generación. Incluye **todos** los bloques condicionales de siguientes pasos que apliquen — la plantilla los lista; no los enumeres de memoria aquí ([[D-069]]), que es como se quedó fuera el de las features dadas de baja.

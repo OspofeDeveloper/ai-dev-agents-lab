@@ -183,12 +183,17 @@ Verifica si el spec ya existe en cualquiera de los dos layouts con el resolutor 
 ```
 Emite el path existente (vacío + exit 3 si no existe en ningún layout). **Fallback** a mano: busca en `<raíz_spec>/features/<capability>/spec/<capability>_spec.md` (subcarpetas) o `<raíz_spec>/features/<capability>/<capability>_spec.md` (plano legacy).
 
-**Si el spec ya existe, mira su estado antes de escribir ([[D-024]]/[[D-062]]).** No es lo mismo pisar un borrador que pisar un spec validado:
+**Si el spec ya existe, mira su estado antes de escribir ([[D-024]]/[[D-062]]/[[D-080]]).** Pisar un borrador, pisar un spec validado y pisar una feature **dada de baja** son tres cosas distintas, así que el estado se lee entero, no como un sí/no:
 
 ```bash
-!grep -Eq '^[[:space:]]*[-*>]?[[:space:]]*\*{0,2}Estado:?\*{0,2}[[:space:]]*:?[[:space:]]*VALIDADO' "<path_existente>" && echo SELLADO || echo DRAFT
+!e=$(sed -nE 's/^[[:space:]]*[-*>]?[[:space:]]*\*{0,2}Estado:?\*{0,2}[[:space:]]*:?[[:space:]]*(BORRADOR|VALIDADO|RETIRADO).*/\1/p' "<path_existente>" | head -1)
+case "$e" in RETIRADO) echo RETIRADO ;; VALIDADO) echo SELLADO ;; *) echo DRAFT ;; esac
 ```
 
+Un spec que no existe (o sin campo `Estado:`) sale como `DRAFT`, que es la rama correcta: no hay nada que perder.
+
+- **`RETIRADO`** → **detente sin escribir nada** y devuelve el bloqueo con veredicto operativo `STOP_SPEC_RETIRADO`. **Ningún flag lo cierra** ([[D-078]]/[[D-080]]): no es un override ni una regeneración, es una feature que el producto sacó del alcance, y volver a escribir su spec la devolvería viva **sin `CR`, sin gate y sin que nadie lo note** — la baja es el único gate de la fase sin escotilla. Cita su traza `Retirada:` y para:
+  > "El spec de `<capability>` existe pero la feature está **dada de baja** (`Estado: RETIRADO`, `<traza Retirada:>`). No lo he tocado. Regenerarlo la devolvería al producto por la puerta de atrás. Si el producto la recupera, eso se decide aparte —y la deja en borrador, pendiente de validar otra vez—; si lo que hay es una capacidad nueva que se parece, va con su propio Feature ID, no en el hueco de esta."
 - **`DRAFT`** (o no existe) → reescribe en su ubicación actual y sigue. Quien te lanzó ya resolvió si procedía regenerarlo; re-plantearlo aquí sería fricción redundante.
 - **`SELLADO` sin `--allow-overwrite-sealed-spec`** → **detente sin escribir nada** (ni el spec ni el README) y devuelve el bloqueo a quien te lanzó, con veredicto operativo `STOP_SPEC_SELLADO`:
   > "El spec de `<capability>` ya existe y está **validado** (`Estado: VALIDADO`) en `<path>`. Regenerarlo descarta el trabajo de validación y los gaps ya respondidos. No lo he tocado. Si el usuario quiere rehacerlo desde cero de todas formas, relánzame con `--allow-overwrite-sealed-spec`. Si lo que quiere es **cambiar algo de lo que ya dice**, no hace falta rehacerlo: se aplica el cambio sobre el spec existente, y eso reabre su validación en vez de descartarla — dile que te pida el cambio y ya lo enrutas tú."
@@ -224,4 +229,17 @@ python3 .sdd/scripts/sdd-features-index.py <raíz_spec>
 
 ## Paso 11: Informar al usuario
 
-Informa: paths generados (spec, README) y `_features.md` regenerado. Si hay `[CRÍTICO]` pendientes: listarlos, avisando de que **bloquean el paso a planificación**. Si se aplicaron asunciones: cuántas y dónde. Siguiente paso: pedirme que **genere el plan técnico de esta feature**.
+Informa: paths generados (spec, README) y `_features.md` regenerado. Si hay `[CRÍTICO]` pendientes: listarlos, avisando de que **bloquean el paso a planificación**. Si se aplicaron asunciones: cuántas y dónde.
+
+**Siguiente paso: que se valide el spec** — descrito como acción, no como comando ([[D-019]]).
+Algo como: *"El spec queda en borrador, sin auditar. Cuando quieras lo valido, y ya con el
+sello pasamos a planificarlo."*
+
+> **Aquí ponía "pedirme que genere el plan técnico de esta feature", y eso el gate lo deniega
+> ([[D-077]]).** Un spec nace en `Estado: BORRADOR` ([[D-061]], y lo dice el Paso 9 de esta
+> misma skill), y `gate_spec_fiable` no deja planificar sobre un spec que nadie ha validado.
+> El cierre estaba mandando al usuario de cabeza contra un gate, dos pasos más allá, sin
+> mencionar el que falta. **Fast-track es donde el spec nace en borrador**, así que es el
+> sitio donde hay que decirlo. Las otras dos vías que escriben un spec ya cerraban así —
+> *"su validación se reabrió"*, *"si quieres, lo valido antes de seguir"*—; esta era la única
+> de las tres que no. Espejo de la frontera create → review del PRD.

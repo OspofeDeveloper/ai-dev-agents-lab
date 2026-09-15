@@ -40,7 +40,7 @@ Si no existe → informa con la ruta exacta y detén. Si no termina en `_spec.md
 
 Delega con la tool `Agent` ([[D-043]]), `subagent_type: "sdd-spec-auditor"` y **`run_in_background: false`**, con el prompt:
 
-  prompt: "Audita el spec <path>. Detecta primero el modo: si el header declara 'Modo: ligero', aplica las reglas de proporcionalidad de kb-spec-expert. Aplica sus 3 checks. Completitud: en standard los 8 elementos SDD; en ligero el núcleo de 4 (Actores, HUs, CAs, Fuera de Alcance) con las omitidas marcadas 'N/A — modo ligero' — una sección ausente sin esa marca ES un hallazgo. Pureza: consulta prohibited_items.md y error_patterns.md de kb-spec-expert y cita cualquier frase que viole la Prueba de Pureza. Testabilidad: cada CA con GIVEN/WHEN/THEN completo, verificable objetivamente y referenciando su HU padre. Estructura el informe según .claude/skills/wf-spec-validate/references/output_template.md. NO escribas ningún archivo: devuélveme el informe. Al terminar di explícitamente si hay hallazgos BLOQUEANTES o no."
+  prompt: "Audita el spec <path>. Detecta primero el modo: si el header declara 'Modo: ligero', aplica las reglas de proporcionalidad de kb-spec-expert. Aplica sus 3 checks. Completitud: en standard los 8 elementos SDD; en ligero el núcleo de 4 (Actores, HUs, CAs, Fuera de Alcance) con las omitidas marcadas 'N/A — modo ligero' — una sección ausente sin esa marca ES un hallazgo. Pureza: consulta prohibited_items.md y error_patterns.md de kb-spec-expert y cita cualquier frase que viole la Prueba de Pureza. Testabilidad: cada CA con GIVEN/WHEN/THEN completo, verificable objetivamente y referenciando su HU padre. Estructura el informe según .claude/skills/wf-spec-validate/references/output_template.md. NO escribas ningún archivo: devuélveme el informe. Al terminar di explícitamente si hay hallazgos BLOQUEANTES o no, aplicando el umbral del Paso 4 de 'Cómo validar un Spec' de kb-spec-expert: bloquean SOLO un elemento obligatorio ausente, contaminación dura (fila de prohibited_items.md) o un CA que no se puede verificar tal como está escrito. NO bloquean las sugerencias de redacción, las notas borderline documentadas, los huecos que son materia de Plan, ni lo que ya dictamina sdd-seal.py --check (incompletos, gaps críticos, inferidos, asunciones sin rastro): eso lo mide el script, no tú."
 
 **Has esperado cuando el informe está en tu contexto como resultado de tu propia llamada** ([[D-047]]). Si no lo tienes, **paras y lo dices**: no reconstruyes el veredicto leyendo el spec por tu cuenta.
 
@@ -56,6 +56,12 @@ Imprime el informe del auditor tal como te lo dio. **No lo escribes en ningún a
 
 El estado del spec **solo** lo escribe el sellador determinista (autor≠verificador: el veredicto del auditor es necesario, no suficiente). Nunca edites la línea `Estado:` a mano.
 
+> **Qué cuenta como bloqueante no lo decides aquí ([[D-076]]).** El umbral vive en
+> `kb-spec-expert` (Paso 4 de «Cómo validar un Spec») y es cerrado: elemento obligatorio ausente ·
+> contaminación dura · CA no verificable. Lo demás se reporta y **no degrada** el veredicto. Sin
+> umbral escrito, la misma clase de hallazgo sella en una pasada y bloquea en la siguiente — medido
+> en el PRD antes de [[D-035]], que es el espejo de esta regla.
+
 **Con hallazgos bloqueantes** → reabre y detén:
 ```bash
 !python3 .sdd/scripts/sdd-seal.py spec "<path>" --unseal
@@ -68,6 +74,7 @@ Informa qué hay que corregir y que lo revalidas cuando esté.
 ```
 
 - **exit 2** → el script dice qué condición falló (HU `[INCOMPLETO]`, gap `[CRÍTICO]` abierto, CA `[INFERIDO]`, `status_sync` no fiable, deriva de PRD, CA sin HU padre, o una asunción aplicada que no dejó rastro en `## Asunciones Aplicadas` — [[D-063]]). Trata cada `✗` como hallazgo, ejecuta `--unseal` y detén. **Un veredicto limpio del auditor no basta**: si el script deniega, manda el script.
+  - **Excepción: si el `✗` es que el spec está `RETIRADO`, NO ejecutes `--unseal` ([[D-078]]).** Esa condición no es un hallazgo de calidad que se corrija reabriendo: la feature está dada de baja y no hay validación que reabrir. Informa de la baja con su traza `Retirada:` delante y detén ahí. (El script ya se niega —`--unseal` sobre un retirado sale `2` sin tocar nada—, pero decirle al usuario "he reabierto la validación" de algo que no se reabrió es la mitad del fallo que sigue siendo tuya.)
 - **exit 0** → captura la **identidad de quien aprueba** con `AskUserQuestion` ([[D-027]]): **precarga el nombre** con `!git config user.name` como default, rol opcional; si git no da nombre, cae al rol. Sella con ese valor:
   ```bash
   !python3 .sdd/scripts/sdd-seal.py spec "<path>" --seal --approved-by "<nombre> [(<rol>)] (<fecha real de tu contexto>)"

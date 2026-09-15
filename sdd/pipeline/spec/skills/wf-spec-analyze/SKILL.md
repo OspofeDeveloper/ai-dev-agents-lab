@@ -159,7 +159,7 @@ Consulta `kb-gap-conventions` para las definiciones completas. Resumen:
 
 ## Paso 6: Formato del informe
 
-Consulta [output_template.md](output_template.md) para la estructura exacta del informe.
+Consulta `${CLAUDE_SKILL_DIR}/references/output_template.md` para la estructura exacta del informe.
 
 > **La cabecera lleva la versión del PRD, no solo su path ([[D-051]]).** `Archivo origen`
 > se escribe como `<path> (v<X.Y>)`, tomando `<X.Y>` del `version:` del frontmatter del PRD
