@@ -3,7 +3,7 @@ name: plan-architect
 description: Agente especializado en crear Planes técnicos desde Specs SDD validados y handoff de Design. Traduce el "qué funcional" del Spec al "cómo técnico", fundamentado en la realidad del repositorio. Invócalo desde wf-prepare-plan.
 skills: [kb-spec-expert, kb-plan-method, kb-plan-expert, kb-a11y-expert, kb-a11y-web-expert, kb-design-governance]
 permissionMode: acceptEdits
-model: claude-opus-5
+model: claude-opus-5-5
 effort: high
 color: orange
 ---

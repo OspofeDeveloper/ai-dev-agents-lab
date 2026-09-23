@@ -186,7 +186,7 @@ def gen_agent(name, description, skills, model, read_only, phase):
         # script ni check la ve ni la invalida. Lo vigila la regla
         # AGENT-MEMORY-DECLARED de sdd-structural-lint.py.
         "permissionMode: acceptEdits",
-        f"model: {model or 'claude-opus-4-8'}",
+        f"model: {model or 'claude-opus-5-5'}",
     ]
     if read_only:
         fm.append("disallowedTools: Write, Edit")

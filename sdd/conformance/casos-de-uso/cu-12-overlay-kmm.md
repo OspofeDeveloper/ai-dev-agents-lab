@@ -19,6 +19,13 @@ respetan capas) es juicio de los agentes KMM → **manual**.
 > arrancar. Agentes del overlay: `kmm-explorer`, `kmm-network-auth-implementer`,
 > `kmm-platform-integrator`.
 
+> [!IMPORTANT]
+> **Deuda de procedencia — frontera de modelo ([[D-094]], 2026-09-23).** Los 10 agentes del
+> overlay saltan dos generaciones de golpe: 5 de `opus-4-8` a `opus-5-5` y 5 de `sonnet-4-6` a
+> `sonnet-5`. Todo veredicto **conductual** anterior de este CU (los `✓` de 2026-06) queda como
+> histórico (`kb-sdd-conformance` Regla 9 puntos 3 y 9); lo determinista —instalación, re-aplicado
+> tras la base, recuento— no se toca. Regístralos como `✓ (4-x) — pendiente HUMO (5.5)`.
+
 ---
 
 ## 🧪 Qué se prueba aquí (por componente)

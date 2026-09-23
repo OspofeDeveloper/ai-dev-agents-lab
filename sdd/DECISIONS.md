@@ -6,6 +6,29 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-094 — Salto a Opus 5.5, y la serie que había que perder a propósito
+
+- **Fecha:** 2026-09-23 · **Estado:** Adoptada (los 11 agentes Opus pasan a `claude-opus-5-5` y los 5 `claude-sonnet-4-6` del overlay KMM a `claude-sonnet-5`; `CU-3.d` vuelve a **0/3**). · **Relacionada:** la frontera de modelo de 2026-08-27 (4-x → 5, notas de procedencia de CU-1/CU-2), `kb-sdd-conformance` Regla 9 puntos 3 y 9.
+
+**Contexto.** Sale Opus 5.5 y el orquestador de las sesiones ya corre en él. En el ecosistema convivían **tres generaciones**: 6 agentes del núcleo en `claude-opus-5`, 5 del overlay KMM en `claude-opus-4-8` y otros 5 del overlay en `claude-sonnet-4-6`. Y la guía no se ponía de acuerdo consigo misma: `kb-sdd-creation-guide` decía `claude-opus-5`, su checklist y la plantilla de frontmatter seguían en `claude-opus-4-8`/`claude-sonnet-4-6`, y **`sdd-scaffold.py` creaba cada agente nuevo con `claude-opus-4-8`** por defecto — el bump anterior barrió los agentes y se dejó la fábrica.
+
+**Decisión.**
+
+- **Todo Opus a `claude-opus-5-5`**, núcleo y overlay. Los Sonnet del overlay a `claude-sonnet-5`, que es la familia del núcleo: los 12 Sonnet quedan en `claude-sonnet-5` (no hay Sonnet 5.5).
+- **La fábrica va en el mismo barrido**: default de `sdd-scaffold.py` (+ su test), checklist, plantilla de frontmatter, tabla de criterios y el `README`. Comprobación: `grep -rn "^model:" pipeline/*/agents/ meta/agents/ tech/*/agents/` da **dos** valores y nada más.
+- **El overlay KMM se sube en la misma decisión**, no de arrastre: la guía pide que un overlay con conformance propia se decida aparte, y esta entrada es esa decisión. Su deuda de procedencia la hereda CU-12.
+- **`CU-3.d` vuelve a 0/3.** Los agentes que ejecuta (`sdd-spec-explorer`, `sdd-spec-writer`, `sdd-spec-auditor`) son `sonnet-5` y no cambian — pero el **punto 3** (el fan-out sale en un único mensaje) lo emite el **hilo principal**, y ese pasa de `opus-5` a `opus-5-5`. Es juicio del orquestador al otro lado de una frontera: la 1/3 pasa a histórica.
+
+**Alternativas descartadas.**
+- *Terminar la serie de CU-3.d con el orquestador en `opus-5` y migrar después* → cuesta dos pasadas para sellar un escenario sobre un modelo que se retira al día siguiente. Con la serie en 1/3 se pierde una pasada; sellada, se habría perdido un sello.
+- *Subir solo el núcleo y dejar el overlay para su propia campaña* → dejaría tres generaciones vivas y la fábrica emitiendo la más vieja. Lo caro de un overlay con conformance es re-validarlo, no subirlo; lo que se decide aparte es la **deuda**, y queda escrita.
+
+**Consecuencias / aprendizaje.** **Un bump de modelo tiene dos superficies: los agentes que existen y los que se van a crear.** El de 2026-08-27 barrió la primera y dejó la segunda en 4-8 durante un mes, sin que nada lo notara porque un agente recién creado con un modelo viejo **funciona**. Y la frontera no es solo el `model:` del frontmatter: el modelo del **hilo principal** también mide, y cualquier escenario cuyo punto lo emita el orquestador —fan-out, gates con `AskUserQuestion`, arbitrajes— cruza la frontera aunque ningún agente cambie. Los sellos conductuales previos (CU-3.a, CU-2, CU-1, CU-13.a) pasan a deuda de procedencia `SELLADO (5) — pendiente HUMO (5.5)`.
+
+**Referencias.** `pipeline/*/agents/*.md`, `meta/agents/*.md`, `tech/kmm/agents/*.md` · `scripts/sdd-scaffold.py` + `tests/test_sdd_scaffold.py` · `meta/skills/kb-sdd-creation-guide/SKILL.md` + `references/checklists.md` + `references/frontmatter-templates.md` · `README.md` · `conformance/casos-de-uso/cu-03-specs.md` · `CHANGELOG.md` 0.117.0.
+
+---
+
 ## D-093 — La vigencia estaba en la cabecera y el veredicto seguía sin llevarla
 
 - **Fecha:** 2026-09-23 · **Estado:** Adoptada (el veredicto del informe de conflictos se enuncia sobre su conjunto; un informe ESTANCADO produce acción en el readiness. **Salió de la pasada 1/3 de `CU-3.d` sobre v0.116.0**, la que validaba [[D-090]]). · **Relacionada:** [[D-090]] (el campo `Conjunto comparado`, que este cierra), [[D-083]] (*"bien formado y equivocado"*), [[D-089]] (el mismo defecto en el índice).

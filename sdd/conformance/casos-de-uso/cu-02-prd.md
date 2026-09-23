@@ -29,6 +29,9 @@ tolerar también la forma verbosa `[ASUNCIÓN: …]`) sí es determinista.
 > (siguen haciendo falta >=3), pero **si puede demostrar que algo se rompio**. Registrala como
 > `SELLADO (4-x) - HUMO OK (5)`, nunca como un `OK` a secas.
 >
+> **Segunda frontera (2026-09-23, [[D-094]]):** los agentes Opus y el hilo principal pasan a
+> `opus-5-5`. La pasada de humo pendiente se hace ya en **5.5**; una hecha en 5 no la cubre.
+>
 > **No re-probar** (deterministas, los cubre CI): ninguno — los 10 escenarios tienen componente de juicio.
 >
 > **Prioridad alta** (el agente debe negarse, parar o juzgar): `CU-2.e` (gate de asunciones + orden PRD->spec, el mas critico del CU), `CU-2.d` (confirmacion ponderada por riesgo, y que declinar deje el PRD intacto), `CU-2.h` (la revision no reescribe a su cosecha), `CU-2.g` (no revisar como PRD un artefacto de otra fase), `CU-2.j` (cascada de dependencias: orden del backstop y los 3 desenlaces).

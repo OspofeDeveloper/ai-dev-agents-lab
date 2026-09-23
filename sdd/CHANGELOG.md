@@ -2,6 +2,15 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.117.0 — 2026-09-23
+
+**Salto a Opus 5.5, núcleo y overlay, y la fábrica en el mismo barrido** — [[DECISIONS D-094]].
+
+- ⚠ **Los 11 agentes Opus pasan a `claude-opus-5-5`** (6 del núcleo desde `opus-5`: `prd-expert`, `design-system-architect`, `design-feature-architect`, `plan-architect`, `sdd-author`, `sdd-conformance`; 5 del overlay KMM desde `opus-4-8`: `plan-architect` y los cuatro implementadores). ⚠ **Los 5 `claude-sonnet-4-6` del overlay KMM pasan a `claude-sonnet-5`**, la familia del núcleo. El ecosistema queda en **dos** valores de `model:`.
+- 🟠 **La fábrica seguía en 4-8.** `sdd-scaffold.py` creaba cada agente nuevo con `claude-opus-4-8`, y el checklist y la plantilla de frontmatter de `kb-sdd-creation-guide` recomendaban `opus-4-8`/`sonnet-4-6` mientras su tabla decía `opus-5`: el bump de agosto barrió los agentes y se dejó la fábrica. Alineados default, test, checklist, plantilla, tabla y `README`. Cierra el ROADMAP **11.9** (los agentes KMM en 4.x), abierto desde el 1 de septiembre.
+- ⚠ **Conformance: frontera de modelo.** **`CU-3.d` vuelve a 0/3** — su punto 3 lo emite el hilo principal, que pasa a Opus 5.5, así que la 1/3 (orquestador `opus-5`) queda como histórica. Los sellos conductuales previos pasan a deuda de procedencia `SELLADO (5) — pendiente HUMO (5.5)`; lo determinista no se toca.
+- **Aprendizaje.** Un bump de modelo tiene dos superficies —los agentes que existen y los que se van a crear— y la frontera no es solo el frontmatter: el modelo del hilo principal también mide.
+
 ## 0.116.1 — 2026-09-23
 
 **La mitad que le faltaba a [[DECISIONS D-090]], y la encontró la pasada que lo validaba** — [[DECISIONS D-093]]. Versión propia y no un retoque de 0.116.0 a propósito: la pasada **1/3 de `CU-3.d` corrió sobre 0.116.0**, y meter estos cambios dentro de esa etiqueta haría que "ancla v0.116.0" nombrara dos árboles distintos. **Los cuatro puntos que `CU-3.d` mide son idénticos entre 0.116.0 y 0.116.1**, así que la serie continúa: lo que cambia es prosa del informe de conflictos y los siguientes pasos del readiness (territorio de CU-3.f/o y V1).

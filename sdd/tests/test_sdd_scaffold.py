@@ -102,7 +102,7 @@ class AgentScaffoldTest(ScaffoldBase):
         self.assertIn("name: tasks-helper", fm)
         self.assertIn("skills: [kb-a, kb-b]", fm)
         self.assertIn("color: cyan", fm)       # tasks -> cyan
-        self.assertIn("model: claude-opus-4-8", fm)
+        self.assertIn("model: claude-opus-5-5", fm)
         self.assertIn("effort: high", fm)       # default (no read-only)
 
     def test_agent_read_only_swaps_effort_for_disallowed(self):

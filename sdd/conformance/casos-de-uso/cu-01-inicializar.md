@@ -32,6 +32,9 @@ wizard antes de nada, invocar el init, no autoaprobar el modo).
 > (siguen haciendo falta >=3), pero **si puede demostrar que algo se rompio**. Registrala como
 > `SELLADO (4-x) - HUMO OK (5)`, nunca como un `OK` a secas.
 >
+> **Segunda frontera (2026-09-23, [[D-094]]):** los agentes Opus y el hilo principal pasan a
+> `opus-5-5`. La pasada de humo pendiente se hace ya en **5.5**; una hecha en 5 no la cubre.
+>
 > **No re-probar** (deterministas, los cubre CI): `CU-1.g` (busqueda de marcadores del hook, 24 tests en `test_session_hook.py`), `CU-1.t` y `CU-1.u` (generacion de reglas eager, `test_install_sh.py`).
 >
 > **Prioridad alta** (el agente debe negarse, parar o juzgar): `CU-1.k` (verificacion bloqueante), `CU-1.j` (gate de subpaquete), `CU-1.p` (los args saltan preguntas y no se re-pregunta lo ya dicho), `CU-1.a`/`CU-1.b`/`CU-1.c` (el wizard de modo).

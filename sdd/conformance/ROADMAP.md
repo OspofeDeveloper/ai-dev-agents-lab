@@ -68,6 +68,14 @@ para garantizar que ningún skill se queda sin casos en los cuatro ejes de prueb
 > **v0.116.1** para que el ancla no nombre dos árboles: 1/3 corrió sobre 0.116.0, y 2/3 y 3/3
 > correrán sobre 0.116.1+, con los cuatro puntos byte-idénticos entre ambas.
 
+> 🔁 **Y la serie se pierde a propósito dos días después** ([[D-094]], v0.117.0). Los agentes Opus
+> pasan a `claude-opus-5-5` y el orquestador de las sesiones con ellos. Los agentes que ejecuta
+> CU-3.d son `sonnet-5` y no cambian, pero su **punto 3** —el fan-out en un único mensaje— lo
+> emite el **hilo principal**: juicio al otro lado de una frontera de modelo. **`CU-3.d` vuelve a
+> 0/3**; la 1/3 queda como histórica. Con una pasada se pierde una pasada; sellando sobre `opus-5`
+> se habría perdido un sello. Los sellos conductuales previos (CU-3.a, CU-2, CU-1, CU-13.a) pasan
+> a `SELLADO (5) — pendiente HUMO (5.5)`.
+
 > ⏱ **Cuatro escenarios nacen sin pasada del barrido de enlazado lateral de Spec**
 > ([[D-078]]/[[D-079]], 2026-09-14): **CU-9.o** (evolucionar una feature dada de baja se deniega, y
 > el estado sobrevive incluso sin hook), **CU-7.s** (la reactivación es la única vuelta atrás y no

@@ -71,7 +71,7 @@ name: <nombre>
 description: "<Razonamiento especializado. Artefactos que produce. Que NO cubre.>"
 skills: [kb-<1>, kb-<2>, ...]
 permissionMode: acceptEdits
-model: claude-opus-4-8 | claude-sonnet-4-6
+model: claude-opus-5-5 | claude-sonnet-5
 effort: high                    # solo en agentes escritores/implementadores
 disallowedTools: Write, Edit    # solo en auditores/planificadores puros
 color: <color-por-fase>

@@ -3,7 +3,7 @@ name: sdd-author
 description: Agente especializado en crear y refactorizar skills (kb-*, wf-*) y agentes dentro del ecosistema SDD. Garantiza SSoT, SRP, frontmatters correctos, estructura de contenido adecuada y registro completo en los CLAUDE.md correspondientes. No ejecuta el pipeline SDD ni analiza specs o planes de producto.
 skills: [kb-sdd-skill-architecture, kb-sdd-creation-guide, kb-sdd-stack-overlay-contract]
 permissionMode: acceptEdits
-model: claude-opus-5
+model: claude-opus-5-5
 effort: high
 color: purple
 ---

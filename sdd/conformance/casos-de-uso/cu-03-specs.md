@@ -26,7 +26,7 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 [`ROADMAP.md`](../ROADMAP.md) — esta vista es la **transpuesta** para leer/ejecutar el CU.
 
 ### `wf-spec-analyze` — analyze obligatorio y pureza (`sdd-spec-explorer`) (2)
-- [x] CU-3.a — El analyze es obligatorio y para en gaps críticos — **SELLADO 3/3** (pasadas 16-18, ancla v0.115.1)
+- [x] CU-3.a — El analyze es obligatorio y para en gaps críticos — **SELLADO 3/3** (pasadas 16-18, ancla v0.115.1) — **SELLADO (5), pendiente HUMO (5.5)** ([[D-094]]: el gate y la delegación los ejerce el hilo principal)
 - [ ] CU-3.k — Analyze: contaminación técnica detiene y las preguntas de riesgo van neutras
 
 ### `wf-spec-discover` — mapa de features y ownership (`sdd-spec-explorer`) (2)
@@ -34,7 +34,7 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 - [ ] CU-3.i — Discovery: ownership ambiguo de shared model para en checkpoint humano
 
 ### `wf-spec-features-first` — orquestador del flujo features-first (4)
-- [ ] CU-3.d — Generación por feature (features-first) en paralelo — **1/3** (ancla v0.116.0, 2026-09-21)
+- [ ] CU-3.d — Generación por feature (features-first) en paralelo — **0/3** (serie reiniciada por frontera de modelo, [[D-094]]; la 1/3 de v0.116.0 con orquestador `opus-5` queda histórica)
 - [ ] CU-3.l — Features-first: `--features` con IDs inexistentes en el discovery
 - [ ] CU-3.u — Features-first: la decisión de alcance viaja al fan-out y un `STOP_*` se presenta (D-081) ⏱ **sin pasada**
 - [ ] CU-3.v — Features-first: un discovery que ya existe se reutiliza, no se regenera (D-081) ⏱ **sin pasada**
