@@ -16,8 +16,12 @@ debe verificarse o computarse de forma reproducible **no se confía a la prosa**
 2. **Solo-ecosistema — no se instalan.** Sirven al desarrollo/CI de este repo:
    ```
    generate-skill-registry.py · sdd-structural-lint.py · sdd-conformance-coverage.py
-   sdd-meta-lint-hook.py · sdd-scaffold.py · merge-claude-settings.py
+   sdd-meta-lint-hook.py · sdd-scaffold.py · merge-claude-settings.py · sdd-fanout-check.py
    ```
+   `sdd-fanout-check.py` es un **probe de conformance**, no un gate: lee el transcript de una
+   sesión y verifica que las N llamadas de un fan-out salieron en un único mensaje ([[D-092]]).
+   No se instala a propósito — un script de banco en `.sdd/scripts/` es contexto falso para
+   cualquier agente que liste ese directorio.
 
 **Qué NO es / qué no va aquí.**
 - No contienen lógica de producto que dependa de juicio semántico (eso vive en agentes + `kb-*`).

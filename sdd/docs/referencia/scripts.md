@@ -83,8 +83,11 @@ prefijos (`F` ≠ `RF` ≠ `F-C`).
 
 - **Exit:** `0` ID emitido · `1` error de uso.
 
-### `sdd-features-index.py` · `<dir> [--check | --stdout]`
-Regenera `_features.md` como función pura de specs + discovery + readiness.
+### `sdd-features-index.py` · `<dir> [--check | --stdout] [--discovery P]`
+Regenera `_features.md` como función pura de specs + discovery + readiness. El veredicto
+del readiness manda, con dos excepciones que el disco desmiente: `LISTA` sobre un spec en
+`BORRADOR` ([[D-077]]) y `PENDIENTE_GENERACIÓN` sobre un spec que **existe** ([[D-089]]:
+matriz estancada — avisa en stderr y deriva el estado de los marcadores).
 
 - **Exit:** `0` OK · `1` error IO · `2` (`--check`) desactualizado en disco.
 
@@ -109,6 +112,14 @@ ABSOLUTE-PATH, ALLOWED-TOOLS-MISMATCH, DESCRIPTION-TOO-LONG…). Gate de cierre 
 workflows de creación.
 
 - **Exit:** `0` limpio · `1` solo warnings · `2` ≥1 blocking (con `--check`).
+
+### `sdd-fanout-check.py` · `<session.jsonl | dir> [--json] [--quiet]`
+Probe de conformance (solo-ecosistema, no se instala): verifica sobre el transcript que las
+N llamadas `Agent` de un fan-out salieron en **un único mensaje** ([[D-047]], [[D-092]]).
+Agrupa por `message.id`, clasifica por `(agente, skill del prompt)` y corta por turno humano,
+que es lo que lo separa de las delegaciones secuenciales legítimas y de los relanzados.
+
+- **Exit:** `0` sin hallazgos · `1` error de uso/IO · `2` fan-out serializado.
 
 ### `sdd-meta-lint-hook.py` · hook `PostToolUse` (`Write|Edit|MultiEdit`)
 Al editar a mano un `SKILL.md`/agente del ecosistema, inyecta sus findings blocking

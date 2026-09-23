@@ -6,6 +6,325 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-093 — La vigencia estaba en la cabecera y el veredicto seguía sin llevarla
+
+- **Fecha:** 2026-09-23 · **Estado:** Adoptada (el veredicto del informe de conflictos se enuncia sobre su conjunto; un informe ESTANCADO produce acción en el readiness. **Salió de la pasada 1/3 de `CU-3.d` sobre v0.116.0**, la que validaba [[D-090]]). · **Relacionada:** [[D-090]] (el campo `Conjunto comparado`, que este cierra), [[D-083]] (*"bien formado y equivocado"*), [[D-089]] (el mismo defecto en el índice).
+
+**Contexto.** [[D-090]] hizo declarar a cada informe de conflictos contra qué conjunto se calculó, y la medición de readiness lo usa para marcar **ESTANCADO** lo que ya no cubre los specs actuales. Funcionó a la primera. Pero la pasada que lo validaba enseñó la mitad que faltaba, en dos sitios:
+
+- **El veredicto de portada no llevaba el alcance.** `gestion-categorias_conflict_report.md` abría con **`SIN_CONFLICTOS`** a secas —*"no se detectaron … entre los dos specs comparados"*, con el matiz enterrado en la frase— mientras esa misma feature aparecía en `CF-F004-02` (MEDIA) del informe de `cuentas-y-tarjetas`, generado una tanda después. La cabecera decía la verdad y la portada no. Y quien abre el informe de una feature **empieza por su portada**, no por el readiness que lo clasifica.
+- **El ESTANCADO se quedaba en diagnóstico.** El readiness listó los dos informes viejos con lo que no vieron… y sus siete «Próximos pasos» no decían nada de ellos. Diagnóstico sin cierre: el lector no sabe si le falta análisis o solo le sobra un documento viejo.
+
+**Decisión.**
+
+- **El veredicto se enuncia sobre su conjunto**: `SIN_CONFLICTOS (entre los 2 specs comparados: F-002, F-003)`. El token va **primero y literal** —lo parsea el readiness, que exige encontrarlo— y el conjunto detrás, entre paréntesis. La regla de oro de la skill lo dice ahora entero: un veredicto sin su alcance **deja de ser inequívoco** en cuanto aparece un spec más.
+- **Un ESTANCADO produce acción en «Próximos pasos»**, y antes de proponer nada el readiness mira **quién cubre los pares que ese informe no vio**.
+- **Y aquí está el dato que evita el arreglo caro:** el fan-out compara cada spec **nuevo contra todos**, así que el par (viejo, nuevo) lo miró el auditor del nuevo y el par (viejo, viejo) sigue cubierto por el informe viejo. **La cobertura por pares está completa**; lo viejo es el **documento**, no el análisis. La acción normal es *"puede rehacerse cuando convenga"*, no relanzar N auditores. Solo si al cruzarlo aparece un par que **no ha mirado nadie**, eso es análisis que falta y sube a acción prioritaria.
+
+**Alternativas descartadas.**
+- *Rehacer automáticamente los informes estancados al cerrar cada tanda* → paga N auditorías para reescribir documentos cuyo contenido ya está cubierto. Es la alternativa que [[D-090]] descartó por cara, y saberlo **por qué** es justo lo que faltaba escribir.
+- *Dejar solo la cabecera y confiar en que el lector la mire* → es lo que se probó: la cabecera estaba puesta y el falso negativo salió igual. Un dato que contradice al titular tiene que estar **en el titular**.
+
+**Consecuencias / aprendizaje.** **Un matiz que vive lejos del veredicto no matiza nada.** [[D-090]] puso la vigencia donde la lee un parser y dio por hecho que con eso bastaba para la persona; el probe de campo enseñó que el lector humano entra por otra puerta. El corolario, que ya va por la segunda vez en esta tanda: cuando un artefacto pasa a ser **relativo a un estado**, hay que recorrer **todos** sus puntos de entrada —portada, cabecera, tabla resumen, informe que lo consume— y no solo el que uno tenía en la cabeza al arreglarlo.
+
+**Referencias.** `pipeline/spec/skills/wf-spec-conflict/SKILL.md` (Regla de oro, Paso 7) + `references/conflict_report_template.md` · `pipeline/spec/skills/wf-spec-readiness/SKILL.md` (Paso 4c) + `references/readiness_report_template.md` · `conformance/casos-de-uso/cu-03-specs.md` (pasada 1/3 de CU-3.d) · `CHANGELOG.md` 0.116.0.
+
+---
+
+## D-092 — El contrato del fan-out no se puede medir a ojo, y con N=2 tampoco se ve
+
+- **Fecha:** 2026-09-21 · **Estado:** Adoptada (probe determinista `sdd-fanout-check.py` con 10 tests; invariante del cardinal reforzado para N=2 en los Pasos 5 y 7 de `wf-spec-features-first`; **V4** nuevo en el banco. **Salió de la pasada de CU-3.d del 2026-09-18**). · **Relacionada:** [[D-084]] (la llamada de prueba), [[D-047]] (el fan-out es una barrera), [[D-050]] (el flag que hace que serializar duela).
+
+**Contexto.** [[D-084]] cerró la forma `1 + (N-1)` reforzando el contrato en los tres emisores y añadiendo el backstop `FANOUT-PILOT-UNGUARDED`. Ese backstop es un lint **sobre el texto de la skill**: comprueba que el contrato esté escrito. No mide la conducta, y no puede — contar llamadas por mensaje en caliente es justo lo que [[D-048]] puso y [[D-050]] retiró por degradar el comportamiento.
+
+Con el contrato reforzado y el backstop puesto, la pasada de CU-3.d del 2026-09-18 volvió a fallar: la primera tanda, de **dos** features, salió `1 + 1` con **253 s** de hueco — y la **misma sesión**, veinte minutos después, emitió las tres de la tanda siguiente en un único mensaje. El orquestador incluso lo dijo al corregirse: *"Emití solo una llamada cuando las dos debían salir en el mismo mensaje"*.
+
+Dos cosas nuevas, y las dos importan:
+
+- **Con N=2 el desvío es invisible.** *"Lanzo las dos en paralelo"* seguido de una llamada se lee igual que el caso bueno: no hay un grupo del que falte un miembro. Con seis, el mensaje con una sola llamada canta; con dos, no hay forma.
+- **Las tres veces lo encontró una persona leyendo el `.jsonl`.** Un banco que depende de que alguien mire el transcript a mano no mide ese contrato: lo muestrea.
+
+**Decisión.**
+
+- **Probe `sdd-fanout-check.py`** (ecosistema, no se instala en el consumer): agrupa los `tool_use` de la tool `Agent` por `message.id`, los clasifica por cubo `(subagent_type, skill que el prompt manda leer)` y corta por turno humano. Dos emisiones del mismo cubo sin turno humano en medio = `FANOUT_SERIALIZADO`, con la forma (`1 + 3`) y el hueco en segundos. Exit 2, como los demás gates.
+- **El cubo lleva la skill a propósito.** Sin ella, `wf-spec-analyze` → `wf-spec-discover` (dos encargos secuenciales **por contrato** al mismo `sdd-spec-explorer`) sería un falso positivo. El corte por turno humano hace lo propio con los relanzados legítimos: un `STOP_*` presentado en un gate, una tanda cortada por el límite de sesión.
+- **Fusionar las filas por `message.id` es la mitad del probe.** El transcript parte un mensaje en una fila por bloque de contenido: las 3 llamadas de un fan-out bueno llegan como 3 filas. La primera versión las contaba como 3 emisiones de tamaño 1 — habría reportado rojo sobre el caso correcto.
+- **Validado contra el histórico antes de darlo por bueno**: pasada 15 → `OK` (7+7), pasada 18 → `OK` (3+3), pasada 14 → `1 + 3` con 359 s, que es el hallazgo que [[D-084]] describe. Y de rebote encontró **una cuarta ocurrencia** que nadie había registrado.
+- **El contrato dice ahora el caso pequeño**: *"y si son 2, ese mensaje lleva 2 — el invariante es el cardinal, no el tamaño de la tanda"*, con la instrucción operativa de **decir el número antes de emitir y contar las llamadas contra él**.
+
+**Alternativas descartadas.**
+- *Un `PreToolUse` que cuente llamadas* → descartada por [[D-050]]: ya se probó, degradó la conducta, y además el hook no sabe cuántas **debería** haber — ese número vive en una decisión tomada dos pasos antes.
+- *Reescribir otra vez el párrafo del contrato* → insuficiente por sí solo: es la tercera vez. Si el texto bastara, no habría hecho falta una segunda.
+- *Instalar el probe en `.sdd/scripts/` del consumer* → descartada: no es un gate del proyecto y lo que lee es el transcript del harness. Un script de conformance en `.sdd/scripts/` es contexto falso para cualquier agente que liste ese directorio (el mismo daño que los scripts zombis de ROADMAP 11.8).
+
+**Consecuencias / aprendizaje.** **Un contrato que solo verifica su propio enunciado no está verificado.** El lint de texto y el probe de conducta no son redundantes: uno mira lo que la skill dice, el otro lo que la sesión hizo, y el fallo de [[D-084]] vive exactamente en el hueco entre los dos. Y el corolario del tamaño: **el caso pequeño no es el caso fácil, es el caso ciego** — un invariante se rompe primero donde su incumplimiento no tiene forma visible.
+
+**Referencias.** `scripts/sdd-fanout-check.py` · `tests/test_sdd_fanout_check.py` (10 tests) · `pipeline/spec/skills/wf-spec-features-first/SKILL.md` (Pasos 5 y 7) · `conformance/casos-de-uso/cu-03-specs.md` (**V4**, CU-3.d punto 3) · `CHANGELOG.md` 0.116.0.
+
+---
+
+## D-091 — La tercera casa de la misma norma: citar la kb que sostiene tu veredicto
+
+- **Fecha:** 2026-09-21 · **Estado:** Adoptada (norma de prosa extendida a la familia conflict y al informe de readiness, y generalizada en la guía de fase; **medida en la pasada de CU-3.d del 2026-09-18**). · **Relacionada:** [[D-088]] (la misma clase, en la fase PRD; su *"¿dónde más vive?"* apuntaba aquí), [[D-042]] (el artefacto se lee **verbatim** a quien decide), v0.115.2 (la norma en el informe de readiness, acotada a los workflows).
+
+**Contexto.** [[D-088]] amplió el probe **V1** a `kb-*` y cerró la fuente en `wf-spec-analyze`, dejando anotado el pendiente: *"¿qué clase es esta, y dónde más vive?"*. La pasada de CU-3.d del 2026-09-18 lo contestó — V1 devolvió **3 líneas**, las tres de la misma forma y ninguna en la fase PRD:
+
+- `spec_readiness_report.md`: *"Por qué es conflicto (Regla 4 de `kb-conflict-expert`…)"* y *"la tabla de severidad de `kb-conflict-expert` da ALTA por defecto"*;
+- `objetivos-de-ahorro_conflict_report.md`: *"exactamente el patrón de la Regla 4 de `kb-conflict-expert`"*.
+
+La norma existía en los dos sitios y **ninguna de las dos lo cubría**: la de `wf-spec-conflict` habla de *"no nombrar el workflow que la ejecuta"* en la **Sugerencia de resolución**, y la de `wf-spec-readiness` —ampliada en v0.115.2 al informe entero— también dice *"workflow"*. Una kb no es un workflow y esto no es una recomendación: es una **justificación**, el sitio donde citar la fuente es lo natural.
+
+**Decisión.**
+
+- **La norma pasa a ser de la clase entera, no del tipo de componente**: ni `wf-*` ni `kb-*`, ni al recomendar ni al justificar. Escrita en `kb-conflict-expert` (sección nueva, con tabla de "en vez de / escribe"), en el Paso 6 y el Paso 7 de `wf-spec-conflict`, en el Paso 7 de `wf-spec-readiness` y en la guía de fase (`pipeline/spec/CLAUDE.md`), que es donde vive el enunciado canónico.
+- **La forma de citar es por contenido:** *"el mismo modelo con comportamientos distintos en dos CAs de features diferentes"* en vez de *"Regla 4 de `kb-conflict-expert`"*. El veredicto se sostiene igual —mejor, de hecho: dice **qué** regla es sin obligar a ir a buscarla— y la procedencia ya la lleva `Generado por:`.
+- **La plantilla lo dice donde se rellena**, en el campo `Por qué es un conflicto`, no solo en el `SKILL.md`. Aprendizaje de [[D-085]]: el campo que pide el texto pesa más que la norma tres párrafos antes.
+
+**Alternativas descartadas.**
+- *Dejarlo pasar por leve* → la categoría del probe es "procedencia fuera de forma", sí, pero aquí no hay procedencia que preservar: el informe ya declara quién lo generó. Es jerga pura en el sitio donde alguien decide qué feature manda.
+- *Prohibir citar reglas* → al revés de lo que se quiere: la cita **sostiene** el veredicto ante quien lo lee. Lo que sobra es el nombre del fichero donde vive.
+
+**Consecuencias / aprendizaje.** Tercera vez que esta norma se escribe y **tercera vez que se escribió acotada al sitio donde apareció** — prosa del gap (v0.92.0), informe de readiness (v0.115.2), nota de gobernanza ([[D-088]]) y ahora la familia conflict. El patrón no es que la norma sea débil: es que cada vez se redacta con el **sustantivo del caso** (*"el workflow"*, *"la skill"*) en vez de con la clase (*"cualquier componente del ecosistema"*). Escribir la regla en términos de lo que se vio es lo que garantiza volver a verla en otro sitio.
+
+**Referencias.** `pipeline/spec/skills/kb-conflict-expert/SKILL.md` · `pipeline/spec/skills/wf-spec-conflict/SKILL.md` (Pasos 6 y 7) + su plantilla · `pipeline/spec/skills/wf-spec-readiness/SKILL.md` (Paso 7) · `pipeline/spec/CLAUDE.md` · `conformance/casos-de-uso/cu-03-specs.md` (V1) · `CHANGELOG.md` 0.116.0.
+
+---
+
+## D-090 — Cinco auditores numerando en local, y un informe que no dice contra qué comparó
+
+- **Fecha:** 2026-09-21 · **Estado:** Adoptada (IDs de hallazgo con prefijo de feature, campo `Conjunto comparado` en la cabecera del informe y detección de informe **ESTANCADO** en el readiness; **salió de la pasada de CU-3.d del 2026-09-18**). · **Relacionada:** [[D-056]] (el reparto de rangos de ID de gap antes del fan-out), [[D-047]] (los auditores se contradicen por diseño y arbitra el readiness), [[D-078]] (dónde se escribe el consolidado), [[D-089]] (la otra cara: un artefacto de una tanda leído en la siguiente).
+
+**Contexto.** El Paso 7 de `wf-spec-features-first` lanza **un auditor de conflictos por spec nuevo**, en paralelo, y cada uno escribe su informe junto a su spec. Ninguno ve lo que numeran los demás. En la pasada del 2026-09-18, con cinco informes en disco (dos de una tanda anterior, tres de esta):
+
+- **tres hallazgos distintos** etiquetados `CF-002` por tres auditores distintos;
+- el `CF-001` de la tanda anterior, que no es el mismo hallazgo que el `CF-001` de esta;
+- y los dos informes viejos, calculados contra un universo de **2** specs, leídos junto a tres calculados contra **5**, sin que nada en el fichero lo dijera.
+
+Lo salvó el readiness inventándose un espacio de nombres global (`GCF-01`…`GCF-05`) y marcando a ojo cuáles eran "de la pasada anterior" — **porque el hilo principal le escribió el encargo a mano en el prompt**. Nada de eso está en ningún contrato. Y el daño, si no se salva, no es cosmético: quien decide *"manda F-001 en este choque"* cita el ID, y con dos hallazgos homónimos la decisión aterriza en el equivocado.
+
+Los escritores del Paso 5 **sí** tienen resuelto esto desde [[D-056]]: el orquestador les reparte bloques de ID (`--gap-id-start P-031`) antes de lanzar. El fan-out de auditores no tenía equivalente.
+
+**Decisión.**
+
+- **El ID lleva delante el `F-00X` del spec auditado**: `CF-F001-01`, `CF-F001-02`. En modo consolidado (un informe de todo el directorio) no hay con quién colisionar y se numera `CF-01`.
+- **Sin reparto, a propósito.** Copiar el mecanismo de [[D-056]] habría exigido un `--finding-id-start` nuevo, parseado por la skill y transportado por el orquestador: tres piezas que pueden quedarse a medias, y la de en medio es la que falló en [[D-081]]. El prefijo no necesita coordinación — **cada auditor ya sabe qué spec audita**.
+- **El informe declara su vigencia**: campo `Conjunto comparado` en la cabecera con todos los specs que entraron (y los excluidos por `RETIRADO`, que [[D-080]] ya obligaba a nombrar). Un informe de conflictos **es válido para el conjunto que tenía delante**, y en la iteración por subsets ese conjunto crece en cada tanda.
+- **El readiness lo lee y lo dice**: informe cuyo `Conjunto comparado` no cubre los specs actuales → **ESTANCADO**, con qué vio y qué no; sus hallazgos se conservan (siguen siendo ciertos sobre lo que comparó) pero no cuentan como cobertura del conjunto de ahora. Sin el campo (informes anteriores a v0.116.0) → **vigencia desconocida**, y se dice.
+- **Y el readiness deja de renumerar**: los IDs ya son únicos, así que los cita tal cual — renumerar rompe la trazabilidad contra el informe de origen, que es lo que abre quien va a arreglar el choque. Para informes viejos con IDs colisionados, `<feature>:<ID>`, que desambigua sin inventar.
+
+**Alternativas descartadas.**
+- *`--finding-id-start` espejo de [[D-056]]* → ver arriba: más superficie y una pieza intermedia que ya demostró perderse.
+- *Recalcular todos los informes en cada tanda* → caro (N auditores por tanda en vez de los nuevos) y no arregla el problema de fondo: un informe **sin fecha de caducidad escrita** vuelve a quedarse viejo en la tanda siguiente.
+- *Que el orquestador avise de las dos cosas en el prompt del readiness* → es lo que pasó, y funcionó **esa vez**. Lo que un orquestador improvisa una vez, el siguiente no lo hace.
+
+**Consecuencias / aprendizaje.** **Un identificador local deja de serlo en cuanto su artefacto tiene hermanos**, y el fan-out fabrica hermanos por diseño. Dos formas de arreglarlo: repartir el espacio antes (coordinación, [[D-056]]) o meter en el ID algo que el autor **ya sabe de sí mismo** (sin coordinación). Cuando la segunda existe, es la buena. Y su gemela temporal: **un artefacto derivado que no declara contra qué se derivó no se puede saber si sigue siendo verdad** — lo mismo que [[D-089]] arregla en el índice, aquí escrito en la cabecera del informe.
+
+**Referencias.** `pipeline/spec/skills/wf-spec-conflict/SKILL.md` (Pasos 6 y 7) + `references/conflict_report_template.md` · `pipeline/spec/skills/wf-spec-readiness/SKILL.md` (Paso 4c) + su plantilla · `pipeline/spec/skills/wf-spec-features-first/SKILL.md` (Paso 7) · `conformance/casos-de-uso/cu-03-specs.md` (CU-3.d) · `CHANGELOG.md` 0.116.0.
+
+---
+
+## D-089 — El índice heredó un veredicto que el disco ya desmentía
+
+- **Fecha:** 2026-09-21 · **Estado:** Adoptada (carve-out en `derive_state` + aviso de matriz estancada en `sdd-features-index.py`, 6 tests; **salió de la pasada de CU-3.d del 2026-09-18**). · **Relacionada:** [[D-077]] (el carve-out gemelo: el sello desmiente a `LISTA`), [[D-046]] (el índice es un artefacto generado, función pura de sus fuentes), [[D-083]] (*"bien formado y equivocado"* es el fallo que no se nota), [[D-090]] (la misma clase, en el informe de conflictos).
+
+**Contexto.** `sdd-features-index.py` deriva el `Estado` de cada feature con una prioridad escrita: la `## Matriz de readiness` del `_readiness_report.md` es **autoridad** sobre la derivación mecánica, con un solo carve-out —un `LISTA` sobre un spec en `BORRADOR` baja a `BLOQUEADA` ([[D-077]])—.
+
+En la iteración por subsets eso se rompe solo, y no hace falta que nadie se equivoque: el **Paso 6** de `wf-spec-features-first` regenera el índice **antes** del readiness del **Paso 8**, así que el único informe en disco es el de la **tanda anterior** — que listaba las features de esta tanda como `PENDIENTE_GENERACIÓN`, porque cuando se escribió era verdad. El veredicto ganaba, y el índice salía diciendo dos cosas incompatibles de la misma feature:
+
+```
+- **Ruta spec**: features/registro-de-movimientos/spec/registro-de-movimientos_spec.md
+- **Estado**: PENDIENTE_GENERACIÓN
+> F-001 está identificada en el discovery pero aún no tiene spec generada.
+```
+
+Medido el 2026-09-18 sobre las tres features recién escritas. **Duró tres días** —hasta que el readiness rehizo el índice— y durante ese tiempo el orquestador había narrado *"índice regenerado (8 features, universo completo)"*, que es exactamente la trampa que `CU-3.d` punto 2 avisa: la conversación decía la verdad y el fichero no.
+
+**Decisión.**
+
+- **Un `PENDIENTE_GENERACIÓN` sobre un spec que existe no es un veredicto: es matriz vieja.** Se descarta y la feature cae al camino marker-based. Mismo razonamiento que [[D-077]], en el otro sentido: que el fichero exista es un **hecho mecánico** del disco, el veredicto es un **juicio**, y el disco es más fresco.
+- **El aviso va aparte y nombra al culpable correcto:** `⚠ matriz de readiness estancada: N feature(s) con spec en disco que el informe sigue dando por generar`. El índice se corrige solo; el `_readiness_report.md` del que salió **sigue estancado** y lo regenera una persona. Callarlo dejaría el informe viejo mandando en todo lo demás.
+- **La señal es de contenido, no de `mtime`.** Se deriva de la contradicción misma (veredicto vs. spec en disco), así que sobrevive a un `git checkout` y no rompe la promesa de que la salida es función pura de las fuentes.
+- **El carve-out es solo para `PENDIENTE_GENERACIÓN`.** `REQUIERE_CAMBIO_PRD` o `BLOQUEADA` sobre un spec existente son juicios que el disco no desmiente.
+
+**Alternativas descartadas.**
+- *Reordenar los pasos (readiness antes que índice)* → descartada: el readiness **lee** el índice (`Fuente: _features.md`) y lo regenera al cerrar (Paso 8.5). Invertirlos cambia una dependencia por la otra y deja el mismo agujero mirando al otro lado.
+- *Borrar el `_readiness_report.md` al empezar una tanda* → destruye el único veredicto que hay mientras la tanda corre, y si se corta no queda ninguno.
+- *Que el Paso 6 pase un flag "ignora el readiness"* → la decisión volvería a vivir en el orquestador y a depender de que viaje ([[D-081]]). El script tiene delante las dos evidencias: puede resolverlo solo.
+
+**Consecuencias / aprendizaje.** **Una autoridad declarada sin fecha de caducidad se convierte en un fallo silencioso en cuanto el flujo es iterativo.** La prioridad *"el readiness manda"* se escribió pensando en una pasada única, donde el informe siempre es posterior a los specs; en cuanto hay tandas, el informe es **anterior** a la mitad de lo que describe. La pregunta que caza la clase, y que [[D-090]] contesta en el otro artefacto: *¿este insumo dice contra qué estado se calculó, o solo lo que concluyó?*
+
+**Referencias.** `scripts/sdd-features-index.py` (`derive_state`, docstring de prioridad, aviso en `main`) · `tests/test_sdd_features_index.py::MatrizEstancadaTest` (6 tests) · `conformance/casos-de-uso/cu-03-specs.md` (CU-3.d punto 2) · `CHANGELOG.md` 0.116.0.
+
+---
+
+## D-088 — El probe medía media clase, y el contrato aprovechaba la otra mitad
+
+- **Fecha:** 2026-09-17 · **Estado:** Adoptada (fuente corregida en `wf-spec-analyze`, norma ampliada, probe **V1** ampliado a `kb-*`; **salió de la pasada 17 de CU-3.a**). · **Relacionada:** [[D-085]] (una prohibición no gana a una instrucción que pide lo contrario), v0.92.0 y v0.115.2 (las dos mitades anteriores de la norma de prosa), [[D-042]] (el gap se lee **verbatim** a quien decide).
+
+**Contexto.** El probe **V1** de CU-3 comprueba que ningún artefacto enseñe comandos, y lo hace con `grep -rnE "\bwf-[a-z][a-z0-9-]*"`. La pasada 17 dio **V1 = 0** — y el `_analysis.md` llevaba **tres nombres de skill**:
+
+- `kb-product-change-governance`, dos veces, en la **Nota de gobernanza** de sendos bloques `[P-XXX]`;
+- `kb-prd-expert`, citado como fuente al justificar un borderline en la sección de pureza.
+
+El primero **lo prescribía el contrato**: `wf-spec-analyze` mandaba literalmente escribir *"deberá reevaluarse con `kb-product-change-governance`"*. El segundo salió solo, y es la misma forma que v0.115.2 acababa de cerrar en `wf-spec-readiness` —citar la norma que sostiene tu veredicto— en otra fase. Los dos están en prosa que, por [[D-042]], se le lee **verbatim** a una persona de producto en la vía de dictado.
+
+**Decisión.**
+
+- **V1 pasa a `\b(wf|kb)-`.** Un probe que mide media clase reporta verde sobre la otra mitad, que es peor que no tenerlo: da por cubierto lo que no mira.
+- **La fuente deja de pedirlo:** la nota de gobernanza nombra ahora **la evaluación** (*"deberá reevaluarse con la gobernanza de cambios de producto"*), no la skill que la hace.
+- **La norma de prosa del gap gana el caso general**, con sus dos formas: ni para recomendar un paso, ni para **citar la norma que sostiene un veredicto** (*"contemplado como aceptable en `kb-prd-expert`, Regla 14"* → *"en la norma de pureza del PRD"*). La segunda es la que se escapa: al justificar un borderline, lo natural es citar la fuente, y la fuente tiene nombre de skill.
+- **La pasada 17 cuenta como limpia.** V1 estaba definido sobre `wf-` y sobre eso dio 0. Suspenderla con el probe ampliado **después** de verla sería mover la vara con la medida puesta — el mismo criterio que en la pasada 16 se aplicó para no ser **más duro**; aquí toca aplicarlo para no serlo tampoco.
+
+**Alternativas descartadas.**
+- *Ampliar V1 y recontar la 17 como fallida* → descartada por lo anterior. El hallazgo es del **instrumento**, no de la corrida: la conducta obedeció al contrato que tenía.
+- *Backstop de linter sobre las plantillas* → descartada por ahora: el barrido enseña que en la fase Spec los nombres que quedan en plantillas son **procedencia sancionada** (`Generado por: wf-spec-discover`) o comentarios HTML que no viajan al artefacto. V1 mide la salida, que es donde se ve la verdad.
+
+**Consecuencias / aprendizaje.** **Un probe que cubre media clase no es medio probe: es un falso verde sobre la mitad que no mira.** Y el corolario de método, que ya va por la tercera vez: la misma norma se ha arreglado en tres sitios distintos —prosa del gap (v0.92.0), informe de readiness (v0.115.2) y nota de gobernanza (aquí)— porque cada vez se escribió **acotada al sitio donde apareció**. La pregunta que lo caza: *¿qué clase es esta, y dónde más vive?*
+
+**Pendiente, y queda anotado:** la fase **Design** tiene seis plantillas de artefacto con nombres de skill dentro (`kb-design-voice`, `kb-a11y-web-expert`, `kb-design-system-contract`, `wf-design-delta`, `wf-design-feedback`, `wf-design-intake`). No entran en esta versión porque no están en la ruta medida y requieren clasificar caso por caso lo que es procedencia y lo que es fuga — pero es el mismo patrón y hay que barrerlo.
+
+**Referencias.** `pipeline/spec/skills/wf-spec-analyze/SKILL.md` (nota de gobernanza + norma de prosa) · `conformance/casos-de-uso/cu-03-specs.md` (probe **V1**, pasada 17) · `CHANGELOG.md` 0.115.3.
+
+---
+
+## D-087 — El índice del fan-out tenía seis autores y un dueño
+
+- **Fecha:** 2026-09-16 · **Estado:** Adoptada (flag `--skip-index` en `wf-spec-fast-track`, transportado por el fan-out de `wf-spec-features-first`; **medido en la pasada 15 de CU-3.a**, que es de donde sale). · **Relacionada:** [[D-046]] (el índice es generado, no editado), [[D-083]] (*"bien formado y equivocado"* es el fallo que no se nota), [[D-085]] (una prohibición no gana a una instrucción que pide lo contrario), [[D-081]] (lo que se decide arriba tiene que viajar en el encargo).
+
+**Contexto.** El Paso 10 de `wf-spec-fast-track` manda regenerar `_features.md` al terminar — correcto cuando la skill corre suelta. En el fan-out de `wf-spec-features-first` cada escritor llega a ese paso en un momento distinto, así que el índice del proyecto se reescribe N veces con universos parciales. Medido en la pasada 15 de CU-3.a: **seis regeneraciones entre las 07:26:12 y las 07:29:06**, y el escritor de F-004 **abriendo el índice para verificar su propia entrada** mientras sus compañeros lo reescribían.
+
+No había daño en el estado final: `sdd-features-index.py` escribe con `tempfile` + `os.replace`, y el Paso 6 del orquestador hace la pasada autoritativa al cerrar. El contrato incluso lo bendecía en voz alta (*"es seguro aunque varios fast-tracks corran en paralelo"*). Pero durante tres minutos el índice del producto era **completo, bien formado y equivocado** —la clase que [[D-083]] marcó como la peligrosa, porque no se nota— y estaba a la vista de cualquiera que lo leyera: otro agente, un hook, un dev.
+
+**Decisión.**
+
+- **Flag `--skip-index` en `wf-spec-fast-track`**, declarado en el `argument-hint` (sus dos formas), parseado en el Paso 1, y que **omite el Paso 10 entero**. El Paso 11 deja de prometer un índice que no tocó.
+- **El fan-out lo pasa siempre** (Paso 5 de `wf-spec-features-first`). Es la vía de [[D-081]]: lo que se decide en el orquestador **viaja en el encargo**.
+- **El corte va donde nace la instrucción, no en una frase que compita.** Prohibirlo desde el prompt habría sido la trampa de [[D-085]] el mismo día que la escribimos: el `SKILL.md` que el delegado ejecuta le dice que regenere, así que una prohibición en el encargo es una contradicción que resuelve su juicio.
+- **La atomicidad se queda como red, no como justificación.** La frase del Paso 10 lo dice ahora así: dos regeneraciones simultáneas nunca dejan un fichero a medias, pero eso no es razón para hacerlo N veces.
+- **Y el escritor no se mira en el índice.** Dentro de una tanda, que su `F-00X` aparezca no significa nada y que no aparezca tampoco: lo que confirma su trabajo es el spec en disco y el `seal`.
+
+**Alternativas descartadas.**
+- *Solo las notas de contrato, sin flag* (la versión que se aplicó primero) → insuficiente: dejaba en pie seis ejecuciones que nadie usa y una ventana de índice equivocado que solo el juicio del lector evitaba. Las notas **se quedan** —son lo que explica el reparto—, pero el mecanismo lo cierra el flag.
+- *Prohibirlo desde el prompt del orquestador* → descartada por [[D-085]] (ver arriba).
+- *Que el escritor detecte solo si está en una tanda* → descartada: no puede saberlo sin que se lo digan, y adivinarlo es precisamente lo que un argumento evita.
+
+**Consecuencias / aprendizaje.** **Un artefacto con N autores y un dueño no se arregla solo diciendo quién manda: se arregla quitando la pluma a quien no la necesita.** El reparto escrito ayuda a quien lee el contrato; el flag lo hace cierto aunque nadie lo lea. Contrapartida asumida y anotada: si la tanda se corta a medias, el índice ya no queda parcial — queda **como estaba antes de empezar**, hasta que alguien ejecute la pasada del Paso 6. Es el mejor de los dos estados malos: un índice viejo se reconoce, uno reescrito a medias no. El Paso 6 dice ahora que se ejecuta igual aunque la tanda se corte.
+
+**Referencias.** `pipeline/spec/skills/wf-spec-fast-track/SKILL.md` (`argument-hint`, Pasos 1, 9, 10 y 11) · `pipeline/spec/skills/wf-spec-features-first/SKILL.md` (Pasos 5 y 6) · `scripts/sdd-features-index.py` (escritura atómica) · `conformance/ROADMAP.md` (fila de `wf-spec-fast-track`) · `conformance/casos-de-uso/cu-03-specs.md` (pasada 15) · `CHANGELOG.md` 0.115.1.
+
+---
+
+## D-086 — La variable de directorio de skill la expande el harness, así que no se puede relevar
+
+- **Fecha:** 2026-09-16 · **Estado:** Adoptada (9 prompts reescritos + backstop determinista `RELAY-SKILLDIR-EXPANDED` con 6 tests; **medida en la pasada 15 de CU-3.a**). · **Relacionada:** [[D-044]] (el delegado ejecuta la sub-skill leyendo su `SKILL.md`, no la invoca con el `Skill` tool), [[D-047]] (el fan-out y su prompt), [[D-084]] (la instrucción que se cumple a medias sin que nadie lo note).
+
+**Contexto.** Los orquestadores que delegan (`wf-spec-features-first`, `wf-prd-change-cascade`) mandan al delegado leer el `SKILL.md` de otra skill y ejecutarlo él mismo ([[D-044]]). Como ese `SKILL.md` usa `${CLAUDE_SKILL_DIR}` para referenciar sus propias plantillas, el prompt llevaba una frase de mapeo:
+
+```
+Dentro de ese SKILL.md, `${CLAUDE_SKILL_DIR}` es `.claude/skills/wf-spec-fast-track/`.
+```
+
+**Esa frase no puede funcionar, y no es culpa de quien la releva.** La documentación de Claude Code es explícita: la sustitución de `${CLAUDE_SKILL_DIR}` la hace **el harness al cargar el `SKILL.md`**, con el directorio de *esa* skill. Un token escrito en el cuerpo del emisor se expande **al directorio del emisor** antes de que el modelo lo vea. Comprobado en el transcript de la pasada 15: el contenido del `SKILL.md` que llegó al contexto de main ya venía expandido, así que lo que salió en las 10 delegaciones fue
+
+```
+Dentro de ese SKILL.md, `<raíz-del-proyecto>/.claude/skills/wf-spec-features-first` es `.claude/skills/wf-spec-analyze/`.
+```
+
+—una afirmación falsa. Main copió con fidelidad lo que le dieron; nunca tuvo el token delante.
+
+**Y el mapeo hace falta.** El delegado no invoca la skill con el `Skill` tool: hace `cat` de su `SKILL.md`. Un `cat` es lectura de fichero y ahí **no hay sustitución**, así que recibe el token crudo. Exposición medida en una sola pasada: 8 escritores × 3 tokens + 10 exploradores/auditores × 1 = **34 resoluciones por inferencia**, todas correctas, ninguna sostenida por el contrato. El modo de fallo es concreto: un delegado que meta el token tal cual en un `cat` acaba haciendo `cat /references/feature_spec_template.md`.
+
+**Decisión.**
+
+- **Las 9 frases de mapeo dejan de usar la sintaxis `${...}`**: *"las rutas que empiecen por la variable de directorio de skill (`CLAUDE_SKILL_DIR`) se resuelven contra `.claude/skills/<target>/`"*. Sin `${`, no hay nada que sustituir y la información llega entera.
+- **Los 7 tokens de las skills que se ejecutan por delegado se quedan como están.** Sustituirlos por rutas literales hardcodearía `.claude/skills/…`, que es justo lo que la variable existe para evitar (plugins, otras raíces de instalación). Lo que los arregla es que el mapeo funcione.
+- **Backstop `RELAY-SKILLDIR-EXPANDED`** (blocking, 6 tests): un `${CLAUDE_SKILL_DIR}` dentro de una línea de `prompt:` que manda leer el `SKILL.md` de **otra** skill. La precisión viene del patrón de relevo: un token que apunta a un fichero **del propio emisor** se expande bien y no dispara.
+
+**Alternativas descartadas.**
+- *Que el orquestador lo pase literal* → **imposible**: no lo tiene. Es la lección de esta entrada.
+- *Escapar el token (`$\{CLAUDE_SKILL_DIR\}` u otra forma)* → descartada: depende de los internos del sustituidor, que no están documentados. Nombrar la variable sin la sintaxis no depende de nada.
+- *Quitar la frase y dejar que el delegado infiera* → descartada: funcionó 34 de 34 veces por inferencia, y un contrato que se apoya en que el delegado acierte no es un contrato.
+
+**Consecuencias / aprendizaje.** **Una variable que expande el harness no se puede reenviar: al llegar al mensaje ya no es una variable, es el valor de quien la escribió.** El emisor no puede hablar del token porque nunca lo tiene. Y el corolario del modelo de ejecución: **[[D-044]] salta la sustitución por diseño** —el delegado lee el fichero en vez de cargar la skill—, así que todo `${CLAUDE_SKILL_DIR}` de una skill ejecutada por delegado es texto crudo para él. La pregunta que caza la clase: *¿quién expande esto, y sigue teniendo el mismo significado donde va a leerse?*
+
+**Referencias.** `pipeline/spec/skills/wf-spec-features-first/SKILL.md` (3 prompts) · `pipeline/prd/skills/wf-prd-change-cascade/SKILL.md` (6 prompts) · `scripts/sdd-structural-lint.py` (`RELAY-SKILLDIR-EXPANDED`) · `tests/test_sdd_structural_lint.py` (6 tests) · `CHANGELOG.md` 0.115.1.
+
+---
+
+## D-085 — Una prohibición de vocabulario no gana a una instrucción que pide ese vocabulario
+
+- **Fecha:** 2026-09-16 · **Estado:** Adoptada (norma ampliada + instrucción del campo reescrita en la plantilla; **medida en la pasada 15 de CU-3.a**, que es de donde sale). · **Relacionada:** [[D-042]] (el gap se presenta sin abrir el fichero, y quien lo presenta lo lee verbatim), [[D-055]] (cuándo le llega la norma a quien escribe), v0.92.0 (la prosa de los gaps en claro, y el probe V2 que la mide).
+
+**Contexto.** v0.92.0 puso la norma de que la prosa de un gap `[P-XXX]` va en claro —el `Contexto`, el `Problema` y la `Pregunta para el cliente` los lee una persona de producto— y el probe **V2** de CU-3 la mide con un `grep` de siglas. La pasada 9 devolvió **1 hallazgo real**. La pasada 15 (2026-09-16, v0.115.0, `myops-app-specs`) devolvió **3**, los tres de la misma forma:
+
+```
+- **Problema**: sin esto no se puede escribir un CA verificable para "marcar una deuda
+  como saldada": no queda claro si esa acción registra la entrada de dinero…
+```
+
+Lo que descarta la explicación fácil: **la norma llegó, y a tiempo**. El `.jsonl` del `sdd-spec-explorer` enseña el orden —`cat SKILL.md` (con la sección *"el ID es contrato, la sigla suelta es jerga"*) → `cat output_template.md` (con la nota *"Al redactar cada gap"*) → `Read prd/prd.md` → `Write prd/prd_analysis.md`—, así que V3 está verde y el defecto no es de carga. Son dos causas sumadas, las dos en el contrato:
+
+1. **La norma cubría una sola forma de la fuga.** Todos sus ejemplos son la sigla como **abreviatura de algo que ya existe** en un documento (*"el CA de X"*, *"sin THEN verificable"*). La frase que se cuela es la otra: la sigla como **el artefacto que todavía no puedes escribir**. Ahí no se abrevia nada — se explica por qué el hueco bloquea, y lo natural es explicarlo nombrando el entregable que no sale.
+2. **La instrucción del propio campo pedía justamente eso.** El placeholder decía `[por qué esto es un gap funcional que **bloquea el spec**]`. Se le pide que explique qué le impide al spec y contesta hablando del spec. Y a veinte líneas, en la misma plantilla, la sección **Testabilidad** tiene un campo **homónimo** cuyo ejemplo es jerga pura y a propósito (`[vago / no verificable / dependiente de otro CA / sin GIVEN o sin THEN]`): el único de los dos `Problema` con ejemplo redactado era el que no debía servir de modelo.
+
+**Decisión.**
+
+- **La norma gana la segunda forma**, con su prueba de corte: *"no se puede escribir un CA verificable para X"* → *"no se puede comprobar de forma objetiva qué pasa cuando X"*, y el criterio que separa las dos — **la frase tiene que sostenerse ante alguien que no sabe que existe una fase Spec**.
+- **El campo deja de preguntar por el entregable bloqueado.** `Problema` pide ahora *"qué decisión de producto queda sin cerrar, y qué no se puede comprobar mientras siga así — en los términos del producto"*. Mismo cambio en el bloque `[PUEDE_REQUERIR_CR]`.
+- **El `Problema` de Testabilidad se marca como lo que no es**: un comentario en la plantilla dice que no es el modelo del `Problema` de los `[P-XXX]`, aunque se llamen igual. El `SKILL.md` ya lo distinguía (borde 3); lo que faltaba era decirlo **donde está el ejemplo**.
+
+**Alternativas descartadas.**
+- *Backstop determinista (una regla de lint que prohíba la sigla en el campo)* → descartada por ahora: **V2 ya es el probe**, corre sobre el artefacto generado y distingue las exenciones (leyenda, Testabilidad, `Afecta`) con criterio que una regex sobre la skill no tiene. Un guard estructural aquí mediría el texto del contrato, no la prosa que sale.
+- *Dejar que lo traduzca quien presenta el gap* → descartada, y ya lo estaba: [[D-042]] le da contrato de leerlo **verbatim** justo para que sea medible con un diff en vez de con un juicio. Si el campo nace en claro, no hay nada que traducir.
+
+**Consecuencias / aprendizaje.** **Una norma que prohíbe un vocabulario no gana a una instrucción que lo pide**: mientras las dos convivan en el mismo contrato, la que se está respondiendo es la instrucción — la norma solo se recuerda, el campo se rellena. Y el corolario de forma: **dos campos homónimos con reglas opuestas, y solo uno con ejemplo, es el ejemplo el que manda**. La pregunta que caza la clase: *¿qué le pido literalmente a quien rellena este campo, y es compatible con lo que le prohíbo tres párrafos antes?*
+
+**Referencias.** `pipeline/spec/skills/wf-spec-analyze/SKILL.md` (norma de prosa del gap) · `pipeline/spec/skills/wf-spec-analyze/references/output_template.md` (campos `Problema`, nota de redacción, comentario de Testabilidad) · `conformance/casos-de-uso/cu-03-specs.md` (probe **V2**, pasada 15) · `CHANGELOG.md` 0.115.1.
+
+---
+
+## D-084 — El fan-out no se rompe por ignorancia, se rompe por prudencia: la llamada de prueba
+
+- **Fecha:** 2026-09-15 · **Estado:** Adoptada (contrato reforzado en los 3 emisores + backstop determinista con 6 tests; **medida en la pasada 14 de CU-3.a**, que es de donde sale). · **Relacionada:** [[D-047]] (el fan-out es una barrera: N llamadas en un mensaje + el flag), [[D-043]] (`run_in_background: false`), [[D-050]] (lo que devolvió el efecto al flag: `CLAUDE_CODE_FORK_SUBAGENT=0` en el consumer), [[D-048]] (el hook que contaba llamadas y se retiró por degradar la conducta), [[D-045]] (decidir en main, ejecutar en el fork).
+
+**Contexto.** El contrato del fan-out lleva escrito desde [[D-047]] y es explícito, en negrita y en mayúsculas: *"emite TODOS los `Agent` tool calls en un único mensaje — no esperes entre ellos"*. La pasada 14 de CU-3.a (2026-09-15, v0.114.1, `myops-app-specs`) lo incumplió **sin contradecirlo**:
+
+```
+12:58:33  Agent → Spec F-001                  (un mensaje, una llamada)
+13:04:24  tool_result                          ← 351 s esperando
+13:04:27  «F-001 listo. Lanzo las tres restantes en paralelo.»
+13:04:32  Agent → Spec F-002 ┐
+13:04:35  Agent → Spec F-004 ├ (un mensaje, tres llamadas)
+13:04:38  Agent → Spec F-005 ┘
+```
+
+El subset estaba fijado en cuatro **antes** de empezar (el usuario lo eligió en el gate del Paso 4b), no hubo interrupción, y el **mismo orquestador**, veinte minutos después, emitió los cuatro auditores de conflicto en un solo mensaje. No es desconocimiento del patrón: es **la tentación de probar primero**. Y la frase con la que lo narró —*"lanzo las tres restantes en paralelo"*— es literalmente cierta, que es lo que la hace difícil de ver: la instrucción hablaba de emitir juntas, y emitió juntas… las que quedaban.
+
+El daño ya no es teórico. Hasta [[D-050]] esto era inocuo porque el harness lanzaba los delegados en segundo plano y solapaban igual; con `CLAUDE_CODE_FORK_SUBAGENT=0` el flag surte efecto de verdad, así que **cada mensaje es una barrera**: el Paso 5 tardó 10,6 min donde cabían ~6, y con seis features serían seis rondas en vez de una.
+
+**Decisión.**
+
+- **El número de llamadas lo fija el paso anterior, no el resultado de la primera.** Los tres emisores de fan-out del ecosistema —`wf-spec-features-first` (Pasos 5 y 7), `wf-prd-change-cascade` (Paso 6) y `wf-design-variant`— dicen ahora, además de *"todas en un único mensaje"*, que **no hay llamada de prueba**: lanzar una para ver si el patrón funciona y emitir el resto después ya rompió la barrera, aunque las restantes salgan juntas.
+- **Y dicen por qué no confirma nada.** Los delegados son independientes, no comparten estado y ninguno depende del anterior: si el primero fuera a fallar por una precondición común, los otros fallan igual y te enteras en el mismo turno. El hedge se paga siempre y no compra información.
+- **La instrucción se hace contable, y se coloca donde se emite.** El Paso 5 abre ahora con *"antes de emitir, cuéntalas"* justo delante del bloque `Agent(`, en vez de dejar el invariante solo en un párrafo posterior al template.
+- **Backstop determinista `FANOUT-PILOT-UNGUARDED` (blocking, 6 tests)** en `sdd-structural-lint.py`: una `wf-*` que ordena emitir N llamadas `Agent` en un único mensaje y **no nombra la llamada de prueba**. La señal es la orden de fan-out, que es de alta precisión: hoy da exactamente tres sujetos, los tres emisores. **Delta probado**: con el guard retirado, el check levanta el hallazgo en `wf-spec-features-first:511`.
+
+**Alternativas descartadas.**
+
+- **Un `PreToolUse` que cuente llamadas `Agent` por mensaje y deniegue las tandas parciales.** Es exactamente `sdd-agent-sync.py`, que [[D-048]] puso y [[D-050]] **retiró entero**: costó dos pasadas de conformance sin medir nada y **degradaba la conducta del modelo** (siguiendo la prosa emitía el booleano 20/20; reaccionando al `deny`, mandaba la cadena `"false"` 5/5). Y aquí no funcionaría ni en principio: el hook ve una llamada, no sabe cuántas *debería* haber — el número vive en una decisión de producto tomada dos pasos antes.
+- **Bajar el fan-out a un script que lance los N agentes.** Un script no puede invocar la tool `Agent`: el fan-out es del orquestador por construcción.
+- **Dar el desvío por aceptable porque "acaba igual".** No acaba igual desde [[D-050]], y aunque acabara: el Paso 6 regenera el índice leyendo de disco los specs de **todas** las features, y arrancarlo con una tanda a medias produce un índice incompleto que además se sella como bueno.
+
+**Consecuencias y aprendizaje.**
+
+- **Una instrucción que el modelo puede cumplir a medias sin notarlo no es una instrucción, es una aspiración.** *"Emítelas en un único mensaje"* es verdadera de cualquier subconjunto que se emita junto. El invariante que no admite lectura parcial es el **cardinal**: cuántas llamadas lleva ese mensaje, fijado antes de emitir la primera.
+- **El desvío que hay que nombrar no es el tonto, es el prudente.** Nadie manda las llamadas de una en una por descuido; se manda una de prueba porque parece responsable antes de gastar cuatro agentes. Un contrato que solo prohíbe la versión torpe deja pasar la versión razonable, que es la que de verdad ocurre.
+- **Y el instrumento aguantó:** el escenario predijo este fallo literalmente —*"el día que el flag surta efecto, mensajes separados serializan el fan-out"*— y lo dejó escrito como FALLO citable antes de que ocurriera. La pasada no lo descubrió: lo **confirmó**.
+
+**Referencias.** `pipeline/spec/skills/wf-spec-features-first/SKILL.md` (Pasos 5 y 7), `pipeline/prd/skills/wf-prd-change-cascade/SKILL.md` (Paso 6), `pipeline/design/skills/wf-design-variant/SKILL.md`, `scripts/sdd-structural-lint.py` (`FANOUT-PILOT-UNGUARDED`), `tests/test_sdd_structural_lint.py` (6 casos), `conformance/casos-de-uso/cu-03-specs.md` (CU-3.a probe 5 y pasada 14, CU-3.d punto 3), `conformance/ROADMAP.md`.
+
+---
+
 ## D-083 — El gate humano del brownfield: sin puerta de vuelta y con el mapa desprotegido
 
 - **Fecha:** 2026-09-15 · **Estado:** Adoptada (reglas escritas + backstop determinista con 6 tests; conducta **sin medir** — CU-4.g y CU-4.h nacen `⏱ sin pasada`). · **Relacionada:** [[D-081]] (el `_discovery.md` que ya existe se reutiliza), [[D-082]] (un `STOP_*` que espera respuesta declara su argumento), [[D-062]] (qué artefacto lleva gate de sobreescritura y cuál no), [[D-080]] (una decisión humana registrada no se pisa regenerando).
@@ -380,7 +699,7 @@ Lo que cambia de fondo, más allá de dónde corre:
 
 Y, cerrando 13.6: **la anotación se quedó corta**. Decía "no heredó [[D-040]]" y apuntaba a una decisión; eran tres. Al heredar una norma hay que leer al destinatario entero, no solo la parte que el precedente ilumina — la misma lección que [[D-063]] ya había dejado escrita.
 
-**Pendiente de medir.** CU-3.h y CU-3.p **cambian de forma**: el `AMBIGUO` que antes se resolvía solo ahora se presenta, y "no lo decido ahora" tiene que dejar un gap marcado. Se mide en las pasadas de CU-3.
+**Pendiente de medir.** CU-3.h y CU-3.p **cambian de forma**: el `AMBIGUO` que antes se resolvía solo ahora se presenta, y "no lo decido ahora" tiene que dejar un gap marcado. Se mide en las pasadas de CU-3. **Los escenarios se reescribieron en v0.114.1**, no el mismo día que esta decisión: 0.107.0 fue la única versión de la tanda 0.107→0.114 sin barrido de conformance, así que durante siete versiones el banco midió el fork que esta decisión había retirado —y CU-3.p llegó a **penalizar como desviación** una de las dos salidas que el gate nuevo sanciona. El aprendizaje del propio D-073 aplicado al instrumento: **el coste de un gate ausente se paga donde no se ve**, y el de un barrido ausente también.
 
 **Referencias.** `sdd/pipeline/spec/skills/wf-spec-delta/SKILL.md`, `sdd/pipeline/spec/skills/wf-spec-sync-from-prd/SKILL.md`, `sdd/conformance/ROADMAP.md`, `sdd/docs/ROADMAP.md` (13.6), `sdd/CHANGELOG.md`.
 

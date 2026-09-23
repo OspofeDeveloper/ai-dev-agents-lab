@@ -4,6 +4,9 @@
 > **Fecha**: [YYYY-MM-DD]
 > **Features analizadas**: [N]
 > **Conflict report**: [SIN_CONFLICTOS — path | CONFLICTOS_DETECTADOS — path | No encontrado | Ambiguo — revisar path]
+> **Vigencia de los informes de conflicto**: [uno por informe: `path` — VIGENTE (comparó los N specs
+> que hay ahora) | ESTANCADO (comparó F-00X, F-00Y; no vio F-00Z) | VIGENCIA DESCONOCIDA (sin campo
+> `Conjunto comparado`). Se lee del campo de su cabecera, no de la fecha (D-090).]
 > **Fuente**: [path/_features.md]
 
 ---
@@ -22,7 +25,7 @@
 |---------|--------|:-----------------:|:---------------:|-------------|
 | F-001: [nombre] | LISTA | 0 | 0 | — |
 | F-002: [nombre] | BLOQUEADA | 2 | 0 | gaps: P-001 |
-| F-003: [nombre] | BLOQUEADA | 0 | 1 | conflictos: CF-001 |
+| F-003: [nombre] | BLOQUEADA | 0 | 1 | conflictos: CF-F003-01 |
 | F-004: [nombre] | BLOQUEADA | 0 | 0 | dependencias: F-002 |
 | F-005: [nombre] | REQUIERE_CAMBIO_PRD | 0 | 0 | gobernanza: alcance derivado desde P-007 |
 | F-006: [nombre] | RETIRADA | — | — | CR-007 — [razón de la baja] |
@@ -49,7 +52,7 @@
 | Feature | Depende de | Estado | Accion requerida |
 |---------|------------|--------|------------------|
 | F-003: [nombre] | F-001 | LISTA | Lista para planificar, despues de F-001 |
-| F-004: [nombre] | F-001, F-003 | BLOQUEADA | Resolver CF-XXX y volver a revisar conflictos |
+| F-004: [nombre] | F-001, F-003 | BLOQUEADA | Resolver CF-F004-01 y volver a revisar conflictos |
 
 ### Fase N
 
@@ -80,7 +83,11 @@
 
 | ID | Tipo | Features afectadas | Descripcion breve | Referencia |
 |----|------|-------------------|-------------------|------------|
-| CF-001 | CA contradictorio | F-003, F-006 | [descripcion corta del conflicto] | `_conflict_report.md` |
+| CF-F003-01 | CA contradictorio | F-003, F-006 | [descripcion corta del conflicto] | `_conflict_report.md` |
+
+<!-- El ID se cita TAL CUAL viene del informe de origen (D-090): ya es único, porque cada auditor
+     numera con su feature delante. No renumerar: la trazabilidad contra el informe es lo que abre
+     quien va a arreglar el choque. Informes viejos con IDs colisionados → citar <feature>:<ID>. -->
 
 ---
 
@@ -115,3 +122,12 @@
 1. Prioriza resolver los gaps `[CRITICO]` — afectan a [N] features
 2. Resuelve los conflictos ALTA — afectan a [N] features
 3. Pide de nuevo el estado de readiness despues de cada correccion para verificar el progreso
+
+<!-- SIEMPRE que la seccion de vigencia liste algun informe ESTANCADO (D-093): un punto mas, con
+     su accion. Di primero quien cubre los pares que ese informe no vio —normalmente los informes
+     vigentes, porque cada spec nuevo se compara contra todos— y luego que puede rehacerse cuando
+     se quiera tener el documento al dia. Si al cruzarlo aparece un par que no ha mirado NADIE,
+     eso no es documento viejo: es analisis que falta, y va como accion prioritaria. -->
+N. **Informes de conflicto estancados**: [path] describe un conjunto de [N] specs que ya no es el
+   actual. Los choques de [F-00X] con [las features nuevas] estan cubiertos por los informes
+   vigentes de estas; el documento puede rehacerse cuando convenga tenerlo al dia.

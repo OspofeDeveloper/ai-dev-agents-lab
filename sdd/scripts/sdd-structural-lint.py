@@ -32,6 +32,8 @@ Checks (cada finding: severidad, tipo, archivo:linea, mensaje):
   FORK-SKILL-DISPATCH    [blocking]  wf con context: fork que orquesta con el `Skill` tool (lo declara o lo prescribe): delegacion invisible a FORK-ORCHESTRATOR, que solo mira la tool `Agent`.
   AGENT-PROMPT-REDISPATCH [blocking] prompt de delegacion que pide "Ejecuta el skill /wf-X": el delegado re-despacha con `Skill`, forkea un clon de si mismo y reintroduce la asincronia.
   SPEC-RETIRED-BLIND     [blocking]  wf-spec-* que clasifica un spec por su `Estado:` mirando solo VALIDADO: un spec RETIRADO cae en la rama "no sellado" y se pisa.
+  FANOUT-PILOT-UNGUARDED [blocking]  wf que manda emitir N llamadas `Agent` en un unico mensaje y no prohibe la llamada de prueba: lanzar una y el resto despues serializa el fan-out igual.
+  RELAY-SKILLDIR-EXPANDED [blocking]  prompt de delegacion que manda leer el SKILL.md de OTRA skill y lleva `${CLAUDE_SKILL_DIR}`: el harness lo expande al directorio del emisor antes de que el modelo lo vea, asi que el mapeo llega falso.
   HUMAN-GATE-UNPROTECTED [blocking]  wf que para con un `STOP_*_SIN_VALIDAR` sobre un artefacto que el mismo escribe, y no protege ese artefacto con `STOP_ARTEFACTO_EXISTE`: la siguiente pasada borra la validacion humana que el gate produjo.
   DESCRIPTION-TOO-LONG   [warning]   description del frontmatter > 220 chars.
   USER-INVOCABLE-MISSING [warning]   wf sin user-invocable; kb sin user-invocable: false.
@@ -1134,6 +1136,111 @@ def check_spec_retired_blind(findings):
             break
 
 
+def check_fanout_pilot_unguarded(findings):
+    """FANOUT-PILOT-UNGUARDED — una `wf-*` que ordena emitir las N llamadas
+       `Agent` en un unico mensaje y no nombra la llamada de prueba (D-084).
+
+       La instruccion "emite las N en un unico mensaje" es necesaria y no es
+       suficiente: no cubre el desvio que de verdad ocurre, que es lanzar UNA
+       para ver si el patron funciona y emitir el resto despues. Quien lo hace
+       puede narrarlo como "lanzo las restantes en paralelo" — literalmente
+       cierto — y creer que cumplio, porque la frase que tenia delante hablaba
+       de emitir juntas, y emitio juntas... las que quedaban.
+
+       Con `run_in_background: false` de verdad activo (D-050) eso serializa el
+       fan-out: el primer mensaje no vuelve hasta que su delegado termina, asi
+       que la tanda pasa de una ronda a dos. Medido en la pasada 14 de CU-3.a:
+       351 s de un escritor en solitario por delante de una tanda de tres.
+
+       No hay backstop de runtime posible — un `PreToolUse` que contara llamadas
+       por mensaje es justo lo que D-048 puso y D-050 retiro por degradar la
+       conducta —, asi que el invariante vive en el cuerpo de la skill y esta
+       regla es su backstop: si mandas emitir en bloque, tienes que decir
+       ademas que no hay llamada de prueba.
+    """
+    fanout_re = re.compile(r"(?:emite|Emite)[^\n]*\bN\b[^\n]*(?:un|unico|único)\s+(?:solo\s+)?mensaje",
+                           re.IGNORECASE)
+    alt_re = re.compile(r"TODOS los `Agent` tool calls en un (?:unico|único) mensaje", re.IGNORECASE)
+    guard_re = re.compile(r"llamada de prueba", re.IGNORECASE)
+    for skill_md in sorted(SDD_ROOT.rglob("SKILL.md")):
+        if is_excluded(skill_md):
+            continue
+        if not skill_md.parent.name.startswith("wf-"):
+            continue
+        try:
+            text = skill_md.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        if guard_re.search(text):
+            continue
+        _fm, body, body_start = split_frontmatter(text)
+        for offset, line_text in enumerate(body.split("\n")):
+            if fanout_re.search(line_text) is None and alt_re.search(line_text) is None:
+                continue
+            findings.append(Finding(
+                "blocking", "FANOUT-PILOT-UNGUARDED", relpath(skill_md),
+                body_start + offset,
+                "Ordena emitir las N llamadas `Agent` en un unico mensaje y no "
+                "prohibe la llamada de prueba. Lanzar una 'a ver si va' y el "
+                "resto despues cumple la letra —las restantes salen juntas— y "
+                "serializa el fan-out igual con el flag activo (D-084). Di que "
+                "el numero lo fija el paso anterior y que no hay llamada de "
+                "prueba."))
+            break
+
+
+def check_relay_skilldir_expanded(findings):
+    """RELAY-SKILLDIR-EXPANDED — un prompt de delegacion que manda ejecutar el
+       `SKILL.md` de OTRA skill y lleva `${CLAUDE_SKILL_DIR}` dentro (D-086).
+
+       La sustitucion la hace el harness al cargar el SKILL.md, con el
+       directorio de ESA skill: un `${CLAUDE_SKILL_DIR}` escrito en el cuerpo
+       del emisor se convierte en el directorio DEL EMISOR antes de que el
+       modelo lo vea. El orquestador no puede relevarlo aunque quiera — nunca
+       tiene el token delante—, asi que la frase de mapeo ("dentro de ese
+       SKILL.md, X es Y") sale invertida y afirma algo falso.
+
+       Y el mapeo hace falta: por D-044 el delegado NO invoca la skill con el
+       `Skill` tool, hace `cat` de su `SKILL.md`. Un `cat` es lectura de
+       fichero y ahi no hay sustitucion, asi que el delegado recibe el token
+       crudo y tiene que resolverlo de cabeza. Medido en la pasada 15 de
+       CU-3.a: 34 resoluciones por inferencia en una sola pasada, con las 10
+       frases de mapeo llegando falsas.
+
+       Escribe el nombre de la variable sin la sintaxis `${...}` — no hay nada
+       que sustituir y la informacion llega entera.
+
+       Precision: solo dispara cuando el prompt nombra el `SKILL.md` de otra
+       skill (el patron de relevo). Un `${CLAUDE_SKILL_DIR}` que apunta a un
+       fichero DEL PROPIO emisor se expande bien y es correcto.
+    """
+    relay_re = re.compile(r"Lee `\.claude/skills/[a-z0-9-]+/SKILL\.md`")
+    token_re = re.compile(r"\$\{CLAUDE_SKILL_DIR\}")
+    for skill_md in sorted(SDD_ROOT.rglob("SKILL.md")):
+        if is_excluded(skill_md):
+            continue
+        try:
+            text = skill_md.read_text(encoding="utf-8")
+        except OSError:
+            continue
+        _fm, body, body_start = split_frontmatter(text)
+        for offset, line_text in enumerate(body.split("\n")):
+            if relay_re.search(line_text) is None:
+                continue
+            if token_re.search(line_text) is None:
+                continue
+            findings.append(Finding(
+                "blocking", "RELAY-SKILLDIR-EXPANDED", relpath(skill_md),
+                body_start + offset,
+                "Prompt de delegacion que manda leer el SKILL.md de otra skill "
+                "y lleva `${CLAUDE_SKILL_DIR}`: el harness lo expande al "
+                "directorio del emisor antes de que el modelo lo vea, asi que "
+                "el mapeo llega invertido y falso (D-086). El delegado lee ese "
+                "SKILL.md con `cat` y ve el token crudo, que es justo lo que "
+                "esta frase deberia resolverle. Nombra la variable sin la "
+                "sintaxis `${...}`."))
+
+
 def check_human_gate_unprotected(findings):
     """HUMAN-GATE-UNPROTECTED — una `wf-*` que se detiene con un veredicto
        `STOP_*_SIN_VALIDAR` sobre un artefacto que ella misma escribe, y que no
@@ -1374,6 +1481,8 @@ def run_all():
     check_fork_self_delegation(findings)
     check_fork_skill_dispatch(findings)
     check_spec_retired_blind(findings)
+    check_fanout_pilot_unguarded(findings)
+    check_relay_skilldir_expanded(findings)
     check_human_gate_unprotected(findings)
     check_agent_prompt_redispatch(findings)
     check_reference_paths(findings)

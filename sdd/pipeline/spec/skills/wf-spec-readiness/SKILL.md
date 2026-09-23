@@ -89,6 +89,24 @@ Clasifica la feature como **BLOQUEADA** si tiene al menos una HU `[INCOMPLETO]`.
 Para **cada** informe de conflictos localizado:
 - Primero verifica su estado general. Debe indicar explícitamente `SIN_CONFLICTOS` o `CONFLICTOS_DETECTADOS`.
 - Si el archivo existe pero no deja ese estado de forma inequívoca, trátalo como artefacto ambiguo y repórtalo en el informe de readiness.
+- **Y comprueba su vigencia por el campo `Conjunto comparado` de la cabecera ([[D-090]]).** Si ese
+  conjunto **no incluye** todos los specs que hay ahora en `features/`, el informe describe un
+  universo que ya no existe: márcalo **ESTANCADO** en tu informe, di contra qué se calculó y qué
+  specs no vio, y **conserva sus hallazgos** —siguen siendo ciertos sobre las features que sí
+  comparó— pero no los presentes como cobertura del conjunto actual. Un informe sin el campo (de
+  antes de v0.116.0) se trata como **vigencia desconocida** y se dice, no se asume vigente.
+  Es el caso normal de la iteración por subsets: la primera tanda comparó 2 specs, la segunda 5, y
+  los informes de la primera se quedan en disco con pinta de actuales.
+- **Y un ESTANCADO se cierra en tu informe, no se queda en diagnóstico ([[D-093]]).** Antes de
+  proponer nada, mira **quién cubre los pares que ese informe no vio**: el fan-out compara cada
+  spec nuevo contra **todos** los que hay, así que el par (viejo, nuevo) lo miró el auditor del
+  nuevo. Lo normal, entonces, es que la **cobertura por pares esté completa** y lo viejo sea el
+  **documento**, no el análisis. Dilo así de explícito —*"el veredicto de F-002 solo cubre el par
+  F-002×F-003; sus choques con F-001, F-004 y F-007 están en los informes vigentes de esas tres"*—
+  y **añade la acción en «Próximos pasos»**: rehacer ese informe cuando se quiera tenerlo al día,
+  o, si al cruzarlo detectas un par que de verdad **no ha mirado nadie**, pedir una revisión de
+  conflictos para ese par, que ahí sí falta análisis. Un ESTANCADO sin acción deja al lector con
+  el diagnóstico y sin el cierre — y el informe viejo sigue en disco diciendo lo que decía.
 - Busca todos los conflictos de severidad **ALTA** que involucren esta feature.
 - Un conflicto se considera no resuelto si aparece en algún informe (el informe refleja el estado en el momento de su generación; si se resolvió, la verificación de conflictos tuvo que volver a pasarse después).
 
@@ -108,10 +126,20 @@ Clasifica la feature como **BLOQUEADA** si tiene al menos un conflicto ALTA asoc
 >   Un conflicto solo se descarta con la cita concreta que lo desmiente.
 > - **Deja constancia del desacuerdo** en el informe: el ID del conflicto, quién lo levantó, quién no
 >   lo vio, y tu veredicto con su evidencia. Un conflicto silenciosamente desaparecido entre dos
->   pasadas es indistinguible de uno resuelto.
+>   pasadas es indistinguible de uno resuelto. Al justificar por qué tu veredicto pesa más, di
+>   **"la regla de arbitraje de este informe"** — no el nombre del workflow que la define (Paso 7).
 > - **Si no puedes resolverlo con los specs**, no lo cierres: mantenlo **abierto** con la severidad
 >   más alta que le haya dado cualquier informe y marca la feature `BLOQUEADA`. El coste de un falso
 >   bloqueo lo paga una revisión; el de un falso "listo" lo paga el plan.
+>
+> **Los IDs de hallazgo ya vienen desambiguados: cítalos tal cual ([[D-090]]).** Desde v0.116.0
+> cada auditor numera con su feature delante (`CF-F001-01`), así que dos informes distintos no
+> pueden chocar y **no tienes que inventarte un espacio de nombres propio**: renumerar rompe la
+> trazabilidad contra el informe de origen, que es lo que abre quien va a arreglar el choque.
+> **Excepción, y dilo cuando pase:** si te llegan informes viejos con IDs locales que **sí**
+> colisionan (tres `CF-002` distintos), desambigua citando `<feature>:<ID>` —
+> `registro-de-movimientos:CF-002`— en vez de renumerar; el ID sigue siendo el del informe y la
+> referencia es única.
 
 ### 4d — Dependencias
 
@@ -208,14 +236,25 @@ Usa `${CLAUDE_SKILL_DIR}/references/readiness_report_template.md` para estructur
 
 > **Lo que escribes aquí lo lee una persona, y esa persona no invoca comandos.** Los
 > **bloqueantes** y lo que propongas para desbloquearlos van en lenguaje natural, nombrando **la
-> acción**: *"responder los gaps que bloquean sus historias"*, *"resolver el conflicto CF-001 con
-> F-003"*, *"generar el spec de F-007"* — nunca el workflow que lo hace, ni con barra ni sin ella.
-> Estados, IDs y marcadores (`LISTA`, `BLOQUEADA`, `PENDIENTE_GENERACIÓN`, `F-00X`, `CF-001`,
+> acción**: *"responder los gaps que bloquean sus historias"*, *"resolver el conflicto CF-F003-01 con
+> F-006"*, *"generar el spec de F-007"* — nunca el workflow que lo hace, ni con barra ni sin ella.
+> Estados, IDs y marcadores (`LISTA`, `BLOQUEADA`, `PENDIENTE_GENERACIÓN`, `F-00X`, `CF-F001-01`,
 > `[INCOMPLETO]`) **son contrato** y se quedan tal cual.
 >
-> Medido (pasada 9 de CU-3.a): un nombre de workflow se coló en la "Sugerencia de resolución" de
-> este informe teniendo la guía de fase **cargada**. La guía da contexto; esta línea es la
-> instrucción.
+> **Y esto vale para el informe entero, no solo para los bloqueantes.** Medido dos veces: pasada 9
+> de CU-3.a —un nombre de workflow en la "Sugerencia de resolución", con la guía de fase
+> **cargada**— y pasada 16, donde se coló en un sitio que esta norma no nombraba: **la
+> justificación del arbitraje** (*"regla de arbitraje explícita del propio `wf-spec-readiness`"*).
+> Ahí no estabas recomendando una acción, estabas citando tu autoridad para contradecir a un
+> auditor — y se cita igual sin nombrar el workflow: **"la regla de arbitraje de este informe"**.
+> La guía da contexto; esta línea es la instrucción.
+>
+> **Y la misma norma vale para el nombre de una `kb-*` ([[D-091]]).** Es la forma que se escapó en
+> la pasada de `CU-3.d` del 2026-09-18, dos veces en este informe: *"Regla 4 de
+> `kb-conflict-expert`"*, *"la tabla de severidad de `kb-conflict-expert` da ALTA por defecto"*.
+> Cita la regla **por lo que dice** —*"el mismo modelo con comportamientos distintos en dos CAs de
+> features diferentes"*, *"un shared model inconsistente corrompe el modelo de dominio"*—: el
+> veredicto se sostiene igual y quien lo lee no tiene que saber qué es una kb.
 
 ---
 

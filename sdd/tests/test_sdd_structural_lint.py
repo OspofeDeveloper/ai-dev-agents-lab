@@ -697,6 +697,124 @@ class StructuralLintTest(unittest.TestCase):
         _, types = types_in(self.root)
         self.assertNotIn("AGENT-PROMPT-REDISPATCH", types)
 
+    # === FANOUT-PILOT-UNGUARDED ===========================================
+    FANOUT = ("**Emite las N llamadas en un unico mensaje**, con el flag: es una "
+              "barrera y el paso siguiente lee lo que escriben todas.")
+
+    def test_fanout_pilot_unguarded_flagged(self):
+        """Mandar emitir en bloque sin prohibir la llamada de prueba: bloqueante."""
+        write(self.root / "spec" / "skills" / "wf-spec-lote" / "SKILL.md",
+              skill_md("wf-spec-lote",
+                       "Por cada feature, delega un escritor.\n\n" + self.FANOUT))
+        _, types = types_in(self.root)
+        self.assertIn("FANOUT-PILOT-UNGUARDED", types)
+
+    def test_fanout_pilot_guarded_not_flagged(self):
+        """Nombrar la llamada de prueba da el fan-out por informado."""
+        write(self.root / "spec" / "skills" / "wf-spec-lote" / "SKILL.md",
+              skill_md("wf-spec-lote",
+                       "Por cada feature, delega un escritor.\n\n" + self.FANOUT +
+                       "\n\nNo hay llamada de prueba: el numero lo fija el paso "
+                       "anterior, no el resultado del primero."))
+        _, types = types_in(self.root)
+        self.assertNotIn("FANOUT-PILOT-UNGUARDED", types)
+
+    def test_fanout_pilot_variant_phrasing_flagged(self):
+        """La otra forma canonica ('TODOS los `Agent` tool calls') tambien cuenta."""
+        write(self.root / "spec" / "skills" / "wf-spec-lote" / "SKILL.md",
+              skill_md("wf-spec-lote",
+                       "**CRITICO: emite TODOS los `Agent` tool calls en un unico "
+                       "mensaje** — no esperes entre ellos."))
+        _, types = types_in(self.root)
+        self.assertIn("FANOUT-PILOT-UNGUARDED", types)
+
+    def test_fanout_pilot_ignores_a_kb(self):
+        """La regla es para quien ORDENA el fan-out, no para la kb que lo explica."""
+        write(self.root / "spec" / "skills" / "kb-fanout" / "SKILL.md",
+              skill_md("kb-fanout", "El patron es: " + self.FANOUT))
+        _, types = types_in(self.root)
+        self.assertNotIn("FANOUT-PILOT-UNGUARDED", types)
+
+    def test_fanout_pilot_not_flagged_without_fanout(self):
+        """Una wf que delega a UN agente no tiene fan-out que proteger."""
+        write(self.root / "spec" / "skills" / "wf-spec-uno" / "SKILL.md",
+              skill_md("wf-spec-uno",
+                       "Delega con la tool `Agent` y `run_in_background: false`."))
+        _, types = types_in(self.root)
+        self.assertNotIn("FANOUT-PILOT-UNGUARDED", types)
+
+    def test_fanout_pilot_reports_once_per_file(self):
+        """Dos fan-outs en el mismo fichero dan UN hallazgo, no dos."""
+        write(self.root / "spec" / "skills" / "wf-spec-lote" / "SKILL.md",
+              skill_md("wf-spec-lote",
+                       "Paso 5. " + self.FANOUT + "\n\nPaso 7. " + self.FANOUT))
+        r = run_script("sdd-structural-lint.py", "--root", self.root, "--json")
+        hits = [f for f in json.loads(r.stdout)
+                if f["type"] == "FANOUT-PILOT-UNGUARDED"]
+        self.assertEqual(len(hits), 1)
+
+    # === RELAY-SKILLDIR-EXPANDED ==========================================
+    RELAY = ('  prompt: "Lee `.claude/skills/wf-spec-fast-track/SKILL.md` y ejecuta '
+             'sus pasos TU MISMO sobre estos argumentos: <prd.md>. '
+             'Dentro de ese SKILL.md, `${CLAUDE_SKILL_DIR}` es '
+             '`.claude/skills/wf-spec-fast-track/`."')
+
+    def test_relay_skilldir_expanded_flagged(self):
+        """El token dentro de un prompt de relevo: bloqueante."""
+        write(self.root / "spec" / "skills" / "wf-spec-lote" / "SKILL.md",
+              skill_md("wf-spec-lote", "Delega uno por feature:\n\n" + self.RELAY))
+        _, types = types_in(self.root)
+        self.assertIn("RELAY-SKILLDIR-EXPANDED", types)
+
+    def test_relay_skilldir_named_without_syntax_not_flagged(self):
+        """Nombrar la variable sin `${...}` no tiene nada que sustituir."""
+        write(self.root / "spec" / "skills" / "wf-spec-lote" / "SKILL.md",
+              skill_md("wf-spec-lote",
+                       'Delega uno por feature:\n\n'
+                       '  prompt: "Lee `.claude/skills/wf-spec-fast-track/SKILL.md` y '
+                       'ejecuta sus pasos TU MISMO. Dentro de ese SKILL.md, las rutas '
+                       'que empiecen por la variable de directorio de skill '
+                       '(`CLAUDE_SKILL_DIR`) se resuelven contra '
+                       '`.claude/skills/wf-spec-fast-track/`."'))
+        _, types = types_in(self.root)
+        self.assertNotIn("RELAY-SKILLDIR-EXPANDED", types)
+
+    def test_relay_skilldir_own_reference_not_flagged(self):
+        """Un token que apunta a un fichero del PROPIO emisor se expande bien."""
+        write(self.root / "spec" / "skills" / "wf-spec-lote" / "SKILL.md",
+              skill_md("wf-spec-lote",
+                       "Presenta el resumen siguiendo la plantilla de "
+                       "`${CLAUDE_SKILL_DIR}/references/output_template.md`."))
+        _, types = types_in(self.root)
+        self.assertNotIn("RELAY-SKILLDIR-EXPANDED", types)
+
+    def test_relay_without_token_not_flagged(self):
+        """Un prompt de relevo sin el token no tiene mapeo que romper."""
+        write(self.root / "spec" / "skills" / "wf-spec-lote" / "SKILL.md",
+              skill_md("wf-spec-lote",
+                       '  prompt: "Lee `.claude/skills/wf-spec-fast-track/SKILL.md` y '
+                       'ejecuta sus pasos TU MISMO sobre <prd.md>."'))
+        _, types = types_in(self.root)
+        self.assertNotIn("RELAY-SKILLDIR-EXPANDED", types)
+
+    def test_relay_skilldir_reports_each_prompt(self):
+        """Tres prompts de relevo rotos dan tres hallazgos: cada uno se arregla aparte."""
+        write(self.root / "spec" / "skills" / "wf-spec-lote" / "SKILL.md",
+              skill_md("wf-spec-lote",
+                       "Paso 1.\n" + self.RELAY + "\n\nPaso 3.\n" + self.RELAY +
+                       "\n\nPaso 5.\n" + self.RELAY))
+        r = run_script("sdd-structural-lint.py", "--root", self.root, "--json")
+        hits = [f for f in json.loads(r.stdout)
+                if f["type"] == "RELAY-SKILLDIR-EXPANDED"]
+        self.assertEqual(len(hits), 3)
+
+    def test_relay_skilldir_applies_to_kb_too(self):
+        """La regla mira el prompt, no el prefijo de la skill que lo escribe."""
+        write(self.root / "spec" / "skills" / "kb-relevo" / "SKILL.md",
+              skill_md("kb-relevo", "Patron de relevo:\n\n" + self.RELAY))
+        _, types = types_in(self.root)
+        self.assertIn("RELAY-SKILLDIR-EXPANDED", types)
+
     # === SPEC-RETIRED-BLIND ===============================================
     PROBE = ("!grep -Eq '^[[:space:]]*\\*{0,2}Estado:?\\*{0,2}[[:space:]]*:?"
              "[[:space:]]*VALIDADO' \"$p\" && echo SELLADO || echo DRAFT")

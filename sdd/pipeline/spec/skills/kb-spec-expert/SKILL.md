@@ -199,12 +199,20 @@ prosa dentro de ellos: descripciones, problemas, sugerencias, avisos, siguientes
 |---|---|
 | Marcadores: `[CRÍTICO]`, `[INCOMPLETO]`, `[INFERIDO]`, `_(pendiente)_` | Recomendaciones y siguientes pasos: *"formalizar el cambio en el PRD"*, no el workflow que lo hace |
 | Veredictos: `LISTO_PARA_SPECS`, `SIN_CONFLICTOS`, `PENDIENTE_GENERACIÓN` | Siglas sueltas: *"el CA de X"* → *"el criterio de aceptación de X"*; *"sin THEN verificable"* → *"sin resultado verificable"* |
-| IDs: `P-011`, `CA-001`, `HU-003`, `RF-006`, `F-00X`, `CF-001` | |
+| IDs: `P-011`, `CA-001`, `HU-003`, `RF-006`, `F-00X`, `CF-F001-01` | Citas de la norma que sostiene un veredicto: *"Regla 4 de `kb-conflict-expert`"* → *"el mismo modelo con comportamientos distintos en dos CAs de features diferentes"* |
 | Procedencia en su forma canónica: `Generado por: wf-spec-discover` | |
 
 **No nombres un workflow en prosa dirigida al lector** —ni `wf-spec-delta`, ni `/wf-spec-amend`,
 ni con barra ni sin ella—. El usuario no invoca comandos: te lo pide hablando, y surfacearlos le
 enseña a teclear argumentos a mano saltándose las validaciones.
+
+**Ni una `kb-*`, que es por donde se escapa al justificar ([[D-088]], [[D-091]]).** La otra mitad
+de la misma clase: no sale al recomendar un paso, sale al **sostener un veredicto** —*"Regla 4 de
+`kb-conflict-expert`"*, *"contemplado como aceptable en `kb-prd-expert`"*—, porque citar la fuente
+es lo natural y la fuente tiene nombre de skill. Cita la regla **por lo que dice**: el veredicto se
+sostiene igual, y de hecho mejor —dice **qué** regla es sin obligar a ir a buscarla—. Medido en tres
+fases distintas (v0.92.0, v0.115.2, [[D-088]]) y otra vez el 2026-09-18 en los informes de conflicto
+y readiness: tres líneas, las tres de esta forma.
 
 **Excepción:** cuando el formato **es** el asunto —la sección de Testabilidad de un análisis, donde
 un CA al que le falta el `THEN` es literalmente el defecto que reportas— nombrarlo es correcto.

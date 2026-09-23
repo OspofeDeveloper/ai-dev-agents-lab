@@ -5,7 +5,11 @@
 > Source requirements: [path/al/documento_origen.md]
 > derived_from_prd: [path/al/PRD.md | N/A]
 > derived_from_prd_version: [1.0 | unknown | N/A]
-> derived_from_prd_hash: [N/A — lo escribe `sdd-sync-check.py seal`, nunca a mano]
+> derived_from_prd_hash: [N/A | sha256:<hex>]
+<!-- derived_from_prd_hash lo escribe `sdd-sync-check.py seal`, nunca a mano: déjalo en N/A.
+     La instrucción va AQUÍ y no dentro del corchete a propósito ([[D-084]]): un placeholder
+     que lleva la explicación dentro del valor se sustituye a medias — quien pone el hash se
+     deja el rabo pegado y el campo, que es contrato parseable, queda con prosa dentro. -->
 > derived_from_change: [CR-XXX | N/A]
 > status_sync: [in_sync | needs_review | stale | unknown]
 > Origen de alcance: [PRD | PRD + analysis respondido | characterization]

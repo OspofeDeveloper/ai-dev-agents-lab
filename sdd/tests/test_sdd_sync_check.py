@@ -75,6 +75,31 @@ class SealTest(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertIn("NO_APLICA", r.stdout)
 
+    def test_seal_limpia_prosa_pegada_al_valor(self):
+        """El sello arrastraba la instruccion de la plantilla dentro del campo (D-084).
+
+        La plantilla llevaba `[N/A - lo escribe sdd-sync-check.py seal, nunca a
+        mano]` y un escritor sustituyo el N/A dejandose el rabo: el campo -que
+        es contrato parseable- quedo con prosa dentro, y el valor se lee igual,
+        asi que nadie lo veia. Sellar limpia la linea entera.
+        """
+        run_script("sdd-sync-check.py", "seal", self.spec)
+        sealed = self.spec.read_text(encoding="utf-8")
+        import re as _re
+        dirty = _re.sub(
+            r"(derived_from_prd_hash: sha256:[0-9a-f]+)",
+            r"\1 — lo escribe `sdd-sync-check.py seal`, nunca a mano",
+            sealed, count=1)
+        write(self.spec, dirty)
+        self.assertIn("nunca a mano", self.spec.read_text(encoding="utf-8"))
+
+        r = run_script("sdd-sync-check.py", "seal", self.spec)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertIn("limpiado", r.stdout)
+        out = self.spec.read_text(encoding="utf-8")
+        self.assertNotIn("nunca a mano", out)
+        self.assertEqual(out, sealed)
+
     def test_seal_unresolvable_prd_exit_1(self):
         write(self.spec, spec_text(prd_rel="no_existe.md"))
         r = run_script("sdd-sync-check.py", "seal", self.spec)

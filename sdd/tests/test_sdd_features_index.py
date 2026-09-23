@@ -493,6 +493,101 @@ class SinValidarTest(unittest.TestCase):
         self.assertEqual(self._index(), self._index())
 
 
+class MatrizEstancadaTest(unittest.TestCase):
+    """Un `PENDIENTE_GENERACIÓN` sobre un spec que existe es matriz vieja (D-089).
+
+    En la iteracion por subsets el Paso 6 de `wf-spec-features-first` regenera el
+    indice ANTES del readiness del Paso 8: el unico informe en disco es el de la
+    tanda anterior, que listaba las features de esta tanda como pendientes. Si el
+    veredicto gana, el indice sale contradiciendose solo — `Ruta spec` a un fichero
+    que existe y `Estado: PENDIENTE_GENERACIÓN` — y encima **bien formado**, que es
+    el modo de fallo que nadie nota ([[D-083]]).
+    """
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.dir = Path(self.tmp.name)
+        write(self.dir / "prj_discovery.md", DISCOVERY)
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _spec(self, estado="BORRADOR", marker=""):
+        text = spec("F-001", "Login", marker)
+        if estado is not None:
+            text = text.replace("> Feature ID: F-001",
+                                f"> Estado: {estado}\n> Feature ID: F-001")
+        return write(self.dir / "features" / "login" / "spec" / "login_spec.md", text)
+
+    def _readiness_de_la_tanda_anterior(self):
+        """El informe que conocia F-002 y no habia visto nacer a F-001."""
+        write(self.dir / "prj_readiness_report.md",
+              "## Matriz de readiness\n\n| Feature | Estado | Bloqueantes |\n"
+              "|---|---|---|\n"
+              "| F-001: Login | PENDIENTE_GENERACIÓN | — |\n"
+              "| F-002: Perfil | PENDIENTE_GENERACIÓN | — |\n")
+
+    def _run(self):
+        r = run_script("sdd-features-index.py", self.dir)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        return r, (self.dir / "prj_features.md").read_text(encoding="utf-8")
+
+    def _bloque(self, out, fid):
+        return out.split(f"### {fid}:")[1].split("\n### ")[0]
+
+    def test_el_veredicto_estancado_no_gana_al_spec_en_disco(self):
+        self._spec(estado="BORRADOR")
+        self._readiness_de_la_tanda_anterior()
+        _, out = self._run()
+        self.assertIn("| F-001: Login | BLOQUEADA |", out)
+        self.assertIn("pendiente de validación", out,
+                      "cae al camino marker-based, que es el que mira el disco")
+
+    def test_el_indice_no_se_contradice_a_si_mismo(self):
+        self._spec(estado="BORRADOR")
+        self._readiness_de_la_tanda_anterior()
+        _, out = self._run()
+        bloque = self._bloque(out, "F-001")
+        self.assertIn("features/login/spec/login_spec.md", bloque)
+        self.assertNotIn("aún no tiene spec generada", bloque,
+                         "la nota de pendiente junto a una ruta que existe es el "
+                         "artefacto bien formado y equivocado")
+
+    def test_avisa_de_que_el_informe_se_quedo_atras(self):
+        """El indice se corrige solo; el informe del que salio lo regenera una persona."""
+        self._spec(estado="BORRADOR")
+        self._readiness_de_la_tanda_anterior()
+        r, _ = self._run()
+        self.assertIn("estancada", r.stderr)
+        self.assertIn("F-001", r.stderr)
+        self.assertNotIn("F-002", r.stderr,
+                         "F-002 no tiene spec: su PENDIENTE_GENERACIÓN es verdad")
+
+    def test_sin_spec_el_pendiente_sigue_siendo_un_veredicto(self):
+        self._spec(estado="BORRADOR")
+        self._readiness_de_la_tanda_anterior()
+        _, out = self._run()
+        self.assertIn("| F-002: Perfil | PENDIENTE_GENERACIÓN |", out)
+        self.assertIn("aún no tiene spec generada", self._bloque(out, "F-002"))
+
+    def test_los_demas_veredictos_siguen_mandando(self):
+        """El carve-out es solo para PENDIENTE_GENERACIÓN: no abre la puerta a mas."""
+        self._spec(estado="BORRADOR")
+        write(self.dir / "prj_readiness_report.md",
+              "## Matriz de readiness\n\n| Feature | Estado | Bloqueantes |\n"
+              "|---|---|---|\n| F-001: Login | REQUIERE_CAMBIO_PRD | gobernanza: X |\n")
+        r, out = self._run()
+        self.assertIn("| F-001: Login | REQUIERE_CAMBIO_PRD |", out)
+        self.assertNotIn("estancada", r.stderr)
+
+    def test_sigue_siendo_idempotente(self):
+        self._spec(estado="BORRADOR")
+        self._readiness_de_la_tanda_anterior()
+        _, first = self._run()
+        _, second = self._run()
+        self.assertEqual(first, second)
+
+
 class CanonStatesBackstopTest(unittest.TestCase):
     """Las copias del vocabulario de estados no divergen ([[D-069]]).
 

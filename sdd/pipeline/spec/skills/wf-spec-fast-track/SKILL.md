@@ -2,7 +2,7 @@
 name: wf-spec-fast-track
 description: "Genera el Spec de una feature directamente desde un documento de requisitos acotado a una sola capacidad. Soporta modo scoped con --scope-from para filtrar un PRD completo a una feature del discovery. Acepta --analysis para usar gaps pre-resueltos de un analisis previo."
 when_to_use: "Activa en frases como 'genera el spec directo de esta feature', 'fast-track del spec', 'crea el spec de esta capability directamente', 'genera spec sin analisis previo'."
-argument-hint: "<archivo.md> --capability <nombre-kebab> [--light|--standard] [--analysis <analysis.md>] [--gap-id-start <P-XXX>] [--allow-derived-scope-from-analysis] [--allow-overwrite-sealed-spec] | <prd.md> --scope-from <discovery.md> --feature <F-00X> [--light|--standard] [--analysis <analysis.md>] [--gap-id-start <P-XXX>] [--allow-derived-scope-from-analysis] [--allow-overwrite-sealed-spec]"
+argument-hint: "<archivo.md> --capability <nombre-kebab> [--light|--standard] [--analysis <analysis.md>] [--gap-id-start <P-XXX>] [--allow-derived-scope-from-analysis] [--allow-overwrite-sealed-spec] [--skip-index] | <prd.md> --scope-from <discovery.md> --feature <F-00X> [--light|--standard] [--analysis <analysis.md>] [--gap-id-start <P-XXX>] [--allow-derived-scope-from-analysis] [--allow-overwrite-sealed-spec] [--skip-index]"
 effort: high
 allowed-tools: [Read, Write, Bash]
 context: fork
@@ -28,6 +28,7 @@ Extrae de `$ARGUMENTS`:
 - **Flag opcional**: `--allow-derived-scope-from-analysis` → permite continuar aunque el analysis introduzca expansión funcional no consolidada todavía en el PRD. Sin este flag, el workflow se detiene para remitir a `wf-prd-change`.
 - **Flag opcional**: `--light` / `--standard` → fuerza el modo del pipeline para esta feature.
 - **Flag opcional**: `--allow-overwrite-sealed-spec` → autoriza sobreescribir un spec cuya cabecera declare `Estado: VALIDADO`. Sin él, si el spec de destino está sellado **te detienes** (Paso 10). Este flag **solo** llega armado por quien te lanza, porque el usuario lo eligió en un gate ([[D-024]]/[[D-026]]).
+- **Flag opcional**: `--skip-index` → **no regeneres `_features.md`** (Paso 10). Te lo pasa quien te lanza cuando eres uno de varios escritores de una tanda: ahí el índice lo regenera él **una sola vez** al terminar todos, con la tanda entera delante. Sin el flag, regeneras tú, que es lo correcto cuando corres suelto.
 - **Flag opcional**: `--gap-id-start <P-XXX>` → primer ID que puedes usar para los gaps que levantes. Te lo da quien te lanza cuando hay varios escritores en paralelo ([[D-056]]); si viene, **manda sobre cualquier cálculo propio**.
 
 **Resolución del modo** (en este orden): flag explícito > `pipeline_mode` de `.sdd/project-init.json` (directorio actual o ancestro) > `standard`. Las reglas exactas de qué relaja el modo ligero viven en `kb-spec-expert` ("Modo ligero — proporcionalidad declarada"); los invariantes (CAs testables, trazabilidad, marcadores, pureza, gobernanza) son idénticos en ambos modos.
@@ -167,7 +168,7 @@ Antes de escribir el output, aplica la Prueba de Pureza al spec completo. Consul
 - Origen de alcance: `PRD` o `PRD + analysis respondido`
 - Avisos de gobernanza: `ninguno` o lista de gaps que derivaron alcance no consolidado
 
-**Índice de features (`_features.md`)**: NO lo escribas a mano. `_features.md` es un artefacto **generado** por `sdd-features-index.py` (regenerador determinista) a partir del discovery + los specs presentes + el readiness report. Tú escribes el spec y el README de la feature; el índice se regenera en el Paso 10. Esto elimina la colisión de escrituras paralelas (varios fast-tracks lanzados a la vez por `wf-spec-features-first`) y los conflictos de merge entre devs sobre el hub monolítico. Los campos del índice (estado canónico, origen de alcance, trazabilidad RF→HU) los deriva el script de sus fuentes: tú solo debes asegurarte de que el header del spec los declare correctamente (`> Feature ID:`, `> Origen de alcance:`, `> Avisos de gobernanza:`).
+**Índice de features (`_features.md`)**: NO lo escribas a mano. `_features.md` es un artefacto **generado** por `sdd-features-index.py` (regenerador determinista) a partir del discovery + los specs presentes + el readiness report. Tú escribes el spec y el README de la feature; el índice se regenera en el Paso 10 **salvo que te hayan pasado `--skip-index`**, en cuyo caso lo regenera quien te lanzó. Esto elimina la colisión de escrituras paralelas (varios fast-tracks lanzados a la vez por `wf-spec-features-first`) y los conflictos de merge entre devs sobre el hub monolítico. Los campos del índice (estado canónico, origen de alcance, trazabilidad RF→HU) los deriva el script de sus fuentes: tú solo debes asegurarte de que el header del spec los declare correctamente (`> Feature ID:`, `> Origen de alcance:`, `> Avisos de gobernanza:`).
 
 ---
 
@@ -216,20 +217,28 @@ python3 .sdd/scripts/sdd-sync-check.py seal <path_del_spec>
 El script calcula el hash del PRD origen y escribe `derived_from_prd_hash` en el header. NUNCA rellenes ese campo a mano (separación autor/verificador: es la evidencia con la que los gates y el sellador de planes detectan deriva del PRD). Si el script no existe:
 > "⚠ Falta `.sdd/scripts/sdd-sync-check.py`. Re-ejecuta la instalación del ecosistema (`install.sh`) para reponer los scripts de enforcement. El spec queda con `derived_from_prd_hash: N/A` (sin detección de deriva)."
 
-**Regenerar el índice de features**: tras escribir el spec, regenera `_features.md` ejecutando desde la raíz del proyecto (el directorio que contiene `.sdd/`):
+**Regenerar el índice de features** (**omite este paso entero si te pasaron `--skip-index`**): tras escribir el spec, regenera `_features.md` ejecutando desde la raíz del proyecto (el directorio que contiene `.sdd/`):
 
 ```
 python3 .sdd/scripts/sdd-features-index.py <raíz_spec>
 ```
 
-`<raíz_spec>` es el directorio que contiene `features/` y el `_features.md` (el mismo de arriba). El script escanea el discovery + todos los specs + el readiness report (si existe) y regenera el índice de forma determinista y atómica — por eso es seguro aunque varios fast-tracks corran en paralelo. NUNCA edites `_features.md` a mano (separación autor/generador). Si el script no existe:
+`<raíz_spec>` es el directorio que contiene `features/` y el `_features.md` (el mismo de arriba). El script escanea el discovery + todos los specs + el readiness report (si existe) y regenera el índice de forma determinista y atómica. La atomicidad es la **red** —dos regeneraciones simultáneas nunca dejan un fichero a medias—, no la razón para hacerlo N veces: eso lo gobierna `--skip-index`.
+
+> **Con `--skip-index` no regeneras, y tampoco te mires en el índice ([[D-087]]).** Dentro de una
+> tanda, `_features.md` refleja lo que había en disco cuando alguien lo regeneró por última vez, no
+> lo que habrá al final: mientras la tanda corre, que tu `F-00X` aparezca no significa nada, y que
+> no aparezca tampoco. **Lo que confirma tu trabajo es tu spec en disco y el `seal` que acabas de
+> ejecutar.** Medido en la pasada 15 de CU-3.a, antes de que existiera el flag: seis regeneraciones
+> en tres minutos y un escritor abriendo el índice para verificarse justo mientras sus compañeros lo
+> reescribían.
 > "⚠ Falta `.sdd/scripts/sdd-features-index.py`. Re-ejecuta la instalación del ecosistema (`install.sh`) para reponer los scripts de enforcement. El índice `_features.md` no se ha regenerado."
 
 ---
 
 ## Paso 11: Informar al usuario
 
-Informa: paths generados (spec, README) y `_features.md` regenerado. Si hay `[CRÍTICO]` pendientes: listarlos, avisando de que **bloquean el paso a planificación**. Si se aplicaron asunciones: cuántas y dónde.
+Informa: paths generados (spec, README) y, **si no te pasaron `--skip-index`**, el `_features.md` regenerado — con el flag no lo nombres: no lo has tocado y lo regenera quien te lanzó. Si hay `[CRÍTICO]` pendientes: listarlos, avisando de que **bloquean el paso a planificación**. Si se aplicaron asunciones: cuántas y dónde.
 
 **Siguiente paso: que se valide el spec** — descrito como acción, no como comando ([[D-019]]).
 Algo como: *"El spec queda en borrador, sin auditar. Cuando quieras lo valido, y ya con el

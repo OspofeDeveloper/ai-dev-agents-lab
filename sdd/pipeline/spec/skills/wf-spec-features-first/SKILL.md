@@ -141,7 +141,7 @@ Verifica que el archivo PRD existe; si no → informa con ruta exacta y detén.
    Agent(
      subagent_type: "sdd-spec-explorer",
      run_in_background: false,
-     prompt: "Lee `.claude/skills/wf-spec-analyze/SKILL.md` y ejecuta sus pasos TÚ MISMO sobre estos argumentos: <prd.md>. NO uses el `Skill` tool: ya eres el agente al que esa skill delega (`agent: sdd-spec-explorer`), así que invocarla te forkearía en un clon tuyo. Dentro de ese SKILL.md, `${CLAUDE_SKILL_DIR}` es `.claude/skills/wf-spec-analyze/`. Al terminar, informa del path exacto del `_analysis.md` generado, su veredicto y el nº de gaps por severidad."
+     prompt: "Lee `.claude/skills/wf-spec-analyze/SKILL.md` y ejecuta sus pasos TÚ MISMO sobre estos argumentos: <prd.md>. NO uses el `Skill` tool: ya eres el agente al que esa skill delega (`agent: sdd-spec-explorer`), así que invocarla te forkearía en un clon tuyo. Dentro de ese SKILL.md, las rutas que empiecen por la variable de directorio de skill (`CLAUDE_SKILL_DIR`) se resuelven contra `.claude/skills/wf-spec-analyze/`. Al terminar, informa del path exacto del `_analysis.md` generado, su veredicto y el nº de gaps por severidad."
    )
    ```
    El path del `_analysis.md` lo tomas **del informe del delegado**, no buscándolo en el disco. Marca este análisis como **recién generado**: el usuario aún no lo ha visto, así que el gate del punto 6 se presenta igualmente aunque el script no reporte críticos abiertos (con la opción de revisarlo antes de generar specs).
@@ -345,7 +345,7 @@ Delega el discovery con la tool `Agent` ([[D-043]]):
 Agent(
   subagent_type: "sdd-spec-explorer",
   run_in_background: false,
-  prompt: "Lee `.claude/skills/wf-spec-discover/SKILL.md` y ejecuta sus pasos TÚ MISMO sobre estos argumentos: <prd.md> [--analysis <analysis.md>] [--allow-derived-scope-from-analysis si aplica]. NO uses el `Skill` tool: ya eres el agente al que esa skill delega (`agent: sdd-spec-explorer`), así que invocarla te forkearía en un clon tuyo. Dentro de ese SKILL.md, `${CLAUDE_SKILL_DIR}` es `.claude/skills/wf-spec-discover/`. Al terminar, informa del path exacto del `_discovery.md`, la lista de features (ID + nombre + actor), los shared models y si te detuviste por ambigüedad."
+  prompt: "Lee `.claude/skills/wf-spec-discover/SKILL.md` y ejecuta sus pasos TÚ MISMO sobre estos argumentos: <prd.md> [--analysis <analysis.md>] [--allow-derived-scope-from-analysis si aplica]. NO uses el `Skill` tool: ya eres el agente al que esa skill delega (`agent: sdd-spec-explorer`), así que invocarla te forkearía en un clon tuyo. Dentro de ese SKILL.md, las rutas que empiecen por la variable de directorio de skill (`CLAUDE_SKILL_DIR`) se resuelven contra `.claude/skills/wf-spec-discover/`. Al terminar, informa del path exacto del `_discovery.md`, la lista de features (ID + nombre + actor), los shared models y si te detuviste por ambigüedad."
 )
 ```
 Espera su resultado (el de la tool, no el del disco) y obtén de él el path del `_discovery.md`.
@@ -489,15 +489,24 @@ bloque empieza en `P-001`.
 > crítico y bloqueante—. Ocurrió en la **primera** pasada paralela tras documentarse como riesgo
 > teórico: con este fan-out no es un caso raro, es el caso normal.
 
-Para cada feature F-00X a generar, lanza un subagente con el `Agent` tool usando `subagent_type: sdd-spec-writer`:
+Para cada feature F-00X a generar, lanza un subagente con el `Agent` tool usando `subagent_type: sdd-spec-writer`. **Antes de emitir, cuéntalas**: el Paso 4b ya fijó cuántas son, y todas salen en **este** mensaje — no hay llamada de prueba (ver abajo):
 
 ```
 Agent(
   subagent_type: "sdd-spec-writer",
   run_in_background: false,
-  prompt: "Lee `.claude/skills/wf-spec-fast-track/SKILL.md` y ejecuta sus pasos TÚ MISMO sobre estos argumentos: <prd.md> --scope-from <discovery.md> --feature F-00X --gap-id-start P-0NN [--light|--standard si se pasó o si project-init declara pipeline_mode] [--analysis <analysis.md> si disponible] [--allow-derived-scope-from-analysis **si el Paso 2.5 lo dejó decidido**, sea porque vino de entrada o porque el usuario eligió continuar con alcance derivado en su gate] [--allow-overwrite-sealed-spec **solo** si el usuario eligió regenerar esa feature sellada en el gate del Paso 4b]. NO uses el `Skill` tool: esa skill es `context: fork` y invocarla te forkearía otro subagente en cascada. Dentro de ese SKILL.md, `${CLAUDE_SKILL_DIR}` es `.claude/skills/wf-spec-fast-track/`. Al terminar, informa del path del spec generado, nº de gaps `[CRÍTICO]`, nº de asunciones aplicadas y los IDs de gap que hayas usado."
+  prompt: "Lee `.claude/skills/wf-spec-fast-track/SKILL.md` y ejecuta sus pasos TÚ MISMO sobre estos argumentos: <prd.md> --scope-from <discovery.md> --feature F-00X --gap-id-start P-0NN --skip-index [--light|--standard si se pasó o si project-init declara pipeline_mode] [--analysis <analysis.md> si disponible] [--allow-derived-scope-from-analysis **si el Paso 2.5 lo dejó decidido**, sea porque vino de entrada o porque el usuario eligió continuar con alcance derivado en su gate] [--allow-overwrite-sealed-spec **solo** si el usuario eligió regenerar esa feature sellada en el gate del Paso 4b]. NO uses el `Skill` tool: esa skill es `context: fork` y invocarla te forkearía otro subagente en cascada. Dentro de ese SKILL.md, las rutas que empiecen por la variable de directorio de skill (`CLAUDE_SKILL_DIR`) se resuelven contra `.claude/skills/wf-spec-fast-track/`. Al terminar, informa del path del spec generado, nº de gaps `[CRÍTICO]`, nº de asunciones aplicadas y los IDs de gap que hayas usado."
 )
 ```
+
+> **`--skip-index` va siempre en el fan-out ([[D-087]]).** El Paso 10 de `wf-spec-fast-track` manda
+> regenerar `_features.md` al terminar — correcto cuando corre suelto, y **N regeneraciones parciales
+> cuando corren a la vez**: cada escritor llega en un momento distinto y reescribe el índice del
+> proyecto con lo que hay en disco en ese instante. Es inocuo (el regenerador escribe atómico) pero
+> deja un índice completo, bien formado y equivocado mientras dura la tanda, que es la clase de
+> fallo que no se nota. El flag corta eso **donde nace la instrucción**, en el contrato del escritor,
+> no con una prohibición tuya que compita con su propio Paso 10 ([[D-085]]). Tú lo regeneras **una
+> sola vez**, en el Paso 6, con la tanda entera delante.
 
 > **La decisión de alcance viaja con el encargo, no se queda en tu contexto ([[D-081]]).** El
 > escritor recibe `--analysis`, así que **vuelve a evaluar** las respuestas por su cuenta y se
@@ -508,7 +517,34 @@ Agent(
 > **viaja**. Lo que sigue prohibido es lo de siempre: **tú no armas un `--allow-*`** ([[D-026]]) —
 > aquí solo transportas el que el usuario ya eligió.
 
-**CRÍTICO: emite TODOS los `Agent` tool calls en un único mensaje** — no esperes entre ellos. Cada subagente es completamente independiente. Si hay 6 features a generar, tu respuesta debe contener 6 llamadas al `Agent` tool simultáneas, todas con `subagent_type: sdd-spec-writer`.
+**CRÍTICO: emite TODOS los `Agent` tool calls en un único mensaje** — no esperes entre ellos. Cada subagente es completamente independiente. Si hay 6 features a generar, tu respuesta debe contener 6 llamadas al `Agent` tool simultáneas, todas con `subagent_type: sdd-spec-writer`. **Y si son 2, ese mensaje lleva 2**: el invariante es el cardinal, no el tamaño de la tanda.
+
+> **No hay llamada de prueba ([[D-084]]).** El número de llamadas de ese mensaje **ya está fijado**
+> por el paso anterior: si son cuatro, el mensaje lleva cuatro. Lanzar **una** para ver si el patrón
+> funciona y emitir el resto después ya rompió la barrera, aunque las restantes salgan juntas. Es el
+> desvío natural —parece prudente, y el informe de la primera parece "confirmar" que se puede
+> seguir—, pero no confirma nada que no supieras: los delegados son independientes, no comparten
+> estado y ninguno depende del anterior. Si el primero fuera a fallar por una precondición común,
+> los otros fallan igual y te enteras en el mismo turno, no en el siguiente.
+>
+> **Medido (pasada 14 de CU-3.a, 2026-09-15).** Con el subset ya fijado en cuatro features, main
+> emitió `F-001` **sola**, esperó sus 351 s y solo entonces mandó las tres restantes en un mensaje,
+> narrándolo como *"F-001 listo. Lanzo las tres restantes en paralelo."* — literalmente cierto y aun
+> así serializado: 10,6 min de fan-out donde cabían ~6. **El mismo orquestador, en el paso de
+> conflictos, emitió los cuatro auditores juntos**: el patrón se sabe. Lo que falla no es el
+> conocimiento, es la tentación de probar primero — y con `run_in_background: false` de verdad
+> activo, esa tentación ya no es inocua.
+>
+> **Y vuelve a pasar con N=2, que es donde menos se nota ([[D-092]]).** Pasada de `CU-3.d` del
+> 2026-09-18, con este contrato ya reforzado: la primera tanda (dos features) salió `1 + 1` —una
+> llamada, 4m13s esperando, y la segunda—, y la **misma sesión** mandó las tres de la tanda
+> siguiente juntas. Con dos, "lanzo las dos en paralelo" y emitir una se parecen demasiado: no hay
+> un grupo visible que delate al que falta, y el coste (duplicar el paso) es el mismo que con seis.
+> **Antes de emitir, di el número y cuenta las llamadas del mensaje contra él.** Si no coinciden,
+> el fan-out no ha salido — no lo completes con un segundo mensaje: eso ya es la forma `1 + (N-1)`
+> consumada. Y que se mida solo: el probe `sdd-fanout-check.py` cuenta las llamadas por mensaje
+> en el transcript, así que esto deja rastro aunque nadie estuviera mirando.
+
 
 > **Aquí el fan-out es una barrera, y por eso `run_in_background: false` es obligatorio en este paso
 > ([[D-047]]).** El Paso 6 regenera el índice leyendo del disco los specs de **todas** las features:
@@ -547,6 +583,14 @@ Si el subset está vacío tras filtrar specs preexistentes (todas las features p
 
 Tras esperar a que terminen todos los fast-tracks, ejecuta la pasada autoritativa **una sola vez** desde la raíz del proyecto (el directorio que contiene `.sdd/`):
 
+> **Autoritativa porque es la única, y ahora lo es de verdad ([[D-087]]).** Los escritores reciben
+> `--skip-index` en el Paso 5, así que durante el fan-out **nadie toca `_features.md`**: hasta que
+> ejecutes esta pasada, el índice sigue diciendo lo que decía antes de empezar. Eso es correcto y es
+> el punto — un índice viejo se reconoce, uno reescrito a medias no. **No sigas sin ejecutarla**, ni
+> cites el índice en tu resumen antes de hacerlo: lo que se generó sale de los informes de tus
+> delegados. Y si la tanda se corta a medias (límite de sesión, un `STOP_*`), ejecútala igual con lo
+> que haya: los specs en disco son reales aunque falten los demás.
+
 ```
 python3 .sdd/scripts/sdd-features-index.py <raíz_spec>
 ```
@@ -570,7 +614,7 @@ python3 .sdd/scripts/sdd-features-index.py <raíz_spec>
 
 ## Paso 7: Conflict check (si no `--skip-conflict`)
 
-Opera sobre **todas las features con spec en `features/`**, incluyendo preexistentes de iteraciones anteriores. Con ≥2 specs: por cada spec recién generado delega con la tool `Agent` ([[D-043]]), `subagent_type: "sdd-spec-auditor"` y `run_in_background: false`, con el prompt `"Lee .claude/skills/wf-spec-conflict/SKILL.md y ejecuta sus pasos TÚ MISMO sobre: <spec.md> --features-dir <features_dir>. NO uses el Skill tool ([[D-044]]): ya eres su agente y te forkearía en un clon."` (solo los nuevos se chequean contra todos). **Emite las N llamadas en un único mensaje**, con el flag: igual que el Paso 5, es una barrera — el Paso 8 lee lo que escriben todas ([[D-047]]). **El informe lo escribe cada auditor**, en `features/<nombre>/spec/<nombre>_conflict_report.md`, junto a su spec: tú no escribes ninguno ([[D-059]]). Sin specs nuevos → omitir.
+Opera sobre **todas las features con spec en `features/`**, incluyendo preexistentes de iteraciones anteriores. Con ≥2 specs: por cada spec recién generado delega con la tool `Agent` ([[D-043]]), `subagent_type: "sdd-spec-auditor"` y `run_in_background: false`, con el prompt `"Lee .claude/skills/wf-spec-conflict/SKILL.md y ejecuta sus pasos TÚ MISMO sobre: <spec.md> --features-dir <features_dir>. NO uses el Skill tool ([[D-044]]): ya eres su agente y te forkearía en un clon."` (solo los nuevos se chequean contra todos). **Emite las N llamadas en un único mensaje**, con el flag: igual que el Paso 5, es una barrera — el Paso 8 lee lo que escriben todas ([[D-047]]). Y como en el Paso 5, **no hay llamada de prueba** ([[D-084]]): el número lo fija el conjunto de specs nuevos, no el resultado del primer auditor — **también cuando ese número es 2** ([[D-092]]). **El informe lo escribe cada auditor**, en `features/<nombre>/spec/<nombre>_conflict_report.md`, junto a su spec: tú no escribes ninguno ([[D-059]]). Sin specs nuevos → omitir.
 
 > **Los auditores pueden contradecirse, y tú no eres el árbitro ([[D-047]]).** Cada auditor mira el
 > mismo grafo desde su feature, así que sobre un mismo par es normal que uno levante un conflicto y
@@ -594,6 +638,15 @@ Opera sobre **todas las features con spec en `features/`**, incluyendo preexiste
 > que no produjiste, y copiar introduce errores que no estaban en el original. La vista
 > consolidada con autoridad la produce el readiness; hasta entonces, la divergencia viaja **en el
 > prompt**, que no es un artefacto que nadie gobierne.
+
+> **Los informes de las tandas anteriores se quedan en disco, y no los tocas ([[D-090]]).** Iterando
+> por subsets, los de la primera tanda compararon un universo más pequeño que el de ahora. No los
+> relances ni los borres: cada informe declara en su cabecera el `Conjunto comparado`, y el Paso 8
+> los marca **ESTANCADO** por ese campo cuando no cubren los specs actuales. Tampoco tienes que
+> avisar de la colisión de IDs —desde v0.116.0 cada auditor numera con su feature delante
+> (`CF-F001-01`), así que no hay dos hallazgos homónimos que desambiguar—. Las dos cosas se
+> improvisaron a mano en la pasada del 2026-09-18, y lo que un orquestador improvisa una vez, el
+> siguiente no lo hace.
 
 ---
 

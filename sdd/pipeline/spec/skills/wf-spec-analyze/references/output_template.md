@@ -75,6 +75,11 @@
 <!-- Si REQUIERE_MEJORA: listar CAs problemáticos -->
 <!-- Si NO_APLICA: "El PRD no contiene CAs formales — esperado en un PRD. Los CAs se generarán en la fase Spec." -->
 
+<!-- OJO: el campo `Problema` de esta sección NO es el modelo del `Problema` de los bloques
+     [P-XXX] de más abajo, aunque se llamen igual. Aquí el formato **es** el asunto (un CA al que
+     le falta el THEN es literalmente el defecto que reportas), así que la jerga es correcta; allí
+     le explicas un hueco a una persona de producto y va en claro. Ver SKILL.md, borde 3. -->
+
 #### [CA-001] [Título del CA problemático]
 - **CA actual**: [descripción o cita]
 - **Problema**: [vago / no verificable / dependiente de otro CA / sin GIVEN o sin THEN / sin referencia a HU padre]
@@ -100,18 +105,18 @@
 > - `[INFORMATIVO]`: si no se responde, se aplicará la "Asunción por defecto" indicada.
 > - `[PUEDE_REQUERIR_CR]`: no cambia la severidad, pero obliga a reevaluar la respuesta con la gobernanza de cambios de producto si introduce expansión de capacidad.
 >
-> **Al redactar cada gap:** `Contexto`, `Problema` y `Pregunta para el cliente` las lee una persona de producto. Los **IDs se quedan** (`CA-001`, `HU-003`, `RF-006`); las **siglas sueltas no** — *"el CA de X"* → *"el criterio de aceptación de X"*, *"sin THEN verificable"* → *"sin resultado verificable"*. El campo `Afecta` lista IDs y no se toca.
+> **Al redactar cada gap:** `Contexto`, `Problema` y `Pregunta para el cliente` las lee una persona de producto. Los **IDs se quedan** (`CA-001`, `HU-003`, `RF-006`); las **siglas sueltas no** — *"el CA de X"* → *"el criterio de aceptación de X"*, *"sin THEN verificable"* → *"sin resultado verificable"*. Tampoco vale nombrar **el artefacto que no puedes escribir todavía**, que es por donde se cuela al justificar el bloqueo: *"no se puede escribir un CA verificable para X"* → *"no se puede comprobar de forma objetiva qué pasa cuando X"*. La frase tiene que sostenerse ante alguien que no sabe que existe una fase Spec. El campo `Afecta` lista IDs y no se toca.
 
 ### [P-001][CRÍTICO] [Título del gap — describe qué falta]
 - **Contexto**: [cita del documento o descripción de dónde aparece la ambigüedad]
-- **Problema**: [por qué esto es un gap funcional que bloquea el spec]
+- **Problema**: [qué decisión de producto queda sin cerrar, y qué no se puede comprobar mientras siga así — en los términos del producto, sin nombrar artefactos ni elementos del pipeline]
 - **Afecta**: [HU-001, HU-003 — lista de HUs que no pueden completarse sin esta respuesta]
 - **Pregunta para el cliente**: [pregunta concreta y específica, sin opciones inventadas]
 - **Respuesta**: _(pendiente)_
 
 ### [P-002][CRÍTICO][PUEDE_REQUERIR_CR] [Título del gap — respuesta sensible de alcance]
 - **Contexto**: [cita del documento o descripción de dónde aparece la ambigüedad]
-- **Problema**: [por qué esto bloquea o condiciona el spec]
+- **Problema**: [qué queda sin cerrar y qué condiciona mientras siga así — en los términos del producto]
 - **Afecta**: [HU-002]
 - **Pregunta para el cliente**: [pregunta neutra, sin empujar hacia una solución expansiva]
 - **Respuesta**: _(pendiente)_

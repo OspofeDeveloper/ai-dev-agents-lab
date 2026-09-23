@@ -91,7 +91,7 @@ Delega con la tool `Agent` ([[D-043]]) y **espera su informe**:
 Agent(
   subagent_type: "sdd-spec-auditor",
   run_in_background: false,
-  prompt: "Lee `.claude/skills/wf-prd-sync-impact/SKILL.md` y ejecuta sus pasos TÚ MISMO sobre estos argumentos: <prd.md>. NO uses el `Skill` tool: ya eres el agente al que esa skill delega (`agent: sdd-spec-auditor`), así que invocarla te forkearía en un clon tuyo. Dentro de ese SKILL.md, `${CLAUDE_SKILL_DIR}` es `.claude/skills/wf-prd-sync-impact/`. Al terminar, informa del path exacto del `_sync_report.md` y del estado por artefacto (`in_sync` / `needs_review` / `stale` / `unknown`)."
+  prompt: "Lee `.claude/skills/wf-prd-sync-impact/SKILL.md` y ejecuta sus pasos TÚ MISMO sobre estos argumentos: <prd.md>. NO uses el `Skill` tool: ya eres el agente al que esa skill delega (`agent: sdd-spec-auditor`), así que invocarla te forkearía en un clon tuyo. Dentro de ese SKILL.md, las rutas que empiecen por la variable de directorio de skill (`CLAUDE_SKILL_DIR`) se resuelven contra `.claude/skills/wf-prd-sync-impact/`. Al terminar, informa del path exacto del `_sync_report.md` y del estado por artefacto (`in_sync` / `needs_review` / `stale` / `unknown`)."
 )
 ```
 
@@ -109,7 +109,7 @@ Del **informe del delegado** (no del disco) extrae:
 Agent(
   subagent_type: "sdd-spec-writer",
   run_in_background: false,
-  prompt: "Lee `.claude/skills/wf-spec-sync-from-prd/SKILL.md` y ejecuta sus pasos TÚ MISMO en modo `analyze` sobre estos argumentos: analyze <prd.md>. NO uses el `Skill` tool: ya eres el agente al que esa skill delega (`agent: sdd-spec-writer`), así que invocarla te forkearía en un clon tuyo. Dentro de ese SKILL.md, `${CLAUDE_SKILL_DIR}` es `.claude/skills/wf-spec-sync-from-prd/`. Al terminar, dame por cada feature afectada: su ID, el path de su `_sync_requirements.md`, su `severidad` (minor|major|structural) y su `acción` (delta|manual_review|repartition|retire)."
+  prompt: "Lee `.claude/skills/wf-spec-sync-from-prd/SKILL.md` y ejecuta sus pasos TÚ MISMO en modo `analyze` sobre estos argumentos: analyze <prd.md>. NO uses el `Skill` tool: ya eres el agente al que esa skill delega (`agent: sdd-spec-writer`), así que invocarla te forkearía en un clon tuyo. Dentro de ese SKILL.md, las rutas que empiecen por la variable de directorio de skill (`CLAUDE_SKILL_DIR`) se resuelven contra `.claude/skills/wf-spec-sync-from-prd/`. Al terminar, dame por cada feature afectada: su ID, el path de su `_sync_requirements.md`, su `severidad` (minor|major|structural) y su `acción` (delta|manual_review|repartition|retire)."
 )
 ```
 
@@ -136,7 +136,7 @@ En la pregunta, describe lo que necesita cada una **en lenguaje natural** —evo
 Agent(
   subagent_type: "sdd-spec-writer",
   run_in_background: false,
-  prompt: "Lee `.claude/skills/wf-spec-sync-from-prd/SKILL.md` y ejecuta sus pasos TÚ MISMO en modo `apply` sobre estos argumentos: apply <prd.md> --features <IDs minor+delta>. NO uses el `Skill` tool: ya eres el agente al que esa skill delega (`agent: sdd-spec-writer`), así que invocarla te forkearía en un clon tuyo. Dentro de ese SKILL.md, `${CLAUDE_SKILL_DIR}` es `.claude/skills/wf-spec-sync-from-prd/`. Al terminar, dime por cada spec tocado: su path, la versión nueva y que su validación quedó reabierta."
+  prompt: "Lee `.claude/skills/wf-spec-sync-from-prd/SKILL.md` y ejecuta sus pasos TÚ MISMO en modo `apply` sobre estos argumentos: apply <prd.md> --features <IDs minor+delta>. NO uses el `Skill` tool: ya eres el agente al que esa skill delega (`agent: sdd-spec-writer`), así que invocarla te forkearía en un clon tuyo. Dentro de ese SKILL.md, las rutas que empiecen por la variable de directorio de skill (`CLAUDE_SKILL_DIR`) se resuelven contra `.claude/skills/wf-spec-sync-from-prd/`. Al terminar, dime por cada spec tocado: su path, la versión nueva y que su validación quedó reabierta."
 )
 ```
 
@@ -154,13 +154,13 @@ Agent(
 
 Solo si en el Paso 5c se aplicó al menos un spec.
 
-**Conflictos** — por cada spec resincronizado, delega un auditor, y **emite las N llamadas en un único mensaje**: con el flag, ese mensaje no vuelve hasta que han terminado todas, y esa es la barrera que necesita el readiness ([[D-047]]).
+**Conflictos** — por cada spec resincronizado, delega un auditor, y **emite las N llamadas en un único mensaje**: con el flag, ese mensaje no vuelve hasta que han terminado todas, y esa es la barrera que necesita el readiness ([[D-047]]). **No hay llamada de prueba** ([[D-084]]): el número de auditores lo fija el conjunto de specs que el Paso 5c aplicó, no el resultado del primero — lanzar uno *"a ver si va"* y el resto después serializa el fan-out con el flag activo, aunque los restantes salgan juntos.
 
 ```
 Agent(
   subagent_type: "sdd-spec-auditor",
   run_in_background: false,
-  prompt: "Lee `.claude/skills/wf-spec-conflict/SKILL.md` y ejecuta sus pasos TÚ MISMO sobre estos argumentos: <spec.md> --features-dir <features_dir>. NO uses el `Skill` tool ([[D-044]]): ya eres su agente y te forkearía en un clon. Dentro de ese SKILL.md, `${CLAUDE_SKILL_DIR}` es `.claude/skills/wf-spec-conflict/`. Al terminar, dime el path del informe y los conflictos de severidad ALTA, si los hay."
+  prompt: "Lee `.claude/skills/wf-spec-conflict/SKILL.md` y ejecuta sus pasos TÚ MISMO sobre estos argumentos: <spec.md> --features-dir <features_dir>. NO uses el `Skill` tool ([[D-044]]): ya eres su agente y te forkearía en un clon. Dentro de ese SKILL.md, las rutas que empiecen por la variable de directorio de skill (`CLAUDE_SKILL_DIR`) se resuelven contra `.claude/skills/wf-spec-conflict/`. Al terminar, dime el path del informe y los conflictos de severidad ALTA, si los hay."
 )
 ```
 
@@ -172,7 +172,7 @@ Agent(
 Agent(
   subagent_type: "sdd-spec-auditor",
   run_in_background: false,
-  prompt: "Lee `.claude/skills/wf-spec-readiness/SKILL.md` y ejecuta sus pasos TÚ MISMO sobre estos argumentos: <features_dir>/. NO uses el `Skill` tool ([[D-044]]): ya eres su agente y te forkearía en un clon. Dentro de ese SKILL.md, `${CLAUDE_SKILL_DIR}` es `.claude/skills/wf-spec-readiness/`. Al terminar, dime el path del `_readiness_report.md` y qué features quedan bloqueadas y por qué."
+  prompt: "Lee `.claude/skills/wf-spec-readiness/SKILL.md` y ejecuta sus pasos TÚ MISMO sobre estos argumentos: <features_dir>/. NO uses el `Skill` tool ([[D-044]]): ya eres su agente y te forkearía en un clon. Dentro de ese SKILL.md, las rutas que empiecen por la variable de directorio de skill (`CLAUDE_SKILL_DIR`) se resuelven contra `.claude/skills/wf-spec-readiness/`. Al terminar, dime el path del `_readiness_report.md` y qué features quedan bloqueadas y por qué."
 )
 ```
 
@@ -190,7 +190,7 @@ Aplica profundidad adaptativa:
 Agent(
   subagent_type: "design-system-architect",
   run_in_background: false,
-  prompt: "Lee `.claude/skills/wf-design-sync/SKILL.md` y ejecuta sus pasos TÚ MISMO sobre estos argumentos: <DESIGN.md>. NO uses el `Skill` tool: ya eres el agente al que esa skill delega (`agent: design-system-architect`), así que invocarla te forkearía en un clon tuyo. Dentro de ese SKILL.md, `${CLAUDE_SKILL_DIR}` es `.claude/skills/wf-design-sync/`. Al terminar, dime el path del informe y qué flows/views/ui_prompt/exports quedaron stale."
+  prompt: "Lee `.claude/skills/wf-design-sync/SKILL.md` y ejecuta sus pasos TÚ MISMO sobre estos argumentos: <DESIGN.md>. NO uses el `Skill` tool: ya eres el agente al que esa skill delega (`agent: design-system-architect`), así que invocarla te forkearía en un clon tuyo. Dentro de ese SKILL.md, las rutas que empiecen por la variable de directorio de skill (`CLAUDE_SKILL_DIR`) se resuelven contra `.claude/skills/wf-design-sync/`. Al terminar, dime el path del informe y qué flows/views/ui_prompt/exports quedaron stale."
 )
 ```
 

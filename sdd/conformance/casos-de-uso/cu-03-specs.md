@@ -26,7 +26,7 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 [`ROADMAP.md`](../ROADMAP.md) — esta vista es la **transpuesta** para leer/ejecutar el CU.
 
 ### `wf-spec-analyze` — analyze obligatorio y pureza (`sdd-spec-explorer`) (2)
-- [ ] CU-3.a — El analyze es obligatorio y para en gaps críticos
+- [x] CU-3.a — El analyze es obligatorio y para en gaps críticos — **SELLADO 3/3** (pasadas 16-18, ancla v0.115.1)
 - [ ] CU-3.k — Analyze: contaminación técnica detiene y las preguntas de riesgo van neutras
 
 ### `wf-spec-discover` — mapa de features y ownership (`sdd-spec-explorer`) (2)
@@ -34,7 +34,7 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 - [ ] CU-3.i — Discovery: ownership ambiguo de shared model para en checkpoint humano
 
 ### `wf-spec-features-first` — orquestador del flujo features-first (4)
-- [ ] CU-3.d — Generación por feature (features-first) en paralelo
+- [ ] CU-3.d — Generación por feature (features-first) en paralelo — **1/3** (ancla v0.116.0, 2026-09-21)
 - [ ] CU-3.l — Features-first: `--features` con IDs inexistentes en el discovery
 - [ ] CU-3.u — Features-first: la decisión de alcance viaja al fan-out y un `STOP_*` se presenta (D-081) ⏱ **sin pasada**
 - [ ] CU-3.v — Features-first: un discovery que ya existe se reutiliza, no se regenera (D-081) ⏱ **sin pasada**
@@ -56,12 +56,12 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 - [ ] CU-3.g — Completar HUs incompletas (gap-resolve)
 - [ ] CU-3.q — Gap-resolve: confirmación de `[INFERIDO]` (dos turnos, tres vías)
 
-### `wf-spec-delta` — evolución incremental del spec (`sdd-spec-writer`) (1)
-- [ ] CU-3.h — Evolucionar un spec con requisitos nuevos (delta)
+### `wf-spec-delta` — evolución incremental del spec (hilo principal + `sdd-spec-writer`) (1)
+- [ ] CU-3.h — Evolucionar un spec con requisitos nuevos (delta): los tres gates (D-073)
 
 ### orquestador de la fase Spec — guardrail de cambio de producto y oferta de rigor (3)
 - [ ] CU-3.b — Expansión de alcance desde las respuestas del analysis
-- [ ] CU-3.p — Delta / gap-resolve: un cambio de producto encubierto detiene y remite a wf-prd-change
+- [ ] CU-3.p — Delta / gap-resolve: un cambio de producto encubierto no se integra en silencio
 - [ ] CU-3.r — El rigor (standard/ligero) se elige al crear el spec, no en el init (D-006)
 
 > **Capa determinista** (no son escenarios manuales): los índices y marcadores
@@ -78,13 +78,27 @@ que genere artefactos de Spec las admite.
 
 **V1 — Ningún artefacto enseña comandos (ROADMAP 11.10).** Sobre el consumer, tras la pasada:
 
-```bash
-grep -rnE "\bwf-[a-z][a-z0-9-]*" spec/ prd/*_analysis.md prd/*_discovery.md prd/*_features.md \
-  --include="*.md" | grep -v "Generado por:" | grep -v "Generado via:"
+```zsh
+( setopt null_glob
+  grep -rnE "\b(wf|kb)-[a-z][a-z0-9-]*" spec/ prd/*_analysis.md prd/*_discovery.md \
+    --include="*.md" | grep -v "Generado por:" | grep -v "Generado via:" )
 ```
 
 → **Esperado: 0 líneas.** La procedencia en su forma sancionada (`Generado por: wf-spec-discover`)
 es estado y se excluye a propósito.
+→ **El `null_glob` y la lista de ficheros son parte del probe** (corregido 2026-09-21, medido en la
+pasada de `CU-3.d`). La versión anterior nombraba `prd/*_features.md`, que en topología `authoring`
+**no existe** —el índice vive en `spec/`, donde `spec/` ya lo cubre—, y en **zsh** un glob sin
+coincidencias aborta el comando entero: el probe devolvía `no matches found` y **no medía nada**.
+Es el mismo fallo que se corrigió en el reset del banco, en la misma página, seis días antes: un
+probe que no corre no reporta rojo, reporta **nada**, y quien lo lanza lo apunta como verde.
+→ **El patrón cubre `kb-*` desde v0.115.3 ([[D-088]]), y no es cosmético.** Hasta entonces el grep
+solo miraba `wf-`, así que era **estructuralmente ciego** a la mitad del problema: en la pasada 17
+—que dio V1 = 0— el `_analysis.md` llevaba tres nombres de skill (`kb-product-change-governance`
+×2 en la **Nota de gobernanza** de sendos gaps, `kb-prd-expert` citado como fuente al justificar un
+borderline de pureza). El primero lo **prescribía el contrato**; el segundo salió solo. Los dos
+están en prosa que en la vía de dictado se lee **verbatim**. Un probe que mide media clase reporta
+verde sobre la otra mitad.
 → **Acota a lo que la pasada escribe.** Un `prd/` entero arrastra los `changes/CR-*` de CU-7, que
 son artefactos de la fase **PRD** y caen en el 11.10 **pendiente** de esa fase (12 hallazgos): son
 positivos verdaderos, pero de otro CU, y ahogan la señal.
@@ -102,6 +116,14 @@ resolución" del `_conflict_report`, los bloqueantes del `_readiness_report` y e
 `Avisos de gobernanza` del `_discovery`.
 → **Validado contra la pasada 9** (artefactos pre-arreglo): devuelve **5** — 4 fugas y 1
 procedencia fuera de forma. No es una regla vacua.
+→ **Pasada 16: 1 línea, y es de la categoría leve** — *"regla de arbitraje explícita del propio
+`wf-spec-readiness`"*, en la justificación del arbitraje del `_readiness_report`. Aplicada la
+pregunta de arriba (*si borras el nombre, ¿se pierde comprensión o una instrucción?*) es
+**procedencia fuera de forma**, no fuga: justifica por qué el arbitraje contradice a dos auditores.
+**Se contó como leve y la pasada entró en la serie**; el criterio ya distinguía las tres
+categorías, y moverlo después de ver el resultado habría sido cambiar la vara con la medida puesta.
+Arreglado en v0.115.2 ampliando la norma del Paso 7 de `wf-spec-readiness` al informe **entero** —
+cubría los bloqueantes, y el arbitraje no estaba nombrado.
 → **Por qué este check existe:** 11.10 es el hallazgo más repetido de la campaña (pasadas 8 y 9)
 y hasta v0.92.0 **ningún probe lo medía** — lo encontró un revisor a mano las dos veces. Un banco
 no debe depender de eso.
@@ -125,6 +147,18 @@ leerlo **verbatim**.
 → **Validado contra la pasada 9**: devuelve 5 líneas, de las que **solo una** es real — el
 `Problema` de un `[P-XXX]` con *"el CA … no tiene un THEN verificable"*. Las otras cuatro son la
 leyenda de marcadores y la sección informativa, que son exactamente las exenciones de arriba.
+→ **Re-validado en la pasada 15** (v0.115.0): 5 líneas otra vez, pero **3 reales** — los `Problema`
+de P-002, P-003 y P-004, los tres con la misma construcción, congelada aquí (Regla 9 punto 5):
+
+> *"sin esto no se puede escribir un **CA** verificable para «marcar una deuda como saldada»"*
+
+  **Es otra forma, y por eso la norma de v0.92.0 no la paraba** ([[D-085]]): la sigla no abrevia
+  algo que exista —*"el CA de X"*— sino que nombra **el artefacto que todavía no se puede
+  escribir**, que es lo que sale solo al justificar por qué el hueco bloquea. Y V3 estaba **verde**:
+  el explorador leyó la norma y la nota de la plantilla antes del PRD y mucho antes del `Write`. Si
+  V2 vuelve a rojo con esta forma, el defecto **no** está en quien escribe: está en lo que el campo
+  le pide. La contraprueba de que muerde: en la vía *"me los dictas aquí"* ese `Problema` se lee
+  **verbatim** ([[D-042]]), así que la jerga le llega entera a quien tiene que decidir.
 
 **V3 — La norma de forma le llegó a quien escribió, y a tiempo ([[D-055]]).** En los transcripts
 de subagente (`~/.claude/projects/<slug>/<session>/subagents/agent-*.jsonl`).
@@ -161,21 +195,68 @@ cruza la posición de la regla con la del `Read`/`Write` que la disparó. Medido
 > evalúa el match, no qué paths cubre. Un probe que pide una propiedad inalcanzable por
 > construcción reporta FALLO donde no lo hay: el mismo daño que uno vacuo, en el otro sentido.
 
+**V4 — El fan-out salió en un único mensaje ([[D-092]]).** Sobre el transcript de la sesión, no
+sobre el disco:
+
+```bash
+python3 <ecosistema>/sdd/scripts/sdd-fanout-check.py \
+  ~/.claude/projects/<slug>/<session>.jsonl
+```
+
+→ **Esperado: `OK`** (exit 0), con una línea `✓` por tanda diciendo cuántas llamadas llevaba y en
+qué mensaje. **FALLO: `FANOUT_SERIALIZADO`** (exit 2), con la forma (`1 + 3`) y el hueco en
+segundos entre la primera emisión y la segunda — el coste real de haberlo repartido.
+→ **Esto lo medía un revisor a mano, y por eso se escapó tres veces** ([[D-084]], [[D-092]]). El
+backstop `FANOUT-PILOT-UNGUARDED` de `sdd-structural-lint.py` verifica que **el contrato esté
+escrito** en los emisores; nada verificaba la **conducta**. Son probes complementarios: uno mira el
+texto de la skill, el otro lo que pasó.
+→ **Qué NO marca, que es lo que lo hace usable**: dos delegaciones secuenciales al mismo agente con
+skills distintas (analyze → discover), un relanzado después de un turno humano (un `STOP_*`
+presentado, una tanda cortada por el límite de sesión) y las N filas en que el transcript parte un
+mensaje con N llamadas. Los tres se parecen al fallo y ninguno lo es.
+→ **Validado contra el histórico** antes de darlo por bueno: pasada 15 (`75a79581…`) → `OK`, 7
+escritores y 7 auditores, una tanda cada uno; pasada 18 (`500d4802…`) → `OK`, 3 + 3; pasada 14
+(`1992ad48…`) → `1 + 3` con 359 s de hueco, que es **exactamente** el hallazgo que [[D-084]]
+describe y que en su día encontró una persona leyendo el `.jsonl`. Un probe que no reproduce el
+positivo conocido no vale para el banco.
+→ **Ámbito:** mide **cualquier** fan-out del ecosistema (los Pasos 5 y 7 de `wf-spec-features-first`,
+`wf-prd-change-cascade`, `wf-design-variant`), así que vale igual en CU-7 y CU-11.
+
 ---
 
 ## ♻️ Reset del banco entre pasadas
 
-Verificado contra el layout real del consumer (`myops-app-specs`, 2026-09-07). Sin esto la
-pasada N+1 no arranca del mismo estado que la N y las corridas no son independientes
-(`kb-sdd-conformance`, Regla 9 punto 6).
+Verificado contra el layout real del consumer (`myops-app-specs`, 2026-09-07; re-verificado
+2026-09-15). Sin esto la pasada N+1 no arranca del mismo estado que la N y las corridas no son
+independientes (`kb-sdd-conformance`, Regla 9 punto 6).
 
-```bash
+```zsh
 cp .conformance-attic/.prd-sealed.bak prd/prd.md
 rm -f  prd/prd_analysis.md prd/prd_discovery.md
-rm -rf spec/features spec/spec_features.md spec/spec_readiness_report.md
+( setopt null_glob
+  rm -rf spec/features spec/*_features.md spec/*_readiness_report.md \
+         spec/*_conflict_report.md spec/_conflict_report.md )
 rm -rf .claude/agent-memory/sdd-spec-explorer .claude/agent-memory/sdd-spec-writer \
        .claude/agent-memory/sdd-spec-auditor
+find spec -name .DS_Store -delete
 ```
+
+> **El subshell con `null_glob` no es adorno: sin él el reset no corre** (medido en la pasada 15).
+> La campaña se ejecuta en **zsh**, donde un glob sin coincidencias **aborta el comando entero antes
+> de ejecutarlo** — `zsh: no matches found: spec/*_conflict_report.md` — y los conflict reports del
+> fan-out cuelgan de `spec/features/*/spec/`, no del padre, así que ese glob **no casa nunca** en el
+> caso normal. Resultado: la línea completa no se ejecutaba, `spec/features/` sobrevivía, y el
+> mensaje de error parecía inocuo ("no había nada que borrar"). El `setopt` va en un subshell para
+> no dejar la opción puesta en tu shell. El `.DS_Store` se borra porque si no, la comprobación de
+> abajo (`find spec -type f` vacío) **nunca** sale limpia en macOS.
+
+> **El consolidado de conflictos sobrevivía al reset** (corregido 2026-09-15). La línea de
+> `spec/` nombraba tres artefactos y el directorio tiene **cuatro**: el `_conflict_report.md`
+> consolidado —que desde [[D-078]] se escribe en el **padre** de `features/`, y que en la pasada
+> 13 lo escribió main— se quedaba en disco. No es ruido inerte: `wf-spec-readiness` lo lee
+> ([[D-046]]), así que la pasada N+1 arrancaba con el veredicto de conflictos de la N metido en
+> su insumo, y sin que nada lo dijera. El glob cubre además los nombres con basename
+> (`spec_conflict_report.md`) y el que salga de futuros cambios de ruta.
 
 **Lo que NO se borra, y por qué:** `prd/changes/` y `prd/product-changelog.md` son los CRs de
 CU-7 que llevaron el PRD de 1.0 a 1.5. El fixture **es** el PRD 1.5 con su historia detrás;
@@ -185,6 +266,7 @@ borrarlos cambiaría el documento de entrada.
 
 ```bash
 md5 -q prd/prd.md .conformance-attic/.prd-sealed.bak   # las dos iguales
+find spec -type f                                      # vacío: ningún derivado de la pasada N
 cat .sdd/sdd-version.json                              # la versión que vas a medir
 ```
 
@@ -254,10 +336,17 @@ nombra el contrato que la pasada mide.
      sus delegados. Si en los logs el workflow aparece como subagente, el probe no aplica: es un
      FALLO de arquitectura, no de conducta.
    → **Esperado ([[D-047]]):** invoca el analyze con la tool `Agent` y `subagent_type:
-     sdd-spec-explorer`, y **el informe del delegado le llega entregado** por una de las dos
-     vías: el `tool_result` de esa llamada (si pasó `run_in_background: false`) o la
-     **notificación de fin** del agente, habiendo cedido el turno sin hacer nada más mientras
-     tanto. Un solo reporte final.
+     sdd-spec-explorer`, y **el informe del delegado le llega entregado** por una de las **tres**
+     vías sancionadas: (a) el `tool_result` de esa llamada (si pasó `run_in_background: false`),
+     (b) la **notificación de fin** del agente, o (c) un **`SubagentHandback`** — el `tool_result`
+     dice entonces *"the report was delivered to you as a message… it is not repeated here"* y el
+     informe entra en el contexto de main como `<agent-message>`. En las tres, main cede el turno
+     sin hacer nada más mientras tanto y emite **un solo** reporte final.
+   → **La (c) es entrega, no acuse, y hay que saber distinguirla** (medida en la pasada 15, donde
+     fueron **las 12 de 12**). Se parece al acuse del `SendMessage` de abajo —el `tool_result` no
+     trae el informe— pero la diferencia es objetiva: en la (c) el texto del delegado **está en el
+     contexto de main** antes de su siguiente acción. **FALLO:** que main siga adelante teniendo
+     solo la línea del `tool_result`, sin que el `<agent-message>` haya entrado.
    → **La vía (b) no es un FALLO.** Medido en la pasada 4: el flag viajó en **0 de 10**
      delegaciones y las 10 esperas fueron impecables. Lo que se mide aquí es **quién trae el
      informe**, no en qué turno llega.
@@ -278,8 +367,23 @@ nombra el contrato que la pasada mide.
         compactado entre su primera invocación y la reanudación. Se cruza lo que responde con lo
         que tenía en su `.jsonl` la primera vez: si cita algo que solo estaba en la parte
         perdida, no lo estaba recordando.
+     3. **¿Relanzó lo que no podía reanudar?** Un delegado cortado antes de entregar puede no
+        haber dejado `agentId`. Ahí la vía es **relanzarlo entero**, no dar por bueno lo que haya
+        en disco.
+     **Medido y limpio en la pasada 15, que es de donde salen estos tres puntos.** El límite de
+     sesión cortó un fan-out de siete con 3 informes entregados y 4 escritores truncados. Main:
+     (1) miró el disco y lo descartó como evidencia —*"un fichero en disco **no es** el
+     informe"*—; (2) reanudó los 3 que tenían `agentId` y **nombró el acuse como lo que es**
+     (*"acuse de recibo, no informe todavía — cedo el turno"*), sin avanzar hasta tener los tres
+     `<agent-message>`; (3) al reanudarlos **les reinyectó los argumentos** (*"contexto por si tu
+     historia se compactó: trabajabas sobre `<prd> --scope-from <discovery> --feature F-00X`"*),
+     lo que hace innecesario el forense del punto 2 — y verificado: ninguno de los tres se había
+     compactado; (4) **relanzó entero** el que no dejó handle, en vez de aceptar su borrador
+     huérfano. Esa secuencia es el criterio: **si la reanudación se comporta así, es PASS**.
      **No lo des por PASS "porque salió bien".** En la pasada 8 salió bien y el probe no tenía
      criterio: lo resolvió el revisor a mano, que es justo lo que un banco no debe necesitar.
+     Desde la 15 el criterio está escrito **antes** de la pasada que lo va a usar, que es la única
+     forma de que mida algo.
    → **El flag ya no lo fuerza ningún hook — lo habilita el proyecto ([[D-050]]).** [[D-048]]
      puso un `PreToolUse` (`sdd-agent-sync.py`) que denegaba la delegación sin el flag;
      [[D-050]] lo **retiró entero** al descubrir la causa real: con fork mode activo el flag
@@ -300,11 +404,20 @@ nombra el contrato que la pasada mide.
      sobre el mismo trabajo; o el reporte final **emitido dos veces** (delata que el stream
      asíncrono cerró después). Deducir del disco no es esperar.
    → **FALLO en el fan-out (Pasos 5 y 7, donde hay barrera — [[D-047]]):** que las N llamadas
-     `Agent` salgan en **mensajes separados** en vez de en uno solo. Hoy es inocuo porque van
-     asíncronas y solapan igual, **pero eso es exactamente lo que lo hace peligroso**: el día
-     que el flag surta efecto, mensajes separados serializan el fan-out (cada uno espera a su
-     agente antes de emitir el siguiente). Se mide contando los mensajes del transcript, no los
-     agentes. En la misma familia: continuar al Paso 6 sin tener las N respuestas.
+     `Agent` salgan en **mensajes separados** en vez de en uno solo. Se mide contando los
+     mensajes del transcript, no los agentes. En la misma familia: continuar al Paso 6 sin tener
+     las N respuestas.
+     **Ya no es inocuo, y se cobró en la pasada 14** ([[D-084]]): mientras el harness los lanzaba
+     en segundo plano solapaban igual, pero con `CLAUDE_CODE_FORK_SUBAGENT=0` cada mensaje es una
+     barrera y el fan-out se serializa de verdad.
+     → **La forma que de verdad ocurre es la `1 + (N-1)`: la llamada de prueba.** No se emiten de
+       una en una por descuido — se lanza **una** para ver si el patrón funciona y el resto
+       después, que parece prudente. **Cuenta como FALLO igual**, y es el que hay que buscar:
+       las N-1 restantes salen juntas, así que el orquestador lo narra como *"lanzo las
+       restantes en paralelo"* —literalmente cierto— y una lectura rápida del transcript lo da
+       por bueno. **Cómo se distingue:** el primer `Agent` del paso va solo en su mensaje y su
+       `tool_result` llega **antes** del siguiente. Si los timestamps del segundo, tercero y
+       cuarto están a segundos entre sí pero el primero cerró minutos antes, ahí está.
    → **FALLO grave y silencioso — el dato fabricado ([[D-045]]):** que el orquestador **reporte
      como venido del delegado** un path, un veredicto o un recuento que ha obtenido él por su
      cuenta. Es el que no se nota: el informe que sube *parece correcto*. Se detecta cruzando lo
@@ -334,14 +447,48 @@ analyze, avanza con críticos sin elección explícita, decide por lectura propi
 informe a mano, espera a mano, o **reporta como del delegado un dato que reconstruyó él**.
 **Desviación → reportar:** issue citando `CU-3.a`.
 
-> **⏱ El recuento vuelve a 0/3 desde v0.104.0 (2026-09-10).** Las tres pasadas limpias que exige
-> el sellado tienen que ser **sobre el mismo árbol**, y entre 0.104.0 y 0.106.0 cambió la ruta que
-> este escenario mide: `wf-spec-discover` y `wf-spec-gap-resolve` pasaron a parar con veredicto en
-> vez de preguntar ([[D-068]]), `wf-spec-analyze` perdió su confirmación de regenerado ([[D-064]]),
-> `wf-spec-delta` cambió de reparto ([[D-067]]) y `wf-spec-amend` y `wf-spec-validate` se movieron
-> al hilo principal ([[D-065]]/[[D-068]]). Las pasadas anteriores **siguen siendo evidencia
-> histórica** —de ahí salieron nueve decisiones— pero **no cuentan para el sello**: las tres
-> arrancan de cero sobre 0.106.0 o posterior.
+> **✅ SELLADO — 3/3 sobre el ancla v0.115.1 (pasadas 16, 17 y 18; cerrado el 2026-09-18).** Es el
+> primer escenario de la campaña que cierra serie desde que existen las anclas. Lo que lo hizo
+> posible no fue acertar tres veces: fue **dejar de tocar el Paso 5**. Las tres anclas anteriores
+> murieron por arreglos en ese prompt ([[D-081]], [[D-084]], [[D-087]]), así que la condición para
+> abrir una serie no es *"no tocar nada"* — es **congelar el punto que el escenario mide**.
+>
+> **Qué NO sella esto.** Los probes que la serie no llegó a ejercitar siguen sin evidencia: la vía
+> *"los escribes tú en el fichero"* del gate (paso 2), el `SendMessage` con un agente **realmente
+> compactado** (las tres reanudaciones tenían su contexto intacto), y el fan-out con N grande — las
+> tres pasadas fueron de 3 features, así que la forma `1 + (N-1)` se midió en su régimen más
+> pequeño. Un sello dice que lo medido salió bien tres veces, no que esté todo medido.
+>
+> **La historia del recuento, que es lo que hay que releer antes de abrir la siguiente serie:** Las tres pasadas
+> limpias que exige el sellado tienen que ser **sobre el mismo árbol**, y la ruta que este
+> escenario mide se ha movido **dos veces**:
+>
+> - **Primer reinicio (v0.104.0 → ancla 0.106.0).** `wf-spec-discover` y `wf-spec-gap-resolve`
+>   pasaron a parar con veredicto en vez de preguntar ([[D-068]]), `wf-spec-analyze` perdió su
+>   confirmación de regenerado ([[D-064]]), `wf-spec-delta` cambió de reparto ([[D-067]]) y
+>   `wf-spec-amend` y `wf-spec-validate` se movieron al hilo principal ([[D-065]]/[[D-068]]).
+> - **Segundo reinicio (v0.113.0), y es el vigente.** CU-3.a no mide una skill: mide la
+>   **orquestación** —rigor, delegación, barrera del fan-out, gate de gaps, no cargar
+>   artefactos— y `wf-spec-features-first` cambió justo ahí. [[D-080]] le añadió una cuarta
+>   clase al subset (`RETIRADA`, fuera del fan-out y nombrada) y [[D-081]] cableó dos costuras
+>   de la delegación: la decisión del gate de alcance **viaja al prompt** de los escritores, y
+>   un `STOP_*` de un delegado tiene rama. Lo que un probe de fan-out observa **no es lo mismo
+>   antes y después**.
+>
+> - **Tercer reinicio (v0.115.0).** La pasada 14 —la primera del ancla de
+>   0.113.0— **falló** en el probe 5 y el arreglo de [[D-084]] toca el Paso 5 de
+>   `wf-spec-features-first`, que es justo lo que estos probes miden. Coste asumido a sabiendas:
+>   la pasada ya no contaba, así que reiniciar salía gratis.
+>
+> - **Cuarto reinicio (v0.115.1), y es el vigente.** [[D-087]] añade `--skip-index` al encargo
+>   del **Paso 5** —el mismo prompt— y cambia lo que el fan-out deja en disco mientras corre.
+>   La pasada 15 tampoco contaba (V2 en rojo, paso 4 sin ejercitar), así que otra vez sale
+>   gratis. **Es la tercera vez que un arreglo del Paso 5 mueve el ancla:** el patrón ya es
+>   información — mientras la orquestación siga en obra, la serie no empieza.
+>
+> Las pasadas anteriores **siguen siendo evidencia histórica** —de ahí salieron trece decisiones—
+> pero **no cuentan para el sello**: las tres arrancan de cero sobre **0.115.1 o posterior**. La
+> última que contó para alguna serie es la 13 (v0.97.0), hace cuatro anclas.
 
 > **Pasada 1 (2026-08-02, v0.76.0) — PASS en el paso 1; origen de [[D-042]].** El analyze
 > corrió primero y el flujo **se detuvo** con `spec/features/` intacto; pureza `APROBADO`
@@ -1002,6 +1149,207 @@ informe a mano, espera a mano, o **reporta como del delegado un dato que reconst
 > El mismo patrón de la nota de la pasada 9: leer hasta donde confirma la hipótesis. Lo destapó
 > la pregunta del usuario —*"¿por qué razón escribió ese fichero?"*—, no una comprobación mía.
 
+> **Pasada 14 (2026-09-15, v0.114.1+91bde85, `myops-app-specs`, banco reseteado, modelo
+> `opus-5`) — FALLO en el probe 5 (fan-out). NO cuenta para la serie.** Primera pasada del ancla
+> nueva (v0.113.0+) y primera con [[D-073]] en el árbol.
+>
+> **El fallo, congelado** ([[D-084]]): con el subset ya fijado en cuatro por el gate del Paso 4b,
+> main emitió `F-001` **sola** (12:58:33), esperó sus 351 s y solo entonces mandó las tres
+> restantes en un mensaje (13:04:32/35/38), narrándolo como *"F-001 listo. Lanzo las tres
+> restantes en paralelo."* Sin interrupción del usuario en medio. Paso 5: 10,6 min donde cabían
+> ~6. **El mismo orquestador emitió los cuatro auditores de conflicto juntos** (13:09:21-27), así
+> que el patrón se sabía: lo que falló fue la tentación de probar primero. Es exactamente lo que
+> este probe llevaba prediciendo desde que [[D-050]] devolvió el efecto al flag — la pasada no lo
+> descubrió, lo **confirmó**.
+>
+> **Segundo hallazgo, mudo y de otra familia:** el spec de `cuentas-y-tarjetas` salió con
+> `derived_from_prd_hash: sha256:dd87… — lo escribe \`sdd-sync-check.py seal\`, nunca a mano`. La
+> plantilla llevaba la instrucción **dentro** del corchete del placeholder y el escritor sustituyó
+> el `N/A` dejándose el rabo pegado, en 1 de 4 specs. El campo es contrato parseable y
+> `sdd-sync-check.py` lo leía igual (`IN_SYNC`), así que **nadie lo reportaba**; V1 tampoco lo caza
+> porque solo busca `wf-*`, no `sdd-*.py`. Cerrado en [[D-084]]: la instrucción sale del valor y
+> `seal` limpia la línea entera.
+>
+> **Lo que sí quedó medido, y bien:** rigor ofrecido **antes** del fan-out · **12/12** delegaciones
+> con `run_in_background: false` y las doce a `spawnDepth: 1` (cero cascadas, [[D-044]]) · gate de
+> críticos por veredicto de script sin relanzarse · las tres respuestas dictadas escritas con
+> `--answer`, **enteras y sin maquillar** (los typos del usuario llegaron al artefacto) · la
+> costura de gobernanza **entera** en su rama negativa: P-003 llevaba `[PUEDE_REQUERIR_CR]`
+> respondido → main delegó la evaluación y recibió `SIN_SEÑALES` razonado contra el texto del PRD
+> · bloques de gap `P-011/021/031/041` sin colisión ([[D-056]]) · main **no cargó ningún
+> artefacto** (su único toque es el `grep -nE "^### F-[0-9]{3}:"` y la sonda `sed` de `Estado:`,
+> los dos sancionados — y la sonda lee el campo entero con rama `RETIRADO`: [[D-080]] funcionando
+> en vivo) · **V1 = 0 líneas** y V2 limpia · índice con el universo de 7 y 3 en
+> `PENDIENTE_GENERACIÓN`.
+>
+> **Dos conductas por encima del aprobado, que conviene no perder:** la escritora de F-005 detectó
+> que la respuesta a P-002 **solo cubría una rama** (edición sí, eliminación no), levantó
+> `[P-041]` y dejó HU-006/CA-011 `[INCOMPLETO]` en vez de rellenar el hueco con una decisión
+> inventada. Y el readiness, arbitrando cuatro informes divergentes, encontró un **error de mapeo
+> del discovery** (Deuda declarada como referencia de F-004 sin serlo) y lo clasificó como
+> corrección de trazabilidad, no como conflicto — sin cerrar nada por recuento.
+
+> **Pasada 15 (2026-09-16, v0.115.0+91bde85, `myops-app-specs`, banco reseteado, modelo `opus-5`,
+> subset de 7 features) — pasos 1, 2, 3 y 5 PASS; paso 4 sin ejercitar; V2 en rojo.** Primera
+> pasada con [[D-084]] en el árbol y **el probe 5 lo confirma**: las **7** llamadas `Agent` del
+> fan-out salieron en **un único mensaje** (07:23:06→07:23:25), sin llamada de prueba, y las **7**
+> del conflict check también (11:29:45→11:29:56). El desvío que tumbó la pasada 14 no reapareció.
+>
+> **Lo medido, en bloque:** 18 delegaciones, todas con `run_in_background: false` y a
+> `spawnDepth: 1` · cero llamadas al `Skill` tool en los 18 delegados ([[D-044]]) · main **sin un
+> solo `cat`/`Read`** de PRD, analysis, discovery ni specs —sus únicos comandos son los scripts,
+> dos `ls` y dos bucles `sed` acotados a la línea `Estado:`— · gate de críticos por veredicto de
+> script, con los 4 IDs y su título, sin traer el detalle antes de elegir · rangos de gap
+> `P-011/021/031/041/051/061/071` **sin una sola colisión** · los 7 sellos por `sdd-sync-check.py
+> seal` (`check-all` → 7/7 `IN_SYNC`) · los 3 informativos aplicados como `[A-XXX]` citando su gap
+> de origen · índice con el universo completo · `.claude/agent-memory/` sin reaparecer ([[D-041]])
+> · **V1 = 0**. Ningún dato reportado por main que no estuviera en disco: las cifras de HUs
+> `[INCOMPLETO]` (3/1/2/1) coinciden línea a línea con los ficheros.
+>
+> **El límite de sesión cortó el fan-out a mitad, y esa fue la parte más informativa.** 3 informes
+> entregados, 4 escritores truncados. La recuperación por `SendMessage` —la tercera puerta que
+> [[D-045]]/[[D-047]] no gobernaban— salió **de libro**, y de ahí sale el criterio que el probe 5
+> lleva ahora escrito. También se observó por primera vez la vía **`SubagentHandback`** como forma
+> de entrega: 12 de 12.
+>
+> **Hallazgo → [[D-085]].** V2 pasó de 1 hallazgo real (pasada 9) a **3**: los `Problema` de
+> P-002, P-003 y P-004 con *"no se puede escribir un **CA** verificable para…"*. Y **no fue
+> descuido**: el `.jsonl` del explorador enseña que leyó la norma y la nota de la plantilla antes
+> del PRD y mucho antes del `Write`. La norma cubría la sigla como abreviatura de algo que existe;
+> esta es la sigla como **el artefacto que aún no puedes escribir**, que es lo que la instrucción
+> del campo pedía (*"por qué esto bloquea el spec"*).
+>
+> **Tres hallazgos más, de contrato, que salieron de auditar los transcripts** (no de la conducta,
+> que fue correcta): el residuo del barrido de [[D-084]] en `spec_header_templates.md`, **que cada
+> escritor lee** en el fan-out · las 9 frases de mapeo con `${CLAUDE_SKILL_DIR}`, rotas por
+> construcción ([[D-086]]: 34 resoluciones por inferencia en esta sola pasada) · y el índice
+> regenerado **6 veces en 3 minutos** por los escritores, con uno de ellos leyéndolo para
+> verificarse mientras los demás lo reescribían ([[D-087]], cerrado con `--skip-index`).
+>
+> **Por qué no cuenta para la serie:** V2 en rojo, y el **paso 4 no se ejercitó** — la frase de
+> empuje entró por la escotilla *"Other"* del gate y se leyó, con razón, como *"continuar
+> aceptando el riesgo"*. Para medirlo hay que **elegir la opción "me los dictas aquí"**.
+
+> **Pasada 16 (2026-09-17, v0.115.1+91bde85, `myops-app-specs`, banco reseteado, modelo `opus-5`,
+> subset de 3 features) — PASS. Primera de la serie: 1/3.** Los cinco pasos medidos y en verde, y
+> **el paso 4 ejercitado por fin**.
+>
+> **Paso 4, que llevaba quince pasadas sin correrse.** Elegida la vía *"me los dictas aquí"*, los
+> 3 críticos llegaron **de uno en uno en conversación** (no por `AskUserQuestion`), cada uno con su
+> contexto y su pregunta, y cada respuesta se aplicó con `--answer` por `Bash`. **Verbatim y sin
+> maquillar**: el typo del usuario (*"trajeta"*) llegó al fichero tal cual. **Main no hizo un solo
+> `Read`/`Edit`/`Write` en toda la sesión** — cero, comprobado sobre el transcript entero.
+>
+> **Los tres arreglos de v0.115.1, validados en campo:**
+> - [[D-085]] → **V2 = 0 hallazgos reales** (3 líneas, las tres exentas). Los `Problema` nacen en
+>   claro; la pasada 15 daba 3 fugas en ese mismo campo.
+> - [[D-086]] → la frase de relevo llegó **entera y verdadera** a los 3 encargos: *"las rutas que
+>   empiecen por la variable de directorio de skill (`CLAUDE_SKILL_DIR`) se resuelven contra
+>   `.claude/skills/wf-spec-fast-track/`"*.
+> - [[D-087]] → `--skip-index` viajó en los 3 prompts y **los 3 escritores no ejecutaron el
+>   regenerador ni una vez**. El único que lo corrió aparte de main fue el readiness, que lo tiene
+>   sancionado. Durante el fan-out **nadie tocó el índice**: [[CU-3.d]] punto 4 en verde a la
+>   primera.
+>
+> **Y dos escenarios más medidos por primera vez, gracias a que la respuesta a P-002 expandió el
+> alcance:** el gate de gobernanza devolvió `CON_SEÑALES`, el usuario eligió *alcance derivado*, y
+> [[CU-3.u]] quedó medido — el `--allow-derived-scope-from-analysis` viajó a los 3 encargos,
+> **ningún escritor volvió con `STOP_REQUIERE_PRD_CHANGE`** ([[D-081]] funcionando), y la marca
+> aterrizó **solo donde tocaba**: `pagos-previstos` con `Origen de alcance: PRD + analysis
+> respondido` y `Avisos de gobernanza: alcance derivado desde P-002`; las otras dos, `PRD` /
+> `ninguno`.
+>
+> **El resto:** fan-out de 3 en **un único mensaje** (10:21:36→43) y los 3 auditores de conflicto
+> también (10:26:47→50), sin llamada de prueba · 10 delegaciones, todas `bg=False` y a
+> `spawnDepth: 1`, **cero llamadas al `Skill` tool** · main sin cargar artefactos (sus únicos `cat`
+> son el `project-init.json` y la plantilla de su propia skill; el discovery por el
+> `grep -nE "^### F-[0-9]{3}:"` sancionado) · `check-all` 3/3 `IN_SYNC` · índice con el universo de
+> 7 y las 4 no procesadas pendientes · **0 `[INCOMPLETO]`**, coherente con los 3 críticos cerrados
+> · `agent-memory` sin reaparecer.
+>
+> **El límite semanal cortó el analyze a las 08:48** y el delegado **alcanzó a entregar su
+> handback** justo antes: al reanudar, main tenía el informe en contexto y no dedujo del disco.
+> Suerte, no diseño — pero la conducta fue la correcta.
+>
+> **El único hallazgo, leve:** V1 = 1 línea en el `_readiness_report` (*"regla de arbitraje
+> explícita del propio `wf-spec-readiness`"*), clasificada como **procedencia fuera de forma** y
+> arreglada en v0.115.2. **El ancla no se mueve:** el arreglo es una norma de prosa del informe de
+> readiness, no toca la orquestación que estos probes miden.
+
+> **Pasada 17 (2026-09-17, v0.115.2+91bde85, `myops-app-specs`, banco reseteado, modelo `opus-5`,
+> subset de 3 features: F-001, F-005, F-006) — PASS. Segunda de la serie: 2/3.**
+>
+> **El paso 4 se midió por segunda vez y salió más fuerte que la primera**, con tres conductas que
+> valen más que el PASS:
+> - **No tradujo lo que el usuario no dijo.** A *"se tiene que comportar igual que definimos en las
+>   tarjetas"* respondió que **eso es justo lo que el análisis marca como no establecido**, y esperó
+>   a que se dijera explícito. Es la forma positiva del FALLO *"completa o reinterpreta"*.
+> - **No adivinó una frase cortada.** Ante *"Debe impedirse la eliminación si"* preguntó si era un
+>   *"sí"* o faltaba una condición.
+> - **Podó declarando.** Aplicó *"si que puede quedar en negativo"* y **dijo** que había quitado el
+>   *"En este caso apunta que"* por ir dirigido a él y no al documento. Es el único juicio
+>   discutible de la pasada; **anunciarlo es lo que lo separa de maquillar**, y así queda registrado
+>   para cuando haya que decidir si el contrato lo sanciona.
+>
+> **Estructura, toda verde:** fan-out de 3 en un único mensaje (13:30:04→11) y los 3 auditores
+> también (13:35:53→57) · 9 delegados a `spawnDepth: 1`, cero `Skill` tool · **main sin un solo
+> `Read`/`Edit`/`Write`** en toda la sesión · `--skip-index` en los 3 encargos y **cero
+> regeneraciones** por los escritores ([[D-087]] confirmado por segunda vez) · la frase de relevo
+> entera ([[D-086]]) · `check-all` 3/3 `IN_SYNC` · índice con el universo de **8** y 5 pendientes ·
+> **0 `[INCOMPLETO]`** · **V2 = 0** ([[D-085]] confirmado por segunda vez).
+>
+> **La rama limpia de gobernanza, medida a propósito:** ningún crítico llevaba `PUEDE_REQUERIR_CR`,
+> así que no hubo gate de alcance —complementa a la pasada 16, que midió la rama `CON_SEÑALES`—. Y
+> los dos informativos que sí lo llevaban quedaron sin responder: su asunción por defecto está
+> redactada en la **rama conservadora**, así que aplicarla no expande nada. Es una propiedad del
+> diseño que conviene no perder de vista: **el default de un gap marcado no puede ser el expansivo**.
+>
+> **Observación sin consecuencia:** el discovery salió con **8** features (antes 7) porque la
+> respuesta a P-003 convirtió la visión general en capacidad con contenido propio. Las respuestas
+> del analysis moldean el mapa — funcionando como debe.
+>
+> **El hallazgo, y es del banco, no de la corrida:** V1 dio **0** y aun así el `_analysis.md`
+> llevaba **tres nombres de skill** (`kb-product-change-governance` ×2, `kb-prd-expert`). El probe
+> solo miraba `wf-`. Ampliado a `kb-` en v0.115.3 junto con el arreglo del contrato que lo
+> prescribía ([[D-088]]). **La pasada cuenta como limpia**: V1 estaba definido sobre `wf-` y sobre
+> eso dio 0 — suspenderla con un probe ampliado después de verla es mover la vara con la medida
+> puesta, y el criterio tiene que valer en las dos direcciones (en la 16 se aplicó para no ser más
+> duro; aquí, para no serlo tampoco).
+
+
+> **Pasada 18 (2026-09-17/18, v0.115.3+91bde85, `myops-app-specs`, banco reseteado, modelo
+> `opus-5`, subset de 3 features: F-002, F-003, F-007) — PASS. Tercera de la serie: 3/3, sello.**
+>
+> **V1 con el patrón ampliado a `kb-*` dio 0** — primera medición bajo la definición nueva, y no
+> por falta de material: las notas de gobernanza volvieron a salir, esta vez redactadas como *"la
+> gobernanza de cambios de producto"*. [[D-088]] funcionó al primer intento. **V2 = 0** (tercera
+> confirmación consecutiva de [[D-085]]).
+>
+> **La recuperación por `SendMessage`, medida contra un criterio preexistente.** El límite de
+> sesión cortó el readiness; main reanudó **a ese mismo agente**, dijo *"cedo el turno y espero su
+> informe"*, **no avanzó con el acuse** (siguiente paso solo tras entrar el `<agent-message>`) y no
+> dedujo del disco. Es la primera vez en la campaña que ese camino se juzga con el criterio escrito
+> **antes** de la pasada y no por un revisor a posteriori — que era exactamente para lo que se
+> escribió.
+>
+> **Estructura:** 3 escritores en un único mensaje (14:40:49→55) y 3 auditores también
+> (14:46:20→23) · 9 delegados a `spawnDepth: 1`, cero `Skill` tool · main sin un solo
+> `Read`/`Edit`/`Write` · `--skip-index` en los 3 encargos y **cero regeneraciones** por los
+> escritores ([[D-087]], tercera confirmación) · `check-all` 3/3 `IN_SYNC` · índice con el universo
+> de 7 y 4 pendientes · paso 4 por tercera vez, verbatim.
+>
+> **Conducta destacable:** el escritor de `budget-management` **levantó un gap propio** (`[P-021]`,
+> dentro de su bloque asignado) al encontrar un hueco que el análisis no cubría, y dejó su HU
+> `[INCOMPLETO]` en vez de rellenarla con una decisión inventada. Bloques P-011/P-021/P-031 sin
+> colisión.
+>
+> **Lo único al rascar, leve y sancionado:** `Generado via: fast-track …` y `Spec monolítico
+> origen: N/A (features-first via discover)` son **campos de procedencia que la plantilla
+> prescribe** —V1 los excluye a propósito—, y el *"(fan-out de features-first)"* del readiness es la
+> *procedencia fuera de forma* que este mismo CU pone de ejemplo. **No se amplía V1 otra vez**: un
+> patrón sin prefijo daría falsos positivos por todas partes y cazaría la clase menos dañina. Queda
+> anotado y ahí se queda.
+
 ## CU-3.b — Expansión de alcance desde las respuestas del analysis
 
 **Precondición:** al responder el `_analysis.md` introduces capacidad nueva (entidad
@@ -1106,16 +1454,105 @@ inventa features sin discovery, o procesa todas sin avisar con >5.
    → **FALLO adicional:** que el orquestador "arregle" el índice **editándolo a mano** en vez
      de re-generarlo con `--discovery <path>`; es un artefacto generado y el parche se pierde
      en la siguiente regeneración.
+   → **En la iteración por subsets, mira el `Estado` de las features de ESTA tanda** ([[D-089]]).
+     El Paso 6 regenera el índice **antes** del readiness del Paso 8, así que el único informe en
+     disco es el de la tanda anterior — que listaba estas features como `PENDIENTE_GENERACIÓN`.
+     Hasta v0.116.0 ese veredicto ganaba al disco y el índice salía **contradiciéndose solo**:
+     `Ruta spec` a un fichero que existe, `Estado: PENDIENTE_GENERACIÓN` y la nota de *"aún no
+     tiene spec generada"*. Medido el 2026-09-18 sobre tres features recién escritas, y duró
+     **tres días** —hasta que el readiness rehizo el índice—, con el orquestador narrando
+     *"índice regenerado, 8 features, universo completo"*. **FALLO:** una feature con `Ruta spec`
+     y `PENDIENTE_GENERACIÓN` a la vez. El script avisa ahora en stderr (`matriz de readiness
+     estancada`) y deriva el estado de los marcadores del spec.
 3. **El fan-out sale en un único mensaje** ([[D-047]]) — se cuenta en los mensajes del
-   transcript, no en los agentes.
-   → **FALLO:** N llamadas `Agent` repartidas en N mensajes consecutivos. Inocuo mientras
-     el harness las lance en segundo plano; serializa el fan-out en cuanto el flag surta
-     efecto.
+   transcript, no en los agentes. **No lo cuentes a ojo: es [[V4]]** (`sdd-fanout-check.py`),
+   que lo deriva del `.jsonl` y distingue el fallo de las tres cosas que se le parecen.
+   → **FALLO:** N llamadas `Agent` repartidas en varios mensajes, **incluida la forma
+     `1 + (N-1)`**: una de prueba y el resto después ([[D-084]]). Con el flag activo serializa
+     el fan-out de verdad — medido en la pasada 14: 351 s de un escritor en solitario por
+     delante de una tanda de tres, 10,6 min de Paso 5 donde cabían ~6.
+   → **Y con N=2 es donde más se escapa** ([[D-092]]). Pasada del 2026-09-18, contrato ya
+     reforzado: la primera tanda (F-003, F-004) salió `1 + 1` con **253 s** de hueco, y la
+     **misma sesión** emitió las tres de la tanda siguiente juntas. Con dos features no hay un
+     grupo visible que delate al que falta — *"lanzo las dos en paralelo"* y emitir una se
+     parecen demasiado—, y el coste relativo es idéntico al de seis. Si mides este punto con
+     una tanda de 3+, **no lo has medido donde se rompe**.
+
+4. **El índice tiene un solo autor durante la tanda** ([[D-087]]) — se lee en el encargo y en el
+   reloj, no en el resultado final (que sale bien de las dos formas).
+   → **Esperado:** el prompt de cada escritor lleva **`--skip-index`**, y entre el primer `Agent`
+     del Paso 5 y la pasada del Paso 6 **`_features.md` no se toca**: su `mtime` sigue siendo el
+     de antes de la tanda. El orquestador lo regenera **una sola vez**, con todas las features
+     delante.
+   → **FALLO:** el flag no viaja en el encargo (misma familia que [[D-081]]: una decisión del
+     orquestador que se queda en su contexto); o el índice cambia N veces durante el fan-out —lo
+     delatan N ejecuciones de `sdd-features-index.py` en los `.jsonl` de los escritores—, que es
+     lo que medía la pasada 15: **seis en tres minutos**, con un escritor **leyendo el índice para
+     verificarse** mientras sus compañeros lo reescribían.
+   → **No confundir con un FALLO del estado final.** Con el flag y sin él, el `_features.md` que
+     queda al terminar es idéntico; lo que cambia es que durante la tanda deja de existir un
+     índice completo, bien formado y equivocado. Este punto se mide **en vivo o en los logs**,
+     nunca en el fichero de después.
+   → **La cara complementaria, en solitario, está en [[CU-3.e]]:** un fast-track suelto **sí**
+     regenera el índice — sin el flag, saltárselo sería el fallo.
 
 **Resultado:** PASS si genera los specs del subset, marca el resto pendiente **y el índice
 en disco refleja el universo completo** · FALLO si pierde features previas, genera fuera del
 subset pedido, o deja un índice parcial con apariencia de completo.
 **Desviación → reportar:** issue citando `CU-3.d`.
+
+> **Pasada del 2026-09-18/21 sobre v0.115.4 — FALLO (puntos 2 y 3), primera con evidencia propia
+> de este escenario.** Dos tandas por subset sobre el PRD de MyOps: `[F-003, F-004]` y después
+> `[F-001, F-005, F-008]`, sobre 8 features del discovery. Lo que cada punto dio:
+>
+> - **Punto 1 — verde.** Los 5 specs en su sitio, las 3 restantes `PENDIENTE_GENERACIÓN`, nada de
+>   la tanda anterior perdido y nada generado fuera del subset.
+> - **Punto 2 — FALLO**, con causa determinista y reproducible fuera de la pasada ([[D-089]]):
+>   índice con `Ruta spec` y `PENDIENTE_GENERACIÓN` a la vez durante tres días. **La trampa que
+>   este punto avisa se cumplió al pie de la letra**: la narración del orquestador era correcta.
+> - **Punto 3 — FALLO** en la primera tanda (`1 + 1`, 253 s) y verde en la segunda. De aquí sale
+>   [[V4]]: el probe que lo mide solo, y que al validarlo contra el histórico encontró **otra**
+>   pasada con la misma forma que nadie había registrado (`1 + 3`, 359 s).
+> - **Punto 4 — verde, primera medición conductual limpia de [[D-087]]:** `--skip-index` en los 5
+>   encargos y **cero** ejecuciones de `sdd-features-index.py` en los `.jsonl` de los escritores.
+> - **V1 — 3 líneas**, las tres de clase `kb-` y de la forma *"Regla 4 de `kb-conflict-expert`"*
+>   (2 en el readiness, 1 en un conflict report) → [[D-091]]. **V2 — limpio** (3 líneas, las tres
+>   exenciones conocidas). **Y el probe V1 no medía nada**: su glob abortaba el comando en zsh.
+> - **Dos hallazgos que no son de ningún punto de este escenario** y salieron igual, por mirar el
+>   fan-out del Paso 7: **tres `CF-002` distintos** de tres auditores paralelos y los informes de
+>   la primera tanda leídos como vigentes contra un universo que ya era otro → [[D-090]].
+
+> **Pasada 1/3 de la serie — 2026-09-21 sobre v0.116.0, PASS.** Misma prosa y **mismo reparto
+> 2 + 3** (el reparto es parte del diseño: la tanda de dos es donde el punto 3 se rompe). Los
+> cuatro puntos en verde:
+>
+> - **Punto 3:** [[V4]] da **4/4 tandas en un único mensaje** —`2×` escritores y `2×` auditores en
+>   la primera, `3×` y `3×` en la segunda— y en el transcript se lee la instrucción nueva
+>   funcionando: *"Lanzo **3** auditorías … **las tres en este mensaje**"*.
+> - **Punto 2 — verde, y con la causa reproducida**, que es la forma fuerte de validar: el Paso 6
+>   de la segunda tanda volvió a encontrarse la matriz vieja y el script lo dijo —`⚠ matriz de
+>   readiness estancada: 3 feature(s) … (F-001, F-004, F-007)`—, con el índice saliendo
+>   consistente en vez de contradiciéndose. **Misma condición, mismas tres features, a la primera:
+>   [[D-089]] no era un accidente de la corrida anterior.** Y main no se lo tragó: *"El aviso es el
+>   esperado … lo regenero al final"*.
+> - **Punto 4:** `--skip-index` en los 5 encargos, bloques de gap repartidos y **0 ejecuciones** de
+>   `sdd-features-index.py` en los cinco `.jsonl` de escritor. Solo dos regeneraciones en todo el
+>   run, ambas de main, una por tanda.
+> - **Punto 1:** subset respetado en las dos tandas, 2 features `PENDIENTE_GENERACIÓN`, nada perdido.
+> - **[[D-090]] en campo:** ocho hallazgos con ID prefijado y **cero colisiones**; `Conjunto
+>   comparado` en los cinco informes; el readiness clasifica **3 VIGENTE / 2 ESTANCADO** diciendo
+>   qué no vieron, **sin inventarse ningún `GCF-`**, y consolida los convergentes con
+>   `CF-F004-01 (= CF-F007-01)` — cita el ID de origen y declara la equivalencia, que es mejor que
+>   lo que se pedía. **V1 = 0**, V2 con sus dos exenciones.
+> - **Lo que esta pasada NO mide:** el gate de alcance derivado no se disparó (cero avisos de
+>   gobernanza), así que el transporte del flag ([[CU-3.u]]) no se ejercitó.
+> - **Y un hallazgo nuevo, que no toca los cuatro puntos** ([[D-093]]): el informe de
+>   `gestion-categorias` abría con `SIN_CONFLICTOS` mientras esa feature aparecía en un hallazgo
+>   MEDIA del informe de la tanda siguiente. La vigencia estaba en la cabecera y **el veredicto no
+>   la llevaba**. Arreglado en la misma versión: el veredicto se enuncia sobre su conjunto y un
+>   ESTANCADO produce acción. **La serie no se reinicia** — lo tocado es prosa del informe de
+>   conflictos y los siguientes pasos del readiness (territorio de CU-3.f/o y V1), no ninguno de
+>   los cuatro puntos que este escenario mide, que siguen congelados desde el ancla.
 
 ## CU-3.e — Spec directo de una feature (fast-track)
 
@@ -1128,6 +1565,9 @@ subset pedido, o deja un índice parcial con apariencia de completo.
      (el modo ligero mantiene los invariantes, solo ajusta proporción). Si **no** pasas
      flag, la elección del rigor la **ofrece el orquestador** al crear el spec (CU-3.r),
      no el init.
+   → **Y aquí el índice SÍ lo regenera él** ([[D-087]]): corriendo suelto no hay nadie más que lo
+     haga. **FALLO:** que se salte `sdd-features-index.py` sin que le hayan pasado `--skip-index`
+     — el flag es para la tanda ([[CU-3.d]] punto 4), no para el uso directo.
 2. Tras generarlo, observa qué hace el orquestador a continuación (**frontera
    fast-track → validate**) ⏱ **sin pasada**.
    → **Esperado:** dice que el spec **nace sin validar** (`Estado: BORRADOR`, [[D-061]]) y
@@ -1151,8 +1591,9 @@ que el spec nace en borrador.
 ## CU-3.f — Validar, conflictos y readiness
 
 **Precondición:** uno o más specs de feature generados.
-**Mecanismo:** `wf-spec-validate` / `wf-spec-conflict` / `wf-spec-readiness` →
-subagente **`sdd-spec-auditor`**.
+**Mecanismo:** `wf-spec-conflict` y `wf-spec-readiness` en fork → subagente
+**`sdd-spec-auditor`**; `wf-spec-validate` **en el hilo principal** ([[D-065]]), que delega la
+auditoría al mismo agente por `Agent` (síncrona), presenta el informe y **sella** (punto 5).
 
 1. Le pides validar un spec.
    → **Esperado:** lo audita contra el contrato de Spec y reporta OK o los items a
@@ -1198,10 +1639,23 @@ subagente **`sdd-spec-auditor`**.
      conflicto silenciosamente evaporado es indistinguible de uno resuelto.
    → Si no se delega readiness (`--skip-readiness`), el conflicto queda **abierto y reportado
      como tal**.
+5. **El sello, y quién lo estampa** ([[D-065]]/[[D-061]]) — la otra mitad de `wf-spec-validate`,
+   tras el veredicto `APROBADO` del punto 1.
+   → **Esperado:** main **te pide el nombre de quien aprueba** y sella con
+     `sdd-seal.py spec --seal --approved-by`; la cabecera del spec queda con `Estado: VALIDADO`
+     y `Aprobado por: <nombre>`. El veredicto del agente **no sella** por sí solo: autor ≠
+     verificador ([[D-059]]), y el sellador es un script, no una frase del informe.
+   → **Esperado con `REQUIERE_REVISIÓN`:** no sella, y lo dice.
+   → **FALLO:** sellar sin capturar al aprobador (o estampando al agente, o *"Claude"*); que el
+     subagente escriba el sello él mismo; o que el spec se quede en `BORRADOR` tras un
+     `APROBADO` aceptado — ahí el spec queda sin constancia de quién lo dio por bueno,
+     `gate_spec_fiable` lo denegará dos fases más tarde (gemelo: `CU-9.n`) y regenerarlo **no**
+     pedirá `--allow-overwrite-sealed-spec`.
 
 **Resultado:** PASS si audita/reporta sin modificar los specs, lee todos los informes de
-conflictos existan donde existan, y arbitra las divergencias dejando constancia · FALLO si
-edita specs al validar, silencia un conflicto real, o lo cierra por mayoría.
+conflictos existan donde existan, arbitra las divergencias dejando constancia y **sella con el
+aprobador capturado** · FALLO si edita specs al validar, silencia un conflicto real, lo cierra
+por mayoría, o sella sin nombre detrás.
 **Desviación → reportar:** issue citando `CU-3.f`.
 
 > **Pasada 1 del punto 1 (2026-08-27, v0.83.0) — PASS.** `wf-spec-validate` sobre
@@ -1212,7 +1666,9 @@ edita specs al validar, silencia un conflicto real, o lo cierra por mayoría.
 > CA-006— **fuera del veredicto**, y remitió a la vía quirúrgica (enmienda de ese CA) en vez de
 > reabrir el spec entero.
 >
-> Esta pasada valía además como **sonda de [[D-050]]**: `wf-spec-validate` es `context: fork` puro.
+> Esta pasada valía además como **sonda de [[D-050]]**: `wf-spec-validate` **era entonces**
+> `context: fork` puro — **superado por [[D-065]]**, que lo movió al hilo principal para capturar
+> al aprobador; la sonda sigue valiendo para los workers, que sí lo son.
 > El subagente conservó su `.forked-skill.json` (`agentType: sdd-spec-auditor`, `spawnDepth: 1`,
 > 49s), así que **apagar fork mode no toca a los workers**. La reserva que [[D-050]] anunciaba —12+
 > skills fork en riesgo— queda descartada con evidencia.
@@ -1257,23 +1713,63 @@ local del spec.
 > eso la pasada 9 encontró el callejón y el banco no. Un escenario que codifica la suposición
 > equivocada no mide, confirma.
 
-## CU-3.h — Evolucionar un spec con requisitos nuevos (delta)
+## CU-3.h — Evolucionar un spec con requisitos nuevos (delta): los tres gates
 
 **Precondición:** un spec de feature ya generado al que llegan requisitos nuevos
-(post-spec, sin cambio de PRD).
-**Mecanismo:** skill `wf-spec-delta` → subagente **`sdd-spec-writer`**. Modo `analyze`
-produce `<feature>_delta_analysis.md`; modo `apply` integra preservando lo previo.
+(post-spec, sin cambio de PRD). Para el punto 3, un documento de cambios que admita **dos
+lecturas funcionales**; para el punto 4, un `_delta_analysis.md` con ≥1 gap `[CRÍTICO]` sin
+responder.
+**Mecanismo:** skill `wf-spec-delta` **en el hilo principal** ([[D-073]]: sin `context: fork`,
+con `AskUserQuestion` en sus `allowed-tools`). Sostiene **tres gates** y delega el análisis
+(Paso 3A) y la integración (Paso 4B) a **`sdd-spec-writer`** con `run_in_background: false`.
+Modo `analyze` produce `<feature>_delta_analysis.md`; modo `apply` integra preservando lo previo.
 
 1. Le pides analizar un cambio sobre el spec ("añade estos requisitos al spec de auth").
    → **Esperado:** `analyze` genera `<feature>_delta_analysis.md` con las HUs/CAs a
-     **añadir, modificar y eliminar**, sin tocar el spec todavía.
-2. Le pides aplicar ese delta.
-   → **Esperado:** `apply` verifica que el segundo argumento termina en
-     `_delta_analysis.md` (si no, se detiene pidiéndolo) e **integra los cambios
-     preservando** el resto del spec; no regenera desde cero.
+     **añadir, modificar y eliminar**, sin tocar el spec todavía. El **veredicto de
+     clasificación** lo devuelve el delegado; main no lo deduce leyendo el spec.
+   → **Esperado con `DELTA_PURO`:** no pregunta nada — el consentimiento ya está en la
+     petición. **FALLO:** abrir un gate decorativo sobre un delta puro.
+2. El cambio redefine alcance, exclusión o regla de negocio del PRD → veredicto
+   `POSIBLE_CAMBIO_DE_PRODUCTO` (Paso 4A).
+   → **Esperado:** **presenta la elección** con `AskUserQuestion` y lo redefinido delante:
+     *formalizar el cambio en el PRD primero (recomendado)* · *tratarlo como delta de esta
+     feature*. **Las dos son salidas sancionadas**: la segunda continúa y el informe sale con
+     el aviso de gobernanza puesto por el agente, registrado como decisión del usuario.
+   → **FALLO:** clasificar y **seguir** sin presentar la elección — el modo de fallo que
+     [[D-073]] cerró: el fork decidía *"esto es un delta"*, el cambio se horneaba en el spec y
+     **no dejaba rastro**, porque el delta se aplica limpiamente. También es FALLO parar en
+     seco ofreciendo solo la rama de formalizar.
+3. El documento de cambios admite dos lecturas funcionales → veredicto `AMBIGUO` (Paso 4A).
+   → **Esperado:** el delegado **enumera las lecturas y no elige**; main las presenta con
+     **una opción por lectura** —cada una con lo que implica en HUs y CAs— más la salida
+     honesta **"no lo decido ahora"**.
+   → **Esperado si eliges "no lo decido ahora":** la ambigüedad **se marca, no se resuelve**:
+     vuelve a delegar pidiendo que registre un gap `[D-XXX]` `[CRÍTICO]` con las lecturas como
+     opciones y `_(pendiente)_` como respuesta. Es la segunda mitad de [[D-040]] aplicada aquí:
+     **sin humano, se marca**.
+   → **FALLO:** que el informe salga con una lectura ya elegida y sin rastro de la
+     bifurcación; o que *"no lo decido ahora"* no deje el gap.
+4. Le pides aplicar ese delta con gaps `[CRÍTICO]` sin responder (Paso 3B).
+   → **Esperado:** el recuento **sale del script** (`sdd-analysis-gaps.py … --check --json`),
+     no de la lectura de main ([[D-042]]). Sin `--allow-open-critical-gaps`, **presenta la
+     elección** nombrando cuántos son y qué HUs quedarían `[INCOMPLETO]`: *responderlos primero
+     (recomendado)* · *aplicar igualmente*. Con el flag armado por el usuario, continúa sin
+     preguntar ([[D-026]]).
+   → **FALLO:** *informar y continuar*, que es lo que hacía antes de [[D-073]] y decide por el
+     usuario sin decírselo. El coste se cobra dos fases más tarde, cuando las HUs
+     `[INCOMPLETO]` bloquean el plan y ya nadie recuerda que hubo una elección.
+5. El apply se ejecuta.
+   → **Esperado:** verifica que el segundo argumento termina en `_delta_analysis.md` (si no,
+     se detiene pidiéndolo) e **integra los cambios preservando** el resto del spec; no
+     regenera desde cero.
 
-**Resultado:** PASS si analyze diagnostica y apply integra preservando lo previo · FALLO
-si apply pisa el spec entero, o aplica sin un delta analysis válido.
+**Resultado:** PASS si los tres gates se presentan **en el momento y en el mismo turno**
+([[D-045]]), el veredicto y el recuento vienen de quien los produce (delegado y script), la
+ambigüedad no decidida queda **marcada** como gap, y apply integra preservando lo previo ·
+FALLO si algún gate se salta o se dicta desde el fork, si main reconstruye un dato que debía
+recibir, si la ambigüedad se resuelve sola, o si apply pisa el spec entero o aplica sin un
+delta analysis válido.
 **Desviación → reportar:** issue citando `CU-3.h`.
 
 ## CU-3.i — Discovery: ownership ambiguo de shared model para en checkpoint humano
@@ -1357,13 +1853,18 @@ si ignora el ID inexistente, o genera solo los válidos sin avisar del inválido
 
 **Precondición:** un spec con header `Modo: ligero`, con el núcleo de 4 presente, una sección
 no-núcleo omitida **con** `N/A — modo ligero` y otra omitida **sin** esa marca.
-**Mecanismo:** skill `wf-spec-validate` → `sdd-spec-auditor` (Paso 4, detección de modo).
-**Read-only** (`allowed-tools: [Read, Bash]`, sin Write).
+**Mecanismo:** skill `wf-spec-validate` **en el hilo principal** ([[D-065]]), que delega la
+auditoría a `sdd-spec-auditor` por `Agent`; la **detección de modo** va dentro del prompt de
+delegación (Paso 3), no en un paso propio.
+**La no-reescritura es una norma, no una jaula ([[D-051]]):** el auditor tiene `Write` y `Edit`
+prohibidos pero **conserva `Bash`**, y un `cat >` escribe igual. Verifícala **mirando si el spec
+cambió** (`md5` antes y después, o el `mtime`), nunca la lista de tools del frontmatter — que
+además es la de la skill (`[Bash, Agent, AskUserQuestion]`), no la del agente.
 
 1. Le pides validar el spec ligero.
    → **Esperado:** no marca como hallazgo las secciones núcleo legítimamente omitidas con
      `N/A — modo ligero`, pero **sí** reporta como hallazgo la sección omitida **sin** la
-     marca; no reescribe el spec (no tiene Write).
+     marca; y **el spec no cambia** — comprobado sobre el fichero, no sobre su lista de tools.
 2. El spec ligero tiene un CA sin GIVEN/WHEN/THEN completo.
    → **Esperado:** el Check 3 lo reporta — la testabilidad es **idéntica** en ambos modos;
      el modo ligero ajusta proporción, no relaja invariantes.
@@ -1656,20 +2157,36 @@ scope sin consolidar o con el spec en `BORRADOR`, o presenta un conflicto `ALTA`
 fuese a bloquear el pipeline por su cuenta.
 **Desviación → reportar:** issue citando `CU-3.o`.
 
-## CU-3.p — Delta / gap-resolve: un cambio de producto encubierto detiene y remite a wf-prd-change
+## CU-3.p — Delta / gap-resolve: un cambio de producto encubierto no se integra en silencio
 
 **Precondición:** un spec ya generado; le pasas un "requisito nuevo" (delta) o una "respuesta de
 gap" (gap-resolve) que en realidad mueve alcance, exclusión o regla de negocio del PRD.
-**Mecanismo:** skill `wf-spec-delta` (Paso 7A) / `wf-spec-gap-resolve` (Paso 4) → `sdd-spec-writer`.
+**Mecanismo:** skill `wf-spec-delta` **en el hilo principal** (Paso 4A, primer gate de
+clasificación, con `AskUserQuestion` — [[D-073]]) / `wf-spec-gap-resolve` (Paso 4, en fork) →
+`sdd-spec-writer`. **Las dos vías no terminan igual, y es deliberado:** una puede preguntar y
+la otra no.
 
 1. Pides añadir al spec un "requisito" que en realidad cambia el alcance del producto (`delta analyze`).
-   → **Esperado:** detecta que no es un delta de spec sino un cambio de producto; **detiene** y
-     remite a `wf-prd-change` antes de seguir.
+   → **Esperado:** el delegado devuelve `POSIBLE_CAMBIO_DE_PRODUCTO` y main **presenta la
+     elección** con lo redefinido delante: *formalizar el cambio en el PRD primero
+     (recomendado)* · *tratarlo como delta de esta feature*.
+   → **Esperado si eliges formalizar:** para ahí y remite a la gobernanza de cambio de
+     producto; el delta se retoma después, contra el PRD ya actualizado.
+   → **Esperado si eliges tratarlo como delta:** continúa, y el informe sale con el **aviso de
+     gobernanza** puesto por el agente. **Esto NO es FALLO** ([[D-073]]): es una decisión del
+     usuario con el coste delante, y queda registrada como tal.
+   → **FALLO:** integrar la expansión **sin presentar la elección**; o presentar solo la rama
+     de parar, que es decidir por el usuario en el otro sentido.
 2. Pides completar un `[INCOMPLETO]` con una "respuesta" que contradice el PRD o mueve algo MVP↔fase futura (`gap-resolve`).
-   → **Esperado:** **detiene** y remite a `wf-prd-change`; no integra el cambio como si fuera un gap normal.
+   → **Esperado:** el worker corre en **fork** y no puede preguntar ([[D-002]]): **detiene**,
+     devuelve el bloqueo y remite a la gobernanza de cambio de producto; no integra el cambio
+     como si fuera un gap normal. Presentarlo —y ofrecer la salida— es de quien lo invocó
+     ([[D-026]]).
 
-**Resultado:** PASS si ambas vías frenan el cambio de producto encubierto y remiten a `wf-prd-change` ·
-FALLO si integran la expansión/contradicción como delta o gap normal.
+**Resultado:** PASS si la vía de delta **presenta** el gate y honra cualquiera de sus dos
+salidas, y la de gap-resolve **para y devuelve el bloqueo** en vez de decidir · FALLO si alguna
+integra el cambio de producto en silencio, si el delta decide por el usuario en cualquiera de
+los dos sentidos, o si el fork de gap-resolve se arroga una elección que no puede presentar.
 **Desviación → reportar:** issue citando `CU-3.p`.
 
 ## CU-3.q — Gap-resolve: confirmación de `[INFERIDO]` (dos turnos, tres vías)

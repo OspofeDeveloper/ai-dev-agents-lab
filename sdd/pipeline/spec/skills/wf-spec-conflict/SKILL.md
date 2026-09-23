@@ -14,7 +14,7 @@ user-invocable: true
 
 Tu objetivo es detectar inconsistencias entre los Specs SDD de un mismo proyecto que podrían derivar en comportamiento indefinido, implementación duplicada o gaps funcionales no cubiertos. Usa `kb-conflict-expert` para las 5 reglas de detección y `kb-spec-expert` como referencia estructural.
 
-**Regla de oro:** El informe es informativo, no bloqueante. Tu rol es detectar y describir — la decisión de cómo resolver cada conflicto la toma el humano. El informe siempre debe dejar un estado inequívoco: `SIN_CONFLICTOS` o `CONFLICTOS_DETECTADOS`.
+**Regla de oro:** El informe es informativo, no bloqueante. Tu rol es detectar y describir — la decisión de cómo resolver cada conflicto la toma el humano. El informe siempre debe dejar un estado inequívoco: `SIN_CONFLICTOS` o `CONFLICTOS_DETECTADOS`, **seguido del conjunto sobre el que vale** ([[D-093]]) — un veredicto sin su alcance deja de ser inequívoco en cuanto aparece un spec más.
 
 ---
 
@@ -86,21 +86,42 @@ Aplica cada regla consultando `kb-conflict-expert` y busca conflictos entre cada
 ## Paso 6: Clasificar cada conflicto detectado
 
 Por cada conflicto:
-- Asigna el ID: `[CF-001]`, `[CF-002]`, etc.
+- Asigna el ID **con el `F-00X` del spec que auditas delante**: `[CF-F001-01]`, `[CF-F001-02]`, …
+  (numeración local, empezando en `01`). En modo consolidado (`.` sobre el directorio) el informe
+  es uno solo y no hay con quién colisionar: ahí numeras `[CF-01]`, `[CF-02]`, …
 - Asigna la severidad según `kb-conflict-expert`: ALTA o MEDIA
 - Describe qué features están involucradas
 - Cita las secciones exactas en conflicto
 - Sugiere una posible resolución (sin imponer — es una sugerencia)
 
+> **El prefijo no es estética: casi nunca corres solo ([[D-090]]).** En el fan-out del Paso 7 de
+> `wf-spec-features-first` hay un auditor por spec nuevo, cada uno escribiendo su propio informe y
+> ninguno viendo lo que numeran los demás. Con numeración local a secas, la primera colisión es
+> **segura**: medido en la pasada de `CU-3.d` del 2026-09-18, **tres hallazgos distintos** llamados
+> `CF-002` por tres auditores, más un `CF-001` de una tanda anterior que era otra cosa. Y el daño
+> no es cosmético — quien consolida (la medición de readiness) y quien decide *"manda F-001 en este
+> choque"* citan el ID: con dos hallazgos homónimos, la decisión aterriza en el equivocado. El
+> `F-00X` delante lo resuelve **sin coordinación**: cada auditor ya sabe qué spec audita, así que
+> no hace falta que nadie reparta bloques antes de lanzar.
+
 > **Lo que escribes aquí lo lee una persona, y esa persona no invoca comandos.** La
 > **Sugerencia de resolución** va en lenguaje natural y nombra **la acción**, no el workflow que
 > la ejecuta: *"formalizar el cambio en el PRD antes de seguir"*, no *"lanzar `wf-prd-change`"*;
 > *"pedir que se aclare el CA-004"*, no *"ejecutar `wf-spec-amend`"*. Los IDs y los veredictos
-> (`CF-001`, `ALTA`, `SIN_CONFLICTOS`) **sí** se quedan: los parsean los gates.
+> (`CF-F001-01`, `ALTA`, `SIN_CONFLICTOS`) **sí** se quedan: los parsean los gates.
 >
 > Medido (pasada 9 de CU-3.a): **2 de los 4** nombres de workflow que se colaron en artefactos
 > salieron justo de este campo, con la guía de fase **cargada**. Por eso la norma está aquí y no
 > solo allí: la guía es contexto de fase, y esto es tu instrucción de rol.
+>
+> **Y vale igual para el nombre de una kb, que es por donde se escapa aquí ([[D-091]]).** Al
+> justificar un veredicto lo natural es citar la fuente —*"Regla 4 de `kb-conflict-expert`"*,
+> *"la tabla de severidad de `kb-conflict-expert`"*— y la fuente tiene nombre de skill. Cita la
+> regla **por lo que dice**: *"el mismo modelo con comportamientos distintos en dos CAs de
+> features diferentes"*, *"un shared model inconsistente es ALTA por defecto"*. Medido en la
+> pasada de `CU-3.d` del 2026-09-18: las **tres** líneas que levantó el probe V1 eran de esta
+> forma, dos en el informe de readiness y una aquí. Quien lee el informe no sabe qué es una kb
+> ni tiene por qué: el veredicto se sostiene solo con la regla enunciada.
 
 Si no se detecta ningún conflicto → prepara un informe breve con estado `SIN_CONFLICTOS`, indica explícitamente que el número de conflictos ALTA y MEDIA es `0`, y conserva el inventario de comparaciones realizadas.
 
@@ -109,6 +130,24 @@ Si no se detecta ningún conflicto → prepara un informe breve con estado `SIN_
 ## Paso 7: Formato del informe
 
 Usa `${CLAUDE_SKILL_DIR}/references/conflict_report_template.md` para estructurar el informe.
+
+> **Declara en la cabecera contra qué conjunto comparaste ([[D-090]]).** El campo
+> `Conjunto comparado` lista los `F-00X` de **todos** los specs que entraron en la comparación —el
+> objetivo incluido— y los retirados que excluiste. No es trazabilidad de adorno: un informe de
+> conflictos es válido **para el conjunto que tenía delante**, y en la iteración por subsets ese
+> conjunto crece en cada tanda. Sin el campo, un informe calculado contra 2 specs es
+> indistinguible de uno calculado contra 5, y quien lo consolida lo da por vigente. Medido en la
+> pasada de `CU-3.d` del 2026-09-18: los informes de la primera tanda describían un universo de
+> **2** specs y se leyeron junto a los de una de **5**, sin que nada en el fichero lo dijera.
+
+> **Y el veredicto se enuncia sobre ese conjunto, no en absoluto ([[D-093]]).** `SIN_CONFLICTOS
+> (entre los 2 specs comparados: F-002, F-003)`, no `SIN_CONFLICTOS` a secas. El token va delante y
+> **literal** —lo parsea la medición de readiness—; el conjunto va detrás, entre paréntesis.
+> Medido en la pasada del 2026-09-21, ya con la cabecera `Conjunto comparado` puesta: el informe de
+> `gestion-categorias` abría con **SIN_CONFLICTOS** mientras esa misma feature aparecía en un
+> hallazgo `MEDIA` del informe de `cuentas-y-tarjetas`, generado una tanda después. La vigencia
+> estaba escrita en la cabecera y el veredicto seguía sin llevarla — y quien abre el informe de una
+> feature **empieza por su portada**, no por el readiness que lo clasifica.
 
 ---
 

@@ -37,12 +37,17 @@
 > Source requirements: [path/del/prd.md]
 > derived_from_prd: [path/del/prd.md]
 > derived_from_prd_version: [versión del PRD o unknown]
-> derived_from_prd_hash: [N/A — lo escribe `sdd-sync-check.py seal` en el Paso 10, nunca a mano]
+> derived_from_prd_hash: [N/A | sha256:<hex>]
 > derived_from_change: [CR-XXX | N/A]
 > status_sync: in_sync
 > Origen de alcance: [PRD | PRD + analysis respondido]
 > Avisos de gobernanza: [ninguno | alcance derivado desde P-00X, P-00Y]
 ```
+
+> **`derived_from_prd_hash` lo escribe `sdd-sync-check.py seal` en el Paso 10, nunca a mano:
+> déjalo en `N/A`.** La instrucción va aquí y no dentro del corchete a propósito ([[D-084]]): un
+> placeholder que lleva la explicación dentro del valor se sustituye a medias — quien pone el hash
+> se deja el rabo pegado y el campo, que es contrato parseable, queda con prosa dentro.
 
 ## Sección opcional: Decisiones derivadas del analysis
 

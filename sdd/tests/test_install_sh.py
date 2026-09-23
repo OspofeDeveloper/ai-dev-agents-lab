@@ -1527,6 +1527,25 @@ class KbSpecExpertContentTest(unittest.TestCase):
         self.assertIn("Hallazgos BLOQUEANTES", tpl)
         self.assertIn("Notas NO bloqueantes", tpl)
 
+    def test_prose_norm_covers_kb_names_too(self):
+        # D-091: la norma de forma se escribio tres veces acotada a "el workflow", y la
+        # forma que se escapa es citar la KB que sostiene un veredicto ("Regla 4 de
+        # kb-conflict-expert"). kb-spec-expert es el portador que llega a tiempo (D-055),
+        # asi que la clase entera tiene que estar enunciada AQUI, no solo en la kb de turno.
+        s = self._skill()
+        self.assertIn("Ni una `kb-*`", s,
+                      "kb-spec-expert no cubre la mitad `kb-*` de la norma de prosa (D-091)")
+        self.assertIn("por lo que dice", s,
+                      "falta la forma correcta: citar la regla por su contenido")
+
+    def test_conflict_family_carries_the_same_norm(self):
+        # El portador del auditor de conflictos es kb-conflict-expert: si la norma no
+        # esta ahi, no le llega a quien escribe el _conflict_report.md.
+        kb = (SDD_ROOT / "pipeline" / "spec" / "skills" / "kb-conflict-expert"
+              / "SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("cita la regla por lo que dice", kb.lower(),
+                      "kb-conflict-expert no lleva la norma de prosa de D-091")
+
 
 class KbPrdExpertContentTest(unittest.TestCase):
     """Backstop de contenido del kb-prd-expert (D-033/D-034): afila el juicio del

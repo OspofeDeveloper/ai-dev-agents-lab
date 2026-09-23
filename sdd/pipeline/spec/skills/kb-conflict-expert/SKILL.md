@@ -93,6 +93,24 @@ Estas reglas aplican cuando se compara un conjunto de Specs SDD (`_spec.md`) que
 
 ---
 
+## Cómo se citan estas reglas en un informe ([[D-091]])
+
+El informe de conflictos lo lee una persona de producto que decide qué feature manda en cada
+choque. Cuando justifiques un veredicto **cita la regla por lo que dice, no por dónde vive**:
+
+| En vez de | Escribe |
+|---|---|
+| *"Regla 4 de `kb-conflict-expert`"* | *"el mismo modelo con comportamientos distintos en dos CAs de features diferentes"* |
+| *"la tabla de severidad de `kb-conflict-expert` da ALTA por defecto"* | *"un shared model inconsistente corrompe el modelo de dominio, y eso es ALTA por defecto"* |
+
+No es una regla de estilo: por [[D-042]] ese texto se le lee **verbatim** a quien decide, y el
+nombre de una kb no le dice nada — es un detalle de cómo está construido el sistema que se lo
+cuenta. La regla enunciada sostiene el veredicto ella sola; el nombre solo sostiene la
+procedencia, y para eso ya está `Generado por:`. Medido tres veces en la pasada de `CU-3.d` del
+2026-09-18 (probe V1), las tres con esta forma exacta.
+
+---
+
 ## Qué NO es un conflicto
 
 - Dos features que referencian el mismo shared model correctamente (con owner declarado) — eso es el comportamiento esperado de los shared models.

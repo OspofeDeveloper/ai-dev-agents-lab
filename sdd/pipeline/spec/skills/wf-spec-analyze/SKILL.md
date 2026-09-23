@@ -101,7 +101,7 @@ Consulta `kb-gap-conventions` para el formato de IDs `[P-XXX]`, las definiciones
 
 - añade el marcador advisory `[PUEDE_REQUERIR_CR]`
 - redacta la pregunta de forma neutra, sin presentar como opciones "normales" soluciones expansivas
-- deja claro que, si la respuesta introduce una entidad persistente, un catálogo reutilizable, una nueva granularidad funcional o un flujo adicional de usuario, deberá reevaluarse con `kb-product-change-governance`
+- deja claro que, si la respuesta introduce una entidad persistente, un catálogo reutilizable, una nueva granularidad funcional o un flujo adicional de usuario, **deberá reevaluarse con la gobernanza de cambios de producto antes de derivar specs**. Nombra la **evaluación**, no la skill que la hace: esa nota va dentro del bloque `[P-XXX]`, que se le lee **verbatim** a una persona de producto ([[D-088]])
 
 Ejemplo de mala formulación:
 - "¿catálogo persistente o texto libre?"
@@ -124,6 +124,20 @@ guía de fase ("lo que escribes en un artefacto lo lee una persona"), aplicada a
   *"la HU de alta"* → *"la historia de usuario de alta"*. `GIVEN`/`WHEN`/`THEN` **no los lee ningún
   script**: son el formato del CA **dentro del spec**, no vocabulario con el que explicarle un
   hueco a alguien.
+- **Los nombres de skill no van al artefacto, ni los `wf-*` ni los `kb-*`** ([[D-088]]). Ni para
+  recomendar un paso (*"reevalúa con `kb-product-change-governance`"* → *"habrá que reevaluarlo con
+  la gobernanza de cambios de producto"*) ni para **citar la norma que sostiene tu veredicto**
+  (*"contemplado como aceptable en `kb-prd-expert`, Regla 14"* → *"contemplado como aceptable en la
+  norma de pureza del PRD"*). La segunda es la que se escapa, porque al justificar un borderline lo
+  natural es citar la fuente — y la fuente tiene nombre de skill. Quien lee el informe no la va a
+  abrir: lo que le sirve es **qué** dice, no **dónde** vive.
+- **Y la segunda forma, que es la que de verdad se cuela: la sigla como el artefacto que
+  todavía no puedes escribir.** Aquí no abrevias nada que exista —*"sin esto no se puede escribir
+  un CA verificable para marcar una deuda como saldada"*—: estás explicando **por qué el hueco
+  bloquea**, y lo natural es explicarlo nombrando el entregable que no te sale. Va en claro igual:
+  *"sin esto no se puede comprobar de forma objetiva qué pasa al marcar una deuda como saldada"*.
+  La prueba que las separa a las dos: **la frase tiene que sostenerse ante alguien que no sabe que
+  existe una fase Spec**. Si para entenderla hay que conocer el pipeline, todavía no está en claro.
 
 **Tres bordes que no se cruzan.**
 
@@ -142,6 +156,16 @@ guía de fase ("lo que escribes en un artefacto lo lee una persona"), aplicada a
 > verificable"*. La reescritura mejoraba el texto y el contrato era correcto: el defecto estaba
 > aguas arriba. Si el campo **nace** en claro, no hay nada que traducir, y `verbatim` se queda
 > estricto — que es lo que lo hace medible con un diff en vez de con un juicio.
+
+> **Por qué no bastó con escribirla (pasada 15 de CU-3.a).** La norma **llegó a tiempo** —el
+> explorador leyó este `SKILL.md` y la plantilla antes que el PRD, y mucho antes de escribir— y
+> aun así tres de los cuatro gaps críticos salieron con *"no se puede escribir un CA verificable
+> para…"*. No fue descuido: la instrucción del propio campo pedía *"por qué esto es un gap
+> funcional que bloquea el spec"*. **Si le pides que te explique qué le impide al spec, te
+> contesta hablando del spec.** El arreglo va donde nace la frase —la plantilla ya no pregunta por
+> el entregable bloqueado, sino por la decisión de producto que falta y por lo que no se puede
+> comprobar mientras falte—, porque **una prohibición de vocabulario no gana a una instrucción que
+> pide ese vocabulario**: mientras las dos convivan, la instrucción es la que se está respondiendo.
 
 ### Campo "Afecta" (obligatorio en CRÍTICO)
 

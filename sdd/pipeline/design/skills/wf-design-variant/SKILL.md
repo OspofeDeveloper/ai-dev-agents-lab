@@ -83,7 +83,7 @@ Por cada variante (`A`, `B`, ...):
 
    Documenta en cada artefacto que es variante <X> y enlaza a la hipotesis.
    ```
-3. **Los escribe el agente** ([[D-059]]/[[D-060]]), en el mismo directorio que los artefactos de prototipado de la feature: la subcarpeta `design/` de la feature si el spec esta en `features/<nombre>/spec/` (que crea si no existe); el mismo directorio del spec en otros casos (layout plano legacy). Emite **las N llamadas en un unico mensaje** si generas varias variantes: con el flag, esa es la barrera que necesita el 2.4 ([[D-047]]).
+3. **Los escribe el agente** ([[D-059]]/[[D-060]]), en el mismo directorio que los artefactos de prototipado de la feature: la subcarpeta `design/` de la feature si el spec esta en `features/<nombre>/spec/` (que crea si no existe); el mismo directorio del spec en otros casos (layout plano legacy). Emite **las N llamadas en un unico mensaje** si generas varias variantes: con el flag, esa es la barrera que necesita el 2.4 ([[D-047]]). **No hay llamada de prueba** ([[D-084]]): el numero de variantes lo fijaste al decidirlas, no lo confirma la primera que vuelve.
 
 ### 2.4 Generar `<feature>_variants.md`
 

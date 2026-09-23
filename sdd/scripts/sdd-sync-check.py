@@ -38,8 +38,15 @@ HASH_LEN = 16  # prefijo hex del sha256 sellado (suficiente contra colisión acc
 
 # `derived_from_prd:` exige el `:` tras "prd" — no matchea _version ni _hash
 PRD_PATH_RE = re.compile(r"derived_from_prd\s*:\s*`?(?P<path>[^`\s|]+)`?")
+# El `tail` captura lo que sobre en la linea tras el valor. No es cosmetica: la
+# plantilla llevaba la instruccion DENTRO del placeholder
+# (`[N/A - lo escribe sdd-sync-check.py seal, nunca a mano]`) y un escritor
+# sustituyo el N/A dejandose el rabo pegado, asi que el campo -que es contrato
+# parseable- quedo con prosa dentro (D-084). El valor se lee igual, asi que el
+# defecto es MUDO. Al sellar se reescribe la linea entera y se limpia sola.
 PRD_HASH_RE = re.compile(
     r"(?P<prefix>derived_from_prd_hash\s*:\s*)(?P<value>sha256:[0-9a-fA-F]{8,64}|N/A|pending)"
+    r"(?P<tail>[^\n]*)"
 )
 PRD_VERSION_LINE_RE = re.compile(r"^.*derived_from_prd_version\s*:.*$", re.MULTILINE)
 PRD_PATH_LINE_RE = re.compile(r"^.*derived_from_prd\s*:.*$", re.MULTILINE)
@@ -106,11 +113,17 @@ def cmd_seal(spec_path: Path, prd_override=None) -> int:
 
     m = PRD_HASH_RE.search(spec_text)
     if m is not None:
-        if m.group("value") == new_value:
+        tail = m.group("tail").strip()
+        if m.group("value") == new_value and not tail:
             print(f"IN_SYNC: el sello ya era {new_value}; sin cambios. ({spec_path})")
             return 0
         new_text = spec_text[:m.start()] + m.group("prefix") + new_value + spec_text[m.end():]
-        action = f"actualizado ({m.group('value')} → {new_value})"
+        if m.group("value") == new_value:
+            action = f"limpiado (el sello ya era {new_value}; se retira la prosa sobrante)"
+        elif tail:
+            action = f"actualizado ({m.group('value')} → {new_value}) y limpiado de prosa sobrante"
+        else:
+            action = f"actualizado ({m.group('value')} → {new_value})"
     else:
         # Insertar tras la línea derived_from_prd_version (o derived_from_prd como fallback)
         anchor = PRD_VERSION_LINE_RE.search(spec_text) or PRD_PATH_LINE_RE.search(spec_text)

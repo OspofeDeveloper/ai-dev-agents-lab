@@ -25,6 +25,9 @@ Derivación de Estado por feature (prioridad):
     spec `Estado: RETIRADO` .......... RETIRADA (por encima de todo, D-074)
     con spec y veredicto en readiness  el del readiness report (autoridad), salvo
                                        un LISTA sobre spec en BORRADOR → BLOQUEADA (D-077)
+                                       y un PENDIENTE_GENERACIÓN sobre spec que existe,
+                                       que es matriz estancada y no veredicto (D-089):
+                                       se descarta y cae al camino marker-based
     con spec, sin readiness ...........  marcador-based provisional:
         [INCOMPLETO]/[CRÍTICO]/[INFERIDO] → BLOQUEADA
         avisos de gobernanza != ninguno   → REQUIERE_CAMBIO_PRD
@@ -318,6 +321,12 @@ def parse_discovery(path: Path | None) -> dict:
 # ([[D-046]], [[D-066]]). Se vuelca en stderr y dentro del propio indice.
 SPECS_SIN_CABECERA: list[str] = []
 
+# Features cuyo spec YA existe en disco y a las que la `## Matriz de readiness` del
+# informe en disco sigue llamando `PENDIENTE_GENERACIÓN` ([[D-089]]). El indice se
+# corrige solo (el veredicto se descarta y gana el camino marker-based), pero el
+# informe del que salio sigue estancado — y a ese lo regenera una persona.
+READINESS_ESTANCADO: list[str] = []
+
 
 def parse_spec(path: Path, features_root: Path) -> dict | None:
     text = read_text(path)
@@ -401,6 +410,18 @@ def _sin_validar(spec: dict) -> bool:
 def derive_state(spec: dict | None, verdict: dict | None) -> tuple[str, str]:
     if spec is None:
         return "PENDIENTE_GENERACIÓN", "—"
+    # Un `PENDIENTE_GENERACIÓN` sobre un spec que EXISTE no es un veredicto: es un
+    # informe que se quedo atras ([[D-089]]). Pasa en cada iteracion por subset — el
+    # Paso 6 de `wf-spec-features-first` regenera el indice ANTES del readiness del
+    # Paso 8, asi que el unico informe en disco es el de la tanda anterior, que
+    # listaba estas features como pendientes. Que el spec exista es un hecho
+    # mecanico del disco; el veredicto es un juicio, y el disco es mas fresco (mismo
+    # razonamiento que el carve-out de `LISTA` sobre BORRADOR, [[D-077]]). Sin esto
+    # el indice sale contradiciendose solo: `Ruta spec` a un fichero que existe,
+    # `Estado: PENDIENTE_GENERACIÓN` y la nota de "aun no tiene spec generada".
+    if verdict and verdict["estado"] == "PENDIENTE_GENERACIÓN":
+        READINESS_ESTANCADO.append(spec.get("fid") or str(spec.get("path") or "?"))
+        verdict = None
     # La baja manda sobre todo lo demas ([[D-074]]). Va ANTES del veredicto del
     # readiness a proposito: una feature que el producto ya no contempla no es
     # "BLOQUEADA" —no hay nada que desbloquear— y ningun informe puede resucitarla.
@@ -687,6 +708,15 @@ def main(argv: list[str]) -> int:
         sys.stderr.write(
             "  Repon `Feature ID` y `Origen de alcance` en su cabecera y regenera. "
             "Mientras falten, este indice esta incompleto ([[D-066]]).\n")
+    if READINESS_ESTANCADO:
+        sys.stderr.write(
+            f"[features-index] ⚠ matriz de readiness estancada: "
+            f"{len(READINESS_ESTANCADO)} feature(s) con spec en disco que el informe "
+            f"sigue dando por generar ({', '.join(READINESS_ESTANCADO)}).\n"
+            "  Este indice ya las deriva de sus specs, pero el "
+            "`_readiness_report.md` es de una tanda anterior: su veredicto no ha "
+            "visto estos specs. Regeneralo antes de decidir nada con el ([[D-089]]).\n"
+        )
     if "> ⚠ SIN DISCOVERY" in content:
         sys.stderr.write(
             "[features-index] ⚠ sin discovery: el índice solo cubre los specs "
