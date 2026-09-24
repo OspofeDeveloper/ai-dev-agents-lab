@@ -156,7 +156,8 @@ Usa `${CLAUDE_SKILL_DIR}/references/conflict_report_template.md` para estructura
 > **2** specs y se leyeron junto a los de una de **5**, sin que nada en el fichero lo dijera.
 
 > **Y el veredicto se enuncia sobre lo que comparaste, no en absoluto ([[D-093]]/[[D-096]]).** En
-> modo feature, `SIN_CONFLICTOS (F-002 contra los otros 4 specs: F-001, F-003, F-004, F-007)`; en
+> modo feature, `SIN_CONFLICTOS (F-002 contra los otros 4 specs: F-001, F-003, F-004, F-007)` —con
+> un solo spec más, `(F-003 contra el otro spec: F-004)`—; en
 > modo consolidado, `SIN_CONFLICTOS (entre los 5 specs comparados: …)`. Nunca `SIN_CONFLICTOS` a
 > secas, y en modo feature nunca *"entre los N"*: se lee como *"revisé todos los pares"*, y no
 > los revisaste. El token va delante y

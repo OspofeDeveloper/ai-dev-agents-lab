@@ -34,7 +34,7 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 - [ ] CU-3.i — Discovery: ownership ambiguo de shared model para en checkpoint humano
 
 ### `wf-spec-features-first` — orquestador del flujo features-first (4)
-- [ ] CU-3.d — Generación por feature (features-first) en paralelo — **2/3** (ancla v0.117.0, orquestador `opus-5-5`; 1/3 2026-09-23, 2/3 2026-09-24 sobre v0.117.1; serie reiniciada por [[D-094]] — la 1/3 de v0.116.0 queda histórica)
+- [x] CU-3.d — Generación por feature (features-first) en paralelo — **SELLADO 3/3** (2026-09-23/24, anclas v0.117.0 → v0.117.2 con los cuatro puntos intactos, orquestador `opus-5-5`)
 - [ ] CU-3.l — Features-first: `--features` con IDs inexistentes en el discovery
 - [ ] CU-3.u — Features-first: la decisión de alcance viaja al fan-out y un `STOP_*` se presenta (D-081) ⏱ **sin pasada**
 - [ ] CU-3.v — Features-first: un discovery que ya existe se reutiliza, no se regenera (D-081) ⏱ **sin pasada**
@@ -1607,6 +1607,35 @@ subset pedido, o deja un índice parcial con apariencia de completo.
 > - **Notas:** en la tanda 2 main volvió a preguntar el rigor y relanzó el flujo con `--features` —
 >   coherente con que el rigor es por feature ([[CU-3.r]])—; el análisis volvió a preguntar gaps
 >   distintos (responder por tema); [[CU-3.u]] sigue sin evidencia.
+
+> **Pasada 3/3 — 2026-09-24 sobre v0.117.2+b8c645c, orquestador `opus-5-5`, PASS. `CU-3.d`
+> SELLADO.** Main 80/80 en `opus-5-5`, subagentes en `sonnet-5`, PRD de partida byte-idéntico.
+> El discovery sacó esta vez **8** features con otra numeración (F-003/F-004 y luego F-001, F-005,
+> F-008) y el subset se respetó igual.
+>
+> - **Punto 3:** [[V4]] 4/4 tandas en un único mensaje. **Punto 2:** 5 con `Ruta spec`, 3
+>   `PENDIENTE_GENERACIÓN`, `discovery=sí`, y el aviso de matriz estancada por **quinta vez**,
+>   siempre con las tres features de la segunda tanda. **Punto 4:** `--skip-index` en los 5
+>   encargos, 0 ejecuciones del índice en los escritores. **Punto 1** verde. **V1 = 0.**
+> - **[[D-096]] en campo:** los cinco informes ciñen el veredicto a los pares de su spec (`F-005
+>   contra los otros 4 specs: …`) y ninguno opina sobre pares ajenos. Los tres ALTA los levantaron
+>   **los dos** auditores de cada par, así que no hubo desacuerdo que arbitrar ni portada que
+>   desmentir: la regla del readiness de [[D-095]]/[[D-096]] queda **sin ejercitar**, no validada.
+> - **Dos cortes por límite de uso** en mitad del fan-out de conflictos de la tanda 2, **después**
+>   de que los cuatro puntos quedaran medidos. La recuperación, sin escenario propio: relanzó de
+>   cero el auditor que no había escrito nada y reanudó con `SendMessage` los dos que sí, con el
+>   encargo completo; no tomó el acuse por informe (*"solo los he reanudado, no tengo todavía nada
+>   de ellos"*, [[D-052]]); y le pasó al readiness las equivalencias de IDs y que no había
+>   divergencias. Cinco informes, ninguno duplicado ni a medias.
+> - **Nota de redacción** arreglada en v0.117.3: la plantilla daba `contra los otros 1 specs`; ahora
+>   tiene la forma singular.
+>
+> **Sobre el sello y sus tres anclas.** Las pasadas corrieron sobre v0.117.0, v0.117.1 y v0.117.2.
+> Entre ellas cambiaron el mensaje que **anuncia** el índice (su contenido es byte-idéntico) y la
+> prosa y el alcance de los informes de conflictos y del readiness; **ninguno de los cuatro puntos
+> que este escenario mide** —subset, contenido del índice, forma del fan-out, autoría del índice—
+> se tocó. Es la regla de la campaña: se congela el punto que se mide, no el árbol. Pendiente fuera
+> de este escenario: [[CU-3.u]] sigue sin evidencia.
 
 ## CU-3.e — Spec directo de una feature (fast-track)
 

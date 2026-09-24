@@ -13,7 +13,7 @@
 
 ## Estado general
 
-> **[SIN_CONFLICTOS | CONFLICTOS_DETECTADOS]** ([modo feature: F-00X contra los otros [N-1] specs: F-00Y, F-00Z] | [modo consolidado: entre los [N] specs comparados: F-00Y, F-00Z])
+> **[SIN_CONFLICTOS | CONFLICTOS_DETECTADOS]** ([modo feature: F-00X contra los otros [N-1] specs: F-00Y, F-00Z — con uno solo: F-00X contra el otro spec: F-00Y] | [modo consolidado: entre los [N] specs comparados: F-00Y, F-00Z])
 >
 > Resumen en 1-2 frases. Si hay conflictos, indicar cuántos son de severidad ALTA y cuántos MEDIA.
 >

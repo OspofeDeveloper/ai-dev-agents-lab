@@ -2,6 +2,13 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.117.3 — 2026-09-24
+
+**`CU-3.d` SELLADO 3/3** — segundo sello de la campaña y el primero sobre Opus 5.5.
+
+- 🔒 **`CU-3.d` cierra serie** (pasadas del 2026-09-23/24 sobre v0.117.0, v0.117.1 y v0.117.2, orquestador `opus-5-5`). Los cuatro puntos —subset, índice que cubre el universo, fan-out en un único mensaje, índice con un solo autor— en verde las tres veces; entre anclas solo cambiaron piezas que el escenario no mide. La condición de [[DECISIONS D-089]] se reprodujo en **las cinco** corridas por subsets desde su arreglo: era estructural. En la 3/3, [[DECISIONS D-096]] en campo (cinco informes ceñidos a sus pares) y una recuperación limpia de dos cortes por límite de uso en mitad del fan-out de conflictos. La regla de portadas desmentidas del readiness queda **sin ejercitar**: no hubo desacuerdo entre auditores.
+- 🟢 **Plantilla de conflictos: forma singular del alcance.** Con un solo spec más, `F-003 contra el otro spec: F-004` en vez de `contra los otros 1 specs`.
+
 ## 0.117.2 — 2026-09-24
 
 **`CU-3.d` 2/3, y cada auditor del fan-out responde de sus pares y de nada más** — [[DECISIONS D-096]].
