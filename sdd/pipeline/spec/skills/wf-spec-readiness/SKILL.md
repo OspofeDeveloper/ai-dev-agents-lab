@@ -128,6 +128,14 @@ Clasifica la feature como **BLOQUEADA** si tiene al menos un conflicto ALTA asoc
 >   lo vio, y tu veredicto con su evidencia. Un conflicto silenciosamente desaparecido entre dos
 >   pasadas es indistinguible de uno resuelto. Al justificar por qué tu veredicto pesa más, di
 >   **"la regla de arbitraje de este informe"** — no el nombre del workflow que la define (Paso 7).
+> - **Y si tu arbitraje confirma el conflicto, la portada del informe que no lo vio queda
+>   desmentida — dilo donde se lee ([[D-095]]).** Ese informe sigue abriendo con
+>   `SIN_CONFLICTOS` sobre un conjunto que **incluye** la feature que tú acabas de bloquear, y
+>   quien abre el informe de una feature empieza por su portada. No lo edites —es de su auditor—:
+>   márcalo en la cabecera de vigencia como **`VIGENTE — portada desmentida por el arbitraje
+>   (CF-F001-01)`** y añade la acción en «Próximos pasos»: su portada no es el estado de esa
+>   feature, lo es este informe, y queda al día al rehacer ese informe **una vez resuelto el
+>   conflicto** (rehacerlo antes solo repite el desacuerdo).
 > - **Si no puedes resolverlo con los specs**, no lo cierres: mantenlo **abierto** con la severidad
 >   más alta que le haya dado cualquier informe y marca la feature `BLOQUEADA`. El coste de un falso
 >   bloqueo lo paga una revisión; el de un falso "listo" lo paga el plan.

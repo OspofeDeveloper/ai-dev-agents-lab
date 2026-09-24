@@ -2,6 +2,16 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.117.1 — 2026-09-23
+
+**`CU-3.d` abre la serie nueva en 1/3, y el arbitraje aprende a decir qué portada desmiente** — [[DECISIONS D-095]].
+
+- ✅ **`CU-3.d` 1/3 sobre v0.117.0+71d38cd, orquestador `opus-5-5`.** Los cuatro puntos en verde: [[V4]] 4/4 tandas en un único mensaje (la de N=2 incluida), índice consistente con el aviso de matriz estancada saltando por **tercera vez con las mismas tres features**, `--skip-index` en los 5 encargos y cero regeneraciones por los escritores. [[DECISIONS D-093]] funciona a la primera: veredictos acotados y los dos ESTANCADOS con su acción. V1 = 0.
+- 🟠 **Una portada que el arbitraje desmiente** ([[DECISIONS D-095]]). El auditor de F-001 levantó `CF-F001-01` (ALTA) contra F-007 y el de F-007 no lo vio; el readiness lo confirmó y bloqueó F-007, y el informe de F-007 seguía abriendo con `SIN_CONFLICTOS`. El readiness **señala** ahora esa portada (`VIGENTE — portada desmentida por el arbitraje`) con su acción, sin editar el informe ajeno, y el informe del fan-out dice **desde qué spec** mira.
+- 🟢 **El script del índice dice dónde escribe**: `regenerado spec/spec_features.md` en vez del nombre a secas, que mandaba a buscarlo a la raíz. Test propio.
+- ⚠ **Conformance: [[DECISIONS D-090]] y [[DECISIONS D-093]] ganan su comprobación explícita**, que no tenían en ningún escenario: `CU-3.f` punto 2 (IDs prefijados, `Conjunto comparado`, veredicto acotado y *visto desde*) y punto 4 (portada desmentida), y `CU-3.o` punto 6 (vigencia de los informes y acción de los ESTANCADOS). **La serie de `CU-3.d` sigue**: el índice es byte-idéntico, solo cambia la línea que lo anuncia.
+- **Aprendizaje.** Una portada puede quedar desmentida por el tiempo ([[DECISIONS D-093]]) o por otro informe, y las dos veces hay que decirlo donde se lee. Y una decisión sin comprobación en el CU que le toca vive de que otra pasada tropiece con ella.
+
 ## 0.117.0 — 2026-09-23
 
 **Salto a Opus 5.5, núcleo y overlay, y la fábrica en el mismo barrido** — [[DECISIONS D-094]].

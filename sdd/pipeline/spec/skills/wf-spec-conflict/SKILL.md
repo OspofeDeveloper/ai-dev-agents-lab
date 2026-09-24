@@ -14,7 +14,7 @@ user-invocable: true
 
 Tu objetivo es detectar inconsistencias entre los Specs SDD de un mismo proyecto que podrían derivar en comportamiento indefinido, implementación duplicada o gaps funcionales no cubiertos. Usa `kb-conflict-expert` para las 5 reglas de detección y `kb-spec-expert` como referencia estructural.
 
-**Regla de oro:** El informe es informativo, no bloqueante. Tu rol es detectar y describir — la decisión de cómo resolver cada conflicto la toma el humano. El informe siempre debe dejar un estado inequívoco: `SIN_CONFLICTOS` o `CONFLICTOS_DETECTADOS`, **seguido del conjunto sobre el que vale** ([[D-093]]) — un veredicto sin su alcance deja de ser inequívoco en cuanto aparece un spec más.
+**Regla de oro:** El informe es informativo, no bloqueante. Tu rol es detectar y describir — la decisión de cómo resolver cada conflicto la toma el humano. El informe siempre debe dejar un estado inequívoco: `SIN_CONFLICTOS` o `CONFLICTOS_DETECTADOS`, **seguido del conjunto sobre el que vale** ([[D-093]]) — un veredicto sin su alcance deja de ser inequívoco en cuanto aparece un spec más. Y en el fan-out, di **desde qué spec** lo miras ([[D-095]]): otro auditor ve el mismo par desde el otro lado y puede levantar lo que tú no viste, y quien arbitra es el informe de readiness.
 
 ---
 

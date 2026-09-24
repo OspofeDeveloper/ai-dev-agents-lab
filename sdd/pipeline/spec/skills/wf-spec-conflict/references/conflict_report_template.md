@@ -16,6 +16,9 @@
 > **[SIN_CONFLICTOS | CONFLICTOS_DETECTADOS]** (entre los [N] specs comparados: [F-002, F-003])
 >
 > Resumen en 1-2 frases. Si hay conflictos, indicar cuántos son de severidad ALTA y cuántos MEDIA.
+>
+> [Solo en modo feature, el del fan-out:] Visto desde [F-00X]. Si otro auditor levanta un choque
+> que incluye esta feature, lo arbitra el informe de readiness, y su veredicto manda sobre este.
 
 <!-- El token va PRIMERO y literal — lo parsea la medición de readiness. El conjunto va detrás,
      entre paréntesis (D-093): un `SIN_CONFLICTOS` a secas se lee como "esta feature no choca con

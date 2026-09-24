@@ -493,6 +493,25 @@ class SinValidarTest(unittest.TestCase):
         self.assertEqual(self._index(), self._index())
 
 
+class RutaDeSalidaTest(unittest.TestCase):
+    """El mensaje de exito dice DONDE escribio, relativo al cwd (D-095).
+
+    Con `regenerado spec_features.md` a secas, el orquestador lo busco en la raiz del
+    proyecto, no lo encontro y gasto dos llamadas en averiguar donde estaba.
+    """
+
+    def test_el_mensaje_lleva_la_ruta_relativa_al_cwd(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            d = root / "spec"
+            write(d / "prj_discovery.md", DISCOVERY)
+            write(d / "features" / "login" / "spec" / "login_spec.md",
+                  spec("F-001", "Login"))
+            r = run_script("sdd-features-index.py", "spec", cwd=root)
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            self.assertIn("regenerado spec/prj_features.md", r.stdout)
+
+
 class MatrizEstancadaTest(unittest.TestCase):
     """Un `PENDIENTE_GENERACIÓN` sobre un spec que existe es matriz vieja (D-089).
 

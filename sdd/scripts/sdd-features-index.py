@@ -698,7 +698,9 @@ def main(argv: list[str]) -> int:
             os.unlink(tmp)
         raise
     n_feat = content.count("\n### F-")
-    print(f"[features-index] regenerado {out_path.name} ({n_feat} features)")
+    # La ruta y no solo el nombre ([[D-095]]): quien lee esta linea busca el fichero
+    # desde su cwd, y con `spec_features.md` a secas lo busca en la raiz.
+    print(f"[features-index] regenerado {os.path.relpath(out_path)} ({n_feat} features)")
     if SPECS_SIN_CABECERA:
         sys.stderr.write(
             f"[features-index] ⚠ {len(SPECS_SIN_CABECERA)} spec(s) con la cabecera "

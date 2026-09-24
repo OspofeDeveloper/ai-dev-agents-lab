@@ -6,7 +6,9 @@
 > **Conflict report**: [SIN_CONFLICTOS — path | CONFLICTOS_DETECTADOS — path | No encontrado | Ambiguo — revisar path]
 > **Vigencia de los informes de conflicto**: [uno por informe: `path` — VIGENTE (comparó los N specs
 > que hay ahora) | ESTANCADO (comparó F-00X, F-00Y; no vio F-00Z) | VIGENCIA DESCONOCIDA (sin campo
-> `Conjunto comparado`). Se lee del campo de su cabecera, no de la fecha (D-090).]
+> `Conjunto comparado`). Se lee del campo de su cabecera, no de la fecha (D-090). Y si tu
+> arbitraje confirmó un conflicto que ese informe no vio: `VIGENTE — portada desmentida por el
+> arbitraje (CF-F00X-NN)` (D-095).]
 > **Fuente**: [path/_features.md]
 
 ---
@@ -128,6 +130,13 @@
      vigentes, porque cada spec nuevo se compara contra todos— y luego que puede rehacerse cuando
      se quiera tener el documento al dia. Si al cruzarlo aparece un par que no ha mirado NADIE,
      eso no es documento viejo: es analisis que falta, y va como accion prioritaria. -->
+<!-- SIEMPRE que la seccion de vigencia marque una portada desmentida por el arbitraje (D-095):
+     un punto mas. El lector de ese informe ve SIN_CONFLICTOS sobre una feature BLOQUEADA. -->
+N. **Informe de conflictos con la portada desmentida**: [path] abre con `SIN_CONFLICTOS`, pero
+   el arbitraje de este informe confirma [CF-F00X-NN] entre [F-00X] y [F-00Y]. El estado de
+   [F-00Y] es el de este informe, no el de esa portada; el documento queda al dia al rehacerlo
+   una vez resuelto el conflicto.
+
 N. **Informes de conflicto estancados**: [path] describe un conjunto de [N] specs que ya no es el
    actual. Los choques de [F-00X] con [las features nuevas] estan cubiertos por los informes
    vigentes de estas; el documento puede rehacerse cuando convenga tenerlo al dia.

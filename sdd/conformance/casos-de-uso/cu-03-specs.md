@@ -34,7 +34,7 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 - [ ] CU-3.i — Discovery: ownership ambiguo de shared model para en checkpoint humano
 
 ### `wf-spec-features-first` — orquestador del flujo features-first (4)
-- [ ] CU-3.d — Generación por feature (features-first) en paralelo — **0/3** (serie reiniciada por frontera de modelo, [[D-094]]; la 1/3 de v0.116.0 con orquestador `opus-5` queda histórica)
+- [ ] CU-3.d — Generación por feature (features-first) en paralelo — **1/3** (ancla v0.117.0, orquestador `opus-5-5`, 2026-09-23; serie reiniciada por [[D-094]] — la 1/3 de v0.116.0 queda histórica)
 - [ ] CU-3.l — Features-first: `--features` con IDs inexistentes en el discovery
 - [ ] CU-3.u — Features-first: la decisión de alcance viaja al fan-out y un `STOP_*` se presenta (D-081) ⏱ **sin pasada**
 - [ ] CU-3.v — Features-first: un discovery que ya existe se reutiliza, no se regenera (D-081) ⏱ **sin pasada**
@@ -1553,6 +1553,36 @@ subset pedido, o deja un índice parcial con apariencia de completo.
 >   ESTANCADO produce acción. **La serie no se reinicia** — lo tocado es prosa del informe de
 >   conflictos y los siguientes pasos del readiness (territorio de CU-3.f/o y V1), no ninguno de
 >   los cuatro puntos que este escenario mide, que siguen congelados desde el ancla.
+>
+> *Esta pasada queda como histórica: la serie se reinició por frontera de modelo ([[D-094]]).*
+
+> **Pasada 1/3 de la serie nueva — 2026-09-23 sobre v0.117.0+71d38cd, orquestador `opus-5-5`,
+> PASS.** Primera tras [[D-094]]: el hilo principal en `claude-opus-5-5` (74/74 mensajes) y los 14
+> subagentes en `sonnet-5`. Mismo reparto **2 + 3** (F-003, F-004 y luego F-001, F-002, F-007).
+>
+> - **Punto 3:** [[V4]] **4/4 tandas en un único mensaje**, la de N=2 incluida.
+> - **Punto 2:** 5 features con `Ruta spec`, 2 `PENDIENTE_GENERACIÓN` sin ruta, y el aviso de matriz
+>   estancada saltó en la tanda 2 con **las mismas tres features** que las dos veces anteriores
+>   (F-001, F-002, F-007): tercera reproducción de la condición de [[D-089]].
+> - **Punto 4:** `--skip-index` en los 5 encargos y **0** ejecuciones del script de índice en los
+>   `.jsonl` de escritor (dos `ls .sdd/scripts/` que lo nombran no cuentan: no lo ejecutan). Lo
+>   regeneraron main una vez por tanda y el readiness tras escribir su informe, que es lo previsto.
+> - **Punto 1:** subset respetado, nada perdido. **V1 = 0.**
+> - **[[D-093]] en campo, a la primera:** los cinco informes abren con el veredicto acotado, y el
+>   readiness clasifica 3 VIGENTE / 2 ESTANCADO con la acción en «Próximos pasos» explicando que
+>   los pares que no vieron ya los cubren los vigentes — la redacción que pedía la decisión.
+> - **Dos hallazgos que no tocan los cuatro puntos** ([[D-095]]), arreglados en v0.117.1: el
+>   informe de F-007 abría con `SIN_CONFLICTOS` mientras el readiness confirmaba `CF-F001-01`
+>   (ALTA) entre F-001 y F-007 — la portada desmentida por el arbitraje sin que nada lo señalara
+>   (ahora lo miden CU-3.f punto 4 y CU-3.o punto 6)—; y el script del índice anunciaba
+>   `regenerado spec_features.md` sin ruta, así que main lo buscó en la raíz y gastó dos llamadas.
+>   **La serie no se reinicia:** el contenido del índice es byte-idéntico, solo cambia la línea
+>   que lo anuncia, y el resto es prosa de informes que este escenario no mide.
+> - **Al correr la prosa:** el análisis puede preguntar otros gaps que en la pasada anterior (esta
+>   vez saldo negativo, cobro de deudas y efecto de editar un movimiento). Responde **por tema**,
+>   no las frases literales: este escenario no mide las respuestas. De ahí salió un gap crítico
+>   nuevo en el spec de movimientos (qué pasa con la deuda o la reserva al **eliminar**), legítimo.
+> - **Sigue sin evidencia [[CU-3.u]]:** el gate de alcance derivado tampoco se disparó.
 
 ## CU-3.e — Spec directo de una feature (fast-track)
 
@@ -1614,6 +1644,16 @@ auditoría al mismo agente por `Agent` (síncrona), presenta el informe y **sell
 2. Le pides detectar conflictos entre features.
    → **Esperado:** con `--features-dir` reporta HUs duplicadas, CAs contradictorios,
      solapes de scope y shared models inconsistentes; no redefine specs.
+   → **Esperado en el fan-out (un informe por spec), y se mira en cada uno de los N:**
+     - los IDs llevan delante el `F-00X` del spec auditado (`CF-F001-01`) y **ningún ID se repite**
+       entre informes ([[D-090]]);
+     - la cabecera trae **`Conjunto comparado`** con todos los specs que entraron, el objetivo
+       incluido ([[D-090]]);
+     - la portada abre con el token literal **y su alcance** —`SIN_CONFLICTOS (entre los N specs
+       comparados: …)`— ([[D-093]]) y dice **desde qué spec** se miró, remitiendo al readiness si
+       otro auditor levanta un choque que la incluya ([[D-095]]).
+   → **FALLO:** dos informes con el mismo ID para hallazgos distintos; un informe sin
+     `Conjunto comparado`; un `SIN_CONFLICTOS` a secas en portada.
 3. Le pides saber qué está listo / en qué orden implementar.
    → **Esperado:** produce `_readiness_report.md` con estado por feature y orden de
      implementación.
@@ -1639,6 +1679,16 @@ auditoría al mismo agente por `Agent` (síncrona), presenta el informe y **sell
      conflicto silenciosamente evaporado es indistinguible de uno resuelto.
    → Si no se delega readiness (`--skip-readiness`), el conflicto queda **abierto y reportado
      como tal**.
+   → **Esperado cuando el arbitraje confirma el conflicto** ([[D-095]]): el informe del auditor que
+     no lo vio sigue abriendo con `SIN_CONFLICTOS` sobre un conjunto que incluye la feature
+     bloqueada. El readiness **no lo edita**, pero lo marca en su cabecera de vigencia como
+     `VIGENTE — portada desmentida por el arbitraje (CF-…)` y añade la acción en «Próximos
+     pasos» (su portada no es el estado; se pone al día al rehacerlo **tras resolver** el
+     conflicto). Medido por primera vez el 2026-09-23: `CF-F001-01` (ALTA) lo levantó el auditor
+     de F-001 y no el de F-007, el readiness lo confirmó… y el informe de F-007 seguía diciendo
+     `SIN_CONFLICTOS` sin que nada lo avisara.
+   → **FALLO:** el readiness confirma el conflicto y el informe desmentido no aparece señalado
+     en ninguna parte; o el readiness **reescribe** el informe de otro auditor.
 5. **El sello, y quién lo estampa** ([[D-065]]/[[D-061]]) — la otra mitad de `wf-spec-validate`,
    tras el veredicto `APROBADO` del punto 1.
    → **Esperado:** main **te pide el nombre de quien aprueba** y sella con
@@ -1653,8 +1703,8 @@ auditoría al mismo agente por `Agent` (síncrona), presenta el informe y **sell
      pedirá `--allow-overwrite-sealed-spec`.
 
 **Resultado:** PASS si audita/reporta sin modificar los specs, lee todos los informes de
-conflictos existan donde existan, arbitra las divergencias dejando constancia y **sella con el
-aprobador capturado** · FALLO si edita specs al validar, silencia un conflicto real, lo cierra
+conflictos existan donde existan, arbitra las divergencias dejando constancia —y señalando la
+portada que su arbitraje desmiente— y **sella con el aprobador capturado** · FALLO si edita specs al validar, silencia un conflicto real, lo cierra
 por mayoría, o sella sin nombre detrás.
 **Desviación → reportar:** issue citando `CU-3.f`.
 
@@ -2116,7 +2166,8 @@ de baja, o si declara listos unos specs que el gate va a denegar.
 **Precondición:** según el sub-escenario: (1) directorio de features sin `_features.md`;
 (2) features con dependencias en ciclo; (3) una feature con alcance derivado del analysis no
 consolidado en el PRD; (4) una feature limpia cuyo spec sigue en `Estado: BORRADOR`;
-(5) una feature con un `_conflict_report.md` que levanta un conflicto `ALTA`.
+(5) una feature con un `_conflict_report.md` que levanta un conflicto `ALTA`; (6) informes de
+conflicto de tandas distintas (iteración por subsets: el caso normal de `CU-3.d`).
 **Mecanismo:** skill `wf-spec-readiness` → `sdd-spec-auditor` (Pasos 2, 5, 6). Solo lee y sintetiza.
 
 1. Le pides el readiness sin que exista `_features.md`.
@@ -2150,11 +2201,28 @@ consolidado en el PRD; (4) una feature limpia cuyo spec sigue en `Estado: BORRAD
      ecosistema que se fía del veredicto de un agente, y el `ALTA` de un auditor minoritario
      bloquearía trabajo que el arbitraje ya resolvió, sin vía de cierre.
 
+6. **Hay informes de conflicto calculados contra conjuntos distintos** ([[D-090]]/[[D-093]]) —
+   la primera tanda comparó 2 specs, la segunda 5—. Se mira en la cabecera y en «Próximos pasos».
+   → **Esperado:** la cabecera trae **`Vigencia de los informes de conflicto`** con uno por
+     informe: `VIGENTE`, `ESTANCADO` (diciendo qué comparó y qué specs no vio) o `VIGENCIA
+     DESCONOCIDA` (sin campo `Conjunto comparado`), leído del campo y no de la fecha.
+   → **Esperado (un ESTANCADO produce acción, [[D-093]]):** en «Próximos pasos», un punto por los
+     estancados que diga **quién cubre los pares que no vieron** —normalmente los informes
+     vigentes, porque cada spec nuevo se compara contra todos— y que el documento **puede
+     rehacerse cuando convenga**. Solo si aparece un par que no ha mirado nadie, la acción es
+     pedir análisis, y va como prioritaria.
+   → **Esperado (los IDs se citan tal cual, [[D-090]]):** ningún espacio de nombres inventado
+     (`GCF-…`); informes viejos con IDs colisionados se citan `<feature>:<ID>`.
+   → **FALLO:** un informe de la tanda anterior presentado como cobertura del conjunto actual;
+     ESTANCADOS listados sin acción; proponer relanzar N auditores cuando la cobertura por pares
+     ya está completa; o renumerar los hallazgos.
+
 **Resultado:** PASS si para sin índice, reporta el ciclo sin abortar, marca el scope derivado,
-no promete planificación sobre un spec sin validar y acota qué significa `BLOQUEADA` ·
+no promete planificación sobre un spec sin validar, acota qué significa `BLOQUEADA` y clasifica la
+vigencia de cada informe de conflicto con su acción ·
 FALLO si fabrica el índice, aborta todo el informe por un ciclo, marca `LISTA` una feature con
-scope sin consolidar o con el spec en `BORRADOR`, o presenta un conflicto `ALTA` como si
-fuese a bloquear el pipeline por su cuenta.
+scope sin consolidar o con el spec en `BORRADOR`, presenta un conflicto `ALTA` como si
+fuese a bloquear el pipeline por su cuenta, o lee un informe estancado como vigente.
 **Desviación → reportar:** issue citando `CU-3.o`.
 
 ## CU-3.p — Delta / gap-resolve: un cambio de producto encubierto no se integra en silencio

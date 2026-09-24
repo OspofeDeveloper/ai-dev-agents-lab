@@ -76,6 +76,14 @@ para garantizar que ningún skill se queda sin casos en los cuatro ejes de prueb
 > se habría perdido un sello. Los sellos conductuales previos (CU-3.a, CU-2, CU-1, CU-13.a) pasan
 > a `SELLADO (5) — pendiente HUMO (5.5)`.
 
+> ✅ **Y la serie nueva abre 1/3 el mismo día** (ancla **v0.117.0+71d38cd**, orquestador
+> `opus-5-5`). Los cuatro puntos en verde, [[D-093]] funcionando a la primera y la condición de
+> [[D-089]] reproducida por tercera vez con las mismas tres features. Dos hallazgos fuera de los
+> cuatro puntos → [[D-095]] (v0.117.1): una portada de conflictos que el arbitraje desmiente sin
+> que nada lo señale, y el script del índice anunciando el nombre sin la ruta. **No reinician la
+> serie.** Y [[D-090]]/[[D-093]] ganan por fin comprobación explícita en `CU-3.f` (puntos 2 y 4) y
+> `CU-3.o` (punto 6).
+
 > ⏱ **Cuatro escenarios nacen sin pasada del barrido de enlazado lateral de Spec**
 > ([[D-078]]/[[D-079]], 2026-09-14): **CU-9.o** (evolucionar una feature dada de baja se deniega, y
 > el estado sobrevive incluso sin hook), **CU-7.s** (la reactivación es la única vuelta atrás y no

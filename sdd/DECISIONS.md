@@ -6,6 +6,33 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-095 — El arbitraje también desmiente portadas, y el índice dice dónde escribe
+
+- **Fecha:** 2026-09-23 · **Estado:** Adoptada (el readiness señala la portada de conflictos que su arbitraje desmiente; el informe de conflictos del fan-out dice desde qué spec mira; el script del índice anuncia la ruta. **Salió de la pasada 1/3 de la serie nueva de `CU-3.d`**, sobre v0.117.0). · **Relacionada:** [[D-047]] (los auditores se contradicen por diseño y el readiness arbitra), [[D-093]] (la portada tiene que llevar lo que la matiza), [[D-089]].
+
+**Contexto.** Dos hallazgos de una pasada en verde, ninguno de los cuatro puntos de `CU-3.d`:
+
+- **Una portada que el arbitraje desmiente y nadie lo dice.** El auditor de F-001 levantó `CF-F001-01` (ALTA) contra F-007; el de F-007, mirando el mismo par desde su lado, no lo vio y abrió con `SIN_CONFLICTOS (entre los 5 specs comparados: …)`. El readiness arbitró, confirmó el conflicto y bloqueó F-007 — y el informe de F-007 siguió diciendo *"sin conflictos"* sobre una feature bloqueada. Es exactamente lo que [[D-093]] enseñó con la vigencia: **quien abre el informe de una feature empieza por su portada**. [[D-093]] cubrió el caso en que la portada envejece por el tiempo; este es el caso en que la desmiente **otro informe**.
+- **El índice anunciaba el nombre, no la ruta.** `regenerado spec_features.md`: main lo buscó en la raíz del proyecto, no estaba, y gastó dos llamadas en averiguar que vive en `spec/`.
+
+**Decisión.**
+
+- **El readiness señala la portada desmentida, sin editarla**: en su cabecera de vigencia, `VIGENTE — portada desmentida por el arbitraje (CF-F001-01)`, y un punto en «Próximos pasos» que dice que el estado de esa feature es el del readiness y que el documento queda al día **al rehacerlo una vez resuelto el conflicto**.
+- **El informe de conflictos del fan-out dice desde qué spec mira** (*"Visto desde F-007"*) y remite al readiness si otro auditor levanta un choque que lo incluya. No es un descargo genérico: es el alcance del veredicto, la otra mitad de [[D-093]].
+- **El script del índice imprime la ruta relativa al cwd.** Test propio.
+- **La serie de `CU-3.d` no se reinicia.** El contenido del índice es byte-idéntico —solo cambia la línea que lo anuncia— y lo demás es prosa de informes que el escenario no mide. Donde sí se mide queda escrito: `CU-3.f` punto 2 (IDs, `Conjunto comparado`, veredicto acotado y *visto desde*) y punto 4 (portada desmentida), y un punto 6 nuevo de `CU-3.o` (vigencia y acción de los ESTANCADOS), que hasta hoy no tenían comprobación explícita de [[D-090]]/[[D-093]] en ningún escenario.
+
+**Alternativas descartadas.**
+- *Que el readiness reescriba o anote el informe del auditor que no lo vio* → el informe es de su auditor y describe lo que **él** vio; editarlo desde otro rol borra justo el desacuerdo del que [[D-047]] pide dejar constancia. Lo que se corrige es dónde lo encuentra el lector, no el documento.
+- *Rehacer el informe desmentido en el momento* → repite el desacuerdo: el conflicto sigue abierto y el auditor de F-007 lo mira desde el mismo lado. Rehacerlo tiene sentido **después** de resolverlo.
+- *Dejar el mensaje del índice para cuando la serie se selle* → cambia una línea de stdout y ningún dato del fichero; esperar dos pasadas cuesta dos búsquedas por pasada.
+
+**Consecuencias / aprendizaje.** **Una portada puede quedar desmentida por el tiempo o por otro informe, y las dos veces hay que decirlo donde se lee.** [[D-093]] miró solo el eje del tiempo; el arbitraje es el otro eje, y estaba escrito en el mismo contrato —*"deja constancia del desacuerdo"*— sin decir **dónde**. Y un aprendizaje de instrumento: lo que [[D-090]] y [[D-093]] prometían **no lo comprobaba ningún escenario**; se vio porque `CU-3.d` mira el fan-out entero. Una decisión sin su comprobación en el CU que le toca vive de que otra pasada tropiece con ella.
+
+**Referencias.** `pipeline/spec/skills/wf-spec-readiness/SKILL.md` (Paso 4c, reglas de arbitraje) + `references/readiness_report_template.md` · `pipeline/spec/skills/wf-spec-conflict/SKILL.md` (Regla de oro) + `references/conflict_report_template.md` · `scripts/sdd-features-index.py` + `tests/test_sdd_features_index.py` (`RutaDeSalidaTest`) · `conformance/casos-de-uso/cu-03-specs.md` (CU-3.d pasada 1/3, CU-3.f puntos 2 y 4, CU-3.o punto 6) · `CHANGELOG.md` 0.117.1.
+
+---
+
 ## D-094 — Salto a Opus 5.5, y la serie que había que perder a propósito
 
 - **Fecha:** 2026-09-23 · **Estado:** Adoptada (los 11 agentes Opus pasan a `claude-opus-5-5` y los 5 `claude-sonnet-4-6` del overlay KMM a `claude-sonnet-5`; `CU-3.d` vuelve a **0/3**). · **Relacionada:** la frontera de modelo de 2026-08-27 (4-x → 5, notas de procedencia de CU-1/CU-2), `kb-sdd-conformance` Regla 9 puntos 3 y 9.
