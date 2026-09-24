@@ -133,7 +133,11 @@ Clasifica la feature como **BLOQUEADA** si tiene al menos un conflicto ALTA asoc
 >   `SIN_CONFLICTOS` sobre un conjunto que **incluye** la feature que tú acabas de bloquear, y
 >   quien abre el informe de una feature empieza por su portada. No lo edites —es de su auditor—:
 >   márcalo en la cabecera de vigencia como **`VIGENTE — portada desmentida por el arbitraje
->   (CF-F001-01)`** y añade la acción en «Próximos pasos»: su portada no es el estado de esa
+>   (CF-F001-01)`** — **solo si el par confirmado está en el alcance de ese informe** ([[D-096]]).
+>   Un informe en modo feature cubre los pares que incluyen su spec: que no viera un choque entre
+>   otros dos specs no lo desmiente, porque no le tocaba. Si aun así se pronunció sobre ese par
+>   ajeno (*"el resto de pares no presenta choques"*), sí queda desmentido, y dilo así: se salió
+>   de su alcance y acertó menos que el auditor dueño del par y añade la acción en «Próximos pasos»: su portada no es el estado de esa
 >   feature, lo es este informe, y queda al día al rehacer ese informe **una vez resuelto el
 >   conflicto** (rehacerlo antes solo repite el desacuerdo).
 > - **Si no puedes resolverlo con los specs**, no lo cierres: mantenlo **abierto** con la severidad

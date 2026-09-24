@@ -6,6 +6,35 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-096 — Un auditor del fan-out responde de los pares de su spec, y de nada más
+
+- **Fecha:** 2026-09-24 · **Estado:** Adoptada (en modo feature el auditor compara solo los pares que incluyen su spec y lo dice en el veredicto; el readiness solo desmiente una portada sobre un par que esa portada cubría. **Salió de la pasada 2/3 de `CU-3.d`**, sobre v0.117.1). · **Relacionada:** [[D-093]] (la cobertura por pares completa, que este hace verdad por contrato), [[D-095]] (la portada desmentida, que este acota), [[D-047]].
+
+**Contexto.** El Paso 5 de la verificación de conflictos decía *"busca conflictos entre cada par de specs"* y *"entre todos los pares"*, sin distinguir los dos modos. En el consolidado es lo correcto; en el **modo feature** —el del fan-out, un auditor por spec nuevo— no. La pasada lo midió con tres auditores sobre el mismo conjunto de 5:
+
+- **F-002** se ciñó a su spec: *"F-002 vs F-001, F-003, F-004, F-007"*. Es lo que supone [[D-093]] cuando dice que la cobertura por pares está completa: cada spec nuevo contra todos.
+- **F-001 y F-007** declararon limpios **los 10 pares**, incluido F-003↔F-004 — donde el auditor de F-004 había levantado un choque ALTA (`CF-F004-01`) que el arbitraje confirmó. Revisar un par ajeno con menos atención que su dueño no suma cobertura: suma un **falso negativo con firma**.
+- **Y el readiness aplicó [[D-095]] de más**: marcó bien como desmentidas las portadas de F-001 y F-007, pero también la de **F-002**, que nunca habló de ese par.
+
+El veredicto acotado de [[D-093]] empujaba en la dirección equivocada: *"entre los 5 specs comparados"* se lee como *"revisé los 10 pares"*.
+
+**Decisión.**
+
+- **En modo feature, el auditor revisa solo los pares que incluyen su spec objetivo** y no se pronuncia sobre los demás, ni para darlos por limpios. El modo consolidado sigue revisando todos.
+- **El veredicto dice ese alcance**: `SIN_CONFLICTOS (F-002 contra los otros 4 specs: F-001, F-003, F-004, F-007)`. El token sigue delante y literal.
+- **El readiness solo marca una portada como desmentida si el par confirmado estaba en su alcance.** Si un informe se pronunció sobre un par ajeno, sí queda desmentido, y se dice por qué.
+- **Comprobación explícita** en `CU-3.f` puntos 2 y 4. La serie de `CU-3.d` no se reinicia: toca alcance y prosa de los informes, que ese escenario no mide.
+
+**Alternativas descartadas.**
+- *Que cada auditor del fan-out revise los 10 pares* → N auditorías de todos los pares para una cobertura que ya se tiene con N revisiones de su spec contra el resto, y con la redundancia hecha por quien menos mira cada par. Lo medido es justo eso: dos auditores que dieron por limpio un par que su dueño encontró sucio.
+- *Dejar el contrato y que el readiness descuente los pares ajenos al leer* → el readiness no puede saber qué miró de verdad un auditor que dice *"todos los pares"*; lo que no está escrito en el alcance no se puede arbitrar.
+
+**Consecuencias / aprendizaje.** **Un veredicto con alcance solo ayuda si el alcance es el verdadero.** [[D-093]] hizo que cada portada dijera sobre qué conjunto vale, y el formato elegido —*"entre los N"*— describía el modo consolidado, no el que corre en el fan-out. Y un arreglo nuevo aplicado a un caso vecino: [[D-095]] funcionó en su caso y se pasó en el de al lado; se vio porque la pasada siguiente lo ejercitó con un par ajeno.
+
+**Referencias.** `pipeline/spec/skills/wf-spec-conflict/SKILL.md` (Pasos 5 y 7) + `references/conflict_report_template.md` · `pipeline/spec/skills/wf-spec-readiness/SKILL.md` (reglas de arbitraje) · `conformance/casos-de-uso/cu-03-specs.md` (CU-3.d pasada 2/3, CU-3.f puntos 2 y 4) · `CHANGELOG.md` 0.117.2.
+
+---
+
 ## D-095 — El arbitraje también desmiente portadas, y el índice dice dónde escribe
 
 - **Fecha:** 2026-09-23 · **Estado:** Adoptada (el readiness señala la portada de conflictos que su arbitraje desmiente; el informe de conflictos del fan-out dice desde qué spec mira; el script del índice anuncia la ruta. **Salió de la pasada 1/3 de la serie nueva de `CU-3.d`**, sobre v0.117.0). · **Relacionada:** [[D-047]] (los auditores se contradicen por diseño y el readiness arbitra), [[D-093]] (la portada tiene que llevar lo que la matiza), [[D-089]].

@@ -73,10 +73,25 @@ Para cada spec, extrae internamente (no en el output):
 
 ## Paso 5: Aplicar las 5 reglas de kb-conflict-expert
 
-Aplica cada regla consultando `kb-conflict-expert` y busca conflictos entre cada par de specs:
+Aplica cada regla consultando `kb-conflict-expert` y busca conflictos en **los pares que te tocan**:
 
-1. **HUs duplicadas**: compara actores + verbos + objetivos entre todos los pares de features
-2. **CAs contradictorios**: compara GIVEN+WHEN entre todos los CAs del proyecto; busca THENs incompatibles
+> **Qué pares te tocan depende del modo ([[D-096]]).**
+> - **Modo feature** (el primer argumento es un `_spec.md`; es el del fan-out): **solo los pares que
+>   incluyen tu spec objetivo** —con 5 specs, tu objetivo contra los otros 4—. Los pares entre los
+>   demás **no son tuyos**: no los revises ni te pronuncies sobre ellos, ni para decir que están
+>   limpios. En el fan-out cada spec nuevo tiene su propio auditor, y los pares entre specs viejos
+>   los cubren sus propios informes; esa es la cobertura por pares de la que depende el readiness.
+> - **Modo consolidado** (`.` sobre el directorio): **todos** los pares, porque eres el único informe.
+>
+> Medido en la pasada 2/3 de `CU-3.d` (2026-09-24): de tres auditores en modo feature, uno se ciñó
+> a su spec y dos declararon limpios **los 10 pares** — incluido F-003↔F-004, donde el auditor de
+> F-004 había levantado un choque ALTA que el arbitraje confirmó. Un auditor que se pronuncia sobre
+> un par ajeno con menos atención que su dueño no añade cobertura: añade un falso negativo.
+
+En las reglas de abajo, "los pares" son los de tu modo:
+
+1. **HUs duplicadas**: compara actores + verbos + objetivos en cada par
+2. **CAs contradictorios**: compara GIVEN+WHEN de los CAs de cada par; busca THENs incompatibles
 3. **Scope overlap**: analiza si los Journeys de una feature incluyen funcionalidad que es el objetivo de otra
 4. **Shared models inconsistentes**: inventaría todos los modelos mencionados y cruza sus definiciones/comportamientos
 5. **Fuera de alcance contradictorio**: cruza las secciones "Fuera de Alcance" de cada feature con las HUs de las demás
@@ -140,8 +155,11 @@ Usa `${CLAUDE_SKILL_DIR}/references/conflict_report_template.md` para estructura
 > pasada de `CU-3.d` del 2026-09-18: los informes de la primera tanda describían un universo de
 > **2** specs y se leyeron junto a los de una de **5**, sin que nada en el fichero lo dijera.
 
-> **Y el veredicto se enuncia sobre ese conjunto, no en absoluto ([[D-093]]).** `SIN_CONFLICTOS
-> (entre los 2 specs comparados: F-002, F-003)`, no `SIN_CONFLICTOS` a secas. El token va delante y
+> **Y el veredicto se enuncia sobre lo que comparaste, no en absoluto ([[D-093]]/[[D-096]]).** En
+> modo feature, `SIN_CONFLICTOS (F-002 contra los otros 4 specs: F-001, F-003, F-004, F-007)`; en
+> modo consolidado, `SIN_CONFLICTOS (entre los 5 specs comparados: …)`. Nunca `SIN_CONFLICTOS` a
+> secas, y en modo feature nunca *"entre los N"*: se lee como *"revisé todos los pares"*, y no
+> los revisaste. El token va delante y
 > **literal** —lo parsea la medición de readiness—; el conjunto va detrás, entre paréntesis.
 > Medido en la pasada del 2026-09-21, ya con la cabecera `Conjunto comparado` puesta: el informe de
 > `gestion-categorias` abría con **SIN_CONFLICTOS** mientras esa misma feature aparecía en un

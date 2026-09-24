@@ -84,6 +84,12 @@ para garantizar que ningún skill se queda sin casos en los cuatro ejes de prueb
 > serie.** Y [[D-090]]/[[D-093]] ganan por fin comprobación explícita en `CU-3.f` (puntos 2 y 4) y
 > `CU-3.o` (punto 6).
 
+> ✅ **2/3 al día siguiente** (v0.117.1+8f348f0). Cuatro puntos en verde por segunda vez seguida y
+> [[D-095]] funcionando en campo. Un hallazgo fuera de los cuatro puntos → [[D-096]] (v0.117.2):
+> los auditores del fan-out no sabían qué pares les tocan —dos de tres dieron por limpio un par
+> ajeno con un ALTA confirmado— y el readiness desmintió la portada de uno que nunca habló de ese
+> par. **No reinicia la serie.**
+
 > ⏱ **Cuatro escenarios nacen sin pasada del barrido de enlazado lateral de Spec**
 > ([[D-078]]/[[D-079]], 2026-09-14): **CU-9.o** (evolucionar una feature dada de baja se deniega, y
 > el estado sobrevive incluso sin hook), **CU-7.s** (la reactivación es la única vuelta atrás y no

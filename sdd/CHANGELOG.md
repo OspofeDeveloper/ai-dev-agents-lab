@@ -2,6 +2,15 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.117.2 — 2026-09-24
+
+**`CU-3.d` 2/3, y cada auditor del fan-out responde de sus pares y de nada más** — [[DECISIONS D-096]].
+
+- ✅ **`CU-3.d` 2/3 sobre v0.117.1+8f348f0, orquestador `opus-5-5`.** Los cuatro puntos en verde por segunda vez seguida: [[V4]] 4/4, índice consistente con el aviso de matriz estancada saltando por **cuarta vez con las mismas tres features**, y cero regeneraciones por los escritores. [[DECISIONS D-095]] en campo: el índice anuncia su ruta, los cinco informes dicen *"visto desde"*, y el readiness arbitró los dos desacuerdos y fusionó dos IDs de un mismo hallazgo. V1 = 0.
+- 🟠 **Los auditores del fan-out no sabían qué pares les tocan** ([[DECISIONS D-096]]). El contrato decía *"todos los pares"* sin distinguir modos: uno de tres se ciñó a su spec y dos declararon limpios los 10, incluido un par con un ALTA confirmado. En modo feature el auditor revisa ahora **solo los pares de su spec** y lo dice en el veredicto (`F-002 contra los otros 4 specs: …`). Y el readiness solo desmiente una portada sobre un par que esa portada cubría: marcó también la de un informe que nunca habló del par.
+- ⚠ **Conformance:** `CU-3.f` puntos 2 y 4 miden las dos cosas. La serie de `CU-3.d` sigue.
+- **Aprendizaje.** Un veredicto con alcance solo ayuda si el alcance es el verdadero — el formato *"entre los N"* describía el modo consolidado, no el que corre en el fan-out.
+
 ## 0.117.1 — 2026-09-23
 
 **`CU-3.d` abre la serie nueva en 1/3, y el arbitraje aprende a decir qué portada desmiente** — [[DECISIONS D-095]].

@@ -34,7 +34,7 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 - [ ] CU-3.i — Discovery: ownership ambiguo de shared model para en checkpoint humano
 
 ### `wf-spec-features-first` — orquestador del flujo features-first (4)
-- [ ] CU-3.d — Generación por feature (features-first) en paralelo — **1/3** (ancla v0.117.0, orquestador `opus-5-5`, 2026-09-23; serie reiniciada por [[D-094]] — la 1/3 de v0.116.0 queda histórica)
+- [ ] CU-3.d — Generación por feature (features-first) en paralelo — **2/3** (ancla v0.117.0, orquestador `opus-5-5`; 1/3 2026-09-23, 2/3 2026-09-24 sobre v0.117.1; serie reiniciada por [[D-094]] — la 1/3 de v0.116.0 queda histórica)
 - [ ] CU-3.l — Features-first: `--features` con IDs inexistentes en el discovery
 - [ ] CU-3.u — Features-first: la decisión de alcance viaja al fan-out y un `STOP_*` se presenta (D-081) ⏱ **sin pasada**
 - [ ] CU-3.v — Features-first: un discovery que ya existe se reutiliza, no se regenera (D-081) ⏱ **sin pasada**
@@ -1584,6 +1584,30 @@ subset pedido, o deja un índice parcial con apariencia de completo.
 >   nuevo en el spec de movimientos (qué pasa con la deuda o la reserva al **eliminar**), legítimo.
 > - **Sigue sin evidencia [[CU-3.u]]:** el gate de alcance derivado tampoco se disparó.
 
+> **Pasada 2/3 — 2026-09-24 sobre v0.117.1+8f348f0, orquestador `opus-5-5`, PASS.** Main 73/73 en
+> `opus-5-5`, 14 subagentes en `sonnet-5`, PRD de partida byte-idéntico al sellado. Mismo reparto
+> 2 + 3.
+>
+> - **Punto 3:** [[V4]] 4/4 tandas en un único mensaje, la de N=2 incluida.
+> - **Punto 2:** 5 con `Ruta spec`, 2 `PENDIENTE_GENERACIÓN`; el aviso de matriz estancada saltó por
+>   **cuarta vez con las mismas tres features**. Y el script anunció `regenerado
+>   spec/spec_features.md`: main no fue a buscarlo a la raíz ([[D-095]]).
+> - **Punto 4:** `--skip-index` en los 5 encargos, **0** ejecuciones del script de índice en los
+>   `.jsonl` de escritor. Punto 1: subset respetado. **V1 = 0.**
+> - **[[D-095]] en campo:** los cinco informes dicen *"visto desde"*, main pasó los dos desacuerdos
+>   al readiness como encargo de arbitraje (`CU-3.f` punto 4), y el readiness confirmó `CF-F001-01`
+>   —que el auditor de F-007 volvió a negar, igual que en la 1/3— y fusionó dos IDs de un mismo
+>   hallazgo (`CF-F001-02 / CF-F002-01`).
+> - **Hallazgo nuevo, fuera de los cuatro puntos** ([[D-096]], arreglado en v0.117.2): el contrato de
+>   conflictos decía *"todos los pares"* sin distinguir el modo feature. De tres auditores, F-002 se
+>   ciñó a su spec y F-001 y F-007 declararon limpios los 10 pares — incluido F-003↔F-004, con un ALTA
+>   confirmado. El readiness marcó bien sus portadas como desmentidas, pero **también la de F-002**,
+>   que nunca habló de ese par: [[D-095]] aplicado de más. **No reinicia la serie**: alcance y prosa
+>   de los informes, que este escenario no mide.
+> - **Notas:** en la tanda 2 main volvió a preguntar el rigor y relanzó el flujo con `--features` —
+>   coherente con que el rigor es por feature ([[CU-3.r]])—; el análisis volvió a preguntar gaps
+>   distintos (responder por tema); [[CU-3.u]] sigue sin evidencia.
+
 ## CU-3.e — Spec directo de una feature (fast-track)
 
 **Precondición:** una capacidad concreta, con o sin discovery.
@@ -1649,11 +1673,15 @@ auditoría al mismo agente por `Agent` (síncrona), presenta el informe y **sell
        entre informes ([[D-090]]);
      - la cabecera trae **`Conjunto comparado`** con todos los specs que entraron, el objetivo
        incluido ([[D-090]]);
-     - la portada abre con el token literal **y su alcance** —`SIN_CONFLICTOS (entre los N specs
-       comparados: …)`— ([[D-093]]) y dice **desde qué spec** se miró, remitiendo al readiness si
-       otro auditor levanta un choque que la incluya ([[D-095]]).
+     - la portada abre con el token literal **y su alcance** —en modo feature `SIN_CONFLICTOS
+       (F-002 contra los otros 4 specs: …)`— ([[D-093]]/[[D-096]]) y dice **desde qué spec** se
+       miró, remitiendo al readiness si otro auditor levanta un choque que la incluya ([[D-095]]);
+     - **el auditor solo se pronuncia sobre los pares que incluyen su spec** ([[D-096]]): nada de
+       *"el resto de pares no presenta choques"*, que es hablar de pares que no le tocan.
    → **FALLO:** dos informes con el mismo ID para hallazgos distintos; un informe sin
-     `Conjunto comparado`; un `SIN_CONFLICTOS` a secas en portada.
+     `Conjunto comparado`; un `SIN_CONFLICTOS` a secas en portada; o un informe en modo feature
+     que declara limpios pares ajenos (medido en la 2/3 de `CU-3.d`: dos de tres auditores dieron
+     por limpio F-003↔F-004, donde había un ALTA confirmado).
 3. Le pides saber qué está listo / en qué orden implementar.
    → **Esperado:** produce `_readiness_report.md` con estado por feature y orden de
      implementación.
@@ -1687,8 +1715,13 @@ auditoría al mismo agente por `Agent` (síncrona), presenta el informe y **sell
      conflicto). Medido por primera vez el 2026-09-23: `CF-F001-01` (ALTA) lo levantó el auditor
      de F-001 y no el de F-007, el readiness lo confirmó… y el informe de F-007 seguía diciendo
      `SIN_CONFLICTOS` sin que nada lo avisara.
+   → **Y solo desmiente lo que ese informe cubría** ([[D-096]]): un informe en modo feature cubre
+     los pares que incluyen su spec. Si el choque confirmado es entre otros dos specs, esa portada
+     **no** está desmentida — salvo que se pronunciara sobre ese par ajeno.
    → **FALLO:** el readiness confirma el conflicto y el informe desmentido no aparece señalado
-     en ninguna parte; o el readiness **reescribe** el informe de otro auditor.
+     en ninguna parte; el readiness **reescribe** el informe de otro auditor; o marca como
+     desmentida la portada de un informe que nunca habló de ese par (medido en la 2/3 de
+     `CU-3.d`: el informe de F-002, ceñido a su spec, marcado por un choque F-003↔F-004).
 5. **El sello, y quién lo estampa** ([[D-065]]/[[D-061]]) — la otra mitad de `wf-spec-validate`,
    tras el veredicto `APROBADO` del punto 1.
    → **Esperado:** main **te pide el nombre de quien aprueba** y sella con
