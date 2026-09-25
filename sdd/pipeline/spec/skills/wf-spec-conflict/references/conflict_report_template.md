@@ -13,7 +13,12 @@
 
 ## Estado general
 
-> **[SIN_CONFLICTOS | CONFLICTOS_DETECTADOS]** ([modo feature: F-00X contra los otros [N-1] specs: F-00Y, F-00Z — con uno solo: F-00X contra el otro spec: F-00Y] | [modo consolidado: entre los [N] specs comparados: F-00Y, F-00Z])
+> **[SIN_CONFLICTOS | CONFLICTOS_DETECTADOS]** ([alcance, en una de las tres formas de abajo])
+
+<!-- Las tres formas del alcance, copiadas tal cual (sin etiquetas delante, D-097):
+       F-002 contra los otros 4 specs: F-001, F-003, F-004, F-007     ← modo feature
+       F-003 contra el otro spec: F-004                               ← modo feature, un solo spec más
+       entre los 5 specs comparados: F-001, F-002, F-003, F-004, F-007 ← modo consolidado -->
 >
 > Resumen en 1-2 frases. Si hay conflictos, indicar cuántos son de severidad ALTA y cuántos MEDIA.
 >

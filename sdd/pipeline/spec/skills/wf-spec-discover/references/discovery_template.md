@@ -50,6 +50,8 @@
 | [NombreModelo] | F-00X: [nombre] | F-00Y, F-00Z | [creación / CRUD / cobertura / proximidad] |
 
 <!-- Omitir sección si no hay shared models -->
+<!-- El criterio se escribe por lo que dice ("la feature cuyo alcance describe su creación"),
+     nunca por la skill que lo define: ni wf-* ni kb-* en este documento (D-091/D-097). -->
 
 ---
 

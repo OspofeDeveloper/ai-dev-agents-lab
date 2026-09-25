@@ -6,6 +6,34 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-097 — El mapa que nadie vio, y tres costuras de la tanda A
+
+- **Fecha:** 2026-09-25 · **Estado:** Adoptada (el mapa de features va como texto visible antes de la pregunta de alcance; el discovery cita criterios por lo que dicen; la plantilla de conflictos deja de tener etiquetas dentro del formato; una tanda siguiente reutiliza el rigor y lo dice. **Salió de la corrida 1 de la tanda A**, sobre v0.117.3). · **Relacionada:** [[D-091]] (la norma de citar reglas por lo que dicen, que no había llegado al discovery), [[D-096]] (la plantilla del alcance), [[D-006]] (el rigor se elige al crear el spec).
+
+**Contexto.** La tanda A mide de una vez los escenarios que el guion de `CU-3.d` ya ejercitaba sin registrarlos. Su primera corrida dio cuatro hallazgos:
+
+- **El mapa de features no llega al usuario.** El gate de alcance de features-first dice *"muestra el mapa (ID, nombre, actor, RFs) y pregunta"*. Main preguntaba con el mapa **solo en su contexto**: *"he generado el mapa de 7 features"* y a continuación la pregunta. Al elegir *"Otro subset"* pidió *"dime los IDs"* sin haberlos mostrado. Revisados los transcripts: **en las tres pasadas de `CU-3.d` pasó lo mismo** — el escenario no lo miraba y el usuario contestaba con nombres, así que nadie lo notó.
+- **V1 = 1, en el discovery**: *"tras aplicar los criterios de `kb-decompose-expert`"*. [[D-091]] llevó la norma a conflictos y readiness; el discovery también justifica con criterios y se quedó fuera.
+- **La plantilla de conflictos filtraba su etiqueta.** Un auditor escribió `(modo feature: F-004 contra …)`: la plantilla de [[D-096]] ponía el nombre del modo **dentro** del formato.
+- **El rigor en la segunda tanda no tenía regla.** *"Una sola vez para toda la pasada"* no decía si *"ahora genera tres más"* es otra pasada. En tres corridas: preguntar otra vez, reutilizar callado, relanzar con el flag sin decirlo.
+
+**Decisión.**
+
+1. **El mapa va delante de la pregunta, como texto visible, en el mismo mensaje**, y nunca se piden IDs que el usuario no ha visto. Lo mide `CU-3.c` punto 1, que pasa a mirarse en pantalla.
+2. **El discovery cita el criterio por lo que dice** (*"la feature cuyo alcance describe su creación"*), en la skill y en la plantilla.
+3. **La plantilla de conflictos da las tres formas del alcance en un comentario**, sin etiquetas delante.
+4. **Una tanda siguiente reutiliza el rigor y lo dice en una línea**, ofreciendo cambiarlo. Lo mide `CU-3.r` punto 4.
+
+**Alternativas descartadas.**
+- *Meter el mapa en el texto de la pregunta o en las descripciones de las opciones* → el selector no tiene sitio para una tabla de 7 filas con RFs; es la misma lección de [[D-053]] con los gaps.
+- *Volver a preguntar el rigor en cada tanda* → fricción para una decisión ya tomada, y rompe el *"una sola vez"* por el lado contrario.
+
+**Consecuencias / aprendizaje.** **Un escenario que se mide de rebote no se mide.** `CU-3.d` corrió tres veces por el gate del mapa y ninguna miró si el mapa se veía, porque no era su punto; `CU-3.c`, que sí lo era, nunca se había registrado. La tanda A existe para eso y a la primera sacó un fallo que llevaba tres pasadas delante. Y el corolario de siempre con las normas de prosa: **van donde se escribe el campo**, y cada artefacto nuevo que justifica es una casa más.
+
+**Referencias.** `pipeline/spec/skills/wf-spec-features-first/SKILL.md` (Paso 4a.1) · `pipeline/spec/skills/wf-spec-discover/SKILL.md` (Paso 7) + `references/discovery_template.md` · `pipeline/spec/skills/wf-spec-conflict/references/conflict_report_template.md` · `pipeline/spec/routing.md` (rigor, punto 5) · `conformance/casos-de-uso/cu-03-specs.md` (tanda A corrida 1: CU-3.a humo, CU-3.c, CU-3.f, CU-3.o, CU-3.r) · `CHANGELOG.md` 0.118.0.
+
+---
+
 ## D-096 — Un auditor del fan-out responde de los pares de su spec, y de nada más
 
 - **Fecha:** 2026-09-24 · **Estado:** Adoptada (en modo feature el auditor compara solo los pares que incluyen su spec y lo dice en el veredicto; el readiness solo desmiente una portada sobre un par que esa portada cubría. **Salió de la pasada 2/3 de `CU-3.d`**, sobre v0.117.1). · **Relacionada:** [[D-093]] (la cobertura por pares completa, que este hace verdad por contrato), [[D-095]] (la portada desmentida, que este acota), [[D-047]].

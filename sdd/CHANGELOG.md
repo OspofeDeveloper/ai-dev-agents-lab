@@ -2,6 +2,17 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.118.0 — 2026-09-25
+
+**Tanda A, corrida 1: cuatro escenarios abren serie y el mapa de features aprende a verse** — [[DECISIONS D-097]].
+
+- ✅ **Registrado en conformance** (v0.117.3+9fe2247, orquestador `opus-5-5`): `CU-3.a` **HUMO (5.5) OK**; `CU-3.r` puntos 1 y 4, `CU-3.o` puntos 2 y 6 y `CU-3.f` puntos 2 y 4 **1/3**. El punto 4 de `CU-3.f` es la **primera vez que se ejercita** [[DECISIONS D-095]]/[[DECISIONS D-096]] con un desacuerdo real, y el readiness aplicó el matiz bien: no dio por desmentida una portada que ya abría con conflictos.
+- 🔴 ⚠ **El mapa de features no llegaba al usuario** ([[DECISIONS D-097]]). El gate de alcance preguntaba con el mapa solo en el contexto de main, y llegó a pedir *"dime los IDs"* sin haberlos enseñado — en esta corrida y, revisado, **en las tres pasadas de `CU-3.d`**. Ahora la tabla va como texto visible antes de la pregunta. `CU-3.c` registra el FALLO y empieza serie de cero.
+- 🟠 ⚠ **Rigor en la tanda siguiente**: reutiliza el elegido y lo dice en una línea, ofreciendo cambiarlo. Antes no había regla y se vieron tres conductas.
+- 🟠 **V1 en el discovery**: los criterios de ownership se citan por lo que dicen, no por su skill.
+- 🟢 **Plantilla de conflictos**: las tres formas del alcance van en un comentario, sin la etiqueta de modo que un auditor copió al veredicto.
+- **Aprendizaje.** Un escenario que se mide de rebote no se mide: el fallo del mapa llevaba tres pasadas delante de un escenario que no lo miraba.
+
 ## 0.117.3 — 2026-09-24
 
 **`CU-3.d` SELLADO 3/3** — segundo sello de la campaña y el primero sobre Opus 5.5.

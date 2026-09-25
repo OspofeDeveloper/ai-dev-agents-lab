@@ -26,11 +26,11 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 [`ROADMAP.md`](../ROADMAP.md) — esta vista es la **transpuesta** para leer/ejecutar el CU.
 
 ### `wf-spec-analyze` — analyze obligatorio y pureza (`sdd-spec-explorer`) (2)
-- [x] CU-3.a — El analyze es obligatorio y para en gaps críticos — **SELLADO 3/3** (pasadas 16-18, ancla v0.115.1) — **SELLADO (5), pendiente HUMO (5.5)** ([[D-094]]: el gate y la delegación los ejerce el hilo principal)
+- [x] CU-3.a — El analyze es obligatorio y para en gaps críticos — **SELLADO 3/3** (pasadas 16-18, ancla v0.115.1) — **SELLADO (5), pendiente HUMO (5.5)** ([[D-094]]: el gate y la delegación los ejerce el hilo principal) · **HUMO (5.5) OK** 2026-09-25
 - [ ] CU-3.k — Analyze: contaminación técnica detiene y las preguntas de riesgo van neutras
 
 ### `wf-spec-discover` — mapa de features y ownership (`sdd-spec-explorer`) (2)
-- [ ] CU-3.c — Discovery: mapa de features y elección de subset
+- [ ] CU-3.c — Discovery: mapa de features y elección de subset — **FALLO** 2026-09-25 (punto 1: el mapa nunca llega al usuario, [[D-097]]); serie a 0
 - [ ] CU-3.i — Discovery: ownership ambiguo de shared model para en checkpoint humano
 
 ### `wf-spec-features-first` — orquestador del flujo features-first (4)
@@ -45,10 +45,10 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 - [ ] CU-3.t — Regenerar el spec de una feature dada de baja: los escritores paran (D-080) ⏱ **sin pasada**
 
 ### `sdd-spec-auditor` — validate / conflict / readiness (read-only) (6)
-- [ ] CU-3.f — Validar, conflictos y readiness
+- [ ] CU-3.f — Validar, conflictos y readiness — puntos 2 y 4: **1/3** (2026-09-25)
 - [ ] CU-3.m — Validate en modo ligero: proporcionalidad sin relajar invariantes
 - [ ] CU-3.n — Conflict: precondición de specs insuficientes
-- [ ] CU-3.o — Readiness: sin índice, ciclos de dependencia y scope derivado
+- [ ] CU-3.o — Readiness: sin índice, ciclos de dependencia y scope derivado — puntos 2 y 6: **1/3** (2026-09-25)
 - [ ] CU-3.s — Conflict sobre el directorio entero: el consolidado se escribe donde el readiness lo busca ⏱ **sin pasada**
 - [ ] CU-3.w — Conflict: la salida del hallazgo es una vía que desella, y las retiradas no compiten (D-082) ⏱ **sin pasada**
 
@@ -62,7 +62,7 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 ### orquestador de la fase Spec — guardrail de cambio de producto y oferta de rigor (3)
 - [ ] CU-3.b — Expansión de alcance desde las respuestas del analysis
 - [ ] CU-3.p — Delta / gap-resolve: un cambio de producto encubierto no se integra en silencio
-- [ ] CU-3.r — El rigor (standard/ligero) se elige al crear el spec, no en el init (D-006)
+- [ ] CU-3.r — El rigor (standard/ligero) se elige al crear el spec, no en el init (D-006) — puntos 1 y 4: **1/3** (2026-09-25)
 
 > **Capa determinista** (no son escenarios manuales): los índices y marcadores
 > (`sdd-features-index.py`, `sdd-gap-conventions`) están cubiertos por unittests; la calidad
@@ -446,6 +446,13 @@ las respuestas, y recibe el informe de su delegado en la propia llamada · FALLO
 analyze, avanza con críticos sin elección explícita, decide por lectura propia, toca el
 informe a mano, espera a mano, o **reporta como del delegado un dato que reconstruyó él**.
 **Desviación → reportar:** issue citando `CU-3.a`.
+
+> **HUMO (5.5) — **Tanda A, corrida 1** (2026-09-25, v0.117.3+9fe2247, orquestador `opus-5-5`), OK.** El analyze se generó antes de nada, los 4 críticos salieron
+> de uno en uno con contexto, problema y afecta, y el discovery no arrancó hasta el último. Main no
+> tocó el `_analysis.md`. Conducta nueva, dentro del contrato: ante una respuesta que cubría **media
+> pregunta** pidió la otra mitad ofreciendo *"guárdala así"*, y guardó la unión literal de los dos
+> mensajes diciéndolo — no completó ni reinterpretó nada. Una pasada de humo **no re-sella**: el
+> sello sigue siendo el de v0.115.1.
 
 > **✅ SELLADO — 3/3 sobre el ancla v0.115.1 (pasadas 16, 17 y 18; cerrado el 2026-09-18).** Es el
 > primer escenario de la campaña que cierra serie desde que existen las anclas. Lo que lo hizo
@@ -1372,20 +1379,19 @@ persistente, catálogo reutilizable, owner o flujo no comprometidos en el PRD).
      todas no discrimina nada. **FALLO:** que el aviso se propague en bloque, o que se
      pierda entre niveles (aparece en el discovery pero no en el spec, o no llega al
      índice).
-   → **⚠ Hoy este contraste NO es verificable sobre `Origen de alcance`, y hay que decirlo
-     antes de dar nada por bueno (ROADMAP 11.11).** `wf-spec-discover` prescribe *"rellena
-     `Origen de alcance` como `PRD` o `PRD + analysis respondido` **según corresponda**"* sin
-     definir el corte, así que el campo admite dos lecturas —"usé el analysis como entrada" vs
-     "el alcance de esta feature deriva de una respuesta no consolidada"— y cada pasada ha
-     elegido una: la 7 marcó 2 de 4, la 8 marcó **las 8** sin haber alcance derivado.
-     **Mientras no se cierre el criterio, `Origen de alcance` puesto a todas NO se reporta como
-     FALLO de este escenario:** es ambigüedad del contrato, no propagación en bloque.
-     **El eje que sí discrimina hoy es `Avisos de gobernanza`**, y es además el que gobierna
-     de verdad — verificado en `sdd-features-index.py`: el estado `REQUIERE_CAMBIO_PRD` se
-     deriva de `avisos de gobernanza != ninguno`, **no** de `Origen de alcance`. Así que el
-     contraste se mide ahí: los avisos citan el `P-XXX` **solo** en las features afectadas, y
-     el índice deriva `REQUIERE_CAMBIO_PRD` **solo** para esas. Si eso se cumple, el escenario
-     pasa aunque `Origen de alcance` esté puesto a todas.
+   → **El contraste se mide en los dos campos** (criterio binario desde v0.86.0, [[D-052]] punto 4,
+     ROADMAP 11.11 cerrado). `Origen de alcance` es **por feature**: `PRD` salvo que el alcance de
+     esa feature **solo** exista en una respuesta del análisis — haber leído el análisis para
+     desambiguar no lo cambia. Y la regla de coherencia es autocomprobable: `PRD + analysis
+     respondido` con `Avisos de gobernanza: ninguno` **no pueden ir juntos**; si no hay un `P-XXX`
+     que citar, el origen es `PRD`.
+   → **FALLO (además de los de arriba):** `Origen de alcance: PRD + analysis respondido` en una
+     feature no afectada, o esa combinación con `Avisos de gobernanza: ninguno`. Antes de v0.86.0
+     el campo admitía dos lecturas —la pasada 7 marcó 2 de 4, la 8 marcó **las 8**— y esas pasadas
+     no cuentan como FALLO de este escenario; desde entonces, sí.
+   → **El que gobierna sigue siendo `Avisos de gobernanza`:** el índice deriva
+     `REQUIERE_CAMBIO_PRD` de `avisos de gobernanza != ninguno` (`sdd-features-index.py`), no de
+     `Origen de alcance`. Los dos tienen que discriminar; si solo lo hace uno, es FALLO.
 
 **Resultado:** PASS si frena la expansión encubierta, y si al forzarla los avisos
 propagan a los tres niveles solo a quien toca · FALLO si genera specs con
@@ -1419,6 +1425,9 @@ alcance derivado sin override ni avisos, o si marca indiscriminadamente.
    → **Esperado:** como los `F-XXX` no existen aún, ejecuta el discovery, te **presenta
      el mapa** (Feature ID, nombre, actor, RFs cubiertos) y **te pregunta qué IDs**
      incluir en esta iteración (no elige por ti).
+   → **Se mira en la pantalla, no en el fichero ni en el informe del delegado** ([[D-097]]): la
+     tabla tiene que salir como texto visible **antes** de la pregunta de alcance. **FALLO:** la
+     pregunta sin la tabla delante, o *"dime los IDs"* sin haberlos mostrado.
 2. El discovery identifica >5 features y no pediste subset.
    → **Esperado:** recomienda iterar con `--features …`; solo usa `--all-features` como
      override explícito.
@@ -1426,6 +1435,16 @@ alcance derivado sin override ni avisos, o si marca indiscriminadamente.
 **Resultado:** PASS si descubre, presenta el mapa y pregunta el subset · FALLO si
 inventa features sin discovery, o procesa todas sin avisar con >5.
 **Desviación → reportar:** issue citando `CU-3.c`.
+
+> ****Tanda A, corrida 1** (2026-09-25, v0.117.3+9fe2247, orquestador `opus-5-5`) — FALLO del punto 1; punto 2 verde.** El discovery sacó 7 features y
+> main presentó la pregunta de alcance (Todas / Núcleo / Otro subset) **sin haber escrito el mapa
+> en ningún momento**: solo *"he generado el mapa de 7 features"*. Al elegir *"Otro subset"* pidió
+> *"dime los IDs"*, que el usuario nunca había visto. **No es de esta corrida:** revisados los
+> transcripts de las tres pasadas de `CU-3.d`, el mapa no llegó al usuario **en ninguna** — el
+> contrato decía *"muestra el mapa y pregunta"* y se cumplía la mitad. Arreglado en v0.118.0
+> ([[D-097]]): la tabla va como texto visible antes de la pregunta, en el mismo mensaje. **Y V1 = 1
+> en este mismo artefacto**: *"tras aplicar los criterios de `kb-decompose-expert`"*, también
+> arreglado. Serie a 0.
 
 ## CU-3.d — Generación por feature (features-first) en paralelo
 
@@ -1769,6 +1788,17 @@ conflictos existan donde existan, arbitra las divergencias dejando constancia �
 portada que su arbitraje desmiente— y **sella con el aprobador capturado** · FALLO si edita specs al validar, silencia un conflicto real, lo cierra
 por mayoría, o sella sin nombre detrás.
 **Desviación → reportar:** issue citando `CU-3.f`.
+
+> ****Tanda A, corrida 1** (2026-09-25, v0.117.3+9fe2247, orquestador `opus-5-5`) — puntos 2 y 4, PASS (1/3).** Punto 2: los cinco informes con IDs
+> prefijados sin colisión, `Conjunto comparado`, *"visto desde"* y veredicto ceñido a los pares de su
+> spec —incluida la forma singular (`F-002 contra el otro spec: F-003`)—; ninguno opina sobre pares
+> ajenos. Un auditor copió la etiqueta de la plantilla (`(modo feature: F-004 contra …)`): defecto de
+> plantilla, no de conducta, arreglado en v0.118.0 ([[D-097]]). Punto 4, **primera vez que se ejercita
+> [[D-095]]/[[D-096]] con un desacuerdo real**: `CF-F007-02` (HU duplicada, F-007↔F-001) lo levantó
+> solo el auditor de F-007; main pasó la divergencia al readiness como encargo de arbitraje; el
+> readiness la confirmó citando los specs, y como la portada del informe de F-001 ya abría con
+> `CONFLICTOS_DETECTADOS` **no la dio por desmentida**: señaló solo la línea de su inventario que el
+> arbitraje contradice. Es el matiz de [[D-096]], aplicado sin que nadie se lo pidiera.
 
 > **Pasada 1 del punto 1 (2026-08-27, v0.83.0) — PASS.** `wf-spec-validate` sobre
 > `transaction-management`: veredicto `APROBADO` con los tres checks (completitud 8/8, pureza,
@@ -2287,6 +2317,12 @@ scope sin consolidar o con el spec en `BORRADOR`, presenta un conflicto `ALTA` c
 fuese a bloquear el pipeline por su cuenta, o lee un informe estancado como vigente.
 **Desviación → reportar:** issue citando `CU-3.o`.
 
+> ****Tanda A, corrida 1** (2026-09-25, v0.117.3+9fe2247, orquestador `opus-5-5`) — puntos 2 y 6, PASS (1/3).** Punto 2: ciclo entre cuentas y tarjetas y
+> objetivos de ahorro, reportado con su causa probable (el mismo conflicto ALTA que duplica una
+> operación en las dos), las dos features fuera del orden de fases y **el resto del informe
+> intacto**. Punto 6: 3 VIGENTE / 2 ESTANCADO leídos del `Conjunto comparado`, y la acción de los
+> estancados dice quién cubre sus pares y que se rehacen cuando convenga, sin relanzar auditores.
+
 ## CU-3.p — Delta / gap-resolve: un cambio de producto encubierto no se integra en silencio
 
 **Precondición:** un spec ya generado; le pasas un "requisito nuevo" (delta) o una "respuesta de
@@ -2392,6 +2428,9 @@ que se propaga a cada `wf-spec-fast-track`, y esos son `context: fork` sin `AskU
    → **Esperado:** usa `light` sin preguntar (el equipo ya fijó el default de proyecto).
 4. Pides generar un lote con `wf-spec-features-first` sin flag.
    → **Esperado:** pregunta el modo **una sola vez** para toda la pasada, nunca feature a feature.
+   → **Y en la tanda siguiente de la misma conversación** (*"ahora genera tres más"*, [[D-097]]):
+     reutiliza el rigor elegido **y lo dice en una línea**, ofreciendo cambiarlo. **FALLO:** volver
+     a preguntar, o aplicarlo en silencio. En tres corridas previas se vieron las tres conductas.
 5. Pides `--light` sobre una feature que **toca shared models, introduce entidades nuevas o expande alcance**.
    → **Esperado:** el rigor ligero **se prohíbe solo**: la workflow lo fuerza a `standard` pese al flag (regla en `kb-spec-expert`), porque en ese perfil de feature se relaja ceremonia pero **no** rigor. No genera un spec ligero sobre una feature con shared models / entidades nuevas / alcance expandido. (Es el guardrail de la última línea de `pipeline/spec/routing.md`.)
 
@@ -2401,3 +2440,9 @@ models / entidades / alcance pese a `--light`** · FALLO si genera ligeros sin o
 re-pregunta pese a un flag explícito, pregunta feature a feature en un lote, o **deja pasar un spec ligero
 sobre una feature que expande alcance / toca shared models**.
 **Desviación → reportar:** issue citando `CU-3.r`.
+
+> ****Tanda A, corrida 1** (2026-09-25, v0.117.3+9fe2247, orquestador `opus-5-5`) — puntos 1 y 4, PASS (1/3).** Punto 1: ofreció Standard (Recomendado) /
+> Ligero con `AskUserQuestion` **antes** de invocar el flujo, sin flag del usuario. Punto 4: una sola
+> pregunta para la primera tanda. **En la segunda tanda relanzó con `--standard` sin decirlo** — el
+> contrato no lo definía (ver arriba), así que no cuenta como FALLO de esta corrida; desde v0.118.0
+> lo cubre la regla nueva y **las corridas 2 y 3 lo miden**.

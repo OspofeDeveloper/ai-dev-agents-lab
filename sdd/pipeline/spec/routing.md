@@ -35,5 +35,6 @@ La diferencia entre 1 y 2 la define `kb-product-change-governance` Regla 2 (`DEP
 2. Si `pipeline_mode` de `.sdd/project-init.json` es `light` → úsalo sin preguntar.
 3. Si no, ofrece con `AskUserQuestion`: **Standard (Recomendado)** (spec completo, 8 elementos, ≥3 CAs, análisis como artefacto) vs **Ligero** (núcleo de 4, ≥1 CA, análisis inline, para feature pequeña y acotada; los gates anti-alucinación son idénticos, se relaja ceremonia no rigor). Pasa el flag elegido.
 4. En `wf-spec-features-first` (lote) se pregunta **una sola vez** para toda la pasada, nunca feature a feature.
+5. **Una tanda siguiente en la misma conversación** (*"ahora genera tres más"*) **reutiliza el rigor ya elegido y lo dice en una línea**: *"sigo con Standard, como en la tanda anterior; dime si prefieres Ligero para estas"*. Ni vuelvas a preguntar ni lo apliques en silencio ([[D-097]]): en tres corridas se vieron las tres conductas —preguntar otra vez, reutilizar callado, relanzar con el flag sin decirlo— porque el contrato no distinguía una tanda nueva de una pasada nueva.
 
 El default seguro es `standard`. Ligero se prohíbe solo (lo fuerza standard) si la feature toca shared models, introduce entidades nuevas o expande alcance — esas reglas viven en `kb-spec-expert` y las aplican las propias workflows.

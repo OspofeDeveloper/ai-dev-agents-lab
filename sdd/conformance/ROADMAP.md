@@ -97,6 +97,13 @@ para garantizar que ningún skill se queda sin casos en los cuatro ejes de prueb
 > lo que no empezó, reanudar lo que sí, y no tomar un acuse por informe. La regla de portadas
 > desmentidas ([[D-095]]/[[D-096]]) queda sin ejercitar: los auditores coincidieron en todo.
 
+> 🧪 **Tanda A — registrar lo que el guion de `CU-3.d` ya ejercitaba** (desde 2026-09-25). Mismo
+> banco y misma prosa; cada corrida suma pasada a `CU-3.c`, `CU-3.r` (1 y 4), `CU-3.o` (2 y 6) y
+> `CU-3.f` (2 y 4), más el humo 5.5 de `CU-3.a`. **Corrida 1** (v0.117.3): humo OK, 1/3 en r/o/f —
+> con la primera prueba real de [[D-095]]/[[D-096]]— y **FALLO de `CU-3.c`**: el mapa de features no
+> había llegado al usuario en ninguna pasada de `CU-3.d` → [[D-097]] (v0.118.0), junto a V1 en el
+> discovery, la etiqueta filtrada de la plantilla y el rigor de la segunda tanda.
+
 > ⏱ **Cuatro escenarios nacen sin pasada del barrido de enlazado lateral de Spec**
 > ([[D-078]]/[[D-079]], 2026-09-14): **CU-9.o** (evolucionar una feature dada de baja se deniega, y
 > el estado sobrevive incluso sin hook), **CU-7.s** (la reactivación es la única vuelta atrás y no

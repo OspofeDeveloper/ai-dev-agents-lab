@@ -124,6 +124,13 @@ Para cada candidata, verifica los 3 criterios de `kb-decompose-expert`:
 Identifica modelos de dominio que aparecen en más de una feature candidata.
 
 Para cada shared model, asigna ownership aplicando las reglas de `kb-decompose-expert` (en este orden):
+
+> **En el artefacto, cita el criterio por lo que dice, no por la skill que lo define ([[D-091]]/[[D-097]]).**
+> *"Tiene como dueña a la feature cuyo alcance describe su creación"*, no *"según los criterios de
+> `kb-decompose-expert`"*. Ni `wf-*` ni `kb-*` en el discovery, tampoco al justificar. Medido en la
+> tanda A de `CU-3.c` (2026-09-25): *"cada uno tiene una única feature … tras aplicar los criterios
+> de `kb-decompose-expert`"*, la única línea de V1 de toda la pasada.
+
 1. **Creación explícita**: la feature cuyo scope del PRD describe la creación de la entidad
 2. **Gestión completa**: la feature con operaciones CRUD completas
 3. **Mayor cobertura**: la feature con más RFs que referencian la entidad

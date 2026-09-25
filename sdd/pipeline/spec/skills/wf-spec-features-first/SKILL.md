@@ -381,6 +381,15 @@ Si no hay `--features` y el discovery contiene >5 features, y **no** vino `--all
 - *Un subset de features* — el usuario nombra los IDs; equivale a `--features F-001,...`. Las no incluidas quedan `PENDIENTE_GENERACIÓN` y se generan en pasadas posteriores sin perder lo anterior. **No elijas tú el subset**: puedes agrupar por dependencia o por gaps abiertos para ayudar a decidir, pero la selección es del usuario.
 - *Todas de una pasada* — equivale a `--all-features`.
 
+> **El mapa va delante de la pregunta, como texto visible, en el mismo mensaje ([[D-097]]).**
+> Escribe la tabla —ID, nombre, actor, RFs cubiertos, una fila por feature— como texto de tu
+> respuesta y **después** lanza el `AskUserQuestion`. No basta con decir *"he generado el mapa de 7
+> features"*, ni con que el mapa esté en el informe del delegado o en el fichero: el usuario no ve
+> ninguno de los dos. Y si elige *"Otro subset"*, no le pidas IDs que no ha visto: el mapa ya tiene
+> que estar en pantalla. Medido en las tres pasadas de `CU-3.d` y en la primera de la tanda A de
+> `CU-3.c` (2026-09-25): **en ninguna** llegó el mapa al usuario, y en la última main pidió *"dime
+> los IDs"* sin haberlos mostrado nunca.
+
 Si hay gaps `[CRÍTICO]` abiertos, dilo aquí también: indica qué features quedarían con HUs `[INCOMPLETO]`, porque cambia la decisión de alcance. Con `--all-features` o `--features` **de entrada** → no presentes el gate; continúa.
 
 ### 4b — Clasificar specs preexistentes (ponderado por riesgo, [[D-024]])
