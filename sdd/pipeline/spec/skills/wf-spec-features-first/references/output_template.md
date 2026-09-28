@@ -2,7 +2,9 @@
 
 ## Resumen de ejecución
 
-Indica el modo: "Iteración sobre subset `[F-001, F-002, ...]`" o "Generación completa".
+Indica el modo **en la primera línea**, siempre: "Iteración sobre subset `[F-001, F-002, ...]`" o
+"Generación completa". También en la segunda tanda y siguientes: es lo que dice qué ha hecho *esta*
+pasada ([[D-099]]).
 
 | Feature | Origen | Spec | Gaps críticos | Estado |
 |---------|--------|------|---------------|--------|
@@ -18,6 +20,13 @@ Indica el modo: "Iteración sobre subset `[F-001, F-002, ...]`" o "Generación c
 - Specs: `features/<nombre>/spec/<nombre>_spec.md` (recién generados + preexistentes; features planas legacy: sin subcarpeta)
 - Conflict report: `<path>_conflict_report.md` (si aplica)
 - Readiness report: `<path>_readiness_report.md` (si aplica)
+
+> **La lista va completa en cada tanda, no solo en la primera ([[D-099]]).** En la segunda y
+> siguientes también el discovery y **los informes de conflictos de esta tanda, con su ruta**
+> (uno por feature junto a su spec): es donde está el detalle de los conflictos que el resumen
+> cita. Medido en la tanda A (2026-09-25/28): los dos resúmenes de primera tanda listaban todo; los
+> dos de segunda tanda dejaron fuera el discovery y los informes de conflictos, justo cuando traían
+> un conflicto ALTA.
 
 ## Siguientes pasos (bloques condicionales)
 

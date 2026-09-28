@@ -2,6 +2,13 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.118.2 — 2026-09-28
+
+**El resumen de cierre también se mide: nace `CU-3.y`** — [[DECISIONS D-099]].
+
+- 🟠 ⚠ **El Paso 9 de features-first no tenía escenario, y fallaba en la segunda tanda.** Evaluados a posteriori los cuatro resúmenes de la tanda A: ninguno abre con la línea de modo, y los dos de segunda tanda dejan fuera el discovery y los informes de conflictos cuando citaban un conflicto ALTA. La plantilla exige ahora la línea de modo siempre y la lista de artefactos completa en cada tanda. `CU-3.y` registra el FALLO retroactivo y abre serie en la corrida 3.
+- **Aprendizaje.** Lo que se repite en cada tanda se degrada en la segunda: pasó con el rigor y pasa con los artefactos.
+
 ## 0.118.1 — 2026-09-28
 
 **Tanda A, corrida 2: tres escenarios a 2/3, y el mapa se mete en la pregunta** — [[DECISIONS D-098]].

@@ -6,6 +6,24 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-099 — El resumen de cierre también se mide: nace CU-3.y
+
+- **Fecha:** 2026-09-28 · **Estado:** Adoptada (escenario nuevo `CU-3.y` para el Paso 9 de features-first; la plantilla exige la línea de modo y la lista completa de artefactos en cada tanda). · **Relacionada:** [[D-069]] (los bloques condicionales se leen de la plantilla), [[D-082]], [[D-077]], [[D-098]].
+
+**Contexto.** El mensaje de cierre de cada tanda es lo que más lee el usuario del flujo entero, y ningún escenario lo medía: V1 mira los artefactos en disco, no el chat, y `CU-3.d` punto 2 aplica la trampa de *"la narración dice la verdad y el fichero no"* solo al índice. Medidos a posteriori contra la plantilla, que ya existía, los cuatro resúmenes de las corridas 1 y 2 de la tanda A: **ninguno** abre con la línea de modo, y los dos de **segunda tanda** dejan fuera el discovery y los informes de conflictos —uno ni trae sección de artefactos— justo cuando citaban un conflicto ALTA que vive en ellos. Los de primera tanda los listaban todos.
+
+**Decisión.** Escenario `CU-3.y`, seis puntos contra la plantilla del Paso 9 (modo y orígenes, bloques que aplican, coherencia con los artefactos, lista completa, sin comandos, siguientes pasos por vías sancionadas), medido en el último mensaje de **cada** tanda. La plantilla pide la línea de modo **siempre** y la lista de artefactos **completa en cada tanda**, con la ruta de los informes de conflictos. La evaluación retroactiva queda registrada como FALLO y la serie empieza en la corrida 3 de la tanda A.
+
+**Alternativas descartadas.**
+- *Meterlo como punto de `CU-3.d`* → reabriría un escenario sellado por algo que no mide.
+- *Esperar a la siguiente corrida para evaluarlo* → las dos anteriores están en los transcripts y la plantilla era la misma; medirlas es gratis y da el fallo antes de repetirlo.
+
+**Consecuencias / aprendizaje.** **Lo que se repite en cada tanda se degrada en la segunda.** La primera tanda sigue la plantilla entera; en la segunda, con más contexto encima, main resume "lo nuevo" y suelta lo que ya dijo una vez. Pasó con el rigor ([[D-097]]) y pasa con los artefactos. Un escenario que mira solo la primera tanda no lo ve.
+
+**Referencias.** `pipeline/spec/skills/wf-spec-features-first/references/output_template.md` · `conformance/casos-de-uso/cu-03-specs.md` (`CU-3.y`) · `CHANGELOG.md` 0.118.2.
+
+---
+
 ## D-098 — El mapa va dentro de la pregunta, porque delante no se ve
 
 - **Fecha:** 2026-09-28 · **Estado:** Adoptada (supera la parte del mapa de [[D-097]]: la tabla de features va en el `preview` de cada opción del gate de alcance, y se repite al pedir los IDs de *"Otro subset"*). · **Relacionada:** [[D-097]], [[D-053]] (la pantalla del selector no tiene sitio para el contexto: aquí sí, en el `preview`).

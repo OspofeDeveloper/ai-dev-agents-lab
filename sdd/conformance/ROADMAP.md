@@ -105,7 +105,8 @@ para garantizar que ningún skill se queda sin casos en los cuatro ejes de prueb
 > discovery, la etiqueta filtrada de la plantilla y el rigor de la segunda tanda. **Corrida 2** (v0.118.0):
 > 2/3 en r/o/f, con el caso de libro de [[D-095]] en `CU-3.f` punto 4, y **segundo FALLO de
 > `CU-3.c`**: la regla de D-097 instalada y el mapa sin verse → [[D-098]] (v0.118.1), la tabla en el
-> `preview` de cada opción.
+> `preview` de cada opción. Y el resumen de cierre gana escenario propio, `CU-3.y` ([[D-099]], v0.118.2): medido a
+> posteriori, los de segunda tanda dejaban fuera la mitad de los artefactos.
 
 > ⏱ **Cuatro escenarios nacen sin pasada del barrido de enlazado lateral de Spec**
 > ([[D-078]]/[[D-079]], 2026-09-14): **CU-9.o** (evolucionar una feature dada de baja se deniega, y

@@ -38,6 +38,7 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 - [ ] CU-3.l — Features-first: `--features` con IDs inexistentes en el discovery
 - [ ] CU-3.u — Features-first: la decisión de alcance viaja al fan-out y un `STOP_*` se presenta (D-081) ⏱ **sin pasada**
 - [ ] CU-3.v — Features-first: un discovery que ya existe se reutiliza, no se regenera (D-081) ⏱ **sin pasada**
+- [ ] CU-3.y — Features-first: el resumen de cierre cumple su plantilla y dice la verdad sobre los artefactos ([[D-099]]) — **FALLO** retro 2026-09-25 y 2026-09-28 (puntos 1 y 4); serie a 0
 
 ### `wf-spec-fast-track` — spec directo de una feature (`sdd-spec-writer`) (3)
 - [ ] CU-3.e — Spec directo de una feature (fast-track)
@@ -2270,6 +2271,54 @@ de baja, o si declara listos unos specs que el gate va a denegar.
 > salida de la fase estaba en el último paso de esta skill, y mandaba justo a donde no hay que ir.
 > Un detector sin vía de salida se lee como completo porque el informe se ve completo. Este
 > escenario **nace sin pasada**.
+
+## CU-3.y — Features-first: el resumen de cierre cumple su plantilla y dice la verdad sobre los artefactos
+
+**Precondición:** una pasada de `wf-spec-features-first` terminada —cualquiera: sale en cada
+corrida de `CU-3.d`/tanda A—, y **mejor en la segunda tanda**, que es donde se ha roto.
+**Mecanismo:** Paso 9 de `wf-spec-features-first` en el hilo principal, contra
+`references/output_template.md`. Se mide en el **último mensaje de cada tanda**, cruzándolo con los
+artefactos en disco.
+
+1. **Modo y orígenes.**
+   → **Esperado:** la primera línea dice el modo (*"Iteración sobre subset [F-001, F-004, F-007]"*
+     o *"Generación completa"*) y la tabla distingue **esta pasada / pasadas anteriores /
+     pendientes** (y retiradas, si las hay).
+   → **FALLO:** sin línea de modo, o features de tandas distintas mezcladas sin decirlo.
+2. **Todos los bloques de siguientes pasos que aplican** ([[D-069]]): gaps críticos, conflictos
+   `ALTA`, validación pendiente, retiradas… según la lista de la plantilla, no de memoria.
+   → **FALLO:** un bloque que aplica y no está (el caso típico: conflictos `ALTA` sin su bloque).
+3. **Lo que afirma coincide con los artefactos** — la trampa de `CU-3.d` punto 2, en el chat.
+   → **Esperado:** estado por feature, recuento de gaps críticos y de conflictos `ALTA` iguales a
+     los del índice, el readiness y los informes.
+   → **FALLO:** cualquier discrepancia. Se comprueba abriendo los ficheros, no leyendo el mensaje.
+4. **La lista de artefactos, completa en cada tanda** ([[D-099]]).
+   → **Esperado:** discovery, índice, specs, **informes de conflictos con su ruta** y readiness —
+     también en la segunda tanda.
+   → **FALLO:** que falte alguno, sobre todo los informes de conflictos cuando el resumen cita un
+     conflicto que vive en ellos.
+5. **Sin comandos ni nombres de skill en el chat** — [[V1]] aplicado a la conversación.
+   → **FALLO:** un `wf-*`, un `kb-*` o un slash-command en el mensaje.
+6. **Los siguientes pasos van por vías sancionadas.**
+   → **Esperado:** ofrece **aplicar** los cambios que resuelven un conflicto (no *"edítalos tú"*,
+     [[D-082]]); no promete planificar lo que el gate va a denegar ([[D-077]]); y si propone
+     **reabrir** una decisión ya tomada (un gap cerrado con su respuesta por defecto), dice por qué
+     vía.
+   → **FALLO:** remitir a editar a mano; dar por planificable un spec sin sellar; o reabrir una
+     decisión sin vía.
+
+**Resultado:** PASS si los seis puntos se cumplen en el último mensaje de **cada** tanda · FALLO si
+alguno falla en cualquiera de ellas.
+**Desviación → reportar:** issue citando `CU-3.y`.
+
+> **Evaluación retroactiva de la tanda A, corridas 1 y 2 (2026-09-25 y 2026-09-28, v0.117.3 y
+> v0.118.0) — FALLO en los puntos 1 y 4.** La plantilla del Paso 9 ya existía, así que los cuatro
+> resúmenes de cierre (dos por corrida) se pueden medir contra ella en los transcripts. **Punto 1:**
+> ninguno de los cuatro abre con la línea de modo. **Punto 4:** los dos de **primera** tanda listan
+> todos los artefactos; los dos de **segunda** tanda dejan fuera el discovery y los informes de
+> conflictos —uno de ellos no trae sección de artefactos—, y ambos citaban un conflicto `ALTA` cuyo
+> detalle vive en esos informes. **Puntos 5 y 6 verdes** en los cuatro: ni un comando, y el conflicto
+> se ofrece aplicarlo. Arreglado en la plantilla en v0.118.2 ([[D-099]]). Serie a 0.
 
 ## CU-3.o — Readiness: sin índice, ciclos, scope derivado, sello y alcance del veredicto
 
