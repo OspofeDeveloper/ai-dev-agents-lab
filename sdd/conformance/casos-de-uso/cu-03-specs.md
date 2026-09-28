@@ -64,6 +64,7 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 - [ ] CU-3.b — Expansión de alcance desde las respuestas del analysis — **FALLO** 2026-09-28 (punto 2: marca derivada en una feature no afectada, [[D-101]]); punto 1 verde
 - [ ] CU-3.p — Delta / gap-resolve: un cambio de producto encubierto no se integra en silencio
 - [ ] CU-3.r — El rigor (standard/ligero) se elige al crear el spec, no en el init (D-006) — puntos 1 y 4: **SELLADOS 3/3** (tanda A, 2026-09-25/28; puntos 2, 3 y 5 sin serie)
+- [ ] CU-3.z — Seguimiento de la fase: la lista de pendientes sale de ficheros y cada cierre ofrece el siguiente ([[D-102]]) ⏱ **sin pasada**
 
 > **Capa determinista** (no son escenarios manuales): los índices y marcadores
 > (`sdd-features-index.py`, `sdd-gap-conventions`) están cubiertos por unittests; la calidad
@@ -2369,6 +2370,52 @@ alguno falla en cualquiera de ellas.
 > de los estancados. El de la **primera** abre con *"He generado las specs de…"* sin línea de modo. Se
 > invierte el patrón de las corridas 1 y 2 —ahí fallaba la segunda—: la línea como **instrucción** se
 > sostiene a ratos. → [[D-101]] (v0.119.0): la plantilla la trae **literal**, para copiarla. Serie a 0.
+
+## CU-3.z — Seguimiento de la fase: la lista de pendientes sale de ficheros y cada cierre ofrece el siguiente ⏱ **sin pasada**
+
+**Precondición:** un banco con specs generados y pendientes de varios tipos —el que deja una corrida
+de la tanda A: conflictos `ALTA`, un ciclo, specs en borrador, `MEDIA`, features sin generar y, si se
+dio, alcance derivado—. **No se resetea**: el escenario recorre esos pendientes.
+**Mecanismo:** `sdd-project-status.py <raíz_spec> --spec-pending --json` (lista determinista, orden
+fijo) + la regla de seguimiento de la guía de la fase: cada flujo de Spec que termina —y *"¿qué me
+toca?"*— cierra con **"Quedan N"** y una pregunta sobre el primero. Vías por tipo en esa misma regla.
+
+1. **La lista es la de los ficheros.** Ejecuta tú el script en otra terminal antes de cada cierre.
+   → **Esperado:** lo que main ofrece es el `items[0]` del script, con su texto; el total coincide.
+   → **FALLO:** ofrecer otra cosa, reconstruir la lista de memoria o del «Próximos pasos» del
+     readiness, o recitarla entera sin que se pida.
+2. **Cada cierre ofrece el siguiente** —generar, evolucionar un spec, validar, completar gaps, medir
+   readiness— y *"¿qué me toca?"* responde con la misma lista, también en un repo solo de specs.
+   → **Esperado:** *"Quedan N pendientes"* + `AskUserQuestion` con las opciones del tipo (una por
+     feature en un conflicto; *todos juntos / uno a uno* al validar) y siempre *"Lo dejo para luego"*.
+   → **FALLO:** un cierre sin la oferta, o una oferta sin la salida de dejarlo.
+3. **"Lo dejo para luego" no rompe nada.**
+   → **Esperado:** no se toca ningún fichero, y la próxima lista sale idéntica.
+4. **Un conflicto se resuelve por la vía que desella.** Eliges la dueña.
+   → **Esperado:** la **otra** feature se corrige con un delta, que reabre su validación; y el
+     siguiente pendiente pasa a ser **rehacer el readiness** (el spec tocado ya no es el que midió).
+   → **FALLO:** corregirlo como enmienda de CA (solo admite aclarar, no cambiar comportamiento),
+     editando a mano, o sin que el readiness salga desactualizado después.
+5. **Validar en lote.** Eliges *todos juntos*.
+   → **Esperado:** las auditorías salen en un único mensaje; el aprobador se pide **una vez**; cada
+     spec se sella por separado; uno con hallazgos o con el script en rojo **no** se sella y no para a
+     los demás; al final, tabla spec · sellado · motivo.
+   → **FALLO:** un aprobador por spec, un fallo que para el lote, o sellar uno que no pasa.
+6. **Alcance derivado** (si el banco lo tiene). Pides validar esa feature.
+   → **Esperado:** el sellador la rechaza por la condición del alcance derivado, y main pregunta
+     *formalizarlo en el PRD (Recomendado)* / *aceptarlo con nombre y sellar*. Con aceptar, la cabecera
+     gana `Alcance derivado aceptado: <nombre> (<fecha>)` y el aviso se queda.
+   → **FALLO:** sellarlo sin preguntar, tratarlo como hallazgo de calidad (`--unseal` y adiós), o
+     borrar el aviso al aceptarlo.
+7. **Reabrir una respuesta ya dada.** Pides cambiar la respuesta a un gap del análisis ya respondido.
+   → **Esperado:** se reescribe con `--force` y el fichero gana `Reabierto: <fecha>`; la lista siguiente
+     trae los specs que citan ese gap y se escribieron antes, para revisarlos.
+   → **FALLO:** cambiarla sin marca, o que la lista no recoja los specs escritos con la anterior.
+
+**Resultado:** PASS si la lista coincide con los ficheros en cada cierre, cada cierre ofrece el
+siguiente con su salida de dejarlo, y las vías de conflicto, lote, alcance derivado y reapertura se
+cumplen · FALLO si una oferta sale de memoria, un cierre no ofrece, o una vía se salta el sello.
+**Desviación → reportar:** issue citando `CU-3.z`.
 
 ## CU-3.o — Readiness: sin índice, ciclos, scope derivado, sello y alcance del veredicto
 

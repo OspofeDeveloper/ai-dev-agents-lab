@@ -32,6 +32,27 @@ La diferencia entre 1 y 2 la define `kb-product-change-governance` Regla 2 (`DEP
 
 **Todo lo que le dices al usuario va en su idioma, también las frases de enlace ([[D-100]]).** Los marcos del harness, los `tool_result` y las notificaciones llegan en inglés; tu respuesta no. Es fácil que se cuele justo en una frase de transición entre pasos —*"The two reviewers disagree on the same pair…"*, medido en la corrida 3 de la tanda A en mitad de una sesión en español—.
 
+**Seguimiento de la fase: al cerrar, ofrece el siguiente pendiente ([[D-102]]).** Cuando termina **cualquier** flujo de Spec —generar, completar gaps, evolucionar un spec, validar, medir readiness, resolver un conflicto—, y también cuando el usuario pregunta *"¿qué me toca?"* o *"¿qué falta?"*, ejecuta:
+
+```bash
+!python3 .sdd/scripts/sdd-project-status.py <raíz_spec> --spec-pending --json
+```
+
+y cierra con **"Quedan N pendientes"** más **un `AskUserQuestion` sobre el primero** (`items[0]`), con sus opciones concretas y siempre **"Lo dejo para luego"**. La lista sale de los ficheros: no la reconstruyas de memoria ni del «Próximos pasos» del readiness, y no la recites entera salvo que la pidan. Vías por tipo —las eliges tú, al usuario se le describe la acción—:
+
+| `tipo` | Opciones que ofreces | Vía |
+|---|---|---|
+| `readiness` | Rehacer la medición ahora | `wf-spec-readiness` |
+| `gap_critico` | Responderla aquí | dictado + `sdd-analysis-gaps.py --answer` (análisis) o `wf-spec-gap-resolve` (spec) |
+| `reabierto` | Revisar los specs afectados | `wf-spec-delta` sobre cada uno, con la respuesta nueva |
+| `conflicto_alta` / `conflicto_media` | Una opción **por feature** de `opciones` (*"la dueña es X"*) | la **otra** se corrige con `wf-spec-delta`, que reabre su validación. **No** `wf-spec-amend`: solo admite aclarar un CA sin cambiar comportamiento |
+| `ciclo` | Una opción por dependencia que podría sobrar | `wf-spec-delta` sobre la feature cuya dependencia sobra |
+| `alcance_derivado` | Formalizarlo en el PRD (Recomendado) · Aceptarlo con nombre al validar | `wf-prd-change` · `wf-spec-validate` con aceptación |
+| `validar` | Todos juntos · Uno a uno | `wf-spec-validate` en lote o por spec |
+| `generar` | Generar estas ahora | `wf-spec-features-first --features` |
+
+Si `total` es 0: dilo en una línea (*"no queda nada pendiente en Spec; se puede planificar"*) sin pregunta. Y **reabrir una respuesta ya dada** del análisis va por `sdd-analysis-gaps.py --answer … --force`, que estampa `Reabierto:`; la lista recoge sola los specs escritos con la respuesta anterior.
+
 **Elección del rigor (standard / ligero), por feature.** No se fija en el init: es elección deliberada por feature al crear el spec. El rigor es un **argumento** que se propaga a cada `wf-spec-fast-track`, y esos son `context: fork` (no pueden usar `AskUserQuestion`, ver [[D-002]]), así que tiene que estar resuelto **antes** del fan-out. **El hilo principal ofrece la elección ANTES de invocar**:
 1. Si el usuario ya pasó `--light`/`--standard` → respétalo.
 2. Si `pipeline_mode` de `.sdd/project-init.json` es `light` → úsalo sin preguntar.

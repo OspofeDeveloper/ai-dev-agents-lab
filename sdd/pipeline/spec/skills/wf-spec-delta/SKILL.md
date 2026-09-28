@@ -264,3 +264,8 @@ Comprueba si hay índice de features:
 quedaron HUs `[INCOMPLETO]` por gaps críticos que el usuario decidió no responder. Si se regeneró
 `_features.md`: "✓ Trazabilidad actualizada". Siguiente paso, en lenguaje natural: **validar el spec
 actualizado** — su validación se reabrió al modificarlo.
+
+**Y cierra con el siguiente pendiente de la fase** ([[D-102]]): `sdd-project-status.py <raíz_spec>
+--spec-pending --json` y la pregunta sobre el primero, según la tabla de seguimiento de la guía de
+la fase. Tras resolver un conflicto, lo normal es que el siguiente sea rehacer el readiness: el spec
+que acabas de tocar ya no es el que midió.

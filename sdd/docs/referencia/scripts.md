@@ -91,8 +91,13 @@ matriz estancada — avisa en stderr y deriva el estado de los marcadores).
 
 - **Exit:** `0` OK · `1` error IO · `2` (`--check`) desactualizado en disco.
 
-### `sdd-project-status.py` · `<dir> [--output F]`
+### `sdd-project-status.py` · `<dir> [--output F]` · `<dir> --spec-pending [--json]`
 Informe PM read-only: agrega el estado real de las features escaneando disco.
+
+Con `--spec-pending`, los **pendientes de la fase Spec** en orden fijo —readiness desactualizado,
+gaps críticos, respuestas reabiertas, conflictos `ALTA`, ciclos, alcance derivado, specs sin validar,
+conflictos `MEDIA`, features sin generar—, cada uno con la acción y si bloquea planificar. Es lo que
+el hilo principal ofrece al cerrar cada flujo de Spec ([[D-102]]).
 
 - **Exit:** `0` siempre.
 

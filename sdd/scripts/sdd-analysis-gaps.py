@@ -52,6 +52,7 @@ Veredictos de `--check`:
 """
 import json
 import re
+from datetime import datetime, timezone
 import sys
 from pathlib import Path
 
@@ -67,6 +68,7 @@ GAP_HEADING_RE = re.compile(
 )
 HEADING_RE = re.compile(r"^\s*#{1,6}\s+")
 # `- **Respuesta**: valor` (tolera `*`/`_` y espacios alrededor del rótulo).
+REOPENED_RE = re.compile(r"^\s*[-*+]\s*\**\s*Reabierto\s*\**\s*:\s*(?P<value>\S+)")
 ANSWER_RE = re.compile(r"^(?P<prefix>\s*[-*+]\s*\**\s*Respuesta\s*\**\s*:\s*)(?P<value>.*)$")
 FLAG_RE = re.compile(r"\[([^\]]+)\]")
 
@@ -205,6 +207,19 @@ def apply_answer(text: str, gap_id: str, answer: str, force: bool):
     newline = "\n" if raw.endswith("\n") else ""
     m = ANSWER_RE.match(raw.rstrip("\n"))
     lines[idx] = f"{m.group('prefix')}{normalized}{newline}"
+    # D-102: una respuesta que CAMBIA deja constancia. Los specs escritos con la
+    # anterior siguen diciendo lo anterior, y sin esta linea nada permite saber que
+    # hay que revisarlos: el fichero solo guarda la respuesta vigente.
+    reabierto = bool(target["answered"]) and normalized != (target["answer"] or "")
+    if reabierto:
+        stamp = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        indent = re.match(r"\s*", raw).group(0)
+        linea = f"{indent}- **Reabierto**: {stamp}{newline or chr(10)}"
+        nxt = idx + 1
+        if nxt < len(lines) and REOPENED_RE.match(lines[nxt].rstrip("\n")):
+            lines[nxt] = linea
+        else:
+            lines.insert(nxt, linea)
     new_text = "".join(lines)
 
     after = check(parse_gaps(new_text))
@@ -215,6 +230,7 @@ def apply_answer(text: str, gap_id: str, answer: str, force: bool):
         "previous": target["answer"],
         "answer": normalized,
         "overwritten": bool(target["answered"]),
+        "reopened": reabierto,
         "verdict": after["verdict"],
         "critical_open": after["critical_open"],
         "critical_open_ids": after["critical_open_ids"],

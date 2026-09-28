@@ -2,6 +2,18 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.120.0 — 2026-09-28
+
+**La fase Spec gana seguimiento** — [[DECISIONS D-102]].
+
+- 🟢 ⚠ **Lista de pendientes calculada por script**: `sdd-project-status.py <raíz_spec> --spec-pending [--json]` da, en orden y solo desde ficheros, lo que falta para planificar: readiness desactualizado, gaps críticos, respuestas reabiertas, conflictos, ciclos, alcance derivado, specs sin validar y features sin generar.
+- 🟢 ⚠ **Cada flujo de Spec cierra ofreciendo el siguiente pendiente** —"Quedan N" y una pregunta con *"Lo dejo para luego"*—, y *"¿qué me toca?"* responde con la misma lista, también en repos solo de specs.
+- 🟢 **Las vías que faltaban**: un conflicto se resuelve eligiendo dueña y corrigiendo la otra con un delta; un ciclo, con un delta; reabrir una respuesta del análisis estampa `Reabierto:` y la lista recoge los specs escritos con la anterior.
+- ⚠ **El alcance derivado bloquea el sello** hasta formalizarlo en el PRD o aceptarlo con nombre (`--accept-derived-scope`).
+- ⚠ **Validar en lote**: un aprobador, auditoría y sello por spec; uno que no pasa no para a los demás.
+- 🟠 **El readiness recoge los conflictos MEDIA que mantiene** en su propia tabla, para que la lista no ofrezca uno ya descartado.
+- **Conformance:** escenario nuevo `CU-3.z`. 17 tests nuevos.
+
 ## 0.119.0 — 2026-09-28
 
 **`CU-3.u` sale por fin, y el origen del alcance deja de decidirse dos veces** — [[DECISIONS D-101]].

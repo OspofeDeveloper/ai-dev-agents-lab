@@ -1,7 +1,7 @@
 # SDD Skill Registry
 <!-- Auto-generado por scripts/generate-skill-registry.py. No editar manualmente. -->
 <!-- Total: 135 skills | 59 wf-* (user-invocable) | 76 kb-* -->
-<!-- Última actualización: 2026-09-15 -->
+<!-- Última actualización: 2026-09-28 -->
 
 ## Meta-Ecosistema (meta/)
 
@@ -58,7 +58,7 @@
 | wf-spec-readiness | Genera un informe de readiness desde los artefactos post-spec (specs, READMEs, _features.md, _conflict_report.md): que features estan listas para plan, cuales… | true | pipeline/spec/skills/wf-spec-readiness/SKILL.md |
 | wf-spec-retire | Gestiona la vigencia de una feature: la da de baja cuando el producto deja de contemplarla —auditando quien depende de ella y sellando el spec como RETIRADO co… | true | pipeline/spec/skills/wf-spec-retire/SKILL.md |
 | wf-spec-sync-from-prd | Resincroniza specs de feature tras un PRD actualizado | true | pipeline/spec/skills/wf-spec-sync-from-prd/SKILL.md |
-| wf-spec-validate | Audita un _spec.md ya generado para detectar regresiones de pureza, testabilidad o completitud, y sella su estado operativo registrando quien lo aprobo | true | pipeline/spec/skills/wf-spec-validate/SKILL.md |
+| wf-spec-validate | Audita uno o varios _spec.md ya generados para detectar regresiones de pureza, testabilidad o completitud, y sella el estado operativo de cada uno registrando… | true | pipeline/spec/skills/wf-spec-validate/SKILL.md |
 
 ## Fase: Design
 

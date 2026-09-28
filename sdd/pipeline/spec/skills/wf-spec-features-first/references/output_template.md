@@ -85,3 +85,10 @@
 **Si todo está listo y no hay pendientes** (es decir: los specs están además **validados** —
 recién generados no lo están):
 > "Todas las features están listas para planificar. Dime por cuál empezamos."
+
+## Cierre: el siguiente pendiente ([[D-102]])
+
+Después de los bloques de arriba, ejecuta `sdd-project-status.py <raíz_spec> --spec-pending --json` y
+cierra con **"Quedan N pendientes"** y un `AskUserQuestion` sobre el primero, según la tabla de
+seguimiento de la guía de la fase. Los bloques de siguientes pasos explican; la pregunta es la que
+hace avanzar.

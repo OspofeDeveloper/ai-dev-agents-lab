@@ -11,6 +11,8 @@ Uso:
     sdd-seal.py <plan|spec> <archivo.md> --seal     # verifica y sella VALIDADO si pasa
     sdd-seal.py <plan|spec> <archivo.md> --seal --approved-by "Nombre (Rol) (fecha)"
                                                    # ademas estampa `Aprobado por:` (Regla 10)
+    sdd-seal.py spec <archivo.md> --seal --approved-by "..." --accept-derived-scope "Nombre (fecha)"
+                                                   # acepta con nombre el alcance derivado (D-102)
     sdd-seal.py <plan|spec> <archivo.md> --unseal   # fuerza Estado: BORRADOR (downgrade permitido
                                                    # desde VALIDADO; desde RETIRADO sale 2, D-078)
     sdd-seal.py spec <archivo.md> --retire --change CR-XXX [--reason "texto"]
@@ -67,6 +69,11 @@ Condiciones verificadas para `spec` (D-061):
       campos que `sdd-features-index.py`, `sdd-project-status.py` y `sdd-release.py`
       leen para derivar indice, estado de delivery y coordenada de release. Si
       faltan, esos scripts NO fallan: omiten la feature en silencio.
+  9. Alcance derivado (D-102): si `Avisos de gobernanza` no es `ninguno`, el spec
+     describe alcance que solo existe en una respuesta del analisis. No se sella
+     hasta que se formalice en el PRD o alguien lo acepte con nombre:
+     `--seal --approved-by X --accept-derived-scope "X (fecha)"` estampa
+     `Alcance derivado aceptado:` y a partir de ahi la condicion pasa.
   8. Asunciones visibles (D-063): todo gap `[INFORMATIVO]` sin responder —cuya
      `Asuncion por defecto` YA esta aplicada en los CAs— deja su entrada en
      `## Asunciones Aplicadas` citando el gap. No se juzga si la asuncion es
@@ -121,6 +128,13 @@ RETIRADA_RE = re.compile(
     r"^(?P<prefix>\s*(?:[-*>]\s*)?\**Retirada:?\**\s*:?\s*)(?P<value>[^\n]*)$",
     re.MULTILINE)
 CR_RE = re.compile(r"^CR-\d{3,4}$")
+# D-102: aceptar conscientemente el alcance derivado de una feature.
+DERIVADO_ACEPTADO_RE = re.compile(
+    r"^(?P<prefix>\s*(?:[-*>]\s*)?\**Alcance derivado aceptado:?\**\s*:?\s*)(?P<value>[^\n]*)$",
+    re.MULTILINE)
+AVISOS_RE = re.compile(
+    r"^\s*>?\s*\**Avisos de gobernanza\**\s*:\s*\**\s*(?P<value>[^\n]*)$", re.MULTILINE)
+SIN_AVISO = ("", "ninguno", "ninguna", "—", "-")
 # Variante de linea completa, para poder retirarla al deshacer la baja.
 RETIRADA_LINE_RE = re.compile(
     r"^[ \t]*(?:[-*>][ \t]*)?\**Retirada:?\**[ \t]*:?[^\n]*$\n?", re.MULTILINE)
@@ -345,7 +359,7 @@ def _undocumented_assumptions(text: str):
     return [g for g in aplicadas if g not in citados], False
 
 
-def check_spec(spec_path: Path):
+def check_spec(spec_path: Path, accept_derived: bool = False):
     """Condiciones mecanicas para sellar un Spec como VALIDADO (D-061).
 
     Mismo reparto que en `plan`: el auditor emite el veredicto experto, pero el
@@ -434,6 +448,20 @@ def check_spec(spec_path: Path):
     add(not faltan,
         "La cabecera declara `Feature ID` y `Origen de alcance`"
         + (f" (faltan: {', '.join(faltan)})" if faltan else ""))
+
+    # 9. Alcance derivado sin formalizar ni aceptar (D-102). La marca de gobernanza
+    # existia pero no impedia nada: un spec con alcance que solo vive en una respuesta
+    # del analisis se sellaba igual que uno limpio, y el recordatorio se perdia en el
+    # resumen de la pasada que lo genero.
+    m_av = AVISOS_RE.search(text)
+    aviso = (m_av.group("value").strip().strip("*").strip() if m_av else "")
+    if aviso.lower() not in SIN_AVISO:
+        aceptado = accept_derived or bool(
+            (lambda m: m and m.group("value").strip())(DERIVADO_ACEPTADO_RE.search(text)))
+        add(aceptado,
+            "Alcance derivado formalizado o aceptado con nombre"
+            + ("" if aceptado else f" (aviso: {aviso[:120]}) — formalizalo en el PRD o "
+               "sella con `--accept-derived-scope`"))
 
     # 8. Toda asuncion aplicada en nombre del usuario deja rastro (D-063).
     sin_rastro, ilegible = _undocumented_assumptions(text)
@@ -566,6 +594,9 @@ def main() -> int:
     args, razon, err = take_value(args, "--reason")
     if err:
         return fail_usage(err)
+    args, derivado, err = take_value(args, "--accept-derived-scope")
+    if err:
+        return fail_usage(err)
     if (len(args) != 3 or args[0] not in ("plan", "spec") or args[2] not in MODES):
         return fail_usage("argumentos invalidos")
     kind = args[0]
@@ -573,6 +604,9 @@ def main() -> int:
     mode = args[2]
     if aprobado is not None and mode != "--seal":
         return fail_usage("`--approved-by` solo aplica con `--seal`")
+    if derivado is not None and (mode != "--seal" or kind != "spec" or not aprobado):
+        return fail_usage("`--accept-derived-scope` solo aplica con `spec --seal --approved-by`: "
+                          "aceptar el alcance derivado es parte de aprobar el spec")
     if (cambio is not None or razon is not None) and mode != "--retire":
         return fail_usage("`--change` y `--reason` solo aplican con `--retire`")
     if mode in ("--retire", "--unretire") and kind != "spec":
@@ -618,7 +652,8 @@ def main() -> int:
                 print("Traza `Retirada:` retirada — la feature vuelve a estar vigente.")
         return 0
 
-    checks, sellable = check_plan(plan_path) if kind == "plan" else check_spec(plan_path)
+    checks, sellable = (check_plan(plan_path) if kind == "plan"
+                        else check_spec(plan_path, accept_derived=derivado is not None))
     print(f"=== sdd-seal {kind} {'(check)' if mode == '--check' else '(seal)'} — {plan_path} ===")
     for ok, desc in checks:
         print(f"  {'✓' if ok else '✗'} {desc}")
@@ -649,6 +684,9 @@ def main() -> int:
     if not write_estado(plan_path, "VALIDADO"):
         return 1
     if aprobado and not write_header_line(plan_path, "Aprobado por", APROBADO_RE, aprobado):
+        return 1
+    if derivado and not write_header_line(plan_path, "Alcance derivado aceptado",
+                                          DERIVADO_ACEPTADO_RE, derivado):
         return 1
     return 0
 

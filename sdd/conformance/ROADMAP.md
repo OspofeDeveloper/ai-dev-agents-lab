@@ -116,6 +116,10 @@ para garantizar que ningún skill se queda sin casos en los cuatro ejes de prueb
 > escritores—, con `CU-3.b` punto 2 en rojo: un escritor se marcó derivado a sí mismo → [[D-101]]
 > (v0.119.0).
 
+> 🧭 **La fase Spec gana seguimiento** ([[D-102]], v0.120.0): lista de pendientes calculada por script y
+> cada cierre ofreciendo el siguiente. Escenario nuevo `CU-3.z`, a medir en la tanda de continuación
+> sobre el banco de una corrida de la tanda A, sin reset.
+
 > ⏱ **Cuatro escenarios nacen sin pasada del barrido de enlazado lateral de Spec**
 > ([[D-078]]/[[D-079]], 2026-09-14): **CU-9.o** (evolucionar una feature dada de baja se deniega, y
 > el estado sobrevive incluso sin hook), **CU-7.s** (la reactivación es la única vuelta atrás y no

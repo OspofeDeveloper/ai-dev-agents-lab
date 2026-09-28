@@ -112,6 +112,12 @@ Para **cada** informe de conflictos localizado:
 
 Clasifica la feature como **BLOQUEADA** si tiene al menos un conflicto ALTA asociado.
 
+> **Los `MEDIA` que tu arbitraje mantiene van en su propia tabla, «Conflictos MEDIA abiertos» ([[D-102]]).**
+> No bloquean, pero la lista de pendientes de la fase los ofrece, y la lee de tu informe —el único
+> que ve todos los informes a la vez—. Uno que descartes (*"no es un conflicto, es redacción"*) **no
+> va en la tabla**: si no, la lista lo ofrecería como pendiente. Medido al construir la lista: leyendo
+> los informes sueltos, reaparecía un `MEDIA` que el readiness ya había descartado.
+
 > **Cuando los informes se contradicen, arbitras tú ([[D-047]]).** Con el fan-out de features-first
 > hay **un auditor por feature**, y cada uno mira el mismo grafo desde su lado: es esperable que
 > sobre un mismo par uno levante un conflicto y otro declare `SIN_CONFLICTOS`. Tú eres el primer

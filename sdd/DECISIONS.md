@@ -6,6 +6,29 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-102 — La fase Spec gana seguimiento: una lista que sale de ficheros y un cierre que ofrece el siguiente
+
+- **Fecha:** 2026-09-28 · **Estado:** Adoptada (opción B de las tres valoradas con el usuario; las tres decisiones de diseño, en su opción recomendada). · **Relacionada:** [[D-099]] y [[D-097]] (lo que se repite se degrada), [[D-082]] (la vía que desella), [[D-089]] (el readiness que envejece), [[D-077]] (lo que promete un estado).
+
+**Contexto.** Después de generar las specs, el flujo era de *"tú pides"*: cada resumen proponía siguientes pasos, cada paso era un flujo aparte, y el estado vivía repartido entre el índice, el análisis, los informes de conflictos y el «Próximos pasos» del readiness — que envejece en cuanto se toca un spec. Al acabar cada acción nadie retomaba la lista. Y había cuatro pendientes **sin vía**: resolver un conflicto (¿delta?, ¿enmienda?), deshacer un ciclo, reabrir una respuesta ya dada, y validar varios specs de golpe; más el alcance derivado, que se marcaba pero no impedía nada. Se valoraron tres opciones: (A) cerrar los huecos y seguir en *"tú pides"*; (B) una lista calculada por script y que cada flujo termine ofreciendo el siguiente; (C) un orquestador que recorra la lista entera. El usuario eligió B por certeza: el mismo seguimiento que C sin un flujo largo que se rompa a mitad.
+
+**Decisión.**
+
+1. **`sdd-project-status.py --spec-pending [--json]`**: los pendientes de la fase en orden fijo, **solo de ficheros**: readiness desactualizado · gaps críticos (análisis y specs) · respuestas reabiertas · conflictos `ALTA` · ciclos · alcance derivado · specs sin validar · conflictos `MEDIA` · features sin generar. Cada uno con qué falta, la acción en lenguaje natural, la vía interna y si bloquea planificar. Vive en el script de estado —ya instalado en todo proyecto— para que no haya dos fuentes de estado.
+2. **Cada flujo de Spec cierra con "Quedan N" y una pregunta sobre el primero**, siempre con *"Lo dejo para luego"*; y *"¿qué me toca?"* responde con la misma lista, también en repos solo de specs. Regla única en la guía de la fase, con la tabla de opciones y vías por tipo, y la instrucción en el cierre de features-first, delta y validate.
+3. **Las vías que faltaban**: un conflicto se resuelve eligiendo dueña y corrigiendo la **otra** con un delta (no con una enmienda, que solo aclara); un ciclo, con un delta sobre la dependencia que sobra; reabrir una respuesta va por `--force`, que ahora estampa `Reabierto:` para que la lista recoja los specs escritos con la anterior.
+4. **Alcance derivado bloquea el sello** (decisión 1a): condición 9 de `sdd-seal.py spec`; se pasa formalizándolo en el PRD o aceptándolo con nombre (`--accept-derived-scope`, que estampa `Alcance derivado aceptado:` y deja el aviso).
+5. **Validar en lote** (decisión 2a): un aprobador para el lote, auditoría y sello por spec, y uno que no pasa no para a los demás.
+6. **El readiness recoge los `MEDIA` que mantiene en su propia tabla.** Leídos de los informes sueltos, la lista ofrecía uno que el readiness ya había descartado — medido al probarla sobre el banco real.
+
+**Alternativas descartadas.** (A) deja el seguimiento en manos del usuario, justo donde se ha medido degradación. (C) concentra horas de flujo y contexto en una sola ejecución: un corte a mitad —cinco en esta campaña— depende de que el orquestador se reenganche. Si se echa de menos, C es una capa fina sobre B.
+
+**Consecuencias / aprendizaje.** **El seguimiento no puede depender de un documento que envejece ni de la memoria de quien lo lleva.** La lista se recalcula de los ficheros en cada cierre, y por eso *"lo dejo para luego"* no pierde nada. Y la regla de la campaña aplicada al diseño: la primera versión del script leía los `MEDIA` de donde era cómodo, no de donde estaban arbitrados, y lo destapó probarla sobre datos reales antes de escribir el escenario. Se mide en `CU-3.z`.
+
+**Referencias.** `scripts/sdd-project-status.py` · `scripts/sdd-seal.py` (condición 9) · `scripts/sdd-analysis-gaps.py` (`Reabierto:`) · `tests/test_sdd_spec_pending.py` (17 tests) · `pipeline/spec/routing.md` (seguimiento) · `pipeline/spec/skills/wf-spec-validate/SKILL.md` · `pipeline/spec/skills/wf-spec-delta/SKILL.md` · `pipeline/spec/skills/wf-spec-features-first/references/output_template.md` · `pipeline/spec/skills/wf-spec-readiness/` (tabla MEDIA) · `conformance/casos-de-uso/cu-03-specs.md` (`CU-3.z`) · `CHANGELOG.md` 0.120.0.
+
+---
+
 ## D-101 — El origen del alcance se copia, no se decide dos veces
 
 - **Fecha:** 2026-09-28 · **Estado:** Adoptada (en modo scoped el escritor copia `Origen de alcance` y `Avisos de gobernanza` del discovery; el índice avisa de incoherencias; aceptar una asunción al repasar se guarda como aceptación; la línea de modo del cierre va literal). · **Relacionada:** [[D-052]] (criterio binario), [[D-081]], [[D-099]], [[D-091]] (una norma por cada sitio donde se escribe el campo).

@@ -93,6 +93,18 @@
 
 ---
 
+## Conflictos MEDIA abiertos
+
+<!-- Omitir si no hay. Mismas columnas y misma regla que la tabla ALTA: solo los que TU
+     arbitraje mantiene; uno que descartas no va aquí (D-102). La lista de pendientes de la fase
+     lee esta tabla, no los informes sueltos, que se contradicen por diseño. -->
+
+| ID | Tipo | Features afectadas | Descripcion breve | Referencia |
+|----|------|-------------------|-------------------|------------|
+| CF-F003-01 | Scope overlap | F-003, F-004 | [descripcion corta] | `_conflict_report.md` |
+
+---
+
 ## Dependencias circulares
 
 <!-- Las reglas se citan por lo que dicen, nunca por el paso que las define ("Paso 5.2"): el lector
