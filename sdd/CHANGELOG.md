@@ -2,6 +2,14 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.118.1 — 2026-09-28
+
+**Tanda A, corrida 2: tres escenarios a 2/3, y el mapa se mete en la pregunta** — [[DECISIONS D-098]].
+
+- ✅ **Registrado** (v0.118.0+05840d1, orquestador `opus-5-5`): `CU-3.r` (1 y 4), `CU-3.o` (2 y 6) y `CU-3.f` (2 y 4) **2/3**. [[DECISIONS D-097]] funciona en tres de sus cuatro piezas: V1 = 0 en el discovery, ninguna etiqueta filtrada en los veredictos, y la línea del rigor en la segunda tanda. Y `CU-3.f` punto 4 da el caso de libro de [[DECISIONS D-095]]: dos portadas `SIN_CONFLICTOS` desmentidas sobre pares suyos, marcadas en la vigencia y con acción propia.
+- 🔴 ⚠ **La cuarta pieza no: el mapa seguía sin verse** ([[DECISIONS D-098]]). Con la regla de D-097 instalada, main escribió una frase de resumen antes de la pregunta y pidió *"los IDs de la tabla"* sin haberla escrito; el usuario confirma que no vio el mapa. Ahora la tabla va en el `preview` de cada opción del gate de alcance y se repite al pedir los IDs. `CU-3.c` registra su segundo FALLO.
+- **Aprendizaje.** Lo que el usuario tiene que ver va dentro de una llamada que el modelo siempre rellena, no en el texto que la precede.
+
 ## 0.118.0 — 2026-09-25
 
 **Tanda A, corrida 1: cuatro escenarios abren serie y el mapa de features aprende a verse** — [[DECISIONS D-097]].

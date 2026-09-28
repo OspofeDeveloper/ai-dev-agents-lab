@@ -6,6 +6,24 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-098 — El mapa va dentro de la pregunta, porque delante no se ve
+
+- **Fecha:** 2026-09-28 · **Estado:** Adoptada (supera la parte del mapa de [[D-097]]: la tabla de features va en el `preview` de cada opción del gate de alcance, y se repite al pedir los IDs de *"Otro subset"*). · **Relacionada:** [[D-097]], [[D-053]] (la pantalla del selector no tiene sitio para el contexto: aquí sí, en el `preview`).
+
+**Contexto.** [[D-097]] pidió escribir el mapa como texto visible antes de la pregunta de alcance. La corrida 2 de la tanda A corrió **con esa regla instalada** y el usuario siguió sin ver el mapa. Main escribió una sola frase —*"He identificado 7 features en el PRD … F-001, F-002 y F-004 son la base"*— y lanzó la pregunta; al elegir *"Otro subset"* pidió *"los IDs de la tabla"*, que nunca había escrito. Ya van **cinco pasadas** así. El texto que precede a una herramienta sale como una frase de resumen, no como un bloque de 7 filas: la regla en prosa pedía algo contra la forma en que el modelo escribe en ese punto, y perdió.
+
+**Decisión.** La tabla va **dentro de la llamada**, en el campo `preview` de cada opción, que el selector pinta al lado de la opción marcada: *Todas* con las N, el grupo propuesto con el suyo, *Otro subset* con el mapa completo. Si el usuario elige *Otro subset*, el mensaje que pide los IDs repite la tabla. La regla del texto previo se mantiene, pero ya no es de la que depende que se vea.
+
+**Alternativas descartadas.**
+- *Cerrar el turno con la tabla y preguntar en texto libre* → se ve seguro, pero pierde las opciones estructuradas y convierte una elección en un campo abierto, justo lo que [[D-053]] evita al revés.
+- *Insistir en la prosa* → dos redacciones, cinco pasadas, cero mapas.
+
+**Consecuencias / aprendizaje.** **Una regla que pide al modelo escribir contra su forma natural en un punto concreto se incumple con la regla delante.** Cuando lo que tiene que ver el usuario puede ir **dentro de una llamada que el modelo siempre rellena**, va ahí. Y del instrumento: el transcript no dice qué se pintó en pantalla; en `CU-3.c` punto 1 se le pregunta al usuario.
+
+**Referencias.** `pipeline/spec/skills/wf-spec-features-first/SKILL.md` (Paso 4a.1) · `conformance/casos-de-uso/cu-03-specs.md` (tanda A corrida 2: CU-3.c, CU-3.f, CU-3.o, CU-3.r) · `CHANGELOG.md` 0.118.1.
+
+---
+
 ## D-097 — El mapa que nadie vio, y tres costuras de la tanda A
 
 - **Fecha:** 2026-09-25 · **Estado:** Adoptada (el mapa de features va como texto visible antes de la pregunta de alcance; el discovery cita criterios por lo que dicen; la plantilla de conflictos deja de tener etiquetas dentro del formato; una tanda siguiente reutiliza el rigor y lo dice. **Salió de la corrida 1 de la tanda A**, sobre v0.117.3). · **Relacionada:** [[D-091]] (la norma de citar reglas por lo que dicen, que no había llegado al discovery), [[D-096]] (la plantilla del alcance), [[D-006]] (el rigor se elige al crear el spec).

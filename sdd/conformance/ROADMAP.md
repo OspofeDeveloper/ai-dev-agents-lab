@@ -102,7 +102,10 @@ para garantizar que ningún skill se queda sin casos en los cuatro ejes de prueb
 > `CU-3.f` (2 y 4), más el humo 5.5 de `CU-3.a`. **Corrida 1** (v0.117.3): humo OK, 1/3 en r/o/f —
 > con la primera prueba real de [[D-095]]/[[D-096]]— y **FALLO de `CU-3.c`**: el mapa de features no
 > había llegado al usuario en ninguna pasada de `CU-3.d` → [[D-097]] (v0.118.0), junto a V1 en el
-> discovery, la etiqueta filtrada de la plantilla y el rigor de la segunda tanda.
+> discovery, la etiqueta filtrada de la plantilla y el rigor de la segunda tanda. **Corrida 2** (v0.118.0):
+> 2/3 en r/o/f, con el caso de libro de [[D-095]] en `CU-3.f` punto 4, y **segundo FALLO de
+> `CU-3.c`**: la regla de D-097 instalada y el mapa sin verse → [[D-098]] (v0.118.1), la tabla en el
+> `preview` de cada opción.
 
 > ⏱ **Cuatro escenarios nacen sin pasada del barrido de enlazado lateral de Spec**
 > ([[D-078]]/[[D-079]], 2026-09-14): **CU-9.o** (evolucionar una feature dada de baja se deniega, y

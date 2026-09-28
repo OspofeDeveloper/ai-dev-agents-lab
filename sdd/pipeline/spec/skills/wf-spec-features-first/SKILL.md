@@ -381,14 +381,24 @@ Si no hay `--features` y el discovery contiene >5 features, y **no** vino `--all
 - *Un subset de features* — el usuario nombra los IDs; equivale a `--features F-001,...`. Las no incluidas quedan `PENDIENTE_GENERACIÓN` y se generan en pasadas posteriores sin perder lo anterior. **No elijas tú el subset**: puedes agrupar por dependencia o por gaps abiertos para ayudar a decidir, pero la selección es del usuario.
 - *Todas de una pasada* — equivale a `--all-features`.
 
-> **El mapa va delante de la pregunta, como texto visible, en el mismo mensaje ([[D-097]]).**
-> Escribe la tabla —ID, nombre, actor, RFs cubiertos, una fila por feature— como texto de tu
-> respuesta y **después** lanza el `AskUserQuestion`. No basta con decir *"he generado el mapa de 7
-> features"*, ni con que el mapa esté en el informe del delegado o en el fichero: el usuario no ve
-> ninguno de los dos. Y si elige *"Otro subset"*, no le pidas IDs que no ha visto: el mapa ya tiene
-> que estar en pantalla. Medido en las tres pasadas de `CU-3.d` y en la primera de la tanda A de
-> `CU-3.c` (2026-09-25): **en ninguna** llegó el mapa al usuario, y en la última main pidió *"dime
-> los IDs"* sin haberlos mostrado nunca.
+> **El mapa va dentro de la pregunta, en el `preview` de cada opción ([[D-098]]).** Cada opción
+> del `AskUserQuestion` lleva en su campo `preview` la tabla en markdown —ID, nombre, actor, RFs
+> cubiertos, una fila por feature— de **lo que esa opción generaría**:
+> - *Todas de una pasada* → las N features.
+> - *Un grupo que propongas* (p. ej. las dueñas de los modelos compartidos) → solo esas.
+> - *Otro subset* → el **mapa completo**, para que el usuario elija los IDs viéndolos.
+>
+> El selector muestra el `preview` junto a la opción marcada: es la única superficie que el
+> usuario ve con seguridad en ese momento. Además, si escribes texto antes de la pregunta, que sea
+> la misma tabla, no un resumen. Y si elige *"Otro subset"*, al pedirle los IDs **repite la tabla**
+> en tu mensaje: no le pidas IDs que no tiene delante.
+>
+> **Por qué en el `preview` y no solo en texto.** [[D-097]] pedía la tabla como texto antes de la
+> pregunta y **no funcionó**: el texto que precede a una herramienta sale como una frase de
+> resumen (*"He identificado 7 features en el PRD…"*), no como una tabla. Medido en las tres
+> pasadas de `CU-3.d` y en las dos primeras de la tanda A (2026-09-25 y 2026-09-28), con la regla
+> ya instalada en la segunda: el usuario no vio el mapa **ni una vez**, y en las dos últimas main
+> pidió *"los IDs de la tabla"* sin haberla mostrado.
 
 Si hay gaps `[CRÍTICO]` abiertos, dilo aquí también: indica qué features quedarían con HUs `[INCOMPLETO]`, porque cambia la decisión de alcance. Con `--all-features` o `--features` **de entrada** → no presentes el gate; continúa.
 

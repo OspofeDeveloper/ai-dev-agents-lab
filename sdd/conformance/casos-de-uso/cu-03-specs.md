@@ -30,7 +30,7 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 - [ ] CU-3.k — Analyze: contaminación técnica detiene y las preguntas de riesgo van neutras
 
 ### `wf-spec-discover` — mapa de features y ownership (`sdd-spec-explorer`) (2)
-- [ ] CU-3.c — Discovery: mapa de features y elección de subset — **FALLO** 2026-09-25 (punto 1: el mapa nunca llega al usuario, [[D-097]]); serie a 0
+- [ ] CU-3.c — Discovery: mapa de features y elección de subset — **FALLO** 2026-09-25 y 2026-09-28 (punto 1: el mapa nunca llega al usuario, [[D-097]] → [[D-098]]); serie a 0
 - [ ] CU-3.i — Discovery: ownership ambiguo de shared model para en checkpoint humano
 
 ### `wf-spec-features-first` — orquestador del flujo features-first (4)
@@ -45,10 +45,10 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 - [ ] CU-3.t — Regenerar el spec de una feature dada de baja: los escritores paran (D-080) ⏱ **sin pasada**
 
 ### `sdd-spec-auditor` — validate / conflict / readiness (read-only) (6)
-- [ ] CU-3.f — Validar, conflictos y readiness — puntos 2 y 4: **1/3** (2026-09-25)
+- [ ] CU-3.f — Validar, conflictos y readiness — puntos 2 y 4: **2/3** (2026-09-25, 2026-09-28)
 - [ ] CU-3.m — Validate en modo ligero: proporcionalidad sin relajar invariantes
 - [ ] CU-3.n — Conflict: precondición de specs insuficientes
-- [ ] CU-3.o — Readiness: sin índice, ciclos de dependencia y scope derivado — puntos 2 y 6: **1/3** (2026-09-25)
+- [ ] CU-3.o — Readiness: sin índice, ciclos de dependencia y scope derivado — puntos 2 y 6: **2/3** (2026-09-25, 2026-09-28)
 - [ ] CU-3.s — Conflict sobre el directorio entero: el consolidado se escribe donde el readiness lo busca ⏱ **sin pasada**
 - [ ] CU-3.w — Conflict: la salida del hallazgo es una vía que desella, y las retiradas no compiten (D-082) ⏱ **sin pasada**
 
@@ -62,7 +62,7 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 ### orquestador de la fase Spec — guardrail de cambio de producto y oferta de rigor (3)
 - [ ] CU-3.b — Expansión de alcance desde las respuestas del analysis
 - [ ] CU-3.p — Delta / gap-resolve: un cambio de producto encubierto no se integra en silencio
-- [ ] CU-3.r — El rigor (standard/ligero) se elige al crear el spec, no en el init (D-006) — puntos 1 y 4: **1/3** (2026-09-25)
+- [ ] CU-3.r — El rigor (standard/ligero) se elige al crear el spec, no en el init (D-006) — puntos 1 y 4: **2/3** (2026-09-25, 2026-09-28)
 
 > **Capa determinista** (no son escenarios manuales): los índices y marcadores
 > (`sdd-features-index.py`, `sdd-gap-conventions`) están cubiertos por unittests; la calidad
@@ -1425,9 +1425,11 @@ alcance derivado sin override ni avisos, o si marca indiscriminadamente.
    → **Esperado:** como los `F-XXX` no existen aún, ejecuta el discovery, te **presenta
      el mapa** (Feature ID, nombre, actor, RFs cubiertos) y **te pregunta qué IDs**
      incluir en esta iteración (no elige por ti).
-   → **Se mira en la pantalla, no en el fichero ni en el informe del delegado** ([[D-097]]): la
-     tabla tiene que salir como texto visible **antes** de la pregunta de alcance. **FALLO:** la
-     pregunta sin la tabla delante, o *"dime los IDs"* sin haberlos mostrado.
+   → **Se mira en la pantalla, no en el fichero ni en el informe del delegado** ([[D-097]]/[[D-098]]):
+     cada opción de la pregunta de alcance lleva la tabla en su `preview` —la de *"Otro subset"*, el
+     mapa completo— y, si elige *"Otro subset"*, main repite la tabla al pedir los IDs. **FALLO:** una
+     pregunta sin la tabla a la vista, o pedir IDs que el usuario no tiene delante. **Pregúntale al
+     usuario qué vio**: el transcript no dice qué se pintó.
 2. El discovery identifica >5 features y no pediste subset.
    → **Esperado:** recomienda iterar con `--features …`; solo usa `--all-features` como
      override explícito.
@@ -1445,6 +1447,14 @@ inventa features sin discovery, o procesa todas sin avisar con >5.
 > ([[D-097]]): la tabla va como texto visible antes de la pregunta, en el mismo mensaje. **Y V1 = 1
 > en este mismo artefacto**: *"tras aplicar los criterios de `kb-decompose-expert`"*, también
 > arreglado. Serie a 0.
+
+> ****Tanda A, corrida 2** (2026-09-28, v0.118.0+05840d1, orquestador `opus-5-5`) — FALLO del punto 1 otra vez, con la regla de [[D-097]] instalada.** Justo
+> antes de la pregunta main escribió una sola frase —*"He identificado 7 features en el PRD,
+> guardadas en `prd/prd_discovery.md` … F-001, F-002 y F-004 son la base"*— y, tras *"Otro subset"*,
+> pidió *"los IDs **de la tabla**"*, que nunca escribió. El usuario confirma que **no vio el mapa**.
+> El texto que precede a una herramienta sale como resumen, no como tabla: la regla en prosa pelea
+> contra eso y pierde. → [[D-098]] (v0.118.1): el mapa va en el `preview` de cada opción. Punto 2
+> verde. Serie a 0.
 
 ## CU-3.d — Generación por feature (features-first) en paralelo
 
@@ -1799,6 +1809,14 @@ por mayoría, o sella sin nombre detrás.
 > readiness la confirmó citando los specs, y como la portada del informe de F-001 ya abría con
 > `CONFLICTOS_DETECTADOS` **no la dio por desmentida**: señaló solo la línea de su inventario que el
 > arbitraje contradice. Es el matiz de [[D-096]], aplicado sin que nadie se lo pidiera.
+
+> ****Tanda A, corrida 2** (2026-09-28, v0.118.0+05840d1, orquestador `opus-5-5`) — puntos 2 y 4, PASS (2/3).** Punto 2: los cinco veredictos ciñen su
+> alcance y **ninguno filtra ya la etiqueta de modo** ([[D-097]]). Punto 4, **el caso de libro de
+> [[D-095]]**: dos informes abrían con `SIN_CONFLICTOS` sobre un par que **sí** era suyo, el arbitraje
+> confirmó un conflicto en ese par (`CF-F007-01` ALTA, `CF-F002-01` MEDIA), y el readiness los marcó
+> `portada desmentida por el arbitraje` en su cabecera de vigencia **y** les dio punto propio en
+> «Próximos pasos». Y trazó el ALTA hasta su origen: la respuesta por defecto de un gap informativo
+> (P-003) que se aplicó sin revisar.
 
 > **Pasada 1 del punto 1 (2026-08-27, v0.83.0) — PASS.** `wf-spec-validate` sobre
 > `transaction-management`: veredicto `APROBADO` con los tres checks (completitud 8/8, pureza,
@@ -2323,6 +2341,10 @@ fuese a bloquear el pipeline por su cuenta, o lee un informe estancado como vige
 > intacto**. Punto 6: 3 VIGENTE / 2 ESTANCADO leídos del `Conjunto comparado`, y la acción de los
 > estancados dice quién cubre sus pares y que se rehacen cuando convenga, sin relanzar auditores.
 
+> ****Tanda A, corrida 2** (2026-09-28, v0.118.0+05840d1, orquestador `opus-5-5`) — puntos 2 y 6, PASS (2/3).** Punto 2: **dos** ciclos independientes que
+> cubren las cinco features, así que la sección de fases queda vacía, cada ciclo con su causa, y el
+> informe se completa igual. Punto 6: 3 VIGENTE / 2 ESTANCADO con su acción.
+
 ## CU-3.p — Delta / gap-resolve: un cambio de producto encubierto no se integra en silencio
 
 **Precondición:** un spec ya generado; le pasas un "requisito nuevo" (delta) o una "respuesta de
@@ -2446,3 +2468,9 @@ sobre una feature que expande alcance / toca shared models**.
 > pregunta para la primera tanda. **En la segunda tanda relanzó con `--standard` sin decirlo** — el
 > contrato no lo definía (ver arriba), así que no cuenta como FALLO de esta corrida; desde v0.118.0
 > lo cubre la regla nueva y **las corridas 2 y 3 lo miden**.
+
+> ****Tanda A, corrida 2** (2026-09-28, v0.118.0+05840d1, orquestador `opus-5-5`) — puntos 1 y 4, PASS (2/3).** Rigor ofrecido antes de invocar; una sola
+> pregunta en la primera tanda; y en la segunda, la regla de [[D-097]] al pie de la letra: *"Sigo con
+> Standard, como en la tanda anterior. Si para estas prefieres Ligero, dímelo."* La línea sale justo
+> antes de lanzar los escritores, así que no hay hueco para contestar; se deja así a propósito
+> —esperar respuesta devolvería la fricción que la regla quita, y el usuario puede interrumpir.
