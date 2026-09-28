@@ -6,6 +6,33 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-101 — El origen del alcance se copia, no se decide dos veces
+
+- **Fecha:** 2026-09-28 · **Estado:** Adoptada (en modo scoped el escritor copia `Origen de alcance` y `Avisos de gobernanza` del discovery; el índice avisa de incoherencias; aceptar una asunción al repasar se guarda como aceptación; la línea de modo del cierre va literal). · **Relacionada:** [[D-052]] (criterio binario), [[D-081]], [[D-099]], [[D-091]] (una norma por cada sitio donde se escribe el campo).
+
+**Contexto.** La corrida 2 de `CU-3.c`/`CU-3.y` disparó, sin prepararlo, el caso de `CU-3.u` y `CU-3.b`: una respuesta con `PUEDE_REQUERIR_CR` que ampliaba el producto, y el usuario eligió seguir con alcance derivado. El transporte funcionó —el flag llegó a los cinco escritores y ninguno paró—, y discovery e índice marcaron solo a F-005. Pero:
+
+- **El spec de F-007 se marcó derivado a sí mismo**, `PRD + analysis respondido` con `Avisos: ninguno`. El criterio binario de [[D-052]] —*leer el análisis para concretar no cambia el origen*— solo estaba escrito en el discovery; el escritor decidía el campo por su cuenta.
+- **Y el fichero le dio motivos.** Era la primera vez que alguien elegía *"repasar los informativos"*, y el contrato decía que aceptar la asunción se aplica **escribiendo su texto** como respuesta. P-003 y P-004 —los dos de objetivos de ahorro— quedaron con `Respuesta` igual a la asunción: el escritor los leyó como alcance decidido en el análisis. Y además el fichero guarda como respuesta humana unas palabras que el usuario no escribió (dijo *"la por defecto"*).
+- **La línea de modo del cierre** faltó esta vez en la **primera** tanda, justo al revés que en las corridas anteriores.
+
+**Decisión.**
+
+1. **En modo scoped, `Origen de alcance` y `Avisos de gobernanza` se copian de la entrada de la feature en el discovery**, que ya aplicó el criterio y la gobernanza. La regla de coherencia se escribe también en el escritor.
+2. **El índice avisa** en stderr si una feature combina origen derivado con `Avisos: ninguno`, o si el spec contradice al discovery. Probado contra los datos reales de la corrida: caza F-007. 4 tests.
+3. **Aceptar la asunción al repasar se guarda como `"Acepta la asunción por defecto: <texto>"`**: sigue distinguiendo *"alguien lo miró"* de *"nadie lo miró"*, que era el motivo del diseño anterior, sin atribuirle al usuario palabras que no dijo.
+4. **La línea de modo va literal en la plantilla del cierre**, con sus valores por rellenar, en vez de como instrucción.
+
+**Alternativas descartadas.**
+- *Dejar las asunciones aceptadas como `_(pendiente)_`* → borra el *"alguien lo miró"*, que el contrato distinguía a propósito.
+- *Que el índice corrija el origen del spec* → el índice deriva, no corrige; avisar y que lo arregle quien escribe el spec.
+
+**Consecuencias / aprendizaje.** **Un campo que dos piezas deciden por separado acaba diciendo dos cosas.** El origen del alcance lo decidían el discovery y el escritor, cada uno con su lectura; ahora lo decide uno y el otro lo copia, y un script vigila que coincidan. Y del instrumento: `CU-3.u` llevaba sin evidencia desde que se escribió y salió en una corrida que no lo buscaba — con una respuesta natural del usuario, no con un PRD preparado.
+
+**Referencias.** `pipeline/spec/skills/wf-spec-fast-track/SKILL.md` · `scripts/sdd-features-index.py` + `tests/test_sdd_features_index.py` (`OrigenIncoherenteTest`) · `pipeline/spec/skills/wf-spec-features-first/SKILL.md` (Paso 2.5, informativos) + `references/output_template.md` · `conformance/casos-de-uso/cu-03-specs.md` (CU-3.a, CU-3.b, CU-3.c, CU-3.u, CU-3.y) · `CHANGELOG.md` 0.119.0.
+
+---
+
 ## D-100 — Tres limpiezas de la corrida que selló la tanda A
 
 - **Fecha:** 2026-09-28 · **Estado:** Adoptada (el README deriva `Requiere` de los shared models; el readiness no cita sus propios pasos; la regla de idioma cubre las frases de enlace; V1 caza también `Paso N`). · **Relacionada:** [[D-091]] (citar reglas por lo que dicen), [[D-099]].

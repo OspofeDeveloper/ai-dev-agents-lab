@@ -176,6 +176,15 @@ Antes de escribir el output, aplica la Prueba de Pureza al spec completo. Consul
 - Origen de alcance: `PRD` o `PRD + analysis respondido`
 - Avisos de gobernanza: `ninguno` o lista de gaps que derivaron alcance no consolidado
 
+> **En modo scoped, estos dos campos se copian de la entrada de tu feature en el discovery ([[D-101]]).**
+> El discovery ya aplicó el criterio —`PRD` salvo que el alcance de esa feature **solo** exista en una
+> respuesta del análisis— y la gobernanza. Usar decisiones del análisis para concretar CAs (un gap
+> informativo aceptado, una aclaración) **no** cambia el origen. Y la regla de coherencia vale igual
+> aquí: `PRD + analysis respondido` con `Avisos de gobernanza: ninguno` no pueden ir juntos. Medido en
+> la corrida 2 de `CU-3.c`/`CU-3.y`: el discovery marcó derivada solo a F-005, y el escritor de F-007
+> se marcó derivado a sí mismo, sin aviso, por haber usado dos gaps informativos. El índice avisa
+> ahora de las dos cosas.
+
 **Índice de features (`_features.md`)**: NO lo escribas a mano. `_features.md` es un artefacto **generado** por `sdd-features-index.py` (regenerador determinista) a partir del discovery + los specs presentes + el readiness report. Tú escribes el spec y el README de la feature; el índice se regenera en el Paso 10 **salvo que te hayan pasado `--skip-index`**, en cuyo caso lo regenera quien te lanzó. Esto elimina la colisión de escrituras paralelas (varios fast-tracks lanzados a la vez por `wf-spec-features-first`) y los conflictos de merge entre devs sobre el hub monolítico. Los campos del índice (estado canónico, origen de alcance, trazabilidad RF→HU) los deriva el script de sus fuentes: tú solo debes asegurarte de que el header del spec los declare correctamente (`> Feature ID:`, `> Origen de alcance:`, `> Avisos de gobernanza:`).
 
 ---

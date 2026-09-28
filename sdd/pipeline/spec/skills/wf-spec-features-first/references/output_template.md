@@ -2,9 +2,11 @@
 
 ## Resumen de ejecución
 
-Indica el modo **en la primera línea**, siempre: "Iteración sobre subset `[F-001, F-002, ...]`" o
-"Generación completa". También en la segunda tanda y siguientes: es lo que dice qué ha hecho *esta*
-pasada ([[D-099]]).
+**[Iteración sobre el subset `[F-001, F-002]` | Generación completa]** · rigor [Standard | Ligero]
+
+<!-- Esa línea va la PRIMERA del mensaje, copiada con los valores de esta pasada, en cada tanda
+     (D-099/D-101). No la sustituyas por una frase ("He generado las specs de…"): es lo que dice qué
+     ha hecho *esta* pasada, y como instrucción se perdió en la primera tanda de la corrida 2. -->
 
 | Feature | Origen | Spec | Gaps críticos | Estado |
 |---------|--------|------|---------------|--------|

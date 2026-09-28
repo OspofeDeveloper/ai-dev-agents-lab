@@ -320,6 +320,18 @@ def parse_discovery(path: Path | None) -> dict:
 # un artefacto parcial con apariencia de completo — el peor modo de fallo posible
 # ([[D-046]], [[D-066]]). Se vuelca en stderr y dentro del propio indice.
 SPECS_SIN_CABECERA: list[str] = []
+# D-101: `Origen de alcance` y `Avisos de gobernanza` son dos caras de la misma
+# decision. Derivado sin aviso que lo explique es incoherente, y un spec que dice
+# otra cosa que su entrada del discovery tiene uno de los dos mal.
+ORIGEN_INCOHERENTE: list[str] = []
+
+
+def _es_derivado(origen: str | None) -> bool:
+    return bool(origen) and "analysis" in origen.lower()
+
+
+def _sin_aviso(gobernanza: str | None) -> bool:
+    return (gobernanza or "").strip().lower() in ("", "ninguno", "ninguna", "—", "-")
 
 # Features cuyo spec YA existe en disco y a las que la `## Matriz de readiness` del
 # informe en disco sigue llamando `PENDIENTE_GENERACIÓN` ([[D-089]]). El indice se
@@ -535,6 +547,16 @@ def render(directory: Path, discovery: dict, specs: dict, verdicts: dict,
         out.append(f"- **Ruta spec**: {spec['relpath'] if spec else '(pendiente de generación)'}")
         out.append(f"- **Estado**: {estado}")
         origen = (spec or feat).get("origen")
+        gob_efectiva = (spec or feat).get("gobernanza")
+        if _es_derivado(origen) and _sin_aviso(gob_efectiva):
+            ORIGEN_INCOHERENTE.append(
+                f"{fid}: `Origen de alcance` derivado del analysis sin ningun `Avisos de "
+                "gobernanza` que cite el gap")
+        if spec and feat and feat.get("origen") and spec.get("origen") \
+                and _es_derivado(spec["origen"]) != _es_derivado(feat["origen"]):
+            ORIGEN_INCOHERENTE.append(
+                f"{fid}: el spec dice `{spec['origen']}` y su entrada del discovery "
+                f"`{feat['origen']}`")
         if origen:
             out.append(f"- **Origen de alcance**: {origen}")
         gobernanza = (spec or feat).get("gobernanza")
@@ -710,6 +732,15 @@ def main(argv: list[str]) -> int:
         sys.stderr.write(
             "  Repon `Feature ID` y `Origen de alcance` en su cabecera y regenera. "
             "Mientras falten, este indice esta incompleto ([[D-066]]).\n")
+    if ORIGEN_INCOHERENTE:
+        sys.stderr.write(
+            f"[features-index] ⚠ origen de alcance incoherente en "
+            f"{len({s.split(':')[0] for s in ORIGEN_INCOHERENTE})} feature(s):\n")
+        for s in ORIGEN_INCOHERENTE:
+            sys.stderr.write(f"  - {s}\n")
+        sys.stderr.write(
+            "  El alcance derivado lo decide el discovery (con su aviso citando el gap); "
+            "un spec lo copia de ahi. Corrige el spec que no coincide ([[D-101]]).\n")
     if READINESS_ESTANCADO:
         sys.stderr.write(
             f"[features-index] ⚠ matriz de readiness estancada: "

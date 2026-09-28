@@ -2,6 +2,15 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.119.0 — 2026-09-28
+
+**`CU-3.u` sale por fin, y el origen del alcance deja de decidirse dos veces** — [[DECISIONS D-101]].
+
+- ✅ **Registrado** (v0.118.3+d8f929b): `CU-3.c` **2/3**; `CU-3.u` puntos 1 y 2 **1/3** —primera evidencia desde que se escribió, disparada por una respuesta natural—: una sola pregunta de alcance y el flag llegando a los cinco escritores sin que ninguno parara. `CU-3.b` punto 1 verde. Los arreglos de [[DECISIONS D-100]] funcionan: READMEs con sus dependencias, V1 = 0 con los `Paso N`, cero frases en inglés.
+- 🔴 ⚠ **Un escritor se marcó alcance derivado a sí mismo** (`CU-3.b` punto 2 FALLO). En modo scoped, `Origen de alcance` y `Avisos de gobernanza` se **copian del discovery**; el índice **avisa** de un origen derivado sin aviso o de un spec que contradice al discovery. 4 tests.
+- 🟠 ⚠ **Aceptar una asunción al repasar los informativos** se guarda como *"Acepta la asunción por defecto: …"*, no como si el usuario hubiera escrito el texto. Nueva comprobación en `CU-3.a`.
+- 🟠 **La línea de modo del cierre va literal en la plantilla** (`CU-3.y` FALLO en la primera tanda, serie a 0).
+
 ## 0.118.3 — 2026-09-28
 
 **La tanda A sella sus tres escenarios, y tres limpiezas** — [[DECISIONS D-100]].

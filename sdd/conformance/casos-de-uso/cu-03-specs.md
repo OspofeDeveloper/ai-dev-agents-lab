@@ -30,15 +30,15 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 - [ ] CU-3.k — Analyze: contaminación técnica detiene y las preguntas de riesgo van neutras
 
 ### `wf-spec-discover` — mapa de features y ownership (`sdd-spec-explorer`) (2)
-- [ ] CU-3.c — Discovery: mapa de features y elección de subset — **FALLO** 2026-09-25 y 2026-09-28 (punto 1: el mapa nunca llega al usuario, [[D-097]] → [[D-098]]); **1/3** desde la corrida 3 (2026-09-28, [[D-098]])
+- [ ] CU-3.c — Discovery: mapa de features y elección de subset — **FALLO** 2026-09-25 y 2026-09-28 (punto 1: el mapa nunca llega al usuario, [[D-097]] → [[D-098]]); **2/3** (2026-09-28 ×2, [[D-098]])
 - [ ] CU-3.i — Discovery: ownership ambiguo de shared model para en checkpoint humano
 
 ### `wf-spec-features-first` — orquestador del flujo features-first (4)
 - [x] CU-3.d — Generación por feature (features-first) en paralelo — **SELLADO 3/3** (2026-09-23/24, anclas v0.117.0 → v0.117.2 con los cuatro puntos intactos, orquestador `opus-5-5`)
 - [ ] CU-3.l — Features-first: `--features` con IDs inexistentes en el discovery
-- [ ] CU-3.u — Features-first: la decisión de alcance viaja al fan-out y un `STOP_*` se presenta (D-081) ⏱ **sin pasada**
+- [ ] CU-3.u — Features-first: la decisión de alcance viaja al fan-out y un `STOP_*` se presenta (D-081) — puntos 1 y 2: **1/3** (2026-09-28); punto 3 sin medir en spec
 - [ ] CU-3.v — Features-first: un discovery que ya existe se reutiliza, no se regenera (D-081) ⏱ **sin pasada**
-- [ ] CU-3.y — Features-first: el resumen de cierre cumple su plantilla y dice la verdad sobre los artefactos ([[D-099]]) — **FALLO** retro 2026-09-25 y 2026-09-28 (puntos 1 y 4); **1/3** desde la corrida 3 (2026-09-28)
+- [ ] CU-3.y — Features-first: el resumen de cierre cumple su plantilla y dice la verdad sobre los artefactos ([[D-099]]) — **FALLO** retro 2026-09-25 y 2026-09-28 (puntos 1 y 4); **FALLO** 2026-09-28 (primera tanda sin línea de modo, [[D-101]]); serie a 0
 
 ### `wf-spec-fast-track` — spec directo de una feature (`sdd-spec-writer`) (3)
 - [ ] CU-3.e — Spec directo de una feature (fast-track)
@@ -61,7 +61,7 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 - [ ] CU-3.h — Evolucionar un spec con requisitos nuevos (delta): los tres gates (D-073)
 
 ### orquestador de la fase Spec — guardrail de cambio de producto y oferta de rigor (3)
-- [ ] CU-3.b — Expansión de alcance desde las respuestas del analysis
+- [ ] CU-3.b — Expansión de alcance desde las respuestas del analysis — **FALLO** 2026-09-28 (punto 2: marca derivada en una feature no afectada, [[D-101]]); punto 1 verde
 - [ ] CU-3.p — Delta / gap-resolve: un cambio de producto encubierto no se integra en silencio
 - [ ] CU-3.r — El rigor (standard/ligero) se elige al crear el spec, no en el init (D-006) — puntos 1 y 4: **SELLADOS 3/3** (tanda A, 2026-09-25/28; puntos 2, 3 y 5 sin serie)
 
@@ -326,6 +326,10 @@ nombra el contrato que la pasada mide.
    → **FALLO (tres formas):** que main haga `Read`/`Edit`/`Write` del `_analysis.md`;
      que **rehúse** ayudar remitiéndote al editor cuando existe vía sancionada; o —el
      grave— que **complete o reinterprete** una respuesta que no diste.
+   → **Y en los informativos, si eliges repasarlos** ([[D-101]]): aceptar la opción por defecto se
+     guarda como **aceptación** (*"Acepta la asunción por defecto: …"*), no como si el texto de la
+     asunción lo hubieras escrito tú. **FALLO:** `Respuesta` igual al texto de la asunción, sin marca.
+     Medido en la corrida 2 de `CU-3.c`/`CU-3.y`, la primera que tomó ese camino.
    → **Ojo al verificar:** que el frontmatter no declare `Write` **no lo impide**
      (`allowed-tools` no es enforcement, [[D-038]]). Hay que mirar los logs.
 
@@ -1399,6 +1403,14 @@ propagan a los tres niveles solo a quien toca · FALLO si genera specs con
 alcance derivado sin override ni avisos, o si marca indiscriminadamente.
 **Desviación → reportar:** issue citando `CU-3.b`.
 
+> ****CU-3.c/y, corrida 2** (2026-09-28, v0.118.3+d8f929b, orquestador `opus-5-5`) — punto 1 PASS, punto 2 FALLO.** Punto 1: el gate frenó la expansión y ofreció
+> formalizar o seguir marcando. Punto 2: discovery e índice discriminan bien (solo F-005 con `PRD +
+> analysis respondido` y su aviso), **pero el spec de F-007 se marcó `PRD + analysis respondido` con
+> `Avisos de gobernanza: ninguno`** —la combinación que la regla de coherencia prohíbe—, y el índice lo
+> heredó. Dos causas que se suman: el criterio binario de [[D-052]] solo vivía en el discovery, y el
+> camino *"repasar los informativos"* guardó P-003 y P-004 aceptados como si fueran respuestas del
+> usuario. → [[D-101]] (v0.119.0).
+
 > **Dos capas, y ninguna sobra ([[CU-3.a]] pasada 7).** El guardrail vive en **dos sitios** y cada
 > uno ve cosas distintas **por construcción**: el de `wf-spec-features-first` corre en main, que
 > **no lee el PRD** (Regla de oro), así que solo detecta lo que se delata en el **texto de la
@@ -1461,6 +1473,10 @@ inventa features sin discovery, o procesa todas sin avisar con >5.
 > su `preview`, y el `tool_result` lo confirma (*"selected preview: | ID | Feature | Actor | RFs …"*):
 > **es la primera vez en seis pasadas que el mapa llega a la pantalla**. Tras *"Otro subset"*, main
 > repitió el mapa completo como tabla al pedir los IDs. Punto 2 verde.
+
+> ****CU-3.c/y, corrida 2** (2026-09-28, v0.118.3+d8f929b, orquestador `opus-5-5`) — PASS, 2/3.** Las tres opciones con la tabla en su `preview` (confirmado por el
+> `tool_result`), y el mapa repetido al pedir los IDs —esta vez con una columna extra de qué modelos
+> posee cada feature—. Punto 2 verde.
 
 ## CU-3.d — Generación por feature (features-first) en paralelo
 
@@ -2205,6 +2221,16 @@ reaparece dentro del fan-out, si el orquestador arma un override por su cuenta, 
 reporta como error genérico.
 **Desviación → reportar:** issue citando `CU-3.u`.
 
+> ****CU-3.c/y, corrida 2** (2026-09-28, v0.118.3+d8f929b, orquestador `opus-5-5`) — puntos 1 y 2 PASS (1/3), punto 3 sin medir en spec; primera evidencia del
+> escenario.** Sin preparar el caso: la respuesta a P-001 (*"debe entrar en la cuenta o tarjeta que
+> diga el usuario, y queda saldada"*) llevaba `PUEDE_REQUERIR_CR`, main delegó la gobernanza y el
+> revisor la dio por ampliación de *"saldar una deuda"*. **Punto 1:** una sola pregunta —*Formalizar en
+> el PRD (Recomendado)* / *Continuar con alcance derivado*—. **Punto 2:** con *continuar*,
+> `--allow-derived-scope-from-analysis` viajó al discovery **y a los cinco escritores**, y ninguno
+> volvió a parar: la costura de [[D-081]], cerrada en campo. **Punto 3:** discovery e índice marcan
+> **solo F-005** (deudas) con el aviso citando P-001 — pero F-005 no estaba en ninguna tanda, así que
+> la marca **en un spec** no se pudo ver. La corrida siguiente la incluye.
+
 > **Por qué faltaba ([[D-081]]).** El gate estaba bien escrito y bien situado —en el hilo principal,
 > que es el único sitio donde se puede presentar ([[D-045]])—, pero el prompt del fan-out no llevaba
 > el flag correspondiente. Y como cada escritor recibe `--analysis`, **reevalúa** por su cuenta: el
@@ -2337,6 +2363,12 @@ alguno falla en cualquiera de ellas.
 > features y los tres informes de conflictos con su ruta —diciendo cuál queda desmentido por el
 > arbitraje—. Sin comandos, estados coherentes con el índice y el readiness, y el conflicto se ofrece
 > aplicarlo.
+
+> ****CU-3.c/y, corrida 2** (2026-09-28, v0.118.3+d8f929b, orquestador `opus-5-5`) — FALLO del punto 1, en la primera tanda.** El cierre de la **segunda** tanda,
+> perfecto: línea de modo y artefactos completos, separando los informes de conflictos de esta tanda
+> de los estancados. El de la **primera** abre con *"He generado las specs de…"* sin línea de modo. Se
+> invierte el patrón de las corridas 1 y 2 —ahí fallaba la segunda—: la línea como **instrucción** se
+> sostiene a ratos. → [[D-101]] (v0.119.0): la plantilla la trae **literal**, para copiarla. Serie a 0.
 
 ## CU-3.o — Readiness: sin índice, ciclos, scope derivado, sello y alcance del veredicto
 

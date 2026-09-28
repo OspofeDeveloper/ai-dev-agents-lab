@@ -493,6 +493,55 @@ class SinValidarTest(unittest.TestCase):
         self.assertEqual(self._index(), self._index())
 
 
+class OrigenIncoherenteTest(unittest.TestCase):
+    """`Origen de alcance` derivado sin aviso, o spec que contradice al discovery (D-101).
+
+    Medido en la corrida 2 de CU-3.c/CU-3.y: el discovery marco derivada solo a F-005
+    y el escritor de F-007 se marco derivado a si mismo, sin aviso, por haber usado
+    dos gaps informativos. El indice lo heredo sin decir nada.
+    """
+
+    def _disc(self, origen_f1="PRD", aviso_f1="ninguno"):
+        return DISCOVERY.replace(
+            "- **Scope (RFs)**: RF-1\n",
+            f"- **Scope (RFs)**: RF-1\n- **Origen de alcance**: {origen_f1}\n"
+            f"- **Avisos de gobernanza**: {aviso_f1}\n", 1)
+
+    def _spec(self, d, origen, aviso):
+        text = spec("F-001", "Login").replace(
+            "> Feature ID: F-001",
+            f"> Feature ID: F-001\n> Origen de alcance: {origen}\n"
+            f"> Avisos de gobernanza: {aviso}")
+        write(d / "features" / "login" / "spec" / "login_spec.md", text)
+
+    def _run(self, disc, origen, aviso):
+        with tempfile.TemporaryDirectory() as tmp:
+            d = Path(tmp)
+            write(d / "prj_discovery.md", disc)
+            self._spec(d, origen, aviso)
+            r = run_script("sdd-features-index.py", d)
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            return r
+
+    def test_derivado_sin_aviso_avisa(self):
+        r = self._run(self._disc(), "PRD + analysis respondido", "ninguno")
+        self.assertIn("origen de alcance incoherente", r.stderr)
+        self.assertIn("F-001", r.stderr)
+
+    def test_spec_que_contradice_al_discovery_avisa(self):
+        r = self._run(self._disc(), "PRD + analysis respondido", "alcance derivado desde P-001")
+        self.assertIn("su entrada del discovery", r.stderr)
+
+    def test_coherente_no_avisa(self):
+        r = self._run(self._disc("PRD + analysis respondido", "alcance derivado desde P-001"),
+                      "PRD + analysis respondido", "alcance derivado desde P-001")
+        self.assertNotIn("incoherente", r.stderr)
+
+    def test_prd_limpio_no_avisa(self):
+        r = self._run(self._disc(), "PRD", "ninguno")
+        self.assertNotIn("incoherente", r.stderr)
+
+
 class RutaDeSalidaTest(unittest.TestCase):
     """El mensaje de exito dice DONDE escribio, relativo al cwd (D-095).
 

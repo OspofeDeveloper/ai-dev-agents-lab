@@ -279,9 +279,12 @@ Verifica que el archivo PRD existe; si no → informa con ruta exacta y detén.
 
    **Si elige repasarlos** → mismo formato conversacional que 6b, uno a uno, con el `contexto` y la
    `asuncion` **verbatim** del script. Dos salidas por gap:
-   - **la asunción le vale** → se aplica con `--answer` **escribiendo el texto de la asunción**.
-     `_(pendiente)_` significa *nadie lo ha mirado*; una respuesta significa *alguien lo decidió*, y
-     aguas abajo no son lo mismo.
+   - **la asunción le vale** → se aplica con `--answer` y el texto **"Acepta la asunción por
+     defecto: <asunción verbatim>"**. `_(pendiente)_` significa *nadie lo ha mirado*; una respuesta
+     significa *alguien lo decidió*, y aguas abajo no son lo mismo — pero *"elegí la opción por
+     defecto"* tampoco es lo mismo que *"esto lo dije yo"* ([[D-101]]). Con el texto de la asunción a
+     secas, el fichero registra como respuesta humana unas palabras que el usuario no escribió, y un
+     escritor que lo lee lo toma por alcance decidido en el análisis (corrida 2 de `CU-3.c`/`CU-3.y`).
    - **quiere otra cosa** → `--answer` con lo que diga, literal. Si eso introduce capacidad nueva,
      sigues por el punto 8 como con cualquier otra respuesta expansiva.
 

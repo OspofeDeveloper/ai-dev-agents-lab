@@ -111,6 +111,11 @@ para garantizar que ningún skill se queda sin casos en los cuatro ejes de prueb
 > se vio por fin—. Tres limpiezas → [[D-100]] (v0.118.3): `Requiere` derivado de los shared models,
 > sin pasos internos en el readiness, e idioma en las frases de enlace.
 
+> 🧪 **CU-3.c/y, corrida 2** (v0.118.3): `CU-3.c` 2/3; `CU-3.y` FALLO (primera tanda sin línea de
+> modo); y **sale `CU-3.u`** sin buscarlo —puntos 1 y 2 en verde, el flag llegando a los cinco
+> escritores—, con `CU-3.b` punto 2 en rojo: un escritor se marcó derivado a sí mismo → [[D-101]]
+> (v0.119.0).
+
 > ⏱ **Cuatro escenarios nacen sin pasada del barrido de enlazado lateral de Spec**
 > ([[D-078]]/[[D-079]], 2026-09-14): **CU-9.o** (evolucionar una feature dada de baja se deniega, y
 > el estado sobrevive incluso sin hook), **CU-7.s** (la reactivación es la única vuelta atrás y no
