@@ -95,6 +95,9 @@
 
 ## Dependencias circulares
 
+<!-- Las reglas se citan por lo que dicen, nunca por el paso que las define ("Paso 5.2"): el lector
+     no ha visto la skill (D-100). -->
+
 <!-- Omitir esta seccion completa si no hay ciclos -->
 
 > Se detectaron dependencias circulares que impiden determinar el orden de implementacion para las features involucradas.

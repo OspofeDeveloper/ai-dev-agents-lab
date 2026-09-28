@@ -106,7 +106,10 @@ para garantizar que ningún skill se queda sin casos en los cuatro ejes de prueb
 > 2/3 en r/o/f, con el caso de libro de [[D-095]] en `CU-3.f` punto 4, y **segundo FALLO de
 > `CU-3.c`**: la regla de D-097 instalada y el mapa sin verse → [[D-098]] (v0.118.1), la tabla en el
 > `preview` de cada opción. Y el resumen de cierre gana escenario propio, `CU-3.y` ([[D-099]], v0.118.2): medido a
-> posteriori, los de segunda tanda dejaban fuera la mitad de los artefactos.
+> posteriori, los de segunda tanda dejaban fuera la mitad de los artefactos. **Corrida 3** (v0.118.2):
+> 🔒 **sella** `CU-3.r` (1, 4), `CU-3.o` (2, 6) y `CU-3.f` (2, 4); `CU-3.c` y `CU-3.y` **1/3** —el mapa
+> se vio por fin—. Tres limpiezas → [[D-100]] (v0.118.3): `Requiere` derivado de los shared models,
+> sin pasos internos en el readiness, e idioma en las frases de enlace.
 
 > ⏱ **Cuatro escenarios nacen sin pasada del barrido de enlazado lateral de Spec**
 > ([[D-078]]/[[D-079]], 2026-09-14): **CU-9.o** (evolucionar una feature dada de baja se deniega, y

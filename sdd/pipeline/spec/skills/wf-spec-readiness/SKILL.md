@@ -267,6 +267,13 @@ Usa `${CLAUDE_SKILL_DIR}/references/readiness_report_template.md` para estructur
 > Cita la regla **por lo que dice** —*"el mismo modelo con comportamientos distintos en dos CAs de
 > features diferentes"*, *"un shared model inconsistente corrompe el modelo de dominio"*—: el
 > veredicto se sostiene igual y quien lo lee no tiene que saber qué es una kb.
+>
+> **Y tampoco cites tus propios pasos ([[D-100]]).** *"Por Paso 5.2, ninguna entra en el orden"* o
+> *"el grafo declarado en las tablas de cada spec (Paso 4d/5)"* le hablan al lector de un documento
+> que no ha visto. Di la regla: *"las features de un ciclo quedan fuera del orden de
+> implementación"*, *"si una feature usa un modelo compartido de otra, depende de ella"*. Y cuenta
+> lo que citas: medido en la corrida 3 de la tanda A, el mismo informe hablaba de *"los seis
+> READMEs"* con cinco features generadas.
 
 ---
 

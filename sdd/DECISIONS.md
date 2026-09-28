@@ -6,6 +6,28 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-100 — Tres limpiezas de la corrida que selló la tanda A
+
+- **Fecha:** 2026-09-28 · **Estado:** Adoptada (el README deriva `Requiere` de los shared models; el readiness no cita sus propios pasos; la regla de idioma cubre las frases de enlace; V1 caza también `Paso N`). · **Relacionada:** [[D-091]] (citar reglas por lo que dicen), [[D-099]].
+
+**Contexto.** La corrida 3 de la tanda A selló sus tres escenarios y dejó tres observaciones fuera de lo que medían:
+
+- **Los READMEs escondían los ciclos.** Cuatro de cinco decían *"Requiere: Ninguna"* mientras su propio spec usaba modelos de otras features. El readiness construye el grafo con la regla *"si usas un modelo cuyo dueño es otra, dependes de ella"* y encontró cinco ciclos; los READMEs, escritos con el criterio de *"qué conviene implementar antes"*, no mostraban ninguno. La plantilla decía justo eso: *"feature(s) que deben implementarse antes"*.
+- **El readiness citaba sus propios pasos**: *"Por Paso 5.2, ninguna entra en el orden"*, *"(Paso 4d/5)"*. No es un nombre de skill —V1 no lo cazaba— pero le habla al lector de un documento que no ha visto. Y contaba mal: *"los seis READMEs"* con cinco features.
+- **Una frase en inglés** en mitad de una sesión en español: *"The two reviewers disagree on the same pair…"*, justo después de dos notificaciones del harness, que llegan en inglés.
+
+**Decisión.** `Requiere` se deriva de la tabla de Shared Models con la misma regla que el readiness, en la plantilla y en la skill del escritor: dos features que se requieren entre sí es un ciclo real y se deja escrito. El readiness cita la regla, no el paso, y cuenta lo que cita. La guía de la fase dice que todo lo que va al usuario va en su idioma, también las frases de enlace. Y el probe V1 caza `Paso [0-9]` en los artefactos.
+
+**Alternativas descartadas.**
+- *Que el readiness corrija los READMEs* → edita artefactos de otro rol; el README es del escritor, y es ahí donde tiene que salir bien.
+- *Dejar `Requiere` al juicio del escritor* → es lo que había, y producía un grafo distinto del que mide el readiness.
+
+**Consecuencias / aprendizaje.** **Dos artefactos que describen la misma relación con reglas distintas se contradicen sin que ninguno esté mal escrito.** El README y el readiness hablaban los dos de dependencias; solo uno usaba la regla. No toca ningún punto sellado: `CU-3.o` punto 2 mide cómo el readiness **reporta** un ciclo, no quién lo ve primero. Queda abierto el hueco de contrato de *cómo se deshace* un ciclo, que va con la tanda de continuación.
+
+**Referencias.** `pipeline/spec/skills/wf-spec-fast-track/SKILL.md` + `references/feature_readme_template.md` · `pipeline/spec/skills/wf-spec-readiness/SKILL.md` + `references/readiness_report_template.md` · `pipeline/spec/routing.md` · `conformance/casos-de-uso/cu-03-specs.md` (V1, tanda A corrida 3) · `CHANGELOG.md` 0.118.3.
+
+---
+
 ## D-099 — El resumen de cierre también se mide: nace CU-3.y
 
 - **Fecha:** 2026-09-28 · **Estado:** Adoptada (escenario nuevo `CU-3.y` para el Paso 9 de features-first; la plantilla exige la línea de modo y la lista completa de artefactos en cada tanda). · **Relacionada:** [[D-069]] (los bloques condicionales se leen de la plantilla), [[D-082]], [[D-077]], [[D-098]].

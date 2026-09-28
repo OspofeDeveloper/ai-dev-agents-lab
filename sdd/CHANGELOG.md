@@ -2,6 +2,15 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.118.3 — 2026-09-28
+
+**La tanda A sella sus tres escenarios, y tres limpiezas** — [[DECISIONS D-100]].
+
+- 🔒 **Sellados 3/3 en los puntos que mide la tanda A**: `CU-3.r` (1 y 4), `CU-3.o` (2 y 6) y `CU-3.f` (2 y 4), sobre v0.117.3 → v0.118.2. Los escenarios siguen abiertos por sus otros puntos. `CU-3.c` abre serie (**1/3**): por primera vez en seis pasadas el mapa llegó a la pantalla, en el `preview` de [[DECISIONS D-098]]. `CU-3.y` **1/3**.
+- 🟠 ⚠ **`Requiere` del README se deriva de los shared models** ([[DECISIONS D-100]]): cuatro de cinco READMEs decían *"Ninguna"* usando modelos ajenos, y los ciclos solo aparecían en el readiness.
+- 🟢 **El readiness cita reglas, no sus pasos** (*"Por Paso 5.2"*), y el probe V1 caza `Paso N` en los artefactos.
+- 🟢 **Idioma**: la guía de la fase cubre las frases de enlace, donde se coló una en inglés tras dos notificaciones del harness.
+
 ## 0.118.2 — 2026-09-28
 
 **El resumen de cierre también se mide: nace `CU-3.y`** — [[DECISIONS D-099]].

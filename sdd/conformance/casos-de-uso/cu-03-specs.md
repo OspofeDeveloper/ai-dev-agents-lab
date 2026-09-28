@@ -30,7 +30,7 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 - [ ] CU-3.k — Analyze: contaminación técnica detiene y las preguntas de riesgo van neutras
 
 ### `wf-spec-discover` — mapa de features y ownership (`sdd-spec-explorer`) (2)
-- [ ] CU-3.c — Discovery: mapa de features y elección de subset — **FALLO** 2026-09-25 y 2026-09-28 (punto 1: el mapa nunca llega al usuario, [[D-097]] → [[D-098]]); serie a 0
+- [ ] CU-3.c — Discovery: mapa de features y elección de subset — **FALLO** 2026-09-25 y 2026-09-28 (punto 1: el mapa nunca llega al usuario, [[D-097]] → [[D-098]]); **1/3** desde la corrida 3 (2026-09-28, [[D-098]])
 - [ ] CU-3.i — Discovery: ownership ambiguo de shared model para en checkpoint humano
 
 ### `wf-spec-features-first` — orquestador del flujo features-first (4)
@@ -38,7 +38,7 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 - [ ] CU-3.l — Features-first: `--features` con IDs inexistentes en el discovery
 - [ ] CU-3.u — Features-first: la decisión de alcance viaja al fan-out y un `STOP_*` se presenta (D-081) ⏱ **sin pasada**
 - [ ] CU-3.v — Features-first: un discovery que ya existe se reutiliza, no se regenera (D-081) ⏱ **sin pasada**
-- [ ] CU-3.y — Features-first: el resumen de cierre cumple su plantilla y dice la verdad sobre los artefactos ([[D-099]]) — **FALLO** retro 2026-09-25 y 2026-09-28 (puntos 1 y 4); serie a 0
+- [ ] CU-3.y — Features-first: el resumen de cierre cumple su plantilla y dice la verdad sobre los artefactos ([[D-099]]) — **FALLO** retro 2026-09-25 y 2026-09-28 (puntos 1 y 4); **1/3** desde la corrida 3 (2026-09-28)
 
 ### `wf-spec-fast-track` — spec directo de una feature (`sdd-spec-writer`) (3)
 - [ ] CU-3.e — Spec directo de una feature (fast-track)
@@ -46,10 +46,10 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 - [ ] CU-3.t — Regenerar el spec de una feature dada de baja: los escritores paran (D-080) ⏱ **sin pasada**
 
 ### `sdd-spec-auditor` — validate / conflict / readiness (read-only) (6)
-- [ ] CU-3.f — Validar, conflictos y readiness — puntos 2 y 4: **2/3** (2026-09-25, 2026-09-28)
+- [ ] CU-3.f — Validar, conflictos y readiness — puntos 2 y 4: **SELLADOS 3/3** (tanda A, 2026-09-25/28; puntos 1, 3 y 5 sin serie)
 - [ ] CU-3.m — Validate en modo ligero: proporcionalidad sin relajar invariantes
 - [ ] CU-3.n — Conflict: precondición de specs insuficientes
-- [ ] CU-3.o — Readiness: sin índice, ciclos de dependencia y scope derivado — puntos 2 y 6: **2/3** (2026-09-25, 2026-09-28)
+- [ ] CU-3.o — Readiness: sin índice, ciclos de dependencia y scope derivado — puntos 2 y 6: **SELLADOS 3/3** (tanda A, 2026-09-25/28; puntos 1, 3, 4 y 5 sin serie)
 - [ ] CU-3.s — Conflict sobre el directorio entero: el consolidado se escribe donde el readiness lo busca ⏱ **sin pasada**
 - [ ] CU-3.w — Conflict: la salida del hallazgo es una vía que desella, y las retiradas no compiten (D-082) ⏱ **sin pasada**
 
@@ -63,7 +63,7 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 ### orquestador de la fase Spec — guardrail de cambio de producto y oferta de rigor (3)
 - [ ] CU-3.b — Expansión de alcance desde las respuestas del analysis
 - [ ] CU-3.p — Delta / gap-resolve: un cambio de producto encubierto no se integra en silencio
-- [ ] CU-3.r — El rigor (standard/ligero) se elige al crear el spec, no en el init (D-006) — puntos 1 y 4: **2/3** (2026-09-25, 2026-09-28)
+- [ ] CU-3.r — El rigor (standard/ligero) se elige al crear el spec, no en el init (D-006) — puntos 1 y 4: **SELLADOS 3/3** (tanda A, 2026-09-25/28; puntos 2, 3 y 5 sin serie)
 
 > **Capa determinista** (no son escenarios manuales): los índices y marcadores
 > (`sdd-features-index.py`, `sdd-gap-conventions`) están cubiertos por unittests; la calidad
@@ -81,11 +81,11 @@ que genere artefactos de Spec las admite.
 
 ```zsh
 ( setopt null_glob
-  grep -rnE "\b(wf|kb)-[a-z][a-z0-9-]*" spec/ prd/*_analysis.md prd/*_discovery.md \
+  grep -rnE "\b(wf|kb)-[a-z][a-z0-9-]*|\bPaso [0-9]" spec/ prd/*_analysis.md prd/*_discovery.md \
     --include="*.md" | grep -v "Generado por:" | grep -v "Generado via:" )
 ```
 
-→ **Esperado: 0 líneas.** La procedencia en su forma sancionada (`Generado por: wf-spec-discover`)
+→ **Esperado: 0 líneas.** Desde [[D-100]] el probe caza también las referencias a pasos de una skill (*"Paso 5.2"*), que le hablan al lector de un documento que no ha visto. La procedencia en su forma sancionada (`Generado por: wf-spec-discover`)
 es estado y se excluye a propósito.
 → **El `null_glob` y la lista de ficheros son parte del probe** (corregido 2026-09-21, medido en la
 pasada de `CU-3.d`). La versión anterior nombraba `prd/*_features.md`, que en topología `authoring`
@@ -1457,6 +1457,11 @@ inventa features sin discovery, o procesa todas sin avisar con >5.
 > contra eso y pierde. → [[D-098]] (v0.118.1): el mapa va en el `preview` de cada opción. Punto 2
 > verde. Serie a 0.
 
+> ****Tanda A, corrida 3** (2026-09-28, v0.118.2+c28651d, orquestador `opus-5-5`) — PASS, 1/3.** Las tres opciones de la pregunta de alcance llevaban la tabla en
+> su `preview`, y el `tool_result` lo confirma (*"selected preview: | ID | Feature | Actor | RFs …"*):
+> **es la primera vez en seis pasadas que el mapa llega a la pantalla**. Tras *"Otro subset"*, main
+> repitió el mapa completo como tabla al pedir los IDs. Punto 2 verde.
+
 ## CU-3.d — Generación por feature (features-first) en paralelo
 
 **Precondición:** discovery hecho y subset elegido (o todas).
@@ -1818,6 +1823,13 @@ por mayoría, o sella sin nombre detrás.
 > `portada desmentida por el arbitraje` en su cabecera de vigencia **y** les dio punto propio en
 > «Próximos pasos». Y trazó el ALTA hasta su origen: la respuesta por defecto de un gap informativo
 > (P-003) que se aplicó sin revisar.
+
+> ****Tanda A, corrida 3** (2026-09-28, v0.118.2+c28651d, orquestador `opus-5-5`) — puntos 2 y 4, PASS.** Alcance ceñido en los cinco informes. Desacuerdo entre
+> auditores en **las dos** tandas: main lo pasó al readiness como encargo de arbitraje, y este marcó
+> las dos portadas desmentidas en la vigencia y les dio su punto en «Próximos pasos». Sobrevivió a un
+> corte por límite de uso reanudando al auditor cortado. **Con esta, sellado 3/3 en esos puntos** —corridas 1 a 3 sobre v0.117.3, v0.118.0 y v0.118.2;
+> entre ellas no cambió nada de lo que miden—. El escenario sigue abierto: el resto de sus puntos no
+> tiene serie.
 
 > **Pasada 1 del punto 1 (2026-08-27, v0.83.0) — PASS.** `wf-spec-validate` sobre
 > `transaction-management`: veredicto `APROBADO` con los tres checks (completitud 8/8, pureza,
@@ -2320,6 +2332,12 @@ alguno falla en cualquiera de ellas.
 > detalle vive en esos informes. **Puntos 5 y 6 verdes** en los cuatro: ni un comando, y el conflicto
 > se ofrece aplicarlo. Arreglado en la plantilla en v0.118.2 ([[D-099]]). Serie a 0.
 
+> ****Tanda A, corrida 3** (2026-09-28, v0.118.2+c28651d, orquestador `opus-5-5`) — PASS, 1/3.** Los dos cierres abren con *"Iteración sobre el subset […]"*,
+> distinguen esta iteración / previa / pendientes, y el de **segunda** tanda lista el mapa de
+> features y los tres informes de conflictos con su ruta —diciendo cuál queda desmentido por el
+> arbitraje—. Sin comandos, estados coherentes con el índice y el readiness, y el conflicto se ofrece
+> aplicarlo.
+
 ## CU-3.o — Readiness: sin índice, ciclos, scope derivado, sello y alcance del veredicto
 
 **Precondición:** según el sub-escenario: (1) directorio de features sin `_features.md`;
@@ -2393,6 +2411,13 @@ fuese a bloquear el pipeline por su cuenta, o lee un informe estancado como vige
 > ****Tanda A, corrida 2** (2026-09-28, v0.118.0+05840d1, orquestador `opus-5-5`) — puntos 2 y 6, PASS (2/3).** Punto 2: **dos** ciclos independientes que
 > cubren las cinco features, así que la sección de fases queda vacía, cada ciclo con su causa, y el
 > informe se completa igual. Punto 6: 3 VIGENTE / 2 ESTANCADO con su acción.
+
+> ****Tanda A, corrida 3** (2026-09-28, v0.118.2+c28651d, orquestador `opus-5-5`) — puntos 2 y 6, PASS.** Punto 2: cinco ciclos que unen las cinco features,
+> fuera del orden y con un orden práctico propuesto sin abortar nada. Punto 6: 3 VIGENTE / 2 ESTANCADO
+> con su acción. De paso destapó por qué los ciclos solo aparecen aquí: cuatro de cinco READMEs
+> decían *"Requiere: Ninguna"* usando modelos ajenos → [[D-100]]. **Con esta, sellado 3/3 en esos puntos** —corridas 1 a 3 sobre v0.117.3, v0.118.0 y v0.118.2;
+> entre ellas no cambió nada de lo que miden—. El escenario sigue abierto: el resto de sus puntos no
+> tiene serie.
 
 ## CU-3.p — Delta / gap-resolve: un cambio de producto encubierto no se integra en silencio
 
@@ -2523,3 +2548,9 @@ sobre una feature que expande alcance / toca shared models**.
 > Standard, como en la tanda anterior. Si para estas prefieres Ligero, dímelo."* La línea sale justo
 > antes de lanzar los escritores, así que no hay hueco para contestar; se deja así a propósito
 > —esperar respuesta devolvería la fricción que la regla quita, y el usuario puede interrumpir.
+
+> ****Tanda A, corrida 3** (2026-09-28, v0.118.2+c28651d, orquestador `opus-5-5`) — puntos 1 y 4, PASS.** Rigor ofrecido antes de invocar, una sola pregunta, y
+> en la segunda tanda *"Sigo con Standard, como en la tanda anterior. Si prefieres Ligero para estas
+> tres, dímelo."* **Con esta, sellado 3/3 en esos puntos** —corridas 1 a 3 sobre v0.117.3, v0.118.0 y v0.118.2;
+> entre ellas no cambió nada de lo que miden—. El escenario sigue abierto: el resto de sus puntos no
+> tiene serie.

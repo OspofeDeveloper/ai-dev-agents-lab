@@ -34,5 +34,10 @@
 
 ## Dependencias
 
-- **Requiere**: [feature(s) que deben implementarse antes, si las hay — o "Ninguna"]
+- **Requiere**: [la feature dueña de **cada** modelo compartido que este spec usa y no es suyo — o "Ninguna" solo si no usa ninguno]
+
+<!-- "Requiere" se deriva de la tabla de Shared Models del spec, con la misma regla que aplica la
+     medición de readiness: si usas un modelo cuyo dueño es otra feature, dependes de ella (D-100).
+     No es "qué conviene implementar antes" a tu juicio. Dos features que se requieren entre sí es
+     un ciclo real: déjalo escrito, que es lo que permite verlo antes del readiness. -->
 - **Bloquea**: [feature(s) que dependen de esta — o "Ninguna"]
