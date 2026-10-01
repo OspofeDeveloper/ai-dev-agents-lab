@@ -19,9 +19,16 @@
 
 - Discovery: `<path>_discovery.md`
 - Features index: `<path>_features.md` (actualizado incrementalmente)
-- Specs: `features/<nombre>/spec/<nombre>_spec.md` (recién generados + preexistentes; features planas legacy: sin subcarpeta)
-- Conflict report: `<path>_conflict_report.md` (si aplica)
+- Specs, **una línea por cada spec del índice** —los de esta tanda y los de tandas anteriores—, con
+  su ruta completa:
+  - `features/<nombre>/spec/<nombre>_spec.md` (esta tanda)
+  - `features/<nombre>/spec/<nombre>_spec.md` (tanda anterior)
+- Informes de conflictos, uno por línea y con su ruta completa (los de tandas anteriores, marcados así)
 - Readiness report: `<path>_readiness_report.md` (si aplica)
+
+<!-- Rutas que se pueden abrir: nada de llaves ni comodines (`{a,b}/spec/<nombre>_spec.md`).
+     Medido en la corrida 3 de CU-3.c (D-103): la segunda tanda listó solo sus 4 specs, con llaves,
+     y dejó fuera los 2 de la tanda anterior. -->
 
 > **La lista va completa en cada tanda, no solo en la primera ([[D-099]]).** En la segunda y
 > siguientes también el discovery y **los informes de conflictos de esta tanda, con su ruta**
@@ -78,10 +85,6 @@
 > "Las features marcadas como LISTA pueden avanzar a planificación: [lista]. Dime cuál quieres
 > planificar —o si prefieres empezar por todas— y me encargo."
 
-**Si hay features `PENDIENTE_GENERACIÓN`:**
-> "Quedan [N] features identificadas en el discovery que aún no se han procesado: [lista de
-> IDs]. Cuando quieras generarlas, dímelo indicando cuáles."
-
 **Si todo está listo y no hay pendientes** (es decir: los specs están además **validados** —
 recién generados no lo están):
 > "Todas las features están listas para planificar. Dime por cuál empezamos."
@@ -92,3 +95,7 @@ Después de los bloques de arriba, ejecuta `sdd-project-status.py <raíz_spec> -
 cierra con **"Quedan N pendientes"** y un `AskUserQuestion` sobre el primero, según la tabla de
 seguimiento de la guía de la fase. Los bloques de siguientes pasos explican; la pregunta es la que
 hace avanzar.
+
+> **Las features sin generar no llevan bloque propio** ([[D-103]]): son un pendiente más de la lista
+> y salen en ella. Un *"Quedan N features sin spec, dime cuáles"* justo antes de *"Quedan N
+> pendientes"* dice lo mismo dos veces —medido en las dos tandas de la corrida 3 de `CU-3.c`—.

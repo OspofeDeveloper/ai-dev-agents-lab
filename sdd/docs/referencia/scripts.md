@@ -97,7 +97,11 @@ Informe PM read-only: agrega el estado real de las features escaneando disco.
 Con `--spec-pending`, los **pendientes de la fase Spec** en orden fijo —readiness desactualizado,
 gaps críticos, respuestas reabiertas, conflictos `ALTA`, ciclos, alcance derivado, specs sin validar,
 conflictos `MEDIA`, features sin generar—, cada uno con la acción y si bloquea planificar. Es lo que
-el hilo principal ofrece al cerrar cada flujo de Spec ([[D-102]]).
+el hilo principal ofrece al cerrar cada flujo de Spec ([[D-102]]). Un ciclo cuyas dependencias
+respalda **todas** la tabla de shared models del índice no es un pendiente: sale en `grupos`
+(*"se planifican juntas"*); solo bloquea el que tiene alguna dependencia sin respaldo, y la nombra.
+El pendiente de validar ofrece solo los specs listos y deja en `en_espera` los que aún tienen que
+cambiar por un pendiente anterior ([[D-103]]).
 
 - **Exit:** `0` siempre.
 

@@ -6,6 +6,28 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-103 — Un ciclo del dominio se planifica en grupo; la lista de pendientes no inventa ni ofrece lo que no está listo
+
+- **Fecha:** 2026-10-01 · **Estado:** Adoptada (el criterio del ciclo, acordado con el usuario). · **Relacionada:** [[D-102]] (la lista que corrige), [[D-100]] (`Requiere` derivado de los shared models), [[D-099]] (la lista de artefactos del cierre), [[D-047]].
+
+**Contexto.** La corrida 3 de `CU-3.c`/`CU-3.y` (v0.120.0) fue la primera con la lista de pendientes de [[D-102]] en uso, sobre un banco con preguntas críticas, un conflicto `ALTA`, un `MEDIA` y un ciclo de cuatro features. Las dos ofertas salieron bien, pero aparecieron cuatro defectos. (1) **El script inventaba una flecha**: escribía el componente fuerte del grafo como cadena en orden de ID —*"F-001 → F-004 → F-005 → F-007 → F-001"*— y F-004 no declara depender de F-005. (2) **El ciclo era del dominio y el script lo trataba como un error**: una cuenta necesita sus movimientos y un movimiento su cuenta, y cada una de las nueve dependencias del grupo la respalda un modelo compartido de la tabla del índice. Aun así lo marcaba bloqueante, aconsejaba *"decidir qué dependencia sobra"* —ninguna sobra— y contradecía al readiness, que lo trataba como un grupo a coordinar. (3) **El pendiente de validar metía specs que aún tienen que cambiar** (F-001, con dos preguntas críticas y un `ALTA`), y main los filtraba por su cuenta. Tras *"Lo dejo para luego"* además recitó una lista suya, con F-004 dentro. (4) **El cierre de la segunda tanda** listaba solo sus 4 specs, con una ruta con llaves que no se abre, y los dos cierres repetían las features sin generar justo antes de *"Quedan N"*.
+
+**Decisión.**
+
+1. **Un ciclo es un grupo, no un camino**: se nombra por sus miembros, sin flechas.
+2. **Un ciclo cuyas dependencias respalda todas la tabla de shared models** —B es dueña de un modelo que A referencia— **no es un pendiente**: sale en `grupos` (*"se planifican juntas"*) y el cierre lo dice en una línea, sin preguntar. Si alguna dependencia no tiene respaldo, el ciclo bloquea y nombra **esas**, una opción por cada una.
+3. **Validar ofrece solo los specs listos**: los que esperan a una pregunta crítica, una respuesta reabierta, un conflicto `ALTA` o un ciclo con error van a `en_espera` con su motivo. Validarlos sería sellar para desellar.
+4. **"Lo dejo para luego" se contesta con una línea** y nada más.
+5. **El cierre de features-first** lista una línea con ruta completa por cada spec del índice y los informes de conflictos; sin llaves ni comodines. Y pierde el bloque de features sin generar, que ya es un pendiente de la lista.
+
+**Alternativas descartadas.** *Que el ciclo deje de bloquear solo si no hay un conflicto entre sus features* —lo que se planteó primero—: el conflicto ya es su propio pendiente, y además bloquearía el ciclo, así que el mismo problema contaría dos veces. Y en un dominio como este casi siempre hay alguno, así que el ciclo nunca saldría. *Que ningún ciclo bloquee*: un `Requiere` puesto de más —sin modelo que lo respalde— es justo el error que el pendiente debe cazar. *Sacar un camino real del componente*: mejor que la cadena falsa, pero un grupo de cuatro con nueve dependencias no se explica con una de sus vueltas.
+
+**Consecuencias / aprendizaje.** **Lo que sale del script es lo que el usuario se cree, así que tiene que ser exacto incluso en el formato.** Un componente fuerte escrito como cadena parecía un dato y era un artefacto del orden de los IDs. Y la regla de seguimiento tenía un hueco justo en la salida que más se usa: decía qué ofrecer, pero no qué decir al no aceptar la oferta, y ahí main volvió a improvisar la lista de memoria que la regla quería evitar. Se mide en `CU-3.aa` (ciclos y validar) y en `CU-3.z` punto 1.
+
+**Referencias.** `scripts/sdd-project-status.py` (`_shared_owners`, `grupos`, `en_espera`) · `tests/test_sdd_spec_pending.py` (4 tests nuevos) · `pipeline/spec/routing.md` (seguimiento) · `pipeline/spec/skills/wf-spec-features-first/references/output_template.md` · `docs/referencia/scripts.md` · `conformance/casos-de-uso/cu-03-specs.md` (`CU-3.aa`; `CU-3.c` sellado) · `CHANGELOG.md` 0.121.0.
+
+---
+
 ## D-102 — La fase Spec gana seguimiento: una lista que sale de ficheros y un cierre que ofrece el siguiente
 
 - **Fecha:** 2026-09-28 · **Estado:** Adoptada (opción B de las tres valoradas con el usuario; las tres decisiones de diseño, en su opción recomendada). · **Relacionada:** [[D-099]] y [[D-097]] (lo que se repite se degrada), [[D-082]] (la vía que desella), [[D-089]] (el readiness que envejece), [[D-077]] (lo que promete un estado).

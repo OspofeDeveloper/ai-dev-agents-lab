@@ -347,9 +347,11 @@ def build(directory: Path) -> str:
 #   1 gaps críticos abiertos    (análisis y specs)
 #   2 respuestas reabiertas     → specs escritos con la respuesta anterior
 #   3 conflictos ALTA           (tabla arbitrada del readiness)
-#   4 ciclos de dependencias    (`Requiere` de los READMEs, D-100)
+#   4 ciclos de dependencias    (`Requiere` de los READMEs, D-100) que NO respalda la
+#                               tabla de shared models; los que sí respalda son grupos que
+#                               se planifican juntos, un aviso y no un pendiente (D-103)
 #   5 alcance derivado          sin formalizar ni aceptar (bloquea validar, D-102)
-#   6 specs sin validar
+#   6 specs sin validar         (separa los listos de los que esperan a 1-4, D-103)
 #   7 conflictos MEDIA          (informes de conflicto, sin arbitrar; no bloquean)
 #   8 features sin generar
 
@@ -415,6 +417,22 @@ def _gap_blocks(text: str):
 def _mtime_iso(path: Path) -> str:
     from datetime import datetime, timezone
     return datetime.fromtimestamp(path.stat().st_mtime, timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
+def _shared_owners(features_md: str) -> dict:
+    """owner_fid -> {fids que referencian algún modelo suyo}, desde la tabla de shared models."""
+    out = {}
+    for row in _table_rows(features_md, "Tabla de shared models"):
+        if len(row) < 3:
+            continue
+        owner = FID_RE.findall(row[1])
+        if owner:
+            out.setdefault(owner[0], set()).update(FID_RE.findall(row[2]))
+    return out
+
+
+def _y(items: list[str]) -> str:
+    return items[0] if len(items) == 1 else ", ".join(items[:-1]) + " y " + items[-1]
 
 
 def _cycles(graph: dict) -> list[list[str]]:
@@ -548,15 +566,34 @@ def spec_pending(directory: Path) -> dict:
                 opciones=fids)
 
     # ── 4. Ciclos (Requiere de los READMEs) ──
+    # Un ciclo es un grupo (componente fuerte), no un camino: se nombra por sus miembros y
+    # nunca como cadena de flechas, que inventaría aristas que no existen (D-103). Si cada
+    # dependencia del grupo la respalda un modelo compartido —B es dueña de un modelo que A
+    # referencia—, el ciclo es del dominio (una cuenta necesita sus movimientos y un
+    # movimiento su cuenta): no hay nada que quitar, se planifican juntas. Solo bloquea si
+    # alguna dependencia no tiene ese respaldo, y entonces se nombra esa.
     graph = {}
     for fid, rd in readmes.items():
         req = re.search(r"^\s*-\s*\*\*Requiere\*\*\s*:\s*(.*)$", read_text(rd), re.MULTILINE)
         graph[fid] = [f for f in FID_RE.findall(req.group(1) if req else "") if f != fid]
+    owners = _shared_owners(features_md)
+    grupos = []
     for comp in _cycles(graph):
+        nombres = _y([label.get(f, f) for f in comp])
+        sueltas = [(a, b) for a in comp for b in graph.get(a, ())
+                   if b in comp and a not in owners.get(b, set())]
+        if not sueltas:
+            grupos.append({"features": comp,
+                           "que": f"{nombres} dependen unas de otras a través de sus modelos "
+                                  "compartidos: se planifican juntas."})
+            continue
         add("ciclo", comp,
-            "Dependencia circular: " + " → ".join(label.get(f, f) for f in comp + comp[:1]) + ".",
-            "Decidir qué dependencia sobra; suele deshacerse al resolver el conflicto que la causa.",
-            "wf-spec-delta sobre la feature cuya dependencia sobra")
+            f"Dependencia circular entre {nombres}. Sin un modelo compartido que la respalde: "
+            + "; ".join(f"{a} dice necesitar a {b} sin usar ningún modelo suyo"
+                        for a, b in sueltas) + ".",
+            "Revisar si esas dependencias hacen falta; la que sobre se quita de su spec.",
+            "wf-spec-delta sobre la feature cuya dependencia sobra",
+            opciones=[f"{a} → {b}" for a, b in sueltas])
 
     # ── 5. Alcance derivado y 6. specs sin validar ──
     derivadas, sin_validar = [], []
@@ -575,10 +612,30 @@ def spec_pending(directory: Path) -> dict:
                 "wf-prd-change | wf-spec-validate --accept-derived-scope")
         sin_validar.append(fid)
     if sin_validar:
-        add("validar", sin_validar,
-            f"{len(sin_validar)} spec(s) en borrador: " + ", ".join(label[f] for f in sin_validar) + ".",
+        # Validar un spec que aún tiene que cambiar es sellarlo para desellarlo: los que
+        # esperan a un pendiente anterior que los toca se separan y no se ofrecen (D-103).
+        motivo = {}
+        for it in items:
+            if it["tipo"] in ("gap_critico", "reabierto", "conflicto_alta", "ciclo"):
+                que = {"gap_critico": f"pregunta {it.get('gap')}",
+                       "reabierto": f"respuesta reabierta {it.get('gap')}",
+                       "conflicto_alta": f"conflicto {it.get('conflicto')}",
+                       "ciclo": "dependencia circular"}[it["tipo"]]
+                for f in it["features"]:
+                    motivo.setdefault(f, [])
+                    if que not in motivo[f]:
+                        motivo[f].append(que)
+        listos = [f for f in sin_validar if f not in motivo]
+        espera = [{"feature": f, "motivo": motivo[f]} for f in sin_validar if f in motivo]
+        que = (f"{len(listos)} spec(s) en borrador listos para validar: "
+               + ", ".join(label[f] for f in listos) + "." if listos
+               else "Ningún spec en borrador está listo para validar todavía.")
+        if espera:
+            que += " Esperan a lo anterior: " + "; ".join(
+                f"{label[e['feature']]} ({', '.join(e['motivo'])})" for e in espera) + "."
+        add("validar", listos, que,
             "Validarlos (de uno en uno o todos juntos); sin sello no se pueden planificar.",
-            "wf-spec-validate", derivadas=derivadas)
+            "wf-spec-validate", derivadas=derivadas, en_espera=espera)
 
     # ── 7. Conflictos MEDIA: los que el readiness mantiene tras arbitrar ──
     # De su tabla «Conflictos MEDIA abiertos». Un readiness de antes de D-102 no la trae:
@@ -590,7 +647,7 @@ def spec_pending(directory: Path) -> dict:
             add("conflicto_media", fids,
                 f"Conflicto {row[0]} (media) entre " + " y ".join(label.get(f, f) for f in fids)
                 + (f": {desc}" if desc else ""),
-                "Conviene resolverlo antes de validar; no bloquea la planificación.",
+                "No bloquea; si el arreglo toca un spec ya validado, ese spec vuelve a validarse.",
                 "elegir dueña → wf-spec-delta sobre la otra", bloquea=False, conflicto=row[0],
                 opciones=fids)
     else:
@@ -620,14 +677,15 @@ def spec_pending(directory: Path) -> dict:
     for n, it in enumerate(items, 1):
         it["orden"] = n
     return {"total": len(items), "bloqueantes": sum(1 for i in items if i["bloquea_plan"]),
-            "readiness_vigente": readiness_vigente, "items": items}
+            "readiness_vigente": readiness_vigente, "items": items, "grupos": grupos}
 
 
 def render_pending(data: dict) -> str:
     out = ["# Pendientes de la fase Spec", ""]
+    notas = [f"> Nota (no es un pendiente): {g['que']}" for g in data.get("grupos", [])]
     if not data["items"]:
         out.append("Nada pendiente: todas las specs generadas están validadas y sin bloqueos.")
-        return "\n".join(out) + "\n"
+        return "\n".join(out + ([""] + notas if notas else [])) + "\n"
     out.append(f"{data['total']} pendiente(s), {data['bloqueantes']} de ellos impiden planificar. "
                "En orden:")
     out.append("")
@@ -635,6 +693,8 @@ def render_pending(data: dict) -> str:
         marca = "" if it["bloquea_plan"] else " _(no bloquea)_"
         out.append(f"{it['orden']}. {it['que']}{marca}")
         out.append(f"   → {it['accion']}")
+    if notas:
+        out += [""] + notas
     return "\n".join(out) + "\n"
 
 

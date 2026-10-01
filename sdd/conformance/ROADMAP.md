@@ -120,6 +120,14 @@ para garantizar que ningún skill se queda sin casos en los cuatro ejes de prueb
 > cada cierre ofreciendo el siguiente. Escenario nuevo `CU-3.z`, a medir en la tanda de continuación
 > sobre el banco de una corrida de la tanda A, sin reset.
 
+> 🧪 **CU-3.c/y, corrida 3** (v0.120.0): 🔒 **sella `CU-3.c`** (3/3, el mapa en el `preview`);
+> `CU-3.y` FALLO del punto 4 en la segunda tanda —specs anteriores fuera, rutas con llaves—, con la
+> línea de modo ya bien en las dos; `CU-3.z`, de paso, ofrece bien pero recita una lista de memoria
+> tras *"lo dejo para luego"*. `CU-3.u`, `CU-3.b` y `CU-3.a` sin medir: la gobernanza leyó como
+> aclaración una respuesta que en la corrida 2 leyó como ampliación. Y el script de pendientes
+> inventaba una flecha en el ciclo y bloqueaba uno del dominio → [[D-103]] (v0.121.0), con escenario
+> nuevo `CU-3.aa`.
+
 > ⏱ **Cuatro escenarios nacen sin pasada del barrido de enlazado lateral de Spec**
 > ([[D-078]]/[[D-079]], 2026-09-14): **CU-9.o** (evolucionar una feature dada de baja se deniega, y
 > el estado sobrevive incluso sin hook), **CU-7.s** (la reactivación es la única vuelta atrás y no

@@ -2,6 +2,18 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.121.0 — 2026-10-01
+
+**La lista de pendientes deja de inventar y de bloquear lo que no toca** — [[DECISIONS D-103]].
+
+- ✅ **Registrado** (v0.120.0+ed7a5b0): 🔒 **`CU-3.c` SELLADO 3/3** —el mapa de features en el `preview` de cada opción, tres pasadas seguidas—. La línea de modo del cierre sale literal en las dos tandas ([[DECISIONS D-101]] funciona). `CU-3.y` FALLO del punto 4 en la segunda tanda, serie a 0. `CU-3.u`, `CU-3.b` y `CU-3.a` sin medir: no se dio su precondición.
+- 🔴 **El ciclo se escribía como una cadena con una flecha que no existe** (*"F-004 → F-005"*, sin que F-004 dependa de F-005). Ahora se nombra como grupo.
+- 🟠 ⚠ **Un ciclo que respaldan los modelos compartidos ya no bloquea**: sale en `grupos` como *"se planifican juntas"*, y el cierre lo dice en una línea. Solo bloquea el que tiene alguna dependencia sin respaldo, y la nombra; la oferta trae una opción por cada una.
+- 🟠 ⚠ **Validar solo ofrece los specs listos**; los que aún tienen que cambiar (pregunta crítica, conflicto `ALTA`, respuesta reabierta, ciclo con error) quedan en `en_espera` con su motivo.
+- 🟠 **"Lo dejo para luego" se contesta con una línea**, sin recitar otra lista de memoria (`CU-3.z` punto 1).
+- 🟠 **El cierre de features-first lista cada spec del índice con su ruta completa** —esta tanda y las anteriores, sin llaves ni comodines— y deja de repetir las features sin generar antes de *"Quedan N"*.
+- **Conformance:** escenario nuevo `CU-3.aa`. 4 tests nuevos.
+
 ## 0.120.0 — 2026-09-28
 
 **La fase Spec gana seguimiento** — [[DECISIONS D-102]].

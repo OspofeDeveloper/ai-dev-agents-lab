@@ -30,15 +30,15 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 - [ ] CU-3.k — Analyze: contaminación técnica detiene y las preguntas de riesgo van neutras
 
 ### `wf-spec-discover` — mapa de features y ownership (`sdd-spec-explorer`) (2)
-- [ ] CU-3.c — Discovery: mapa de features y elección de subset — **FALLO** 2026-09-25 y 2026-09-28 (punto 1: el mapa nunca llega al usuario, [[D-097]] → [[D-098]]); **2/3** (2026-09-28 ×2, [[D-098]])
+- [x] CU-3.c — Discovery: mapa de features y elección de subset — **SELLADO 3/3** (2026-09-28 ×2 y 2026-09-29, anclas v0.118.2 → v0.120.0, orquestador `opus-5-5`; el mapa en el `preview`, [[D-098]])
 - [ ] CU-3.i — Discovery: ownership ambiguo de shared model para en checkpoint humano
 
 ### `wf-spec-features-first` — orquestador del flujo features-first (4)
 - [x] CU-3.d — Generación por feature (features-first) en paralelo — **SELLADO 3/3** (2026-09-23/24, anclas v0.117.0 → v0.117.2 con los cuatro puntos intactos, orquestador `opus-5-5`)
 - [ ] CU-3.l — Features-first: `--features` con IDs inexistentes en el discovery
-- [ ] CU-3.u — Features-first: la decisión de alcance viaja al fan-out y un `STOP_*` se presenta (D-081) — puntos 1 y 2: **1/3** (2026-09-28); punto 3 sin medir en spec
+- [ ] CU-3.u — Features-first: la decisión de alcance viaja al fan-out y un `STOP_*` se presenta (D-081) — puntos 1 y 2: **1/3** (2026-09-28); punto 3 sin medir en spec; 2026-09-29 **sin medir** (la gobernanza no vio expansión)
 - [ ] CU-3.v — Features-first: un discovery que ya existe se reutiliza, no se regenera (D-081) ⏱ **sin pasada**
-- [ ] CU-3.y — Features-first: el resumen de cierre cumple su plantilla y dice la verdad sobre los artefactos ([[D-099]]) — **FALLO** retro 2026-09-25 y 2026-09-28 (puntos 1 y 4); **FALLO** 2026-09-28 (primera tanda sin línea de modo, [[D-101]]); serie a 0
+- [ ] CU-3.y — Features-first: el resumen de cierre cumple su plantilla y dice la verdad sobre los artefactos ([[D-099]]) — **FALLO** retro 2026-09-25 y 2026-09-28 (puntos 1 y 4); **FALLO** 2026-09-28 (primera tanda sin línea de modo, [[D-101]]); **FALLO** 2026-09-29 (punto 4 en la segunda tanda: specs anteriores fuera y rutas con llaves, [[D-103]]); serie a 0
 
 ### `wf-spec-fast-track` — spec directo de una feature (`sdd-spec-writer`) (3)
 - [ ] CU-3.e — Spec directo de una feature (fast-track)
@@ -61,10 +61,11 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 - [ ] CU-3.h — Evolucionar un spec con requisitos nuevos (delta): los tres gates (D-073)
 
 ### orquestador de la fase Spec — guardrail de cambio de producto y oferta de rigor (3)
-- [ ] CU-3.b — Expansión de alcance desde las respuestas del analysis — **FALLO** 2026-09-28 (punto 2: marca derivada en una feature no afectada, [[D-101]]); punto 1 verde
+- [ ] CU-3.b — Expansión de alcance desde las respuestas del analysis — **FALLO** 2026-09-28 (punto 2: marca derivada en una feature no afectada, [[D-101]]); punto 1 verde; 2026-09-29 **sin medir**
 - [ ] CU-3.p — Delta / gap-resolve: un cambio de producto encubierto no se integra en silencio
 - [ ] CU-3.r — El rigor (standard/ligero) se elige al crear el spec, no en el init (D-006) — puntos 1 y 4: **SELLADOS 3/3** (tanda A, 2026-09-25/28; puntos 2, 3 y 5 sin serie)
-- [ ] CU-3.z — Seguimiento de la fase: la lista de pendientes sale de ficheros y cada cierre ofrece el siguiente ([[D-102]]) ⏱ **sin pasada**
+- [ ] CU-3.z — Seguimiento de la fase: la lista de pendientes sale de ficheros y cada cierre ofrece el siguiente ([[D-102]]) — de paso en 2026-09-29: punto 2 verde, **punto 1 FALLO** tras *"Lo dejo para luego"* ([[D-103]]); sin serie
+- [ ] CU-3.aa — Seguimiento: un ciclo del dominio se planifica en grupo, uno sin respaldo bloquea y se nombra ([[D-103]]) ⏱ **sin pasada**
 
 > **Capa determinista** (no son escenarios manuales): los índices y marcadores
 > (`sdd-features-index.py`, `sdd-gap-conventions`) están cubiertos por unittests; la calidad
@@ -330,7 +331,9 @@ nombra el contrato que la pasada mide.
    → **Y en los informativos, si eliges repasarlos** ([[D-101]]): aceptar la opción por defecto se
      guarda como **aceptación** (*"Acepta la asunción por defecto: …"*), no como si el texto de la
      asunción lo hubieras escrito tú. **FALLO:** `Respuesta` igual al texto de la asunción, sin marca.
-     Medido en la corrida 2 de `CU-3.c`/`CU-3.y`, la primera que tomó ese camino.
+     Medido en la corrida 2 de `CU-3.c`/`CU-3.y`, la primera que tomó ese camino. **Sin medir aún
+     con el arreglo**: en la corrida 3 se eligió *"Aplicarlas y seguir"*. Para medirlo, elegir
+     *"Repasarlas ahora"* y aceptar al menos una por defecto.
    → **Ojo al verificar:** que el frontmatter no declare `Write` **no lo impide**
      (`allowed-tools` no es enforcement, [[D-038]]). Hay que mirar los logs.
 
@@ -1412,6 +1415,11 @@ alcance derivado sin override ni avisos, o si marca indiscriminadamente.
 > camino *"repasar los informativos"* guardó P-003 y P-004 aceptados como si fueran respuestas del
 > usuario. → [[D-101]] (v0.119.0).
 
+> ****CU-3.c/y, corrida 3** (2026-09-29, v0.120.0+ed7a5b0, orquestador `opus-5-5`) — sin medir.** La gobernanza no vio expansión en las respuestas (ver `CU-3.u`),
+> así que no hubo nada que marcar: las siete entradas del discovery y los seis specs son `PRD`, y el
+> índice no avisa de ninguna incoherencia. Es coherente, pero no discrimina: el punto 2 necesita una
+> feature derivada al lado de otras que no lo son.
+
 > **Dos capas, y ninguna sobra ([[CU-3.a]] pasada 7).** El guardrail vive en **dos sitios** y cada
 > uno ve cosas distintas **por construcción**: el de `wf-spec-features-first` corre en main, que
 > **no lee el PRD** (Regla de oro), así que solo detecta lo que se delata en el **texto de la
@@ -1478,6 +1486,12 @@ inventa features sin discovery, o procesa todas sin avisar con >5.
 > ****CU-3.c/y, corrida 2** (2026-09-28, v0.118.3+d8f929b, orquestador `opus-5-5`) — PASS, 2/3.** Las tres opciones con la tabla en su `preview` (confirmado por el
 > `tool_result`), y el mapa repetido al pedir los IDs —esta vez con una columna extra de qué modelos
 > posee cada feature—. Punto 2 verde.
+
+> ****CU-3.c/y, corrida 3** (2026-09-29, v0.120.0+ed7a5b0, orquestador `opus-5-5`) — PASS, 3/3: 🔒 SELLADO.** Las tres opciones de la pregunta de alcance llevan
+> su tabla en el `preview` —*"Núcleo primero"* las tres features que propone, *"Todas"* y *"Otro subset"*
+> el mapa completo—, confirmado por el `tool_result`; tras *"Otro subset"*, main repite el mapa entero
+> al pedir los IDs. Punto 2 verde: con 7 features no procesa todas sin preguntar. Tres pasadas limpias
+> sobre v0.118.2 → v0.120.0 desde que el mapa va en el `preview` ([[D-098]]).
 
 ## CU-3.d — Generación por feature (features-first) en paralelo
 
@@ -2232,6 +2246,15 @@ reporta como error genérico.
 > **solo F-005** (deudas) con el aviso citando P-001 — pero F-005 no estaba en ninguna tanda, así que
 > la marca **en un spec** no se pudo ver. La corrida siguiente la incluye.
 
+> ****CU-3.c/y, corrida 3** (2026-09-29, v0.120.0+ed7a5b0, orquestador `opus-5-5`) — sin medir: no se dio la precondición.** La respuesta a la deuda, casi igual
+> a la de la corrida 2 (*"se tiene que registrar como entrada a la cuenta o tarjeta que indique el
+> usuario"*), la gobernanza la dio esta vez por **aclaración**: el PRD ya compromete que el gasto de
+> la deuda sale de una cuenta, y saldarla cierra el lado simétrico. Las dos lecturas son defendibles,
+> y eso es lo que importa para el escenario: **con una respuesta natural en la frontera, la precondición
+> sale o no según la corrida.** Para medirlo seguro, una respuesta que la propia pregunta ya señala
+> como capacidad nueva —en el banco de MyOps, a P-003: *"quiero una notificación aunque tenga la app
+> cerrada"*—. F-005 se generó con `Origen de alcance: PRD`, coherente con su entrada del discovery.
+
 > **Por qué faltaba ([[D-081]]).** El gate estaba bien escrito y bien situado —en el hilo principal,
 > que es el único sitio donde se puede presentar ([[D-045]])—, pero el prompt del fan-out no llevaba
 > el flag correspondiente. Y como cada escritor recibe `--analysis`, **reevalúa** por su cuenta: el
@@ -2371,6 +2394,16 @@ alguno falla en cualquiera de ellas.
 > invierte el patrón de las corridas 1 y 2 —ahí fallaba la segunda—: la línea como **instrucción** se
 > sostiene a ratos. → [[D-101]] (v0.119.0): la plantilla la trae **literal**, para copiarla. Serie a 0.
 
+> ****CU-3.c/y, corrida 3** (2026-09-29, v0.120.0+ed7a5b0, orquestador `opus-5-5`) — FALLO del punto 4, en la segunda tanda.** La línea de modo, literal y la
+> primera **en las dos tandas**: [[D-101]] funciona. Primera tanda limpia en los seis puntos. La
+> segunda cumple 1, 2, 3, 5 y 6 —todos los bloques: preguntas críticas, conflicto `ALTA`, `MEDIA`,
+> ciclo, validación y F-006—, pero su lista de artefactos trae solo los 4 specs de esta tanda, y como
+> `spec/features/{registro-de-movimientos,cuentas-y-tarjetas,…}/spec/<nombre>_spec.md`: una ruta que
+> no se abre, y sin los dos specs de la tanda anterior que la plantilla pide. Discovery, índice, los 4
+> informes de conflictos y readiness, sí. Y los dos cierres repetían lo que falta generar justo antes
+> de *"Quedan N pendientes"*. → [[D-103]] (v0.121.0): una línea con ruta completa por cada spec del
+> índice, y fuera el bloque de features sin generar. Serie a 0.
+
 ## CU-3.z — Seguimiento de la fase: la lista de pendientes sale de ficheros y cada cierre ofrece el siguiente ⏱ **sin pasada**
 
 **Precondición:** un banco con specs generados y pendientes de varios tipos —el que deja una corrida
@@ -2416,6 +2449,46 @@ toca?"*— cierra con **"Quedan N"** y una pregunta sobre el primero. Vías por 
 siguiente con su salida de dejarlo, y las vías de conflicto, lote, alcance derivado y reapertura se
 cumplen · FALLO si una oferta sale de memoria, un cierre no ofrece, o una vía se salta el sello.
 **Desviación → reportar:** issue citando `CU-3.z`.
+
+> ****CU-3.c/y, corrida 3** (2026-09-29, v0.120.0+ed7a5b0, orquestador `opus-5-5`) — de paso, sin contar para la serie: punto 2 verde, punto 1 FALLO.** Las dos
+> ofertas son el `items[0]` del script, con su texto y su total —*validar las dos* (2 pendientes) y
+> *responder P-031* (7)—, con las opciones de su tipo y *"Lo dejo para luego"*. Pero al elegir dejarlo
+> en la segunda, main encadenó una lista propia de cuatro opciones que nadie pidió, y en ella *"validar
+> F-002 y F-004"*: F-004 estaba en el ciclo, y se saltó el `MEDIA`. Es la lista de memoria que el punto
+> 1 prohíbe. Y el script tenía su parte: su pendiente de validar metía specs que aún tienen que cambiar
+> (F-001 con dos preguntas críticas y un `ALTA`), y escribía el ciclo como una cadena con una flecha
+> que no existe. → [[D-103]] (v0.121.0).
+
+## CU-3.aa — Seguimiento: un ciclo del dominio se planifica en grupo, uno sin respaldo bloquea y se nombra ⏱ **sin pasada**
+
+**Precondición:** un banco con un grupo de features que dependen unas de otras —el de la tanda A lo
+trae: movimientos, cuentas, deudas y objetivos—. Para la segunda mitad, una dependencia que **no**
+respalde ningún modelo compartido (se fuerza añadiendo a mano, en el README de una feature, un
+`Requiere` hacia otra de la que no usa nada).
+**Mecanismo:** `sdd-project-status.py <raíz_spec> --spec-pending` (`grupos` y el pendiente `ciclo`)
+y la regla de seguimiento de la guía de la fase.
+
+1. **El ciclo del dominio no bloquea.** Con el banco tal cual, pides *"¿qué me toca?"*.
+   → **Esperado:** no aparece un pendiente de ciclo; el cierre dice en una línea que esas features
+     *"se planifican juntas"*, sin preguntar por ello. El script lo trae en `grupos`.
+   → **FALLO:** ofrecer *"decidir qué dependencia sobra"* sobre un ciclo que respaldan los modelos
+     compartidos, o contar el grupo entre los pendientes.
+2. **El grupo se nombra como grupo.**
+   → **Esperado:** sus miembros, sin flechas. **FALLO:** una cadena `A → B → C → A` —el componente
+     fuerte no es un camino, y la cadena inventa dependencias que nadie declaró—.
+3. **Una dependencia sin respaldo sí bloquea, y se nombra.** Añades el `Requiere` forzado.
+   → **Esperado:** sale un pendiente de ciclo que nombra **esa** dependencia (*"X dice necesitar a Y
+     sin usar ningún modelo suyo"*) y, cuando le toque, la oferta trae una opción por cada una de
+     ellas, nunca por las que sí están respaldadas.
+4. **Validar solo ofrece lo que está listo.** Con preguntas críticas o un conflicto `ALTA` abiertos.
+   → **Esperado:** la oferta de validar nombra solo los specs que no esperan a otro pendiente; los
+     demás salen como *"esperan a lo anterior"* con su motivo.
+   → **FALLO:** ofrecer sellar un spec que todavía tiene que cambiar.
+
+**Resultado:** PASS si el ciclo del dominio queda como aviso, el grupo se escribe sin flechas, el
+ciclo con una dependencia suelta bloquea nombrándola y validar no ofrece specs en espera · FALLO si
+alguno no se cumple.
+**Desviación → reportar:** issue citando `CU-3.aa`.
 
 ## CU-3.o — Readiness: sin índice, ciclos, scope derivado, sello y alcance del veredicto
 

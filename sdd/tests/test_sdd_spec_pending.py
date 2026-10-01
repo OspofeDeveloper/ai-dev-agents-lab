@@ -35,8 +35,8 @@ ANALYSIS = """\
 """
 
 
-def index(features):
-    """features: [(fid, name, ruta|None, estado, avisos)]"""
+def index(features, shared=()):
+    """features: [(fid, name, ruta|None, estado, avisos)]; shared: [(modelo, owner, refs)]"""
     out = ["# Features Index: Prj",
            "> Discovery: `../prd/prj_discovery.md` (fuera de esta raíz de artefactos)", "",
            "## Features", ""]
@@ -46,6 +46,10 @@ def index(features):
                 f"- **Estado**: {estado}",
                 f"- **Origen de alcance**: {'PRD + analysis respondido' if avisos != 'ninguno' else 'PRD'}",
                 f"- **Avisos de gobernanza**: {avisos}", ""]
+    if shared:
+        out += ["## Tabla de shared models", "",
+                "| Modelo | Feature Owner | Features que lo referencian |", "|---|---|---|"]
+        out += [f"| {m} | {o}: x | {refs} |" for m, o, refs in shared] + [""]
     return "\n".join(out) + "\n"
 
 
@@ -73,8 +77,8 @@ class Bank:
               spec(fid, estado, avisos, extra_header, body))
         write(self.spec / "features" / name / "README.md", readme(fid, requiere))
 
-    def index(self, features):
-        write(self.spec / "spec_features.md", index(features))
+    def index(self, features, shared=()):
+        write(self.spec / "spec_features.md", index(features, shared))
 
     def analysis(self, p1="_(pendiente)_"):
         write(self.prd / "prj_analysis.md", ANALYSIS.format(p1=p1))
@@ -148,6 +152,62 @@ class SpecPendingTest(unittest.TestCase):
         self._base()
         ciclo = next(i for i in self.b.pending()["items"] if i["tipo"] == "ciclo")
         self.assertEqual(ciclo["features"], ["F-001", "F-002"])
+
+    def test_ciclo_sin_respaldo_nombra_la_dependencia_y_no_inventa_flechas(self):
+        """Sin tabla de shared models, ninguna arista está respaldada: bloquea y las nombra."""
+        self._base()
+        ciclo = next(i for i in self.b.pending()["items"] if i["tipo"] == "ciclo")
+        self.assertTrue(ciclo["bloquea_plan"])
+        self.assertEqual(sorted(ciclo["opciones"]), ["F-001 → F-002", "F-002 → F-001"])
+        self.assertIn("Dependencia circular entre", ciclo["que"])
+
+    def _tres_en_ciclo(self, shared):
+        """F-001 → F-002 → F-003 → F-001; ninguna arista F-002 → F-003 inventada."""
+        b = self.b
+        b.feature("F-001", "movimientos", requiere="F-002")
+        b.feature("F-002", "cuentas", requiere="F-001, F-003")
+        b.feature("F-003", "objetivos", requiere="F-001")
+        rows = [(f, n, f"features/{n}/spec/{n}_spec.md", "BLOQUEADA", "ninguno")
+                for f, n in (("F-001", "movimientos"), ("F-002", "cuentas"),
+                             ("F-003", "objetivos"))]
+        b.index(rows, shared)
+        b.analysis("respondida")
+        time.sleep(0.01)
+        b.readiness("", "", "")
+        return b.pending()
+
+    def test_ciclo_respaldado_por_modelos_es_un_grupo_y_no_bloquea(self):
+        data = self._tres_en_ciclo([("Movimiento", "F-001", "F-002, F-003"),
+                                    ("Cuenta", "F-002", "F-001"),
+                                    ("Objetivo", "F-003", "F-002")])
+        self.assertNotIn("ciclo", tipos(data))
+        self.assertEqual([g["features"] for g in data["grupos"]], [["F-001", "F-002", "F-003"]])
+        validar = next(i for i in data["items"] if i["tipo"] == "validar")
+        self.assertEqual(validar["features"], ["F-001", "F-002", "F-003"])
+        r = run_script("sdd-project-status.py", self.b.spec, "--spec-pending")
+        self.assertIn("se planifican juntas", r.stdout)
+        nota = next(l for l in r.stdout.splitlines() if "se planifican juntas" in l)
+        self.assertNotIn("→", nota)
+
+    def test_ciclo_con_una_arista_suelta_bloquea_solo_por_esa(self):
+        data = self._tres_en_ciclo([("Movimiento", "F-001", "F-002, F-003"),
+                                    ("Cuenta", "F-002", "F-001")])
+        ciclo = next(i for i in data["items"] if i["tipo"] == "ciclo")
+        self.assertEqual(ciclo["opciones"], ["F-002 → F-003"])
+        self.assertEqual(data["grupos"], [])
+
+    def test_validar_separa_los_que_esperan_a_un_pendiente_anterior(self):
+        self._base()
+        self.b.feature("F-004", "categorias")
+        idx = self.b.spec / "spec_features.md"
+        idx.write_text(idx.read_text() + "### F-004: categorias\n"
+                       "- **Ruta spec**: features/categorias/spec/categorias_spec.md\n"
+                       "- **Estado**: BLOQUEADA\n- **Avisos de gobernanza**: ninguno\n")
+        os.utime(self.b.spec / "spec_readiness_report.md")
+        validar = next(i for i in self.b.pending()["items"] if i["tipo"] == "validar")
+        self.assertEqual(validar["features"], ["F-004"])
+        self.assertEqual([e["feature"] for e in validar["en_espera"]], ["F-001", "F-002"])
+        self.assertIn("conflicto CF-F001-01", validar["en_espera"][0]["motivo"])
 
     def test_media_descartada_por_el_readiness_no_aparece(self):
         """Con la tabla MEDIA en el readiness, un MEDIA de un informe suelto no sale."""
