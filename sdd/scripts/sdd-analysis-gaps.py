@@ -247,6 +247,7 @@ LIST_FIELDS = {
     "contexto": "contexto",
     "problema": "problema",
     "afecta": "afecta",
+    "ejemplo": "ejemplo",
     "pregunta para el cliente": "question",
     # La asuncion por defecto de un gap [INFORMATIVO] es una DECISION DE PRODUCTO
     # que se aplica sola si nadie responde (D-057). Se emite para que quien
@@ -347,6 +348,7 @@ def list_gaps(text: str, source: str, only_gap: str = None) -> dict:
              "contexto": fields.get(g["id"], {}).get("contexto"),
              "problema": fields.get(g["id"], {}).get("problema"),
              "afecta": fields.get(g["id"], {}).get("afecta"),
+             "ejemplo": fields.get(g["id"], {}).get("ejemplo"),
              "asuncion": fields.get(g["id"], {}).get("asuncion"),
              "answered": g["answered"]}
             for g in gaps
@@ -509,7 +511,7 @@ def main() -> int:
                 mark = "✓" if g["answered"] else "·"
                 print(f"{mark} {g['id']}{flags} {g['title']}")
                 if only_gap:
-                    for label in ("contexto", "problema", "afecta"):
+                    for label in ("contexto", "problema", "afecta", "ejemplo"):
                         if g.get(label):
                             print(f"    {label.capitalize()}: {g[label]}")
                 if g["question"]:

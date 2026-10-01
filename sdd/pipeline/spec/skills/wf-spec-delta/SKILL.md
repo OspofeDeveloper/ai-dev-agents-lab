@@ -136,8 +136,10 @@ INSTRUCCION:
    - `POSIBLE_CAMBIO_DE_PRODUCTO` — redefine el alcance del MVP, una exclusion del PRD o una regla
      transversal. **No decidas tu**: nombra QUE lo redefine y devuelvelo.
    - `AMBIGUO` — el requisito admite **mas de una lectura funcional**. Enumera las lecturas, cada
-     una con lo que implicaria en HUs y CAs. **No elijas**: elegir por el usuario es fabricar
-     alcance ([[D-039]]/[[D-063]]).
+     una con **que le pasa al actor del spec** (no los CAs que cambian: eso va aparte, en el
+     cuerpo del informe) y si obliga a tocar otra feature; y da **un ejemplo** sacado del spec
+     —un journey, un CA— que muestre la diferencia entre ellas ([[D-109]]). **No elijas**: elegir
+     por el usuario es fabricar alcance ([[D-039]]/[[D-063]]).
 6. **Escribe tu el informe** en `<mismo directorio que el spec>/<basename>_v<X.Y>_delta_analysis.md`,
    con `X.Y` la version del spec que analizas (ej.: `features/auth/spec/auth_spec.md` v1.2 →
    `features/auth/spec/auth_v1.2_delta_analysis.md`), e informa del path: eres su autor
@@ -159,8 +161,9 @@ Según el veredicto que devuelva el agente:
   - **Tratarlo como delta de esta feature** → continúa, y el informe queda con el aviso de
     gobernanza puesto por el agente. Es una decisión del usuario, y queda registrada como tal.
 - **`AMBIGUO`** → presenta las lecturas que devolvió el agente, **una opción por lectura**, más la
-  salida honesta:
-  - Cada lectura, con lo que implica en HUs y CAs.
+  salida honesta, con el **formato de decisión** de la guía de la fase ([[D-109]]): qué hay que
+  decidir, el ejemplo del agente, por qué ahora, y cada opción con qué le pasa al actor y qué otra
+  feature cambia. Ni "lecturas", ni HUs, ni CAs en el texto que ve el usuario.
   - **"No lo decido ahora"** → la ambigüedad **se marca**, no se resuelve: vuelve a delegar pidiendo
     que registre un gap `[D-XXX]` `[CRÍTICO]` con las lecturas como opciones y `_(pendiente)_` como
     respuesta. Eso es la segunda mitad de [[D-040]] aplicada aquí: **sin humano, se marca**.

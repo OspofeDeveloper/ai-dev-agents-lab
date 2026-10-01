@@ -109,6 +109,7 @@ lleva además `Asunción por defecto`, y un `[CRÍTICO]` lleva `Afecta`):
 ### [P-001][CRÍTICO] [Título del gap]
 - **Contexto**: [dónde aparece la ambigüedad al escribir este spec]
 - **Afecta**: [HU-001, HU-003]
+- **Ejemplo**: [opcional — un caso concreto con el actor, sacado del documento (un journey, una frase del PRD), que haga entendible la pregunta; nunca inventado]
 - **Pregunta para el cliente**: [pregunta concreta]
 - **Respuesta**: _(pendiente)_
 

@@ -222,6 +222,7 @@ El marcador `_(pendiente)_` se inserta en el campo **"Respuesta"** de cada gap h
 ### [P-001][CRÍTICO] Título descriptivo del gap
 - **Contexto**: [dónde se detectó el gap en el documento]
 - **Afecta**: [HU-001, HU-003 — lista de HUs que no pueden completarse sin esta respuesta]
+- **Ejemplo**: [opcional — un caso concreto con el actor del documento, sacado de sus journeys o CAs, nunca inventado]
 - **Pregunta para el cliente**: [pregunta concreta y específica — sin inventar opciones]
 - **Respuesta**: _(pendiente)_
 
@@ -231,6 +232,8 @@ El marcador `_(pendiente)_` se inserta en el campo **"Respuesta"** de cada gap h
 - **Respuesta**: _(pendiente)_
 - **Asunción por defecto**: [qué se aplicará si el cliente no responde]
 ```
+
+> **Nota sobre `Ejemplo`** ([[D-109]]): es lo que hace entendible la pregunta a quien la responde —*"el Usuario transfiere 50 € de su cuenta a su tarjeta; luego quiere borrar solo el ingreso"*—. Se presenta tal cual, así que sale del documento (un journey, un CA, una frase del PRD) y nunca se inventa: un ejemplo inventado cuela un comportamiento que nadie decidió. Si el documento no da para uno, se omite.
 
 > **Nota sobre `Afecta`**: El campo `Afecta` es obligatorio en gaps `[CRÍTICO]` y permite trazar qué HUs quedarán marcadas como `[INCOMPLETO]` si el gap no se responde. No aplica a gaps `[INFORMATIVO]` (estos siempre tienen asunción por defecto).
 

@@ -44,6 +44,17 @@ y cierra **copiando literal el campo `resumen`** como primera frase del cierre �
 
 **Cómo se delega cada vía ([[D-104]]).** Las skills con `context: fork` —completar gaps, conflictos, readiness, y las de generación— se invocan como en `wf-spec-features-first`: tool **`Agent`**, el `subagent_type` de su frontmatter (`agent:`), **`run_in_background: false`**, y el encargo *"Lee `.claude/skills/<skill>/SKILL.md` y ejecuta sus pasos TÚ MISMO sobre: <argumentos>. NO uses el `Skill` tool"*. **Nunca con el `Skill` tool**: lanza el fork en segundo plano y **puede perder los argumentos** —medido en `CU-3.z`: el readiness llegó al auditor sin encargo (*"dime qué quieres que revise"*) y la auditoría de conflictos, dos veces seguidas—, y el cierre se escribe sin su resultado. Las que corren en el hilo principal (validar, delta, features-first) sí se invocan con `Skill`.
 
+**Toda decisión que le pides al usuario sigue un formato ([[D-109]]).** Preguntas críticas, conflictos, lecturas ambiguas de un cambio, el gate de cambio de producto: el usuario decide **cómo se comporta el producto**, no qué documento se corrige, así que se le presenta en ese idioma:
+
+> **Qué hay que decidir** — una frase sobre el comportamiento, sin hablar de specs.
+> **Ejemplo** — un caso concreto con el **actor de la spec** (el Usuario, un cliente de la API, el operador, el asistente…), **tal cual viene** del gap, del informe o del análisis: nunca lo inventes; si no viene, se omite.
+> **Por qué ahora** — qué bloquea y qué desbloquea (*"es lo que impide validar movimientos y deudas"*).
+> **Situación** — dónde está: *"pregunta 1 de 2 de este tema"*, *"después de esto queda validar"* (de `preguntas_criticas` y de `items[1]`).
+> **Opciones** — cada una, *qué le pasa al actor* y, en una línea, *qué otra parte del producto cambia*.
+> Los IDs (`P-031`, `F-001`, `CF-F001-01`), al final y entre paréntesis.
+
+Con `AskUserQuestion`, todo eso va en el texto de la pregunta —tras el `resumen`— y en la descripción de cada opción ([[D-108]]). Ni "HU", ni "CA", ni "lecturas", ni nombres de fichero en el texto principal.
+
 **Preguntas críticas: primero qué hay, luego cómo tratarlo ([[D-105]], [[D-106]]).** Cuando `items[0]` es un `gap_critico`, mira `preguntas_criticas` del JSON:
 
 - **Si hay una sola**, la oferta *es* la presentación: tras el `resumen`, contexto, a qué afecta y la pregunta, y *"Respóndeme con tus palabras, o dime que la dejas para luego"*, **sin `AskUserQuestion`** ([[D-105]]).
@@ -70,7 +81,7 @@ Las opciones de un `AskUserQuestion` nunca son **respuestas** redactadas por ti:
 | `readiness` | Rehacer la medición ahora — o, si trae `conflictos`, *revisar los conflictos de esas features y rehacer* | `wf-spec-conflict` por cada feature de `conflictos` (en un mismo mensaje) y después `wf-spec-readiness` |
 | `gap_critico` | Una sola: ninguna, se presenta y se pide la respuesta ([[D-105]]). Varias: el mapa y *Todas ahora · Solo las de algunas features · De una en una · Lo dejo para luego* ([[D-106]]) | presentar con `--list --gap` y dictado literal: `sdd-analysis-gaps.py --answer` (análisis) o `wf-spec-gap-resolve … --answer P-XXX "<texto>"` (spec) |
 | `reabierto` | Revisar los specs afectados | `wf-spec-delta` sobre cada uno, con la respuesta nueva |
-| `conflicto_alta` / `conflicto_media` | Una opción **por feature** de `opciones` (*"la dueña es X"*) | la **otra** se corrige con `wf-spec-delta`, que reabre su validación. **No** `wf-spec-amend`: solo admite aclarar un CA sin cambiar comportamiento |
+| `conflicto_alta` / `conflicto_media` | **La decisión de producto** de `decision` ([[D-109]]): qué hay que decidir, el ejemplo, una opción por cada una de sus `opciones` (título; descripción = efecto en el actor y *"Cambia: …"*) y *Lo dejo para luego*. **Sin** `decision` (informes anteriores), una opción por feature de `opciones` (*"la dueña es X"*) | `wf-spec-delta` sobre **cada spec** de `cambia` de la opción elegida —en un mismo mensaje si son varios—, con el texto de la opción, literal, como requisito; si el usuario escribe la suya, sus palabras. Cada uno reabre su validación. **No** `wf-spec-amend`: solo admite aclarar un CA sin cambiar comportamiento |
 | `ciclo` | Una opción por dependencia de `opciones` (las que **no** respalda ningún modelo compartido) | `wf-spec-delta` sobre la feature cuya dependencia sobra |
 | `alcance_derivado` | Formalizarlo en el PRD (Recomendado) · Aceptarlo con nombre al validar | `wf-prd-change` · `wf-spec-validate` con aceptación |
 | `validar` | Todos juntos · Uno a uno — sobre `features` (los listos); los de `en_espera` no se ofrecen | `wf-spec-validate` en lote o por spec |

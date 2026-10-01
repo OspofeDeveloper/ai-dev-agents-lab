@@ -6,6 +6,27 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-109 — Las decisiones se presentan en el idioma del producto, con un ejemplo y desde el comportamiento
+
+- **Fecha:** 2026-10-01 · **Estado:** Adoptada (propuesta A, B y C, con la corrección del usuario de que valga para cualquier tipo de proyecto). · **Relacionada:** [[D-104]] (la pregunta se presenta, no se reformula), [[D-108]] (lo que se ve va dentro de la pregunta), [[D-073]] (lecturas ambiguas de un delta), [[D-082]] (la vía que desella).
+
+**Contexto.** El ecosistema guiaba bien —ofertas de la lista, respuestas literales, la vía correcta—, pero el usuario encontraba **liosas las decisiones**. En la pasada 3 de la tanda de continuación se ve por qué: (1) un conflicto se preguntaba como *"¿qué feature manda?"* —una decisión sobre documentos— y después hacía falta otra pregunta, la de las lecturas, para decidir lo que importaba: cómo se comporta el producto; (2) nada traía un ejemplo; (3) las opciones decían *"añade dos criterios y ajusta los de editar"*, el efecto en la spec y no en quien la usa; (4) se mezclaban "HU", "CA", "lecturas", IDs y nombres con guiones; (5) no se sabía si era la última pregunta del tema.
+
+**Decisión.**
+
+1. **Formato de toda decisión**, en la guía de la fase: *qué hay que decidir* (comportamiento, no documentos), *ejemplo* con el **actor de la spec** —el Usuario en una app, un cliente en una API, el operador, el asistente— tomado tal cual del gap, del informe o del análisis, *por qué ahora*, *situación*, y *opciones* con qué le pasa al actor y qué otra parte cambia; los IDs al final.
+2. **El ejemplo nunca se inventa.** Lo escribe quien tiene el documento delante —el analizador, el escritor, el auditor— en un campo `Ejemplo`; main lo copia o lo omite.
+3. **Un conflicto se resuelve por la decisión de producto.** El auditor escribe en su informe, por conflicto, una **Decisión de producto** con 2–4 opciones y *Cambia:* por cada una; `--spec-pending` la extrae en `decision`; main la presenta tal cual y lanza un delta sobre **cada** spec que cambie según la opción. Qué documento se corrige sale de la decisión, y deja de ser una pregunta.
+4. **Las lecturas ambiguas de un delta** vienen ya con ese formato: efecto en el actor, si toca otra feature y un ejemplo.
+
+**Alternativas descartadas.** *Solo más contexto en la pregunta de la dueña*: seguiría siendo una pregunta sobre documentos y haría falta la segunda. *Que main redacte el ejemplo*: un ejemplo inventado cuela un comportamiento que nadie decidió. *Hablar de "la app"*: el ecosistema sirve igual a una API o a un agente; el actor de la spec es el que vale en todos.
+
+**Consecuencias / aprendizaje.** **Al usuario se le pregunta por lo que conoce, que es su producto, no por la estructura de los documentos.** La decisión sobre documentos se deriva de la de producto, y preguntarla aparte duplica las preguntas —en la pasada 2, cada vuelta del conflicto eran dos—. Cambia lo que el usuario ve, así que la serie de `CU-3.z`, `CU-3.aa` y `CU-3.h` vuelve a empezar.
+
+**Referencias.** `pipeline/spec/routing.md` (formato y tabla de vías) · `wf-spec-conflict` (SKILL y plantilla) · `wf-spec-delta` (SKILL y plantilla) · `wf-spec-features-first/SKILL.md` (dictado) · `kb-gap-conventions` y las plantillas de gap de análisis y spec (`Ejemplo`) · `scripts/sdd-project-status.py` (`decision`) · `scripts/sdd-analysis-gaps.py` (`ejemplo`) · `tests/test_sdd_spec_pending.py` · `tests/test_sdd_analysis_gaps.py` · `conformance/casos-de-uso/cu-03-specs.md` · `CHANGELOG.md` 0.124.0.
+
+---
+
 ## D-108 — El `resumen` y el mapa de preguntas van dentro de la pregunta
 
 - **Fecha:** 2026-10-01 · **Estado:** Adoptada. · **Relacionada:** [[D-098]] (el mismo defecto con el mapa de features, y el mismo arreglo), [[D-104]] (`resumen`), [[D-106]] (el mapa de preguntas).

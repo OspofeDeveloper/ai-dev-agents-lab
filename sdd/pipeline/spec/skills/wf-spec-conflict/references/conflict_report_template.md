@@ -70,7 +70,23 @@
 que sostiene tu veredicto, cítala por lo que dice —"el mismo modelo con comportamientos distintos
 en dos CAs de features diferentes"—, nunca por el nombre de la kb que la define (D-091).]
 
-**Sugerencia de resolución**: [recomendación concreta — ej: "Considerar que HU-003 de feature-a es la definición canónica y eliminar la HU-007 de feature-b", o "Clarificar con el cliente qué feature es la responsable de X"]
+**Decisión de producto**:
+- **Qué hay que decidir**: [una frase sobre el comportamiento del producto, no sobre los documentos — ej: "qué pasa cuando alguien quiere cambiar o borrar un gasto que tiene una deuda asociada"]
+- **Ejemplo**: [un caso concreto con el actor de las specs, sacado de sus journeys o CAs — ej: "el Usuario paga 30 € de una cena por Ana y se registran el gasto y la deuda; después ve que eran 25 €"]
+- **Opción 1 — [título corto]**: [qué le pasa al actor con esta opción]. *Cambia:* [F-00X (nombre), F-00Y (nombre)]
+- **Opción 2 — [título corto]**: [qué le pasa al actor]. *Cambia:* [F-00X (nombre)]
+
+<!-- La Decisión de producto se presenta TAL CUAL al usuario (D-109): la extrae el script de
+     pendientes y el hilo principal la copia. Por eso:
+     - El Ejemplo sale de las specs o del PRD, NUNCA inventado: un ejemplo inventado cuela un
+       comportamiento que nadie ha decidido.
+     - Las opciones describen al ACTOR de las specs —Usuario, cliente de la API, operador, el
+       asistente…—, no los criterios: "el Usuario no puede borrar el gasto mientras exista la
+       deuda", no "se añaden dos CAs de bloqueo".
+     - Entre 2 y 4 opciones; incluye siempre las dos de "una se ajusta a la otra" si aplican.
+     - *Cambia:* nombra al menos un spec —el que tendrá que recogerlo—, aunque solo sea dejarlo
+       escrito. Es la lista sobre la que se corregirá con un delta.
+     - Sin recomendación: es una decisión de producto, no tuya. -->
 
 ---
 

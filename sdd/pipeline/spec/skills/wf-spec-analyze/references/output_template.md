@@ -111,6 +111,7 @@
 - **Contexto**: [cita del documento o descripción de dónde aparece la ambigüedad]
 - **Problema**: [qué decisión de producto queda sin cerrar, y qué no se puede comprobar mientras siga así — en los términos del producto, sin nombrar artefactos ni elementos del pipeline]
 - **Afecta**: [HU-001, HU-003 — lista de HUs que no pueden completarse sin esta respuesta]
+- **Ejemplo**: [opcional — un caso concreto con el actor, sacado del documento (un journey, una frase del PRD), que haga entendible la pregunta; nunca inventado]
 - **Pregunta para el cliente**: [pregunta concreta y específica, sin opciones inventadas]
 - **Respuesta**: _(pendiente)_
 
@@ -118,6 +119,7 @@
 - **Contexto**: [cita del documento o descripción de dónde aparece la ambigüedad]
 - **Problema**: [qué queda sin cerrar y qué condiciona mientras siga así — en los términos del producto]
 - **Afecta**: [HU-002]
+- **Ejemplo**: [opcional — un caso concreto con el actor, sacado del documento (un journey, una frase del PRD), que haga entendible la pregunta; nunca inventado]
 - **Pregunta para el cliente**: [pregunta neutra, sin empujar hacia una solución expansiva]
 - **Respuesta**: _(pendiente)_
 

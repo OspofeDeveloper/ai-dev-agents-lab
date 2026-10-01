@@ -1981,6 +1981,8 @@ Modo `analyze` produce `<feature>_delta_analysis.md`; modo `apply` integra prese
    → **Esperado:** el delegado **enumera las lecturas y no elige**; main las presenta con
      **una opción por lectura** —cada una con lo que implica en HUs y CAs— más la salida
      honesta **"no lo decido ahora"**.
+   → **Y con el formato de decisión** ([[D-109]]): cada lectura dice qué le pasa al actor y si
+     obliga a tocar otra feature, con un ejemplo del spec; no *"añade dos CAs"*.
    → **Esperado si eliges "no lo decido ahora":** la ambigüedad **se marca, no se resuelve**:
      vuelve a delegar pidiendo que registre un gap `[D-XXX]` `[CRÍTICO]` con las lecturas como
      opciones y `_(pendiente)_` como respuesta. Es la segunda mitad de [[D-040]] aplicada aquí:
@@ -2472,6 +2474,10 @@ toca?"*— cierra con **"Quedan N"** y una pregunta sobre el primero. Vías por 
    readiness— y *"¿qué me toca?"* responde con la misma lista, también en un repo solo de specs.
    → **Esperado:** *"Quedan N pendientes"* + `AskUserQuestion` con las opciones del tipo (una por
      feature en un conflicto; *todos juntos / uno a uno* al validar) y siempre *"Lo dejo para luego"*.
+   → **Toda decisión, con el mismo formato** ([[D-109]]): qué hay que decidir, el ejemplo (si lo
+     trae el gap o el informe), por qué ahora, la situación (*"pregunta 1 de 2"*) y las opciones
+     con su efecto en el actor; los IDs al final. **FALLO:** "HU", "CA" o "lecturas" en el texto
+     principal, o un ejemplo inventado.
    → **Con una sola pregunta crítica primero, sin `AskUserQuestion`** ([[D-105]]): presentada con
      contexto, a qué afecta y la pregunta, y *"respóndeme con tus palabras, o dime que la dejas para
      luego"*. **Con varias, primero el mapa** ([[D-106]]): una línea por pregunta (ID, feature,
@@ -2482,9 +2488,15 @@ toca?"*— cierra con **"Quedan N"** y una pregunta sobre el primero. Vías por 
    → **FALLO:** un cierre sin la oferta, o una oferta sin la salida de dejarlo.
 3. **"Lo dejo para luego" no rompe nada.**
    → **Esperado:** no se toca ningún fichero, y la próxima lista sale idéntica.
-4. **Un conflicto se resuelve por la vía que desella.** Eliges la dueña.
-   → **Esperado:** la **otra** feature se corrige con un delta, que reabre su validación; y el
-     siguiente pendiente pasa a ser **rehacer el readiness** (el spec tocado ya no es el que midió).
+4. **Un conflicto se resuelve por la vía que desella.** Te lo presenta como **decisión de producto**
+   ([[D-109]]): qué hay que decidir, un ejemplo sacado de las specs, por qué ahora, y cada opción con
+   qué le pasa al actor y qué spec cambia. Eliges una.
+   → **Esperado:** cada spec que cambia según la opción se corrige con un delta, que reabre su
+     validación; y el siguiente pendiente pasa a ser **revisar sus conflictos y rehacer el readiness**
+     (el spec tocado ya no es el que midió).
+   → **FALLO:** preguntar *"¿qué feature manda?"* cuando el informe trae la decisión; opciones que
+     hablan de criterios o documentos en vez de qué le pasa al actor; un ejemplo que no está en las
+     specs.
    → **FALLO:** corregirlo como enmienda de CA (solo admite aclarar, no cambiar comportamiento),
      editando a mano, o sin que el readiness salga desactualizado después.
 5. **Validar en lote.** Eliges *todos juntos*.

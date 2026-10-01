@@ -108,7 +108,9 @@ escrita para copiarla; el pendiente de readiness lleva `conflictos` cuando un sp
 de su propio informe de conflictos; y una respuesta reabierta alcanza a los specs que la citan, la
 declaran en `Respuestas del análisis aplicadas` o pertenecen a una feature que nombra su `Afecta`
 ([[D-104]]). Y `preguntas_criticas`, el mapa de las preguntas críticas abiertas —ID, feature, título y
-fichero— que se enseña antes de tratarlas cuando hay varias ([[D-106]]).
+fichero— que se enseña antes de tratarlas cuando hay varias ([[D-106]]). Cada conflicto lleva su
+`decision` —qué hay que decidir, ejemplo y opciones con su efecto y qué spec cambia—, sacada de la
+**Decisión de producto** de su informe ([[D-109]]).
 
 - **Exit:** `0` siempre.
 

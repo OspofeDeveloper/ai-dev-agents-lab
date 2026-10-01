@@ -442,6 +442,41 @@ def _y(items: list[str]) -> str:
     return items[0] if len(items) == 1 else ", ".join(items[:-1]) + " y " + items[-1]
 
 
+DECISION_FIELD_RE = re.compile(r"^\s*[-*]\s*\*\*(Qué hay que decidir|Ejemplo)\*\*\s*:\s*(.*)$",
+                               re.MULTILINE)
+OPCION_RE = re.compile(r"^\s*[-*]\s*\*\*Opción\s*\d+\s*[—–-]\s*(?P<titulo>[^*]+?)\*\*\s*:\s*"
+                       r"(?P<efecto>.*?)\s*\*Cambia:\*\s*(?P<cambia>.*)$", re.MULTILINE)
+
+
+def _decision(directory: Path, conflict_id: str) -> dict | None:
+    """La `Decisión de producto` de un conflicto, del informe que lo describe (D-109).
+
+    Se busca el bloque `### [CF-XXX]` en los informes de conflictos —por feature y
+    consolidado— y se toma el más reciente que la traiga: es lo que el hilo principal
+    presenta tal cual, en vez de preguntar qué documento manda."""
+    ids = [c.strip() for c in conflict_id.split("/")]
+    reports = sorted(list(directory.glob("features/*/spec/*_conflict_report.md"))
+                     + list(directory.glob("*_conflict_report.md")),
+                     key=lambda p: p.stat().st_mtime, reverse=True)
+    for rep in reports:
+        text = read_text(rep)
+        for cid in ids:
+            m = re.search(r"^###\s*\[" + re.escape(cid) + r"\][^\n]*\n(.*?)(?=^###\s|^##\s|\Z)",
+                          text, re.MULTILINE | re.DOTALL)
+            if not m or "Decisión de producto" not in m.group(1):
+                continue
+            block = m.group(1)
+            campos = {k: v.strip() for k, v in DECISION_FIELD_RE.findall(block)}
+            opciones = [{"titulo": o["titulo"].strip(), "efecto": o["efecto"].strip().rstrip("."),
+                         "cambia": sorted(set(FID_RE.findall(o["cambia"])), key=fid_sort_key)}
+                        for o in OPCION_RE.finditer(block)]
+            if opciones:
+                return {"que_decidir": campos.get("Qué hay que decidir", ""),
+                        "ejemplo": campos.get("Ejemplo", ""), "opciones": opciones,
+                        "informe": os.path.relpath(rep)}
+    return None
+
+
 def _cycles(graph: dict) -> list[list[str]]:
     """Componentes fuertemente conexos de tamaño > 1 (Tarjan)."""
     index, low, stack, on, out, counter = {}, {}, [], set(), [], [0]
@@ -606,9 +641,9 @@ def spec_pending(directory: Path) -> dict:
                 f"Conflicto {row[0]} entre " + " y ".join(label.get(f, f) for f in fids)
                 + (f": {desc}" if desc else "") + ("" if readiness_vigente
                                                     else " (según el readiness anterior)"),
-                "Elegir qué feature es la dueña; la otra se corrige y vuelve a validarse.",
-                "elegir dueña → wf-spec-delta sobre la otra", conflicto=row[0],
-                opciones=fids)
+                "Decidir cómo se comporta el producto; los specs que cambian se corrigen y vuelven a validarse.",
+                "decisión de producto → wf-spec-delta sobre cada spec que cambia", conflicto=row[0],
+                opciones=fids, decision=_decision(directory, row[0]))
 
     # ── 4. Ciclos (Requiere de los READMEs) ──
     # Un ciclo es un grupo (componente fuerte), no un camino: se nombra por sus miembros y
@@ -693,8 +728,8 @@ def spec_pending(directory: Path) -> dict:
                 f"Conflicto {row[0]} (media) entre " + " y ".join(label.get(f, f) for f in fids)
                 + (f": {desc}" if desc else ""),
                 "No bloquea; si el arreglo toca un spec ya validado, ese spec vuelve a validarse.",
-                "elegir dueña → wf-spec-delta sobre la otra", bloquea=False, conflicto=row[0],
-                opciones=fids)
+                "decisión de producto → wf-spec-delta sobre cada spec que cambia", bloquea=False,
+                conflicto=row[0], opciones=fids, decision=_decision(directory, row[0]))
     else:
         vistos = set()
         for rep in sorted(directory.glob("features/*/spec/*_conflict_report.md")):

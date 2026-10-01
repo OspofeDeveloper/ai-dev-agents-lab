@@ -226,6 +226,18 @@ class AnalysisGapsTest(unittest.TestCase):
         self.assertIsNone(g["problema"])
         self.assertIsNotNone(g["question"])
 
+    def test_list_emits_the_example_when_the_gap_has_one(self):
+        """D-109: el ejemplo es lo que hace entendible la pregunta; se emite tal cual."""
+        block = ("### [P-001][CRÍTICO] Título\n\n"
+                 "- **Contexto**: algo\n"
+                 "- **Ejemplo**: el Usuario transfiere 50 € y luego borra solo el ingreso\n"
+                 "- **Pregunta para el cliente**: ¿pregunta concreta?\n"
+                 "- **Respuesta**: _(pendiente)_\n\n---\n\n")
+        path = self.make(block)
+        r = run_script("sdd-analysis-gaps.py", path, "--list", "--json")
+        g = json.loads(r.stdout)["gaps"][0]
+        self.assertEqual(g["ejemplo"], "el Usuario transfiere 50 € y luego borra solo el ingreso")
+
     def test_list_joins_a_field_that_continues_on_the_next_line(self):
         # Un `Contexto` largo puede seguir en la linea siguiente. Se entrega
         # entero: es texto que se le ENSENA al usuario, no un resumen.

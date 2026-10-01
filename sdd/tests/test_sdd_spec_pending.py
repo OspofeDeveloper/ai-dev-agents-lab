@@ -279,6 +279,33 @@ class SpecPendingTest(unittest.TestCase):
         self.assertTrue(mapa[1]["fichero"].endswith("cuentas_spec.md"))
         self.assertTrue(mapa[0]["fichero"].endswith("prj_analysis.md"))
 
+    def test_conflicto_trae_la_decision_de_producto_del_informe(self):
+        """El conflicto se presenta como decisión de producto, del informe (D-109)."""
+        self._base()
+        write(self.b.spec / "features" / "movimientos" / "spec" / "movimientos_conflict_report.md",
+              "## Detalle de conflictos\n\n### [CF-F001-01] HU duplicada — Severidad: ALTA\n\n"
+              "**Decisión de producto**:\n"
+              "- **Qué hay que decidir**: qué pasa al borrar un gasto con deuda\n"
+              "- **Ejemplo**: el Usuario paga 30 € por Ana y luego ve que eran 25 €\n"
+              "- **Opción 1 — Gasto bloqueado**: el Usuario no puede borrarlo mientras exista la deuda. "
+              "*Cambia:* F-001 (movimientos)\n"
+              "- **Opción 2 — Se propaga**: borrar el gasto anula la deuda. *Cambia:* F-001 (movimientos), "
+              "F-002 (cuentas)\n\n## Inventario\n")
+        os.utime(self.b.spec / "spec_readiness_report.md")
+        alta = next(i for i in self.b.pending()["items"] if i["tipo"] == "conflicto_alta")
+        d = alta["decision"]
+        self.assertEqual(d["que_decidir"], "qué pasa al borrar un gasto con deuda")
+        self.assertIn("30 €", d["ejemplo"])
+        self.assertEqual([(o["titulo"], o["cambia"]) for o in d["opciones"]],
+                         [("Gasto bloqueado", ["F-001"]), ("Se propaga", ["F-001", "F-002"])])
+        self.assertIn("mientras exista la deuda", d["opciones"][0]["efecto"])
+
+    def test_conflicto_sin_decision_en_el_informe_la_deja_vacia(self):
+        self._base()
+        alta = next(i for i in self.b.pending()["items"] if i["tipo"] == "conflicto_alta")
+        self.assertIsNone(alta["decision"])
+        self.assertEqual(alta["opciones"], ["F-001", "F-002"])
+
     def test_media_descartada_por_el_readiness_no_aparece(self):
         """Con la tabla MEDIA en el readiness, un MEDIA de un informe suelto no sale."""
         self._base(media="")

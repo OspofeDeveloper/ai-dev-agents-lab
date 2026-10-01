@@ -132,8 +132,15 @@ THEN [resultado observable y verificable]
 ### [D-001][CRÍTICO] [Título del gap]
 - **Contexto**: [en qué parte de los nuevos requisitos aparece la ambigüedad]
 - **Problema**: [por qué este gap impide definir el cambio de forma verificable]
+- **Ejemplo**: [un caso concreto con el actor del spec, sacado de sus journeys o CAs, que muestre la diferencia — nunca inventado; si no lo hay, omite la línea]
 - **Pregunta**: [pregunta concreta y específica, sin opciones inventadas]
 - **Respuesta**: _(pendiente)_
+
+<!-- Si el veredicto es AMBIGUO, las lecturas van aquí, una por línea, con el formato de decisión
+     (D-109) — se le presentan al usuario tal cual:
+- **Opción 1 — [título corto]**: [qué le pasa al actor del spec]. *Cambia:* [solo este spec | este spec y F-00Y (nombre)]
+- **Opción 2 — [título corto]**: [qué le pasa al actor]. *Cambia:* [...]
+     Lo que cada una implica en HUs y CAs va en las secciones de arriba, no aquí. -->
 
 ### [D-002][INFORMATIVO] [Título del gap]
 - **Contexto**: [dónde aparece la ambigüedad]

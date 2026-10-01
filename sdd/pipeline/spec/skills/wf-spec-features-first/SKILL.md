@@ -218,7 +218,8 @@ Verifica que el archivo PRD existe; si no → informa con ruta exacta y detén.
    ```
 
    Escribe en el chat, **verbatim**, lo que devuelve: el ID y su título, el `contexto`, el
-   `problema`, el `afecta` y la **pregunta** literal. Si sus `flags` incluyen
+   `problema`, el `afecta`, el `ejemplo` si lo trae ([[D-109]]) y la **pregunta** literal, con una
+   línea de situación (*"pregunta 2 de 3"*). Si sus `flags` incluyen
    `PUEDE_REQUERIR_CR`, añade **una línea** avisando de que la respuesta puede expandir el
    producto y que entonces habrá que formalizarlo en el PRD (punto 8). Luego **cede el turno**:
    el usuario responde en texto libre.

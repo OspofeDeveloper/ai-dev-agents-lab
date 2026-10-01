@@ -2,6 +2,15 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.124.0 — 2026-10-01
+
+**Las decisiones se presentan en el idioma del producto** — [[DECISIONS D-109]].
+
+- 🟠 ⚠ **Un formato para toda decisión**: qué hay que decidir, un ejemplo concreto con el actor de la spec (sacado de ella, nunca inventado), por qué ahora, dónde estás (*"pregunta 1 de 2"*) y opciones con qué le pasa al actor y qué otra parte cambia. Los IDs al final. Vale para preguntas críticas, conflictos, lecturas ambiguas de un cambio y el gate de cambio de producto, y para cualquier tipo de proyecto: el actor es el de la spec —usuario, cliente de una API, operador, un asistente—.
+- 🟠 ⚠ **Un conflicto se resuelve decidiendo el comportamiento, no qué documento manda.** El informe de conflictos trae una **Decisión de producto** por conflicto, el script la extrae (`decision`) y main la presenta tal cual; se corrige con un delta cada spec que cambie según la opción elegida. Sin ella (informes anteriores), sigue la pregunta de la dueña.
+- 🟢 Los gaps admiten un campo `Ejemplo`, y `sdd-analysis-gaps.py --list` lo emite.
+- **Conformance:** `CU-3.z` puntos 2 y 4 y `CU-3.h` punto 3. 3 tests nuevos.
+
 ## 0.123.2 — 2026-10-01
 
 **El `resumen` y el mapa de preguntas, dentro de la pregunta** — [[DECISIONS D-108]].

@@ -107,7 +107,7 @@ Por cada conflicto:
 - Asigna la severidad según `kb-conflict-expert`: ALTA o MEDIA
 - Describe qué features están involucradas
 - Cita las secciones exactas en conflicto
-- Sugiere una posible resolución (sin imponer — es una sugerencia)
+- Escribe su **Decisión de producto** ([[D-109]]): qué hay que decidir, un ejemplo sacado de las specs, y de 2 a 4 opciones, cada una con **qué le pasa al actor** y qué spec cambia. Es lo que se le presentará al usuario tal cual: no la decisión sobre qué documento manda, sino sobre cómo se comporta el producto. Sin recomendar ninguna.
 
 > **El prefijo no es estética: casi nunca corres solo ([[D-090]]).** En el fan-out del Paso 7 de
 > `wf-spec-features-first` hay un auditor por spec nuevo, cada uno escribiendo su propio informe y
@@ -120,7 +120,7 @@ Por cada conflicto:
 > no hace falta que nadie reparta bloques antes de lanzar.
 
 > **Lo que escribes aquí lo lee una persona, y esa persona no invoca comandos.** La
-> **Sugerencia de resolución** va en lenguaje natural y nombra **la acción**, no el workflow que
+> **Decisión de producto** va en lenguaje natural y nombra **la acción**, no el workflow que
 > la ejecuta: *"formalizar el cambio en el PRD antes de seguir"*, no *"lanzar `wf-prd-change`"*;
 > *"pedir que se aclare el CA-004"*, no *"ejecutar `wf-spec-amend`"*. Los IDs y los veredictos
 > (`CF-F001-01`, `ALTA`, `SIN_CONFLICTOS`) **sí** se quedan: los parsean los gates.
