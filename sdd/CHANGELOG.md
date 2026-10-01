@@ -2,6 +2,13 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.123.2 — 2026-10-01
+
+**El `resumen` y el mapa de preguntas, dentro de la pregunta** — [[DECISIONS D-108]].
+
+- ✅ **Registrado** (v0.123.0+1bb7899, tanda de continuación, pasada 2): `CU-3.g` (1, 2, 3) y `CU-3.h` (1, 3) en serie; `CU-3.z` FALLO (5) y `CU-3.aa` FALLO (1). La reapertura de P-002 alcanzó a F-005 **sellado** sin citar la respuesta, y las seis specs se sellaron.
+- 🟠 **El `resumen` va en el texto del `AskUserQuestion` y el mapa de preguntas críticas en el `preview` de sus opciones**: puestos en un mensaje antes de la herramienta, salían parafraseados —*"4 de ellos interdependientes"* por *"4 impiden planificar"*—.
+
 ## 0.123.1 — 2026-10-01
 
 **Tres arreglos de la pasada 2 de la tanda de continuación** — [[DECISIONS D-107]].

@@ -54,18 +54,18 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 - [ ] CU-3.w — Conflict: la salida del hallazgo es una vía que desella, y las retiradas no compiten (D-082) ⏱ **sin pasada**
 
 ### `wf-spec-gap-resolve` — completar incompletos y confirmar inferidos (`sdd-spec-writer`) (2)
-- [ ] CU-3.g — Completar HUs incompletas (gap-resolve) — puntos 2 y 3: **1/3** (2026-10-01, con la respuesta guardada reescrita, [[D-104]])
+- [ ] CU-3.g — Completar HUs incompletas (gap-resolve) — puntos 2 y 3: **2/3** (2026-10-01 ×2); punto 1 (respuesta literal): **1/3**; punto 4: mapa a medias ([[D-108]])
 - [ ] CU-3.q — Gap-resolve: confirmación de `[INFERIDO]` (dos turnos, tres vías)
 
 ### `wf-spec-delta` — evolución incremental del spec (hilo principal + `sdd-spec-writer`) (1)
-- [ ] CU-3.h — Evolucionar un spec con requisitos nuevos (delta): los tres gates (D-073) — puntos 1 y 4: **1/3** (2026-10-01)
+- [ ] CU-3.h — Evolucionar un spec con requisitos nuevos (delta): los tres gates (D-073) — punto 1: **2/3**; punto 3: **1/3**; punto 4: **1/3** (2026-10-01)
 
 ### orquestador de la fase Spec — guardrail de cambio de producto y oferta de rigor (3)
 - [ ] CU-3.b — Expansión de alcance desde las respuestas del analysis — **FALLO** 2026-09-28 (punto 2: marca derivada en una feature no afectada, [[D-101]]); punto 1 verde; 2026-09-29 **sin medir**
 - [ ] CU-3.p — Delta / gap-resolve: un cambio de producto encubierto no se integra en silencio
 - [ ] CU-3.r — El rigor (standard/ligero) se elige al crear el spec, no en el init (D-006) — puntos 1 y 4: **SELLADOS 3/3** (tanda A, 2026-09-25/28; puntos 2, 3 y 5 sin serie)
-- [ ] CU-3.z — Seguimiento de la fase: la lista de pendientes sale de ficheros y cada cierre ofrece el siguiente ([[D-102]]) — de paso en 2026-09-29: punto 2 verde, **punto 1 FALLO** tras *"Lo dejo para luego"* ([[D-103]]); **FALLO** 2026-10-01 (puntos 5 y 7, [[D-104]]); 2, 3 y 4 verdes; sin serie
-- [ ] CU-3.aa — Seguimiento: un ciclo del dominio se planifica en grupo, uno sin respaldo bloquea y se nombra ([[D-103]]) — **FALLO** 2026-10-01 (punto 1: el aviso del grupo no sale, [[D-104]]); 2, 3 y 4 verdes
+- [ ] CU-3.z — Seguimiento de la fase: la lista de pendientes sale de ficheros y cada cierre ofrece el siguiente ([[D-102]]) — de paso en 2026-09-29: punto 2 verde, **punto 1 FALLO** tras *"Lo dejo para luego"* ([[D-103]]); **FALLO** 2026-10-01 (puntos 5 y 7, [[D-104]]); **FALLO** 2026-10-01 pasada 2 (punto 5: sin tabla, [[D-107]]); 1, 2, 3, 4 y 7 verdes en la pasada 2
+- [ ] CU-3.aa — Seguimiento: un ciclo del dominio se planifica en grupo, uno sin respaldo bloquea y se nombra ([[D-103]]) — **FALLO** 2026-10-01 (punto 1: el aviso del grupo no sale, [[D-104]]); **FALLO** 2026-10-01 pasada 2 (punto 1: `resumen` parafraseado, [[D-108]]); 2, 3 y 4 verdes en las dos
 
 > **Capa determinista** (no son escenarios manuales): los índices y marcadores
 > (`sdd-features-index.py`, `sdd-gap-conventions`) están cubiertos por unittests; la calidad
@@ -1943,6 +1943,13 @@ local del spec.
 > y pasó su versión. Y la skill se lanzó con el `Skill` tool, en segundo plano. → [[D-104]].
 > Ningún punto lo prohíbe todavía; se mide desde ahora como FALLO del punto 1 (*"no inventa"*).
 
+> ****Tanda de continuación, pasada 2** (2026-10-01, v0.123.0+1bb7899, orquestador `opus-5-5`) — puntos 1, 2 y 3 PASS (2/3 en 2 y 3; 1/3 en 1); punto 4 a medias.**
+> Cada pregunta, sacada con `--list --gap` y presentada con su contexto; respuestas en texto libre; el
+> spec **sin tocar hasta tener las dos**; un solo escritor, con `Agent` y en primer plano, con
+> `--answer` y las palabras exactas, que quedaron literales en el spec. **Punto 4:** la elección
+> *Todas ahora / De una en una / Lo dejo para luego* salió bien —sin la de features, porque las dos son
+> de F-001—, pero el mapa llegó como una frase parafraseada, no una línea por pregunta → [[D-108]].
+
 ## CU-3.h — Evolucionar un spec con requisitos nuevos (delta): los tres gates
 
 **Precondición:** un spec de feature ya generado al que llegan requisitos nuevos
@@ -2011,6 +2018,14 @@ delta analysis válido.
 > D-001/D-002 se guardaron reescritas, con añadidos; y el requisito se escribió en un fichero
 > temporal de sesión, con el segundo informe llamado `_v1.3_delta_analysis.md` y el primero sin
 > versión.
+
+> ****Tanda de continuación, pasada 2** (2026-10-01, v0.123.0+1bb7899, orquestador `opus-5-5`) — puntos 1 y 3 PASS (2/3 en 1; 1/3 en 3).** Tres deltas —dos sobre F-001
+> y uno sobre F-005, según quién fuera la dueña—, todos `analyze` → informe → `apply` con el escritor
+> en primer plano. Main **no preguntó contenido antes de analizar**: escribió el requisito con la
+> decisión literal (*"Manda deudas-y-reembolsos"*). El escritor devolvió `AMBIGUO` con tres lecturas
+> y sin elegir, y main las presentó una por opción más *"No lo decido ahora"*: el punto 3, por el
+> camino de [[D-073]]. Las tres respuestas, literales; informes nombrados por versión
+> (`_v1.1_`, `_v1.2_`, `_v1.0_`) y con `Requisito de origen`.
 
 ## CU-3.i — Discovery: ownership ambiguo de shared model para en checkpoint humano
 
@@ -2512,6 +2527,17 @@ cumplen · FALLO si una oferta sale de memoria, un cierre no ofrece, o una vía 
 > fallaba en falso—. Y los forks lanzados con `Skill`: el readiness y la auditoría de conflictos
 > llegaron **sin encargo** tres veces. → [[D-104]] (v0.122.0).
 
+> ****Tanda de continuación, pasada 2** (2026-10-01, v0.123.0+1bb7899, orquestador `opus-5-5`) — FALLO del punto 5; 1, 2, 3, 4 y 7 PASS.** **Punto 1:** todas las
+> ofertas fueron el `items[0]`, incluido *revisar los conflictos de F-001 y volver a medir* que ahora da
+> el script. **Punto 2:** cada cierre ofreció el siguiente con su salida. **Punto 3:** tres veces una
+> línea, sin herramientas. **Punto 4:** el conflicto dio tres vueltas —por las respuestas de la prosa,
+> que cerraban un hueco y abrían otro— y cada una fue dueña → delta sobre la otra → conflictos → readiness;
+> la tercera, con F-001 de dueña, corrigió F-005. **Punto 5:** seis auditorías en un mensaje, aprobador una
+> vez, seis sellos —F-001 incluida, sin el falso positivo—, **pero otra vez sin la tabla** → [[D-107]].
+> **Punto 7:** `Reabierto:`, respuesta literal, gobernanza reevaluada, y la lista alcanzó **F-005 sellado**
+> por el `Afecta` del gap. Delegaciones: todas con `Agent`, en primer plano y con encargo. Una frase en
+> inglés (*"Now the closing…"*) → [[D-107]].
+
 > ****CU-3.c/y, corrida 3** (2026-09-29, v0.120.0+ed7a5b0, orquestador `opus-5-5`) — de paso, sin contar para la serie: punto 2 verde, punto 1 FALLO.** Las dos
 > ofertas son el `items[0]` del script, con su texto y su total —*validar las dos* (2 pendientes) y
 > *responder P-031* (7)—, con las opciones de su tipo y *"Lo dejo para luego"*. Pero al elegir dejarlo
@@ -2558,6 +2584,13 @@ alguno no se cumple.
 > ofreció solo los listos mientras F-001/F-005 esperaban. Pero **el aviso del grupo no apareció en
 > ninguno de los 8 cierres**, aunque el script lo traía en `grupos` y la regla pedía decirlo. → [[D-104]]:
 > el script lo da dentro de `resumen`, una frase para copiar.
+
+> ****Tanda de continuación, pasada 2** (2026-10-01, v0.123.0+1bb7899, orquestador `opus-5-5`) — FALLO del punto 1; 2, 3 y 4 PASS.** El `resumen` no salió
+> literal: el usuario vio *"Quedan 6 pendientes, 4 de ellos interdependientes (F-001, F-004, F-005,
+> F-007)"* —confunde los cuatro bloqueantes con las cuatro del grupo—, porque main fue directo al
+> `AskUserQuestion` y el texto previo se pinta como resumen. Los cierres siguientes sí nombraron el
+> grupo. El ciclo forzado salió nombrando solo `F-002 → F-003`, y validar ofreció solo lo listo. →
+> [[D-108]] (v0.123.2): el `resumen`, dentro de la pregunta.
 
 ## CU-3.o — Readiness: sin índice, ciclos, scope derivado, sello y alcance del veredicto
 

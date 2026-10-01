@@ -38,7 +38,7 @@ La diferencia entre 1 y 2 la define `kb-product-change-governance` Regla 2 (`DEP
 !python3 .sdd/scripts/sdd-project-status.py <raíz_spec> --spec-pending --json
 ```
 
-y cierra **copiando literal el campo `resumen`** como primera frase del cierre —trae *"Quedan N pendientes; M impiden planificar"* y el aviso de los grupos que se planifican juntos ([[D-104]]); como regla en prosa, el aviso no salió en ninguno de 8 cierres— más **un `AskUserQuestion` sobre el primero** (`items[0]`), con sus opciones concretas y siempre **"Lo dejo para luego"**. La lista sale de los ficheros: no la reconstruyas de memoria ni del «Próximos pasos» del readiness, y no la recites entera salvo que la pidan.
+y cierra **copiando literal el campo `resumen`** como primera frase del cierre —**dentro del texto de la pregunta** del `AskUserQuestion` cuando la hay, no en un mensaje antes: el texto que precede a una herramienta sale como resumen, no tal cual ([[D-098]], [[D-108]]); medido en la pasada 2 de `CU-3.z`, salió *"4 de ellos interdependientes"* donde el script decía *"4 impiden planificar"* —trae *"Quedan N pendientes; M impiden planificar"* y el aviso de los grupos que se planifican juntos ([[D-104]]); como regla en prosa, el aviso no salió en ninguno de 8 cierres— más **un `AskUserQuestion` sobre el primero** (`items[0]`), con sus opciones concretas y siempre **"Lo dejo para luego"**. La lista sale de los ficheros: no la reconstruyas de memoria ni del «Próximos pasos» del readiness, y no la recites entera salvo que la pidan.
 
 **Se ofrece `items[0]`, y nada que no esté en la lista** ([[D-104]]). No adelantes un pendiente que te parezca más urgente —un conflicto que acaba de destapar una auditoría lo arbitra el readiness antes de resolverlo— ni propongas acciones que no son pendientes: en `CU-3.z` main ofreció **reescribir un spec para que pasara un sello que fallaba por un defecto del sellador**. Un gate que falla en falso se reporta; el artefacto no se toca para esquivarlo. Y *"listo para planificar"* solo lo dice el readiness o el `resumen`, no tu cuenta: cinco specs selladas no son cinco planificables si van en grupo con una que no lo está.
 
@@ -47,7 +47,7 @@ y cierra **copiando literal el campo `resumen`** como primera frase del cierre �
 **Preguntas críticas: primero qué hay, luego cómo tratarlo ([[D-105]], [[D-106]]).** Cuando `items[0]` es un `gap_critico`, mira `preguntas_criticas` del JSON:
 
 - **Si hay una sola**, la oferta *es* la presentación: tras el `resumen`, contexto, a qué afecta y la pregunta, y *"Respóndeme con tus palabras, o dime que la dejas para luego"*, **sin `AskUserQuestion`** ([[D-105]]).
-- **Si hay varias**, antes de presentar ninguna, **enséñale el mapa**: una línea por pregunta —ID, feature y título, de `preguntas_criticas`—, y pregunta con `AskUserQuestion` cómo quiere tratarlas ([[D-106]]):
+- **Si hay varias**, antes de presentar ninguna, **enséñale el mapa**: una línea por pregunta —ID, feature y título, de `preguntas_criticas`—, **en el `preview` de cada opción** del `AskUserQuestion` con que preguntas cómo quiere tratarlas ([[D-106]], [[D-108]]; por la misma razón que el mapa de features de [[D-098]]):
   - **Todas ahora (Recomendado)** — *"te las presento una a una y, cuando acabemos, completo todos los specs a la vez"*;
   - **Solo las de algunas features** — solo si son de **más de una** feature; después, un `AskUserQuestion` con `multiSelect` y una opción por feature;
   - **De una en una** — *"cada respuesta se aplica en el momento; entre una y otra habrá que volver a medir qué está listo"*;

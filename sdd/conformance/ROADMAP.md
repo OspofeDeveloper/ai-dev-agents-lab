@@ -134,6 +134,12 @@ para garantizar que ningún skill se queda sin casos en los cuatro ejes de prueb
 > Lo grave: reabrir una respuesta no alcanzaba un spec **validado** que la aplicaba sin citarla, y
 > los forks lanzados con `Skill` llegaban sin encargo. → [[D-104]] (v0.122.0).
 
+> 🧪 **Tanda de continuación, pasada 2** (v0.123.0, mismo banco restaurado): de *"¿qué me falta?"* a
+> seis specs selladas, con el conflicto grave en tres vueltas por las respuestas de la prosa. `CU-3.g`
+> (2, 3) y `CU-3.h` (1) **2/3**; `CU-3.z` FALLO (5, la tabla) y `CU-3.aa` FALLO (1, el `resumen`
+> parafraseado). Lo grave de la pasada 1, cerrado: la reapertura alcanzó un spec **sellado** que no
+> citaba la respuesta, y ninguna delegación llegó vacía. → [[D-107]] (v0.123.1) y [[D-108]] (v0.123.2).
+
 > ⏱ **Cuatro escenarios nacen sin pasada del barrido de enlazado lateral de Spec**
 > ([[D-078]]/[[D-079]], 2026-09-14): **CU-9.o** (evolucionar una feature dada de baja se deniega, y
 > el estado sobrevive incluso sin hook), **CU-7.s** (la reactivación es la única vuelta atrás y no

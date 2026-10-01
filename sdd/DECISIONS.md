@@ -6,6 +6,22 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-108 — El `resumen` y el mapa de preguntas van dentro de la pregunta
+
+- **Fecha:** 2026-10-01 · **Estado:** Adoptada. · **Relacionada:** [[D-098]] (el mismo defecto con el mapa de features, y el mismo arreglo), [[D-104]] (`resumen`), [[D-106]] (el mapa de preguntas).
+
+**Contexto.** En la pasada 2 de la tanda de continuación, el primer cierre debía abrir con el `resumen` literal —*"Quedan 6 pendientes; 4 impiden planificar. F-001… se planifican juntas"*— y enseñar el mapa de las dos preguntas críticas antes de preguntar cómo tratarlas. Lo que el usuario vio fue *"Quedan 6 pendientes, 4 de ellos interdependientes (F-001, F-004, F-005, F-007)… P-031 (…) y P-032 (…)"*: una paráfrasis que confunde los pendientes bloqueantes con las features del grupo, y un mapa en una frase. Main fue directo al `AskUserQuestion`, y el texto que precede a una herramienta se muestra como resumen, no tal cual. Es el defecto que [[D-098]] midió con el mapa de features.
+
+**Decisión.** Cuando el cierre lleva `AskUserQuestion`, el `resumen` va como primera frase **del texto de la pregunta**, y el mapa de preguntas críticas en el **`preview`** de cada opción. Sin herramienta (una sola pregunta crítica, [[D-105]]), el mensaje es texto y el `resumen` va en él.
+
+**Alternativas descartadas.** Reforzar la instrucción de escribirlo antes: ya decía "literal", y el problema no es la instrucción sino cómo se pinta el texto que precede a una herramienta.
+
+**Consecuencias / aprendizaje.** **Lo que tiene que verse tal cual, va dentro de la herramienta que se ve.** Es la segunda vez que el mismo mecanismo de visualización se come un contenido obligatorio; la regla vale para cualquier cierre con pregunta.
+
+**Referencias.** `pipeline/spec/routing.md` (seguimiento) · `conformance/casos-de-uso/cu-03-specs.md` (`CU-3.aa` punto 1, `CU-3.z` punto 2) · `CHANGELOG.md` 0.123.2.
+
+---
+
 ## D-107 — Tres arreglos de la pasada 2: la tabla del lote del script, los avisos del delegado y las frases en inglés
 
 - **Fecha:** 2026-10-01 · **Estado:** Adoptada. · **Relacionada:** [[D-104]] (de donde vienen la tabla y la regla del orden), [[D-101]] (lo literal que se da hecho se sostiene), [[D-100]] (idioma).
