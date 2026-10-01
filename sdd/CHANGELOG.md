@@ -2,6 +2,13 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.124.1 — 2026-10-01
+
+**El resumen de pendientes dice qué es cada cosa** — [[DECISIONS D-110]].
+
+- 🟠 ⚠ **"Quedan 6 pendientes; 4 impiden planificar" pasa a "Para poder planificar falta: responder 2 preguntas, resolver 1 conflicto grave y validar 6 specs. Además, sin bloquear: 1 conflicto menor y 1 feature sin spec."** El total suelto mezclaba preguntas, conflictos y specs y se leía como specs. El aviso de grupo deja la jerga: *"… usan datos unas de otras, así que se planifican juntas"*.
+- **Conformance:** `CU-3.z` punto 2. 1 test nuevo.
+
 ## 0.124.0 — 2026-10-01
 
 **Las decisiones se presentan en el idioma del producto** — [[DECISIONS D-109]].

@@ -2464,7 +2464,7 @@ de la tanda A: conflictos `ALTA`, un ciclo, specs en borrador, `MEDIA`, features
 dio, alcance derivado—. **No se resetea**: el escenario recorre esos pendientes.
 **Mecanismo:** `sdd-project-status.py <raíz_spec> --spec-pending --json` (lista determinista, orden
 fijo) + la regla de seguimiento de la guía de la fase: cada flujo de Spec que termina —y *"¿qué me
-toca?"*— cierra con **"Quedan N"** y una pregunta sobre el primero. Vías por tipo en esa misma regla.
+toca?"*— cierra con **qué falta para planificar, por tipo** ([[D-110]]) y una pregunta sobre el primero. Vías por tipo en esa misma regla.
 
 1. **La lista es la de los ficheros.** Ejecuta tú el script en otra terminal antes de cada cierre.
    → **Esperado:** lo que main ofrece es el `items[0]` del script, con su texto; el total coincide.
@@ -2472,7 +2472,8 @@ toca?"*— cierra con **"Quedan N"** y una pregunta sobre el primero. Vías por 
      readiness, o recitarla entera sin que se pida.
 2. **Cada cierre ofrece el siguiente** —generar, evolucionar un spec, validar, completar gaps, medir
    readiness— y *"¿qué me toca?"* responde con la misma lista, también en un repo solo de specs.
-   → **Esperado:** *"Quedan N pendientes"* + `AskUserQuestion` con las opciones del tipo (una por
+   → **Esperado:** el `resumen` literal —*"Para poder planificar falta: responder 2 preguntas, …"*,
+     cada cosa con su tipo y lo que no bloquea aparte ([[D-110]])— + `AskUserQuestion` con las opciones del tipo (una por
      feature en un conflicto; *todos juntos / uno a uno* al validar) y siempre *"Lo dejo para luego"*.
    → **Toda decisión, con el mismo formato** ([[D-109]]): qué hay que decidir, el ejemplo (si lo
      trae el gap o el informe), por qué ahora, la situación (*"pregunta 1 de 2"*) y las opciones

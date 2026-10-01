@@ -664,8 +664,8 @@ def spec_pending(directory: Path) -> dict:
                    if b in comp and a not in owners.get(b, set())]
         if not sueltas:
             grupos.append({"features": comp,
-                           "que": f"{nombres} dependen unas de otras a través de sus modelos "
-                                  "compartidos: se planifican juntas."})
+                           "que": f"{nombres} usan datos unas de otras, así que se "
+                                  "planifican juntas."})
             continue
         add("ciclo", comp,
             f"Dependencia circular entre {nombres}. Sin un modelo compartido que la respalde: "
@@ -760,9 +760,18 @@ def spec_pending(directory: Path) -> dict:
     # La frase con que main abre el cierre, ya escrita para copiarla: el aviso de los
     # grupos como regla en prosa no salió en ninguno de 8 cierres (D-104, como la línea
     # de modo de D-101).
-    resumen = (f"Quedan {len(items)} pendiente{'s' if len(items) != 1 else ''}; {bloq} "
-               f"{'impide' if bloq == 1 else 'impiden'} planificar." if items
-               else "No queda nada pendiente en Spec: se puede planificar.")
+    # Un total suelto ("Quedan 6 pendientes") no dice de qué: mezcla preguntas, conflictos y
+    # specs, y el lector lo toma por specs (D-110). Se dice qué es cada cosa, separando lo que
+    # impide planificar de lo que no.
+    bloqueantes = [i for i in items if i["bloquea_plan"]]
+    resto = [i for i in items if not i["bloquea_plan"]]
+    if not items:
+        resumen = "No queda nada pendiente en Spec: se puede planificar."
+    else:
+        resumen = ("Para poder planificar falta: " + _y(_desglose(bloqueantes)) + "."
+                   if bloqueantes else "Ya se puede planificar.")
+        if resto:
+            resumen += " Además, sin bloquear: " + _y(_desglose(resto)) + "."
     resumen += "".join(" " + g["que"] for g in grupos)
     # Con varias preguntas críticas, el mapa de lo que hay que tratar antes de tratar nada
     # (D-106): el usuario elige si las responde todas, las de unas features o de una en una.
@@ -771,6 +780,36 @@ def spec_pending(directory: Path) -> dict:
     return {"total": len(items), "bloqueantes": bloq, "resumen": resumen,
             "readiness_vigente": readiness_vigente, "items": items, "grupos": grupos,
             "preguntas_criticas": criticas}
+
+
+def _n(n: int, uno: str, varios: str) -> str:
+    return f"{n} {uno if n == 1 else varios}"
+
+
+def _desglose(items: list) -> list:
+    """Qué es cada pendiente, contado por tipo y en el orden de la lista (D-110)."""
+    cuenta = {}
+    for it in items:
+        if it["tipo"] == "validar":
+            n = len(it["features"]) + len(it.get("en_espera", []))
+        elif it["tipo"] == "generar":
+            n = len(it["features"])
+        else:
+            n = 1
+        cuenta[it["tipo"]] = cuenta.get(it["tipo"], 0) + n
+    texto = {
+        "readiness": lambda n: "volver a medir si las specs están listas",
+        "gap_critico": lambda n: "responder " + _n(n, "pregunta", "preguntas"),
+        "reabierto": lambda n: "revisar " + _n(n, "respuesta cambiada", "respuestas cambiadas"),
+        "conflicto_alta": lambda n: "resolver " + _n(n, "conflicto grave", "conflictos graves"),
+        "ciclo": lambda n: "romper " + _n(n, "dependencia circular", "dependencias circulares"),
+        "alcance_derivado": lambda n: "decidir " + _n(n, "alcance que no está en el PRD",
+                                                     "alcances que no están en el PRD"),
+        "validar": lambda n: "validar " + _n(n, "spec", "specs"),
+        "conflicto_media": lambda n: _n(n, "conflicto menor", "conflictos menores"),
+        "generar": lambda n: _n(n, "feature sin spec", "features sin spec"),
+    }
+    return [texto[t](n) for t, n in cuenta.items()]
 
 
 def render_pending(data: dict) -> str:

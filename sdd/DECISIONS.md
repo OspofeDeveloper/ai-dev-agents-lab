@@ -6,7 +6,19 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
-## D-109 — Las decisiones se presentan en el idioma del producto, con un ejemplo y desde el comportamiento
+## D-110 — El resumen de pendientes dice qué es cada cosa, no cuántas hay
+
+- **Fecha:** 2026-10-01 · **Estado:** Adoptada. · **Relacionada:** [[D-104]] (el `resumen` lo escribe el script), [[D-108]] (va dentro de la pregunta), [[D-109]] (decisiones en el idioma del producto).
+
+**Contexto.** En la pasada 4 de la tanda de continuación el primer cierre salió bien copiado —*"Quedan 6 pendientes; 4 impiden planificar. F-001… dependen unas de otras a través de sus modelos compartidos: se planifican juntas."*— y aun así no se entendía: el usuario lo leyó como specs ("diría 6 specs pendientes de lo que sea"). Los 6 eran dos preguntas, un conflicto grave, un pendiente de validar que agrupa seis specs, un conflicto menor y una feature sin spec. Contarlos como "6 specs" también sería falso. Y *"modelos compartidos"* es jerga de la descomposición.
+
+**Decisión.** El `resumen` deja el total y dice **qué falta para planificar, por tipo y con su cuenta en la unidad que el usuario reconoce** (preguntas, conflictos, specs a validar, features sin spec), y **aparte lo que no bloquea**. El aviso de grupo dice *"usan datos unas de otras, así que se planifican juntas"*. `total` y `bloqueantes` siguen en el JSON para quien los mida.
+
+**Alternativas descartadas.** *"6 specs pendientes"*: falso, mezcla tipos. Mantener el total y añadir el desglose detrás: dos números que no suman igual (6 tareas, 9 cosas) confunden más que uno.
+
+**Consecuencias.** La pasada 4 se reinicia sobre v0.124.1.
+
+ Las decisiones se presentan en el idioma del producto, con un ejemplo y desde el comportamiento
 
 - **Fecha:** 2026-10-01 · **Estado:** Adoptada (propuesta A, B y C, con la corrección del usuario de que valga para cualquier tipo de proyecto). · **Relacionada:** [[D-104]] (la pregunta se presenta, no se reformula), [[D-108]] (lo que se ve va dentro de la pregunta), [[D-073]] (lecturas ambiguas de un delta), [[D-082]] (la vía que desella).
 

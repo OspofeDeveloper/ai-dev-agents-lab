@@ -213,8 +213,19 @@ class SpecPendingTest(unittest.TestCase):
         data = self._tres_en_ciclo([("Movimiento", "F-001", "F-002, F-003"),
                                     ("Cuenta", "F-002", "F-001"),
                                     ("Objetivo", "F-003", "F-002")])
-        self.assertTrue(data["resumen"].startswith("Quedan 1 pendiente; 1 impide planificar."))
+        self.assertTrue(data["resumen"].startswith("Para poder planificar falta: "))
         self.assertIn("se planifican juntas", data["resumen"])
+
+    def test_resumen_dice_que_es_cada_pendiente_y_aparte_lo_que_no_bloquea(self):
+        """Un total suelto ("Quedan 6 pendientes") se lee como specs: se dice por tipo (D-110)."""
+        self._base()
+        self.b.feature("F-004", "categorias")
+        idx = self.b.spec / "spec_features.md"
+        idx.write_text(idx.read_text() + "### F-009: pagos\n- **Estado**: PENDIENTE\n")
+        data = self.b.pending()
+        self.assertNotIn("Quedan", data["resumen"])
+        self.assertIn("validar ", data["resumen"])
+        self.assertIn("Además, sin bloquear: 2 features sin spec.", data["resumen"])
 
     def test_informe_de_conflictos_anterior_a_su_spec_pide_rehacerlos(self):
         """Un spec corregido tras su informe: primero sus conflictos, luego el readiness (D-104)."""

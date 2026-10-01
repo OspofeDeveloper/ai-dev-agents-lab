@@ -104,7 +104,7 @@ respalda **todas** la tabla de shared models del índice no es un pendiente: sal
 (*"se planifican juntas"*); solo bloquea el que tiene alguna dependencia sin respaldo, y la nombra.
 El pendiente de validar ofrece solo los specs listos y deja en `en_espera` los que aún tienen que
 cambiar por un pendiente anterior ([[D-103]]). El JSON trae además `resumen`, la frase de cierre ya
-escrita para copiarla; el pendiente de readiness lleva `conflictos` cuando un spec se corrigió después
+escrita para copiarla —qué falta para planificar, por tipo, y aparte lo que no bloquea ([[D-110]])—; el pendiente de readiness lleva `conflictos` cuando un spec se corrigió después
 de su propio informe de conflictos; y una respuesta reabierta alcanza a los specs que la citan, la
 declaran en `Respuestas del análisis aplicadas` o pertenecen a una feature que nombra su `Afecta`
 ([[D-104]]). Y `preguntas_criticas`, el mapa de las preguntas críticas abiertas —ID, feature, título y
