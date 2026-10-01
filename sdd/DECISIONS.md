@@ -6,6 +6,22 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-105 — Una pregunta crítica se ofrece presentándola, sin `AskUserQuestion`
+
+- **Fecha:** 2026-10-01 · **Estado:** Adoptada (elección del usuario entre dos formas). · **Relacionada:** [[D-102]] (cada cierre ofrece el siguiente), [[D-104]] (la pregunta se presenta, no se reformula).
+
+**Contexto.** [[D-102]] dice que cada cierre termina con un `AskUserQuestion` sobre el primer pendiente —para una pregunta crítica, *Responderla aquí / Lo dejo para luego*—, y [[D-104]] que la pregunta se presenta con su contexto y la respuesta se pide en las palabras del usuario. Leídas juntas admitían dos formas, y en la pasada 2 de la tanda de continuación main eligió la suya: presentar la pregunta y pedir la respuesta en el chat, sin `AskUserQuestion`. El usuario la dio por buena, pero pidió que fuera **norma decidida y no interpretación**.
+
+**Decisión.** Cuando `items[0]` es un `gap_critico`, la oferta **es** la presentación: tras el `resumen`, contexto, a qué afecta, la pregunta y *"respóndeme con tus palabras, o dime que la dejas para luego"*, sin `AskUserQuestion`; las siguientes del mismo fichero, anunciadas en una línea y de una en una. El resto de tipos sigue con su `AskUserQuestion`.
+
+**Alternativas descartadas.** *Dos pasos* (*¿la respondemos?* y luego la pregunta): todas las ofertas iguales y la salida de dejarlo como botón, pero hace decidir sin haber visto la pregunta, y cuesta un turno que no aporta. Las opciones de un `AskUserQuestion` para la respuesta misma son exactamente lo que [[D-104]] quitó.
+
+**Consecuencias / aprendizaje.** **Dos reglas que se pueden leer juntas de dos maneras son una decisión sin tomar**, y el modelo la toma por ti. Esta vez acertó; lo que se fija es que no dependa de eso.
+
+**Referencias.** `pipeline/spec/routing.md` (seguimiento y tabla de vías) · `conformance/casos-de-uso/cu-03-specs.md` (`CU-3.z` punto 2) · `CHANGELOG.md` 0.122.1.
+
+---
+
 ## D-104 — El seguimiento de la fase Spec, después de su primera pasada de verdad
 
 - **Fecha:** 2026-10-01 · **Estado:** Adoptada (los ocho arreglos y cuatro de los "regular" acordados con el usuario; la regla del orden, estricta). · **Relacionada:** [[D-102]] y [[D-103]] (lo que corrige), [[D-045]]/[[D-047]] (cómo se delega), [[D-101]] (lo literal se sostiene), [[D-054]] (los dos hogares de un gap), [[D-061]] (lo que reabre un sello).

@@ -2,6 +2,12 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.122.1 — 2026-10-01
+
+**Una pregunta crítica se ofrece presentándola** — [[DECISIONS D-105]].
+
+- 🟠 **Cuando el primer pendiente es una pregunta crítica, el cierre la presenta directamente** —contexto, a qué afecta y la pregunta— y pide la respuesta en tus palabras o que la dejes para luego, **sin `AskUserQuestion`**. Los demás pendientes siguen con su pregunta de opciones. `CU-3.z` punto 2 lo mide.
+
 ## 0.122.0 — 2026-10-01
 
 **El seguimiento de la fase Spec, después de su primera pasada de verdad** — [[DECISIONS D-104]].

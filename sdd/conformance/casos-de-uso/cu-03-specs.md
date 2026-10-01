@@ -2444,6 +2444,10 @@ toca?"*— cierra con **"Quedan N"** y una pregunta sobre el primero. Vías por 
    readiness— y *"¿qué me toca?"* responde con la misma lista, también en un repo solo de specs.
    → **Esperado:** *"Quedan N pendientes"* + `AskUserQuestion` con las opciones del tipo (una por
      feature en un conflicto; *todos juntos / uno a uno* al validar) y siempre *"Lo dejo para luego"*.
+   → **Con una pregunta crítica primero, sin `AskUserQuestion`** ([[D-105]]): la pregunta presentada
+     con contexto, a qué afecta y la pregunta, y *"respóndeme con tus palabras, o dime que la dejas
+     para luego"*. **FALLO:** opciones de respuesta redactadas por main, o un *"¿la respondemos?"*
+     antes de enseñarla.
    → **FALLO:** un cierre sin la oferta, o una oferta sin la salida de dejarlo.
 3. **"Lo dejo para luego" no rompe nada.**
    → **Esperado:** no se toca ningún fichero, y la próxima lista sale idéntica.
