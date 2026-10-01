@@ -2,6 +2,20 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.122.0 — 2026-10-01
+
+**El seguimiento de la fase Spec, después de su primera pasada de verdad** — [[DECISIONS D-104]].
+
+- ✅ **Registrado** (v0.121.0+bd208db, tanda de continuación sobre el banco de la corrida 3): `CU-3.g` (2, 3) y `CU-3.h` (1, 4) **1/3**; `CU-3.z` FALLO (5, 7) y `CU-3.aa` FALLO (1). De *"¿qué me falta?"* a cinco specs selladas, con el conflicto grave resuelto por un delta y una segunda auditoría que cazó el conflicto que creó el propio arreglo.
+- 🔴 ⚠ **Reabrir una respuesta no encontraba un spec validado que la aplicaba sin citarla.** El discovery anota por feature `Respuestas del análisis usadas`, el spec las copia en `Respuestas del análisis aplicadas` y las cita donde las aplica, y la lista las cruza; para los specs anteriores, por el `Afecta` del gap. Reabrir una respuesta `[PUEDE_REQUERIR_CR]` vuelve a pasar por la gobernanza.
+- 🔴 **Los forks lanzados con `Skill` llegaban sin encargo** y en segundo plano. La regla de seguimiento dice cómo se delega cada vía: `Agent` en primer plano con el SKILL.md en el encargo.
+- 🟠 ⚠ **Las respuestas dictadas se guardan literales** y las preguntas críticas se presentan con su contexto (`--list --gap`), no como opciones redactadas por main. `wf-spec-gap-resolve` gana `--answer P-XXX "<texto>"`. Antes de un delta, main no pregunta contenido.
+- 🟠 ⚠ **El sellador y la puerta del plan ignoran `[INCOMPLETO]`/`[INFERIDO]` entre comillas de código**: una frase de plantilla dejaba un spec insellable.
+- 🟠 **La lista de pendientes** trae `resumen`, la frase de cierre con el aviso del grupo; pide rehacer los conflictos de un spec corregido después de su informe, antes del readiness; y se ofrece solo `items[0]`, sin acciones fuera de la lista.
+- 🟠 **Validar en lote** trae su tabla literal; *"planificable"* sale del `resumen`, no del sello.
+- 🟡 **El delta** nombra su informe por versión del spec y copia el requisito literal dentro. **El probe de fan-out** deja de marcar auditar → corregir → volver a auditar y analizar → aplicar.
+- **Tests:** 8 nuevos.
+
 ## 0.121.0 — 2026-10-01
 
 **La lista de pendientes deja de inventar y de bloquear lo que no toca** — [[DECISIONS D-103]].

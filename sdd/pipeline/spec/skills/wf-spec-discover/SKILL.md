@@ -215,6 +215,12 @@ cite una feature por su nombre queda obsoleto al regenerar el discovery.
 > `Avisos de gobernanza: ninguno` **no pueden ir juntos** en la misma feature. Si no tienes un
 > `P-XXX` que citar, el origen es `PRD`.
 
+**`Respuestas del análisis usadas` lista, por feature, cada gap respondido del análisis cuya
+respuesta concreta esa feature** ([[D-104]]) —también las aclaraciones, que no cambian el origen—.
+No es un juicio de gobernanza: es trazabilidad. Si una respuesta se reabre, es lo que permite
+encontrar los specs escritos con la anterior; medido en `CU-3.z`, el spec de deudas aplicó la
+respuesta a P-002 sin nombrarla, y la reapertura no lo alcanzó estando validado.
+
 Determina el directorio de salida (regla de layout): si `.sdd/project-init.json` (en el directorio actual o un ancestro) declara `artifacts.prd`, usa ese directorio (relativo a la raíz que contiene `.sdd/`); si no, usa el mismo directorio que el archivo de entrada. Nombre: nombre base del archivo de entrada + `_discovery.md`.
 - Ejemplo (sin mapa): `docs/requisitos.md` → `docs/requisitos_discovery.md`
 

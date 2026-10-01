@@ -6,6 +6,32 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-104 — El seguimiento de la fase Spec, después de su primera pasada de verdad
+
+- **Fecha:** 2026-10-01 · **Estado:** Adoptada (los ocho arreglos y cuatro de los "regular" acordados con el usuario; la regla del orden, estricta). · **Relacionada:** [[D-102]] y [[D-103]] (lo que corrige), [[D-045]]/[[D-047]] (cómo se delega), [[D-101]] (lo literal se sostiene), [[D-054]] (los dos hogares de un gap), [[D-061]] (lo que reabre un sello).
+
+**Contexto.** La tanda de continuación sobre el banco de la corrida 3 (v0.121.0) recorrió por primera vez el seguimiento entero: preguntas críticas de un spec, readiness, un conflicto `ALTA` resuelto con dos deltas, validación en lote, reabrir una respuesta y un ciclo forzado. La lista y las vías funcionaron: cada cierre ofreció el siguiente, el conflicto se resolvió por la vía que desella y el lote selló cinco specs dejando fuera la que no pasaba. Pero salieron ocho defectos. (1) **Reabrir P-002 no encontró F-005**, que aplicaba esa respuesta sin citarla —ni el spec ni el discovery la nombran— y estaba **validado**: la lista dijo que no había nada que revisar sobre una decisión retirada. (2) **Main lanzó los forks con el `Skill` tool**: corren en segundo plano y, tres de cuatro veces, **llegaron sin encargo** (*"dime qué quieres que revise"*); se recuperó solo pasando a `Agent`. (3) **Main redactó las respuestas**: leía la pregunta con `sed`, la convertía en opciones suyas y guardaba su versión —cuatro respuestas reescritas, dos con una decisión añadida—, y antes de un delta preguntó él el contenido del cambio. (4) **Reabrir una respuesta `[PUEDE_REQUERIR_CR]` no pasó por la gobernanza.** (5) **El aviso del grupo** que [[D-103]] pedía decir en una línea **no salió en ninguno de 8 cierres**. (6) **El sellador contaba `[INCOMPLETO]` en una frase de plantilla entre comillas de código**: F-001 era insellable, y main ofreció reescribir el spec para esquivarlo. (7) **Tras corregir un spec, la lista pedía el readiness pero no rehacer su informe de conflictos**, que seguía dando el `ALTA` por abierto. (8) **Faltó la tabla final del lote.** Y cuatro regulares: main se saltó dos veces el orden de la lista, dijo *"listas para planificar"* de specs que van en grupo con una sin sellar, el requisito del delta quedó en un fichero temporal con dos convenciones de nombre, y el probe de fan-out marcó como repartidas tres secuencias legítimas.
+
+**Decisión.**
+
+1. **Una respuesta del análisis se traza por feature**: `Respuestas del análisis usadas` en el discovery → `Respuestas del análisis aplicadas` en la cabecera del spec, más la cita `[P-XXX]` donde se aplica. La lista alcanza los specs por cabecera, por cita o, para los escritos antes, por el `Afecta` del gap. La reapertura de una respuesta `[PUEDE_REQUERIR_CR]` repite la evaluación de gobernanza.
+2. **Cómo se delega cada vía**: los forks, con `Agent`, su agente, primer plano y *"lee el SKILL.md y ejecútalo"*; nunca con `Skill`.
+3. **Las preguntas críticas se presentan con el script** (contexto, afecta, pregunta) y **las respuestas se guardan literales**; `wf-spec-gap-resolve` las recibe con `--answer P-XXX "<texto>"`. Antes de un delta, main no pregunta contenido: lo que falte decidir lo saca el escritor.
+4. **`resumen`** en la lista de pendientes: la frase de cierre ya escrita, con el aviso de los grupos, para copiarla.
+5. **Una marca entre comillas de código es una mención**: el sellador y la puerta del plan no la cuentan.
+6. **Un informe de conflictos más viejo que su spec** pide rehacer esos conflictos antes del readiness.
+7. **La tabla del lote, literal** en validar; *"planificable"* sale del `resumen`, no del sello.
+8. **Se ofrece `items[0]` y nada fuera de la lista**; un gate que falla en falso se reporta, no se esquiva tocando el artefacto.
+9. **El delta** nombra su informe por la versión del spec analizada y copia el requisito literal en el informe. **El probe** corta un cubo cuando otra delegación sale en medio, y separa los encargos por su línea `Modo:`.
+
+**Alternativas descartadas.** *Que main pueda adelantar un pendiente "más urgente"*: esta vez acertó, pero el readiness es quien arbitra si un conflicto recién destapado se mantiene, y con el punto 6 el orden correcto ya sale del script. *Exigir solo la cita `[P-XXX]` en los specs*: es la regla que el escritor ya incumplió; la cabecera copiada del discovery es la que se sostiene ([[D-101]]), y el `Afecta` cubre los specs ya escritos. *Reescribir la plantilla para no mencionar `[INCOMPLETO]`*: el defecto está en contar una mención como marca, y quedaría para la siguiente frase que la cite.
+
+**Consecuencias / aprendizaje.** **Lo que el usuario dice es un dato, no un borrador.** Casi todos los defectos de comportamiento de esta pasada son main redactando algo que no le toca: respuestas, opciones, el contenido de un cambio, el siguiente paso. Cada vez el resultado parecía razonable, y por eso no se nota hasta que una precisión que nadie dijo acaba en un spec sellado. Y el más grave salió del recorrido completo, no de ningún escenario aislado: una reapertura que no alcanza a un spec validado solo se ve si antes se ha validado.
+
+**Referencias.** `scripts/sdd-project-status.py` (`resumen`, `conflictos`, reapertura por cabecera y `Afecta`) · `scripts/sdd-seal.py` y `scripts/sdd-gate-check.py` (`_sin_codigo`) · `scripts/sdd-fanout-check.py` · `tests/test_sdd_spec_pending.py` · `tests/test_sdd_fanout_check.py` · `pipeline/spec/routing.md` · `pipeline/spec/skills/wf-spec-gap-resolve/SKILL.md` · `wf-spec-delta` (SKILL y plantilla) · `wf-spec-validate/SKILL.md` · `wf-spec-discover` (SKILL y plantilla) · `wf-spec-fast-track` (SKILL y plantillas de cabecera) · `kb-gap-conventions` · `wf-spec-features-first/references/output_template.md` · `conformance/casos-de-uso/cu-03-specs.md` · `CHANGELOG.md` 0.122.0.
+
+---
+
 ## D-103 — Un ciclo del dominio se planifica en grupo; la lista de pendientes no inventa ni ofrece lo que no está listo
 
 - **Fecha:** 2026-10-01 · **Estado:** Adoptada (el criterio del ciclo, acordado con el usuario). · **Relacionada:** [[D-102]] (la lista que corrige), [[D-100]] (`Requiere` derivado de los shared models), [[D-099]] (la lista de artefactos del cierre), [[D-047]].

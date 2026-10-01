@@ -38,14 +38,22 @@ La diferencia entre 1 y 2 la define `kb-product-change-governance` Regla 2 (`DEP
 !python3 .sdd/scripts/sdd-project-status.py <raíz_spec> --spec-pending --json
 ```
 
-y cierra con **"Quedan N pendientes"** más **un `AskUserQuestion` sobre el primero** (`items[0]`), con sus opciones concretas y siempre **"Lo dejo para luego"**. La lista sale de los ficheros: no la reconstruyas de memoria ni del «Próximos pasos» del readiness, y no la recites entera salvo que la pidan. Si `grupos` trae algo, dilo en **una línea** con su texto (*"F-001, F-004… se planifican juntas"*): es un aviso, no un pendiente, y no se pregunta por él ([[D-103]]).
+y cierra **copiando literal el campo `resumen`** como primera frase del cierre —trae *"Quedan N pendientes; M impiden planificar"* y el aviso de los grupos que se planifican juntos ([[D-104]]); como regla en prosa, el aviso no salió en ninguno de 8 cierres— más **un `AskUserQuestion` sobre el primero** (`items[0]`), con sus opciones concretas y siempre **"Lo dejo para luego"**. La lista sale de los ficheros: no la reconstruyas de memoria ni del «Próximos pasos» del readiness, y no la recites entera salvo que la pidan.
+
+**Se ofrece `items[0]`, y nada que no esté en la lista** ([[D-104]]). No adelantes un pendiente que te parezca más urgente —un conflicto que acaba de destapar una auditoría lo arbitra el readiness antes de resolverlo— ni propongas acciones que no son pendientes: en `CU-3.z` main ofreció **reescribir un spec para que pasara un sello que fallaba por un defecto del sellador**. Un gate que falla en falso se reporta; el artefacto no se toca para esquivarlo. Y *"listo para planificar"* solo lo dice el readiness o el `resumen`, no tu cuenta: cinco specs selladas no son cinco planificables si van en grupo con una que no lo está.
+
+**Cómo se delega cada vía ([[D-104]]).** Las skills con `context: fork` —completar gaps, conflictos, readiness, y las de generación— se invocan como en `wf-spec-features-first`: tool **`Agent`**, el `subagent_type` de su frontmatter (`agent:`), **`run_in_background: false`**, y el encargo *"Lee `.claude/skills/<skill>/SKILL.md` y ejecuta sus pasos TÚ MISMO sobre: <argumentos>. NO uses el `Skill` tool"*. **Nunca con el `Skill` tool**: lanza el fork en segundo plano y **puede perder los argumentos** —medido en `CU-3.z`: el readiness llegó al auditor sin encargo (*"dime qué quieres que revise"*) y la auditoría de conflictos, dos veces seguidas—, y el cierre se escribe sin su resultado. Las que corren en el hilo principal (validar, delta, features-first) sí se invocan con `Skill`.
+
+**Una pregunta crítica se presenta, no se reformula ([[D-104]]).** Sácala con el script del fichero donde vive —`sdd-analysis-gaps.py "<análisis | spec | delta>" --list --gap P-XXX --json`— y preséntala con su **contexto, a qué afecta y la pregunta**, como en el dictado del análisis. Pide la respuesta **en sus palabras**: no conviertas la pregunta en opciones redactadas por ti. Y la respuesta se escribe **literal**: tú con `--answer` si vive en el análisis o en un delta; si vive en un spec, se la pasas a completar las historias como `--answer P-XXX "<texto exacto>"`. Medido en `CU-3.z`: cuatro respuestas se guardaron reescritas, dos con una decisión añadida que nadie tomó.
+
+**Reabrir una respuesta marcada `[PUEDE_REQUERIR_CR]` vuelve a pasar por la gobernanza** ([[D-104]]): la respuesta nueva se evalúa igual que la primera —delegando la evaluación de cambio de producto— antes de cerrar con la lista. Que la primera fuera una aclaración no dice nada de la segunda.
 
 **Si eligen "Lo dejo para luego", contesta una línea y para** —*"Queda apuntado; cuando quieras, pregúntame qué falta"*—. **No** encadenes otras opciones ni un resumen de lo que queda: esa lista ya no sale del script sino de tu memoria, y en la corrida 3 de `CU-3.c` ofreció validar una feature que estaba en espera ([[D-103]]). Vías por tipo —las eliges tú, al usuario se le describe la acción—:
 
 | `tipo` | Opciones que ofreces | Vía |
 |---|---|---|
-| `readiness` | Rehacer la medición ahora | `wf-spec-readiness` |
-| `gap_critico` | Responderla aquí | dictado + `sdd-analysis-gaps.py --answer` (análisis) o `wf-spec-gap-resolve` (spec) |
+| `readiness` | Rehacer la medición ahora — o, si trae `conflictos`, *revisar los conflictos de esas features y rehacer* | `wf-spec-conflict` por cada feature de `conflictos` (en un mismo mensaje) y después `wf-spec-readiness` |
+| `gap_critico` | Responderla aquí | presentar con `--list --gap` y dictado literal: `sdd-analysis-gaps.py --answer` (análisis) o `wf-spec-gap-resolve … --answer P-XXX "<texto>"` (spec) |
 | `reabierto` | Revisar los specs afectados | `wf-spec-delta` sobre cada uno, con la respuesta nueva |
 | `conflicto_alta` / `conflicto_media` | Una opción **por feature** de `opciones` (*"la dueña es X"*) | la **otra** se corrige con `wf-spec-delta`, que reabre su validación. **No** `wf-spec-amend`: solo admite aclarar un CA sin cambiar comportamiento |
 | `ciclo` | Una opción por dependencia de `opciones` (las que **no** respalda ningún modelo compartido) | `wf-spec-delta` sobre la feature cuya dependencia sobra |

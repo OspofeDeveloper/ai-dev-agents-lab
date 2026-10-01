@@ -41,6 +41,10 @@ import sys
 from pathlib import Path
 
 SKILL_RE = re.compile(r"\.claude/skills/([a-z0-9][a-z0-9-]*)/SKILL\.md")
+# Los encargos que un workflow de hilo principal arma él mismo (`wf-spec-delta`) no
+# mandan leer un SKILL.md: declaran su modo en la primera línea. Analizar y aplicar
+# son dos encargos distintos, uno detrás de otro por contrato (D-104).
+MODE_RE = re.compile(r"^\s*Modo:\s*([a-z0-9][a-z0-9-]*)", re.MULTILINE)
 ISO_RE = re.compile(r"^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})")
 
 
@@ -93,7 +97,7 @@ def emissions(rows):
                 continue
             inp = part.get("input") or {}
             prompt = inp.get("prompt") or ""
-            m = SKILL_RE.search(prompt)
+            m = SKILL_RE.search(prompt) or MODE_RE.search(prompt)
             calls.append((inp.get("subagent_type") or "?", m.group(1) if m else "—"))
         if calls:
             out.append((message.get("id") or f"row-{len(out)}",
@@ -125,15 +129,24 @@ def analyze(rows):
 
     hallazgos, limpias = [], []
     for segment in segments:
-        cubos = {}
+        # Un cubo se corta también cuando entre dos de sus emisiones sale OTRA
+        # delegación: auditar → corregir → volver a auditar es una secuencia con
+        # dependencia, no un fan-out repartido (D-104). La forma real del defecto
+        # —una llamada de prueba y el resto justo después— no tiene nada en medio, y
+        # se sigue cazando.
+        runs, abiertos = [], {}
         for mid, ts, calls in segment:
+            presentes = set(calls)
+            for bucket in [b for b in abiertos if b not in presentes]:
+                runs.append((bucket, abiertos.pop(bucket)))
             # Una emisión cuenta en el cubo de cada llamada que lleva: si un mensaje
             # mezcla dos encargos distintos (raro, pero legítimo), cada cubo ve las
             # suyas y ninguno queda con un recuento inflado.
-            for bucket in set(calls):
+            for bucket in presentes:
                 n = sum(1 for c in calls if c == bucket)
-                cubos.setdefault(bucket, []).append({"msg": mid, "ts": ts, "n": n})
-        for (agent, skill), items in cubos.items():
+                abiertos.setdefault(bucket, []).append({"msg": mid, "ts": ts, "n": n})
+        runs += list(abiertos.items())
+        for (agent, skill), items in runs:
             total = sum(i["n"] for i in items)
             if len(items) == 1:
                 if total > 1:

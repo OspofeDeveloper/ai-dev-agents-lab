@@ -17,6 +17,7 @@
 > status_sync: unknown
 > Origen de alcance: [Documento fuente | Documento fuente + analysis respondido]
 > Avisos de gobernanza: [ninguno | alcance derivado desde P-00X, P-00Y]
+> Respuestas del análisis aplicadas: [ninguna | P-00X, P-00Y]
 ```
 
 > **`Estado:` lo escribes una sola vez, en BORRADOR, y nunca lo tocas después ([[D-061]]).**
@@ -42,6 +43,7 @@
 > status_sync: in_sync
 > Origen de alcance: [PRD | PRD + analysis respondido]
 > Avisos de gobernanza: [ninguno | alcance derivado desde P-00X, P-00Y]
+> Respuestas del análisis aplicadas: [ninguna | P-00X, P-00Y]
 ```
 
 > **`derived_from_prd_hash` lo escribe `sdd-sync-check.py seal` en el Paso 10, nunca a mano:

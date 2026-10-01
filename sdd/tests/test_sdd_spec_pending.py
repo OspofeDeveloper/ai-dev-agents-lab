@@ -209,6 +209,62 @@ class SpecPendingTest(unittest.TestCase):
         self.assertEqual([e["feature"] for e in validar["en_espera"]], ["F-001", "F-002"])
         self.assertIn("conflicto CF-F001-01", validar["en_espera"][0]["motivo"])
 
+    def test_resumen_trae_el_total_y_el_aviso_del_grupo(self):
+        data = self._tres_en_ciclo([("Movimiento", "F-001", "F-002, F-003"),
+                                    ("Cuenta", "F-002", "F-001"),
+                                    ("Objetivo", "F-003", "F-002")])
+        self.assertTrue(data["resumen"].startswith("Quedan 1 pendiente; 1 impide planificar."))
+        self.assertIn("se planifican juntas", data["resumen"])
+
+    def test_informe_de_conflictos_anterior_a_su_spec_pide_rehacerlos(self):
+        """Un spec corregido tras su informe: primero sus conflictos, luego el readiness (D-104)."""
+        self._base()
+        rep = self.b.spec / "features" / "cuentas" / "spec" / "cuentas_conflict_report.md"
+        write(rep, "## Resumen de conflictos\n")
+        past = time.time() - 120
+        os.utime(rep, (past, past))
+        os.utime(self.b.spec / "spec_readiness_report.md", (past + 10, past + 10))
+        ready = self.b.pending()["items"][0]
+        self.assertEqual(ready["tipo"], "readiness")
+        self.assertEqual(ready["conflictos"], ["F-002"])
+        self.assertIn("conflictos de F-002", ready["accion"])
+
+    def _reabrir(self, spec_body="", header=""):
+        b = self.b
+        b.feature("F-001", "deudas-y-reembolsos", extra_header=header, body=spec_body)
+        b.index([("F-001", "deudas-y-reembolsos",
+                  "features/deudas-y-reembolsos/spec/deudas-y-reembolsos_spec.md",
+                  "BLOQUEADA", "ninguno")])
+        write(b.prd / "prj_analysis.md",
+              "# Análisis\n\n### [P-002][CRÍTICO] Saldar una deuda\n"
+              "- **Afecta**: deudas y reembolsos entre amigos\n"
+              "- **Respuesta**: entra en la cuenta que diga el usuario\n")
+        past = time.time() - 3600
+        os.utime(b.spec / "features" / "deudas-y-reembolsos" / "spec" /
+                 "deudas-y-reembolsos_spec.md", (past, past))
+        r = run_script("sdd-analysis-gaps.py", b.prd / "prj_analysis.md",
+                       "--answer", "P-002", "entra en la cuenta del gasto", "--force")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        return [i for i in b.pending()["items"] if i["tipo"] == "reabierto"]
+
+    def test_reabrir_alcanza_un_spec_que_aplica_la_respuesta_sin_citarla(self):
+        """El caso de F-005: la respuesta aplicada sin `[P-002]`; lo encuentra por `Afecta`."""
+        reab = self._reabrir()
+        self.assertEqual(reab[0]["features"], ["F-001"])
+
+    def test_reabrir_usa_la_cabecera_de_respuestas_aplicadas(self):
+        b = self.b
+        b.feature("F-009", "otra", extra_header="> Respuestas del análisis aplicadas: P-002\n")
+        reab = self._reabrir()
+        idx = b.spec / "spec_features.md"
+        idx.write_text(idx.read_text() + "### F-009: otra\n"
+                       "- **Ruta spec**: features/otra/spec/otra_spec.md\n"
+                       "- **Estado**: BLOQUEADA\n- **Avisos de gobernanza**: ninguno\n")
+        past = time.time() - 3600
+        os.utime(b.spec / "features" / "otra" / "spec" / "otra_spec.md", (past, past))
+        reab = [i for i in b.pending()["items"] if i["tipo"] == "reabierto"]
+        self.assertEqual(reab[0]["features"], ["F-001", "F-009"])
+
     def test_media_descartada_por_el_readiness_no_aparece(self):
         """Con la tabla MEDIA en el readiness, un MEDIA de un informe suelto no sale."""
         self._base(media="")
@@ -304,6 +360,25 @@ class SpecPendingTest(unittest.TestCase):
         r = run_script("sdd-project-status.py", self.b.spec, "--spec-pending")
         self.assertEqual(r.returncode, 0)
         self.assertNotRegex(r.stdout, r"\b(wf|kb)-[a-z]")
+
+
+class SealMencionTest(unittest.TestCase):
+    """Una marca entre comillas de código es una mención, no una marca (D-104)."""
+
+    def test_la_plantilla_que_explica_incompleto_no_bloquea_el_sello(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            p = Path(tmp) / "x_spec.md"
+            write(p, spec("F-001", body="\n## Items Pendientes\n\n> Los críticos marcan sus HUs "
+                                         "como `[INCOMPLETO]` y bloquean.\n"))
+            r = run_script("sdd-seal.py", "spec", p, "--check")
+            self.assertEqual(r.returncode, 0, r.stdout)
+
+    def test_la_marca_real_sigue_bloqueando(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            p = Path(tmp) / "x_spec.md"
+            write(p, spec("F-001", body="\n> ⚠ [INCOMPLETO] — Pendiente de gap(s): [P-001].\n"))
+            r = run_script("sdd-seal.py", "spec", p, "--check")
+            self.assertEqual(r.returncode, 2, r.stdout)
 
 
 class SealDerivedScopeTest(unittest.TestCase):

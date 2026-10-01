@@ -16,6 +16,7 @@
 <!-- Specs de caracterización (wf-spec-from-code): añadir Origen: characterization,
      Evidencia base: commit SHA, y campo Evidencia en cada CA — ver kb-spec-characterization. -->
 > Avisos de gobernanza: [ninguno | alcance derivado desde P-00X]
+> Respuestas del análisis aplicadas: [ninguna | P-00X, P-00Y]
 
 ---
 

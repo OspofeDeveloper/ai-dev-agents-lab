@@ -496,7 +496,7 @@ def spec_pending(directory: Path) -> dict:
     # ── 0. Readiness ──
     readiness = first(directory, "*_readiness_report.md")
     rtext = read_text(readiness) if readiness else ""
-    motivos = []
+    motivos, conflictos_viejos = [], []
     if specs and not readiness:
         motivos.append("no hay informe de readiness")
     elif readiness:
@@ -509,41 +509,76 @@ def spec_pending(directory: Path) -> dict:
                    and (m := ESTADO_SPEC_RE.search(read_text(sp))) and m.group(1) == "BORRADOR"]
         if tocados:
             motivos.append("specs modificados después del informe: " + ", ".join(tocados))
+        # Un spec corregido después de su propio informe de conflictos: el readiness
+        # que se rehiciera ahora leería ese informe viejo —que aún da el conflicto por
+        # abierto— y no lo cerraría nunca. Primero sus conflictos, luego el readiness
+        # (D-104).
+        for f, sp in specs.items():
+            rep = sp.with_name(sp.name.replace("_spec.md", "_conflict_report.md"))
+            if (rep.is_file() and rep.stat().st_mtime < sp.stat().st_mtime
+                    and (m := ESTADO_SPEC_RE.search(read_text(sp))) and m.group(1) == "BORRADOR"):
+                conflictos_viejos.append(f)
+        if conflictos_viejos:
+            motivos.append("informe de conflictos anterior a su spec: " + ", ".join(conflictos_viejos))
         reports = sorted(directory.glob("features/*/spec/*_conflict_report.md")) + \
             sorted(directory.glob("*_conflict_report.md"))
         if any(r.stat().st_mtime > rts for r in reports):
             motivos.append("hay informes de conflictos más nuevos que él")
     readiness_vigente = bool(readiness) and not motivos
     if motivos:
+        cv = sorted(conflictos_viejos, key=fid_sort_key)
         add("readiness", sorted(specs, key=fid_sort_key),
             "El informe de readiness no refleja los specs actuales (" + "; ".join(motivos) + ").",
-            "Rehacer la medición de readiness, que arbitra los conflictos y da el estado de cada feature.",
-            "wf-spec-readiness", motivos=motivos)
+            ("Revisar de nuevo los conflictos de " + _y([label.get(f, f) for f in cv])
+             + " y después rehacer la medición de readiness." if cv else
+             "Rehacer la medición de readiness, que arbitra los conflictos y da el estado de cada feature."),
+            ("wf-spec-conflict (por feature) → wf-spec-readiness" if cv else "wf-spec-readiness"),
+            motivos=motivos, conflictos=cv)
 
     # ── 1. Gaps críticos abiertos y 2. respuestas reabiertas (análisis) ──
     disc = re.search(r"^>\s*Discovery:\s*`?([^`\n]+?)`?\s*(?:\(|$)", features_md, re.MULTILINE)
     analysis = None
+    disc_path = (directory / disc.group(1).strip()).resolve() if disc else None
     if disc:
         cand = (directory / disc.group(1).strip()).resolve()
         cand = cand.with_name(cand.name.replace("_discovery.md", "_analysis.md"))
         analysis = cand if cand.is_file() else None
     analysis = analysis or first(directory, "*_analysis.md")
     atext = read_text(analysis) if analysis else ""
-    for gid, sev, resp, reab, _ in _gap_blocks(atext):
+    for gid, sev, resp, reab, block in _gap_blocks(atext):
         if sev == "CRÍTICO" and resp in ("", PENDIENTE_TXT):
             add("gap_critico", [], f"La decisión {gid} del análisis sigue sin responder.",
                 f"Responder {gid}; las historias que dependen de ella quedan incompletas hasta entonces.",
                 "sdd-analysis-gaps --answer + wf-spec-gap-resolve", gap=gid)
         if reab:
+            # Un spec usa una respuesta del análisis si la cita o si la declara en su
+            # cabecera (`Respuestas del análisis aplicadas`, copiada del discovery). Solo
+            # la cita no basta: un escritor que aplica la respuesta sin nombrarla deja el
+            # spec fuera de la lista, validado con la decisión retirada (D-104).
+            # Y para los specs escritos antes de esa cabecera, el campo `Afecta` del
+            # gap: nombra las features por su nombre ("deudas y reembolsos entre amigos").
             cita = re.compile(r"\b" + re.escape(gid) + r"\b")
-            afectados = [f for f, sp in specs.items()
-                         if cita.search(read_text(sp)) and _mtime_iso(sp) < reab]
-            if afectados:
+            am = re.search(r"^\s*[-*+]\s*\**\s*Afecta\s*\**\s*:\s*(.*)$", block, re.MULTILINE)
+            afecta = (am.group(1) if am else "").lower()
+
+            def usa(f, sp):
+                text = read_text(sp)
+                nombre = idx.get(f, {}).get("name", "").replace("-", " ").lower()
+                return (cita.search(header_field(text, "Respuestas del análisis aplicadas") or "")
+                        or cita.search(text) or (nombre and nombre in afecta))
+            afectados = sorted([f for f, sp in specs.items()
+                                if _mtime_iso(sp) < reab and usa(f, sp)], key=fid_sort_key)
+            mapa = disc_path and disc_path.is_file() and _mtime_iso(disc_path) < reab and cita.search(
+                read_text(disc_path))
+            if afectados or mapa:
                 add("reabierto", afectados,
                     f"La respuesta a {gid} cambió ({reab}) después de escribir "
-                    + ", ".join(label[f] for f in afectados) + ".",
-                    f"Revisar esos specs con la respuesta nueva de {gid}.",
-                    "wf-spec-delta", gap=gid)
+                    + (", ".join(label[f] for f in afectados) if afectados else "el mapa de features")
+                    + (" y el mapa de features" if afectados and mapa else "") + ".",
+                    f"Revisar esos specs con la respuesta nueva de {gid}."
+                    + (" El mapa de features también la usa: las features que se generen después"
+                       " partirán de él." if mapa else ""),
+                    "wf-spec-delta", gap=gid, mapa=bool(mapa))
     for fid, sp in sorted(specs.items(), key=lambda kv: fid_sort_key(kv[0])):
         stext = read_text(sp)
         for gid, sev, resp, _, _ in _gap_blocks(stext):
@@ -676,7 +711,15 @@ def spec_pending(directory: Path) -> dict:
     items.sort(key=lambda it: orden.index(it["tipo"]))
     for n, it in enumerate(items, 1):
         it["orden"] = n
-    return {"total": len(items), "bloqueantes": sum(1 for i in items if i["bloquea_plan"]),
+    bloq = sum(1 for i in items if i["bloquea_plan"])
+    # La frase con que main abre el cierre, ya escrita para copiarla: el aviso de los
+    # grupos como regla en prosa no salió en ninguno de 8 cierres (D-104, como la línea
+    # de modo de D-101).
+    resumen = (f"Quedan {len(items)} pendiente{'s' if len(items) != 1 else ''}; {bloq} "
+               f"{'impide' if bloq == 1 else 'impiden'} planificar." if items
+               else "No queda nada pendiente en Spec: se puede planificar.")
+    resumen += "".join(" " + g["que"] for g in grupos)
+    return {"total": len(items), "bloqueantes": bloq, "resumen": resumen,
             "readiness_vigente": readiness_vigente, "items": items, "grupos": grupos}
 
 

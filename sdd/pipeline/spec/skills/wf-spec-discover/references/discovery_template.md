@@ -38,6 +38,11 @@
 - **Modelos compartidos (ref)**: [ModeloY (owner: F-00Z)]
 - **Origen de alcance**: [PRD | PRD + analysis respondido]
 - **Avisos de gobernanza**: [ninguno | alcance derivado desde P-00X]
+- **Respuestas del análisis usadas**: [ninguna | P-00X, P-00Y]
+
+<!-- Respuestas del análisis usadas: los gaps YA respondidos cuya respuesta concreta esta feature
+     (aparezca o no en sus journeys y CAs de arriba). Es lo que permite, si una respuesta se
+     reabre, encontrar los specs escritos con la anterior (D-104). -->
 
 <!-- Repetir bloque por cada feature identificada -->
 

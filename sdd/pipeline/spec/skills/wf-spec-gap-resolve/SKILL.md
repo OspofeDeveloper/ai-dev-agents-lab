@@ -29,6 +29,13 @@ Extrae:
 
 - path del spec
 - `--analysis <analysis.md>` opcional
+- `--answer P-XXX "<texto>"` opcional y repetible — las respuestas que el usuario **dictó** en la
+  conversación, **con sus palabras exactas** ([[D-104]]). Se aplican tal cual con
+  `sdd-analysis-gaps.py "<fichero donde vive el gap>" --answer P-XXX "<texto>"`: ni se resumen, ni se
+  pasan a tercera persona, ni se les añade una precisión que el usuario no dijo. Si la respuesta deja
+  algo abierto, eso se dice en el informe; no se completa en la respuesta. Medido en `CU-3.z`: *"si
+  cambio o borro uno…"* quedó guardado como *"si el Usuario cambia o borra… (puede iniciarse desde
+  cualquiera de los dos)"*, con una decisión que nadie tomó.
 - `--inferred '<decisiones>'` opcional — las decisiones **ya tomadas con el usuario** sobre los CAs
   `[INFERIDO]`, que es como vuelve la segunda mitad de este flujo ([[D-068]]/[[D-082]]). Formato:
   entradas `CA-XXX=<vía>` separadas por `;`, con una de las tres vías exactas —`confirmado`,
@@ -173,6 +180,10 @@ tampoco puedes decidir; marcar es para lo conservador y menor, parar es para lo 
 > ```
 > Degradar a `BORRADOR` siempre es seguro y siempre es correcto: lo que se validó ya no es lo que
 > hay. Es la misma norma que en el PRD, donde un cambio reabre el sello ([[D-028]]).
+
+Si has aplicado respuestas **del análisis** (no las del propio spec), añade sus `P-XXX` a la cabecera
+`Respuestas del análisis aplicadas` ([[D-104]]): es lo que hace que reabrir una de ellas encuentre
+este spec.
 
 Incrementa versión menor del spec y registra en changelog:
 

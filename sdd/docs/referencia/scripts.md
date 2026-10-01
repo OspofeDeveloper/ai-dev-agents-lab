@@ -101,7 +101,11 @@ el hilo principal ofrece al cerrar cada flujo de Spec ([[D-102]]). Un ciclo cuya
 respalda **todas** la tabla de shared models del índice no es un pendiente: sale en `grupos`
 (*"se planifican juntas"*); solo bloquea el que tiene alguna dependencia sin respaldo, y la nombra.
 El pendiente de validar ofrece solo los specs listos y deja en `en_espera` los que aún tienen que
-cambiar por un pendiente anterior ([[D-103]]).
+cambiar por un pendiente anterior ([[D-103]]). El JSON trae además `resumen`, la frase de cierre ya
+escrita para copiarla; el pendiente de readiness lleva `conflictos` cuando un spec se corrigió después
+de su propio informe de conflictos; y una respuesta reabierta alcanza a los specs que la citan, la
+declaran en `Respuestas del análisis aplicadas` o pertenecen a una feature que nombra su `Afecta`
+([[D-104]]).
 
 - **Exit:** `0` siempre.
 
@@ -125,8 +129,9 @@ workflows de creación.
 ### `sdd-fanout-check.py` · `<session.jsonl | dir> [--json] [--quiet]`
 Probe de conformance (solo-ecosistema, no se instala): verifica sobre el transcript que las
 N llamadas `Agent` de un fan-out salieron en **un único mensaje** ([[D-047]], [[D-092]]).
-Agrupa por `message.id`, clasifica por `(agente, skill del prompt)` y corta por turno humano,
-que es lo que lo separa de las delegaciones secuenciales legítimas y de los relanzados.
+Agrupa por `message.id`, clasifica por `(agente, skill del prompt o su línea Modo:)` y corta por
+turno humano y por cualquier otra delegación en medio, que es lo que lo separa de las delegaciones
+secuenciales legítimas —auditar, corregir y volver a auditar— y de los relanzados ([[D-104]]).
 
 - **Exit:** `0` sin hallazgos · `1` error de uso/IO · `2` fan-out serializado.
 

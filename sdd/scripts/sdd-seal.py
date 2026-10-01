@@ -145,6 +145,13 @@ AMEND_LINE_RE = re.compile(
 )
 
 
+
+def _sin_codigo(text: str) -> str:
+    """El texto sin bloques ni spans de código: `[INCOMPLETO]` entre comillas es una
+    mención —la plantilla explicando la convención—, no una marca (D-104)."""
+    text = re.sub(r"^```.*?^```", "", text, flags=re.MULTILINE | re.DOTALL)
+    return re.sub(r"`[^`\n]*`", "", text)
+
 def fail_usage(msg):
     print(f"ERROR: {msg}", file=sys.stderr)
     print(__doc__.split("Uso:")[1].split("Exit codes:")[0], file=sys.stderr)
@@ -180,7 +187,7 @@ def check_plan(plan_path: Path):
             add(val.lower() == "ninguno", f"`**{gap}:**` sin gaps abiertos (valor: '{val}')")
 
     # 3. Sin [INCOMPLETO] en el plan
-    n_inc = len(re.findall(r"\[INCOMPLETO\]", plan))
+    n_inc = len(re.findall(r"\[INCOMPLETO\]", _sin_codigo(plan)))
     add(n_inc == 0, f"Plan sin marcadores [INCOMPLETO] (encontrados: {n_inc})")
 
     # 4. Spec origen resoluble
@@ -207,11 +214,11 @@ def check_plan(plan_path: Path):
         return checks, False
 
     # 5. Spec sin [INCOMPLETO], [CRÍTICO] ni [INFERIDO] abiertos
-    n_spec_inc = len(re.findall(r"\[INCOMPLETO\]", spec_text))
+    n_spec_inc = len(re.findall(r"\[INCOMPLETO\]", _sin_codigo(spec_text)))
     add(n_spec_inc == 0, f"Spec sin [INCOMPLETO] (encontrados: {n_spec_inc})")
     n_spec_crit = len(re.findall(r"\[CR[IÍ]TICO\]", spec_text))
     add(n_spec_crit == 0, f"Spec sin gaps [CRÍTICO] (encontrados: {n_spec_crit})")
-    n_spec_inf = len(re.findall(r"\[INFERIDO\]", spec_text))
+    n_spec_inf = len(re.findall(r"\[INFERIDO\]", _sin_codigo(spec_text)))
     add(n_spec_inf == 0, f"Spec sin CAs [INFERIDO] sin confirmar (encontrados: {n_spec_inf})")
 
     # 6. status_sync del spec (si declarado) no debe estar desalineado.
@@ -395,7 +402,7 @@ def check_spec(spec_path: Path, accept_derived: bool = False):
         return checks, False
 
     # 2. HUs completas.
-    n_inc = len(re.findall(r"\[INCOMPLETO\]", text))
+    n_inc = len(re.findall(r"\[INCOMPLETO\]", _sin_codigo(text)))
     add(n_inc == 0, f"Sin HUs [INCOMPLETO] (encontradas: {n_inc})")
 
     # 3. Gaps criticos propios, abiertos.
@@ -405,7 +412,7 @@ def check_spec(spec_path: Path, accept_derived: bool = False):
         + (f" (abiertos: {', '.join(abiertos)})" if abiertos else ""))
 
     # 4. CAs confirmados.
-    n_inf = len(re.findall(r"\[INFERIDO\]", text))
+    n_inf = len(re.findall(r"\[INFERIDO\]", _sin_codigo(text)))
     add(n_inf == 0, f"Sin CAs [INFERIDO] sin confirmar (encontrados: {n_inf})")
 
     # 5. status_sync fiable (misma regla que en `plan`).

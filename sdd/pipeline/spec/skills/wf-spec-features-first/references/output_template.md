@@ -92,7 +92,8 @@ recién generados no lo están):
 ## Cierre: el siguiente pendiente ([[D-102]])
 
 Después de los bloques de arriba, ejecuta `sdd-project-status.py <raíz_spec> --spec-pending --json` y
-cierra con **"Quedan N pendientes"** y un `AskUserQuestion` sobre el primero, según la tabla de
+cierra **copiando literal su campo `resumen`** ("Quedan N pendientes…" y el aviso de los grupos que se
+planifican juntos, [[D-104]]) y un `AskUserQuestion` sobre el primero, según la tabla de
 seguimiento de la guía de la fase. Los bloques de siguientes pasos explican; la pregunta es la que
 hace avanzar.
 

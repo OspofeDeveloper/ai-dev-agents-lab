@@ -377,6 +377,10 @@ Al final de cada HU afectada:
 > ⚠ [INCOMPLETO] — Pendiente de gap(s): [P-001], [P-003]. Responde esos gaps en <dónde viven> y pide que se complete la HU.
 ```
 
+**La marca va sin comillas de código** ([[D-104]]). Escrita entre comillas —`` `[INCOMPLETO]` ``— es una
+**mención** (una plantilla que explica la convención), y los gates no la cuentan: así una frase
+explicativa no deja un spec insellable. Lo mismo vale para `[INFERIDO]`.
+
 **`<dónde viven>` no es decorativo: es la diferencia entre una salida y un callejón** ([[D-054]]).
 Un gap tiene dos hogares, así que la frase nombra el que corresponde:
 

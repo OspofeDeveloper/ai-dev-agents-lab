@@ -131,6 +131,32 @@ class FanoutCheckTest(unittest.TestCase):
         r = self._run(p)
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
 
+    def test_auditar_corregir_y_volver_a_auditar_no_es_hallazgo(self):
+        """A, B, A: entre las dos auditorías sale otra delegación de la que dependen (D-104)."""
+        p = self._session([
+            agent_row("msg-1", "2026-10-01T09:39:21Z", "sdd-spec-auditor", "wf-spec-conflict", "F-001"),
+            tool_result_row(),
+            agent_row("msg-2", "2026-10-01T09:45:16Z", "sdd-spec-writer", "wf-spec-delta", "F-001"),
+            tool_result_row(),
+            agent_row("msg-3", "2026-10-01T09:50:54Z", "sdd-spec-auditor", "wf-spec-conflict", "F-001"),
+            tool_result_row(),
+        ])
+        r = self._run(p)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
+    def test_analizar_y_aplicar_un_delta_son_encargos_distintos(self):
+        """Sin SKILL.md en el encargo, el `Modo:` separa los cubos (D-104)."""
+        def modo(mid, ts, m):
+            row = agent_row(mid, ts, "sdd-spec-writer", "x", "F-001")
+            row["message"]["content"][0]["input"]["prompt"] = f"Modo: {m}\nPath del spec: x"
+            return row
+        p = self._session([modo("msg-1", "2026-10-01T09:26:42Z", "spec-delta-analyze"),
+                           tool_result_row(),
+                           modo("msg-2", "2026-10-01T09:33:08Z", "spec-delta-apply"),
+                           tool_result_row()])
+        r = self._run(p)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+
     def test_relanzar_tras_un_turno_humano_no_es_hallazgo(self):
         """Una tanda cortada y relanzada después de que la persona decida."""
         p = self._session([

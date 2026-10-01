@@ -7,6 +7,13 @@
 
 ---
 
+## Requisito de origen
+
+> [Los nuevos requisitos, copiados literales. El fichero de arriba puede ser temporal; esto es lo
+> que queda de lo que se pidió.]
+
+---
+
 ## Estado general
 
 > **[SIN_CAMBIOS | CAMBIOS_MENORES | CAMBIOS_SIGNIFICATIVOS | CAMBIO_DE_SCOPE]**

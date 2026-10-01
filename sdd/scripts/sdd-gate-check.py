@@ -64,6 +64,13 @@ AMEND_RE = re.compile(
 )
 
 
+
+def _sin_codigo(text: str) -> str:
+    """El texto sin bloques ni spans de código: `[INCOMPLETO]` entre comillas es una
+    mención —la plantilla explicando la convención—, no una marca (D-104)."""
+    text = re.sub(r"^```.*?^```", "", text, flags=re.MULTILINE | re.DOTALL)
+    return re.sub(r"`[^`\n]*`", "", text)
+
 def find_md_arg(args: str, marker: str):
     """Primer token .md cuyo nombre contiene el marcador (p. ej. '_plan')."""
     for token in re.findall(r"[^\s\"']+\.md", args or ""):
@@ -228,7 +235,7 @@ def gate_spec_fiable(args: str):
                          "Si la decision cambio, hay que reactivarla antes.")
     if retirado:
         return retirado
-    n_inc = len(re.findall(r"\[INCOMPLETO\]", text))
+    n_inc = len(re.findall(r"\[INCOMPLETO\]", _sin_codigo(text)))
     if n_inc:
         return f"El spec '{spec_path}' tiene {n_inc} HU(s) [INCOMPLETO]. Responde los gaps que las bloquean —en el `_analysis.md` o en la seccion `Items Pendientes` del propio spec, segun donde esten definidos— y pide que se completen esas historias."
     # Gaps criticos: bloquean los ABIERTOS, no la palabra (D-061). Desde D-054 un

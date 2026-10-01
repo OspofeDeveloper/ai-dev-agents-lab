@@ -128,6 +128,12 @@ para garantizar que ningún skill se queda sin casos en los cuatro ejes de prueb
 > inventaba una flecha en el ciclo y bloqueaba uno del dominio → [[D-103]] (v0.121.0), con escenario
 > nuevo `CU-3.aa`.
 
+> 🧪 **Tanda de continuación, pasada 1** (v0.121.0, banco de la corrida 3 sin reset, copia en
+> `.conformance-attic/bank-cu3z/`): primera pasada real del seguimiento, de *"¿qué me falta?"* a cinco
+> specs selladas. `CU-3.g` (2, 3) y `CU-3.h` (1, 4) **1/3**; `CU-3.z` FALLO (5, 7) y `CU-3.aa` FALLO (1).
+> Lo grave: reabrir una respuesta no alcanzaba un spec **validado** que la aplicaba sin citarla, y
+> los forks lanzados con `Skill` llegaban sin encargo. → [[D-104]] (v0.122.0).
+
 > ⏱ **Cuatro escenarios nacen sin pasada del barrido de enlazado lateral de Spec**
 > ([[D-078]]/[[D-079]], 2026-09-14): **CU-9.o** (evolucionar una feature dada de baja se deniega, y
 > el estado sobrevive incluso sin hook), **CU-7.s** (la reactivación es la única vuelta atrás y no

@@ -52,7 +52,14 @@ Si no hay argumento o el modo no es válido, informa al usuario:
 
 Ejemplos:
 - `analyze features/auth/spec/auth_spec.md --new-reqs new_requirements.md`
-- `apply features/auth/spec/auth_spec.md features/auth/spec/auth_delta_analysis.md`
+- `apply features/auth/spec/auth_spec.md features/auth/spec/auth_v1.2_delta_analysis.md`
+
+> **Cuando el cambio sale de la conversación** —una decisión del usuario, la dueña de un conflicto—,
+> escribe tú el fichero de requisitos con **sus palabras exactas**, sin redactarlas ni completarlas, y
+> **no le hagas antes preguntas de contenido** ([[D-104]]): qué falta decidir lo dice el escritor al
+> analizar (gaps `[D-XXX]`, `AMBIGUO`), y lo presenta el Paso 4A. Preguntar antes es decidir el
+> cambio en el hilo principal, que es lo que este flujo delega. Medido en `CU-3.z`: tras elegir la
+> dueña de un conflicto, main redactó él dos lecturas y las preguntó antes de analizar nada.
 
 Si el usuario intenta usar `resolve`, remítele a:
 > "Para eso lo que toca es completar las historias incompletas del spec con las respuestas del análisis — pídemelo y lo hago."
@@ -131,9 +138,13 @@ INSTRUCCION:
    - `AMBIGUO` — el requisito admite **mas de una lectura funcional**. Enumera las lecturas, cada
      una con lo que implicaria en HUs y CAs. **No elijas**: elegir por el usuario es fabricar
      alcance ([[D-039]]/[[D-063]]).
-6. **Escribe tu el informe** en `<mismo directorio que el spec>/<basename>_delta_analysis.md`
-   (ej.: `features/auth/spec/auth_spec.md` → `features/auth/spec/auth_delta_analysis.md`) e informa
-   del path: eres su autor ([[D-059]]/[[D-060]]). No toques el spec: `analyze` no escribe specs.
+6. **Escribe tu el informe** en `<mismo directorio que el spec>/<basename>_v<X.Y>_delta_analysis.md`,
+   con `X.Y` la version del spec que analizas (ej.: `features/auth/spec/auth_spec.md` v1.2 →
+   `features/auth/spec/auth_v1.2_delta_analysis.md`), e informa del path: eres su autor
+   ([[D-059]]/[[D-060]]). Un nombre por version, y no uno distinto la segunda vez ([[D-104]]). No
+   toques el spec: `analyze` no escribe specs.
+7. **Copia los nuevos requisitos, literales, en la seccion `Requisito de origen` del informe**
+   ([[D-104]]): el fichero de requisitos puede ser temporal, y el informe es lo que queda.
 ```
 
 ### Paso 4A: Los dos gates de clasificación (aquí, con `AskUserQuestion`)

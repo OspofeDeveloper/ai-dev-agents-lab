@@ -109,9 +109,19 @@ Informa qué hay que corregir y que lo revalidas cuando esté.
 
 ## Paso 6: Informar el siguiente paso
 
-- **Sellado** → dilo con su aprobador, y que ya se puede planificar sobre él.
+- **Sellado** → dilo con su aprobador. Que se pueda **planificar** lo dice el `resumen` de la lista de pendientes, no el sello: un spec sellado que va en grupo con otro sin sellar todavía no se planifica ([[D-104]]).
 - **En borrador** → enumera lo que falta y ofrécete a revalidarlo cuando esté corregido. Descríbele la acción en lenguaje natural, sin nombrar el workflow.
-- **En lote** → una tabla: spec · sellado sí/no · motivo si no.
+- **En lote** → esta tabla, copiada, con una fila por spec del lote ([[D-104]]: como instrucción, en `CU-3.z` no salió):
+
+  ```markdown
+  | Spec | Sellado | Motivo si no |
+  |---|---|---|
+  | F-002: categorias-de-gasto | ✓ Oscar (Product Owner) (2026-10-01) | — |
+  | F-001: registro-de-movimientos | ✗ | <la condición del sellador que falló, o el hallazgo de la auditoría> |
+  ```
+
+  Si un spec no se sella por una condición del sellador que no cuadra con su contenido, **dilo como
+  posible fallo del sellador y no toques el spec para esquivarlo** ([[D-104]]).
 
 **Y cierra con el siguiente pendiente de la fase** ([[D-102]]): `sdd-project-status.py <raíz_spec>
 --spec-pending --json` y la pregunta sobre el primero, según la tabla de seguimiento de la guía de la

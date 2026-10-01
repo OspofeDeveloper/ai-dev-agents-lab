@@ -80,7 +80,7 @@ Verifica (con `kb-decompose-expert`) que el documento describe una única capabi
 
 **Si se proporcionó `--analysis`**: lee el `_analysis.md` primero. Extrae todos los gaps respondidos (donde "Respuesta" no es `_(pendiente)_`). Durante los checks siguientes, antes de crear un gap nuevo:
 1. Busca en el analysis si la misma pregunta o contexto ya fue respondido
-2. Si fue respondido → usa la respuesta del cliente directamente, no crees gap ni marques `[INCOMPLETO]`
+2. Si fue respondido → usa la respuesta del cliente directamente, no crees gap ni marques `[INCOMPLETO]`. **Cítala donde la apliques** —*"(según `[P-002]` del análisis)"* en la regla o el CA que concreta— y añádela a la cabecera `Respuestas del análisis aplicadas` ([[D-104]]): sin la cita, reabrir esa respuesta no encuentra este spec
 3. Si no fue respondido (sigue como `_(pendiente)_`) → procede como si no hubiera analysis (crea gap `[CRÍTICO]` y marca HU como `[INCOMPLETO]`)
 4. Si el inline analysis detecta un gap que no existe en el analysis previo → créalo normalmente
 5. Si una respuesta resuelta introduce señales de cambio de producto según `kb-product-change-governance`:
@@ -175,8 +175,11 @@ Antes de escribir el output, aplica la Prueba de Pureza al spec completo. Consul
 - Artefactos: Spec ✓, Plan —, Tasks — (rutas relativas a la raíz de la feature según su layout: `spec/<nombre>_spec.md` con subcarpetas, `<nombre>_spec.md` si la feature es plana legacy)
 - Origen de alcance: `PRD` o `PRD + analysis respondido`
 - Avisos de gobernanza: `ninguno` o lista de gaps que derivaron alcance no consolidado
+- Respuestas del análisis aplicadas (solo en el spec): `ninguna` o los `P-XXX` respondidos que usa
 
-> **En modo scoped, estos dos campos se copian de la entrada de tu feature en el discovery ([[D-101]]).**
+> **En modo scoped, estos campos se copian de la entrada de tu feature en el discovery ([[D-101]]),**
+> y `Respuestas del análisis aplicadas` parte de su `Respuestas del análisis usadas` ([[D-104]]),
+> más cualquier otra respuesta del análisis que tú apliques al escribir.
 > El discovery ya aplicó el criterio —`PRD` salvo que el alcance de esa feature **solo** exista en una
 > respuesta del análisis— y la gobernanza. Usar decisiones del análisis para concretar CAs (un gap
 > informativo aceptado, una aclaración) **no** cambia el origen. Y la regla de coherencia vale igual
