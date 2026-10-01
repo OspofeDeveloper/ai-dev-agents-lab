@@ -105,7 +105,8 @@ cambiar por un pendiente anterior ([[D-103]]). El JSON trae además `resumen`, l
 escrita para copiarla; el pendiente de readiness lleva `conflictos` cuando un spec se corrigió después
 de su propio informe de conflictos; y una respuesta reabierta alcanza a los specs que la citan, la
 declaran en `Respuestas del análisis aplicadas` o pertenecen a una feature que nombra su `Afecta`
-([[D-104]]).
+([[D-104]]). Y `preguntas_criticas`, el mapa de las preguntas críticas abiertas —ID, feature, título y
+fichero— que se enseña antes de tratarlas cuando hay varias ([[D-106]]).
 
 - **Exit:** `0` siempre.
 

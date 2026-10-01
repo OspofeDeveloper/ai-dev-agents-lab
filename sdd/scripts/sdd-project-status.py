@@ -31,6 +31,7 @@ Uso:
 """
 from __future__ import annotations
 
+import os
 import re
 import sys
 from pathlib import Path
@@ -398,6 +399,12 @@ def _table_rows(text: str, title: str) -> list[list[str]]:
     return rows
 
 
+def _gap_title(text: str, gid: str) -> str:
+    """El título de la cabecera `### [P-XXX][…] <título>` de un gap."""
+    m = re.search(r"^#{2,4}\s*\[" + re.escape(gid) + r"\](?:\[[^\]]*\])*\s*(.*)$", text, re.MULTILINE)
+    return m.group(1).strip() if m else ""
+
+
 def _gap_blocks(text: str):
     """[(id, severidad, respuesta, reabierto_ts, bloque)] de un análisis o un spec."""
     heads = list(GAP_HEAD_RE.finditer(text))
@@ -549,7 +556,9 @@ def spec_pending(directory: Path) -> dict:
         if sev == "CRÍTICO" and resp in ("", PENDIENTE_TXT):
             add("gap_critico", [], f"La decisión {gid} del análisis sigue sin responder.",
                 f"Responder {gid}; las historias que dependen de ella quedan incompletas hasta entonces.",
-                "sdd-analysis-gaps --answer + wf-spec-gap-resolve", gap=gid)
+                "sdd-analysis-gaps --answer + wf-spec-gap-resolve", gap=gid,
+                titulo=_gap_title(atext, gid),
+                fichero=os.path.relpath(analysis) if analysis else "")
         if reab:
             # Un spec usa una respuesta del análisis si la cita o si la declara en su
             # cabecera (`Respuestas del análisis aplicadas`, copiada del discovery). Solo
@@ -585,7 +594,8 @@ def spec_pending(directory: Path) -> dict:
             if sev == "CRÍTICO" and resp in ("", PENDIENTE_TXT):
                 add("gap_critico", [fid], f"{label[fid]} tiene la decisión {gid} sin responder.",
                     f"Responder {gid}; sus historias incompletas se completan con la respuesta.",
-                    "wf-spec-gap-resolve", gap=gid)
+                    "wf-spec-gap-resolve", gap=gid, titulo=_gap_title(stext, gid),
+                    fichero=os.path.relpath(sp))
 
     # ── 3. Conflictos ALTA (arbitrados por el readiness) ──
     if rtext:
@@ -719,8 +729,13 @@ def spec_pending(directory: Path) -> dict:
                f"{'impide' if bloq == 1 else 'impiden'} planificar." if items
                else "No queda nada pendiente en Spec: se puede planificar.")
     resumen += "".join(" " + g["que"] for g in grupos)
+    # Con varias preguntas críticas, el mapa de lo que hay que tratar antes de tratar nada
+    # (D-106): el usuario elige si las responde todas, las de unas features o de una en una.
+    criticas = [{"gap": i["gap"], "features": i["features"], "titulo": i.get("titulo", ""),
+                 "fichero": i.get("fichero", "")} for i in items if i["tipo"] == "gap_critico"]
     return {"total": len(items), "bloqueantes": bloq, "resumen": resumen,
-            "readiness_vigente": readiness_vigente, "items": items, "grupos": grupos}
+            "readiness_vigente": readiness_vigente, "items": items, "grupos": grupos,
+            "preguntas_criticas": criticas}
 
 
 def render_pending(data: dict) -> str:

@@ -2,6 +2,14 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.123.0 — 2026-10-01
+
+**Varias preguntas críticas: primero qué hay, luego cómo tratarlo** — [[DECISIONS D-106]].
+
+- 🟠 **Con varias preguntas críticas abiertas, el cierre enseña antes el mapa** —una línea por pregunta, con su feature— y pregunta cómo tratarlas: *todas ahora*, *solo las de algunas features*, *de una en una* o *para luego*. Con un lote, se dictan todas y después se completan los specs **a la vez**, un escritor por spec en un mismo mensaje: una sola medición de readiness en vez de una por spec. Con una sola pregunta, sigue [[DECISIONS D-105]].
+- 🟢 `sdd-project-status.py --spec-pending --json` trae `preguntas_criticas` (ID, feature, título y fichero), y cada pendiente de pregunta crítica su `titulo` y `fichero`.
+- **Conformance:** `CU-3.z` punto 2 y `CU-3.g` punto 4 nuevo. 1 test nuevo.
+
 ## 0.122.1 — 2026-10-01
 
 **Una pregunta crítica se ofrece presentándola** — [[DECISIONS D-105]].

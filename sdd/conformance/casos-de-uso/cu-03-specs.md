@@ -1911,6 +1911,19 @@ por mayoría, o sella sin nombre detrás.
      spec.
    → **FALLO:** *"quedan N gaps en el `_analysis.md`"* cuando alguno vive en el spec.
 
+4. **Varias preguntas críticas, en varios specs** ([[D-106]]). Con preguntas abiertas en ≥2 specs,
+   preguntas *"¿qué me falta?"*.
+   → **Esperado:** antes de presentar ninguna, el mapa —una línea por pregunta, con su feature— y la
+     elección de cómo tratarlas. Con *todas ahora*: te las presenta de una en una, **no completa
+     ningún spec hasta tener todas**, y entonces lanza un escritor por spec **en un mismo mensaje**
+     (lo verifica `sdd-fanout-check.py`); un solo cierre, con el readiness primero. Con *de una en
+     una*: cada respuesta se aplica en el momento.
+   → **FALLO:** empezar por la primera sin el mapa, completar un spec a mitad del lote, o repartir
+     los escritores en varios mensajes.
+   → **Precondición del banco:** el de la tanda de continuación solo tiene preguntas en F-001 (dos);
+     ahí se mide el mapa y la elección, sin la opción de features. El lote multi-spec necesita un
+     banco con preguntas en dos specs.
+
 **Resultado:** PASS si completa solo con material respondido **y** alcanza los gaps de los dos
 hogares · FALLO si inventa el contenido de una HU sin respuesta, o si deja inalcanzable un gap
 local del spec.
@@ -2444,10 +2457,13 @@ toca?"*— cierra con **"Quedan N"** y una pregunta sobre el primero. Vías por 
    readiness— y *"¿qué me toca?"* responde con la misma lista, también en un repo solo de specs.
    → **Esperado:** *"Quedan N pendientes"* + `AskUserQuestion` con las opciones del tipo (una por
      feature en un conflicto; *todos juntos / uno a uno* al validar) y siempre *"Lo dejo para luego"*.
-   → **Con una pregunta crítica primero, sin `AskUserQuestion`** ([[D-105]]): la pregunta presentada
-     con contexto, a qué afecta y la pregunta, y *"respóndeme con tus palabras, o dime que la dejas
-     para luego"*. **FALLO:** opciones de respuesta redactadas por main, o un *"¿la respondemos?"*
-     antes de enseñarla.
+   → **Con una sola pregunta crítica primero, sin `AskUserQuestion`** ([[D-105]]): presentada con
+     contexto, a qué afecta y la pregunta, y *"respóndeme con tus palabras, o dime que la dejas para
+     luego"*. **Con varias, primero el mapa** ([[D-106]]): una línea por pregunta (ID, feature,
+     título) y la elección *todas ahora / solo las de algunas features / de una en una / para luego*
+     —la segunda solo si son de más de una feature—. **FALLO:** opciones de respuesta redactadas por
+     main, presentar la primera pregunta sin el mapa cuando hay varias, o procesar un spec antes de
+     tener todas las respuestas del lote elegido.
    → **FALLO:** un cierre sin la oferta, o una oferta sin la salida de dejarlo.
 3. **"Lo dejo para luego" no rompe nada.**
    → **Esperado:** no se toca ningún fichero, y la próxima lista sale idéntica.

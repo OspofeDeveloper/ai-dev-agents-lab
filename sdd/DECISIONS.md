@@ -6,6 +6,22 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-106 — Varias preguntas críticas: primero el mapa, luego cómo tratarlas
+
+- **Fecha:** 2026-10-01 · **Estado:** Adoptada (diseño del usuario). Completa [[D-105]], que sigue valiendo para una sola pregunta. · **Relacionada:** [[D-102]] (la lista), [[D-104]] (la pregunta se presenta y la respuesta va literal), [[D-047]] (un fan-out en un mensaje).
+
+**Contexto.** Con la regla de [[D-104]]/[[D-105]], main presentaba la primera pregunta crítica y, en cuanto se respondían las de un spec, lanzaba su escritor. Con preguntas en varios specs eso cuesta caro: cada spec completado deja el readiness desactualizado, y en la lista el readiness va **antes** que las preguntas, así que entre las de un spec y las del siguiente habría que volver a medir —N mediciones en vez de una—. Y el usuario no sabía qué le esperaba antes de empezar: cuántas preguntas, de qué features. Puede no querer tratarlas todas de golpe, por tiempo, por tokens o por quién tiene la respuesta.
+
+**Decisión.** Cuando el primer pendiente es una pregunta crítica y hay **varias**, el cierre enseña primero el mapa —una línea por pregunta: ID, feature y título, del campo `preguntas_criticas` del script— y pregunta cómo tratarlas: **todas ahora** (recomendado), **solo las de algunas features** (solo si hay más de una, con selección múltiple), **de una en una** o **para luego**. Con un lote, se presentan de una en una, las del análisis se escriben según llegan, **ningún spec se procesa hasta tener todas**, y entonces un escritor por spec en un mismo mensaje y un solo cierre; si a mitad lo deja, se procesa lo que ya hay. De una en una, cada respuesta se aplica en el momento.
+
+**Alternativas descartadas.** *Siempre en lote, sin preguntar*: decide por el usuario cuánto trabajo hace ahora. *Siempre de una en una*: es lo que había, y paga una medición por spec. *Un `AskUserQuestion` con las respuestas como opciones*: lo que [[D-104]] quitó.
+
+**Consecuencias / aprendizaje.** **Antes de pedirle a alguien una serie de decisiones, enséñale cuántas son.** El orden de la lista es correcto para cada paso y caro para una serie: la decisión de agrupar no la puede tomar el script, pero sí darle al usuario lo que necesita para tomarla.
+
+**Referencias.** `scripts/sdd-project-status.py` (`preguntas_criticas`, `titulo`, `fichero`) · `tests/test_sdd_spec_pending.py` · `pipeline/spec/routing.md` (seguimiento y tabla de vías) · `conformance/casos-de-uso/cu-03-specs.md` (`CU-3.z` punto 2, `CU-3.g` punto 4) · `CHANGELOG.md` 0.123.0.
+
+---
+
 ## D-105 — Una pregunta crítica se ofrece presentándola, sin `AskUserQuestion`
 
 - **Fecha:** 2026-10-01 · **Estado:** Adoptada (elección del usuario entre dos formas). · **Relacionada:** [[D-102]] (cada cierre ofrece el siguiente), [[D-104]] (la pregunta se presenta, no se reformula).

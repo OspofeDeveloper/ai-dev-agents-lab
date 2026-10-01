@@ -265,6 +265,20 @@ class SpecPendingTest(unittest.TestCase):
         reab = [i for i in b.pending()["items"] if i["tipo"] == "reabierto"]
         self.assertEqual(reab[0]["features"], ["F-001", "F-009"])
 
+    def test_preguntas_criticas_traen_el_mapa_para_elegir_como_tratarlas(self):
+        """Varias preguntas críticas: ID, feature, título y fichero de cada una (D-106)."""
+        self._base()
+        self.b.feature("F-002", "cuentas", requiere="F-001",
+                       body="\n## Items Pendientes\n\n### [P-021][CRÍTICO] Saldo negativo\n"
+                            "- **Respuesta**: _(pendiente)_\n")
+        os.utime(self.b.spec / "spec_readiness_report.md")
+        mapa = self.b.pending()["preguntas_criticas"]
+        self.assertEqual([(q["gap"], q["features"]) for q in mapa],
+                         [("P-001", []), ("P-021", ["F-002"])])
+        self.assertEqual(mapa[1]["titulo"], "Saldo negativo")
+        self.assertTrue(mapa[1]["fichero"].endswith("cuentas_spec.md"))
+        self.assertTrue(mapa[0]["fichero"].endswith("prj_analysis.md"))
+
     def test_media_descartada_por_el_readiness_no_aparece(self):
         """Con la tabla MEDIA en el readiness, un MEDIA de un informe suelto no sale."""
         self._base(media="")
