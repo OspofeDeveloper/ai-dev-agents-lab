@@ -2,6 +2,15 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.123.1 — 2026-10-01
+
+**Tres arreglos de la pasada 2 de la tanda de continuación** — [[DECISIONS D-107]].
+
+- 🟠 **La tabla del lote de validación la imprime el sellador** (`sdd-seal.py spec --report <specs…>`) y main la copia: como plantilla en el SKILL no salió en dos pasadas. Las notas menores de las auditorías se dicen en una línea.
+- 🟠 **Lo que el escritor o el auditor avisa de otra feature sale en el cierre**, en una línea antes de la oferta.
+- 🟡 **Regla de idioma**: las frases que narran el nombre de un paso de la skill no se dicen; se dice en español qué se hace, o nada.
+- **Tests:** 1 nuevo.
+
 ## 0.123.0 — 2026-10-01
 
 **Varias preguntas críticas: primero qué hay, luego cómo tratarlo** — [[DECISIONS D-106]].

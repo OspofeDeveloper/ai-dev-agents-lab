@@ -395,6 +395,22 @@ class SealMencionTest(unittest.TestCase):
             self.assertEqual(r.returncode, 2, r.stdout)
 
 
+class SealReportTest(unittest.TestCase):
+    """`sdd-seal.py spec --report`: la tabla del lote, impresa por el script (D-107)."""
+
+    def test_una_fila_por_spec_con_aprobador_o_motivo(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            ok = Path(tmp) / "bien_spec.md"
+            write(ok, spec("F-002", estado="VALIDADO",
+                           extra_header="> Aprobado por: Ana (PO) (2026-10-01)\n"))
+            ko = Path(tmp) / "mal_spec.md"
+            write(ko, spec("F-001", body="\n> ⚠ [INCOMPLETO] — Pendiente de gap(s): [P-001].\n"))
+            r = run_script("sdd-seal.py", "spec", "--report", ok, ko)
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            self.assertIn("| F-002: bien | ✓ Ana (PO) (2026-10-01) | — |", r.stdout)
+            self.assertRegex(r.stdout, r"\| F-001: mal \| ✗ \| falla: Sin HUs \[INCOMPLETO\]")
+
+
 class SealDerivedScopeTest(unittest.TestCase):
     """Condición 9 de `sdd-seal.py spec` (D-102)."""
 

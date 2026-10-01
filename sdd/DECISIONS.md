@@ -6,6 +6,22 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-107 — Tres arreglos de la pasada 2: la tabla del lote del script, los avisos del delegado y las frases en inglés
+
+- **Fecha:** 2026-10-01 · **Estado:** Adoptada. · **Relacionada:** [[D-104]] (de donde vienen la tabla y la regla del orden), [[D-101]] (lo literal que se da hecho se sostiene), [[D-100]] (idioma).
+
+**Contexto.** La pasada 2 de la tanda de continuación (v0.123.0) cumplió casi todo lo de [[D-104]]–[[D-106]]: preguntas con el mapa y en lote, respuestas literales, delegaciones en primer plano y con encargo, la oferta siempre de la lista, deltas con veredicto del escritor, y las seis specs selladas. Quedaron tres cosas. (1) **La tabla del lote no salió**, por segunda vez, aunque el SKILL la traía literal: una plantilla que hay que rellenar a mano se resume en el cierre. (2) **En la segunda vuelta del conflicto, el escritor avisó** de que deudas y reembolsos no permitía la corrección que acababa de aplicar, y el cierre ofreció auditar sin decirlo: el usuario se enteró por la auditoría, tres minutos después. (3) **Una frase en inglés por pasada**, siempre del mismo tipo: el nombre de un paso de la skill narrado (*"Now the closing: run the status script again"*).
+
+**Decisión.** (1) `sdd-seal.py spec --report <specs…>` imprime la tabla —spec, sellado con aprobador, o el motivo— y el SKILL de validar manda copiarla; las notas menores de auditoría, en una línea. (2) Lo que un delegado avisa **fuera de su spec** se dice en una línea antes de la oferta, citado; no es un pendiente ni se pregunta por él. (3) La regla de idioma nombra el patrón con sus tres ejemplos medidos: esas frases no se dicen.
+
+**Alternativas descartadas.** Para (1), endurecer la instrucción: ya era literal. Para (2), convertir el aviso en un pendiente: lo confirma la auditoría que viene a continuación, y duplicarlo en la lista lo contaría dos veces.
+
+**Consecuencias / aprendizaje.** El patrón de [[D-101]] y [[D-104]] se confirma por tercera vez: **lo que el script da hecho se copia; lo que hay que componer, se resume**.
+
+**Referencias.** `scripts/sdd-seal.py` (`--report`) · `tests/test_sdd_spec_pending.py` · `pipeline/spec/skills/wf-spec-validate/SKILL.md` · `pipeline/spec/routing.md` · `docs/referencia/scripts.md` · `CHANGELOG.md` 0.123.1.
+
+---
+
 ## D-106 — Varias preguntas críticas: primero el mapa, luego cómo tratarlas
 
 - **Fecha:** 2026-10-01 · **Estado:** Adoptada (diseño del usuario). Completa [[D-105]], que sigue valiendo para una sola pregunta. · **Relacionada:** [[D-102]] (la lista), [[D-104]] (la pregunta se presenta y la respuesta va literal), [[D-047]] (un fan-out en un mensaje).

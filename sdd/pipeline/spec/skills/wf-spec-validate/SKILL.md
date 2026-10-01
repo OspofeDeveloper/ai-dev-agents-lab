@@ -111,14 +111,17 @@ Informa qué hay que corregir y que lo revalidas cuando esté.
 
 - **Sellado** → dilo con su aprobador. Que se pueda **planificar** lo dice el `resumen` de la lista de pendientes, no el sello: un spec sellado que va en grupo con otro sin sellar todavía no se planifica ([[D-104]]).
 - **En borrador** → enumera lo que falta y ofrécete a revalidarlo cuando esté corregido. Descríbele la acción en lenguaje natural, sin nombrar el workflow.
-- **En lote** → esta tabla, copiada, con una fila por spec del lote ([[D-104]]: como instrucción, en `CU-3.z` no salió):
+- **En lote** → la tabla la imprime el sellador; **cópiala tal cual** ([[D-107]]):
 
-  ```markdown
-  | Spec | Sellado | Motivo si no |
-  |---|---|---|
-  | F-002: categorias-de-gasto | ✓ Oscar (Product Owner) (2026-10-01) | — |
-  | F-001: registro-de-movimientos | ✗ | <la condición del sellador que falló, o el hallazgo de la auditoría> |
+  ```bash
+  !python3 .sdd/scripts/sdd-seal.py spec --report <spec1.md> <spec2.md> …
   ```
+
+  Una fila por spec: sellado con su aprobador, o el motivo —la condición que falla, o que pasa el
+  sellador pero no se selló—. Si alguno no se selló por un **hallazgo de auditoría**, añade debajo una
+  línea por hallazgo. Y si las auditorías dejaron **notas menores** que no bloquean, dilas en una
+  línea, sin esconderlas. Como plantilla para componer a mano, la tabla no salió en dos pasadas
+  seguidas de `CU-3.z`.
 
   Si un spec no se sella por una condición del sellador que no cuadra con su contenido, **dilo como
   posible fallo del sellador y no toques el spec para esquivarlo** ([[D-104]]).

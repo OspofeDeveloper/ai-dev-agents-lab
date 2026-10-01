@@ -34,7 +34,9 @@ Verifica precondiciones **por contenido** antes de invocar un workflow.
 Sella un plan a `Estado: VALIDADO` solo si pasan **8 condiciones** (estructura;
 4 líneas de gaps en "ninguno"; sin `[INCOMPLETO]`; spec origen resoluble y sin
 marcadores; `status_sync` fiable; hash de PRD; **cobertura de todo `CA-XXX`**; deuda
-técnica aprobada). Si falla, fuerza `BORRADOR`.
+técnica aprobada). Si falla, fuerza `BORRADOR`. Los marcadores entre comillas de código son
+menciones y no cuentan ([[D-104]]). `spec --report <specs…>` imprime la tabla de un lote de
+validación —spec, sellado con su aprobador o el motivo— para copiarla ([[D-107]]).
 
 - **Exit:** `0` OK/sellado · `1` error IO · `2` condiciones no cumplidas.
 

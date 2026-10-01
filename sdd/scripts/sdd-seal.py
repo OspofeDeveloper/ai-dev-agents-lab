@@ -18,6 +18,7 @@ Uso:
     sdd-seal.py spec <archivo.md> --retire --change CR-XXX [--reason "texto"]
                                                    # da de baja la feature: Estado: RETIRADO (D-074)
     sdd-seal.py spec <archivo.md> --unretire       # deshace la baja: vuelve a BORRADOR
+    sdd-seal.py spec --report <a.md> [<b.md> …]    # tabla del lote: spec · sellado · motivo (D-107)
 
 Exit codes: 0 = OK / sellado; 1 = error de uso o IO; 2 = condiciones no cumplidas.
 
@@ -546,6 +547,36 @@ def _current_estado(path: Path) -> str | None:
     return m.group("value") if m else None
 
 
+def report(paths) -> int:
+    """La tabla de un lote de validación, para copiarla (D-107): como instrucción en la
+    plantilla no salió en dos pasadas seguidas; dada por el script, se copia."""
+    print("| Spec | Sellado | Motivo si no |")
+    print("|---|---|---|")
+    for p in paths:
+        path = Path(p)
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError:
+            print(f"| {p} | ✗ | no se puede leer |")
+            continue
+        fid = re.search(r"^\s*>?\s*\**Feature ID\**\s*:\s*\**\s*(F-[\w-]+)", text, re.MULTILINE)
+        nombre = path.name.replace("_spec.md", "")
+        etiqueta = f"{fid.group(1)}: {nombre}" if fid else nombre
+        estado = _current_estado(path)
+        if estado == "VALIDADO":
+            ap = APROBADO_RE.search(text)
+            print(f"| {etiqueta} | ✓ {ap.group('value').strip() if ap else ''} | — |")
+            continue
+        if estado == "RETIRADO":
+            print(f"| {etiqueta} | ✗ | dada de baja |")
+            continue
+        checks, _ = check_spec(path)
+        motivo = "; ".join("falla: " + desc for ok, desc in checks if not ok) or \
+            "pasa el sellador: no se selló (auditoría con hallazgos o sin aprobar)"
+        print(f"| {etiqueta} | ✗ | {motivo.replace('|', '/')} |")
+    return 0
+
+
 def take_value(args, flag):
     """Extrae `--flag valor` de args; devuelve (args_sin_flag, valor|None, error|None)."""
     if flag not in args:
@@ -604,6 +635,8 @@ def main() -> int:
     args, derivado, err = take_value(args, "--accept-derived-scope")
     if err:
         return fail_usage(err)
+    if len(args) >= 3 and args[0] == "spec" and args[1] == "--report":
+        return report(args[2:])
     if (len(args) != 3 or args[0] not in ("plan", "spec") or args[2] not in MODES):
         return fail_usage("argumentos invalidos")
     kind = args[0]
