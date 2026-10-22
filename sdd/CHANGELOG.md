@@ -2,6 +2,10 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.125.4 — 2026-10-22
+
+- 🟠 **Una petición al dueño queda atendida aunque el dueño la cite en cualquier columna de su fila de orígenes**, siempre que la cita lleve la feature que la hizo junto a su `R-NNN` (los `R-NNN` son locales a cada consumidora). El dueño la citaba en *«Qué crea o cambia»* y la lista la seguía dando por pendiente (CU-3.ab, pasada 1). 2 tests nuevos.
+
 ## 0.125.3 — 2026-10-22
 
 - 🟠 **Un uso de solo lectura se reconoce también por cómo lo escriben los escritores**: *«Lee el catálogo…»*, *«… No cambia su saldo»*, *«consulta…»*. Tras corregir deudas, su tabla decía que solo lee las cuentas y la lista seguía pidiendo completar el contrato de cuentas (CU-3.ab, pasada 1). 1 test nuevo.

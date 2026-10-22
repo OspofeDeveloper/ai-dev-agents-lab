@@ -139,8 +139,14 @@ def contrato(text: str) -> dict:
         om = re.search(r"^####\s+Or[ií]genes externos\b.*?$(.*)", block, re.MULTILINE | re.DOTALL)
         origenes = []
         for row in rows(om.group(1) if om else ""):
+            fila = " | ".join(row)
+            # Quién es el origen sale de su columna; la cita de una petición puede ir en
+            # cualquiera («…; el par nunca lleva categoría (F-004 · R-001)»), y se reconoce
+            # por el ID de la petición junto a la feature que la hizo: los `R-NNN` son
+            # locales a cada consumidora y dos pueden tener su R-001 (CU-3.ab, pasada 1).
             origenes.append({"fids": set(FID_RE.findall(row[0])),
-                             "rids": set(RID_RE.findall(row[0])), "celda": row[0]})
+                             "rids": set(RID_RE.findall(fila)),
+                             "fids_fila": set(FID_RE.findall(fila)), "celda": row[0]})
         name = m.group(1).strip(" `*")
         out[norm(name)] = {"name": name, "origenes": origenes}
     return out
@@ -247,7 +253,8 @@ def check(directory: Path) -> dict:
                 continue
             owner = p["owner"]
             atendida = owner in contratos and any(
-                p["id"] in o["rids"] for m in contratos[owner].values() for o in m["origenes"])
+                p["id"] in o["rids"] and c in o["fids_fila"]
+                for m in contratos[owner].values() for o in m["origenes"])
             if not atendida:
                 peticiones.append({"consumidor": c, "owner": owner, "id": p["id"],
                                    "modelo": p["modelo"], "titulo": p["titulo"],

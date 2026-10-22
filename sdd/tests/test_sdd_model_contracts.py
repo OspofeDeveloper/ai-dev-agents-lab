@@ -152,6 +152,21 @@ class ContractsTest(unittest.TestCase):
         self.assertEqual((rc, data["peticiones"]), (0, []))
         self.assertEqual(self.seal("deudas").returncode, 0)
 
+    def test_peticion_citada_en_otra_columna_de_la_fila_tambien_queda_atendida(self):
+        self._banco(origenes="| F-002 (deudas) | Registrar deuda | gasto vinculado (F-002 · R-001) | no | — |",
+                    consumo_f2=CONSUMO.format(filas=GASTO_DEUDA,
+                                              peticiones=PETICION.format(estado="pendiente")))
+        data, rc = self.contracts()
+        self.assertEqual((rc, data["peticiones"]), (0, []))
+
+    def test_el_R_001_de_otra_consumidora_no_atiende_esta_peticion(self):
+        self._banco(origenes="| F-002 (deudas) | Registrar deuda | gasto | no | — |\n"
+                             "| F-003 (presupuesto) · R-001 | Otra cosa | x | no | — |",
+                    consumo_f2=CONSUMO.format(filas=GASTO_DEUDA,
+                                              peticiones=PETICION.format(estado="pendiente")))
+        data, rc = self.contracts()
+        self.assertEqual([p["id"] for p in data["peticiones"]], ["R-001"])
+
     def test_dependencia_que_el_indice_no_declara_es_un_aviso(self):
         self._banco(consumo_f3=CONSUMO.format(filas=LECTURA.replace("suma", "cuenta"),
                                               peticiones=""))
