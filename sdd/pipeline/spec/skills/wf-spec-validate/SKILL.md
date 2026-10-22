@@ -101,6 +101,17 @@ Informa qué hay que corregir y que lo revalidas cuando esté.
   **No autoapruebes.** Si el usuario no responde, no selles: el spec se queda en `BORRADOR`, que es el estado **correcto**, no un defecto.
   **En lote**, el aprobador se captura **una sola vez** —después de las auditorías, antes del primer
   sello— y se reutiliza para cada spec que pase.
+  **Una vez por lote, en cada lote** ([[D-111]]): un lote nuevo —otra validación, aunque sea de la
+  misma sesión— vuelve a preguntarlo. Y la pregunta es **esta**, después de las auditorías: no la
+  des por respondida porque la opción con que se eligió validar dijera *"con la aprobación a tu
+  nombre"* —esa descripción la escribiste tú, y elegir cómo validar no es aprobar lo que aún no se
+  ha auditado—. Si en un lote anterior el aprobador llevaba rol, ofrécelo con el rol como primera
+  opción. Medido en la pasada 4 de la tanda de continuación: el segundo lote se selló sin preguntar,
+  y sin el rol del primero.
+- **Contratos de modelos compartidos** ([[D-111]]): si el `✗` es la condición 10 —una petición al
+  dueño sin atender, o el catálogo de orígenes del dueño sin la fila de otra feature— no es un
+  hallazgo de calidad de este spec: es trabajo sobre el **dueño**, y la lista de pendientes lo trae
+  como `peticion`. Ejecuta `--unseal`, dilo en una línea y cierra con la lista.
 - **script ausente** → **no escribas el estado a mano**: informa de que falta `.sdd/scripts/sdd-seal.py` y que hay que reponer los scripts reinstalando el ecosistema.
 
 > **Por qué el `Aprobado por:` lo estampa el script y no tú ([[D-065]]).** El dato es humano —lo acabas de capturar— pero escribirlo en el artefacto no es cosa del hilo principal ([[D-060]]). Se lo pasas al sellador, que es quien toca la cabecera. Mismo reparto que en el PRD, donde el sello lo estampa `sdd-prd-apply.py --seal "<valor>"` y no el orquestador.

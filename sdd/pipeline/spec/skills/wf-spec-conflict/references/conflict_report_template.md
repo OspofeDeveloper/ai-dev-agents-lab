@@ -66,6 +66,8 @@
 **En `[feature-b]`**:
 > "[cita exacta de la sección en conflicto — con su ID]"
 
+**Causa** (solo si es de un modelo compartido): [Duplica | Supone | Efecto no catalogado | Sin dueño | Decisión] — [una frase: qué regla de qué modelo, y de qué feature es dueña]
+
 **Por qué es un conflicto**: [explicación específica de la incompatibilidad. Si citas la regla
 que sostiene tu veredicto, cítala por lo que dice —"el mismo modelo con comportamientos distintos
 en dos CAs de features diferentes"—, nunca por el nombre de la kb que la define (D-091).]
@@ -85,7 +87,10 @@ en dos CAs de features diferentes"—, nunca por el nombre de la kb que la defin
        deuda", no "se añaden dos CAs de bloqueo".
      - Entre 2 y 4 opciones; incluye siempre las dos de "una se ajusta a la otra" si aplican.
      - *Cambia:* nombra al menos un spec —el que tendrá que recogerlo—, aunque solo sea dejarlo
-       escrito. Es la lista sobre la que se corregirá con un delta.
+       escrito. Es la lista sobre la que se corregirá con un delta. Si la opción fija una regla
+       de un modelo compartido, *Cambia:* nombra a su DUEÑO (D-111): la regla se escribe solo ahí.
+     - Cada opción describe UN comportamiento: no la expliques comparándola con dos cosas que se
+       comportan distinto ("igual que A o que B"), porque quien la aplica no sabe cuál eligió.
      - Sin recomendación: es una decisión de producto, no tuya. -->
 
 ---

@@ -133,6 +133,26 @@ Declara explícitamente qué NO está incluido en este spec. Sin esta sección, 
 
 **Importante**: las exclusiones deben ser funcionales, no técnicas. "No usaremos PostgreSQL" es una exclusión técnica (va al Plan). "La gestión de contraseñas no es parte de este feature" es una exclusión funcional válida.
 
+### Modelos compartidos: el dueño define, los demás citan ([[D-111]])
+
+Cuando la feature es **dueña** de un modelo compartido, el spec lleva `## Contrato de modelos
+compartidos`: ciclo de vida, qué puede hacer el actor, invariantes y el catálogo de **orígenes
+externos** (qué operaciones de otras features lo crean o lo cambian, y qué se puede hacer con lo
+que crean). Cuando **usa** un modelo de otra feature, lleva `## Modelos de otras features`: qué hace
+con él y qué regla del dueño cita, y las **peticiones al dueño** si necesita una regla que el dueño
+no tiene.
+
+**Una regla de un modelo ajeno no se escribe en el spec que lo usa**, ni en HUs, ni en CAs, ni en
+reglas, ni en fuera de alcance. Un CA puede decir el efecto observable de su operación (*"se
+registra un gasto vinculado al contacto"*) y citar al dueño; no puede fijar cómo se comporta luego
+ese modelo (*"ese gasto no se puede editar"*). Esa frase duplicada en dos specs es la que, al
+corregir uno, deja al otro diciendo lo contrario.
+
+**Bien:** *"…se registra un gasto vinculado al contacto (qué se puede hacer con él lo fija el
+contrato de Movimiento en el registro de movimientos)."*
+**Mal:** *"…se registra un gasto vinculado al contacto, que no se podrá editar mientras la deuda
+siga viva."* — es una regla de Movimiento escrita fuera de su dueño: va como petición al dueño.
+
 ---
 
 ## Modo ligero (proporcionalidad declarada)
@@ -276,6 +296,12 @@ dos formas en dos corridas).
 3. **Un CA que no se puede verificar tal como está escrito**: le falta parte del GIVEN/WHEN/THEN,
    no referencia HU padre, o su resultado no es observable objetivamente. El corte es
    **ejecutabilidad**, no elegancia: si alguien puede montar la prueba con lo que hay, no bloquea.
+4. **Una regla de un modelo compartido escrita fuera de su dueño** ([[D-111]]): una frase que fija
+   cómo se comporta un modelo del que es dueña otra feature —si se edita, si se borra, cómo
+   aparece, qué invariante cumple—. Se corrige citando el contrato del dueño o convirtiéndola en
+   petición al dueño. Lo estructural (catálogo, peticiones, dependencias) lo verifica
+   `sdd-model-contracts.py`; esta frase en prosa solo la ves tú. Un spec anterior a los contratos
+   (sin ninguna de las dos secciones) no se juzga por esto: se anota como nota no bloqueante.
 
 **No degrada el veredicto** —se reporta, y el spec se sella igual—:
 

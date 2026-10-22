@@ -66,6 +66,7 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 - [ ] CU-3.r — El rigor (standard/ligero) se elige al crear el spec, no en el init (D-006) — puntos 1 y 4: **SELLADOS 3/3** (tanda A, 2026-09-25/28; puntos 2, 3 y 5 sin serie)
 - [ ] CU-3.z — Seguimiento de la fase: la lista de pendientes sale de ficheros y cada cierre ofrece el siguiente ([[D-102]]) — de paso en 2026-09-29: punto 2 verde, **punto 1 FALLO** tras *"Lo dejo para luego"* ([[D-103]]); **FALLO** 2026-10-01 (puntos 5 y 7, [[D-104]]); **FALLO** 2026-10-01 pasada 2 (punto 5: sin tabla, [[D-107]]); 1, 2, 3, 4 y 7 verdes en la pasada 2
 - [ ] CU-3.aa — Seguimiento: un ciclo del dominio se planifica en grupo, uno sin respaldo bloquea y se nombra ([[D-103]]) — **FALLO** 2026-10-01 (punto 1: el aviso del grupo no sale, [[D-104]]); **FALLO** 2026-10-01 pasada 2 (punto 1: `resumen` parafraseado, [[D-108]]); 2, 3 y 4 verdes en las dos
+- [ ] CU-3.ab — Cada regla tiene un dueño: el dueño publica el contrato del modelo y los demás lo citan ([[D-111]])
 
 > **Capa determinista** (no son escenarios manuales): los índices y marcadores
 > (`sdd-features-index.py`, `sdd-gap-conventions`) están cubiertos por unittests; la calidad
@@ -2464,7 +2465,7 @@ de la tanda A: conflictos `ALTA`, un ciclo, specs en borrador, `MEDIA`, features
 dio, alcance derivado—. **No se resetea**: el escenario recorre esos pendientes.
 **Mecanismo:** `sdd-project-status.py <raíz_spec> --spec-pending --json` (lista determinista, orden
 fijo) + la regla de seguimiento de la guía de la fase: cada flujo de Spec que termina —y *"¿qué me
-toca?"*— cierra con **qué falta para planificar, por tipo** ([[D-110]]) y una pregunta sobre el primero. Vías por tipo en esa misma regla.
+toca?"*— cierra con **qué falta para planificar, por tipo** ([[D-110]]) y una pregunta sobre el primero. Desde [[D-111]] hay un tipo más, `peticion` (completar el contrato de un modelo compartido en su dueño). Vías por tipo en esa misma regla.
 
 1. **La lista es la de los ficheros.** Ejecuta tú el script en otra terminal antes de cada cierre.
    → **Esperado:** lo que main ofrece es el `items[0]` del script, con su texto; el total coincide.
@@ -2604,6 +2605,47 @@ alguno no se cumple.
 > `AskUserQuestion` y el texto previo se pinta como resumen. Los cierres siguientes sí nombraron el
 > grupo. El ciclo forzado salió nombrando solo `F-002 → F-003`, y validar ofreció solo lo listo. →
 > [[D-108]] (v0.123.2): el `resumen`, dentro de la pregunta.
+
+## CU-3.ab — Cada regla tiene un dueño: el dueño publica el contrato del modelo y los demás lo citan ([[D-111]]) ⏱ **sin pasada**
+
+**Precondición:** generar las specs **desde cero** sobre el PRD ya analizado del banco de la tanda
+de continuación (`rm -rf spec && cp -Rp .conformance-attic/bank-cu3z/prd .`, y *"genera las
+specs"*). Ese PRD tiene modelos compartidos con varias features que los crean o los cambian
+(Movimiento lo crean cuentas, deudas y objetivos), que es donde la pasada 4 perdió ~5 horas.
+**Mecanismo:** las secciones `## Contrato de modelos compartidos` (dueña) y `## Modelos de otras
+features` (consumidoras) de la plantilla del spec, `sdd-model-contracts.py`, la condición 10 de
+`sdd-seal.py spec` y el tipo `peticion` de la lista de pendientes.
+
+1. **El dueño publica el contrato.**
+   → **Esperado:** cada dueña de un modelo compartido trae su contrato, con un **catálogo de orígenes
+     externos** que tiene una fila por cada operación de otra feature que lo crea o lo cambia.
+     Lo que el PRD no decide de esas filas sale en **una** pregunta crítica por modelo, con todas a
+     la vista. `sdd-model-contracts.py spec` sale `0`, o solo con peticiones.
+   → **FALLO:** un dueño sin contrato; un catálogo al que le falta una feature que crea el modelo;
+     las preguntas de los orígenes repartidas en varias, o apareciendo después en auditorías.
+2. **Las consumidoras citan, no reescriben.**
+   → **Esperado:** cada consumidora tiene su tabla de modelos de otras features, y sus HUs, CAs y
+     reglas no fijan cómo se comporta un modelo ajeno. Lo que necesitan y el dueño no tiene va como
+     petición `R-NNN`.
+   → **FALLO:** un CA de una consumidora que dice si un movimiento se puede editar o borrar, o cómo
+     aparece en el histórico. Se mide con la misma clasificación que se hizo sobre `bank-cu3z`
+     (cita / duplica / supone / efecto / sin dueño): **0 en duplica y en supone**.
+3. **Las peticiones se atienden en el dueño.** Si sale alguna.
+   → **Esperado:** la lista la trae como *completar el contrato* y se resuelve con un cambio **solo
+     en el dueño**, cuya fila nueva cita la petición; el consumidor no se toca y sale de la lista.
+   → **FALLO:** corregir el consumidor para que diga la regla, o tratarla como conflicto.
+4. **Las dependencias que el índice no declara se ven.**
+   → **Esperado:** una feature que solo lee un modelo (presupuesto suma gastos) está entre sus
+     referencias, o sale como aviso en la lista y en el readiness.
+5. **El coste baja.** Hasta *"ya se puede planificar"*, cuenta decisiones, vueltas completas
+   (cambio → conflictos → medición → validación) y tiempo.
+   → **Esperado:** claramente por debajo de la pasada 4 de la tanda de continuación (~14 decisiones,
+     ~5 vueltas, ~5 h), y ningún conflicto con causa *duplica* ni *sin dueño*.
+
+**Resultado:** PASS si las dueñas publican el contrato con su catálogo, las consumidoras citan, las
+peticiones se atienden en el dueño y no aparece ningún conflicto por duplicación o falta de dueño ·
+FALLO si una regla de un modelo compartido vive en dos specs.
+**Desviación → reportar:** issue citando `CU-3.ab`.
 
 ## CU-3.o — Readiness: sin índice, ciclos, scope derivado, sello y alcance del veredicto
 

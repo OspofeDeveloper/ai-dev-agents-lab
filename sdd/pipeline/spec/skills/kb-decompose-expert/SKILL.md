@@ -86,9 +86,39 @@ Ejemplos:
 - `Zone` → owner: feature de disponibilidad (el usuario define sus zonas)
 - `Service` → owner: feature de servicios (el coordinador crea los servicios)
 
-### Lo que implica ser owner
+### Lo que implica ser owner: cada regla tiene un dueño ([[D-111]])
 
-La feature owner **define** el modelo completo en su Plan. Las features que lo referencian **no lo redefinen** — solo declaran que lo usan y apuntan al Plan de la feature owner.
+La feature owner **define** el modelo completo: su estructura en el Plan y **sus reglas en el spec**
+—ciclo de vida, qué puede hacer el actor con él, invariantes, y qué operaciones de otras features
+lo crean o lo cambian—. Es la API pública del modelo, como la de un módulo en una arquitectura por
+features: las features que lo referencian **no lo redefinen**, la citan.
+
+- **El dueño publica el contrato** en `## Contrato de modelos compartidos` de su spec, con un
+  catálogo de **orígenes externos**: una fila por cada operación de otra feature que crea o cambia
+  el modelo. Lo que no esté decidido de esas filas es **una** pregunta crítica del dueño, con todas
+  a la vista, no una por consumidor que vaya apareciendo.
+- **El consumidor cita** en `## Modelos de otras features`: qué hace él con el modelo y qué regla
+  del dueño aplica. Un CA suyo puede decir el efecto observable de su propia operación (*"se
+  registra un gasto"*), pero no cómo se comporta después ese modelo (*"ese gasto no se puede
+  editar"*): esa frase es del dueño.
+- **Si el consumidor necesita una regla que el dueño no tiene**, no la escribe: la registra como
+  **petición al dueño** (`R-NNN`). Se atiende con un cambio **solo en el dueño**, que la cita en
+  su catálogo. Así una regla nunca vive en dos specs, y corregir una no deja a la otra diciendo
+  lo contrario.
+- **Las reglas transversales del producto** (las que no son de ningún modelo) ya tienen dueño: el
+  PRD. Los specs las citan por lo que dicen; no las copian como regla propia.
+
+**Medido** (tanda de continuación, pasada 4): en 6 specs escritos sin esta regla, las consumidoras
+duplicaban ~10 reglas de modelos ajenos, suponían ~8 que el dueño no decía y producían ~13 efectos
+que el dueño no contemplaba. Esos huecos explicaron entre el 45 y el 55 % del coste de conflictos; y
+las decisiones reales —qué puede hacer el usuario con un movimiento que creó otra feature— salieron
+en cuatro vueltas porque el dueño no tenía catálogo.
+
+### Escribe sobre el modelo o solo lo lee
+
+Para el índice, una feature **referencia** un modelo compartido tanto si lo crea o cambia como si
+solo lo lee (un presupuesto que suma los gastos del mes referencia Movimiento). Las dos cuentan como
+dependencia; solo la primera necesita fila en el catálogo de orígenes del dueño.
 
 ---
 

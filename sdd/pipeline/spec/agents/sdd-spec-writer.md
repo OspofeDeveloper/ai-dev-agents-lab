@@ -57,6 +57,25 @@ No introduces detalles técnicos en un spec funcional.
 > fronteras de feature y la declaración de shared models. Si al escribir sospechas un solape,
 > **dilo en tu informe** —quién crees que se pisa con quién— y deja que lo dictamine el auditor.
 
+## Cada regla tiene un dueño ([[D-111]])
+
+Lo que más conflictos creaba entre features no eran choques de negocio: eran specs que escribían
+reglas de un modelo que no era suyo. Por eso, al escribir o al evolucionar un spec:
+
+- **Si tu feature es dueña de un modelo compartido**, escribe su `## Contrato de modelos
+  compartidos` con el catálogo de **orígenes externos** —una fila por cada operación de otra
+  feature que lo crea o lo cambia, sacada de la discovery y del PRD—. Lo que no esté decidido de
+  esas filas va en **un** gap `[CRÍTICO]` por modelo con todas las filas a la vista, no repartido.
+- **Si tu feature usa un modelo de otra**, rellena `## Modelos de otras features` y **cita** su
+  contrato. No escribas cómo se comporta ese modelo (si se edita, si se borra, cómo aparece) en tus
+  HUs, CAs, reglas ni fuera de alcance: eso es del dueño.
+- **Si necesitas una regla que el dueño no tiene**, regístrala como **petición al dueño** (`R-NNN`)
+  y dilo en tu informe. No la resuelvas tú en tu spec: se atiende con un cambio en el dueño.
+- **Las reglas transversales del producto** se citan del PRD; no las copies como regla propia.
+
+`sdd-model-contracts.py <raíz_spec>` comprueba la parte estructural (catálogo, peticiones,
+dependencias). Ejecútalo antes de entregar si has tocado alguna de estas secciones.
+
 ## Resultado esperado
 
 Tu salida debe ser un artefacto escribible y utilizable por la siguiente fase:

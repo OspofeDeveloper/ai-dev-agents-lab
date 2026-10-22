@@ -82,6 +82,11 @@ Condiciones verificadas para `spec` (D-061):
      tomada en nombre del usuario sea VISIBLE. Guarda de vacuidad: si la
      seccion existe pero no se le reconoce ninguna entrada `- **[A-00X]**`,
      se deniega en vez de darla por buena (D-037).
+  10. Contratos de modelos compartidos (D-111): si la raiz del spec tiene indice,
+      `sdd-model-contracts.py` no le encuentra nada pendiente — como dueña, publica el
+      contrato de sus modelos y su catalogo de origenes recoge a cada feature que los
+      crea o cambia; como consumidora, no tiene peticiones al dueño sin atender. Un
+      spec anterior a los contratos (sin ninguna de las dos secciones) queda exento.
 
 El sello es una marca operativa confiable (kb-plan-expert, "Estados del Plan"):
 si cualquier condicion falla, el plan queda/vuelve a BORRADOR.
@@ -120,6 +125,11 @@ TD_FIELDS = ("Decisión", "A pesar de", "Riesgo asumido", "Queda pendiente",
 # dato HUMANO —no verificable mecanicamente— pero quien lo estampa es el script, no
 # el hilo principal: mismo reparto que en el PRD (`sdd-prd-apply.py --seal "<valor>"`),
 # y asi main no escribe contenido en el artefacto ([[D-060]]). [[D-065]]
+# Al volver a BORRADOR la aprobacion se va con el sello (D-111): un spec en borrador
+# que sigue diciendo `Aprobado por: X` afirma que alguien dio por bueno lo que hay,
+# y lo que hay ya no es lo que se aprobo.
+APROBADO_LINE_RE = re.compile(
+    r"^[ \t]*(?:[-*>][ \t]*)?\**Aprobado por:?\**[ \t]*:?[^\n]*$\n?", re.MULTILINE)
 APROBADO_RE = re.compile(
     r"^(?P<prefix>\s*(?:[-*>]\s*)?\**Aprobado por:?\**\s*:?\s*)(?P<value>[^\n]*)$",
     re.MULTILINE)
@@ -485,7 +495,31 @@ def check_spec(spec_path: Path, accept_derived: bool = False):
     elif _open_gaps(text, GAP_INFO_RE):
         add(True, "Toda asuncion aplicada deja rastro en `## Asunciones Aplicadas`")
 
+    # 10. Cada regla de un modelo compartido tiene un dueño (D-111).
+    contratos = _contracts_module()
+    root = contratos.spec_root(spec_path) if contratos else None
+    fid_m = re.search(r"^\s*>?\s*\**Feature ID\**\s*:\s*\**\s*(F-(?:C-)?\d+)", text, re.MULTILINE)
+    if root is not None and fid_m:
+        data = contratos.check(root)
+        if fid_m.group(1) not in data["anteriores_a_d111"]:
+            problemas = contratos.problemas_de(data, fid_m.group(1))
+            add(not problemas,
+                "Contratos de modelos compartidos al dia"
+                + (" (" + "; ".join(problemas) + ")" if problemas else ""))
+
     return checks, all(ok for ok, _ in checks)
+
+
+def _contracts_module():
+    """`sdd-model-contracts.py`, hermano de este script; None si no esta instalado."""
+    path = Path(__file__).resolve().parent / "sdd-model-contracts.py"
+    if not path.is_file():
+        return None
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("sdd_model_contracts", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
 
 
 def write_estado(plan_path: Path, new_state: str) -> bool:
@@ -682,6 +716,12 @@ def main() -> int:
             return 2
         if not write_estado(plan_path, "BORRADOR"):
             return 1
+        if mode == "--unseal":
+            text = plan_path.read_text(encoding="utf-8")
+            nuevo = APROBADO_LINE_RE.sub("", text)
+            if nuevo != text:
+                plan_path.write_text(nuevo, encoding="utf-8")
+                print("`Aprobado por:` retirado — la aprobacion era del contenido anterior.")
         if mode == "--unretire":
             # La traza se va con el estado: una linea `Retirada:` sobre un spec vigente
             # afirma una baja que ya no existe, y la leen tanto el indice como una persona.

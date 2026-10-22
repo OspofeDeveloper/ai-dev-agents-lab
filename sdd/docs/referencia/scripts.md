@@ -36,7 +36,9 @@ Sella un plan a `Estado: VALIDADO` solo si pasan **8 condiciones** (estructura;
 marcadores; `status_sync` fiable; hash de PRD; **cobertura de todo `CA-XXX`**; deuda
 técnica aprobada). Si falla, fuerza `BORRADOR`. Los marcadores entre comillas de código son
 menciones y no cuentan ([[D-104]]). `spec --report <specs…>` imprime la tabla de un lote de
-validación —spec, sellado con su aprobador o el motivo— para copiarla ([[D-107]]).
+validación —spec, sellado con su aprobador o el motivo— para copiarla ([[D-107]]). En un spec, la
+condición 10 exige los contratos de modelos compartidos al día ([[D-111]]); y `--unseal` retira el
+`Aprobado por:`, porque la aprobación era del contenido anterior.
 
 - **Exit:** `0` OK/sellado · `1` error IO · `2` condiciones no cumplidas.
 
@@ -71,6 +73,17 @@ Anota `> **Enmienda pendiente:** CA-XXX (E-00X, fecha)` tras `Estado:` del plan
 ---
 
 ## Funciones puras — no escriben
+
+### `sdd-model-contracts.py` · `<raíz_spec> [--json]`
+El lint de arquitectura de las specs ([[D-111]]): cada regla de un modelo compartido tiene un dueño.
+Comprueba que la feature dueña publica el **contrato** de su modelo (`## Contrato de modelos
+compartidos`) y que su catálogo de **orígenes externos** recoge a cada feature que crea o cambia el
+modelo; que las **peticiones al dueño** (`R-NNN`, en `## Modelos de otras features`) están atendidas
+—el dueño las cita en su catálogo—; y avisa de los modelos que un consumidor usa sin que el índice lo
+declare. Un spec sin ninguna de las dos secciones es anterior a los contratos y queda exento. Lo usan
+`sdd-seal.py` (condición 10) y `sdd-project-status.py --spec-pending` (tipo `peticion`).
+
+- **Exit:** `0` sin nada que bloquee · `2` con contratos, catálogos o peticiones pendientes · `1` uso.
 
 ### `sdd-resolve-path.py` · `write | find | rel-from | kinds <kind> <input> [--local-root D]`
 SSoT del layout de artefactos. `write` → ruta canónica donde escribir; `find` →
@@ -110,7 +123,10 @@ declaran en `Respuestas del análisis aplicadas` o pertenecen a una feature que 
 ([[D-104]]). Y `preguntas_criticas`, el mapa de las preguntas críticas abiertas —ID, feature, título y
 fichero— que se enseña antes de tratarlas cuando hay varias ([[D-106]]). Cada conflicto lleva su
 `decision` —qué hay que decidir, ejemplo y opciones con su efecto y qué spec cambia—, sacada de la
-**Decisión de producto** de su informe ([[D-109]]).
+**Decisión de producto** de su informe ([[D-109]]). Lo que un consumidor necesita del contrato de un
+modelo compartido y su dueño no recoge sale como `peticion`, que se resuelve con un cambio **solo en
+el dueño**; las dependencias que el índice no declara salen en `dependencias_no_declaradas`, como
+aviso ([[D-111]]).
 
 - **Exit:** `0` siempre.
 

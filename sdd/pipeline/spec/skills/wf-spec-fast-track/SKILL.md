@@ -53,6 +53,9 @@ Lee el archivo de entrada en su totalidad.
 - La lista de **Scope (RFs)** → los IDs de RF que pertenecen a esta feature
 - La lista de **Scope (secciones PRD)** → las secciones del PRD relevantes
 - Los **shared models** declarados para esta feature (owner y ref)
+- De la **Tabla de shared models**, para cada modelo del que esta feature es dueña: qué features
+  lo referencian y **qué operación de cada una lo crea o lo cambia** (o "solo lectura"). Es la
+  materia prima de su catálogo de orígenes ([[D-111]])
 
 Si el Feature ID no existe en el discovery → informa:
 > "El feature `<F-00X>` no existe en `<discovery.md>`. Features disponibles: [lista]."
@@ -142,6 +145,20 @@ Produce un `_spec.md` completo siguiendo la estructura de `${CLAUDE_SKILL_DIR}/r
 Usa las plantillas de cabecera de `${CLAUDE_SKILL_DIR}/references/spec_header_templates.md`:
 - **Modo directo**: cabecera con `Generado via: fast-track desde [path]`, `Feature ID: F-001`, `derived_from_prd: N/A`
 - **Modo scoped**: cabecera con `Generado via: fast-track desde [prd.md] (scope: F-00X via [discovery.md])`, `status_sync: in_sync`
+
+**Modelos compartidos ([[D-111]]): cada regla tiene un dueño.**
+- Si la feature es **dueña** de algún modelo compartido → `## Contrato de modelos compartidos`, un
+  `### <Modelo>` por cada uno, con su **catálogo de orígenes externos**: una fila por cada operación
+  de otra feature que lo crea o lo cambia (de la tabla de shared models del discovery y del PRD).
+  Lo que el PRD no decida de esas filas —si se puede tocar desde aquí, qué pasa con su origen— va
+  en **un solo** gap `[CRÍTICO]` por modelo, con todas las filas abiertas a la vista y un ejemplo
+  sacado del PRD: el usuario lo decide de una vez, no fila a fila en auditorías sucesivas.
+- Si **usa** modelos de otra feature → `## Modelos de otras features`: qué hace con cada uno
+  (`lectura: …` si solo lo lee) y qué regla del dueño cita. **No escribas reglas de ese modelo** en
+  tus HUs, CAs, reglas ni fuera de alcance; si necesitas una que el dueño no tiene, registra una
+  **petición al dueño** (`R-NNN`) y dilo en tu informe. Corres en paralelo con el dueño y no ves
+  su spec: cita su contrato por lo que el discovery dice que hará, y lo que no cuadre lo detecta
+  después `sdd-model-contracts.py` como trabajo sobre el dueño, no como conflicto.
 
 Añade las secciones opcionales según corresponda (plantillas en `spec_header_templates.md`):
 - `## Decisiones derivadas del analysis` si se usó `--allow-derived-scope-from-analysis`

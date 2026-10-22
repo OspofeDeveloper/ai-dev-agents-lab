@@ -632,6 +632,33 @@ def spec_pending(directory: Path) -> dict:
                     "wf-spec-gap-resolve", gap=gid, titulo=_gap_title(stext, gid),
                     fichero=os.path.relpath(sp))
 
+    # ── 2b. Contratos de modelos compartidos (D-111) ──
+    # Una regla de un modelo compartido vive en su dueño. Lo que un consumidor
+    # necesita y el dueño no recoge —una petición `R-NNN` o una operación que no
+    # sale en su catálogo de orígenes— se resuelve en el DUEÑO: un cambio sobre
+    # un solo spec, no un conflicto que arbitrar entre dos.
+    contratos = _contracts_module()
+    cdata = contratos.check(directory) if contratos else None
+    if cdata:
+        for p in cdata["sin_contrato"]:
+            add("peticion", [p["owner"]], p["que"],
+                f"Que {label.get(p['owner'], p['owner'])} publique el contrato de {p['modelo']}: "
+                "qué puede hacer el usuario con él y qué otras features lo crean o cambian.",
+                "wf-spec-delta sobre el dueño", owner=p["owner"], modelo=p["modelo"])
+        for p in cdata["catalogo"]:
+            add("peticion", sorted({p["owner"], p["consumidor"]}, key=fid_sort_key), p["que"],
+                f"Decidir en {label.get(p['owner'], p['owner'])} qué puede hacer el usuario con lo "
+                "que crea esa operación; se escribe solo en el dueño.",
+                "wf-spec-delta sobre el dueño", owner=p["owner"], modelo=p["modelo"],
+                consumidor=p["consumidor"])
+        for p in cdata["peticiones"]:
+            add("peticion", sorted({p["owner"], p["consumidor"]} - {""}, key=fid_sort_key),
+                f"{p['que']} ({p['id']}).",
+                f"Atenderla en {label.get(p['owner'], p['owner'] or 'el dueño')}: el cambio se "
+                "escribe solo en el dueño y cita la petición en su catálogo de orígenes.",
+                "wf-spec-delta sobre el dueño", owner=p["owner"], modelo=p["modelo"],
+                consumidor=p["consumidor"], peticion=p["id"])
+
     # ── 3. Conflictos ALTA (arbitrados por el readiness) ──
     if rtext:
         for row in _table_rows(rtext, "Conflictos ALTA no resueltos"):
@@ -696,8 +723,9 @@ def spec_pending(directory: Path) -> dict:
         # esperan a un pendiente anterior que los toca se separan y no se ofrecen (D-103).
         motivo = {}
         for it in items:
-            if it["tipo"] in ("gap_critico", "reabierto", "conflicto_alta", "ciclo"):
+            if it["tipo"] in ("gap_critico", "peticion", "reabierto", "conflicto_alta", "ciclo"):
                 que = {"gap_critico": f"pregunta {it.get('gap')}",
+                       "peticion": f"contrato de {it.get('modelo')}",
                        "reabierto": f"respuesta reabierta {it.get('gap')}",
                        "conflicto_alta": f"conflicto {it.get('conflicto')}",
                        "ciclo": "dependencia circular"}[it["tipo"]]
@@ -751,7 +779,7 @@ def spec_pending(directory: Path) -> dict:
             "Generar sus specs cuando convenga.",
             "wf-spec-features-first --features", bloquea=False)
 
-    orden = ["readiness", "gap_critico", "reabierto", "conflicto_alta", "ciclo",
+    orden = ["readiness", "gap_critico", "peticion", "reabierto", "conflicto_alta", "ciclo",
              "alcance_derivado", "validar", "conflicto_media", "generar"]
     items.sort(key=lambda it: orden.index(it["tipo"]))
     for n, it in enumerate(items, 1):
@@ -777,7 +805,9 @@ def spec_pending(directory: Path) -> dict:
     # (D-106): el usuario elige si las responde todas, las de unas features o de una en una.
     criticas = [{"gap": i["gap"], "features": i["features"], "titulo": i.get("titulo", ""),
                  "fichero": i.get("fichero", "")} for i in items if i["tipo"] == "gap_critico"]
+    no_declaradas = cdata["no_declaradas"] if cdata else []
     return {"total": len(items), "bloqueantes": bloq, "resumen": resumen,
+            "dependencias_no_declaradas": no_declaradas,
             "readiness_vigente": readiness_vigente, "items": items, "grupos": grupos,
             "preguntas_criticas": criticas}
 
@@ -800,6 +830,8 @@ def _desglose(items: list) -> list:
     texto = {
         "readiness": lambda n: "volver a medir si las specs están listas",
         "gap_critico": lambda n: "responder " + _n(n, "pregunta", "preguntas"),
+        "peticion": lambda n: "completar " + _n(n, "contrato de un modelo compartido",
+                                                   "contratos de modelos compartidos"),
         "reabierto": lambda n: "revisar " + _n(n, "respuesta cambiada", "respuestas cambiadas"),
         "conflicto_alta": lambda n: "resolver " + _n(n, "conflicto grave", "conflictos graves"),
         "ciclo": lambda n: "romper " + _n(n, "dependencia circular", "dependencias circulares"),
@@ -812,9 +844,23 @@ def _desglose(items: list) -> list:
     return [texto[t](n) for t, n in cuenta.items()]
 
 
+def _contracts_module():
+    """`sdd-model-contracts.py`, hermano de este script; None si no está instalado."""
+    path = Path(__file__).resolve().parent / "sdd-model-contracts.py"
+    if not path.is_file():
+        return None
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("sdd_model_contracts", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
+
+
 def render_pending(data: dict) -> str:
     out = ["# Pendientes de la fase Spec", ""]
     notas = [f"> Nota (no es un pendiente): {g['que']}" for g in data.get("grupos", [])]
+    notas += [f"> Aviso (no es un pendiente): {d['que']}"
+              for d in data.get("dependencias_no_declaradas", [])]
     if not data["items"]:
         out.append("Nada pendiente: todas las specs generadas están validadas y sin bloqueos.")
         return "\n".join(out + ([""] + notas if notas else [])) + "\n"

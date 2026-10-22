@@ -167,6 +167,13 @@ Del README de la feature, extrae la sección `## Dependencias`:
 
 Complementa con el `_features.md`: si una feature referencia un shared model cuyo owner es otra feature, la feature referenciadora depende de la feature owner (a menos que ya esté en la lista de Requiere).
 
+Y con lo que los specs **usan de verdad** ([[D-111]]): `python3 .sdd/scripts/sdd-model-contracts.py
+<raíz_spec> --json`. Sus `no_declaradas` son modelos que un spec usa sin que el índice lo declare
+como referencia suya: cuéntalos como dependencia y **dilo en el informe** —es una frontera que el
+auditor de conflictos no ha mirado—. Sus `catalogo` y `peticiones` son trabajo pendiente sobre el
+dueño: bloquean como un gap crítico, y la lista de pendientes ya los ofrece; no los conviertas en
+conflictos.
+
 Construye la lista unificada de dependencias para cada feature.
 
 ### 4e — Sello del spec

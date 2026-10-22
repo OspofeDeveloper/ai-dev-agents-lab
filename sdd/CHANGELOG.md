@@ -2,6 +2,17 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.125.0 — 2026-10-22
+
+**Cada regla tiene un dueño** — [[DECISIONS D-111]].
+
+- 🟠 ⚠ **El dueño de un modelo compartido publica su contrato en el spec**: ciclo de vida, qué puede hacer el actor, invariantes y un **catálogo de orígenes externos** —qué operaciones de otras features lo crean o lo cambian y qué se puede hacer con lo que crean—. Lo que no esté decidido de esos orígenes es **una** pregunta crítica por modelo, no varias que aparecen en auditorías sucesivas.
+- 🟠 ⚠ **Las consumidoras citan el contrato y no reescriben sus reglas**; lo que necesiten y el dueño no tenga va como **petición al dueño** (`R-NNN`), que se atiende con un cambio solo en el dueño. Las reglas transversales se citan del PRD.
+- 🟢 **`sdd-model-contracts.py`**, el lint de esas fronteras: catálogo completo, peticiones sin atender y dependencias que el índice no declara. Lo usan el sellador (condición 10) y la lista de pendientes (tipo `peticion`). Los specs anteriores quedan exentos.
+- 🟠 El auditor de conflictos escribe la **causa** de un conflicto de modelo compartido (duplica, supone, efecto no catalogado, sin dueño, decisión) y el *Cambia:* de una regla del modelo nombra al dueño; una opción describe un solo comportamiento.
+- 🟠 **Arreglos de la pasada 4**: la reapertura cierra con la oferta antes de tocar ningún spec; lo que se aclara al analizar un cambio de varios specs vale para todos; el aprobador se pregunta en cada lote; `--unseal` retira el `Aprobado por:`; el formato de decisión, entero en cada pregunta de un grupo.
+- **Conformance:** `CU-3.ab` nuevo. 9 tests nuevos.
+
 ## 0.124.1 — 2026-10-01
 
 **El resumen de pendientes dice qué es cada cosa** — [[DECISIONS D-110]].

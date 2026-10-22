@@ -34,7 +34,7 @@ ENFORCEMENT_SCRIPTS = [
     "sdd-project-status.py", "sdd-kb-check.py", "sdd-release.py", "sdd-next-id.py",
     "sdd-resolve-path.py", "sdd-design-resolve.py", "sdd-source-drift.py",
     "sdd-prd-ready.py", "sdd-prd-frontmatter.py", "sdd-prd-deps.py",
-    "sdd-prd-apply.py",
+    "sdd-prd-apply.py", "sdd-model-contracts.py",
 ]
 
 

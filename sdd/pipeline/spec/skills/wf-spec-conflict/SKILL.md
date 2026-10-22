@@ -93,7 +93,7 @@ En las reglas de abajo, "los pares" son los de tu modo:
 1. **HUs duplicadas**: compara actores + verbos + objetivos en cada par
 2. **CAs contradictorios**: compara GIVEN+WHEN de los CAs de cada par; busca THENs incompatibles
 3. **Scope overlap**: analiza si los Journeys de una feature incluyen funcionalidad que es el objetivo de otra
-4. **Shared models inconsistentes**: inventaría todos los modelos mencionados y cruza sus definiciones/comportamientos
+4. **Shared models inconsistentes**: inventaría todos los modelos mencionados y cruza sus definiciones/comportamientos. Lee antes `python3 .sdd/scripts/sdd-model-contracts.py <raíz_spec> --json`: te da lo estructural —qué consumidor crea o cambia un modelo que el catálogo del dueño no recoge, qué peticiones al dueño siguen sin atender, qué dependencias no declara el índice— y no lo vuelvas a derivar tú. Lo tuyo es la prosa: un consumidor que escribe una regla del modelo ajeno, o un dueño cuyo contrato contradice lo que otra feature necesita. Cada uno lleva su **Causa** ([[D-111]])
 5. **Fuera de alcance contradictorio**: cruza las secciones "Fuera de Alcance" de cada feature con las HUs de las demás
 
 ---
@@ -108,6 +108,7 @@ Por cada conflicto:
 - Describe qué features están involucradas
 - Cita las secciones exactas en conflicto
 - Escribe su **Decisión de producto** ([[D-109]]): qué hay que decidir, un ejemplo sacado de las specs, y de 2 a 4 opciones, cada una con **qué le pasa al actor** y qué spec cambia. Es lo que se le presentará al usuario tal cual: no la decisión sobre qué documento manda, sino sobre cómo se comporta el producto. Sin recomendar ninguna.
+- Si es de un modelo compartido, escribe su **Causa** (duplica, supone, efecto no catalogado, sin dueño o decisión) y haz que el *Cambia:* de cada opción que fije una regla del modelo nombre a su **dueño** ([[D-111]]). Cada opción describe un solo comportamiento, sin compararlo con dos referentes que se comportan distinto.
 
 > **El prefijo no es estética: casi nunca corres solo ([[D-090]]).** En el fan-out del Paso 7 de
 > `wf-spec-features-first` hay un auditor por spec nuevo, cada uno escribiendo su propio informe y

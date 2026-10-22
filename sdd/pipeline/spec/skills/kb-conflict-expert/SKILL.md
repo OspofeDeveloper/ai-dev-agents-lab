@@ -67,6 +67,32 @@ Estas reglas aplican cuando se compara un conjunto de Specs SDD (`_spec.md`) que
 
 **Cómo reportar**: Cita el modelo, las features que lo referencian y la inconsistencia específica detectada.
 
+### La causa de un conflicto de modelo compartido ([[D-111]])
+
+Cada regla de un modelo compartido tiene un dueño: la feature dueña publica su **contrato** (ciclo
+de vida, qué puede hacer el actor, invariantes y el catálogo de **orígenes externos**), y las
+demás lo citan o le hacen una **petición**. Cuando dos specs chocan sobre un modelo compartido, di
+**por qué** —es lo que decide dónde se corrige—, con una de estas causas:
+
+| Causa | Qué pasa | Dónde se corrige |
+|---|---|---|
+| **Duplica** | el consumidor reescribe una regla del contrato del dueño, y no coinciden | el consumidor: cita el contrato en vez de reescribirlo |
+| **Supone** | el consumidor da por hecha una regla que el dueño no dice | el dueño: decide la regla en su contrato |
+| **Efecto no catalogado** | una operación del consumidor crea o cambia el modelo y el catálogo de orígenes del dueño no la recoge | el dueño: añade la fila y decide qué se puede hacer con lo que crea |
+| **Sin dueño** | cada spec deja la regla a la otra y nadie la tiene | el dueño del modelo, siempre |
+| **Decisión** | los dos specs dicen lo que les toca y el choque es de producto | según la decisión, pero una regla del modelo se escribe solo en su dueño |
+
+Escríbela en el informe (campo **Causa** del conflicto). Y en la **Decisión de producto**, el
+*Cambia:* de una opción que fija una regla del modelo nombra **al dueño**: si una opción obliga a
+cambiar también al consumidor, es porque el consumidor tenía la regla duplicada — y eso se
+corrige citando, no volviendo a escribirla.
+
+**Una opción describe un solo comportamiento.** No la expliques comparándola con dos cosas que se
+comportan distinto (*"igual que una aportación directa o una transferencia"*, cuando una deja un
+movimiento y la otra dos): quien la elige no sabe cuál de las dos ha elegido, y el que la aplica
+tampoco. Medido en la pasada 4 de la tanda de continuación: esa opción partió el cambio en dos
+lecturas, y cada spec se quedó con una.
+
 ---
 
 ## Regla 5: Fuera de alcance contradictorio
@@ -114,5 +140,6 @@ procedencia, y para eso ya está `Generado por:`. Medido tres veces en la pasada
 ## Qué NO es un conflicto
 
 - Dos features que referencian el mismo shared model correctamente (con owner declarado) — eso es el comportamiento esperado de los shared models.
+- Un consumidor que **cita** el contrato del dueño (*"según el contrato de Movimiento"*) o que tiene una **petición al dueño** registrada: es la vía correcta. Una petición sin atender no es un conflicto que arbitrar —la lista de pendientes ya la trae como trabajo sobre el dueño—.
 - CAs que describen el mismo escenario pero para **actores distintos** con capacidades distintas — son CAs distintos válidos.
 - Features que mencionan la misma entidad de dominio con propósitos distintos (ej: Feature A *crea* usuarios, Feature B *lista* usuarios — no es conflicto, es colaboración correcta).

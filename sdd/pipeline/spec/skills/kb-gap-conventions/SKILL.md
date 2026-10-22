@@ -21,6 +21,12 @@ Este skill es el **Single Source of Truth** para todas las convenciones de gaps 
 | Análisis de documento origen (modos `analyze`, `fast-track`) | `[P-XXX]` | `[P-001]`, `[P-042]` |
 | Análisis de cambios incrementales (modo `delta`) | `[D-XXX]` | `[D-001]`, `[D-003]` |
 
+> **`[R-XXX]` no es un gap: es una petición al dueño de un modelo compartido** ([[D-111]]). Vive en
+> `## Modelos de otras features` del spec que la hace, con el encabezado
+> `### [R-001] A F-00X (Modelo): <qué necesita>` y los campos `Por qué`, `Ejemplo` (opcional) y
+> `Estado`. No se responde con `--answer`: se atiende con un cambio en el dueño, que la cita en su
+> catálogo de orígenes (`F-00Y (nombre) · R-001`). Numeración local al spec que la hace.
+
 **Numeración**: secuencial desde `001` y **por linaje** — no por artefacto. Sin saltos, salvo los **bloques reservados** del fan-out paralelo ([[D-056]], abajo), que sí los dejan a propósito.
 
 Un linaje es el `_analysis.md` de un documento origen **más todos los specs derivados de él**.

@@ -50,11 +50,15 @@
 
 ## Tabla de shared models
 
-| Modelo | Feature Owner | Features que lo referencian | Criterio de asignación |
-|--------|---------------|-----------------------------|------------------------|
-| [NombreModelo] | F-00X: [nombre] | F-00Y, F-00Z | [creación / CRUD / cobertura / proximidad] |
+| Modelo | Feature Owner | Features que lo referencian | Criterio de asignación | Qué lo crea o cambia desde otras features |
+|--------|---------------|-----------------------------|------------------------|-------------------------------------------|
+| [NombreModelo] | F-00X: [nombre] | F-00Y, F-00Z | [creación / CRUD / cobertura / proximidad] | F-00Y: [operación que lo crea o cambia]; F-00Z: solo lectura |
 
 <!-- Omitir sección si no hay shared models -->
+<!-- "Features que lo referencian" incluye a las que SOLO lo leen (un presupuesto que suma gastos
+     referencia Movimiento): sin declararla, nadie revisa esa frontera (D-111).
+     La última columna es la materia prima del contrato que escribirá la feature dueña: por cada
+     feature que lo referencia, qué operación suya lo crea o cambia, o "solo lectura". -->
 <!-- El criterio se escribe por lo que dice ("la feature cuyo alcance describe su creación"),
      nunca por la skill que lo define: ni wf-* ni kb-* en este documento (D-091/D-097). -->
 

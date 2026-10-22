@@ -152,6 +152,18 @@ escribir el discovery** y devuelve el bloqueo con veredicto operativo `STOP_OWNE
 
 Si todos los modelos tienen owner claro → continúa directamente.
 
+### Quién lo referencia y cómo ([[D-111]])
+
+La feature dueña escribirá en su spec el **contrato** del modelo, con un catálogo de las
+operaciones de otras features que lo crean o lo cambian. Ese catálogo sale de aquí:
+
+- En **"Features que lo referencian"** van todas las que lo usan, **también las que solo lo
+  leen** (un presupuesto que suma los gastos del mes referencia Movimiento). Una que falta es una
+  frontera que ningún revisor mira después.
+- En **"Qué lo crea o cambia desde otras features"**, por cada una de ellas, la operación del PRD
+  que lo crea o lo cambia (*"F-005: registrar una deuda crea un gasto vinculado al contacto"*), o
+  *"solo lectura"*. Sale del alcance del PRD de cada feature, no se infiere.
+
 ---
 
 ## Paso 8: Mapear scope PRD → Feature

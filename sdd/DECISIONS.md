@@ -6,7 +6,25 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
-## D-110 — El resumen de pendientes dice qué es cada cosa, no cuántas hay
+## D-111 — Cada regla tiene un dueño: el contrato de los modelos compartidos vive en su feature dueña
+
+- **Fecha:** 2026-10-22 · **Estado:** Adoptada. · **Relacionada:** [[D-109]] (decisiones en el idioma del producto), [[D-104]] (seguimiento), [[D-100]] (`Requiere` desde los shared models), [[D-075]] (autor≠verificador).
+
+**Contexto.** En la pasada 4 de la tanda de continuación hicieron falta ~14 decisiones y ~5 vueltas completas (cambio → conflictos → medición → validación), unas 5 horas, para llegar a *"ya se puede planificar"*. La pregunta del usuario fue de fondo: si las features tienen conflictos entre ellas, ¿no es que la misma cosa se define en varios sitios, y no debería haber SSoT en vez de intentar controlar todos los conflictos? Medido sobre el banco original (6 specs): el dueño de cada modelo compartido estaba asignado (discovery → índice) pero solo definía el modelo **en su Plan**; las **reglas** del modelo las escribía cada spec. Las consumidoras duplicaban ~10, suponían ~8 que el dueño no decía y producían ~13 efectos que el dueño no contemplaba. CF-F001-03 (*un movimiento* frente a *dos enlazados*) nació entero de una duplicación al corregir; CF-F001-02, de una regla que cada spec dejaba a la otra. Y las decisiones reales —CF-F001-01, CF-F005-01, P-031, P-032— eran **la misma pregunta** (*¿qué puede hacer el usuario con un movimiento que creó otra feature?*) que salió en cuatro vueltas porque el dueño no tenía catálogo de quién crea su modelo. Estimación: entre el 45 y el 55 % del coste.
+
+**Decisión.** Lo mismo que en una arquitectura por features: cada regla vive en un solo sitio.
+1. **El dueño publica el contrato** en su spec (`## Contrato de modelos compartidos`): ciclo de vida, qué puede hacer el actor, invariantes y el **catálogo de orígenes externos**. Lo no decidido de los orígenes es **un** gap crítico por modelo, con todas las filas a la vista.
+2. **Las consumidoras citan** (`## Modelos de otras features`) y no escriben reglas del modelo ajeno; lo que necesiten va como **petición al dueño** (`R-NNN`), atendida con un cambio solo en el dueño, que la cita en su catálogo. Las reglas transversales tienen como dueño el PRD.
+3. **`sdd-model-contracts.py`** es el lint: catálogo completo, peticiones sin atender, dependencias no declaradas. Lo consumen el sellador (condición 10) y la lista de pendientes (tipo `peticion`, vía: cambio sobre el dueño). Lo que una frase en prosa fija sobre un modelo ajeno lo juzga el auditor (hallazgo bloqueante de validación y causa en los conflictos).
+4. Los specs anteriores (sin ninguna de las dos secciones) quedan exentos, para no bloquear proyectos que actualizan.
+
+Van en la misma versión los defectos de la pasada 4: reapertura sin oferta, aclaración no propagada entre los análisis de una misma decisión, aprobador no preguntado en el segundo lote, `Aprobado por:` en un spec en borrador y el formato de decisión recortado en las preguntas 2 y 3 de un grupo.
+
+**Alternativas descartadas.** *Generar primero las dueñas y luego las consumidoras* (dos oleadas): los modelos se referencian en las dos direcciones (cuentas usa movimientos y movimientos usa cuentas), así que no hay orden; el catálogo sale de la discovery, que ya ve todas las features, y lo que no cuadre lo encuentra el script. *Un artefacto `core` para las reglas transversales*: ya tienen dueño, el PRD. *Decidir antes qué conflicto bloquea y decidir en lote*: tratan el síntoma; se revisan después de medir esto.
+
+**Consecuencias.** Se mide con `CU-3.ab` sobre specs regenerados desde el PRD; el banco de la tanda de continuación se escribió sin la regla y no la prueba.
+
+ El resumen de pendientes dice qué es cada cosa, no cuántas hay
 
 - **Fecha:** 2026-10-01 · **Estado:** Adoptada. · **Relacionada:** [[D-104]] (el `resumen` lo escribe el script), [[D-108]] (va dentro de la pregunta), [[D-109]] (decisiones en el idioma del producto).
 

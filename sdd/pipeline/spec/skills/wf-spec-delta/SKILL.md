@@ -61,6 +61,19 @@ Ejemplos:
 > cambio en el hilo principal, que es lo que este flujo delega. Medido en `CU-3.z`: tras elegir la
 > dueña de un conflicto, main redactó él dos lecturas y las preguntó antes de analizar nada.
 
+> **Una decisión que cambia varios specs se analiza con UN requisito común, y lo que se aclara en
+> uno vale para todos** ([[D-111]]). Escribe un solo fichero de requisitos y pásaselo a cada
+> análisis. Si el análisis de uno de ellos te devuelve una pregunta (`AMBIGUO` o un gap `[D-XXX]`)
+> y el usuario la responde, la respuesta **cambia el requisito**, no solo ese informe: añádela
+> literal al fichero común y **vuelve a analizar los demás** antes de aplicar ninguno —o escribe la
+> misma respuesta en sus informes si ya tienen el mismo gap—. Medido en la pasada 4 de la tanda de
+> continuación: la aclaración *"dos movimientos enlazados"* se guardó solo en el análisis de un
+> spec, el otro se aplicó con *"un movimiento"*, y nació un conflicto grave nuevo.
+>
+> **Una regla de un modelo compartido se escribe solo en su dueño** ([[D-111]]). Si la decisión es
+> sobre cómo se comporta un modelo del que es dueña otra feature, el cambio va al dueño —su
+> contrato y su catálogo de orígenes—, y al consumidor solo lo que hace su propia operación.
+
 Si el usuario intenta usar `resolve`, remítele a:
 > "Para eso lo que toca es completar las historias incompletas del spec con las respuestas del análisis — pídemelo y lo hago."
 
@@ -147,6 +160,11 @@ INSTRUCCION:
    toques el spec: `analyze` no escribe specs.
 7. **Copia los nuevos requisitos, literales, en la seccion `Requisito de origen` del informe**
    ([[D-104]]): el fichero de requisitos puede ser temporal, y el informe es lo que queda.
+8. **Modelos compartidos** ([[D-111]]): si el requisito fija como se comporta un modelo del que es
+   duena OTRA feature, no lo integres como regla de este spec: proponlo como **peticion al dueno**
+   (`R-NNN` en `## Modelos de otras features`) y dilo en tu informe, con la feature duena. Si este
+   spec ES el dueno, el cambio va a su `## Contrato de modelos compartidos` (y, si atiende una
+   peticion, la fila de origenes la cita: `F-00Y (nombre) · R-00N`).
 ```
 
 ### Paso 4A: Los dos gates de clasificación (aquí, con `AskUserQuestion`)
