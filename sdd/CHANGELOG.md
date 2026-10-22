@@ -2,6 +2,10 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.125.3 — 2026-10-22
+
+- 🟠 **Un uso de solo lectura se reconoce también por cómo lo escriben los escritores**: *«Lee el catálogo…»*, *«… No cambia su saldo»*, *«consulta…»*. Tras corregir deudas, su tabla decía que solo lee las cuentas y la lista seguía pidiendo completar el contrato de cuentas (CU-3.ab, pasada 1). 1 test nuevo.
+
 ## 0.125.2 — 2026-10-22
 
 **Tres pendientes falsos de la primera pasada de `CU-3.ab`** — [[DECISIONS D-111]].

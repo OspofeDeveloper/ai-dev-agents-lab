@@ -103,6 +103,13 @@ class ContractsTest(unittest.TestCase):
         data, rc = self.contracts()
         self.assertEqual((rc, data["catalogo"]), (0, []))
 
+    def test_lee_al_principio_o_no_cambia_tambien_es_lectura(self):
+        for fila in ("| Movimiento | F-001 | Lee el histórico para el resumen | Contrato |",
+                     "| Movimiento | F-001 | elige la cuenta del gasto. No cambia su saldo | Contrato |"):
+            self._banco(consumo_f2=CONSUMO.format(filas=fila, peticiones=""))
+            data, rc = self.contracts()
+            self.assertEqual((rc, data["catalogo"]), (0, []), fila)
+
     def test_lo_que_el_spec_declara_usar_respalda_la_dependencia_del_ciclo(self):
         """El índice olvida que F-003 lee Movimiento: aviso, pero no un ciclo que bloquea."""
         self._banco(origenes="| F-002 (deudas) | Registrar deuda | gasto | no | — |",

@@ -146,6 +146,18 @@ def contrato(text: str) -> dict:
     return out
 
 
+LECTURA_RE = re.compile(r"\blectura\b|\bsolo (?:lee|lo lee|consulta)\b|\bno (?:lo )?(?:cambia|modifica)\b")
+LECTURA_INICIO_RE = re.compile(r"^\W*(?:lee|leer|consulta|muestra|selecciona|lista)\b")
+
+
+def es_lectura(celda: str) -> bool:
+    """Si un uso es de solo lectura. La plantilla pide «lectura: …», pero los escritores
+    también escriben «Lee el catálogo…», «asocia…; lectura de su identidad» o «… No cambia
+    su saldo»; tratarlos como escritura inventa catálogos incompletos (CU-3.ab, pasada 1)."""
+    t = celda.lower()
+    return bool(LECTURA_RE.search(t) or LECTURA_INICIO_RE.search(t))
+
+
 def consumo(text: str) -> tuple[list[dict], list[dict]]:
     """(usos, peticiones) de la sección del consumidor."""
     body = h2(text, CONSUMO)
@@ -160,8 +172,7 @@ def consumo(text: str) -> tuple[list[dict], list[dict]]:
                      # empezar por «lectura:», pero un escritor que lo pone en medio («asocia… ;
                      # lectura de su identidad») no escribe sobre el modelo, y tratarlo como
                      # escritura inventa un catálogo incompleto (pasada 1 de CU-3.ab).
-                     "que": row[2], "escribe": not re.search(r"\blectura\b|\bsolo lee\b",
-                                                             row[2].lower())})
+                     "que": row[2], "escribe": not es_lectura(row[2])})
     peticiones = []
     heads = list(PETICION_RE.finditer(body))
     for n, m in enumerate(heads):
