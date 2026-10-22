@@ -30,11 +30,11 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 - [ ] CU-3.k — Analyze: contaminación técnica detiene y las preguntas de riesgo van neutras
 
 ### `wf-spec-discover` — mapa de features y ownership (`sdd-spec-explorer`) (2)
-- [x] CU-3.c — Discovery: mapa de features y elección de subset — **SELLADO 3/3** (2026-09-28 ×2 y 2026-09-29, anclas v0.118.2 → v0.120.0, orquestador `opus-5-5`; el mapa en el `preview`, [[D-098]])
+- [x] CU-3.c — Discovery: mapa de features y elección de subset — **SELLADO 3/3** (2026-09-28 ×2 y 2026-09-29, anclas v0.118.2 → v0.120.0, orquestador `opus-5-5`; el mapa en el `preview`, [[D-098]]) · D-111 (v0.125.0): comprobación de humo en la tanda de CU-3.ab (el discovery y los specs ganan secciones; el mapa y el reparto no cambian)
 - [ ] CU-3.i — Discovery: ownership ambiguo de shared model para en checkpoint humano
 
 ### `wf-spec-features-first` — orquestador del flujo features-first (4)
-- [x] CU-3.d — Generación por feature (features-first) en paralelo — **SELLADO 3/3** (2026-09-23/24, anclas v0.117.0 → v0.117.2 con los cuatro puntos intactos, orquestador `opus-5-5`)
+- [x] CU-3.d — Generación por feature (features-first) en paralelo — **SELLADO 3/3** (2026-09-23/24, anclas v0.117.0 → v0.117.2 con los cuatro puntos intactos, orquestador `opus-5-5`) · D-111 (v0.125.0): comprobación de humo en la tanda de CU-3.ab (el discovery y los specs ganan secciones; el mapa y el reparto no cambian)
 - [ ] CU-3.l — Features-first: `--features` con IDs inexistentes en el discovery
 - [ ] CU-3.u — Features-first: la decisión de alcance viaja al fan-out y un `STOP_*` se presenta (D-081) — puntos 1 y 2: **1/3** (2026-09-28); punto 3 sin medir en spec; 2026-09-29 **sin medir** (la gobernanza no vio expansión)
 - [ ] CU-3.v — Features-first: un discovery que ya existe se reutiliza, no se regenera (D-081) ⏱ **sin pasada**
@@ -46,10 +46,10 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 - [ ] CU-3.t — Regenerar el spec de una feature dada de baja: los escritores paran (D-080) ⏱ **sin pasada**
 
 ### `sdd-spec-auditor` — validate / conflict / readiness (read-only) (6)
-- [ ] CU-3.f — Validar, conflictos y readiness — puntos 2 y 4: **SELLADOS 3/3** (tanda A, 2026-09-25/28; puntos 1, 3 y 5 sin serie)
+- [ ] CU-3.f — Validar, conflictos y readiness — puntos 2 y 4: **SELLADOS 3/3** (tanda A, 2026-09-25/28; puntos 1, 3 y 5 sin serie) · **D-111 (v0.125.0): punto 2 vuelve a 0** (el informe gana la Causa y el *Cambia:* nombra al dueño); punto 4, comprobación de humo en la tanda de CU-3.ab
 - [ ] CU-3.m — Validate en modo ligero: proporcionalidad sin relajar invariantes
 - [ ] CU-3.n — Conflict: precondición de specs insuficientes
-- [ ] CU-3.o — Readiness: sin índice, ciclos de dependencia y scope derivado — puntos 2 y 6: **SELLADOS 3/3** (tanda A, 2026-09-25/28; puntos 1, 3, 4 y 5 sin serie)
+- [ ] CU-3.o — Readiness: sin índice, ciclos de dependencia y scope derivado — puntos 2 y 6: **SELLADOS 3/3** (tanda A, 2026-09-25/28; puntos 1, 3, 4 y 5 sin serie) · **D-111 (v0.125.0): punto 2 vuelve a 0** (el índice declara también las referencias de solo lectura: más dependencias, más grupos)
 - [ ] CU-3.s — Conflict sobre el directorio entero: el consolidado se escribe donde el readiness lo busca ⏱ **sin pasada**
 - [ ] CU-3.w — Conflict: la salida del hallazgo es una vía que desella, y las retiradas no compiten (D-082) ⏱ **sin pasada**
 
@@ -58,7 +58,7 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 - [ ] CU-3.q — Gap-resolve: confirmación de `[INFERIDO]` (dos turnos, tres vías)
 
 ### `wf-spec-delta` — evolución incremental del spec (hilo principal + `sdd-spec-writer`) (1)
-- [ ] CU-3.h — Evolucionar un spec con requisitos nuevos (delta): los tres gates (D-073) — punto 1: **2/3**; punto 3: **1/3**; punto 4: **1/3** (2026-10-01)
+- [ ] CU-3.h — Evolucionar un spec con requisitos nuevos (delta): los tres gates (D-073) — punto 1: **2/3**; punto 3: **1/3**; punto 4: **1/3** (2026-10-01) · D-111: punto 6 nuevo (la aclaración de un cambio de varios specs llega a todos)
 
 ### orquestador de la fase Spec — guardrail de cambio de producto y oferta de rigor (3)
 - [ ] CU-3.b — Expansión de alcance desde las respuestas del analysis — **FALLO** 2026-09-28 (punto 2: marca derivada en una feature no afectada, [[D-101]]); punto 1 verde; 2026-09-29 **sin medir**
@@ -2003,6 +2003,15 @@ Modo `analyze` produce `<feature>_delta_analysis.md`; modo `apply` integra prese
    → **Esperado:** verifica que el segundo argumento termina en `_delta_analysis.md` (si no,
      se detiene pidiéndolo) e **integra los cambios preservando** el resto del spec; no
      regenera desde cero.
+6. **Una decisión que cambia varios specs, y uno de los análisis pregunta algo** ([[D-111]]). Lo
+   provoca un conflicto cuya opción elegida cambia dos specs, con una opción que admite dos
+   lecturas.
+   → **Esperado:** los dos análisis parten del **mismo** requisito; la aclaración que das en uno se
+     añade al requisito común y el otro se rehace —o recibe la misma respuesta— **antes de aplicar
+     ninguno**. Y si la decisión fija una regla de un modelo compartido, el cambio va a su dueño.
+   → **FALLO:** aplicar los dos con la aclaración solo en uno (medido en la pasada 4 de la tanda de
+     continuación: *"dos movimientos enlazados"* en uno, *"un movimiento"* en el otro, y un
+     conflicto grave nuevo).
 
 **Resultado:** PASS si los tres gates se presentan **en el momento y en el mismo turno**
 ([[D-045]]), el veredicto y el recuento vienen de quien los produce (delegado y script), la
@@ -2502,10 +2511,13 @@ toca?"*— cierra con **qué falta para planificar, por tipo** ([[D-110]]) y una
    → **FALLO:** corregirlo como enmienda de CA (solo admite aclarar, no cambiar comportamiento),
      editando a mano, o sin que el readiness salga desactualizado después.
 5. **Validar en lote.** Eliges *todos juntos*.
-   → **Esperado:** las auditorías salen en un único mensaje; el aprobador se pide **una vez**; cada
-     spec se sella por separado; uno con hallazgos o con el script en rojo **no** se sella y no para a
-     los demás; al final, tabla spec · sellado · motivo.
-   → **FALLO:** un aprobador por spec, un fallo que para el lote, o sellar uno que no pasa.
+   → **Esperado:** las auditorías salen en un único mensaje; el aprobador se pide **una vez en cada
+     lote**, después de las auditorías —también en el segundo lote de la sesión—; cada spec se sella
+     por separado; uno con hallazgos o con el script en rojo **no** se sella y no para a los demás; al
+     final, tabla spec · sellado · motivo.
+   → **FALLO:** un aprobador por spec, un fallo que para el lote, sellar uno que no pasa, o sellar
+     sin preguntar el aprobador porque la opción de validar decía *"con la aprobación a tu nombre"*
+     ([[D-111]]; medido en la pasada 4 de la tanda de continuación).
 6. **Alcance derivado** (si el banco lo tiene). Pides validar esa feature.
    → **Esperado:** el sellador la rechaza por la condición del alcance derivado, y main pregunta
      *formalizarlo en el PRD (Recomendado)* / *aceptarlo con nombre y sellar*. Con aceptar, la cabecera

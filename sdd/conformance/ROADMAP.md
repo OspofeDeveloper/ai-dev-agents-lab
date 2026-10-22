@@ -140,6 +140,15 @@ para garantizar que ningún skill se queda sin casos en los cuatro ejes de prueb
 > parafraseado). Lo grave de la pasada 1, cerrado: la reapertura alcanzó un spec **sellado** que no
 > citaba la respuesta, y ninguna delegación llegó vacía. → [[D-107]] (v0.123.1) y [[D-108]] (v0.123.2).
 
+> 🧪 **Tanda de continuación, pasada 4** (v0.124.1, 1-22 oct.): las decisiones ya se entienden
+> —decisión de producto, ejemplo, situación— pero llegar a *"ya se puede planificar"* costó ~14
+> decisiones, ~5 vueltas completas y ~5 horas. `CU-3.z` FALLO (2: la reapertura no ofreció antes de
+> corregir; 5: el segundo lote se selló sin preguntar el aprobador). Medido sobre el banco original:
+> entre el 45 y el 55 % del coste salía de reglas de modelos compartidos escritas fuera de su dueño.
+> → [[D-111]] (v0.125.0): cada regla tiene un dueño. Escenario nuevo **`CU-3.ab`**, a medir en una
+> tanda que regenera las specs desde el PRD; `CU-3.f` (2) y `CU-3.o` (2) vuelven a 0; `CU-3.c`, `CU-3.d`
+> y `CU-3.f` (4), comprobación de humo en esa misma tanda; `CU-3.h` gana el punto 6.
+
 > ⏱ **Cuatro escenarios nacen sin pasada del barrido de enlazado lateral de Spec**
 > ([[D-078]]/[[D-079]], 2026-09-14): **CU-9.o** (evolucionar una feature dada de baja se deniega, y
 > el estado sobrevive incluso sin hook), **CU-7.s** (la reactivación es la única vuelta atrás y no
