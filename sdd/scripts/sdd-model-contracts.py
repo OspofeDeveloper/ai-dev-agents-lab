@@ -156,7 +156,12 @@ def consumo(text: str) -> tuple[list[dict], list[dict]]:
             continue
         owner = FID_RE.findall(row[1])
         usos.append({"modelo": row[0].strip(" `*"), "owner": owner[0] if owner else "",
-                     "que": row[2], "escribe": not row[2].lower().lstrip("*_ ").startswith("lectura")})
+                     # Solo lectura si lo dice en cualquier punto de la celda: la plantilla pide
+                     # empezar por «lectura:», pero un escritor que lo pone en medio («asocia… ;
+                     # lectura de su identidad») no escribe sobre el modelo, y tratarlo como
+                     # escritura inventa un catálogo incompleto (pasada 1 de CU-3.ab).
+                     "que": row[2], "escribe": not re.search(r"\blectura\b|\bsolo lee\b",
+                                                             row[2].lower())})
     peticiones = []
     heads = list(PETICION_RE.finditer(body))
     for n, m in enumerate(heads):
@@ -189,7 +194,7 @@ def check(directory: Path) -> dict:
     contratos = {f: contrato(specs[f]) for f in nuevos}
     usos = {f: consumo(specs[f]) for f in nuevos}
 
-    sin_contrato, catalogo, peticiones, no_declaradas = [], [], [], []
+    sin_contrato, catalogo, peticiones, no_declaradas, uso = [], [], [], [], []
     # 1. El dueño publica el contrato de cada modelo suyo.
     for key, mod in sorted(modelos.items()):
         o = mod["owner"]
@@ -203,6 +208,9 @@ def check(directory: Path) -> dict:
             key = norm(u["modelo"])
             mod = modelos.get(key)
             owner = u["owner"] or (mod["owner"] if mod else "")
+            if owner and owner != c:
+                uso.append({"feature": c, "owner": owner, "modelo": u["modelo"],
+                            "escribe": u["escribe"]})
             # 4. Dependencia que el índice no declara.
             if mod and c != mod["owner"] and c not in mod["refs"]:
                 no_declaradas.append({"feature": c, "modelo": mod["name"], "owner": mod["owner"],
@@ -218,9 +226,10 @@ def check(directory: Path) -> dict:
                 if c_mod is not None and not any(c in o["fids"] for o in c_mod["origenes"]):
                     catalogo.append({"owner": owner, "consumidor": c, "modelo": c_mod["name"],
                                      "operacion": u["que"],
-                                     "que": f"{label.get(c, c)} {u['que'].rstrip('.')} y el "
-                                            f"contrato de {c_mod['name']} en "
-                                            f"{label.get(owner, owner)} no lo recoge."})
+                                     "que": f"{label.get(c, c)} {u['que'][:1].lower()}"
+                                            f"{u['que'][1:].rstrip('.')}, y el contrato de "
+                                            f"{c_mod['name']} en {label.get(owner, owner)} no "
+                                            "lo recoge."})
         # 3. Peticiones al dueño: atendidas si el dueño las cita en sus orígenes.
         for p in pets:
             if p["estado"].lower().startswith(RETIRADA):
@@ -237,7 +246,7 @@ def check(directory: Path) -> dict:
                                                    p["titulo"])})
 
     return {"anteriores_a_d111": anteriores, "sin_contrato": sin_contrato, "catalogo": catalogo,
-            "peticiones": peticiones, "no_declaradas": no_declaradas,
+            "peticiones": peticiones, "no_declaradas": no_declaradas, "uso": uso,
             "bloquea": bool(sin_contrato or catalogo or peticiones)}
 
 

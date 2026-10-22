@@ -97,6 +97,30 @@ class ContractsTest(unittest.TestCase):
         data, rc = self.contracts()
         self.assertEqual((rc, data["catalogo"]), (0, []))
 
+    def test_lectura_en_medio_de_la_celda_tampoco_necesita_fila(self):
+        fila = "| Movimiento | F-001 | asocia un gasto a su resumen; lectura de su importe | Contrato |"
+        self._banco(consumo_f2=CONSUMO.format(filas=fila, peticiones=""))
+        data, rc = self.contracts()
+        self.assertEqual((rc, data["catalogo"]), (0, []))
+
+    def test_lo_que_el_spec_declara_usar_respalda_la_dependencia_del_ciclo(self):
+        """El índice olvida que F-003 lee Movimiento: aviso, pero no un ciclo que bloquea."""
+        self._banco(origenes="| F-002 (deudas) | Registrar deuda | gasto | no | — |",
+                    consumo_f2=CONSUMO.format(filas=GASTO_DEUDA, peticiones=""),
+                    consumo_f3=CONSUMO.format(filas=LECTURA, peticiones=""))
+        for fid, name, req in (("F-001", "movimientos", "F-003"), ("F-003", "presupuesto", "F-001")):
+            readme = self.b.spec / "features" / name / "README.md"
+            readme.write_text(readme.read_text().replace("- **Requiere**: Ninguna",
+                                                         f"- **Requiere**: {req}"))
+        b = self.b
+        idx = b.spec / "spec_features.md"
+        idx.write_text(idx.read_text().replace(
+            "| Movimiento | F-001: x | F-002 |",
+            "| Movimiento | F-001: x | F-002 |\n| Presupuesto | F-003: x | F-001 |"))
+        pend = self.b.pending()
+        self.assertNotIn("ciclo", [i["tipo"] for i in pend["items"]])
+        self.assertEqual([d["feature"] for d in pend["dependencias_no_declaradas"]], ["F-003"])
+
     def test_peticion_pendiente_bloquea_al_consumidor_y_sale_en_la_lista(self):
         self._banco(origenes="| F-002 (deudas) | Registrar deuda | gasto vinculado | sí | — |",
                     consumo_f2=CONSUMO.format(filas=GASTO_DEUDA,

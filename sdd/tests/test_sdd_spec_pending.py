@@ -209,6 +209,15 @@ class SpecPendingTest(unittest.TestCase):
         self.assertEqual([e["feature"] for e in validar["en_espera"]], ["F-001", "F-002"])
         self.assertIn("conflicto CF-F001-01", validar["en_espera"][0]["motivo"])
 
+    def test_el_mismo_hallazgo_visto_desde_el_otro_lado_sale_una_vez(self):
+        self._base(readiness=False)
+        time.sleep(0.01)
+        self.b.readiness(alta_rows="| CF-F001-01 | Modelo | F-001, F-002 | El saldo cambia | x |\n"
+                                   "| CF-F002-01 | Modelo | F-001, F-002 | Mismo hallazgo que "
+                                   "CF-F001-01, visto desde el otro lado | x |")
+        altas = [i["conflicto"] for i in self.b.pending()["items"] if i["tipo"] == "conflicto_alta"]
+        self.assertEqual(altas, ["CF-F001-01"])
+
     def test_resumen_trae_el_total_y_el_aviso_del_grupo(self):
         data = self._tres_en_ciclo([("Movimiento", "F-001", "F-002, F-003"),
                                     ("Cuenta", "F-002", "F-001"),

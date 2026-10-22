@@ -2,6 +2,15 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.125.2 — 2026-10-22
+
+**Tres pendientes falsos de la primera pasada de `CU-3.ab`** — [[DECISIONS D-111]].
+
+- 🟠 Un uso es de solo lectura si la celda dice «lectura» en cualquier punto, no solo al principio: un catálogo «incompleto» salía de una frase como *«asocia…; lectura de su identidad»*.
+- 🟠 Lo que un spec declara usar en «Modelos de otras features» respalda su dependencia en la detección de ciclos: si el índice olvidaba una referencia, salía un ciclo «sin respaldo» que bloqueaba. El olvido del índice sigue saliendo como aviso.
+- 🟡 Un conflicto que el readiness da por *«mismo hallazgo que CF-…»* ya no sale como segunda decisión.
+- **Tests:** 3 nuevos.
+
 ## 0.125.1 — 2026-10-22
 
 **Los dos arreglos de la pasada 4 que faltaban** — [[DECISIONS D-111]].

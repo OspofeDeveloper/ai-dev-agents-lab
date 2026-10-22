@@ -647,8 +647,9 @@ def spec_pending(directory: Path) -> dict:
                 "wf-spec-delta sobre el dueño", owner=p["owner"], modelo=p["modelo"])
         for p in cdata["catalogo"]:
             add("peticion", sorted({p["owner"], p["consumidor"]}, key=fid_sort_key), p["que"],
-                f"Decidir en {label.get(p['owner'], p['owner'])} qué puede hacer el usuario con lo "
-                "que crea esa operación; se escribe solo en el dueño.",
+                f"Decidir en {label.get(p['owner'], p['owner'])} cómo recoge su contrato esa "
+                "operación —qué crea o cambia y qué puede hacer el usuario con ello—; se escribe "
+                "solo en el dueño.",
                 "wf-spec-delta sobre el dueño", owner=p["owner"], modelo=p["modelo"],
                 consumidor=p["consumidor"])
         for p in cdata["peticiones"]:
@@ -661,7 +662,8 @@ def spec_pending(directory: Path) -> dict:
 
     # ── 3. Conflictos ALTA (arbitrados por el readiness) ──
     if rtext:
-        for row in _table_rows(rtext, "Conflictos ALTA no resueltos"):
+        filas_alta = _table_rows(rtext, "Conflictos ALTA no resueltos")
+        for row in _sin_repetidos(filas_alta):
             fids = sorted(set(FID_RE.findall(" ".join(row[1:3]))), key=fid_sort_key)
             desc = row[3] if len(row) > 3 else ""
             add("conflicto_alta", fids,
@@ -684,6 +686,12 @@ def spec_pending(directory: Path) -> dict:
         req = re.search(r"^\s*-\s*\*\*Requiere\*\*\s*:\s*(.*)$", read_text(rd), re.MULTILINE)
         graph[fid] = [f for f in FID_RE.findall(req.group(1) if req else "") if f != fid]
     owners = _shared_owners(features_md)
+    # Lo que los specs declaran usar también respalda una dependencia (D-111): si el índice
+    # olvidó que presupuesto lee movimientos, el spec lo dice en «Modelos de otras features», y
+    # sin esto ese olvido se convertía en un ciclo «sin respaldo» que bloqueaba (pasada 1 de
+    # CU-3.ab). El hueco del índice ya sale como aviso aparte.
+    for u in (cdata or {}).get("uso", []):
+        owners.setdefault(u["owner"], set()).add(u["feature"])
     grupos = []
     for comp in _cycles(graph):
         nombres = _y([label.get(f, f) for f in comp])
@@ -749,7 +757,7 @@ def spec_pending(directory: Path) -> dict:
     # De su tabla «Conflictos MEDIA abiertos». Un readiness de antes de D-102 no la trae:
     # entonces se cae a los informes sueltos y se dice que no están arbitrados.
     if rtext and re.search(r"^##\s+Conflictos MEDIA abiertos", rtext, re.MULTILINE):
-        for row in _table_rows(rtext, "Conflictos MEDIA abiertos"):
+        for row in _sin_repetidos(_table_rows(rtext, "Conflictos MEDIA abiertos")):
             fids = sorted(set(FID_RE.findall(" ".join(row[1:3]))), key=fid_sort_key)
             desc = row[3] if len(row) > 3 else ""
             add("conflicto_media", fids,
@@ -842,6 +850,24 @@ def _desglose(items: list) -> list:
         "generar": lambda n: _n(n, "feature sin spec", "features sin spec"),
     }
     return [texto[t](n) for t, n in cuenta.items()]
+
+
+def _sin_repetidos(rows: list[list[str]]) -> list[list[str]]:
+    """Quita las filas que el propio readiness da por el mismo hallazgo que otra.
+
+    Dos auditores ven el mismo choque desde cada lado y le ponen dos IDs; el readiness lo
+    escribe («Mismo hallazgo que CF-F005-01, visto desde el otro lado») pero deja las dos
+    filas, y cada una salía como una decisión que tomar (pasada 1 de CU-3.ab).
+    """
+    ids = {r[0].strip() for r in rows}
+    out = []
+    for r in rows:
+        desc = r[3] if len(r) > 3 else ""
+        m = re.match(r"\s*\**\s*Mismo hallazgo que\s+(CF-[\w-]+)", desc, re.IGNORECASE)
+        if m and m.group(1) in ids and m.group(1) != r[0].strip():
+            continue
+        out.append(r)
+    return out
 
 
 def _contracts_module():
