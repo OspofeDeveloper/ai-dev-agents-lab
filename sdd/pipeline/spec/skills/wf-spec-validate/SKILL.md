@@ -128,6 +128,10 @@ Informa qué hay que corregir y que lo revalidas cuando esté.
   !python3 .sdd/scripts/sdd-seal.py spec --report <spec1.md> <spec2.md> …
   ```
 
+  **Cada spec, un argumento**: escribe las rutas una detrás de otra. No las metas en una variable
+  entre comillas (`"$L"`), que el script recibe como **una sola** ruta y la tabla sale vacía o
+  rota — medido en la pasada 4 de la tanda de continuación, que tuvo que repetirla.
+
   Una fila por spec: sellado con su aprobador, o el motivo —la condición que falla, o que pasa el
   sellador pero no se selló—. Si alguno no se selló por un **hallazgo de auditoría**, añade debajo una
   línea por hallazgo. Y si las auditorías dejaron **notas menores** que no bloquean, dilas en una

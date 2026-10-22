@@ -2,6 +2,13 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.125.1 — 2026-10-22
+
+**Los dos arreglos de la pasada 4 que faltaban** — [[DECISIONS D-111]].
+
+- 🟡 **Una pregunta crítica del seguimiento se presenta con el formato de decisión** (qué hay que decidir, ejemplo, por qué ahora, situación y la pregunta del gap literal), no con los rótulos del fichero (*Contexto / A qué afecta*). El dictado del análisis en la generación sigue siendo literal, a propósito.
+- 🟡 **La tabla del lote**: cada spec va como argumento propio; una variable entre comillas la rompía.
+
 ## 0.125.0 — 2026-10-22
 
 **Cada regla tiene un dueño** — [[DECISIONS D-111]].
