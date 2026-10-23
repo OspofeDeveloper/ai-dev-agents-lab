@@ -150,6 +150,6 @@ procedencia, y para eso ya está `Generado por:`. Medido tres veces en la pasada
 ## Qué NO es un conflicto
 
 - Dos features que referencian el mismo shared model correctamente (con owner declarado) — eso es el comportamiento esperado de los shared models.
-- Un consumidor que **cita** el contrato del dueño (*"según el contrato de Movimiento"*) o que tiene una **petición al dueño** registrada: es la vía correcta. Una petición sin atender no es un conflicto que arbitrar —la lista de pendientes ya la trae como trabajo sobre el dueño—.
+- Un consumidor que **cita** el contrato del dueño (*"según el contrato de Movimiento"*) o que tiene una **petición al dueño** registrada: es la vía correcta. Una petición sin atender no es un conflicto que arbitrar —la lista de pendientes ya la trae como trabajo sobre el dueño—. Tampoco lo es una línea **Estado** dentro de una petición (*"pendiente de que F-001 las integre"*): es de antes de [[D-112]] y no cuenta; si el dueño cita la petición en su fila, está atendida.
 - CAs que describen el mismo escenario pero para **actores distintos** con capacidades distintas — son CAs distintos válidos.
 - Features que mencionan la misma entidad de dominio con propósitos distintos (ej: Feature A *crea* usuarios, Feature B *lista* usuarios — no es conflicto, es colaboración correcta).

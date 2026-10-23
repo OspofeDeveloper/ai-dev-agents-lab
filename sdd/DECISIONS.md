@@ -21,7 +21,25 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 **Consecuencias.** Se mide con `CU-3.ac` sobre `bank-cu3ab-mitad`. Planificar con supuestos declarados y revisar conflictos solo contra las vecinas quedan para después de medir esto.
 
- Cada regla tiene un dueño: el contrato de los modelos compartidos vive en su feature dueña
+
+**Ampliación (v0.126.1) — el mapa lo lee un usuario final.** En los dos primeros cierres de
+`CU-3.ac` el mapa salía bien calculado, pero las opciones de bloque no traían vista previa (main no
+la componía), la de *validar las listas* no cabía, las decisiones menores que quedaban no aparecían
+(el mapa decía qué falta para *empezar*, no para *cerrarlo todo*), la vista previa era jerga
+(*"alcance_derivado · F-006 …"*) y los nombres salían como *"F-004 (presupuesto-mensual)"*. Ahora el
+script da también `cierre` —`pregunta` y `opciones` con `label`, `description`, `preview` y
+`accion`— para copiarlo literal: como mucho cuatro opciones, la última siempre *Lo dejo para luego*,
+y lo que no cabe se dice en la pregunta. El mapa nombra cada feature por su nombre con el ID detrás,
+explica qué significa cada línea y cuenta las decisiones menores y las features sin spec; la vista
+previa de cada decisión es la pregunta de producto (de su *Decisión de producto*, o de la
+descripción del readiness, que pasa a escribirse en llano). El alcance derivado se pregunta como
+*"¿Das por bueno «…»?"*. Un `Estado` dentro de una petición (anterior a D-112) no es un hallazgo y se
+quita al tocar el spec. El aviso de grupos deja de decir *"se planifican juntas"*, que contradecía
+el mapa.
+
+---
+
+## D-111 — Cada regla tiene un dueño: el contrato de los modelos compartidos vive en su feature dueña
 
 - **Fecha:** 2026-10-22 · **Estado:** Adoptada. · **Relacionada:** [[D-109]] (decisiones en el idioma del producto), [[D-104]] (seguimiento), [[D-100]] (`Requiere` desde los shared models), [[D-075]] (autor≠verificador).
 
@@ -39,7 +57,9 @@ Van en la misma versión los defectos de la pasada 4: reapertura sin oferta, acl
 
 **Consecuencias.** Se mide con `CU-3.ab` sobre specs regenerados desde el PRD; el banco de la tanda de continuación se escribió sin la regla y no la prueba.
 
- El resumen de pendientes dice qué es cada cosa, no cuántas hay
+---
+
+## D-110 — El resumen de pendientes dice qué es cada cosa, no cuántas hay
 
 - **Fecha:** 2026-10-01 · **Estado:** Adoptada. · **Relacionada:** [[D-104]] (el `resumen` lo escribe el script), [[D-108]] (va dentro de la pregunta), [[D-109]] (decisiones en el idioma del producto).
 
@@ -51,7 +71,9 @@ Van en la misma versión los defectos de la pasada 4: reapertura sin oferta, acl
 
 **Consecuencias.** La pasada 4 se reinicia sobre v0.124.1.
 
- Las decisiones se presentan en el idioma del producto, con un ejemplo y desde el comportamiento
+---
+
+## D-109 — Las decisiones se presentan en el idioma del producto, con un ejemplo y desde el comportamiento
 
 - **Fecha:** 2026-10-01 · **Estado:** Adoptada (propuesta A, B y C, con la corrección del usuario de que valga para cualquier tipo de proyecto). · **Relacionada:** [[D-104]] (la pregunta se presenta, no se reformula), [[D-108]] (lo que se ve va dentro de la pregunta), [[D-073]] (lecturas ambiguas de un delta), [[D-082]] (la vía que desella).
 

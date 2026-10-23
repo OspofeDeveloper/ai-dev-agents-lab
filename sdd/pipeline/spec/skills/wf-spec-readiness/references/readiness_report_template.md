@@ -97,7 +97,12 @@
 
 <!-- Omitir si no hay. Mismas columnas y misma regla que la tabla ALTA: solo los que TU
      arbitraje mantiene; uno que descartas no va aquí (D-102). La lista de pendientes de la fase
-     lee esta tabla, no los informes sueltos, que se contradicen por diseño. -->
+     lee esta tabla, no los informes sueltos, que se contradicen por diseño.
+     La «Descripcion breve» de un MEDIA la lee el usuario como la decisión que le queda (v0.126.1)
+     cuando su informe no trae Decisión de producto: escríbela como la pregunta de producto, en
+     llano —"si mover dinero entre tus propias cuentas cuenta para el límite global"—, no como el
+     hueco técnico ("F-004 suma todos los movimientos de tipo gasto sin filtrar…"); sin CAs,
+     invariantes ni nombres de campo. -->
 
 | ID | Tipo | Features afectadas | Descripcion breve | Referencia |
 |----|------|-------------------|-------------------|------------|

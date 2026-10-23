@@ -2,6 +2,16 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.126.1 — 2026-10-23
+
+**El mapa de la fase Spec, pensado para quien lo lee** — [[DECISIONS D-112]].
+
+- 🟠 ⚠ **El cierre sale entero del script** (`cierre.pregunta` y `cierre.opciones`): main lo copia literal, con la vista previa de cada opción. Como mucho cuatro opciones; lo que no cabe se dice en la pregunta.
+- 🟠 **El mapa dice qué falta para cerrarlo todo**, no solo para empezar: también las decisiones menores (que no frenan nada) y las features sin spec. Las menores se pueden tratar como un bloque más.
+- 🟠 **En llano**: las features por su nombre (*"presupuesto mensual (F-004)"*); cada decisión, como la pregunta de producto; el alcance fuera del PRD, como *"¿Das por bueno «…»?"*. La descripción de un conflicto menor en el readiness se escribe como pregunta de producto, y los informes de conflictos traen *Decisión de producto* también en los menores.
+- 🟡 El aviso de features que comparten datos ya no dice *"se planifican juntas"*. Una línea `Estado` en una petición al dueño (anterior a 0.126.0) no es un hallazgo y se quita al tocar el spec. Restaurados los encabezados de D-109, D-110 y D-111 en `DECISIONS.md`.
+- 3 tests nuevos.
+
 ## 0.126.0 — 2026-10-23
 
 **Planificar por bloques: qué se puede empezar ya y qué falta para el resto** — [[DECISIONS D-112]].

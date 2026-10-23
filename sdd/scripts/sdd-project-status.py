@@ -727,8 +727,9 @@ def spec_pending(directory: Path) -> dict:
                    if b in comp and a not in owners.get(b, set())]
         if not sueltas:
             grupos.append({"features": comp,
-                           "que": f"{nombres} usan datos unas de otras, así que se "
-                                  "planifican juntas."})
+                           "que": f"{nombres} usan datos unas de otras: es lo normal y no "
+                                  "frena a ninguna; al planificar, empieza por las que dan "
+                                  "los datos."})
             continue
         add("ciclo", comp,
             f"Dependencia circular entre {nombres}. Sin un modelo compartido que la respalde: "
@@ -752,7 +753,8 @@ def spec_pending(directory: Path) -> dict:
             add("alcance_derivado", [fid],
                 f"{label[fid]} tiene alcance que solo existe en una respuesta del análisis ({av}).",
                 "Formalizarlo en el PRD, o aceptarlo con nombre al validar el spec.",
-                "wf-prd-change | wf-spec-validate --accept-derived-scope")
+                "wf-prd-change | wf-spec-validate --accept-derived-scope",
+                pregunta=_pregunta_alcance(av))
         sin_validar.append(fid)
     if sin_validar:
         # Validar un spec que aún tiene que cambiar es sellarlo para desellarlo: los que
@@ -793,7 +795,8 @@ def spec_pending(directory: Path) -> dict:
                 + (f": {desc}" if desc else ""),
                 "No bloquea; si el arreglo toca un spec ya validado, ese spec vuelve a validarse.",
                 "decisión de producto → wf-spec-delta sobre cada spec que cambia", bloquea=False,
-                conflicto=row[0], opciones=fids, decision=_decision(directory, row[0]))
+                conflicto=row[0], opciones=fids, decision=_decision(directory, row[0]),
+                descripcion=desc)
     else:
         vistos = set()
         for rep in sorted(directory.glob("features/*/spec/*_conflict_report.md")):
@@ -864,6 +867,12 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
     presentaba. Aquí cada feature dice si se puede planificar ya, y lo pendiente se agrupa
     en bloques: dos features van juntas solo si comparten una decisión. Leer algo que otro
     decide no las junta —la decisión lo dice en `Afecta también a`— y sale como espera.
+
+    El texto lo lee un usuario final, no quien conoce el pipeline (v0.126.1): nombres de
+    feature legibles, qué significa cada línea, y también lo que no frena nada —los
+    conflictos menores y las features sin spec—, porque el mapa es «qué falta para
+    cerrarlo todo», no solo «qué falta para empezar». La pregunta y sus opciones salen ya
+    escritas: el preview que main tenía que componer no salió en ningún cierre.
     """
     decisiones = [i for i in items if i["bloquea_plan"] and i["tipo"] not in NO_DECISION]
 
@@ -917,6 +926,19 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
         por_feature[f] = {"estado_plan": estado, "pendientes": propios[f], "espera": espera[f],
                           "lectora": f in lectoras}
 
+    def nombre(f):
+        # «presupuesto mensual (F-004)», no «F-004 (presupuesto-mensual)»: el usuario
+        # reconoce la feature por su nombre; el ID va detrás, para quien lo busque.
+        m = re.match(r"(F-[\w-]+?) \((.+)\)$", label.get(f, f))
+        return f"{m.group(2).replace('-', ' ')} ({m.group(1)})" if m else label.get(f, f)
+
+    def nombres(fs):
+        return _y([nombre(f) for f in fs])
+
+    def corto(f):
+        m = re.match(r"F-[\w-]+? \((.+)\)$", label.get(f, f))
+        return m.group(1).replace("-", " ") if m else f
+
     grupos_b = {}
     for f in sorted(specs, key=fid_sort_key):
         if propios[f]:
@@ -935,51 +957,161 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
         fuera = sorted({o for f in fs for o in espera[f]} - set(mias))
         depende = sorted({de_feature[g] for o in fuera for g in cambia(por_orden[o])
                           if g in de_feature} - {letra})
+        preview = ["Decisiones de este bloque:", ""]
+        for k, o in enumerate(mias, 1):
+            preview += _linea_decision(k, por_orden[o], [nombre(g) for g in cambia(por_orden[o])])
+        preview += ["", "Con todas las respuestas: un cambio por spec, una revisión de",
+                    "conflictos y la validación del bloque. Después ya se pueden planificar."]
         bloques.append({"bloque": letra, "features": fs, "decisiones": mias, "espera": fuera,
-                        "depende_de": depende,
-                        "preview": "\n".join(_linea_decision(por_orden[o], cambia(por_orden[o]))
-                                             for o in mias)})
+                        "depende_de": depende, "preview": "\n".join(preview)})
 
-    def nombres(fs):
-        return _y([label.get(f, f) for f in fs])
+    menores = [i for i in items if i["tipo"] == "conflicto_media"]
+    sin_spec = [f for i in items if i["tipo"] == "generar" for f in i["features"]]
+
     lineas = []
     if not readiness_vigente:
-        lineas.append("Antes de nada, la medición de qué está listo está desactualizada: lo "
-                      "primero es rehacerla, y puede cambiar este mapa.")
+        lineas.append("Antes de nada: la medición de qué está listo es anterior a los últimos "
+                      "cambios. Hay que rehacerla, y puede cambiar lo que sigue.")
+        lineas.append("")
     ya = [f for f, v in por_feature.items() if v["estado_plan"] == "planificable"]
     validar = [f for f, v in por_feature.items() if v["estado_plan"] == "lista_para_validar"]
+    if not decisiones and not validar and not menores and not sin_spec and readiness_vigente:
+        lineas.append("Todo está cerrado: puedes planificar cualquier feature.")
     if ya:
-        lineas.append(f"Se puede planificar ya: {nombres(ya)}.")
+        lineas.append(f"Ya puedes planificar: {nombres(ya)}.")
     if validar:
-        lineas.append(f"Listas en cuanto se validen: {nombres(validar)}.")
+        lineas.append("Se pueden planificar en cuanto las valides (no les falta ninguna "
+                      f"decisión): {nombres(validar)}.")
+    if (ya or validar) and (decisiones or menores):
+        lineas.append("Lo que quede abierto en otras features no les impide empezar.")
+    if bloques:
+        lineas.append("")
+        lineas.append("Al resto le faltan decisiones. Van en bloques: cada bloque se trata de "
+                      "una vez y no espera a los demás salvo que se diga:")
     for b in bloques:
         que = _y(_desglose([por_orden[o] for o in b["decisiones"]]))
         dep = (f" Además espera a {_n(len(b['espera']), 'decisión', 'decisiones')} del "
-               + _y([f"bloque {d}" for d in b["depende_de"]]) + "."
+               + _y([f"bloque {d}" for d in b["depende_de"]])
+               + ", que cambia algo que lee."
                if b["depende_de"] else " Solo depende de sí mismo.")
-        lineas.append(f"Bloque {b['bloque']} — {nombres(b['features'])}: falta {que}.{dep}")
+        lineas.append(f"- Bloque {b['bloque']} — {nombres(b['features'])}: falta {que}.{dep}")
     sueltas = [f for f, v in por_feature.items()
                if v["estado_plan"] == "espera_a_otro" and not v["lectora"]]
     for f in sueltas:
         de = sorted({de_feature[g] for o in espera[f] for g in cambia(por_orden[o])
                      if g in de_feature})
-        lineas.append(f"{label.get(f, f)}: no tiene nada propio; espera a "
-                      + _y([f"bloque {d}" for d in de]) + ".")
+        lineas.append(f"- {nombre(f)}: no le falta nada propio, pero espera al "
+                      + _y([f"bloque {d}" for d in de]) + ", que cambia algo que lee.")
     if lectoras:
-        lineas.append(f"Al final: {nombres(sorted(lectoras, key=fid_sort_key))} — lee de casi "
-                      "todas; se planifica cuando estén las demás.")
-    return {"por_feature": por_feature, "bloques": bloques, "mapa": "\n".join(lineas)}
+        lineas.append(f"- Al final: {nombres(sorted(lectoras, key=fid_sort_key))}. Lee datos "
+                      "de casi todas: conviene planificarla cuando las demás estén cerradas.")
+    if menores:
+        lineas.append("")
+        # Contadas por feature, no una a una: el detalle va en el preview de su opción. Cuatro
+        # párrafos de huecos en la pregunta tapaban el resto del mapa.
+        tocan = sorted({f for it in menores for f in (cambia(it) or it["features"])},
+                       key=fid_sort_key)
+        uno = len(menores) == 1
+        lineas.append(f"Sin frenar nada, {'queda' if uno else 'quedan'} "
+                      f"{_n(len(menores), 'decisión menor', 'decisiones menores')} "
+                      f"({'un hueco que ningún spec cubre' if uno else 'huecos que ningún spec cubre'}"
+                      f"), en {_y([corto(f) for f in tocan])}. "
+                      + ("Puedes tomarla ahora o más adelante; si cambia una feature ya validada, "
+                         if uno else "Puedes tomarlas ahora o más adelante; si una cambia una "
+                         "feature ya validada, ")
+                      + "esa feature vuelve a validarse.")
+    if sin_spec:
+        lineas.append("")
+        lineas.append(f"Sin spec todavía: {nombres(sin_spec)}. No frena a las demás; se genera "
+                      "cuando quieras.")
+
+    # Las opciones del cierre, en orden y con su preview: caben 4, y la última es siempre
+    # «Lo dejo para luego». Lo que no cabe se dice en la pregunta, para pedirlo con palabras.
+    cand = []
+    if not readiness_vigente:
+        cand.append({"label": "Rehacer la medición",
+                     "description": "Mide otra vez qué está listo con los últimos cambios.",
+                     "accion": "readiness"})
+    if validar:
+        cand.append({"label": f"Validar las listas ({len(validar)})",
+                     "description": "Las sellas y ya se pueden planificar, aunque el resto "
+                                    "siga abierto.",
+                     "preview": "\n".join(["Se validan juntas:", ""]
+                                          + [f"- {nombre(f)}" for f in validar]
+                                          + ["", "Se te pregunta una vez quién aprueba. Las que "
+                                             "pasen quedan listas para planificar."]),
+                     "accion": "validar"})
+    for b in bloques:
+        n = len(b["decisiones"])
+        cand.append({"label": f"Bloque {b['bloque']} — " + _y([corto(f) for f in b["features"]][:2])
+                              + ("…" if len(b["features"]) > 2 else ""),
+                     "description": _n(n, "decisión", "decisiones") + "; "
+                                    + ("espera al " + _y([f"bloque {d}" for d in b["depende_de"]])
+                                       if b["depende_de"] else "solo depende de sí mismo") + ".",
+                     "preview": b["preview"], "accion": f"bloque:{b['bloque']}"})
+    if menores:
+        prev = ["Decisiones menores (no frenan nada):", ""]
+        for k, it in enumerate(menores, 1):
+            prev += _linea_decision(k, it, [nombre(g) for g in (cambia(it) or it["features"])])
+        cand.append({"label": f"Decisiones menores ({len(menores)})",
+                     "description": "No frenan nada; tomarlas ahora evita revalidar después.",
+                     "preview": "\n".join(prev), "accion": "menores"})
+    if sin_spec:
+        cand.append({"label": "Generar " + _y([corto(f) for f in sin_spec][:2])
+                              + ("…" if len(sin_spec) > 2 else ""),
+                     "description": "Crea su spec; no afecta a lo que ya está.",
+                     "accion": "generar"})
+    opciones = cand[:3]
+    if opciones:
+        opciones[0] = {**opciones[0], "label": opciones[0]["label"] + " (Recomendado)"}
+    opciones.append({"label": "Lo dejo para luego",
+                     "description": "Lo que ya está listo se puede planificar igualmente.",
+                     "accion": "luego"})
+    sobran = [c["label"] for c in cand[3:]]
+    pregunta = "\n".join(lineas) + "\n\n¿Por dónde seguimos?" + (
+        " (También puedes pedirme con tus palabras: "
+        + _y([x[:1].lower() + x[1:] for x in sobran]) + ".)" if sobran else "")
+    return {"por_feature": por_feature, "bloques": bloques, "mapa": "\n".join(lineas),
+            "cierre": {"pregunta": pregunta, "opciones": opciones}}
 
 
-def _linea_decision(it: dict, fs: list) -> str:
-    """Una línea por decisión de un bloque, para el `preview` de su opción."""
+def _pregunta_alcance(av: str) -> str:
+    """El aviso de gobernanza («alcance derivado desde P-002; alcance derivado (deshacer un
+    cobro…, decisión de producto sobre CF-…) decidido por el usuario…») como pregunta."""
+    m = re.search(r"alcance derivado \(([^,)]+)", av)
+    refs = sorted(set(re.findall(r"\b(?:P|CF)-[\w-]*\d", av)))
+    que = f"«{m.group(1).strip()}»" if m else "lo que salió de tus respuestas"
+    return (f"¿Das por bueno {que}? No está en el PRD: salió de tus respuestas"
+            + (f" ({', '.join(refs)})" if refs else "")
+            + ". Si lo aceptas, queda con tu nombre al validar; si no, se añade antes al PRD.")
+
+
+def _pregunta(it: dict) -> str:
+    """La decisión en una frase: la de su decisión de producto, o lo que dice el pendiente.
+
+    Sin decisión de producto (un informe anterior a D-109), la descripción del readiness y
+    no el `que`, que empieza por «Conflicto `CF-…` (media) entre F-001 (…)»: eso es para
+    quien mantiene el pipeline, no para quien decide."""
+    if it["tipo"] == "alcance_derivado":
+        return it.get("pregunta") or it["que"]
     dec = it.get("decision") or {}
-    que = dec.get("que_decidir") or it["que"]
-    que = re.sub(r"\s+", " ", que).strip()
-    if len(que) > 140:
-        que = que[:137].rstrip() + "…"
-    ident = it.get("conflicto") or it.get("peticion") or it.get("gap") or it["tipo"]
-    return f"{ident} · " + ", ".join(fs) + f"\n  {que}"
+    que = dec.get("que_decidir") or it.get("descripcion") or it["que"]
+    que = re.sub(r"\s+", " ", que.replace("`", "")).strip()
+    if len(que) > 220:
+        que = que[:217].rstrip() + "…"
+    return que[:1].upper() + que[1:]
+
+
+def _linea_decision(k: int, it: dict, fs: list) -> list:
+    """Una decisión de un bloque, para el `preview` de su opción."""
+    ident = (it.get("conflicto") or it.get("peticion") or it.get("gap") or "").replace("`", "")
+    out = [f"{k}. {_pregunta(it)}", "   Afecta a: " + (_y(fs) if fs else "—")]
+    ops = [o["titulo"] for o in (it.get("decision") or {}).get("opciones", [])]
+    if ops:
+        out.append("   Opciones: " + " · ".join(ops))
+    if ident:
+        out.append(f"   ({ident})")
+    return out
 
 
 def _n(n: int, uno: str, varios: str) -> str:

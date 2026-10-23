@@ -164,7 +164,9 @@ INSTRUCCION:
    duena OTRA feature, no lo integres como regla de este spec: proponlo como **peticion al dueno**
    (`R-NNN` en `## Modelos de otras features`) y dilo en tu informe, con la feature duena. Si este
    spec ES el dueno, el cambio va a su `## Contrato de modelos compartidos` (y, si atiende una
-   peticion, la fila de origenes la cita: `F-00Y (nombre) · R-00N`).
+   peticion, la fila de origenes la cita: `F-00Y (nombre) · R-00N`). Si este spec tiene
+   peticiones con una linea **Estado** (anteriores a [[D-112]]), quitala al tocarlo: la verdad
+   es la cita del dueno, y esa linea se queda vieja en cuanto el dueno la integra.
 ```
 
 ### Paso 4A: Los dos gates de clasificación (aquí, con `AskUserQuestion`)

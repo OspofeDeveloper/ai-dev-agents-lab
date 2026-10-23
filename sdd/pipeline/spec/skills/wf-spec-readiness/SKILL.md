@@ -117,6 +117,9 @@ Clasifica la feature como **BLOQUEADA** si tiene al menos un conflicto ALTA asoc
 > que ve todos los informes a la vez—. Uno que descartes (*"no es un conflicto, es redacción"*) **no
 > va en la tabla**: si no, la lista lo ofrecería como pendiente. Medido al construir la lista: leyendo
 > los informes sueltos, reaparecía un `MEDIA` que el readiness ya había descartado.
+> Su **descripción breve** es lo que el usuario lee como la decisión menor que le queda: escríbela
+> como la **pregunta de producto en llano** (*"si mover dinero entre tus cuentas cuenta para el
+> límite global"*), no como el hueco técnico (*"F-004 suma todos los movimientos de tipo gasto…"*).
 
 > **Cuando los informes se contradicen, arbitras tú ([[D-047]]).** Con el fan-out de features-first
 > hay **un auditor por feature**, y cada uno mira el mismo grafo desde su lado: es esperable que

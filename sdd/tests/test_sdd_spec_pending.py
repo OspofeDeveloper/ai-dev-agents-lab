@@ -185,8 +185,8 @@ class SpecPendingTest(unittest.TestCase):
         validar = next(i for i in data["items"] if i["tipo"] == "validar")
         self.assertEqual(validar["features"], ["F-001", "F-002", "F-003"])
         r = run_script("sdd-project-status.py", self.b.spec, "--spec-pending")
-        self.assertIn("se planifican juntas", r.stdout)
-        nota = next(l for l in r.stdout.splitlines() if "se planifican juntas" in l)
+        self.assertIn("usan datos unas de otras", r.stdout)
+        nota = next(l for l in r.stdout.splitlines() if "usan datos unas de otras" in l)
         self.assertNotIn("→", nota)
 
     def test_ciclo_con_una_arista_suelta_bloquea_solo_por_esa(self):
@@ -223,7 +223,7 @@ class SpecPendingTest(unittest.TestCase):
                                     ("Cuenta", "F-002", "F-001"),
                                     ("Objetivo", "F-003", "F-002")])
         self.assertTrue(data["resumen"].startswith("Para poder planificar falta: "))
-        self.assertIn("se planifican juntas", data["resumen"])
+        self.assertIn("no frena a ninguna", data["resumen"])
 
     def test_resumen_dice_que_es_cada_pendiente_y_aparte_lo_que_no_bloquea(self):
         """Un total suelto ("Quedan 6 pendientes") se lee como specs: se dice por tipo (D-110)."""
@@ -552,12 +552,13 @@ class MapaPorBloquesTest(unittest.TestCase):
     def test_una_feature_sin_nada_pendiente_se_puede_planificar_aunque_otras_tengan_conflictos(self):
         data = self.b.pending()
         self.assertEqual(data["por_feature"]["F-003"]["estado_plan"], "planificable")
-        self.assertIn("Se puede planificar ya: F-003 (categorias).", data["mapa"])
+        self.assertIn("Ya puedes planificar: categorias (F-003).", data["mapa"])
 
     def test_sin_sellar_queda_lista_en_cuanto_se_valide(self):
         data = self.b.pending()
         self.assertEqual(data["por_feature"]["F-005"]["estado_plan"], "lista_para_validar")
-        self.assertIn("Listas en cuanto se validen: F-005 (resumen).", data["mapa"])
+        self.assertIn("en cuanto las valides (no les falta ninguna decisión): resumen (F-005).",
+                      data["mapa"])
 
     def test_el_bloque_lo_forman_las_features_que_la_decision_cambia_no_las_que_nombra(self):
         """CF-F001-02 nombra a movimientos, pero solo cambia presupuesto: bloque aparte."""
@@ -583,6 +584,47 @@ class MapaPorBloquesTest(unittest.TestCase):
 
     def test_el_mapa_no_nombra_skills(self):
         data = self.b.pending()
-        texto = data["mapa"] + "".join(b["preview"] for b in data["bloques"])
+        texto = data["cierre"]["pregunta"] + "".join(
+            o["label"] + o["description"] + o.get("preview", "") for o in data["cierre"]["opciones"])
         self.assertNotRegex(texto, r"\b(wf|kb)-[a-z]")
-        self.assertIn("CF-F001-02 · F-004", texto)
+        self.assertNotIn("conflicto_alta", texto)
+        self.assertIn("1. Si una transferencia cuenta para el límite global\n"
+                      "   Afecta a: presupuesto (F-004)\n   Opciones: No cuenta · Cuenta", texto)
+
+    def test_el_cierre_trae_la_pregunta_y_como_mucho_cuatro_opciones(self):
+        """Lo que no cabe se dice en la pregunta; la última opción es siempre dejarlo."""
+        op = self.b.pending()["cierre"]["opciones"]
+        self.assertLessEqual(len(op), 4)
+        self.assertEqual(op[-1]["label"], "Lo dejo para luego")
+        self.assertTrue(op[0]["label"].endswith("(Recomendado)"))
+        self.assertTrue(all(o.get("preview") for o in op if o["accion"].startswith("bloque:")))
+
+    def test_lo_que_no_frena_tambien_sale_en_el_mapa(self):
+        """El mapa es qué falta para cerrarlo todo: también los menores y lo que no tiene spec."""
+        self.b.readiness(alta_rows="| CF-F001-01 | Modelo | F-001, F-002 | saldo | x |",
+                         media_rows="| CF-F004-01 | Hueco | F-004 | no dice si una devolución "
+                                    "resta del gasto | x |")
+        data = self.b.pending()
+        self.assertIn("Sin frenar nada, queda 1 decisión menor", data["mapa"])
+        menores = next(o for o in data["cierre"]["opciones"] if o["accion"] == "menores")
+        self.assertIn("No dice si una devolución resta del gasto", menores["preview"])
+        self.assertNotIn("(media) entre", menores["preview"])
+
+
+class PreguntaAlcanceTest(unittest.TestCase):
+    """El aviso de gobernanza, contado como pregunta a quien decide (v0.126.1)."""
+
+    def test_saca_lo_que_se_acepta_y_de_donde_salio(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "sdd_project_status", Path(__file__).resolve().parent.parent / "scripts"
+            / "sdd-project-status.py")
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        texto = mod._pregunta_alcance(
+            "alcance derivado desde P-002; alcance derivado (deshacer un cobro ya registrado "
+            "sobre una deuda, decisión de producto sobre el conflicto CF-F001-02) decidido por "
+            "el usuario")
+        self.assertTrue(texto.startswith("¿Das por bueno «deshacer un cobro ya registrado "
+                                         "sobre una deuda»? No está en el PRD"))
+        self.assertIn("(CF-F001-02, P-002)", texto)

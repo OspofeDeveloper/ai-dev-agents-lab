@@ -132,7 +132,9 @@ planificar ya, está lista en cuanto se valide, tiene decisiones propias o esper
 `bloques` (features unidas por decisiones que las cambian a la vez, con lo que les falta, de qué
 bloque dependen y un `preview` por decisión) y `mapa`, el texto del cierre ya escrito. Leer algo que
 otra decisión cambia —su campo *Afecta también a*— no une bloques: crea una espera. El informe por
-defecto gana la columna **Planificable**.
+defecto gana la columna **Planificable**. Y `cierre` (v0.126.1): la `pregunta` y las `opciones` del cierre ya escritas
+—`label`, `description`, `preview`, `accion` (`readiness`, `validar`, `bloque:X`, `menores`, `generar`,
+`luego`)—, como mucho cuatro, para copiarlas literal.
 
 - **Exit:** `0` siempre.
 
