@@ -150,9 +150,17 @@ Usa las plantillas de cabecera de `${CLAUDE_SKILL_DIR}/references/spec_header_te
 - Si la feature es **dueña** de algún modelo compartido → `## Contrato de modelos compartidos`, un
   `### <Modelo>` por cada uno, con su **catálogo de orígenes externos**: una fila por cada operación
   de otra feature que lo crea o lo cambia (de la tabla de shared models del discovery y del PRD).
-  Lo que el PRD no decida de esas filas —si se puede tocar desde aquí, qué pasa con su origen— va
-  en **un solo** gap `[CRÍTICO]` por modelo, con todas las filas abiertas a la vista y un ejemplo
-  sacado del PRD: el usuario lo decide de una vez, no fila a fila en auditorías sucesivas.
+  Lo que el PRD no decida del contrato va en **un solo** gap `[CRÍTICO]` por modelo, con todo a la
+  vista y un ejemplo sacado del PRD: el usuario lo decide de una vez, no pieza a pieza en
+  auditorías sucesivas. **Repasa las tres partes** ([[D-112]]) y pregunta lo que el PRD no fije:
+  1. **Orígenes externos**: de cada fila, si se puede tocar desde aquí y qué pasa con su origen.
+  2. **Invariantes**: lo que nunca puede pasar —¿el saldo puede quedar negativo?, ¿se puede
+     reservar más de lo que hay?—, y si vale para todas las operaciones o solo para algunas.
+  3. **Lo ligado cuando el modelo desaparece**: si se elimina uno (una cuenta), qué pasa con lo
+     que apunta a él (sus movimientos, las deudas pagadas con ella, deshacer lo hecho con ella).
+  Medido en la pasada 1 de `CU-3.ab`: movimientos preguntó sus orígenes de una vez, pero cuentas no
+  preguntó sus invariantes, y *"¿saldo negativo?"*, *"¿reservar sin saldo?"* y *"¿y si la cuenta
+  ya no existe?"* (tres veces) salieron después, cada uno como conflicto con su vuelta.
 - Si **usa** modelos de otra feature → `## Modelos de otras features`: qué hace con cada uno
   (`lectura: …` si solo lo lee) y qué regla del dueño cita. **No escribas reglas de ese modelo** en
   tus HUs, CAs, reglas ni fuera de alcance; si necesitas una que el dueño no tiene, registra una

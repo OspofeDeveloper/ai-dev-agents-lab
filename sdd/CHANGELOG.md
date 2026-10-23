@@ -2,6 +2,18 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.126.0 — 2026-10-23
+
+**Planificar por bloques: qué se puede empezar ya y qué falta para el resto** — [[DECISIONS D-112]].
+
+- 🟠 ⚠ **El cierre de la fase Spec presenta un mapa, no una lista**: qué features se pueden planificar ya, cuáles quedan listas en cuanto se validen, y una línea por **bloque** con lo que le falta y si depende solo de sí mismo o de otro bloque. Se elige por qué bloque seguir. Una feature planificable se puede llevar a plan aunque el resto tenga decisiones abiertas.
+- 🟠 ⚠ **Un bloque se trata de una vez**: primero todas sus decisiones, después un cambio por spec en un mismo mensaje, una revisión de conflictos, una medición y la validación del bloque. *De una en una* sigue disponible.
+- 🟢 **El mapa lo calcula el script** (`por_feature`, `bloques`, `mapa`): dos features van en el mismo bloque solo si una decisión puede cambiarlas a la vez; leer algo que otra decide (*Afecta también a*) es una espera, no las junta. La vista de proyecto gana la columna **Planificable**.
+- 🟠 Conflicto **grave** solo si dos specs se contradicen; un hueco (falta la regla, nadie la contradice) es **medio**. Pertenecer a un ciclo de modelos compartidos ya no bloquea en la medición.
+- 🟠 El dueño de un modelo pregunta al generar **todo** su contrato: orígenes, invariantes y qué pasa con lo ligado si el modelo se elimina.
+- 🟡 Columna `Uso` (lectura/escritura) en *Modelos de otras features*; la petición al dueño pierde su campo de estado; las opciones avisan si amplían el PRD; un análisis de cambio de una versión anterior del spec no se aplica; la fase Plan avisa (sin bloquear) si otra feature tiene una decisión que puede cambiar lo que esta usa.
+- **Conformance:** `CU-3.ac` nuevo; `CU-3.z` (2) vuelve a 0. 7 tests nuevos.
+
 ## 0.125.4 — 2026-10-22
 
 - 🟠 **Una petición al dueño queda atendida aunque el dueño la cite en cualquier columna de su fila de orígenes**, siempre que la cita lleve la feature que la hizo junto a su `R-NNN` (los `R-NNN` son locales a cada consumidora). El dueño la citaba en *«Qué crea o cambia»* y la lista la seguía dando por pendiente (CU-3.ab, pasada 1). 2 tests nuevos.

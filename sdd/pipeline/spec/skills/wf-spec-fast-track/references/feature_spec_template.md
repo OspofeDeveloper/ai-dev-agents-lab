@@ -101,23 +101,26 @@ Flujos alternativos: Si [condición] → [resultado]
 ## Modelos de otras features
 <!-- Solo si esta feature USA modelos compartidos de los que es dueña otra feature (índice:
      "Modelos compartidos (ref)"); si no, omite la sección entera ([[D-111]]).
-     - Una fila por cada uso. Si solo lo lee, la columna "Qué hace" empieza por "lectura:".
+     - Una fila por cada uso. La columna `Uso` dice `lectura` si solo lo lee y `escritura` si lo
+       crea o lo cambia: es lo que decide si el dueño tiene que recogerlo en su catálogo (D-112).
      - La regla NO se escribe aquí ni en los CAs: se cita al contrato del dueño. Un CA puede decir
        el efecto observable de SU operación ("se registra un gasto") pero no cómo se comporta
        después ese modelo (si se edita, si se borra, cómo aparece): eso es del dueño.
      - Si necesitas una regla que el contrato del dueño no tiene, o una distinta, NO la escribas:
        regístrala como petición al dueño. Se atiende con un cambio en el dueño, que la cita en su
        catálogo de orígenes; aquí no hay que volver a tocar nada. -->
-| Modelo | Dueña | Qué hace esta feature con él | Regla que aplica |
-|--------|-------|------------------------------|------------------|
-| [Modelo] | F-00X | [crea / cambia … al …, o "lectura: …"] | [Contrato de F-00X · Orígenes externos de F-00X] |
+| Modelo | Dueña | Uso | Qué hace esta feature con él | Regla que aplica |
+|--------|-------|-----|------------------------------|------------------|
+| [Modelo] | F-00X | [lectura · escritura] | [crea / cambia … al …, o qué lee y para qué] | [Contrato de F-00X · Orígenes externos de F-00X] |
 
 ### Peticiones al dueño
 <!-- Omitir si no hay. Formato contrato: lo parsea `sdd-model-contracts.py`. -->
 ### [R-001] A F-00X ([Modelo]): [qué necesita esta feature, en una frase sobre el comportamiento]
 - **Por qué**: [qué operación de esta feature lo necesita]
 - **Ejemplo**: [un caso concreto con el actor, sacado del spec o del PRD; si no hay, omite la línea]
-- **Estado**: pendiente
+<!-- Sin campo de estado (D-112): está atendida cuando el dueño la cita en su catálogo
+     (`F-00Y (nombre) · R-00N`), y eso lo comprueba un script. Un "Estado: pendiente" aquí sería
+     una segunda fuente de verdad que se queda vieja en cuanto el dueño la atiende. -->
 
 ---
 

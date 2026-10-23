@@ -95,7 +95,10 @@ Después de los bloques de arriba, ejecuta `sdd-project-status.py <raíz_spec> -
 cierra **copiando literal su campo `resumen`** ("Para poder planificar falta: …", por tipo, [[D-110]], y el aviso de los grupos que se
 planifican juntos, [[D-104]]) y un `AskUserQuestion` sobre el primero, según la tabla de
 seguimiento de la guía de la fase. Los bloques de siguientes pasos explican; la pregunta es la que
-hace avanzar.
+hace avanzar. **Si el JSON trae dos o más `bloques`, o alguna feature ya planificable o lista para
+validar, el cierre es el del mapa** ([[D-112]]): su campo `mapa`, literal, y la pregunta de por qué
+bloque seguir, como dice la guía de la fase. Después de una generación es lo normal: casi siempre
+hay features que no dependen de nada y se pueden validar y planificar ya.
 
 > **Las features sin generar no llevan bloque propio** ([[D-103]]): son un pendiente más de la lista
 > y salen en ella. Un *"Quedan N features sin spec, dime cuáles"* justo antes de *"Quedan N

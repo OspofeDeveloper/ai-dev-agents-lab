@@ -500,3 +500,89 @@ class SealDerivedScopeTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+INFORME_BLOQUES = """## Detalle de conflictos
+
+### [CF-F001-01] Modelo — Severidad: ALTA
+
+**Decisión de producto**:
+- **Qué hay que decidir**: qué pasa con el saldo al reservar
+- **Afecta también a**: F-004 (presupuesto), que suma los gastos
+- **Opción 1 — Por movimiento**: reservar crea un gasto. *Cambia:* F-001 (movimientos), F-002 (cuentas)
+- **Opción 2 — Excepción**: no crea gasto. *Cambia:* F-001 (movimientos)
+
+### [CF-F001-02] CA contradictorio — Severidad: ALTA
+
+**Decisión de producto**:
+- **Qué hay que decidir**: si una transferencia cuenta para el límite global
+- **Opción 1 — No cuenta**: mover dinero propio no es gastar. *Cambia:* F-004 (presupuesto)
+- **Opción 2 — Cuenta**: reduce el margen. *Cambia:* F-004 (presupuesto)
+
+## Inventario
+"""
+
+
+class MapaPorBloquesTest(unittest.TestCase):
+    """Qué se puede planificar ya y qué bloques faltan (D-112)."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.b = Bank(Path(self.tmp.name))
+        b = self.b
+        b.feature("F-001", "movimientos")
+        b.feature("F-002", "cuentas")
+        b.feature("F-003", "categorias", estado="VALIDADO")
+        b.feature("F-004", "presupuesto")
+        b.feature("F-005", "resumen")
+        b.index([(f, n, f"features/{n}/spec/{n}_spec.md", "BLOQUEADA", "ninguno")
+                 for f, n in (("F-001", "movimientos"), ("F-002", "cuentas"),
+                              ("F-003", "categorias"), ("F-004", "presupuesto"),
+                              ("F-005", "resumen"))])
+        b.analysis("respondida")
+        write(b.spec / "features" / "movimientos" / "spec" / "movimientos_conflict_report.md",
+              INFORME_BLOQUES)
+        time.sleep(0.01)
+        b.readiness(alta_rows="| CF-F001-01 | Modelo | F-001, F-002 | saldo | x |\n"
+                              "| CF-F001-02 | CA | F-001, F-004 | límite global | x |")
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_una_feature_sin_nada_pendiente_se_puede_planificar_aunque_otras_tengan_conflictos(self):
+        data = self.b.pending()
+        self.assertEqual(data["por_feature"]["F-003"]["estado_plan"], "planificable")
+        self.assertIn("Se puede planificar ya: F-003 (categorias).", data["mapa"])
+
+    def test_sin_sellar_queda_lista_en_cuanto_se_valide(self):
+        data = self.b.pending()
+        self.assertEqual(data["por_feature"]["F-005"]["estado_plan"], "lista_para_validar")
+        self.assertIn("Listas en cuanto se validen: F-005 (resumen).", data["mapa"])
+
+    def test_el_bloque_lo_forman_las_features_que_la_decision_cambia_no_las_que_nombra(self):
+        """CF-F001-02 nombra a movimientos, pero solo cambia presupuesto: bloque aparte."""
+        bloques = {b["bloque"]: b["features"] for b in self.b.pending()["bloques"]}
+        self.assertEqual(sorted(bloques.values()), [["F-001", "F-002"], ["F-004"]])
+
+    def test_afecta_tambien_a_crea_espera_entre_bloques_sin_fusionarlos(self):
+        data = self.b.pending()
+        pres = next(b for b in data["bloques"] if b["features"] == ["F-004"])
+        mov = next(b for b in data["bloques"] if b["features"] == ["F-001", "F-002"])
+        self.assertEqual(pres["depende_de"], [mov["bloque"]])
+        self.assertEqual(mov["depende_de"], [])
+        self.assertIn("Además espera a 1 decisión del bloque " + mov["bloque"], data["mapa"])
+        self.assertIn("Solo depende de sí mismo.", data["mapa"])
+
+    def test_sin_afecta_tambien_a_no_hay_espera(self):
+        rep = self.b.spec / "features" / "movimientos" / "spec" / "movimientos_conflict_report.md"
+        rep.write_text(INFORME_BLOQUES.replace(
+            "- **Afecta también a**: F-004 (presupuesto), que suma los gastos\n", ""))
+        os.utime(self.b.spec / "spec_readiness_report.md")
+        data = self.b.pending()
+        self.assertTrue(all(b["depende_de"] == [] for b in data["bloques"]))
+
+    def test_el_mapa_no_nombra_skills(self):
+        data = self.b.pending()
+        texto = data["mapa"] + "".join(b["preview"] for b in data["bloques"])
+        self.assertNotRegex(texto, r"\b(wf|kb)-[a-z]")
+        self.assertIn("CF-F001-02 · F-004", texto)

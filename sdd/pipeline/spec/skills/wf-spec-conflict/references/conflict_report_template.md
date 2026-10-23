@@ -75,6 +75,7 @@ en dos CAs de features diferentes"—, nunca por el nombre de la kb que la defin
 **Decisión de producto**:
 - **Qué hay que decidir**: [una frase sobre el comportamiento del producto, no sobre los documentos — ej: "qué pasa cuando alguien quiere cambiar o borrar un gasto que tiene una deuda asociada"]
 - **Ejemplo**: [un caso concreto con el actor de las specs, sacado de sus journeys o CAs — ej: "el Usuario paga 30 € de una cena por Ana y se registran el gasto y la deuda; después ve que eran 25 €"]
+- **Afecta también a**: [solo si hay: F-00Z (nombre) — qué lee que esta decisión cambia; si no, omite la línea]
 - **Opción 1 — [título corto]**: [qué le pasa al actor con esta opción]. *Cambia:* [F-00X (nombre), F-00Y (nombre)]
 - **Opción 2 — [título corto]**: [qué le pasa al actor]. *Cambia:* [F-00X (nombre)]
 
@@ -91,6 +92,12 @@ en dos CAs de features diferentes"—, nunca por el nombre de la kb que la defin
        de un modelo compartido, *Cambia:* nombra a su DUEÑO (D-111): la regla se escribe solo ahí.
      - Cada opción describe UN comportamiento: no la expliques comparándola con dos cosas que se
        comportan distinto ("igual que A o que B"), porque quien la aplica no sabe cuál eligió.
+     - Si una opción da al actor algo que el PRD no recoge (una operación nueva, como "deshacer
+       un cobro"), dilo EN la opción: "… Ojo: amplía el PRD". Que se entere al elegirla, no después.
+     - "Afecta también a" (D-112): features que NINGUNA opción cambia pero que leen algo que la
+       decisión cambia (si reservar pasa a crear un gasto, presupuesto, que suma gastos). Esas
+       features esperan a la decisión sin entrar en su bloque. Sin la línea, no espera nadie: no la
+       pongas "por si acaso", porque frena a quien no hace falta.
      - Sin recomendación: es una decisión de producto, no tuya. -->
 
 ---

@@ -64,9 +64,10 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 - [ ] CU-3.b — Expansión de alcance desde las respuestas del analysis — **FALLO** 2026-09-28 (punto 2: marca derivada en una feature no afectada, [[D-101]]); punto 1 verde; 2026-09-29 **sin medir**
 - [ ] CU-3.p — Delta / gap-resolve: un cambio de producto encubierto no se integra en silencio
 - [ ] CU-3.r — El rigor (standard/ligero) se elige al crear el spec, no en el init (D-006) — puntos 1 y 4: **SELLADOS 3/3** (tanda A, 2026-09-25/28; puntos 2, 3 y 5 sin serie)
-- [ ] CU-3.z — Seguimiento de la fase: la lista de pendientes sale de ficheros y cada cierre ofrece el siguiente ([[D-102]]) — de paso en 2026-09-29: punto 2 verde, **punto 1 FALLO** tras *"Lo dejo para luego"* ([[D-103]]); **FALLO** 2026-10-01 (puntos 5 y 7, [[D-104]]); **FALLO** 2026-10-01 pasada 2 (punto 5: sin tabla, [[D-107]]); 1, 2, 3, 4 y 7 verdes en la pasada 2
+- [ ] CU-3.z — Seguimiento de la fase: la lista de pendientes sale de ficheros y cada cierre ofrece el siguiente ([[D-102]]) — de paso en 2026-09-29: punto 2 verde, **punto 1 FALLO** tras *"Lo dejo para luego"* ([[D-103]]); **FALLO** 2026-10-01 (puntos 5 y 7, [[D-104]]); **FALLO** 2026-10-01 pasada 2 (punto 5: sin tabla, [[D-107]]); 1, 2, 3, 4 y 7 verdes en la pasada 2 · **D-112 (v0.126.0): punto 2 vuelve a 0** (con más de un frente, el cierre presenta el mapa por bloques)
 - [ ] CU-3.aa — Seguimiento: un ciclo del dominio se planifica en grupo, uno sin respaldo bloquea y se nombra ([[D-103]]) — **FALLO** 2026-10-01 (punto 1: el aviso del grupo no sale, [[D-104]]); **FALLO** 2026-10-01 pasada 2 (punto 1: `resumen` parafraseado, [[D-108]]); 2, 3 y 4 verdes en las dos
 - [ ] CU-3.ab — Cada regla tiene un dueño: el dueño publica el contrato del modelo y los demás lo citan ([[D-111]])
+- [ ] CU-3.ac — Planificar por bloques: qué se puede empezar ya y qué falta para el resto ([[D-112]])
 
 > **Capa determinista** (no son escenarios manuales): los índices y marcadores
 > (`sdd-features-index.py`, `sdd-gap-conventions`) están cubiertos por unittests; la calidad
@@ -2497,6 +2498,8 @@ toca?"*— cierra con **qué falta para planificar, por tipo** ([[D-110]]) y una
      main, presentar la primera pregunta sin el mapa cuando hay varias, o procesar un spec antes de
      tener todas las respuestas del lote elegido.
    → **FALLO:** un cierre sin la oferta, o una oferta sin la salida de dejarlo.
+   → **Con más de un frente, el mapa** ([[D-112]]): si hay dos o más bloques, o algo listo mientras
+     queda algo pendiente, el cierre copia el `mapa` y pregunta por qué bloque seguir (ver `CU-3.ac`).
 3. **"Lo dejo para luego" no rompe nada.**
    → **Esperado:** no se toca ningún fichero, y la próxima lista sale idéntica.
 4. **Un conflicto se resuelve por la vía que desella.** Te lo presenta como **decisión de producto**
@@ -2658,6 +2661,43 @@ features` (consumidoras) de la plantilla del spec, `sdd-model-contracts.py`, la 
 peticiones se atienden en el dueño y no aparece ningún conflicto por duplicación o falta de dueño ·
 FALLO si una regla de un modelo compartido vive en dos specs.
 **Desviación → reportar:** issue citando `CU-3.ab`.
+
+## CU-3.ac — Planificar por bloques: qué se puede empezar ya y qué falta para el resto ([[D-112]]) ⏱ **sin pasada**
+
+**Precondición:** el banco `bank-cu3ab-mitad` (`rm -rf prd spec && cp -Rp
+.conformance-attic/bank-cu3ab-mitad/prd .conformance-attic/bank-cu3ab-mitad/spec .`): 7 specs en
+borrador, una sin ningún pendiente (gestión de categorías), presupuesto con una decisión propia, un
+bloque de cuatro features con decisiones compartidas y el alcance de deudas, y visión general, que
+lee de todas.
+**Mecanismo:** el mapa de `sdd-project-status.py --spec-pending` (`por_feature`, `bloques`, `mapa`) y
+la regla de cierre por bloques de la guía de la fase.
+
+1. **El cierre enseña el mapa.** Pides *"¿qué me falta?"*.
+   → **Esperado:** el texto de la pregunta es el `mapa` literal: categorías lista en cuanto se
+     valide; un bloque solo con presupuesto; un bloque con movimientos, cuentas, deudas y objetivos;
+     visión general al final. Cada bloque dice qué le falta y si depende de otro. Una opción por
+     bloque, *Validar las listas* y *Lo dejo para luego*.
+   → **FALLO:** la lista plana, un único bloque con todo, o un mapa reescrito por main.
+2. **Lo que está listo se puede empezar.** Eliges validar las listas.
+   → **Esperado:** se valida categorías (aprobador preguntado) y el cierre dice *"ya puedes
+     planificar: gestión de categorías"* aunque el resto tenga decisiones abiertas; pedir su plan no
+     lo bloquea nada (como mucho un aviso de una línea).
+   → **FALLO:** *"todavía no se puede planificar"* por los pendientes de otras features.
+3. **Un bloque se trata de una vez.** Eliges el bloque grande y *todas ahora*.
+   → **Esperado:** primero el mapa de sus decisiones; después cada decisión, sin aplicar nada entre
+     una y otra; con todas respondidas, los análisis de cambio de sus specs en un mensaje, los
+     `apply` en otro, **una** revisión de conflictos, **una** medición y la validación del bloque.
+   → **FALLO:** una vuelta (cambio, revisión, medición) por decisión.
+4. **Una espera no arrastra.** Si una decisión del bloque grande *afecta también a* presupuesto.
+   → **Esperado:** presupuesto sale como *"espera a 1 decisión del bloque …"*, pero sigue siendo su
+     propio bloque y se puede tratar antes o después.
+5. **El coste.** Cuenta las vueltas hasta tener el bloque grande sellado.
+   → **Esperado:** 1 (o 2 si la revisión destapa algo), frente a una por decisión.
+
+**Resultado:** PASS si el mapa se presenta tal cual, lo listo se puede planificar sin esperar al
+resto y un bloque se resuelve en una sola vuelta · FALLO si algo listo queda bloqueado por otra
+feature o el bloque vuelve a una vuelta por decisión.
+**Desviación → reportar:** issue citando `CU-3.ac`.
 
 ## CU-3.o — Readiness: sin índice, ciclos, scope derivado, sello y alcance del veredicto
 

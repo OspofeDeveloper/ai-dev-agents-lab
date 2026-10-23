@@ -168,17 +168,26 @@ def consumo(text: str) -> tuple[list[dict], list[dict]]:
     """(usos, peticiones) de la sección del consumidor."""
     body = h2(text, CONSUMO)
     tabla = re.split(r"^###\s", body, maxsplit=1, flags=re.MULTILINE)[0]
+    # Columna `Uso` (lectura | escritura) explícita desde D-112: la intención no se adivina
+    # por cómo se redacta la celda. Sin ella (specs anteriores), el detector de lectura.
+    cab = next((l for l in tabla.splitlines() if l.strip().startswith("|")), "")
+    cols = [c.strip().lower() for c in cab.strip().strip("|").split("|")]
+    i_uso = cols.index("uso") if "uso" in cols else None
     usos = []
     for row in rows(tabla):
         if len(row) < 3:
             continue
+        if i_uso is not None and i_uso < len(row) and row[i_uso].strip(" *`_").lower():
+            escribe = not row[i_uso].strip(" *`_").lower().startswith("lectura")
+        else:
+            escribe = not es_lectura(row[2])
         owner = FID_RE.findall(row[1])
         usos.append({"modelo": row[0].strip(" `*"), "owner": owner[0] if owner else "",
                      # Solo lectura si lo dice en cualquier punto de la celda: la plantilla pide
                      # empezar por «lectura:», pero un escritor que lo pone en medio («asocia… ;
                      # lectura de su identidad») no escribe sobre el modelo, y tratarlo como
                      # escritura inventa un catálogo incompleto (pasada 1 de CU-3.ab).
-                     "que": row[2], "escribe": not es_lectura(row[2])})
+                     "que": row[2], "escribe": escribe})
     peticiones = []
     heads = list(PETICION_RE.finditer(body))
     for n, m in enumerate(heads):

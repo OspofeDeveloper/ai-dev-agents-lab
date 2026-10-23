@@ -38,7 +38,7 @@ CONSUMO = """
 PETICION = """### Peticiones al dueño
 ### [R-001] A F-001 (Movimiento): el gasto de una deuda viva no se edita
 - **Por qué**: la deuda cuenta con ese gasto.
-- **Estado**: {estado}
+
 """
 
 GASTO_DEUDA = "| Movimiento | F-001 | crea un gasto al registrar una deuda | Orígenes externos de F-001 |"
@@ -109,6 +109,20 @@ class ContractsTest(unittest.TestCase):
             self._banco(consumo_f2=CONSUMO.format(filas=fila, peticiones=""))
             data, rc = self.contracts()
             self.assertEqual((rc, data["catalogo"]), (0, []), fila)
+
+    def test_la_columna_uso_manda_sobre_como_esta_redactada_la_celda(self):
+        """«Lee…» en la celda pero `escritura` en Uso: cuenta como escritura (D-112)."""
+        tabla = ("| Modelo | Dueña | Uso | Qué hace esta feature con él | Regla que aplica |\n"
+                 "|---|---|---|---|---|\n"
+                 "| Movimiento | F-001 | escritura | Lee y luego crea un gasto | Contrato |\n")
+        self._banco(consumo_f2="\n## Modelos de otras features\n" + tabla)
+        data, rc = self.contracts()
+        self.assertEqual([c["consumidor"] for c in data["catalogo"]], ["F-002"])
+        self._banco(consumo_f2="\n## Modelos de otras features\n"
+                    + tabla.replace("| escritura |", "| lectura |").replace("Lee y luego crea",
+                                                                          "Crea"))
+        data, rc = self.contracts()
+        self.assertEqual(data["catalogo"], [])
 
     def test_lo_que_el_spec_declara_usar_respalda_la_dependencia_del_ciclo(self):
         """El índice olvida que F-003 lee Movimiento: aviso, pero no un ciclo que bloquea."""

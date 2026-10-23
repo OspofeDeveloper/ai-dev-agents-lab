@@ -130,7 +130,7 @@ class MultiFeatureTest(unittest.TestCase):
     def test_report_has_table_header(self):
         r = run_script("sdd-project-status.py", self.dir)
         self.assertIn("## Por feature", r.stdout)
-        self.assertIn("| Feature | Fase | Estado | Bloqueo | Siguiente acción |", r.stdout)
+        self.assertIn("| Feature | Fase | Estado | Planificable | Bloqueo | Siguiente acción |", r.stdout)
 
     def test_is_read_only(self):
         before = tree_digest(self.dir)

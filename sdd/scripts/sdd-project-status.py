@@ -268,6 +268,26 @@ def _row(fid, name, fase, estado, bloqueo, accion, n_bugs):
             "bloqueo": bloqueo or "—", "accion": accion, "bugs": n_bugs}
 
 
+def _planificable(directory: Path) -> dict:
+    """fid -> texto corto de si se puede planificar ya, desde el mapa de bloques (D-112)."""
+    try:
+        data = spec_pending(directory)
+    except Exception:  # la vista de proyecto no se cae por un índice raro
+        return {}
+    bloque = {f: b["bloque"] for b in data.get("bloques", []) for f in b["features"]}
+    textos = {"planificable": "sí", "lista_para_validar": "al validarla"}
+    out = {}
+    for f, v in data.get("por_feature", {}).items():
+        e = v["estado_plan"]
+        if e in textos:
+            out[f] = textos[e]
+        elif e == "pendiente_propio":
+            out[f] = f"tras el bloque {bloque.get(f, '?')}"
+        else:
+            out[f] = "al final" if v.get("lectora") else "espera a otro bloque"
+    return out
+
+
 def build(directory: Path) -> str:
     features_md_path = first(directory, "*_features.md")
     resumen = features_resumen(read_text(features_md_path)) if features_md_path else {}
@@ -312,15 +332,18 @@ def build(directory: Path) -> str:
                + (f" · {total_bugs} bug(s) registrado(s)" if total_bugs else ""))
     out.append("> Informe generado por `sdd-project-status.py` (read-only, no edita nada).")
     out.append("")
+    # Si se puede planificar ya, por feature (D-112): una feature lista no espera a que el
+    # resto del proyecto cierre sus decisiones.
+    plan = _planificable(directory) if features_md_path else {}
     out.append("## Por feature")
     out.append("")
-    out.append("| Feature | Fase | Estado | Bloqueo | Siguiente acción |")
-    out.append("|---|---|---|---|---|")
+    out.append("| Feature | Fase | Estado | Planificable | Bloqueo | Siguiente acción |")
+    out.append("|---|---|---|---|---|---|")
     for r in rows:
         label = f"{r['fid']}: {r['name']}" if r["name"] else r["fid"]
         bug_note = f" · ⚠ {r['bugs']} bug(s)" if r["bugs"] else ""
-        out.append(f"| {label} | {r['fase']} | {r['estado']} | {r['bloqueo']}{bug_note} "
-                   f"| {r['accion']} |")
+        out.append(f"| {label} | {r['fase']} | {r['estado']} | {plan.get(r['fid'], '—')} "
+                   f"| {r['bloqueo']}{bug_note} | {r['accion']} |")
     out.append("")
 
     # Siguiente foco: features accionables que no están cerradas ni pendientes
@@ -442,7 +465,7 @@ def _y(items: list[str]) -> str:
     return items[0] if len(items) == 1 else ", ".join(items[:-1]) + " y " + items[-1]
 
 
-DECISION_FIELD_RE = re.compile(r"^\s*[-*]\s*\*\*(Qué hay que decidir|Ejemplo)\*\*\s*:\s*(.*)$",
+DECISION_FIELD_RE = re.compile(r"^\s*[-*]\s*\*\*(Qué hay que decidir|Ejemplo|Afecta también a)\*\*\s*:\s*(.*)$",
                                re.MULTILINE)
 OPCION_RE = re.compile(r"^\s*[-*]\s*\*\*Opción\s*\d+\s*[—–-]\s*(?P<titulo>[^*]+?)\*\*\s*:\s*"
                        r"(?P<efecto>.*?)\s*\*Cambia:\*\s*(?P<cambia>.*)$", re.MULTILINE)
@@ -471,8 +494,13 @@ def _decision(directory: Path, conflict_id: str) -> dict | None:
                          "cambia": sorted(set(FID_RE.findall(o["cambia"])), key=fid_sort_key)}
                         for o in OPCION_RE.finditer(block)]
             if opciones:
+                # Las features que la decisión no cambia pero que leen algo que cambia
+                # (D-112): esperan a ella sin entrar en su bloque.
+                afecta = sorted(set(FID_RE.findall(campos.get("Afecta también a", ""))),
+                                key=fid_sort_key)
                 return {"que_decidir": campos.get("Qué hay que decidir", ""),
                         "ejemplo": campos.get("Ejemplo", ""), "opciones": opciones,
+                        "afecta": afecta,
                         "informe": os.path.relpath(rep)}
     return None
 
@@ -814,10 +842,144 @@ def spec_pending(directory: Path) -> dict:
     criticas = [{"gap": i["gap"], "features": i["features"], "titulo": i.get("titulo", ""),
                  "fichero": i.get("fichero", "")} for i in items if i["tipo"] == "gap_critico"]
     no_declaradas = cdata["no_declaradas"] if cdata else []
+    mapa = _mapa(items, specs, label, cdata, readiness_vigente)
     return {"total": len(items), "bloqueantes": bloq, "resumen": resumen,
-            "dependencias_no_declaradas": no_declaradas,
+            "dependencias_no_declaradas": no_declaradas, **mapa,
             "readiness_vigente": readiness_vigente, "items": items, "grupos": grupos,
             "preguntas_criticas": criticas}
+
+
+# Lo que no es una decisión de nadie en concreto: la medición desactualizada nombra a todas
+# las features, validar y generar son el paso siguiente, no lo que lo impide.
+NO_DECISION = ("readiness", "validar", "generar")
+
+
+def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
+          readiness_vigente: bool) -> dict:
+    """Qué se puede planificar ya y qué bloques de decisiones faltan para el resto (D-112).
+
+    La lista plana decía «para poder planificar falta: …» del proyecto entero, y una feature
+    sin nada pendiente esperaba a todas: en CU-3.ab, categorías estaba lista y no se podía
+    planificar nada. El gate del plan siempre fue por feature; lo que bloqueaba era cómo se
+    presentaba. Aquí cada feature dice si se puede planificar ya, y lo pendiente se agrupa
+    en bloques: dos features van juntas solo si comparten una decisión. Leer algo que otro
+    decide no las junta —la decisión lo dice en `Afecta también a`— y sale como espera.
+    """
+    decisiones = [i for i in items if i["bloquea_plan"] and i["tipo"] not in NO_DECISION]
+
+    def cambia(it):
+        # Las features que la decisión puede cambiar, de las opciones de su decisión de
+        # producto; no las que solo menciona. Con un modelo central (movimientos) todo
+        # conflicto lo nombra, y juntar por nombrar dejaba un único bloque con todo dentro:
+        # el «todo o nada» de siempre (D-112).
+        ops = (it.get("decision") or {}).get("opciones") or []
+        fs = sorted({f for o in ops for f in o["cambia"]}, key=fid_sort_key)
+        return [f for f in (fs or it["features"]) if f in specs]
+    padre = {f: f for f in specs}
+
+    def raiz(f):
+        while padre[f] != f:
+            padre[f] = padre[padre[f]]
+            f = padre[f]
+        return f
+    for it in decisiones:
+        fs = cambia(it)
+        for f in fs[1:]:
+            padre[raiz(f)] = raiz(fs[0])
+
+    propios = {f: [i["orden"] for i in decisiones if f in cambia(i)] for f in specs}
+    espera = {f: [] for f in specs}
+    for it in decisiones:
+        for f in (it.get("decision") or {}).get("afecta", []):
+            if f in espera and f not in cambia(it) and it["orden"] not in espera[f]:
+                espera[f].append(it["orden"])
+    # Una feature que solo lee y lo hace de varias con decisiones abiertas (un resumen, un
+    # panel) depende de todo lo demás: se planifica al final, no se la mete en un bloque.
+    lectoras = set()
+    usos = (cdata or {}).get("uso", [])
+    con_decisiones = {f for f in specs if propios[f]}
+    for f in specs:
+        mios = [u for u in usos if u["feature"] == f]
+        duenos = {u["owner"] for u in mios} & con_decisiones
+        if not propios[f] and mios and not any(u["escribe"] for u in mios) and len(duenos) >= 3:
+            lectoras.add(f)
+
+    sellado = {f: bool((m := ESTADO_SPEC_RE.search(read_text(sp))) and m.group(1) == "VALIDADO")
+               for f, sp in specs.items()}
+    por_feature = {}
+    for f in sorted(specs, key=fid_sort_key):
+        if propios[f]:
+            estado = "pendiente_propio"
+        elif espera[f] or f in lectoras:
+            estado = "espera_a_otro"
+        else:
+            estado = "planificable" if sellado[f] else "lista_para_validar"
+        por_feature[f] = {"estado_plan": estado, "pendientes": propios[f], "espera": espera[f],
+                          "lectora": f in lectoras}
+
+    grupos_b = {}
+    for f in sorted(specs, key=fid_sort_key):
+        if propios[f]:
+            grupos_b.setdefault(raiz(f), []).append(f)
+    ordenados = sorted(grupos_b.values(),
+                       key=lambda fs: (len({o for f in fs for o in propios[f]}), fs[0]))
+    letras = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+    bloques, de_feature = [], {}
+    for n, fs in enumerate(ordenados):
+        for f in fs:
+            de_feature[f] = letras[n % 26]
+    por_orden = {i["orden"]: i for i in items}
+    for n, fs in enumerate(ordenados):
+        letra = letras[n % 26]
+        mias = sorted({o for f in fs for o in propios[f]})
+        fuera = sorted({o for f in fs for o in espera[f]} - set(mias))
+        depende = sorted({de_feature[g] for o in fuera for g in cambia(por_orden[o])
+                          if g in de_feature} - {letra})
+        bloques.append({"bloque": letra, "features": fs, "decisiones": mias, "espera": fuera,
+                        "depende_de": depende,
+                        "preview": "\n".join(_linea_decision(por_orden[o], cambia(por_orden[o]))
+                                             for o in mias)})
+
+    def nombres(fs):
+        return _y([label.get(f, f) for f in fs])
+    lineas = []
+    if not readiness_vigente:
+        lineas.append("Antes de nada, la medición de qué está listo está desactualizada: lo "
+                      "primero es rehacerla, y puede cambiar este mapa.")
+    ya = [f for f, v in por_feature.items() if v["estado_plan"] == "planificable"]
+    validar = [f for f, v in por_feature.items() if v["estado_plan"] == "lista_para_validar"]
+    if ya:
+        lineas.append(f"Se puede planificar ya: {nombres(ya)}.")
+    if validar:
+        lineas.append(f"Listas en cuanto se validen: {nombres(validar)}.")
+    for b in bloques:
+        que = _y(_desglose([por_orden[o] for o in b["decisiones"]]))
+        dep = (f" Además espera a {_n(len(b['espera']), 'decisión', 'decisiones')} del "
+               + _y([f"bloque {d}" for d in b["depende_de"]]) + "."
+               if b["depende_de"] else " Solo depende de sí mismo.")
+        lineas.append(f"Bloque {b['bloque']} — {nombres(b['features'])}: falta {que}.{dep}")
+    sueltas = [f for f, v in por_feature.items()
+               if v["estado_plan"] == "espera_a_otro" and not v["lectora"]]
+    for f in sueltas:
+        de = sorted({de_feature[g] for o in espera[f] for g in cambia(por_orden[o])
+                     if g in de_feature})
+        lineas.append(f"{label.get(f, f)}: no tiene nada propio; espera a "
+                      + _y([f"bloque {d}" for d in de]) + ".")
+    if lectoras:
+        lineas.append(f"Al final: {nombres(sorted(lectoras, key=fid_sort_key))} — lee de casi "
+                      "todas; se planifica cuando estén las demás.")
+    return {"por_feature": por_feature, "bloques": bloques, "mapa": "\n".join(lineas)}
+
+
+def _linea_decision(it: dict, fs: list) -> str:
+    """Una línea por decisión de un bloque, para el `preview` de su opción."""
+    dec = it.get("decision") or {}
+    que = dec.get("que_decidir") or it["que"]
+    que = re.sub(r"\s+", " ", que).strip()
+    if len(que) > 140:
+        que = que[:137].rstrip() + "…"
+    ident = it.get("conflicto") or it.get("peticion") or it.get("gap") or it["tipo"]
+    return f"{ident} · " + ", ".join(fs) + f"\n  {que}"
 
 
 def _n(n: int, uno: str, varios: str) -> str:

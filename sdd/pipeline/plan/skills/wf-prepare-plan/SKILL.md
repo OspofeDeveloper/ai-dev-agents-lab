@@ -79,6 +79,16 @@ Antes de verificar el Spec, determina el contexto técnico del proyecto. Busca `
      aquí convertiría el veredicto de un agente en un candado, y el `ALTA` de un auditor
      minoritario bloquearía trabajo que el arbitraje del readiness ya resolvió. Lo que no
      vale es **callarlo**: alguien levantó ese solape y quien planifica tiene que saberlo.
+   - **Decisiones de otras features que pueden cambiar lo que esta lee** ([[D-112]]). Si el proyecto
+     tiene fase Spec, mira el mapa de planificación (sin leer artefactos):
+     ```bash
+     !python3 .sdd/scripts/sdd-project-status.py <raíz_spec> --spec-pending --json
+     ```
+     Si `por_feature["F-00X"].estado_plan` es `espera_a_otro`, **advierte y continúa**, en una línea:
+     > "⚠ Hay una decisión pendiente en otra feature que puede cambiar lo que esta usa (`<CF-XXX>`: `<qué hay que decidir>`). Planifico igualmente; si esa decisión cambia algo, el plan se revisará."
+
+     Tampoco es un gate: que el resto del proyecto tenga decisiones abiertas no impide planificar
+     lo que ya está cerrado, que es justo lo que el mapa permite.
    - Si hay `[INFORMATIVO]_(pendiente)_` pero no `[INCOMPLETO]` ni `[CRÍTICO]` → advierte pero **continúa**:
      > "⚠ El Spec tiene X items [INFORMATIVO] sin responder. Se usarán los valores por defecto. Puedes responderlos después si quieres más precisión."
 4. Verifica que el archivo parece un Spec validado (contiene "Criterios de Aceptación" e "Historias de Usuario"). Si parece un PRD sin procesar → informa:

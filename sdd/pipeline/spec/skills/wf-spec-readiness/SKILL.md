@@ -229,6 +229,14 @@ Una feature puede tener múltiples bloqueos simultáneos. En ese caso, listar to
 
 **Nota importante**: el readiness report usa solo estados canónicos. El detalle fino se expresa en la columna `Bloqueantes`, no creando variantes de estado adicionales.
 
+**"Dependencias bloqueantes" son solo las que apuntan a algo que no se puede usar** ([[D-112]]): una
+feature RETIRADA, o una dependencia sin respaldo de ningún modelo compartido. **Pertenecer a un
+ciclo respaldado por modelos compartidos no bloquea a nadie**, ni que otra feature del ciclo tenga
+pendientes: cada una se juzga por lo suyo. No escribas *"forma un bloque circular con…"* en
+`Bloqueantes`; el ciclo va en su sección y como orden de implementación. Medido en la pasada 1 de
+`CU-3.ab`: gestión de categorías, sin un solo pendiente propio, salía bloqueada por *"forma un
+bloque circular con presupuesto"*, y eso es lo que hacía parecer que no se podía planificar nada.
+
 > **`LISTA` significa "el gate de la fase siguiente la deja pasar" ([[D-077]]).** No es una
 > valoración de la calidad del spec: es una **predicción**, y el que la verifica es
 > `gate_spec_fiable`. Por eso el sello entra en la condición — desde [[D-061]] ese gate

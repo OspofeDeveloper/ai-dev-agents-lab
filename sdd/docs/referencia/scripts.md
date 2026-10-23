@@ -80,7 +80,8 @@ Comprueba que la feature dueña publica el **contrato** de su modelo (`## Contra
 compartidos`) y que su catálogo de **orígenes externos** recoge a cada feature que crea o cambia el
 modelo; que las **peticiones al dueño** (`R-NNN`, en `## Modelos de otras features`) están atendidas
 —el dueño las cita en su catálogo—; y avisa de los modelos que un consumidor usa sin que el índice lo
-declare. Un spec sin ninguna de las dos secciones es anterior a los contratos y queda exento. Lo usan
+declare. Un spec sin ninguna de las dos secciones es anterior a los contratos y queda exento. Si un uso
+es de lectura o de escritura lo dice la columna `Uso`; en specs sin ella, se deduce de la redacción. Lo usan
 `sdd-seal.py` (condición 10) y `sdd-project-status.py --spec-pending` (tipo `peticion`).
 
 - **Exit:** `0` sin nada que bloquee · `2` con contratos, catálogos o peticiones pendientes · `1` uso.
@@ -126,7 +127,12 @@ fichero— que se enseña antes de tratarlas cuando hay varias ([[D-106]]). Cada
 **Decisión de producto** de su informe ([[D-109]]). Lo que un consumidor necesita del contrato de un
 modelo compartido y su dueño no recoge sale como `peticion`, que se resuelve con un cambio **solo en
 el dueño**; las dependencias que el índice no declara salen en `dependencias_no_declaradas`, como
-aviso ([[D-111]]).
+aviso ([[D-111]]). Y el **mapa de planificación** ([[D-112]]): `por_feature` (si cada feature se puede
+planificar ya, está lista en cuanto se valide, tiene decisiones propias o espera a otro bloque),
+`bloques` (features unidas por decisiones que las cambian a la vez, con lo que les falta, de qué
+bloque dependen y un `preview` por decisión) y `mapa`, el texto del cierre ya escrito. Leer algo que
+otra decisión cambia —su campo *Afecta también a*— no une bloques: crea una espera. El informe por
+defecto gana la columna **Planificable**.
 
 - **Exit:** `0` siempre.
 

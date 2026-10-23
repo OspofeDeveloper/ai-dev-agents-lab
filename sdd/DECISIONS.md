@@ -6,7 +6,22 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
-## D-111 — Cada regla tiene un dueño: el contrato de los modelos compartidos vive en su feature dueña
+## D-112 — Planificar por bloques: qué se puede empezar ya y qué falta para cerrar el resto
+
+- **Fecha:** 2026-10-23 · **Estado:** Adoptada. · **Relacionada:** [[D-111]] (contratos), [[D-110]] (resumen por tipo), [[D-106]] (mapa antes de tratar), [[D-102]] (seguimiento).
+
+**Contexto.** En la pasada 1 de `CU-3.ab` hubo ~15 decisiones y ~6 vueltas sin poder planificar **nada**, aunque gestión de categorías no tenía ni un pendiente. No era técnico: el gate del plan siempre fue por feature (`gate_spec_fiable` solo mira su spec) y la medición nunca bloqueaba a una feature por otra de su grupo. Bloqueaba **la presentación**: una lista plana con *"para poder planificar falta: …"* del proyecto entero, una regla que prohibía decir *"listo para planificar"* fuera del resumen, y la medición escribiendo *"forma un bloque circular con…"* como bloqueante. El usuario: en un proyecto real, mediano o grande, es inviable tenerlo todo al 100 % para empezar; tiene que quedar claro qué se puede empezar a hacer y qué falta para cerrar el resto, sin hacer el proceso más engorroso.
+
+**Decisión.**
+1. **Mapa por bloques, del script** (`sdd-project-status.py --spec-pending`): por feature, si se puede planificar ya; y los pendientes agrupados en bloques. Dos features van juntas solo si **una decisión puede cambiarlas a la vez** (sus opciones), no si la nombra: con un modelo central, juntar por mención dejaba un solo bloque con todo. Una decisión que no cambia una feature pero cambia algo que esta lee lo declara el auditor (*Afecta también a*) y crea una **espera** entre bloques, sin fusionarlos; sin esa línea no espera nadie.
+2. **El cierre copia el mapa** y pregunta por qué bloque seguir; **un bloque se trata de una vez**: sus decisiones, un cambio por spec, una revisión, una medición, su validación.
+3. **Menos bloqueos falsos:** conflicto grave solo si hay contradicción (un hueco es medio); un ciclo de modelos compartidos no bloquea; el dueño pregunta todo su contrato al generar; la fase Plan avisa, no bloquea.
+
+**Alternativas descartadas.** *Bloques por componente conexo de todo lo que se menciona:* medido sobre el banco real, metía presupuesto en el bloque grande por una decisión que solo lo cambiaba a él. *Calcular las esperas por los modelos que lee cada feature:* con un modelo central, todo esperaría a todo; la espera tiene que declararla quien conoce la decisión. *Un gate nuevo en el plan:* lo contrario de lo pedido.
+
+**Consecuencias.** Se mide con `CU-3.ac` sobre `bank-cu3ab-mitad`. Planificar con supuestos declarados y revisar conflictos solo contra las vecinas quedan para después de medir esto.
+
+ Cada regla tiene un dueño: el contrato de los modelos compartidos vive en su feature dueña
 
 - **Fecha:** 2026-10-22 · **Estado:** Adoptada. · **Relacionada:** [[D-109]] (decisiones en el idioma del producto), [[D-104]] (seguimiento), [[D-100]] (`Requiere` desde los shared models), [[D-075]] (autor≠verificador).
 

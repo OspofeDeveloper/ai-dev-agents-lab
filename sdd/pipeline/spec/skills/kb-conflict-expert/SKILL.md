@@ -82,6 +82,15 @@ demás lo citan o le hacen una **petición**. Cuando dos specs chocan sobre un m
 | **Sin dueño** | cada spec deja la regla a la otra y nadie la tiene | el dueño del modelo, siempre |
 | **Decisión** | los dos specs dicen lo que les toca y el choque es de producto | según la decisión, pero una regla del modelo se escribe solo en su dueño |
 
+**Contradicción o hueco: la severidad ([[D-112]]).** Solo **Duplica** (que no coincide) y
+**Decisión** son una **contradicción** —dos specs dicen cosas incompatibles—, y solo esas son
+**ALTA**. **Supone**, **Efecto no catalogado** y **Sin dueño** son un **hueco**: falta una regla
+que alguien tiene que decidir, pero ningún spec dice lo contrario de otro. Un hueco es **MEDIA**: no
+bloquea a las features que no lo resuelven, y la lista lo ofrece como decisión de su bloque. Medido
+en la pasada 1 de `CU-3.ab`: la mayoría de los *"conflictos graves"* eran huecos —el contrato de
+cuentas no decía si el saldo puede quedar negativo; objetivos no repetía una regla de cuentas que le
+bastaba con citar— y cada uno frenó como si dos specs se contradijeran.
+
 Escríbela en el informe (campo **Causa** del conflicto). Y en la **Decisión de producto**, el
 *Cambia:* de una opción que fija una regla del modelo nombra **al dueño**: si una opción obliga a
 cambiar también al consumidor, es porque el consumidor tenía la regla duplicada — y eso se
@@ -113,7 +122,8 @@ lecturas, y cada spec se quedó con una.
 |------|-----------|---------|
 | CAs contradictorios | ALTA | Comportamiento indefinido en producción |
 | HUs duplicadas | ALTA | Implementación doble, inconsistencia de datos |
-| Shared models inconsistentes | ALTA | Modelo de dominio corrupto |
+| Shared models inconsistentes — contradicción | ALTA | Modelo de dominio corrupto |
+| Shared models inconsistentes — hueco (falta la regla, nadie la contradice) | MEDIA | Decisión pendiente del dueño; no corrompe nada todavía |
 | Scope overlap | MEDIA | Duplicación de trabajo, boundaries difusos |
 | Fuera de alcance contradictorio | MEDIA | Gap funcional no cubierto por ninguna feature |
 

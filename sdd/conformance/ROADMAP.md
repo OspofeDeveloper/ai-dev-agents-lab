@@ -149,6 +149,13 @@ para garantizar que ningún skill se queda sin casos en los cuatro ejes de prueb
 > tanda que regenera las specs desde el PRD; `CU-3.f` (2) y `CU-3.o` (2) vuelven a 0; `CU-3.c`, `CU-3.d`
 > y `CU-3.f` (4), comprobación de humo en esa misma tanda; `CU-3.h` gana el punto 6.
 
+> 🧪 **`CU-3.ab`, pasada 1** (v0.125.x, cortada a mitad a propósito): el SSoT funciona para la calidad
+> —ninguna corrección creó contradicciones, cada cambio fue al spec dueño, las aclaraciones se
+> cerraron antes de aplicar— pero no para el tiempo: ~15 decisiones y ~6 vueltas sin poder planificar
+> nada, con categorías sin un solo pendiente. Cuatro arreglos del script de contratos a mitad
+> (v0.125.2-0.125.4). El estado se guardó como `bank-cu3ab-mitad`. → [[D-112]] (v0.126.0): planificar
+> por bloques; escenario nuevo **`CU-3.ac`** sobre ese banco.
+
 > ⏱ **Cuatro escenarios nacen sin pasada del barrido de enlazado lateral de Spec**
 > ([[D-078]]/[[D-079]], 2026-09-14): **CU-9.o** (evolucionar una feature dada de baja se deniega, y
 > el estado sobrevive incluso sin hook), **CU-7.s** (la reactivación es la única vuelta atrás y no

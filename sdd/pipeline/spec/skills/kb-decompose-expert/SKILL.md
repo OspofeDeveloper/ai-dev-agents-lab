@@ -95,8 +95,9 @@ features: las features que lo referencian **no lo redefinen**, la citan.
 
 - **El dueño publica el contrato** en `## Contrato de modelos compartidos` de su spec, con un
   catálogo de **orígenes externos**: una fila por cada operación de otra feature que crea o cambia
-  el modelo. Lo que no esté decidido de esas filas es **una** pregunta crítica del dueño, con todas
-  a la vista, no una por consumidor que vaya apareciendo.
+  el modelo. Lo que no esté decidido del contrato —orígenes, **invariantes** y **qué pasa con lo
+  ligado si el modelo se elimina**— es **una** pregunta crítica del dueño, con todo a la vista, no
+  una por consumidor que vaya apareciendo ([[D-112]]).
 - **El consumidor cita** en `## Modelos de otras features`: qué hace él con el modelo y qué regla
   del dueño aplica. Un CA suyo puede decir el efecto observable de su propia operación (*"se
   registra un gasto"*), pero no cómo se comporta después ese modelo (*"ese gasto no se puede

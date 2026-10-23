@@ -196,6 +196,17 @@ natural: responder los gaps críticos en el informe y pedirte que **apliques el 
 
 ## Submodo APPLY
 
+### Paso 3A-bis: Un análisis superado no se aplica ([[D-112]])
+
+El informe se llama `<spec>_v<X.Y>_delta_analysis.md` con la versión del spec que analizó. Antes de
+nada, compara esa `X.Y` con la `Versión:` de la cabecera del spec (`grep -m1`, sin leer el resto):
+si el spec ya va por **otra** versión, el análisis está **superado** —se hizo sobre un texto que ya
+no existe— y **no se aplica**. Dilo en una línea y, si el cambio sigue haciendo falta, vuelve a
+analizarlo sobre el spec actual. Es también lo que pasa con un análisis que se decidió no aplicar
+(la decisión dejó ese spec sin cambios): se queda en disco como traza y el siguiente cambio del spec
+lo supera. Medido en la pasada 1 de `CU-3.ab`: un análisis de cuentas que la decisión dejó sin
+efecto seguía saliendo como *"otro cambio analizado y sin aplicar"*.
+
 ### Paso 3B: Gaps críticos sin responder — el gate que faltaba
 
 El recuento **sale del script, no de tu lectura** ([[D-042]]):
