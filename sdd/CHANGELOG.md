@@ -2,6 +2,14 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.127.3 — 2026-10-26
+
+**Una decisión de una sola opción se aplica, no se pregunta** — [[DECISIONS D-114]] (ampliación). Sale de la pasada 1 de `CU-3.ac (3)`.
+
+- 🟠 El mapa trata como *"Ya decidido, falta copiarlo"* un conflicto cuya *Decisión de producto* solo tiene una opción (*Única opción* u *Opción 1* sola): las features de su *Cambia* (antes de la raya) son *Falta en*, y su *Qué falta reflejar* es lo que se copia. El auditor ya lo reconocía como decidido, pero lo escribía así y salía como decisión menor.
+- 🟡 Concordancias en el mapa: *"1 sugerencia… no frena nada"*, *"Se valida:"* con una sola feature, *"esas features vuelven a validarse"* con varias.
+- **Conformance:** `CU-3.ac (3)` punto 2 PASS; punto 1 repetido, arreglado en esta versión. 1 test nuevo.
+
 ## 0.127.2 — 2026-10-26
 
 **Las decisiones de conflictos también cuentan como decididas** — [[DECISIONS D-114]] (ampliación). Sale de la pasada 1 de `CU-3.ac (3)`.

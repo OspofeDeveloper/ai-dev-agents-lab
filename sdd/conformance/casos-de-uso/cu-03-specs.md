@@ -2764,7 +2764,7 @@ inglés. Pero:
   de los specs.
 → [[D-114]] (v0.127.1). Estado guardado como `bank-cu3ac-bloqueA`.
 
-### CU-3.ac (3) — Lo respondido llega a su dueño, y lo que no sella dice por qué ([[D-114]]) ⏱ **pasada en curso** (punto 1 parcial; v0.127.2)
+### CU-3.ac (3) — Lo respondido llega a su dueño, y lo que no sella dice por qué ([[D-114]]) ⏱ **pasada en curso** (puntos 1 parcial y 2 PASS; v0.127.3)
 
 **Precondición:** el banco `bank-cu3ac-bloqueA` (final de la pasada de `CU-3.ac (2)`: cuatro
 features planificables; bloque A con `CF-F004-01`, que es lo ya respondido en D-006; la decisión
@@ -2814,8 +2814,20 @@ en la misma vuelta y un rechazo se explica · FALLO si una regla queda escrita s
   *Aplicar lo ya decidido*. Validarla primero es sellarla para desellarla; main lo vio y lo avisó en
   prosa, pero el mapa lo recomendaba igual. **Arreglo (v0.127.2):** una feature a la que le falta
   copiar algo ya decidido queda `pendiente_copiar` y sale de la lista para validar.
-- Para seguir: *Aplicar lo ya decidido* (punto 2); después, con v0.127.2, revisar otra vez los
-  conflictos de registro de movimientos (repetir el punto 1 para `CF-F005-04`).
+- **Punto 2: PASS.** *Aplicar lo ya decidido* copió la regla a presupuesto mensual sin preguntar, la
+  revalidó (APROBADO), midió al final y visión general pasó a planificable con el bloque A cerrado.
+- **Punto 1 repetido con v0.127.2: FALLO en la forma, no en el criterio.** El auditor encontró la
+  decisión en la lista y escribió *"no hay aquí una decisión de producto nueva que tomar — ya se
+  tomó"*, pero con **Causa** *Supone* y una *Decisión de producto* de **Única opción**, en vez de
+  *Decidido fuera del dueño* con su *Traslado*: siguió saliendo como decisión menor. Igual con el
+  nuevo `CF-F001-07` (una fila de la tabla de modelos ajenos de objetivos de ahorro, sin comportamiento
+  en disputa). La regla *"una decisión de una sola opción no se escribe"* estaba en prosa y no bastó.
+  **Arreglo (v0.127.3):** el script trata una decisión de una sola opción como traslado (sus *Cambia*
+  son *Falta en*). Sobre el banco, el cierre queda *Aplicar lo ya decidido (2) (Recomendado)*, en
+  registro de movimientos y objetivos de ahorro, sin decisiones menores; registro de movimientos ya no
+  se ofrece para validar antes de copiarlo.
+- **Detalles de redacción** (v0.127.3): *"1 sugerencia…: no frenan nada"*, *"Se validan juntas:"* con
+  una sola feature y *"esa feature vuelve a validarse"* con varias.
 
 ## CU-3.o — Readiness: sin índice, ciclos, scope derivado, sello y alcance del veredicto
 

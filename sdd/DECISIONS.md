@@ -70,6 +70,11 @@ y ese requisito empieza siempre igual (`Qué se decidía:` / `Opción elegida:`)
 Además, una feature a la que le falta copiar algo ya decidido no se ofrece para validar
 (`pendiente_copiar`): validarla antes es sellarla para desellarla.
 
+**Ampliación (v0.127.3).** Con la decisión ya en la lista, el auditor la reconoció (*"no hay aquí una
+decisión de producto nueva que tomar"*) y aun así la escribió como *Decisión de producto* de **Única
+opción**, que el mapa presentaba como decisión menor. Lo que una regla en prosa no consigue lo hace el
+script: una decisión de una sola opción se trata como traslado, con sus *Cambia* como *Falta en*.
+
 **Referencias.** `scripts/sdd-analysis-gaps.py` (`--owners`, `--decisiones`, `NO_GAPS`),
 `scripts/sdd-seal.py` (`--blocked`, `--not-approved`), `scripts/sdd-project-status.py`
 (`corregir`, `pendiente_corregir`, vista previa de la medición), `kb-spec-expert`,

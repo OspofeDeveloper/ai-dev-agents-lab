@@ -104,6 +104,9 @@ producto* de una única opción.
 
 **Una decisión de una sola opción no es una decisión.** Si al redactarla solo te sale una opción,
 es que ya está decidida: es **Sin trasladar** o **Decidido fuera del dueño**, con su *Traslado*.
+También lo es una corrección de redacción sin comportamiento en disputa. Si aun así queda escrita
+con una sola opción, el mapa la trata como traslado (v0.127.3): las features de su *Cambia* son
+*Falta en*, y su *Qué falta reflejar* es el *Qué*.
 
 **Duplica es solo para el mismo caso.** Si el dueño no dice nada del caso concreto (un movimiento
 nuevo que su regla, escrita antes, no podía nombrar), no hay dos reglas que choquen: hay una sola,

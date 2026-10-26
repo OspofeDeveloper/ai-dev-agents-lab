@@ -880,6 +880,20 @@ INFORME_FUERA_DEL_DUENO = """## Detalle de conflictos
 """
 
 
+INFORME_UNICA_OPCION = """## Detalle de conflictos
+
+### [CF-F001-05] Shared models inconsistentes — Severidad: MEDIA
+
+**Causa**: Supone — presupuesto remite a movimientos, que no lo dice.
+
+**Decisión de producto**: no hay aquí una decisión nueva; ya se tomó.
+- **Qué falta reflejar en F-001**: que un gasto puede dejar la cuenta en negativo.
+- **Única opción** — *Cambia:* F-001 (movimientos) — añade la frase, cerrando la referencia que F-004 ya le hace.
+
+## Inventario
+"""
+
+
 class DecididoFueraDelDuenoTest(unittest.TestCase):
     def test_se_aplica_como_traslado_y_no_se_pregunta(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -900,6 +914,29 @@ class DecididoFueraDelDuenoTest(unittest.TestCase):
             self.assertEqual(tr["traslado"]["falta_en"], ["F-004"])
             self.assertEqual(tr["traslado"]["decidido_en"], ["F-001"])
             self.assertNotIn("conflicto_media", tipos(data))
+
+    def test_una_decision_de_una_sola_opcion_se_aplica(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            b = Bank(Path(tmp))
+            b.feature("F-001", "movimientos", estado="BORRADOR")
+            b.feature("F-004", "presupuesto", estado="VALIDADO")
+            b.index([("F-001", "movimientos", "features/movimientos/spec/movimientos_spec.md",
+                      "LISTA", "ninguno"),
+                     ("F-004", "presupuesto", "features/presupuesto/spec/presupuesto_spec.md",
+                      "LISTA", "ninguno")])
+            b.analysis("respondida")
+            write(b.spec / "features" / "movimientos" / "spec" / "movimientos_conflict_report.md",
+                  INFORME_UNICA_OPCION)
+            time.sleep(0.01)
+            b.readiness(media_rows="| `CF-F001-05` | Shared models (hueco) | F-001, F-004 | x | x |")
+            data = b.pending()
+            self.assertNotIn("conflicto_media", tipos(data))
+            tr = next(i for i in data["items"] if i["tipo"] == "trasladar")
+            # F-004 sale en la explicación de la opción, no en lo que cambia.
+            self.assertEqual(tr["traslado"]["falta_en"], ["F-001"])
+            self.assertEqual(tr["traslado"]["que"],
+                             "que un gasto puede dejar la cuenta en negativo.")
+            self.assertEqual(data["por_feature"]["F-001"]["estado_plan"], "pendiente_copiar")
 
     def test_lo_que_falta_copiar_no_se_ofrece_para_validar(self):
         with tempfile.TemporaryDirectory() as tmp:

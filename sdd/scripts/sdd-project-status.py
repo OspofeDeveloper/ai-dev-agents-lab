@@ -517,6 +517,10 @@ def _bloques_conflicto(directory: Path, conflict_id: str):
                 yield rep, m.group(1)
 
 
+UNICA_OPCION_RE = re.compile(r"^\s*[-*]\s*\*\*(?:Única opción|Opción única)\*\*\s*[—–:-]\s*"
+                             r"\*Cambia:\*\s*(?P<cambia>.+)$", re.MULTILINE | re.IGNORECASE)
+QUE_FALTA_RE = re.compile(r"^\s*[-*]\s*\*\*Qué falta (?:reflejar|copiar|añadir|escribir)[^*]*\*\*"
+                          r"\s*:\s*(.+)$", re.MULTILINE | re.IGNORECASE)
 TRASLADO_FIELD_RE = re.compile(r"^\s*[-*]\s*\*\*(Qué|Decidido en|Falta en)\*\*\s*:\s*(.*)$",
                                re.MULTILINE)
 
@@ -537,6 +541,28 @@ def _traslado(directory: Path, conflict_id: str) -> dict | None:
             return {"que": campos["Qué"], "decidido_en":
                     sorted(set(FID_RE.findall(campos.get("Decidido en", ""))), key=fid_sort_key),
                     "falta_en": falta, "informe": os.path.relpath(rep)}
+    # Una decisión de una sola opción no es una decisión (v0.127.1), pero la regla en prosa
+    # no bastó: en CU-3.ac (3) el auditor reconoció el saldo negativo como ya decidido y aun
+    # así lo escribió como «Decisión de producto» con «Única opción», y salió como decisión
+    # menor. Lo determinista lo decide el script (v0.127.3): con una sola opción, se aplica.
+    for rep, block in _bloques_conflicto(directory, conflict_id):
+        if "Decisión de producto" not in block:
+            continue
+        unicas = [m.group("cambia") for m in UNICA_OPCION_RE.finditer(block)]
+        opciones = [m.group("cambia") for m in OPCION_RE.finditer(block)]
+        if len(unicas) + len(opciones) != 1:
+            break
+        cambia = (unicas + opciones)[0]
+        # «F-001 (registro-movimientos) — añade esa frase, cerrando la referencia que F-005
+        # ya le hace»: las features que cambian van antes de la raya; lo de después explica.
+        falta = sorted(set(FID_RE.findall(re.split(r"\s+[—–]\s+", cambia, maxsplit=1)[0])),
+                       key=fid_sort_key)
+        que = QUE_FALTA_RE.search(block)
+        texto = que.group(1).strip() if que else re.split(r"\s+[—–]\s+", cambia, maxsplit=1)[-1].strip()
+        if falta and texto:
+            return {"que": texto, "decidido_en": [], "falta_en": falta,
+                    "informe": os.path.relpath(rep)}
+        break
     return None
 
 
@@ -1132,7 +1158,9 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
         fs = sorted({f for it in traslados for f in it["features"]}, key=fid_sort_key)
         lineas.append(f"Ya decidido, falta copiarlo: {_n(len(traslados), 'cambio', 'cambios')} en "
                       f"{_y([corto(f) for f in fs])}. No hace falta que decidas nada: se aplica "
-                      "lo que ya respondiste, y esa feature vuelve a validarse.")
+                      "lo que ya respondiste, y "
+                      + ("esa feature vuelve" if len(fs) == 1 else "esas features vuelven")
+                      + " a validarse.")
     if menores:
         lineas.append("")
         # Contadas por feature, no una a una: el detalle va en el preview de su opción. Cuatro
@@ -1152,7 +1180,9 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
         fs = sorted({f for it in sugerencias for f in it["features"]}, key=fid_sort_key)
         lineas.append("")
         lineas.append(f"La validación dejó {_n(len(sugerencias), 'sugerencia', 'sugerencias')} "
-                      f"en {_y([corto(f) for f in fs])}: no frenan nada, pero conviene verlas.")
+                      f"en {_y([corto(f) for f in fs])}: "
+                      + ("no frena nada, pero conviene verla." if len(sugerencias) == 1
+                         else "no frenan nada, pero conviene verlas."))
     if sin_spec:
         lineas.append("")
         lineas.append(f"Sin spec todavía: {nombres(sin_spec)}. No frena a las demás; se genera "
@@ -1183,7 +1213,7 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
         cand.append({"label": f"Validar las listas ({len(validar)})",
                      "description": "Las sellas y ya se pueden planificar, aunque el resto "
                                     "siga abierto.",
-                     "preview": "\n".join(["Se validan juntas:", ""]
+                     "preview": "\n".join(["Se valida:" if len(validar) == 1 else "Se validan juntas:", ""]
                                           + [f"- {nombre(f)}" for f in validar]
                                           + ["", "Se te pregunta una vez quién aprueba. Las que "
                                              "pasen quedan listas para planificar."]),
