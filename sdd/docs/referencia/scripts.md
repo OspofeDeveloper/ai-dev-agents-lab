@@ -38,7 +38,9 @@ técnica aprobada). Si falla, fuerza `BORRADOR`. Los marcadores entre comillas d
 menciones y no cuentan ([[D-104]]). `spec --report <specs…>` imprime la tabla de un lote de
 validación —spec, sellado con su aprobador o el motivo— para copiarla ([[D-107]]). En un spec, la
 condición 10 exige los contratos de modelos compartidos al día ([[D-111]]); y `--unseal` retira el
-`Aprobado por:`, porque la aprobación era del contenido anterior.
+`Aprobado por:`, porque la aprobación era del contenido anterior. `--suggest "<texto>"` (repetible) guarda las sugerencias de
+la validación en la cabecera, y se van con el sello; `spec --report --lineas` da el resultado del
+lote en frases; sellar o desellar un spec regenera el índice de features ([[D-113]]).
 
 - **Exit:** `0` OK/sellado · `1` error IO · `2` condiciones no cumplidas.
 
@@ -134,7 +136,9 @@ bloque dependen y un `preview` por decisión) y `mapa`, el texto del cierre ya e
 otra decisión cambia —su campo *Afecta también a*— no une bloques: crea una espera. El informe por
 defecto gana la columna **Planificable**. Y `cierre` (v0.126.1): la `pregunta` y las `opciones` del cierre ya escritas
 —`label`, `description`, `preview`, `accion` (`readiness`, `validar`, `bloque:X`, `menores`, `generar`,
-`luego`)—, como mucho cuatro, para copiarlas literal.
+`luego`)—, como mucho cuatro, para copiarlas literal. Con `--lote <spec.md> …`, la pregunta empieza por el resultado de ese lote de
+validación. Tipos nuevos ([[D-113]]): `trasladar` (ya decidido por el dueño, se aplica sin preguntar)
+y `sugerencia` (lo que dejó la validación, de la cabecera del spec); ninguno bloquea.
 
 - **Exit:** `0` siempre.
 

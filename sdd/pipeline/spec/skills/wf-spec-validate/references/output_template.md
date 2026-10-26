@@ -18,6 +18,13 @@
 ### Notas NO bloqueantes (no cambian el veredicto)
 - [borderline aceptable, con el porqué | sugerencia de redacción | materia de Plan]
 
+### Sugerencias con arreglo (no bloquean; se ofrecen al usuario)
+<!-- Solo lo que deja el spec prometiendo algo que no se probará (una regla sin CA, un ítem del
+     checklist marcado que no se cumple), en llano y con su arreglo: "promete X y no hay criterio
+     que lo pruebe → añadir el criterio". Si no hay, "Ninguna". El sellador las guarda en la
+     cabecera (`--suggest`) y la lista de pendientes las ofrece. -->
+- [qué falta → qué se añadiría]
+
 ---
 
 ## Completitud: X/8 elementos presentes

@@ -23,8 +23,9 @@ Este skill es el **Single Source of Truth** para todas las convenciones de gaps 
 
 > **`[R-XXX]` no es un gap: es una petición al dueño de un modelo compartido** ([[D-111]]). Vive en
 > `## Modelos de otras features` del spec que la hace, con el encabezado
-> `### [R-001] A F-00X (Modelo): <qué necesita>` y los campos `Por qué`, `Ejemplo` (opcional) y
-> `Estado`. No se responde con `--answer`: se atiende con un cambio en el dueño, que la cita en su
+> `### [R-001] A F-00X (Modelo): <qué necesita>` y los campos `Por qué` y `Ejemplo` (opcional);
+> sin `Estado` ([[D-112]]): la verdad es la cita del dueño, y un estado escrito en el consumidor se
+> queda viejo en cuanto el dueño la integra. No se responde con `--answer`: se atiende con un cambio en el dueño, que la cita en su
 > catálogo de orígenes (`F-00Y (nombre) · R-001`). Numeración local al spec que la hace.
 
 **Numeración**: secuencial desde `001` y **por linaje** — no por artefacto. Sin saltos, salvo los **bloques reservados** del fan-out paralelo ([[D-056]], abajo), que sí los dejan a propósito.

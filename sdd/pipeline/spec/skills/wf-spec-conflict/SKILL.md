@@ -112,6 +112,9 @@ Por cada conflicto:
 - **La severidad sale de la causa** ([[D-112]]): una contradicción (duplica que no coincide, decisión) es ALTA; un hueco (supone, efecto no catalogado, sin dueño) es MEDIA.
 - **`Afecta también a`**: las features que ninguna opción cambia pero que leen algo que la decisión cambia. Es lo que permite que el resto siga planificándose sin esperar a esta decisión; no la rellenes por precaución.
 - Si una opción **amplía el PRD**, dilo en la propia opción.
+- **Si el dueño ya lo decidió** y el consumidor no lo ha copiado, la causa es **Sin trasladar** y en vez de la decisión va un bloque **Traslado** (*Qué · Decidido en · Falta en*), sin opciones ([[D-113]]): no se le vuelve a preguntar al usuario.
+- **Un conflicto que traes de un informe anterior se reescribe con este criterio**: causa, severidad y decisión de hoy, no el encabezado de antes (*"ALTA (se mantiene)"*).
+- **Un conflicto de otro informe se cita con el ID que le da la lista de pendientes**, o no se cita.
 
 > **El prefijo no es estética: casi nunca corres solo ([[D-090]]).** En el fan-out del Paso 7 de
 > `wf-spec-features-first` hay un auditor por spec nuevo, cada uno escribiendo su propio informe y

@@ -81,6 +81,16 @@ demás lo citan o le hacen una **petición**. Cuando dos specs chocan sobre un m
 | **Efecto no catalogado** | una operación del consumidor crea o cambia el modelo y el catálogo de orígenes del dueño no la recoge | el dueño: añade la fila y decide qué se puede hacer con lo que crea |
 | **Sin dueño** | cada spec deja la regla a la otra y nadie la tiene | el dueño del modelo, siempre |
 | **Decisión** | los dos specs dicen lo que les toca y el choque es de producto | según la decisión, pero una regla del modelo se escribe solo en su dueño |
+| **Sin trasladar** | el dueño **ya decidió** la regla y la tiene en su contrato, y el consumidor no la ha copiado o sigue con la versión anterior | el consumidor; no hay nada que decidir ([[D-113]]) |
+
+**"Sin trasladar" no es una decisión ([[D-113]]).** Solo cuando el contrato del dueño **dice ya** la
+regla —cítala—: si el dueño la deja ambigua, es **Supone** o **Decisión**. En vez de *Decisión de
+producto*, escribe un bloque **Traslado** con tres líneas: `- **Qué**:` la regla en llano, como la
+vería el usuario (*"reservar dinero para un objetivo exige saldo suficiente en la cuenta"*);
+`- **Decidido en**: F-00X (nombre)`; `- **Falta en**: F-00Y (nombre)`. Lo ya respondido no se
+vuelve a preguntar: la lista lo ofrece como *"Aplicar lo ya decidido"* y se copia sin preguntar.
+Medido en `CU-3.ac`: *"F-005 ya decidió que reservar exige saldo y F-008 no trasladó esa
+respuesta"* salió como una de las cuatro decisiones menores, con su pregunta.
 
 **Contradicción o hueco: la severidad ([[D-112]]).** Solo **Duplica** (que no coincide) y
 **Decisión** son una **contradicción** —dos specs dicen cosas incompatibles—, y solo esas son
@@ -95,6 +105,16 @@ Escríbela en el informe (campo **Causa** del conflicto). Y en la **Decisión de
 *Cambia:* de una opción que fija una regla del modelo nombra **al dueño**: si una opción obliga a
 cambiar también al consumidor, es porque el consumidor tenía la regla duplicada — y eso se
 corrige citando, no volviendo a escribirla.
+
+**Un conflicto que sigue abierto se reescribe con el criterio de hoy.** Si lo traes de un informe
+anterior, no copies su encabezado (*"Severidad: ALTA (se mantiene)"*): vuelve a decidir su causa y
+su severidad y escribe su *Decisión de producto* (o su *Traslado*) si no la tenía. Medido en
+`CU-3.ac`: nueve conflictos arrastrados seguían en ALTA con causa *"sin dueño"*, que es un hueco, y
+uno sin decisión de producto; fue la medición la que tuvo que rebajarlos.
+
+**Los conflictos de otro informe se citan con su ID tal como lo da la lista de pendientes**, o no se
+citan. Medido en `CU-3.ac`: deudas citó como `CF-F005-02` lo que su dueño llama `CF-F005-01`, y la
+medición tuvo que escribir un aviso en un informe que lee el usuario.
 
 **Una opción describe un solo comportamiento.** No la expliques comparándola con dos cosas que se
 comportan distinto (*"igual que una aportación directa o una transferencia"*, cuando una deja un

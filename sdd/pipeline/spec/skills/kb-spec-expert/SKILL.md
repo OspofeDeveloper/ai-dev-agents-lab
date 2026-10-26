@@ -317,6 +317,20 @@ dos formas en dos corridas).
   dictamina `sdd-seal.py spec --check`, no tu lectura. No lo cuentes como hallazgo tuyo —
   duplicarlo no añade rigor y compite con el veredicto bueno.
 
+**Sugerencias con arreglo (v0.126.2).** Una nota no bloqueante que deja el spec prometiendo algo
+que no se probará —una regla que promete avisar en cuatro casos y solo dos tienen CA; un ítem del
+checklist marcado que no se cumple— **no bloquea**, pero tampoco se queda en una nota: va en
+`### Sugerencias con arreglo`, una por línea, en llano y con su arreglo (*"promete avisar sin
+pagos previstos y sin objetivos, y no hay criterio que lo pruebe → añadir esos dos criterios"*).
+El sellador la guarda en la cabecera y la lista de pendientes la ofrece al usuario. Medido en
+`CU-3.ac`: visión general se selló con dos casos prometidos sin CA, y la nota quedó en un párrafo
+que nadie vio.
+
+**Tus notas son de este spec.** No recomiendes otras auditorías (*"conviene una auditoría de
+conflictos sobre…"*), ni comentes gaps del análisis u otros artefactos: eso lo trae la lista de
+pendientes, y repetirlo aquí lo convierte en un pendiente que no existe. Tampoco una línea
+**Estado** dentro de una petición al dueño (anterior a [[D-112]]): la verdad es la cita del dueño.
+
 > **Tu veredicto es necesario y no suficiente.** Aunque no encuentres nada bloqueante, el sello
 > solo se estampa si el verificador mecánico también pasa: son ortogonales a propósito, y cada uno
 > ve lo que el otro no.
@@ -349,6 +363,9 @@ Contaminación encontrada:
 
 ### Notas NO bloqueantes (no cambian el veredicto):
 - [borderline aceptable, con el porqué | sugerencia de redacción | materia de Plan]
+
+### Sugerencias con arreglo (no bloquean; se ofrecen al usuario):
+- [qué promete el spec sin probarlo → qué se añadiría] (si no hay, "Ninguna")
 ```
 
 ---

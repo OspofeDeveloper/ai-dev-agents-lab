@@ -156,6 +156,15 @@ para garantizar que ningún skill se queda sin casos en los cuatro ejes de prueb
 > (v0.125.2-0.125.4). El estado se guardó como `bank-cu3ab-mitad`. → [[D-112]] (v0.126.0): planificar
 > por bloques; escenario nuevo **`CU-3.ac`** sobre ese banco.
 
+> 🧪 **`CU-3.ac`, pasada 1** (v0.126.0-0.126.1): siete de ocho features planificables con cuatro
+> decisiones menores abiertas, frente a ninguna en `CU-3.ab`; lo que más desbloqueó fue separar
+> contradicción de hueco. La 0.126.1 hizo el mapa legible para un usuario final (cierre entero del
+> script, nombres, lo que no frena). Estado guardado como `bank-cu3ac-menores`. → [[D-113]]
+> (v0.127.0): lo ya decidido no se pregunta, las sugerencias de la validación se enseñan, y
+> arreglos de la pasada; escenario **`CU-3.ac (2)`**. Pendiente para después de medirla: nombres
+> legibles con tildes en el índice, medición incremental y el coste en tokens de las auditorías
+> (~140k por spec validado).
+
 > ⏱ **Cuatro escenarios nacen sin pasada del barrido de enlazado lateral de Spec**
 > ([[D-078]]/[[D-079]], 2026-09-14): **CU-9.o** (evolucionar una feature dada de baja se deniega, y
 > el estado sobrevive incluso sin hook), **CU-7.s** (la reactivación es la única vuelta atrás y no

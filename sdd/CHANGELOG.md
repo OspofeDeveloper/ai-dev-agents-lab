@@ -2,6 +2,19 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.127.0 — 2026-10-26
+
+**Lo ya decidido no se pregunta, y lo que ve la validación se enseña** — [[DECISIONS D-113]]. Incluye los arreglos de la pasada 1 de `CU-3.ac`.
+
+- 🟠 ⚠ **Causa *Sin trasladar***: si el dueño ya decidió la regla y otra feature no la ha copiado, no es una decisión; sale como *"Ya decidido, falta copiarlo"* y se aplica sin preguntar (*Aplicar lo ya decidido*).
+- 🟠 ⚠ **Sugerencias de la validación**: lo que deja un spec prometiendo algo sin criterio que lo pruebe no bloquea, pero queda en la cabecera (`sdd-seal.py --suggest`), sale en el mapa y se ofrece (*Aplicar sugerencias*).
+- 🟠 ⚠ **El resultado del lote encabeza el cierre** (`--spec-pending --lote <specs>`): qué se validó, quién aprobó, qué no y por qué.
+- 🟠 **Sellar pone al día el índice de features**: ya no dice *"pendiente de validación"* de specs validadas, ni *"requiere cambio de PRD"* con el alcance aceptado.
+- 🟠 **Un conflicto con alias en el readiness** (`` `CF-F001-03` (= `CF-F005-03`) ``) encuentra su decisión de producto: antes salía siempre sin ella.
+- 🟠 El auditor de conflictos **reescribe con el criterio de hoy** lo que trae de un informe anterior (severidad por causa, decisión en llano) y cita los conflictos de otros informes con el ID de la lista.
+- 🟡 La vista previa no recorta a media palabra; el pie de un bloque que solo acepta alcance no promete cambios; no se vuelve a preguntar el aprobador justo después de *"Aceptarlo con mi nombre"*; las notas del auditor de validación son solo de su spec; la petición al dueño ya no tiene `Estado` en ninguna plantilla; la guía de validación ya no contradice el mapa; lo que main escribe entre herramientas va en el idioma del usuario.
+- **Conformance:** `CU-3.ac` pasada 1 parcial (puntos 1–2 PASS); `CU-3.ac (2)` nuevo. 10 tests nuevos.
+
 ## 0.126.1 — 2026-10-23
 
 **El mapa de la fase Spec, pensado para quien lo lee** — [[DECISIONS D-112]].

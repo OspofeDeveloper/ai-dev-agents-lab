@@ -498,9 +498,6 @@ class SealDerivedScopeTest(unittest.TestCase):
             self.assertEqual(r.returncode, 0, r.stdout)
 
 
-if __name__ == "__main__":
-    unittest.main()
-
 
 INFORME_BLOQUES = """## Detalle de conflictos
 
@@ -628,3 +625,146 @@ class PreguntaAlcanceTest(unittest.TestCase):
         self.assertTrue(texto.startswith("¿Das por bueno «deshacer un cobro ya registrado "
                                          "sobre una deuda»? No está en el PRD"))
         self.assertIn("(CF-F001-02, P-002)", texto)
+
+
+
+INFORME_TRASLADO = """## Detalle de conflictos
+
+### [CF-F002-01] Shared models inconsistentes — Severidad: MEDIA
+
+**Causa**: Sin trasladar — cuentas ya fija en su contrato que reservar exige saldo.
+
+**Traslado**:
+- **Qué**: reservar dinero para un objetivo exige saldo suficiente en la cuenta
+- **Decidido en**: F-002 (cuentas)
+- **Falta en**: F-003 (objetivos)
+
+### [CF-F001-03] Hueco — Severidad: MEDIA
+
+**Decisión de producto**:
+- **Qué hay que decidir**: si el saldo puede quedar negativo al registrar un gasto
+- **Opción 1 — Nunca negativo**: se deniega. *Cambia:* F-002 (cuentas)
+- **Opción 2 — Puede quedar negativo**: se avisa. *Cambia:* F-002 (cuentas)
+
+## Inventario
+"""
+
+
+class LoYaDecididoYSugerenciasTest(unittest.TestCase):
+    """D-113 y v0.126.2: lo ya decidido no se pregunta; las sugerencias se ven."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        b = self.b = Bank(Path(self.tmp.name))
+        b.feature("F-001", "movimientos", estado="VALIDADO")
+        b.feature("F-002", "cuentas", estado="VALIDADO",
+                  extra_header="> Sugerencias de la validación: promete avisar sin datos y no "
+                               "hay criterio que lo pruebe → añadir ese criterio\n")
+        b.feature("F-003", "objetivos", estado="VALIDADO")
+        b.index([(f, n, f"features/{n}/spec/{n}_spec.md", "LISTA", "ninguno")
+                 for f, n in (("F-001", "movimientos"), ("F-002", "cuentas"),
+                              ("F-003", "objetivos"))])
+        b.analysis("respondida")
+        write(b.spec / "features" / "cuentas" / "spec" / "cuentas_conflict_report.md",
+              INFORME_TRASLADO)
+        time.sleep(0.01)
+        b.readiness(media_rows="| `CF-F002-01` | Sin trasladar | F-002, F-003 | x | x |\n"
+                               "| `CF-F001-03` (= `CF-F005-09`) | Hueco | F-001, F-002 | "
+                               "invariante técnica | x |")
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def test_sin_trasladar_no_es_una_decision(self):
+        data = self.b.pending()
+        tr = next(i for i in data["items"] if i["tipo"] == "trasladar")
+        self.assertEqual(tr["features"], ["F-003"])
+        self.assertNotIn("CF-F002-01", [i.get("conflicto") for i in data["items"]
+                                       if i["tipo"] == "conflicto_media"])
+        op = next(o for o in data["cierre"]["opciones"] if o["accion"] == "trasladar")
+        self.assertIn("reservar dinero para un objetivo exige saldo suficiente", op["preview"])
+        self.assertIn("Ya decidido, falta copiarlo", data["mapa"])
+
+    def test_el_id_con_alias_del_readiness_encuentra_su_decision(self):
+        """`CF-F001-03` (= `CF-F005-09`) se quedaba sin decisión de producto (CU-3.ac)."""
+        menor = next(i for i in self.b.pending()["items"] if i["tipo"] == "conflicto_media")
+        self.assertEqual(menor["decision"]["que_decidir"],
+                         "si el saldo puede quedar negativo al registrar un gasto")
+
+    def test_la_sugerencia_de_la_validacion_sale_en_el_mapa_y_se_ofrece(self):
+        data = self.b.pending()
+        self.assertIn("La validación dejó 1 sugerencia en cuentas", data["mapa"])
+        labels = [o["label"] for o in data["cierre"]["opciones"]]
+        self.assertTrue(any(l.startswith("Aplicar sugerencias (1)") for l in labels), labels)
+
+    def test_el_resultado_del_lote_encabeza_el_cierre(self):
+        r = run_script("sdd-project-status.py", self.b.spec, "--spec-pending", "--json",
+                       "--lote", self.b.spec / "features" / "cuentas" / "spec" / "cuentas_spec.md")
+        pregunta = json.loads(r.stdout)["cierre"]["pregunta"]
+        self.assertTrue(pregunta.startswith("Validadas (1): cuentas (F-002)."), pregunta[:120])
+        self.assertIn("- cuentas (F-002): promete avisar sin datos", pregunta)
+
+
+
+class PieDelBloqueTest(unittest.TestCase):
+    def test_un_bloque_que_solo_acepta_alcance_no_promete_cambios(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            b = Bank(Path(tmp))
+            b.feature("F-001", "deudas", avisos="alcance derivado desde P-002")
+            b.feature("F-002", "cuentas")
+            b.index([("F-001", "deudas", "features/deudas/spec/deudas_spec.md", "BLOQUEADA",
+                      "alcance derivado desde P-002"),
+                     ("F-002", "cuentas", "features/cuentas/spec/cuentas_spec.md", "BLOQUEADA",
+                      "ninguno")])
+            b.analysis("respondida")
+            time.sleep(0.01)
+            b.readiness()
+            bloque = b.pending()["bloques"][0]
+            self.assertIn("no hace falta cambiar ningún spec", bloque["preview"])
+            self.assertNotIn("una revisión de", bloque["preview"])
+
+
+
+class SugerenciasDelSelladorTest(unittest.TestCase):
+    def _spec(self, tmp):
+        p = Path(tmp) / "x_spec.md"
+        write(p, spec("F-001"))
+        return p
+
+    def test_suggest_queda_en_la_cabecera_y_se_va_al_desellar(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            p = self._spec(tmp)
+            r = run_script("sdd-seal.py", "spec", p, "--seal", "--approved-by", "Ana (2026-10-26)",
+                           "--suggest", "falta un CA → añadirlo", "--suggest", "otra")
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            self.assertIn("> Sugerencias de la validación: falta un CA → añadirlo · otra",
+                          p.read_text())
+            r = run_script("sdd-seal.py", "spec", "--report", "--lineas", p)
+            self.assertIn("Validadas (1): x (F-001). Aprobó: Ana (2026-10-26).", r.stdout)
+            self.assertIn("- x (F-001): otra", r.stdout)
+            run_script("sdd-seal.py", "spec", p, "--unseal")
+            self.assertNotIn("Sugerencias de la validación", p.read_text())
+
+    def test_volver_a_sellar_sin_sugerencias_las_quita(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            p = self._spec(tmp)
+            run_script("sdd-seal.py", "spec", p, "--seal", "--approved-by", "Ana", "--suggest", "a")
+            run_script("sdd-seal.py", "spec", p, "--seal", "--approved-by", "Ana")
+            self.assertNotIn("Sugerencias de la validación", p.read_text())
+
+    def test_sellar_pone_al_dia_el_indice(self):
+        """v0.126.2: el índice seguía «pendiente de validación» tras sellar."""
+        with tempfile.TemporaryDirectory() as tmp:
+            b = Bank(Path(tmp))
+            b.feature("F-001", "cuentas")
+            b.index([("F-001", "cuentas", "features/cuentas/spec/cuentas_spec.md", "BLOQUEADA",
+                      "ninguno")])
+            sp = b.spec / "features" / "cuentas" / "spec" / "cuentas_spec.md"
+            r = run_script("sdd-seal.py", "spec", sp, "--seal", "--approved-by", "Ana")
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            self.assertIn("Índice de features actualizado", r.stdout)
+            self.assertIn("LISTA", (b.spec / "spec_features.md").read_text())
+
+
+if __name__ == "__main__":
+    unittest.main()

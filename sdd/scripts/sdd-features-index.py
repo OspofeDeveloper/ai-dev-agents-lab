@@ -370,6 +370,7 @@ def parse_spec(path: Path, features_root: Path) -> dict | None:
         "status_sync": header_field(text, "status_sync"),
         "origen": header_field(text, "Origen de alcance"),
         "gobernanza": header_field(text, "Avisos de gobernanza"),
+        "derivado_aceptado": header_field(text, "Alcance derivado aceptado"),
         "has_marker": bool(MARKER_RE.search(text)),
         "hus": hus,
         "cas": cas,
@@ -449,10 +450,22 @@ def derive_state(spec: dict | None, verdict: dict | None) -> tuple[str, str]:
     if verdict:
         if verdict["estado"] == "LISTA" and _sin_validar(spec):
             return "BLOQUEADA", SIN_VALIDAR_MOTIVO
+        # Y al revés (v0.126.2): un BLOQUEADA cuyo único motivo es que faltaba validar
+        # lo desmiente el sello. Sellar no rehace el readiness, y el índice seguía diciendo
+        # «pendiente de validación» de siete specs ya validadas (CU-3.ac).
+        if (verdict["estado"] == "BLOQUEADA" and not _sin_validar(spec)
+                and re.fullmatch(r"\s*pendiente de validaci[oó]n[^;]*",
+                                 verdict.get("bloqueantes", ""), re.IGNORECASE)):
+            return "LISTA", "—"
+        # El alcance derivado aceptado con nombre al sellar (D-102) ya no pide cambio de
+        # PRD: el readiness lo midió antes de la aceptación.
+        if (verdict["estado"] == "REQUIERE_CAMBIO_PRD" and spec.get("derivado_aceptado")
+                and not _sin_validar(spec)):
+            return "LISTA", "—"
         return verdict["estado"], verdict.get("bloqueantes", "—")
     if spec["has_marker"]:
         return "BLOQUEADA", "marcadores [INCOMPLETO]/[CRÍTICO]/[INFERIDO] en el spec"
-    if has_gobernanza(spec.get("gobernanza")):
+    if has_gobernanza(spec.get("gobernanza")) and not spec.get("derivado_aceptado"):
         return "REQUIERE_CAMBIO_PRD", f"gobernanza: {spec['gobernanza']}"
     # Va DESPUES de marcadores y gobernanza a proposito: los dos son motivos mas
     # concretos, y ademas un spec con marcadores abiertos NO se puede validar

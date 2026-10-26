@@ -67,7 +67,7 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 - [ ] CU-3.z — Seguimiento de la fase: la lista de pendientes sale de ficheros y cada cierre ofrece el siguiente ([[D-102]]) — de paso en 2026-09-29: punto 2 verde, **punto 1 FALLO** tras *"Lo dejo para luego"* ([[D-103]]); **FALLO** 2026-10-01 (puntos 5 y 7, [[D-104]]); **FALLO** 2026-10-01 pasada 2 (punto 5: sin tabla, [[D-107]]); 1, 2, 3, 4 y 7 verdes en la pasada 2 · **D-112 (v0.126.0): punto 2 vuelve a 0** (con más de un frente, el cierre presenta el mapa por bloques)
 - [ ] CU-3.aa — Seguimiento: un ciclo del dominio se planifica en grupo, uno sin respaldo bloquea y se nombra ([[D-103]]) — **FALLO** 2026-10-01 (punto 1: el aviso del grupo no sale, [[D-104]]); **FALLO** 2026-10-01 pasada 2 (punto 1: `resumen` parafraseado, [[D-108]]); 2, 3 y 4 verdes en las dos
 - [ ] CU-3.ab — Cada regla tiene un dueño: el dueño publica el contrato del modelo y los demás lo citan ([[D-111]])
-- [ ] CU-3.ac — Planificar por bloques: qué se puede empezar ya y qué falta para el resto ([[D-112]])
+- [ ] CU-3.ac — Planificar por bloques: qué se puede empezar ya y qué falta para el resto ([[D-112]]) · (2) un bloque de varias decisiones y lo ya decidido ([[D-113]])
 
 > **Capa determinista** (no son escenarios manuales): los índices y marcadores
 > (`sdd-features-index.py`, `sdd-gap-conventions`) están cubiertos por unittests; la calidad
@@ -2662,7 +2662,7 @@ peticiones se atienden en el dueño y no aparece ningún conflicto por duplicaci
 FALLO si una regla de un modelo compartido vive en dos specs.
 **Desviación → reportar:** issue citando `CU-3.ab`.
 
-## CU-3.ac — Planificar por bloques: qué se puede empezar ya y qué falta para el resto ([[D-112]]) ⏱ **sin pasada**
+## CU-3.ac — Planificar por bloques: qué se puede empezar ya y qué falta para el resto ([[D-112]]) ⏱ **pasada 1 parcial (puntos 1–2)**
 
 **Precondición:** el banco `bank-cu3ab-mitad` (`rm -rf prd spec && cp -Rp
 .conformance-attic/bank-cu3ab-mitad/prd .conformance-attic/bank-cu3ab-mitad/spec .`): 7 specs en
@@ -2698,6 +2698,39 @@ la regla de cierre por bloques de la guía de la fase.
 resto y un bloque se resuelve en una sola vuelta · FALLO si algo listo queda bloqueado por otra
 feature o el bloque vuelve a una vuelta por decisión.
 **Desviación → reportar:** issue citando `CU-3.ac`.
+
+**Pasada 1 (2026-10-23/26, v0.126.0 → 0.126.1).** Puntos 1 y 2 **PASS** tras la 0.126.1: el cierre
+salió literal las tres veces, con vista previa; rehacer la medición rebajó cuatro conflictos de
+graves a menores (huecos) y **siete de ocho features quedaron planificables** con cuatro decisiones
+menores abiertas, frente a ninguna en la pasada 1 de `CU-3.ab`. Los puntos 3–5 no se pudieron medir:
+al rebajarse los conflictos no quedó ningún bloque de varias decisiones. Defectos, en la 0.127.0: el
+resultado del lote no se enseñó, las notas de validación quedaron escondidas (visión general se selló
+con dos casos prometidos sin CA), el índice seguía *"pendiente de validación"* tras sellar, los
+conflictos arrastrados seguían en ALTA sin decisión, un ID con alias del readiness perdía su decisión
+de producto, una decisión ya tomada salía como pregunta y main escribió en inglés.
+
+### CU-3.ac (2) — Un bloque de varias decisiones, y lo ya decidido sin preguntar ([[D-113]]) ⏱ **sin pasada**
+
+**Precondición:** el banco `bank-cu3ac-menores` (final de la pasada 1: siete specs validadas, cuatro
+decisiones menores, pagos previstos sin spec), con v0.127.0.
+
+1. **El mapa con todo lo que falta.** *"¿Qué me falta?"*.
+   → **Esperado:** siete features *"ya puedes planificar"*, la línea de decisiones menores y la de
+     pagos previstos; la vista previa de *Decisiones menores* con cada decisión como pregunta de
+     producto, sus opciones y sin cortes a media palabra.
+2. **Varias decisiones, una vuelta.** *Decisiones menores* → *Todas ahora*.
+   → **Esperado:** las decisiones seguidas, sin aplicar nada entre medias; después un cambio por
+     spec en un mensaje, **una** revisión de conflictos de lo tocado, **una** medición y la
+     validación en lote.
+   → **FALLO:** una vuelta por decisión.
+3. **Lo ya decidido no se pregunta.** Si la revisión clasifica algo como *Sin trasladar*.
+   → **Esperado:** sale como *"Ya decidido, falta copiarlo"* y se aplica sin preguntar.
+4. **El resultado del lote se ve.** Al cerrar.
+   → **Esperado:** la pregunta del cierre empieza por *"Validadas (N): … Aprobó: …"* y las
+     sugerencias de la validación, si las hay; el aprobador se pregunta una vez.
+5. **Idioma.** Ningún texto de main en inglés entre herramientas.
+
+**Resultado:** PASS si el bloque se cierra en una vuelta y nada ya decidido se vuelve a preguntar.
 
 ## CU-3.o — Readiness: sin índice, ciclos, scope derivado, sello y alcance del veredicto
 

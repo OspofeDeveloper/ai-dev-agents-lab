@@ -79,6 +79,16 @@ en dos CAs de features diferentes"—, nunca por el nombre de la kb que la defin
 - **Opción 1 — [título corto]**: [qué le pasa al actor con esta opción]. *Cambia:* [F-00X (nombre), F-00Y (nombre)]
 - **Opción 2 — [título corto]**: [qué le pasa al actor]. *Cambia:* [F-00X (nombre)]
 
+<!-- Si la causa es «Sin trasladar» (D-113) —el dueño ya decidió la regla en su contrato y otra
+     feature no la ha copiado—, NO hay Decisión de producto: en su lugar va
+
+**Traslado**:
+- **Qué**: [la regla en llano, como la vería el actor — ej: "reservar dinero para un objetivo exige saldo suficiente en la cuenta"]
+- **Decidido en**: [F-00X (nombre) — cita del contrato]
+- **Falta en**: [F-00Y (nombre)]
+
+     y la lista de pendientes lo aplica sin preguntar al usuario. -->
+
 <!-- La Decisión de producto se presenta TAL CUAL al usuario (D-109): la extrae el script de
      pendientes y el hilo principal la copia. Por eso:
      - El Ejemplo sale de las specs o del PRD, NUNCA inventado: un ejemplo inventado cuela un

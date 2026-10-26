@@ -477,18 +477,9 @@ def _decision(directory: Path, conflict_id: str) -> dict | None:
     Se busca el bloque `### [CF-XXX]` en los informes de conflictos —por feature y
     consolidado— y se toma el más reciente que la traiga: es lo que el hilo principal
     presenta tal cual, en vez de preguntar qué documento manda."""
-    ids = [c.strip() for c in conflict_id.split("/")]
-    reports = sorted(list(directory.glob("features/*/spec/*_conflict_report.md"))
-                     + list(directory.glob("*_conflict_report.md")),
-                     key=lambda p: p.stat().st_mtime, reverse=True)
-    for rep in reports:
-        text = read_text(rep)
-        for cid in ids:
-            m = re.search(r"^###\s*\[" + re.escape(cid) + r"\][^\n]*\n(.*?)(?=^###\s|^##\s|\Z)",
-                          text, re.MULTILINE | re.DOTALL)
-            if not m or "Decisión de producto" not in m.group(1):
+    for rep, block in _bloques_conflicto(directory, conflict_id):
+            if "Decisión de producto" not in block:
                 continue
-            block = m.group(1)
             campos = {k: v.strip() for k, v in DECISION_FIELD_RE.findall(block)}
             opciones = [{"titulo": o["titulo"].strip(), "efecto": o["efecto"].strip().rstrip("."),
                          "cambia": sorted(set(FID_RE.findall(o["cambia"])), key=fid_sort_key)}
@@ -502,6 +493,45 @@ def _decision(directory: Path, conflict_id: str) -> dict | None:
                         "ejemplo": campos.get("Ejemplo", ""), "opciones": opciones,
                         "afecta": afecta,
                         "informe": os.path.relpath(rep)}
+    return None
+
+
+def _bloques_conflicto(directory: Path, conflict_id: str):
+    """Los bloques `### [CF-XXX]` de un conflicto, del informe más reciente al más antiguo.
+
+    Los IDs se sacan con regex: el readiness escribe `` `CF-F001-03` (= `CF-F005-03`) ``, y
+    partirlo por «/» dejaba las comillas y el alias dentro del ID, que no casaba con nada:
+    ese conflicto salía siempre sin su decisión de producto (CU-3.ac)."""
+    ids = list(dict.fromkeys(re.findall(r"CF-[\w]+(?:-[\w]+)*", conflict_id))) or [conflict_id]
+    reports = sorted(list(directory.glob("features/*/spec/*_conflict_report.md"))
+                     + list(directory.glob("*_conflict_report.md")),
+                     key=lambda p: p.stat().st_mtime, reverse=True)
+    for rep in reports:
+        text = read_text(rep)
+        for cid in ids:
+            m = re.search(r"^###\s*\[" + re.escape(cid) + r"\][^\n]*\n(.*?)(?=^###\s|^##\s|\Z)",
+                          text, re.MULTILINE | re.DOTALL)
+            if m:
+                yield rep, m.group(1)
+
+
+TRASLADO_FIELD_RE = re.compile(r"^\s*[-*]\s*\*\*(Qué|Decidido en|Falta en)\*\*\s*:\s*(.*)$",
+                               re.MULTILINE)
+
+
+def _traslado(directory: Path, conflict_id: str) -> dict | None:
+    """Un conflicto que no es una decisión: el dueño ya decidió y otra feature no lo ha
+    copiado (D-113). El auditor lo marca con Causa «Sin trasladar» y un bloque «Traslado»;
+    se aplica sin preguntar al usuario lo que ya respondió."""
+    for rep, block in _bloques_conflicto(directory, conflict_id):
+        if not re.search(r"\*\*Causa\*\*\s*:\s*\**\s*Sin trasladar", block, re.IGNORECASE):
+            continue
+        campos = {k: v.strip() for k, v in TRASLADO_FIELD_RE.findall(block)}
+        falta = sorted(set(FID_RE.findall(campos.get("Falta en", ""))), key=fid_sort_key)
+        if campos.get("Qué") and falta:
+            return {"que": campos["Qué"], "decidido_en":
+                    sorted(set(FID_RE.findall(campos.get("Decidido en", ""))), key=fid_sort_key),
+                    "falta_en": falta, "informe": os.path.relpath(rep)}
     return None
 
 
@@ -539,7 +569,20 @@ def _cycles(graph: dict) -> list[list[str]]:
     return out
 
 
-def spec_pending(directory: Path) -> dict:
+def _add_traslado(add, directory: Path, conflict_id: str, label: dict) -> bool:
+    tr = _traslado(directory, conflict_id)
+    if not tr:
+        return False
+    add("trasladar", tr["falta_en"],
+        f"Ya decidido, falta copiarlo a " + " y ".join(label.get(f, f) for f in tr["falta_en"])
+        + f": {tr['que']}",
+        "Aplicarlo sin preguntar: la decisión ya está tomada; la feature vuelve a validarse.",
+        "wf-spec-delta sobre cada feature donde falta", bloquea=False, conflicto=conflict_id,
+        traslado=tr)
+    return True
+
+
+def spec_pending(directory: Path, lote: list | None = None) -> dict:
     items = []
 
     def add(tipo, features, que, accion, via, bloquea=True, **extra):
@@ -694,6 +737,8 @@ def spec_pending(directory: Path) -> dict:
         for row in _sin_repetidos(filas_alta):
             fids = sorted(set(FID_RE.findall(" ".join(row[1:3]))), key=fid_sort_key)
             desc = row[3] if len(row) > 3 else ""
+            if _add_traslado(add, directory, row[0], label):
+                continue
             add("conflicto_alta", fids,
                 f"Conflicto {row[0]} entre " + " y ".join(label.get(f, f) for f in fids)
                 + (f": {desc}" if desc else "") + ("" if readiness_vigente
@@ -790,6 +835,8 @@ def spec_pending(directory: Path) -> dict:
         for row in _sin_repetidos(_table_rows(rtext, "Conflictos MEDIA abiertos")):
             fids = sorted(set(FID_RE.findall(" ".join(row[1:3]))), key=fid_sort_key)
             desc = row[3] if len(row) > 3 else ""
+            if _add_traslado(add, directory, row[0], label):
+                continue
             add("conflicto_media", fids,
                 f"Conflicto {row[0]} (media) entre " + " y ".join(label.get(f, f) for f in fids)
                 + (f": {desc}" if desc else ""),
@@ -810,6 +857,16 @@ def spec_pending(directory: Path) -> dict:
                         "Rehacer el readiness para confirmarlo antes de resolverlo.",
                         "wf-spec-readiness", bloquea=False, conflicto=row[0])
 
+    # ── 7b. Sugerencias de la validación (v0.126.2) ──
+    # Lo que un auditor vio con arreglo concreto y no bloquea; el sellador lo deja en la
+    # cabecera. No frena el plan, pero se ve y se ofrece.
+    for fid, sp in sorted(specs.items(), key=lambda kv: fid_sort_key(kv[0])):
+        sug = header_field(read_text(sp), "Sugerencias de la validación")
+        for x in [x.strip() for x in (sug or "").split(" · ") if x.strip()]:
+            add("sugerencia", [fid], x,
+                "Aplicarla con un cambio en el spec; la feature vuelve a validarse.",
+                "wf-spec-delta sobre el spec", bloquea=False)
+
     # ── 8. Features sin generar ──
     pend = [f for f, meta in idx.items() if meta["estado"].startswith("PENDIENTE")]
     if pend:
@@ -819,7 +876,8 @@ def spec_pending(directory: Path) -> dict:
             "wf-spec-features-first --features", bloquea=False)
 
     orden = ["readiness", "gap_critico", "peticion", "reabierto", "conflicto_alta", "ciclo",
-             "alcance_derivado", "validar", "conflicto_media", "generar"]
+             "alcance_derivado", "validar", "trasladar", "conflicto_media", "sugerencia",
+             "generar"]
     items.sort(key=lambda it: orden.index(it["tipo"]))
     for n, it in enumerate(items, 1):
         it["orden"] = n
@@ -845,7 +903,7 @@ def spec_pending(directory: Path) -> dict:
     criticas = [{"gap": i["gap"], "features": i["features"], "titulo": i.get("titulo", ""),
                  "fichero": i.get("fichero", "")} for i in items if i["tipo"] == "gap_critico"]
     no_declaradas = cdata["no_declaradas"] if cdata else []
-    mapa = _mapa(items, specs, label, cdata, readiness_vigente)
+    mapa = _mapa(items, specs, label, cdata, readiness_vigente, lote)
     return {"total": len(items), "bloqueantes": bloq, "resumen": resumen,
             "dependencias_no_declaradas": no_declaradas, **mapa,
             "readiness_vigente": readiness_vigente, "items": items, "grupos": grupos,
@@ -858,7 +916,7 @@ NO_DECISION = ("readiness", "validar", "generar")
 
 
 def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
-          readiness_vigente: bool) -> dict:
+          readiness_vigente: bool, lote: list | None = None) -> dict:
     """Qué se puede planificar ya y qué bloques de decisiones faltan para el resto (D-112).
 
     La lista plana decía «para poder planificar falta: …» del proyecto entero, y una feature
@@ -960,12 +1018,19 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
         preview = ["Decisiones de este bloque:", ""]
         for k, o in enumerate(mias, 1):
             preview += _linea_decision(k, por_orden[o], [nombre(g) for g in cambia(por_orden[o])])
-        preview += ["", "Con todas las respuestas: un cambio por spec, una revisión de",
-                    "conflictos y la validación del bloque. Después ya se pueden planificar."]
+        tipos_b = {por_orden[o]["tipo"] for o in mias}
+        if tipos_b <= {"alcance_derivado"}:
+            pie = ["", "Basta con tu respuesta y validar: no hace falta cambiar ningún spec."]
+        else:
+            pie = ["", "Con todas las respuestas: un cambio por spec, una revisión de",
+                   "conflictos y la validación del bloque. Después ya se pueden planificar."]
+        preview += pie
         bloques.append({"bloque": letra, "features": fs, "decisiones": mias, "espera": fuera,
                         "depende_de": depende, "preview": "\n".join(preview)})
 
     menores = [i for i in items if i["tipo"] == "conflicto_media"]
+    traslados = [i for i in items if i["tipo"] == "trasladar"]
+    sugerencias = [i for i in items if i["tipo"] == "sugerencia"]
     sin_spec = [f for i in items if i["tipo"] == "generar" for f in i["features"]]
 
     lineas = []
@@ -975,14 +1040,15 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
         lineas.append("")
     ya = [f for f, v in por_feature.items() if v["estado_plan"] == "planificable"]
     validar = [f for f, v in por_feature.items() if v["estado_plan"] == "lista_para_validar"]
-    if not decisiones and not validar and not menores and not sin_spec and readiness_vigente:
+    if (not decisiones and not validar and not menores and not sin_spec and not traslados
+            and not sugerencias and readiness_vigente):
         lineas.append("Todo está cerrado: puedes planificar cualquier feature.")
     if ya:
         lineas.append(f"Ya puedes planificar: {nombres(ya)}.")
     if validar:
         lineas.append("Se pueden planificar en cuanto las valides (no les falta ninguna "
                       f"decisión): {nombres(validar)}.")
-    if (ya or validar) and (decisiones or menores):
+    if (ya or validar) and (decisiones or menores or traslados):
         lineas.append("Lo que quede abierto en otras features no les impide empezar.")
     if bloques:
         lineas.append("")
@@ -1005,6 +1071,12 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
     if lectoras:
         lineas.append(f"- Al final: {nombres(sorted(lectoras, key=fid_sort_key))}. Lee datos "
                       "de casi todas: conviene planificarla cuando las demás estén cerradas.")
+    if traslados:
+        lineas.append("")
+        fs = sorted({f for it in traslados for f in it["features"]}, key=fid_sort_key)
+        lineas.append(f"Ya decidido, falta copiarlo: {_n(len(traslados), 'cambio', 'cambios')} en "
+                      f"{_y([corto(f) for f in fs])}. No hace falta que decidas nada: se aplica "
+                      "lo que ya respondiste, y esa feature vuelve a validarse.")
     if menores:
         lineas.append("")
         # Contadas por feature, no una a una: el detalle va en el preview de su opción. Cuatro
@@ -1020,6 +1092,11 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
                          if uno else "Puedes tomarlas ahora o más adelante; si una cambia una "
                          "feature ya validada, ")
                       + "esa feature vuelve a validarse.")
+    if sugerencias:
+        fs = sorted({f for it in sugerencias for f in it["features"]}, key=fid_sort_key)
+        lineas.append("")
+        lineas.append(f"La validación dejó {_n(len(sugerencias), 'sugerencia', 'sugerencias')} "
+                      f"en {_y([corto(f) for f in fs])}: no frenan nada, pero conviene verlas.")
     if sin_spec:
         lineas.append("")
         lineas.append(f"Sin spec todavía: {nombres(sin_spec)}. No frena a las demás; se genera "
@@ -1041,6 +1118,18 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
                                           + ["", "Se te pregunta una vez quién aprueba. Las que "
                                              "pasen quedan listas para planificar."]),
                      "accion": "validar"})
+    if traslados:
+        prev = ["Ya decidido, falta copiarlo (no se te pregunta nada):", ""]
+        for k, it in enumerate(traslados, 1):
+            tr = it["traslado"]
+            prev += [f"{k}. {tr['que']}",
+                     "   Falta en: " + _y([nombre(f) for f in tr["falta_en"]])
+                     + ("; decidido en " + _y([nombre(f) for f in tr["decidido_en"]])
+                        if tr["decidido_en"] else "")]
+        prev += ["", "Se aplican juntos, se revisan los conflictos de lo tocado y se validan."]
+        cand.append({"label": f"Aplicar lo ya decidido ({len(traslados)})",
+                     "description": "Copia decisiones que ya tomaste a las features donde faltan.",
+                     "preview": "\n".join(prev), "accion": "trasladar"})
     for b in bloques:
         n = len(b["decisiones"])
         cand.append({"label": f"Bloque {b['bloque']} — " + _y([corto(f) for f in b["features"]][:2])
@@ -1056,6 +1145,14 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
         cand.append({"label": f"Decisiones menores ({len(menores)})",
                      "description": "No frenan nada; tomarlas ahora evita revalidar después.",
                      "preview": "\n".join(prev), "accion": "menores"})
+    if sugerencias:
+        prev = ["Sugerencias de la validación (no frenan nada):", ""]
+        for k, it in enumerate(sugerencias, 1):
+            prev += [f"{k}. {nombre(it['features'][0])}: {it['que']}"]
+        prev += ["", "Al aplicarlas, esas features vuelven a validarse."]
+        cand.append({"label": f"Aplicar sugerencias ({len(sugerencias)})",
+                     "description": "Pequeños arreglos que vio la validación.",
+                     "preview": "\n".join(prev), "accion": "sugerencias"})
     if sin_spec:
         cand.append({"label": "Generar " + _y([corto(f) for f in sin_spec][:2])
                               + ("…" if len(sin_spec) > 2 else ""),
@@ -1068,7 +1165,14 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
                      "description": "Lo que ya está listo se puede planificar igualmente.",
                      "accion": "luego"})
     sobran = [c["label"] for c in cand[3:]]
-    pregunta = "\n".join(lineas) + "\n\n¿Por dónde seguimos?" + (
+    # Tras validar un lote, su resultado encabeza el cierre (v0.126.2): la tabla se
+    # imprimía en una herramienta y main pasaba directo al mapa, sin enseñarla.
+    cabeza = []
+    if lote:
+        sellador = _seal_module()
+        if sellador:
+            cabeza = sellador.lineas_lote(lote) + [""]
+    pregunta = "\n".join(cabeza + lineas) + "\n\n¿Por dónde seguimos?" + (
         " (También puedes pedirme con tus palabras: "
         + _y([x[:1].lower() + x[1:] for x in sobran]) + ".)" if sobran else "")
     return {"por_feature": por_feature, "bloques": bloques, "mapa": "\n".join(lineas),
@@ -1097,8 +1201,7 @@ def _pregunta(it: dict) -> str:
     dec = it.get("decision") or {}
     que = dec.get("que_decidir") or it.get("descripcion") or it["que"]
     que = re.sub(r"\s+", " ", que.replace("`", "")).strip()
-    if len(que) > 220:
-        que = que[:217].rstrip() + "…"
+    # Sin recortar: la vista previa tiene sitio, y «…ni F-0…» a media palabra no se lee.
     return que[:1].upper() + que[1:]
 
 
@@ -1140,7 +1243,10 @@ def _desglose(items: list) -> list:
         "alcance_derivado": lambda n: "decidir " + _n(n, "alcance que no está en el PRD",
                                                      "alcances que no están en el PRD"),
         "validar": lambda n: "validar " + _n(n, "spec", "specs"),
+        "trasladar": lambda n: "aplicar " + _n(n, "decisión ya tomada", "decisiones ya tomadas"),
         "conflicto_media": lambda n: _n(n, "conflicto menor", "conflictos menores"),
+        "sugerencia": lambda n: _n(n, "sugerencia de la validación",
+                                   "sugerencias de la validación"),
         "generar": lambda n: _n(n, "feature sin spec", "features sin spec"),
     }
     return [texto[t](n) for t, n in cuenta.items()]
@@ -1162,6 +1268,18 @@ def _sin_repetidos(rows: list[list[str]]) -> list[list[str]]:
             continue
         out.append(r)
     return out
+
+
+def _seal_module():
+    """`sdd-seal.py`, hermano de este script; None si no está instalado."""
+    path = Path(__file__).resolve().parent / "sdd-seal.py"
+    if not path.is_file():
+        return None
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("sdd_seal", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    return mod
 
 
 def _contracts_module():
@@ -1197,6 +1315,11 @@ def render_pending(data: dict) -> str:
 
 
 def main(argv: list[str]) -> int:
+    lote = None
+    if "--lote" in argv:
+        i = argv.index("--lote")
+        lote = [a for a in argv[i + 1:] if not a.startswith("--")]
+        argv = argv[:i] + [a for a in argv[i + 1:] if a.startswith("--")]
     args = [a for a in argv if not a.startswith("--")]
     out_idx = argv.index("--output") if "--output" in argv else -1
     out_file = argv[out_idx + 1] if 0 <= out_idx < len(argv) - 1 else None
@@ -1204,7 +1327,7 @@ def main(argv: list[str]) -> int:
         args.remove(out_file)
     if len(args) != 1:
         sys.stderr.write("uso: sdd-project-status.py <dir> [--output <archivo>] | "
-                         "<dir> --spec-pending [--json]\n")
+                         "<dir> --spec-pending [--json] [--lote <spec.md> …]\n")
         return 1
     directory = Path(args[0]).resolve()
     if not directory.is_dir():
@@ -1212,7 +1335,7 @@ def main(argv: list[str]) -> int:
         return 1
 
     if "--spec-pending" in argv:
-        data = spec_pending(directory)
+        data = spec_pending(directory, lote)
         if "--json" in argv:
             import json
             sys.stdout.write(json.dumps(data, ensure_ascii=False, indent=2) + "\n")

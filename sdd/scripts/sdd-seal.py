@@ -19,6 +19,8 @@ Uso:
                                                    # da de baja la feature: Estado: RETIRADO (D-074)
     sdd-seal.py spec <archivo.md> --unretire       # deshace la baja: vuelve a BORRADOR
     sdd-seal.py spec --report <a.md> [<b.md> …]    # tabla del lote: spec · sellado · motivo (D-107)
+    sdd-seal.py spec --report --lineas <a.md> …    # el mismo resultado en frases, para el cierre
+    sdd-seal.py spec <archivo.md> --seal --approved-by "..." --suggest "<texto>" [--suggest …]
 
 Exit codes: 0 = OK / sellado; 1 = error de uso o IO; 2 = condiciones no cumplidas.
 
@@ -146,6 +148,15 @@ DERIVADO_ACEPTADO_RE = re.compile(
 AVISOS_RE = re.compile(
     r"^\s*>?\s*\**Avisos de gobernanza\**\s*:\s*\**\s*(?P<value>[^\n]*)$", re.MULTILINE)
 SIN_AVISO = ("", "ninguno", "ninguna", "—", "-")
+# Lo que la auditoria vio con un arreglo concreto y no bloquea (v0.126.2): «visión general
+# promete 4 casos sin datos y solo 2 tienen CA». Se sellaba y la nota se perdia en un
+# parrafo que nadie veia. Queda en la cabecera, la lista de pendientes la ofrece, y se va
+# con el sello: la siguiente validacion decide si sigue haciendo falta.
+SUGERENCIAS_RE = re.compile(
+    r"^(?P<prefix>\s*(?:[-*>]\s*)?\**Sugerencias de la validación:?\**\s*:?\s*)(?P<value>[^\n]*)$",
+    re.MULTILINE)
+SUGERENCIAS_LINE_RE = re.compile(
+    r"^[ \t]*(?:[-*>][ \t]*)?\**Sugerencias de la validación:?\**[ \t]*:?[^\n]*$\n?", re.MULTILINE)
 # Variante de linea completa, para poder retirarla al deshacer la baja.
 RETIRADA_LINE_RE = re.compile(
     r"^[ \t]*(?:[-*>][ \t]*)?\**Retirada:?\**[ \t]*:?[^\n]*$\n?", re.MULTILINE)
@@ -573,6 +584,30 @@ def write_header_line(path: Path, label: str, line_re, valor: str) -> bool:
     return True
 
 
+def _refresh_index(spec_path: Path) -> None:
+    """Regenera el índice de features tras sellar o desellar un spec (v0.126.2).
+
+    El índice lleva el estado de cada feature y solo se regeneraba al generar specs o al
+    medir: tras validar siete specs seguía diciendo «pendiente de validación» de todas.
+    Sin índice, o sin el script hermano, no hace nada."""
+    script = Path(__file__).resolve().parent / "sdd-features-index.py"
+    root = next((d for d in list(spec_path.resolve().parents)[:5]
+                 if any(d.glob("*_features.md"))), None)
+    if not script.is_file() or root is None:
+        return
+    import importlib.util
+    spec = importlib.util.spec_from_file_location("sdd_features_index", script)
+    mod = importlib.util.module_from_spec(spec)
+    try:
+        spec.loader.exec_module(mod)
+        content, out = mod.build(root)
+    except Exception:  # el sello no falla por el índice
+        return
+    if not out.exists() or out.read_text(encoding="utf-8") != content:
+        out.write_text(content, encoding="utf-8")
+        print(f"Índice de features actualizado: {out.name}")
+
+
 def _current_estado(path: Path) -> str | None:
     try:
         m = ESTADO_RE.search(path.read_text(encoding="utf-8"))
@@ -581,9 +616,57 @@ def _current_estado(path: Path) -> str | None:
     return m.group("value") if m else None
 
 
-def report(paths) -> int:
+def _nombre_legible(path: Path, text: str) -> str:
+    fid = re.search(r"^\s*>?\s*\**Feature ID\**\s*:\s*\**\s*(F-[\w-]+)", text, re.MULTILINE)
+    nombre = path.name.replace("_spec.md", "").replace("-", " ")
+    return f"{nombre} ({fid.group(1)})" if fid else nombre
+
+
+def lineas_lote(paths) -> list[str]:
+    """El resultado de un lote en frases, para encabezar el cierre (v0.126.2).
+
+    La tabla de `--report` se imprimía y main pasaba directo al mapa: el usuario no veía
+    qué se selló ni las notas. Estas líneas van dentro de la pregunta del cierre."""
+    ok, no, sug = [], [], []
+    for p in paths:
+        path = Path(p)
+        try:
+            text = path.read_text(encoding="utf-8")
+        except OSError:
+            no.append(f"- {p}: no se puede leer.")
+            continue
+        nombre = _nombre_legible(path, text)
+        estado = _current_estado(path)
+        if estado == "VALIDADO":
+            ap = APROBADO_RE.search(text)
+            ok.append((nombre, ap.group("value").strip() if ap else ""))
+            s = SUGERENCIAS_RE.search(text)
+            if s and s.group("value").strip():
+                sug += [f"- {nombre}: {x.strip()}" for x in s.group("value").split(" · ") if x.strip()]
+            continue
+        checks, _ = check_spec(path)
+        motivo = "; ".join(desc for c, desc in checks if not c) or \
+            "la auditoría encontró algo que corregir, o no se aprobó"
+        no.append(f"- {nombre}: no se validó — {motivo}.")
+    out = []
+    if ok:
+        aprob = {a for _, a in ok}
+        out.append(f"Validadas ({len(ok)}): " + ", ".join(n for n, _ in ok)
+                   + (f". Aprobó: {next(iter(aprob))}." if len(aprob) == 1 and "" not in aprob else "."))
+    out += no
+    if sug:
+        out.append("La validación deja sugerencias que no frenan nada (puedes aplicarlas "
+                   "cuando quieras; la feature vuelve a validarse):")
+        out += sug
+    return out
+
+
+def report(paths, lineas: bool = False) -> int:
     """La tabla de un lote de validación, para copiarla (D-107): como instrucción en la
     plantilla no salió en dos pasadas seguidas; dada por el script, se copia."""
+    if lineas:
+        print("\n".join(lineas_lote(paths)))
+        return 0
     print("| Spec | Sellado | Motivo si no |")
     print("|---|---|---|")
     for p in paths:
@@ -669,7 +752,15 @@ def main() -> int:
     args, derivado, err = take_value(args, "--accept-derived-scope")
     if err:
         return fail_usage(err)
+    sugerencias = []
+    while "--suggest" in args:
+        args, valor, err = take_value(args, "--suggest")
+        if err:
+            return fail_usage(err)
+        sugerencias.append(" ".join(valor.split()).replace(" · ", ", "))
     if len(args) >= 3 and args[0] == "spec" and args[1] == "--report":
+        if args[2] == "--lineas":
+            return report(args[3:], lineas=True)
         return report(args[2:])
     if (len(args) != 3 or args[0] not in ("plan", "spec") or args[2] not in MODES):
         return fail_usage("argumentos invalidos")
@@ -678,6 +769,8 @@ def main() -> int:
     mode = args[2]
     if aprobado is not None and mode != "--seal":
         return fail_usage("`--approved-by` solo aplica con `--seal`")
+    if sugerencias and (mode != "--seal" or kind != "spec"):
+        return fail_usage("`--suggest` solo aplica con `spec --seal`")
     if derivado is not None and (mode != "--seal" or kind != "spec" or not aprobado):
         return fail_usage("`--accept-derived-scope` solo aplica con `spec --seal --approved-by`: "
                           "aceptar el alcance derivado es parte de aprobar el spec")
@@ -718,10 +811,12 @@ def main() -> int:
             return 1
         if mode == "--unseal":
             text = plan_path.read_text(encoding="utf-8")
-            nuevo = APROBADO_LINE_RE.sub("", text)
+            nuevo = SUGERENCIAS_LINE_RE.sub("", APROBADO_LINE_RE.sub("", text))
             if nuevo != text:
                 plan_path.write_text(nuevo, encoding="utf-8")
                 print("`Aprobado por:` retirado — la aprobacion era del contenido anterior.")
+        if kind == "spec":
+            _refresh_index(plan_path)
         if mode == "--unretire":
             # La traza se va con el estado: una linea `Retirada:` sobre un spec vigente
             # afirma una baja que ya no existe, y la leen tanto el indice como una persona.
@@ -768,6 +863,16 @@ def main() -> int:
     if derivado and not write_header_line(plan_path, "Alcance derivado aceptado",
                                           DERIVADO_ACEPTADO_RE, derivado):
         return 1
+    if kind == "spec":
+        # Las sugerencias son de ESTA validación: las de una anterior se van con ella.
+        text = plan_path.read_text(encoding="utf-8")
+        limpio = SUGERENCIAS_LINE_RE.sub("", text)
+        if limpio != text:
+            plan_path.write_text(limpio, encoding="utf-8")
+        if sugerencias and not write_header_line(plan_path, "Sugerencias de la validación",
+                                                 SUGERENCIAS_RE, " · ".join(sugerencias)):
+            return 1
+        _refresh_index(plan_path)
     return 0
 
 

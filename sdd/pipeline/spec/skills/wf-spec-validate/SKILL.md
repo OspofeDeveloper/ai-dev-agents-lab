@@ -48,7 +48,7 @@ Si no existe → informa con la ruta exacta y detén. Si no termina en `_spec.md
 
 Delega con la tool `Agent` ([[D-043]]), `subagent_type: "sdd-spec-auditor"` y **`run_in_background: false`**, con el prompt:
 
-  prompt: "Audita el spec <path>. Detecta primero el modo: si el header declara 'Modo: ligero', aplica las reglas de proporcionalidad de kb-spec-expert. Aplica sus 3 checks. Completitud: en standard los 8 elementos SDD; en ligero el núcleo de 4 (Actores, HUs, CAs, Fuera de Alcance) con las omitidas marcadas 'N/A — modo ligero' — una sección ausente sin esa marca ES un hallazgo. Pureza: consulta prohibited_items.md y error_patterns.md de kb-spec-expert y cita cualquier frase que viole la Prueba de Pureza. Testabilidad: cada CA con GIVEN/WHEN/THEN completo, verificable objetivamente y referenciando su HU padre. Estructura el informe según .claude/skills/wf-spec-validate/references/output_template.md. NO escribas ningún archivo: devuélveme el informe. Al terminar di explícitamente si hay hallazgos BLOQUEANTES o no, aplicando el umbral del Paso 4 de 'Cómo validar un Spec' de kb-spec-expert: bloquean SOLO un elemento obligatorio ausente, contaminación dura (fila de prohibited_items.md) o un CA que no se puede verificar tal como está escrito. NO bloquean las sugerencias de redacción, las notas borderline documentadas, los huecos que son materia de Plan, ni lo que ya dictamina sdd-seal.py --check (incompletos, gaps críticos, inferidos, asunciones sin rastro): eso lo mide el script, no tú."
+  prompt: "Audita el spec <path>. Detecta primero el modo: si el header declara 'Modo: ligero', aplica las reglas de proporcionalidad de kb-spec-expert. Aplica sus 3 checks. Completitud: en standard los 8 elementos SDD; en ligero el núcleo de 4 (Actores, HUs, CAs, Fuera de Alcance) con las omitidas marcadas 'N/A — modo ligero' — una sección ausente sin esa marca ES un hallazgo. Pureza: consulta prohibited_items.md y error_patterns.md de kb-spec-expert y cita cualquier frase que viole la Prueba de Pureza. Testabilidad: cada CA con GIVEN/WHEN/THEN completo, verificable objetivamente y referenciando su HU padre. Estructura el informe según .claude/skills/wf-spec-validate/references/output_template.md. NO escribas ningún archivo: devuélveme el informe. Al terminar di explícitamente si hay hallazgos BLOQUEANTES o no, aplicando el umbral del Paso 4 de 'Cómo validar un Spec' de kb-spec-expert: bloquean SOLO un elemento obligatorio ausente, contaminación dura (fila de prohibited_items.md) o un CA que no se puede verificar tal como está escrito. NO bloquean las sugerencias de redacción, las notas borderline documentadas, los huecos que son materia de Plan, ni lo que ya dictamina sdd-seal.py --check (incompletos, gaps críticos, inferidos, asunciones sin rastro): eso lo mide el script, no tú. Lo que deja el spec prometiendo algo que no se probará (una regla sin CA, un ítem del checklist marcado que no se cumple) va en 'Sugerencias con arreglo', en llano y con su arreglo. Tus notas son solo de este spec: no recomiendes otras auditorías ni comentes otros artefactos."
 
 **En lote**, emite las N llamadas `Agent` —una por spec, mismo prompt con su path— en un único
 mensaje, **sin llamada de prueba**: lanzar una "a ver si va" y el resto después serializa igual
@@ -96,8 +96,10 @@ Informa qué hay que corregir y que lo revalidas cuando esté.
   aceptación no lo borra, deja constancia de que alguien lo vio y decidió seguir.
 - **exit 0** → captura la **identidad de quien aprueba** con `AskUserQuestion` ([[D-027]]): **precarga el nombre** con `!git config user.name` como default, rol opcional; si git no da nombre, cae al rol. Sella con ese valor:
   ```bash
-  !python3 .sdd/scripts/sdd-seal.py spec "<path>" --seal --approved-by "<nombre> [(<rol>)] (<fecha real de tu contexto>)"
+  !python3 .sdd/scripts/sdd-seal.py spec "<path>" --seal --approved-by "<nombre> [(<rol>)] (<fecha real de tu contexto>)" [--suggest "<sugerencia>" …]
   ```
+  Cada línea de **Sugerencias con arreglo** del auditor va en su `--suggest`, literal (v0.126.2):
+  no bloquean, pero así quedan en la cabecera y la lista de pendientes las ofrece.
   **No autoapruebes.** Si el usuario no responde, no selles: el spec se queda en `BORRADOR`, que es el estado **correcto**, no un defecto.
   **En lote**, el aprobador se captura **una sola vez** —después de las auditorías, antes del primer
   sello— y se reutiliza para cada spec que pase.
@@ -108,6 +110,10 @@ Informa qué hay que corregir y que lo revalidas cuando esté.
   ha auditado—. Si en un lote anterior el aprobador llevaba rol, ofrécelo con el rol como primera
   opción. Medido en la pasada 4 de la tanda de continuación: el segundo lote se selló sin preguntar,
   y sin el rol del primero.
+  **Salvo una cosa** (v0.126.2): si el lote viene de una decisión en la que el usuario **acaba de
+  darse por responsable** —eligió *"Aceptarlo con mi nombre y validar"*— y en esta sesión ya hay un
+  aprobador capturado, ese es el aprobador: dilo en la línea del resultado (*"aprobado por …, como
+  en el lote anterior"*) y no lo vuelvas a preguntar. Elegir *validar* a secas no cuenta.
 - **Contratos de modelos compartidos** ([[D-111]]): si el `✗` es la condición 10 —una petición al
   dueño sin atender, o el catálogo de orígenes del dueño sin la fila de otra feature— no es un
   hallazgo de calidad de este spec: es trabajo sobre el **dueño**, y la lista de pendientes lo trae
@@ -120,9 +126,20 @@ Informa qué hay que corregir y que lo revalidas cuando esté.
 
 ## Paso 6: Informar el siguiente paso
 
-- **Sellado** → dilo con su aprobador. Que se pueda **planificar** lo dice el `resumen` de la lista de pendientes, no el sello: un spec sellado que va en grupo con otro sin sellar todavía no se planifica ([[D-104]]).
+- **Sellado** → dilo con su aprobador. Que se pueda **planificar** lo dice el `mapa` de la lista de pendientes, feature a feature ([[D-112]]): un spec sellado sin decisiones propias se planifica aunque otras features tengan decisiones abiertas.
 - **En borrador** → enumera lo que falta y ofrécete a revalidarlo cuando esté corregido. Descríbele la acción en lenguaje natural, sin nombrar el workflow.
-- **En lote** → la tabla la imprime el sellador; **cópiala tal cual** ([[D-107]]):
+- **En lote, cerrando con la lista de pendientes** (lo normal) → el resultado del lote **encabeza
+  el cierre** (v0.126.2): pide la lista con `--lote` y las rutas validadas, y copia `cierre` como
+  siempre. Su pregunta ya empieza por qué se validó, quién lo aprobó, qué no y por qué, y las
+  sugerencias que dejó la validación:
+
+  ```bash
+  !python3 .sdd/scripts/sdd-project-status.py <raíz_spec> --spec-pending --json --lote <spec1.md> <spec2.md> …
+  ```
+
+  Medido en `CU-3.ac`: la tabla se imprimía en una herramienta y main pasaba directo al mapa; las
+  notas quedaron en un párrafo que se ve resumido.
+- **En lote, sin cierre** (validación suelta) → la tabla la imprime el sellador; **cópiala tal cual** ([[D-107]]):
 
   ```bash
   !python3 .sdd/scripts/sdd-seal.py spec --report <spec1.md> <spec2.md> …

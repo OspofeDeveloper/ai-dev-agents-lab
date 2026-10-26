@@ -177,6 +177,46 @@ class FeaturesIndexTest(unittest.TestCase):
         text = (self.dir / "prj_features.md").read_text(encoding="utf-8")
         self.assertIn("conflicto ALTA con F-002", text)
 
+    def _readiness_bloqueada(self, motivo, estado="BLOQUEADA"):
+        write(self.dir / "prj_readiness_report.md",
+              "# Readiness\n\n## Matriz de readiness\n\n"
+              "| Feature | Estado | Bloqueantes |\n|---|---|---|\n"
+              f"| F-001: Login | {estado} | {motivo} |\n")
+
+    def test_sellar_desmiente_un_bloqueada_que_solo_esperaba_la_validacion(self):
+        """v0.126.2: siete specs validadas seguían «pendiente de validación» en el índice."""
+        write(self.dir / "prj_discovery.md", DISCOVERY)
+        write(self.dir / "features" / "login" / "spec" / "login_spec.md",
+              spec("F-001", "Login").replace("> Feature ID: F-001\n",
+                                             "> Feature ID: F-001\n> Estado: VALIDADO\n"))
+        self._readiness_bloqueada("pendiente de validación")
+        self._run()
+        text = (self.dir / "prj_features.md").read_text(encoding="utf-8")
+        self.assertIn("| F-001: Login | LISTA |", text)
+
+    def test_un_bloqueada_por_otra_cosa_se_mantiene_aunque_este_sellado(self):
+        write(self.dir / "prj_discovery.md", DISCOVERY)
+        write(self.dir / "features" / "login" / "spec" / "login_spec.md",
+              spec("F-001", "Login").replace("> Feature ID: F-001\n",
+                                             "> Feature ID: F-001\n> Estado: VALIDADO\n"))
+        self._readiness_bloqueada("conflicto ALTA con F-002; pendiente de validación")
+        self._run()
+        text = (self.dir / "prj_features.md").read_text(encoding="utf-8")
+        self.assertIn("| F-001: Login | BLOQUEADA |", text)
+
+    def test_alcance_derivado_aceptado_no_pide_cambio_de_prd(self):
+        write(self.dir / "prj_discovery.md", DISCOVERY)
+        write(self.dir / "features" / "login" / "spec" / "login_spec.md",
+              spec("F-001", "Login").replace(
+                  "> Feature ID: F-001\n",
+                  "> Feature ID: F-001\n> Estado: VALIDADO\n"
+                  "> Avisos de gobernanza: alcance derivado desde P-002\n"
+                  "> Alcance derivado aceptado: Ana (2026-10-26)\n"))
+        self._readiness_bloqueada("gobernanza: alcance derivado", estado="REQUIERE_CAMBIO_PRD")
+        self._run()
+        text = (self.dir / "prj_features.md").read_text(encoding="utf-8")
+        self.assertIn("| F-001: Login | LISTA |", text)
+
     def test_no_discovery_uses_specs_only(self):
         # fast-track standalone: sin discovery, solo specs presentes
         write(self.dir / "features" / "login" / "spec" / "login_spec.md",

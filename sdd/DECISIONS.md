@@ -6,6 +6,48 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-113 — Lo ya decidido se aplica, no se pregunta; y lo que la validación ve, se enseña
+
+- **Fecha:** 2026-10-26 · **Estado:** Adoptada. · **Relacionada:** [[D-112]] (bloques), [[D-111]] (contratos), [[D-109]] (decisión de producto), [[D-107]] (tabla del lote).
+
+**Contexto.** En la pasada 1 de `CU-3.ac` el mapa funcionó (siete de ocho features planificables),
+pero dejó ver tres cosas. Una de las cuatro *"decisiones menores"* no lo era: *"F-005 ya decidió que
+reservar exige saldo y F-008 no trasladó esa respuesta"*; preguntarla otra vez es pedir al usuario
+lo que ya respondió. Visión general se selló prometiendo cuatro casos sin datos con criterio solo
+para dos, y la nota del auditor quedó en un párrafo que nadie vio. Y el resultado del lote de
+validación no se enseñó: main pasó directo al mapa.
+
+**Decisión.**
+1. **Causa *Sin trasladar*.** Si el contrato del dueño ya dice la regla y el consumidor no la ha
+   copiado, el auditor escribe un bloque **Traslado** (*Qué · Decidido en · Falta en*) en vez de una
+   decisión de producto. La lista lo trae como `trasladar`, que no bloquea ni se pregunta: la opción
+   *Aplicar lo ya decidido* lo copia con un cambio por feature, una revisión y una medición.
+2. **Sugerencias con arreglo.** Lo que deja un spec prometiendo algo que no se probará no bloquea
+   el sello (opción B), pero el auditor lo escribe como sugerencia en llano con su arreglo, el
+   sellador la guarda en la cabecera (`--suggest`), y la lista la enseña y la ofrece
+   (*Aplicar sugerencias*). Se va con el sello: la siguiente validación decide si sigue.
+3. **El resultado del lote encabeza el cierre** (`--spec-pending --lote <specs>`): qué se validó,
+   quién aprobó, qué no y por qué, y las sugerencias.
+
+**Alternativas descartadas.** *Que una promesa sin CA bloquee el sello* (opción A): frena una
+feature entera por un arreglo pequeño, contra [[D-112]]. *Dejarlo como nota* (opción C): es lo que
+hizo que nadie lo viera. *Detectar el traslado por script*: si el contrato del dueño ya dice la regla
+es un juicio de lectura; el script solo lo transporta.
+
+**Consecuencias.** Menos preguntas al usuario y nada escondido. Con ella, la 0.127.0 corrige lo que
+salió de la pasada: conflictos arrastrados sin reevaluar, el índice que no se actualizaba al sellar,
+el ID con alias que perdía su decisión, el pie de los bloques, la vista previa recortada, el
+aprobador repetido y el texto de main en inglés. Se mide con `CU-3.ac (2)`.
+
+**Referencias.** `scripts/sdd-project-status.py` (`trasladar`, `sugerencia`, `--lote`) ·
+`scripts/sdd-seal.py` (`--suggest`, `--report --lineas`, índice al sellar) ·
+`scripts/sdd-features-index.py` · `kb-conflict-expert` · `wf-spec-conflict` (SKILL y plantilla) ·
+`wf-spec-validate` (SKILL y plantilla) · `kb-spec-expert` · `kb-gap-conventions` ·
+`wf-spec-readiness` · `pipeline/spec/routing.md` · `pipeline/orchestration.md` ·
+`tests/test_sdd_spec_pending.py` · `tests/test_sdd_features_index.py` · `CHANGELOG.md` 0.127.0.
+
+---
+
 ## D-112 — Planificar por bloques: qué se puede empezar ya y qué falta para cerrar el resto
 
 - **Fecha:** 2026-10-23 · **Estado:** Adoptada. · **Relacionada:** [[D-111]] (contratos), [[D-110]] (resumen por tipo), [[D-106]] (mapa antes de tratar), [[D-102]] (seguimiento).
