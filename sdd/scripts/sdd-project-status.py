@@ -275,7 +275,9 @@ def _planificable(directory: Path) -> dict:
     except Exception:  # la vista de proyecto no se cae por un índice raro
         return {}
     bloque = {f: b["bloque"] for b in data.get("bloques", []) for f in b["features"]}
-    textos = {"planificable": "sí", "lista_para_validar": "al validarla"}
+    textos = {"planificable": "sí", "lista_para_validar": "al validarla",
+              "pendiente_corregir": "al corregirla y validarla",
+              "pendiente_copiar": "al copiar lo ya decidido y validarla"}
     out = {}
     for f, v in data.get("por_feature", {}).items():
         e = v["estado_plan"]
@@ -896,6 +898,24 @@ def spec_pending(directory: Path, lote: list | None = None) -> dict:
             "Generar sus specs cuando convenga.",
             "wf-spec-features-first --features", bloquea=False)
 
+    # Lo ya decidido que falta copiar cambia el spec: validarlo antes es sellarlo para
+    # desellarlo. CU-3.ac (3): presupuesto salía a la vez en «Validar las listas» y en
+    # «Aplicar lo ya decidido», y validar iba primero.
+    a_copiar = {f for i in items if i["tipo"] == "trasladar" for f in i["features"]}
+    for it in items:
+        if it["tipo"] != "validar" or not a_copiar & set(it["features"]):
+            continue
+        fuera = [f for f in it["features"] if f in a_copiar]
+        it["features"] = [f for f in it["features"] if f not in a_copiar]
+        it["en_espera"] += [{"feature": f, "motivo": ["falta copiar lo ya decidido"]}
+                            for f in fuera]
+        it["que"] = ((f"{len(it['features'])} spec(s) en borrador listos para validar: "
+                      + ", ".join(label[f] for f in it["features"]) + ".")
+                     if it["features"] else "Ningún spec en borrador está listo para validar "
+                                            "todavía.")
+        it["que"] += " Esperan a lo anterior: " + "; ".join(
+            f"{label[e['feature']]} ({', '.join(e['motivo'])})" for e in it["en_espera"]) + "."
+
     orden = ["readiness", "gap_critico", "peticion", "reabierto", "conflicto_alta", "ciclo",
              "alcance_derivado", "corregir", "validar", "trasladar", "conflicto_media",
              "sugerencia", "generar"]
@@ -995,12 +1015,16 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
     sellado = {f: bool((m := ESTADO_SPEC_RE.search(read_text(sp))) and m.group(1) == "VALIDADO")
                for f, sp in specs.items()}
     a_corregir = {f for i in items if i["tipo"] == "corregir" for f in i["features"]}
+    a_copiar = {f for i in items if i["tipo"] == "trasladar" for f in i["features"]}
     por_feature = {}
     for f in sorted(specs, key=fid_sort_key):
         if propios[f]:
             estado = "pendiente_propio"
         elif f in a_corregir:
             estado = "pendiente_corregir"
+        elif f in a_copiar and not sellado[f]:
+            # Sellada, se sigue pudiendo planificar: el traslado la desella al aplicarse.
+            estado = "pendiente_copiar"
         elif espera[f] or f in lectoras:
             estado = "espera_a_otro"
         else:

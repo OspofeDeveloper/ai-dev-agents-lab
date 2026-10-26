@@ -2,6 +2,14 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.127.2 — 2026-10-26
+
+**Las decisiones de conflictos también cuentan como decididas** — [[DECISIONS D-114]] (ampliación). Sale de la pasada 1 de `CU-3.ac (3)`.
+
+- 🟠 ⚠ `sdd-analysis-gaps.py --decisiones` recoge también la **opción elegida en cada conflicto**, que llega al análisis de cambio como requisito y no como pregunta (campo `conflicto`). Sin ella, el saldo negativo, ya decidido en `CF-F005-01`, volvía a salir como decisión menor. El requisito de una decisión de conflicto empieza siempre igual (`Qué se decidía:` / `Opción elegida:`).
+- 🟠 Una feature a la que le falta copiar algo ya decidido **no se ofrece para validar** (`estado_plan` `pendiente_copiar`): antes salía a la vez en *Validar las listas (Recomendado)* y en *Aplicar lo ya decidido*. La vista de proyecto ya no da *"espera a otro bloque"* a una feature que solo tiene que corregirse o copiar algo.
+- **Conformance:** pasada 1 de `CU-3.ac (3)`, punto 1 parcial. 2 tests nuevos.
+
 ## 0.127.1 — 2026-10-26
 
 **Una regla va a su dueño aunque nazca en otra feature; y lo que no sella, dice por qué** — [[DECISIONS D-114]]. Sale de la revisión de la pasada 2 de `CU-3.ac`.

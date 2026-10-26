@@ -901,6 +901,28 @@ class DecididoFueraDelDuenoTest(unittest.TestCase):
             self.assertEqual(tr["traslado"]["decidido_en"], ["F-001"])
             self.assertNotIn("conflicto_media", tipos(data))
 
+    def test_lo_que_falta_copiar_no_se_ofrece_para_validar(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            b = Bank(Path(tmp))
+            b.feature("F-001", "movimientos", estado="BORRADOR")
+            b.feature("F-004", "presupuesto", estado="BORRADOR")
+            b.index([("F-001", "movimientos", "features/movimientos/spec/movimientos_spec.md",
+                      "LISTA", "ninguno"),
+                     ("F-004", "presupuesto", "features/presupuesto/spec/presupuesto_spec.md",
+                      "LISTA", "ninguno")])
+            b.analysis("respondida")
+            write(b.spec / "features" / "presupuesto" / "spec" / "presupuesto_conflict_report.md",
+                  INFORME_FUERA_DEL_DUENO)
+            time.sleep(0.01)
+            b.readiness(media_rows="| `CF-F004-01` | Decidido fuera del dueño | F-001, F-004 | x | x |")
+            data = b.pending()
+            val = next(i for i in data["items"] if i["tipo"] == "validar")
+            self.assertEqual(val["features"], ["F-001"])
+            self.assertEqual(val["en_espera"][0]["feature"], "F-004")
+            self.assertEqual(data["por_feature"]["F-004"]["estado_plan"], "pendiente_copiar")
+            self.assertIn("Validar las listas (1)",
+                          " ".join(o["label"] for o in data["cierre"]["opciones"]))
+
 
 if __name__ == "__main__":
     unittest.main()

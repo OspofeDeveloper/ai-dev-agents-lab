@@ -451,6 +451,44 @@ def check_owners(text: str, path: Path) -> dict:
 VERSION_RE = re.compile(r"_v(\d+\.\d+)_delta_analysis\.md$")
 
 
+CONFLICTO_ID_RE = re.compile(r"\bCF-[\w-]+?-\d+\b")
+QUE_SE_DECIDIA_RE = re.compile(r"^>?\s*\**Qu[eé] se decid[ií]a\**\s*:\**\s*(.+)$",
+                               re.MULTILINE | re.IGNORECASE)
+# «Opción elegida: X», «Opción elegida por el usuario: **X** — …», «**Opción elegida — X**: …».
+# La línea «Fuente: … Opción elegida por el usuario (texto literal del informe).» no casa:
+# tras «usuario» viene un paréntesis, no un separador.
+OPCION_ELEGIDA_RE = re.compile(
+    r"^>?\s*\**Opci[oó]n elegida(?: por el usuario)?\s*[:—–-]\s*(.+)$",
+    re.MULTILINE | re.IGNORECASE)
+
+
+def _decisiones_de_conflicto(text: str, feature: str, analisis: str, version) -> list:
+    """Las decisiones de conflicto que llegaron como requisito de un análisis de cambio.
+
+    No son gaps: van en «Requisito de origen» como bloque «Decisión de producto sobre el
+    conflicto CF-…». Sin ellas, la lista de lo decidido no recogía la respuesta de un
+    conflicto y su gemelo en otro informe volvía a salir como pregunta (CU-3.ac (3): el
+    saldo negativo de CF-F005-01, otra vez como CF-F001-05).
+    """
+    m = re.search(r"^##\s+Requisito de origen\s*$(.*?)(?=^##\s|\Z)", text,
+                  re.MULTILINE | re.DOTALL)
+    if not m:
+        return []
+    bloque = m.group(1)
+    cabecera = next((ln for ln in bloque.splitlines()
+                     if re.search(r"decisi[oó]n de producto", ln, re.IGNORECASE)), "")
+    conflictos = list(dict.fromkeys(CONFLICTO_ID_RE.findall(cabecera)))
+    opcion = OPCION_ELEGIDA_RE.search(bloque)
+    if not conflictos or not opcion:
+        return []
+    que = QUE_SE_DECIDIA_RE.search(bloque)
+    limpia = lambda s: re.sub(r"\s+", " ", s.replace("**", "")).strip()
+    return [{"feature": feature, "analisis": analisis, "version_analizada": version,
+             "conflicto": " / ".join(conflictos), "gap": None, "titulo": None,
+             "pregunta": limpia(que.group(1)) if que else None,
+             "respuesta": limpia(opcion.group(1)), "asuncion": None, "dueno": None}]
+
+
 def decisiones(features_dir: Path) -> dict:
     """Lo que el usuario ya respondió en los análisis de cambio, feature a feature."""
     out = []
@@ -475,6 +513,7 @@ def decisiones(features_dir: Path) -> dict:
                         # «Como propones: …» remite a la asunción por defecto: sin ella la
                         # respuesta no se entiende fuera de su análisis.
                         "asuncion": f.get("asuncion"), "dueno": f.get("dueno")})
+        out += _decisiones_de_conflicto(text, feature, str(a), v.group(1) if v else None)
     return {"action": "decisiones", "source": str(features_dir), "total": len(out),
             "decisiones": out}
 

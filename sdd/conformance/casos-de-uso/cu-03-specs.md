@@ -2764,7 +2764,7 @@ inglés. Pero:
   de los specs.
 → [[D-114]] (v0.127.1). Estado guardado como `bank-cu3ac-bloqueA`.
 
-### CU-3.ac (3) — Lo respondido llega a su dueño, y lo que no sella dice por qué ([[D-114]]) ⏱ **sin pasada**
+### CU-3.ac (3) — Lo respondido llega a su dueño, y lo que no sella dice por qué ([[D-114]]) ⏱ **pasada en curso** (punto 1 parcial; v0.127.2)
 
 **Precondición:** el banco `bank-cu3ac-bloqueA` (final de la pasada de `CU-3.ac (2)`: cuatro
 features planificables; bloque A con `CF-F004-01`, que es lo ya respondido en D-006; la decisión
@@ -2801,6 +2801,21 @@ pendiente `corregir`.
 **Resultado:** PASS si nada respondido se vuelve a preguntar, la respuesta con dueño llega a su dueño
 en la misma vuelta y un rechazo se explica · FALLO si una regla queda escrita solo fuera de su dueño.
 **Desviación → reportar:** issue citando `CU-3.ac`.
+
+**Pasada 1 (Opus 5.5, v0.127.1), punto 1: PARCIAL.**
+- `CF-F004-01` salió como *"Ya decidido, falta copiarlo"* en presupuesto mensual: **PASS**.
+- `CF-F005-04` (= `CF-F001-05`, el saldo negativo) volvió a salir como **decisión menor**: **FALLO**.
+  La respuesta del usuario estaba en el análisis de cambio de cuentas y tarjetas como *Decisión de
+  producto sobre el conflicto `CF-F005-01`* (en el requisito, no como pregunta), y `--decisiones` solo
+  leía preguntas: el auditor comprobó la lista y no la encontró. **Arreglo (v0.127.2):**
+  `--decisiones` recoge también la opción elegida de cada conflicto (campo `conflicto`), y el
+  requisito de una decisión de conflicto empieza siempre igual para que se pueda leer.
+- **Hallazgo nuevo:** presupuesto mensual salía a la vez en *Validar las listas (2) (Recomendado)* y en
+  *Aplicar lo ya decidido*. Validarla primero es sellarla para desellarla; main lo vio y lo avisó en
+  prosa, pero el mapa lo recomendaba igual. **Arreglo (v0.127.2):** una feature a la que le falta
+  copiar algo ya decidido queda `pendiente_copiar` y sale de la lista para validar.
+- Para seguir: *Aplicar lo ya decidido* (punto 2); después, con v0.127.2, revisar otra vez los
+  conflictos de registro de movimientos (repetir el punto 1 para `CF-F005-04`).
 
 ## CU-3.o — Readiness: sin índice, ciclos, scope derivado, sello y alcance del veredicto
 

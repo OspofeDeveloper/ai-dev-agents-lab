@@ -580,6 +580,24 @@ class DuenoYDecisionesTest(unittest.TestCase):
             self.assertEqual(d[0]["asuncion"], "no cuenta")
             self.assertEqual(d[0]["version_analizada"], "1.5")
 
+    def test_decisiones_recoge_la_opcion_elegida_en_un_conflicto(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            feats = Path(tmp) / "features"
+            write(feats / "cuentas" / "spec" / "cuentas_spec_v1.2_delta_analysis.md",
+                  "# Delta\n\n## Requisito de origen\n\n"
+                  "> # Decisión de producto sobre el conflicto CF-F005-01\n>\n"
+                  "> Fuente: informe → CF-F005-01. Opción elegida por el usuario (texto literal).\n>\n"
+                  "> Qué se decidía: si el saldo puede quedar negativo.\n>\n"
+                  "> Opción elegida por el usuario: **El saldo puede quedar negativo** — "
+                  "fuera de las transferencias.\n\n---\n\n## Estado general\n\nX\n")
+            d = json.loads(run_script("sdd-analysis-gaps.py", feats, "--decisiones",
+                                      "--json").stdout)["decisiones"]
+            self.assertEqual(len(d), 1)
+            self.assertEqual(d[0]["conflicto"], "CF-F005-01")
+            self.assertEqual(d[0]["pregunta"], "si el saldo puede quedar negativo.")
+            self.assertEqual(d[0]["respuesta"],
+                             "El saldo puede quedar negativo — fuera de las transferencias.")
+
     def test_un_delta_que_declara_que_no_tiene_preguntas_no_es_vacuous(self):
         with tempfile.TemporaryDirectory() as tmp:
             a = Path(tmp) / "x_v1.2_delta_analysis.md"

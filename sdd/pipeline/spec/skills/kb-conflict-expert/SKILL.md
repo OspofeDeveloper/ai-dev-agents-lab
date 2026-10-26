@@ -86,7 +86,8 @@ demás lo citan o le hacen una **petición**. Cuando dos specs chocan sobre un m
 
 **Lo que el usuario ya decidió no se le vuelve a preguntar (v0.127.1).** Antes de escribir una
 *Decisión de producto*, mira la **lista de decisiones**: las preguntas que el usuario ya respondió
-en los análisis de cambio, con su respuesta literal y de quién es la regla
+en los análisis de cambio, con su respuesta literal y de quién es la regla, **y las opciones que
+eligió en conflictos anteriores** (campo `conflicto`; v0.127.2)
 (`sdd-analysis-gaps.py <features_dir> --decisiones --json`; tu flujo te la pasa), y los
 changelog de los specs (*"Integra la decisión de producto del usuario sobre `CF-…`"*). Si uno de los
 dos lados del choque **es** esa respuesta y el dueño no dice nada de ese caso, la causa es

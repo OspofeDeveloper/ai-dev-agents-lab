@@ -96,7 +96,8 @@ Cuenta, lista y escribe las respuestas de los gaps de un `_analysis.md` o un `_d
 sin que nadie los lea a ojo ([[D-042]]). `--owners` ([[D-114]]): cada pregunta respondida con
 `Dueño` de otra feature tiene que estar, literal, en un análisis de cambio de esa feature, o el
 apply se para. `--decisiones`: lo que el usuario ya respondió en los análisis de cambio de todas las
-features, con su dueño, para la revisión de conflictos. Un análisis de cambio que declara *"Sin
+features, con su dueño, y la opción elegida en cada conflicto (campo `conflicto`), para la revisión de
+conflictos. Un análisis de cambio que declara *"Sin
 gaps detectados"* da `NO_GAPS`.
 
 - **Exit:** `0` OK · `1` error de uso o IO · `2` críticos abiertos, `VACUOUS` o `OWNER_MISSING`.

@@ -62,6 +62,14 @@ el mismo sitio donde se lee. Con ella, la 0.127.1 también trae: la vista previa
 medición* y su aviso sin contradicción, las opciones de los conflictos en palabras del usuario (sin
 *"gasto sintético"*), y `NO_GAPS` para un análisis de cambio que declara no tener preguntas.
 
+**Ampliación (v0.127.2, pasada 1 de `CU-3.ac (3)`).** Una decisión de conflicto no llega al análisis
+de cambio como pregunta, sino como requisito (*Decisión de producto sobre el conflicto `CF-…`*), y
+`--decisiones` solo listaba preguntas: el saldo negativo, decidido en `CF-F005-01`, volvió a salir como
+decisión menor (`CF-F005-04`). `--decisiones` recoge ahora también la opción elegida de cada conflicto,
+y ese requisito empieza siempre igual (`Qué se decidía:` / `Opción elegida:`) para que se pueda leer.
+Además, una feature a la que le falta copiar algo ya decidido no se ofrece para validar
+(`pendiente_copiar`): validarla antes es sellarla para desellarla.
+
 **Referencias.** `scripts/sdd-analysis-gaps.py` (`--owners`, `--decisiones`, `NO_GAPS`),
 `scripts/sdd-seal.py` (`--blocked`, `--not-approved`), `scripts/sdd-project-status.py`
 (`corregir`, `pendiente_corregir`, vista previa de la medición), `kb-spec-expert`,
