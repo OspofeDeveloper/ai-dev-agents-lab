@@ -62,6 +62,11 @@ Desde la raíz del proyecto:
 !SDD_HOME=$(cat ~/.sdd-home) && SDD_PROJECT_ROOT="$(pwd)" bash "$SDD_HOME/install.sh" <fase1,fase2,...> --prune ${DESIGN_ROLE:+--design-role=$DESIGN_ROLE} ${ART_PRD:+--artifacts-prd=$ART_PRD} ${ART_SPEC:+--artifacts-spec=$ART_SPEC} ${ART_DESIGN:+--artifacts-design=$ART_DESIGN}
 ```
 
+> **No recortes la salida con `tail`** (v0.128.0): lo que `--prune` elimina (`✗ … eliminada`) sale a
+> mitad, y con `tail -25` el resumen del update dijo *"pedí quitar las piezas sobrantes, pero no puedo
+> confirmar si se quitó alguna"* (pasada 1 de `CU-3.ac (3)`). Si necesitas acotarla, filtra en vez de
+> cortar: `… 2>&1 | grep -E '✗|⚠|rror'`, y di en el resumen qué se quitó, o que no había nada.
+>
 > Si `phases` incluye `design`, pasa `--design-role=<design_role>` (el valor leído de `project-init.json`: `system`, `feature` o `full`) para reinstalar el mismo agente/bundle que tenía el proyecto — sin el flag, `install.sh` instalaría ambos agentes (`full`) por defecto y degradaría un repo authoring/consumer. Si `design` no está en `phases`, omite el flag.
 >
 > **Preserva el layout no canónico.** `install.sh` reescribe las reglas de fase desde plantilla en cada run; si `artifacts.<fase>` del `project-init.json` difiere del canónico (= nombre de la fase, p. ej. `spec → specs`), pasa `--artifacts-<fase>=<dir>` con ese valor, o el update **regresaría** el glob de directorio de la regla al canónico (un directorio que no existe). Solo para las fases con directorio no canónico; el resto se omite. El check `rule-globs` del verificador lo detecta si se olvida.

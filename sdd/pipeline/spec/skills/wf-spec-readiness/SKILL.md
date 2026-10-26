@@ -113,6 +113,8 @@ Para **cada** informe de conflictos localizado:
 Clasifica la feature como **BLOQUEADA** si tiene al menos un conflicto ALTA asociado.
 
 > **Los `MEDIA` que tu arbitraje mantiene van en su propia tabla, «Conflictos MEDIA abiertos» ([[D-102]]).**
+> La sección se escribe **siempre**, también sin ninguno (una línea *"Ninguno."*), igual que la de
+> `ALTA` (v0.128.0): sin ella, la lista de pendientes no distingue *"no hay"* de *"informe antiguo"*.
 > No bloquean, pero la lista de pendientes de la fase los ofrece, y la lee de tu informe —el único
 > que ve todos los informes a la vez—. Uno que descartes (*"no es un conflicto, es redacción"*) **no
 > va en la tabla**: si no, la lista lo ofrecería como pendiente. Medido al construir la lista: leyendo

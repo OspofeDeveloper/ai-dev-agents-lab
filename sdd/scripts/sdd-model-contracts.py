@@ -42,6 +42,12 @@ exige nada, para que un proyecto que actualiza no se quede bloqueado.
 
 Uso:
     sdd-model-contracts.py <raíz_spec> [--json]
+    sdd-model-contracts.py <raíz_spec> --vecinas F-001[,F-008…] [--json]
+
+`--vecinas` (v0.128.0) da las features con las que las dadas comparten un modelo —dueña o
+consumidora, según el índice y las tablas de los specs—. Es el alcance de una revisión de
+conflictos tras un cambio que no añade historias ni alcance: un choque de modelo compartido
+solo puede darse entre features que comparten el modelo.
 
 Exit: 0 sin problemas que bloqueen · 2 con alguno (contrato, catálogo o petición) ·
 1 error de uso. Los avisos no cambian el exit.
@@ -153,6 +159,7 @@ def contrato(text: str) -> dict:
 
 
 LECTURA_RE = re.compile(r"\blectura\b|\bsolo (?:lee|lo lee|consulta)\b|\bno (?:lo )?(?:cambia|modifica)\b")
+ESCRITURA_RE = re.compile(r"(?<!\bno )(?<!\bsin )\b(?:escritura|escribe)\b")
 LECTURA_INICIO_RE = re.compile(r"^\W*(?:lee|leer|consulta|muestra|selecciona|lista)\b")
 
 
@@ -161,6 +168,10 @@ def es_lectura(celda: str) -> bool:
     también escriben «Lee el catálogo…», «asocia…; lectura de su identidad» o «… No cambia
     su saldo»; tratarlos como escritura inventa catálogos incompletos (CU-3.ab, pasada 1)."""
     t = celda.lower()
+    # «lectura: … · escritura: …» declara las dos: escribe. Sin esto, la palabra «lectura»
+    # ganaba y objetivos de ahorro salía como solo lectora de Movimiento (CU-3.ac (3)).
+    if ESCRITURA_RE.search(t):
+        return False
     return bool(LECTURA_RE.search(t) or LECTURA_INICIO_RE.search(t))
 
 
@@ -178,7 +189,8 @@ def consumo(text: str) -> tuple[list[dict], list[dict]]:
         if len(row) < 3:
             continue
         if i_uso is not None and i_uso < len(row) and row[i_uso].strip(" *`_").lower():
-            escribe = not row[i_uso].strip(" *`_").lower().startswith("lectura")
+            uso = row[i_uso].strip(" *`_").lower()
+            escribe = "escritura" in uso or not uso.startswith("lectura")
         else:
             escribe = not es_lectura(row[2])
         owner = FID_RE.findall(row[1])
@@ -277,6 +289,25 @@ def check(directory: Path) -> dict:
             "bloquea": bool(sin_contrato or catalogo or peticiones)}
 
 
+def vecinas(directory: Path, fids: list[str]) -> dict:
+    """Las features que comparten algún modelo con `fids` (sin incluirlas)."""
+    features_md_path = next(iter(sorted(directory.glob("*_features.md"))), None)
+    rutas, nombres, modelos = index(read_text(features_md_path) if features_md_path else "")
+    con_spec = {f for f, r in rutas.items() if (directory / r).is_file()}
+    pares = [(m["owner"], r, m["name"]) for m in modelos.values() for r in m["refs"]]
+    pares += [(u["owner"], u["feature"], u["modelo"]) for u in check(directory)["uso"]]
+    dadas, out, por = set(fids), set(), {}
+    for owner, consumidor, modelo in pares:
+        for a, b in ((owner, consumidor), (consumidor, owner)):
+            if a in dadas and b not in dadas and b in con_spec:
+                out.add(b)
+                por.setdefault(b, set()).add(modelo)
+    orden = sorted(out, key=fid_key)
+    return {"features": sorted(dadas, key=fid_key), "vecinas": orden,
+            "por_modelo": {f: sorted(por[f]) for f in orden},
+            "nombres": {f: nombres.get(f, "") for f in orden}}
+
+
 def problemas_de(data: dict, fid: str) -> list[str]:
     """Lo que impide sellar `fid` (condición 10 de `sdd-seal.py spec`)."""
     out = [p["que"] for p in data["sin_contrato"] if p["owner"] == fid]
@@ -312,10 +343,23 @@ def render(data: dict) -> str:
 
 
 def main(argv: list[str]) -> int:
-    args = [a for a in argv if not a.startswith("--")]
+    args = [a for i, a in enumerate(argv) if not a.startswith("--")
+            and not (i and argv[i - 1] == "--vecinas")]
     if len(args) != 1 or not Path(args[0]).is_dir():
         print(__doc__.split("Uso:")[1].split("Exit:")[0].strip(), file=sys.stderr)
         return 1
+    if "--vecinas" in argv:
+        i = argv.index("--vecinas")
+        fids = FID_RE.findall(argv[i + 1]) if i + 1 < len(argv) else []
+        if not fids:
+            print("--vecinas necesita una o más features: F-001[,F-002…]", file=sys.stderr)
+            return 1
+        v = vecinas(Path(args[0]), fids)
+        if "--json" in argv:
+            print(json.dumps(v, ensure_ascii=False, indent=2))
+        else:
+            print(", ".join(v["vecinas"]) or "(ninguna)")
+        return 0
     data = check(Path(args[0]))
     if "--json" in argv:
         print(json.dumps(data, ensure_ascii=False, indent=2))

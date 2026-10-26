@@ -6,6 +6,71 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-115 — Un cambio sin nada que decidir sigue un camino corto; y el cierre dice lo que hay
+
+- **Fecha:** 2026-10-26 · **Estado:** Adoptada. · **Relacionada:** [[D-113]] (lo ya decidido), [[D-114]] (dueños), [[D-112]] (mapa), [[D-102]] (readiness arbitra), [[D-027]]/[[D-111]] (quién aprueba). Modifica la regla de [[D-111]] sobre el aprobador en lote.
+
+**Contexto.** En la pasada 1 de `CU-3.ac (3)` no se le hizo al usuario ni una pregunta de producto:
+los tres cambios eran cosas ya decididas que faltaba copiar. Aun así costaron **71 minutos** de
+máquina en cuatro vueltas. Dos tercios fueron revisiones de conflictos completas (6 agentes, unos 25
+minutos, 6-10 M de tokens leídos cada una) y mediciones con agente (4, unos 21 minutos), que
+terminaban diciendo *"el conflicto queda cerrado"*. Las revisiones completas, además, *"descubrían"*
+choques viejos que la anterior no había visto, y cada uno era otra vuelta. Y al final, con todo listo
+para planificar, el cierre recomendó *"Decisiones menores (4)"* con cuatro conflictos ya resueltos:
+la plantilla del readiness omitía la tabla de `MEDIA` cuando no había ninguno, el script tomó la
+ausencia por un informe antiguo y leyó los informes sueltos sin mirar su columna de estado, uno de
+ellos estancado y con el conflicto abierto solo bajo su alias.
+
+**Decisión.**
+1. **El estado de un conflicto lo da el informe más reciente que lo lista, también por sus alias.**
+   Un readiness al día sin tabla de `MEDIA` no tiene ninguno; los resueltos no salen; un conflicto
+   que un informe posterior al readiness cierra tampoco. La plantilla escribe siempre las dos tablas.
+2. **Cambios sin nada que decidir** (*Aplicar lo ya decidido*, *Corregir lo que pidió la
+   validación*, *Aplicar sugerencias*):
+   - **un solo paso** analiza y aplica (`wf-spec-delta directo`), y para si encuentra algo que decidir;
+   - la revisión de conflictos es una **verificación de lo que cambió** contra las features que
+     comparten modelo (`sdd-model-contracts.py --vecinas`), que copia tal cual lo que no tocó;
+   - va **en paralelo** con la auditoría (`wf-spec-validate --con-conflictos`);
+   - la medición es **incremental** (`sdd-project-status.py --refresh-readiness`), y la completa, con
+     agente, solo si hay algo que arbitrar;
+   - las sugerencias, que son criterios que prueban reglas ya escritas, no revisan conflictos.
+3. **El aprobador va en la opción.** Las opciones del cierre que acaban validando nombran a quién
+   aprueba (el `user.name` de git) y dicen que solo se sella lo que pasa la auditoría. Elegirlas es
+   esa aprobación, y no se vuelve a preguntar. [[D-111]] prohibía dar por respondida la pregunta por
+   una opción *que escribía main*; esta la escribe el script y lo dice explícitamente. Sin nombre en
+   git, se pregunta como antes.
+4. **Lo que lee el usuario, en sus términos:**
+   - el *Qué* de un traslado dice lo que cambia para el usuario, no qué sección se edita;
+   - una corrección sin comportamiento en disputa es traslado, no una decisión de una opción;
+   - cada opción de un conflicto anticipa su consecuencia directa;
+   - las sugerencias dicen qué revalidan;
+   - las features salen con el nombre de su spec, con tildes.
+5. Arreglos menores:
+   - una celda *"lectura: … · escritura: …"* cuenta como escritura;
+   - con varios cambios en paralelo, el índice lo regenera main una vez;
+   - la actualización del ecosistema enseña lo que poda.
+
+**Alternativas descartadas.**
+- **Revisar solo contra las vecinas también los cambios con decisión.** Un cambio que añade
+  historias puede duplicar una de una feature con la que no comparte modelo; ahí la revisión sigue
+  siendo completa.
+- **Medir siempre sin agente.** Arbitrar dos informes que se contradicen es juicio, y el script solo
+  pone al día lo mecánico.
+- **Que el escritor no regenere nunca el índice.** Un cambio suelto lo necesita al día, y sin main
+  delante no lo regenera nadie.
+
+**Consecuencias.** Estimado sobre la pasada: una vuelta de copiar algo ya decidido baja de unos 22
+minutos a 7-8; el ahorro crece con el número de features, porque la revisión completa crece con ellas
+y la verificación no. Una pregunta menos por lote. El cierre no ofrece decisiones que no existen.
+
+**Referencias.** `scripts/sdd-project-status.py` (`--refresh-readiness`, estado de conflictos por
+alias, `aprueba`, títulos), `scripts/sdd-model-contracts.py` (`--vecinas`, lectura y escritura),
+`wf-spec-delta` (submodo `directo`, `--sin-indice`), `wf-spec-conflict` (modo verificación,
+plantilla), `wf-spec-validate` (`--aprobador`, `--con-conflictos`), `wf-spec-readiness` (plantilla),
+`kb-conflict-expert`, `wf-sdd-update`, `pipeline/spec/routing.md`.
+
+---
+
 ## D-114 — Una regla va a su dueño aunque nazca en otra feature; y lo que no sella, dice por qué
 
 - **Fecha:** 2026-10-26 · **Estado:** Adoptada. · **Relacionada:** [[D-111]] (contratos y dueños), [[D-113]] (lo ya decidido), [[D-112]] (bloques), [[D-104]] (respuestas literales).

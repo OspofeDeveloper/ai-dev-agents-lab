@@ -2764,7 +2764,7 @@ inglés. Pero:
   de los specs.
 → [[D-114]] (v0.127.1). Estado guardado como `bank-cu3ac-bloqueA`.
 
-### CU-3.ac (3) — Lo respondido llega a su dueño, y lo que no sella dice por qué ([[D-114]]) ⏱ **pasada en curso** (puntos 1 parcial y 2 PASS; v0.127.3)
+### CU-3.ac (3) — Lo respondido llega a su dueño, y lo que no sella dice por qué ([[D-114]]) ⏱ **pasada 1 cerrada** (1, 2 y 5 PASS; 3 sin ejecutar → `CU-3.ac (4)`; v0.127.3)
 
 **Precondición:** el banco `bank-cu3ac-bloqueA` (final de la pasada de `CU-3.ac (2)`: cuatro
 features planificables; bloque A con `CF-F004-01`, que es lo ya respondido en D-006; la decisión
@@ -2828,6 +2828,74 @@ en la misma vuelta y un rechazo se explica · FALLO si una regla queda escrita s
   se ofrece para validar antes de copiarlo.
 - **Detalles de redacción** (v0.127.3): *"1 sugerencia…: no frenan nada"*, *"Se validan juntas:"* con
   una sola feature y *"esa feature vuelve a validarse"* con varias.
+- **Punto 1 con v0.127.3: PASS.** *Aplicar lo ya decidido (2)* sin decisiones menores; aplicado en un
+  mensaje por spec, revisión de lo tocado, una medición y un lote validado (registro de movimientos
+  v1.7, objetivos de ahorro v1.4). Las 7 features con spec, planificables.
+- **Punto 3: sin ejecutar** (pasa a `CU-3.ac (4)`). **Punto 4: no aplicó** (todas las validaciones
+  aprobaron). **Punto 5: PASS con coste alto**: el bloque A se cerró en una vuelta, pero de 20 min.
+- **Balance de la pasada:** 0 preguntas de producto; 3 traslados; **71 min de máquina** en 4 vueltas;
+  25 subagentes. Revisiones de conflictos completas (6, ~25 min) y mediciones con agente (4, ~21 min)
+  fueron dos tercios del tiempo.
+- **Hallazgos del cierre final** (arreglados en v0.128.0, [[D-115]]):
+  - **F1 🔴**: el cierre recomendó *"Decisiones menores (4)"* con cuatro conflictos resueltos. La
+    plantilla del readiness omitía la tabla de `MEDIA` vacía, y el script leyó los informes sueltos
+    sin mirar su estado (uno estancado, con el conflicto abierto bajo su alias).
+  - **F2**: `sdd-model-contracts.py` leía *"lectura: … · escritura: …"* como solo lectura.
+  - **F3**: dos `apply` en paralelo regeneraron el índice a la vez.
+  - Además: dos revisiones *"descubrieron"* choques viejos; el texto de los traslados estaba en jerga
+    de editor; *"Now the closing: run the status script."*; y la actualización no dijo qué podó.
+
+### CU-3.ac (4) — El camino corto de lo que no tiene nada que decidir ([[D-115]]) ⏱ **sin pasada**
+
+**Precondición:** el banco `bank-cu3ac-listo` (final de la pasada 1 de `CU-3.ac (3)`: las 7 features
+con spec, validadas; 5 sugerencias de la validación en registro de movimientos y presupuesto mensual;
+pagos previstos sin spec), con v0.128.0. Antes de empezar, *"Actualiza el SDD del proyecto"*.
+**Mecanismo:** el estado de los conflictos por el informe más reciente; `wf-spec-delta directo`;
+`wf-spec-validate --aprobador --con-conflictos`; `wf-spec-conflict --cambio`;
+`sdd-project-status.py --refresh-readiness`; `aprueba` en las opciones.
+**Qué se mide en cada vuelta:** minutos de máquina, número de subagentes, y si se lanzó una revisión de
+conflictos completa o una medición con agente.
+
+1. **El cierre dice lo que hay.** *"¿Qué me queda en Spec?"*
+   → **Esperado:** las 7 planificables, **ninguna decisión menor**; *Aplicar sugerencias (5)* con
+     *"vuelve a validar registro de movimientos y presupuesto mensual, sin revisar conflictos"* y, en
+     su vista previa, *"quedan validadas a nombre de <tú>"*; nombres con tildes (*"visión general"*).
+   → **FALLO:** cualquier conflicto ya resuelto como pendiente, o un nombre sin tildes.
+2. **Sugerencias por el camino corto.** Eliges *Aplicar sugerencias*.
+   → **Esperado:**
+     - un cambio directo por spec, los dos en un mensaje, y el índice regenerado una vez;
+     - la validación sin preguntarte quién aprueba y sin revisión de conflictos;
+     - `--refresh-readiness` con exit 0, sin agente de medición;
+     - cierre sin *"Rehacer la medición"*.
+     **≤ 10 min**.
+   → **FALLO:** te pregunta el aprobador, lanza revisiones de conflictos o una medición con agente, o
+     el cierre pide rehacer la medición.
+3. **Una respuesta de otra feature va a su dueño** (el punto 3 pendiente de `CU-3.ac (3)`). Pides:
+   *"En registro de movimientos, el gasto que genera una deuda no cuenta para el límite global del
+   mes"*.
+   → **Esperado:**
+     - el análisis marca `Dueño: F-004 (presupuesto mensual)`;
+     - `--owners` lo detecta y el requisito llega también a presupuesto mensual **sin preguntarte**;
+     - se aplican los dos;
+     - se revisan los conflictos completos, porque es un cambio de comportamiento, no una verificación;
+     - se intenta primero la medición incremental.
+     El cierre ofrece *Validar las listas (2)* con tu nombre en la opción; al elegirla, no se te
+     pregunta.
+   → **FALLO:** aplicado solo en registro de movimientos; la revisión lo devuelve como conflicto; o el
+     aprobador se pregunta después de elegir la opción con tu nombre.
+4. **Lo que no sella dice por qué** (si alguna validación no sella).
+   → **Esperado:** *"la validación pide corregir: <qué>"* y la opción *Corregir lo que pidió la
+     validación*, que sigue el camino corto (cambio directo + validación con verificación de
+     conflictos + medición incremental).
+5. **La medición incremental sabe cuándo no basta** (opcional, largo). *Generar pagos previstos*.
+   → **Esperado:** `--refresh-readiness` sale con 2 (*"features nuevas desde la medición"*) y se lanza
+     la medición completa.
+   → **FALLO:** medición incremental con una feature nueva.
+
+**Resultado:** PASS si los puntos 1-3 se cumplen, y la vuelta de sugerencias y la de copiar al dueño
+cuestan menos de la mitad que en `CU-3.ac (3)` (unos 22 min por vuelta) · FALLO si el cierre ofrece
+algo resuelto, o si un cambio sin decisión vuelve a pasar por revisión completa y medición con agente.
+**Desviación → reportar:** issue citando `CU-3.ac`.
 
 ## CU-3.o — Readiness: sin índice, ciclos, scope derivado, sello y alcance del veredicto
 

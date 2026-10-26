@@ -85,11 +85,15 @@ en dos CAs de features diferentes"—, nunca por el nombre de la kb que la defin
      producto: en su lugar va
 
 **Traslado**:
-- **Qué**: [la regla en llano, como la vería el actor — ej: "reservar dinero para un objetivo exige saldo suficiente en la cuenta"]
+- **Qué**: [la regla en llano, como la vería el actor — ej: "reservar dinero para un objetivo exige saldo suficiente en la cuenta". NUNCA la sección que se edita ("en ## Modelos de otras features, separar la fila…"): esto es lo que lee el usuario en la opción *Aplicar lo ya decidido*]
 - **Decidido en**: [F-00X (nombre) — cita del contrato, o la respuesta del usuario: "respuesta a D-006"]
 - **Falta en**: [F-00Y (nombre) — en «Decidido fuera del dueño», el dueño]
 
-     y la lista de pendientes lo aplica sin preguntar al usuario. -->
+     y la lista de pendientes lo aplica sin preguntar al usuario.
+     También es Traslado una corrección SIN comportamiento en disputa (una tabla que no declara lo
+     que sus propios CAs ya hacen): su Qué dice lo que el spec pasará a decir —"objetivos de ahorro
+     dirá que reservar desde una cuenta crea el movimiento"—. Nunca una Decisión de una sola opción:
+     si solo te sale una, es esto (v0.128.0; la lista la trata igual, pero con tu texto). -->
 
 <!-- La Decisión de producto se presenta TAL CUAL al usuario (D-109): la extrae el script de
      pendientes y el hilo principal la copia. Por eso:
@@ -110,6 +114,10 @@ en dos CAs de features diferentes"—, nunca por el nombre de la kb que la defin
        decisión cambia (si reservar pasa a crear un gasto, presupuesto, que suma gastos). Esas
        features esperan a la decisión sin entrar en su bloque. Sin la línea, no espera nadie: no la
        pongas "por si acaso", porque frena a quien no hace falta.
+     - Consecuencias directas (v0.128.0): si elegir una opción abre una pregunta que es su
+       consecuencia inmediata, dila EN la opción con lo que la propia opción implica, o parte la
+       opción en dos. Medido en CU-3.ac: "el saldo puede quedar negativo" se eligió sin decir qué
+       pasa al eliminar una cuenta en negativo, y esa pregunta salió después como otra vuelta.
      - Sin recomendación: es una decisión de producto, no tuya. -->
 
 ---

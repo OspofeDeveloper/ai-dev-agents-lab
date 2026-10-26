@@ -175,6 +175,17 @@ para garantizar que ningún skill se queda sin casos en los cuatro ejes de prueb
 > revisiones fueron ~1 M tokens), medición incremental, el aprobador implícito en la opción de
 > validar y opciones que prevén sus consecuencias directas.
 
+> 🧪 **`CU-3.ac (3)`** (v0.127.1 → v0.127.3): PASS de los puntos 1, 2 y 5, tras dos arreglos en la
+> propia pasada (v0.127.2: las decisiones de conflicto cuentan como decididas; v0.127.3: una decisión
+> de una sola opción se aplica). Cero preguntas de producto, pero **71 min de máquina** para copiar
+> tres decisiones ya tomadas, y un cierre final que recomendaba 4 decisiones ya resueltas. Estado
+> guardado como `bank-cu3ac-listo`. El punto 3 (respuesta con dueño) queda sin ejecutar. →
+> [[D-115]] (v0.128.0): el camino corto para lo que no tiene nada que decidir (cambio directo,
+> verificación de conflictos contra las vecinas en paralelo con la auditoría, medición incremental),
+> el aprobador en la opción, el estado de los conflictos por el informe más reciente y sus alias, y
+> nombres con tildes; escenario **`CU-3.ac (4)`**. Sigue pendiente: el coste en tokens de las
+> auditorías de validación.
+
 > ⏱ **Cuatro escenarios nacen sin pasada del barrido de enlazado lateral de Spec**
 > ([[D-078]]/[[D-079]], 2026-09-14): **CU-9.o** (evolucionar una feature dada de baja se deniega, y
 > el estado sobrevive incluso sin hook), **CU-7.s** (la reactivación es la única vuelta atrás y no

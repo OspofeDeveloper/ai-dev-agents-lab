@@ -961,5 +961,203 @@ class DecididoFueraDelDuenoTest(unittest.TestCase):
                           " ".join(o["label"] for o in data["cierre"]["opciones"]))
 
 
+def informe(filas, cuerpo=""):
+    """Un informe de conflictos con su «Resumen de conflictos»: filas (id, sev, fids, estado)."""
+    t = ["# Conflict Report", "", "## Resumen de conflictos", "",
+         "| ID | Tipo | Severidad | Features involucradas | Estado |",
+         "|----|------|:---------:|-----------------------|--------|"]
+    t += [f"| {i} | Shared models | {sev} | {fids} | {estado} |" for i, sev, fids, estado in filas]
+    return "\n".join(t + ["", "---", "", "## Detalle de conflictos", "", cuerpo, ""]) + "\n"
+
+
+class ConflictosCerradosTest(unittest.TestCase):
+    """v0.128.0: el cierre final de CU-3.ac (3) recomendó «4 decisiones menores» ya resueltas."""
+
+    def _bank(self, tmp, media_rows=None, matrix=""):
+        b = Bank(Path(tmp))
+        b.feature("F-001", "movimientos", estado="VALIDADO")
+        b.feature("F-005", "cuentas", estado="VALIDADO")
+        b.index([("F-001", "movimientos", "features/movimientos/spec/movimientos_spec.md",
+                  "LISTA", "ninguno"),
+                 ("F-005", "cuentas", "features/cuentas/spec/cuentas_spec.md", "LISTA", "ninguno")])
+        b.analysis("respondida")
+        return b
+
+    def _informes(self, b):
+        # El de cuentas es viejo, sin columna de estado, y da por abierto el alias.
+        write(b.spec / "features" / "cuentas" / "spec" / "cuentas_conflict_report.md",
+              "# R\n\n## Resumen de conflictos\n\n| ID | Tipo | Severidad | Features |\n"
+              "|---|---|---|---|\n| CF-F005-04 | Shared | MEDIA | F-005, F-001 |\n")
+        time.sleep(0.01)
+        write(b.spec / "features" / "movimientos" / "spec" / "movimientos_conflict_report.md",
+              informe([("CF-F001-05", "MEDIA", "F-001, F-005", "**Resuelto en esta revisión**"),
+                       ("CF-F001-06", "MEDIA", "F-001, F-004", "Resuelto (revisión anterior)")],
+                      "### `CF-F001-05` (= `CF-F005-04`) — saldo negativo\n"))
+
+    def test_readiness_al_dia_sin_tabla_media_no_tiene_menores(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            b = self._bank(tmp)
+            self._informes(b)
+            time.sleep(0.01)
+            b.readiness()        # sin sección MEDIA: no había ninguno
+            data = b.pending()
+            self.assertTrue(data["readiness_vigente"])
+            self.assertNotIn("conflicto_media", tipos(data))
+
+    def test_sin_readiness_al_dia_los_resueltos_y_sus_alias_no_salen(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            b = self._bank(tmp)
+            b.readiness()
+            time.sleep(0.01)
+            self._informes(b)
+            data = b.pending()
+            self.assertFalse(data["readiness_vigente"])
+            self.assertNotIn("conflicto_media", tipos(data))
+
+    def test_uno_abierto_sigue_saliendo(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            b = self._bank(tmp)
+            b.readiness()
+            time.sleep(0.01)
+            write(b.spec / "features" / "movimientos" / "spec" / "movimientos_conflict_report.md",
+                  informe([("CF-F001-08", "MEDIA", "F-001, F-005", "Abierto")]))
+            self.assertIn("conflicto_media", tipos(b.pending()))
+
+    def test_un_alta_cerrado_despues_del_readiness_no_sale(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            b = self._bank(tmp)
+            b.readiness(alta_rows="| CF-F001-05 | Shared | F-001, F-005 | x | x |")
+            time.sleep(0.01)
+            self._informes(b)
+            self.assertNotIn("conflicto_alta", tipos(b.pending()))
+
+
+class MedicionIncrementalTest(unittest.TestCase):
+    """v0.128.0: --refresh-readiness pone al día la medición sin agente si no hay que arbitrar."""
+
+    def _bank(self, tmp):
+        b = Bank(Path(tmp))
+        b.feature("F-001", "movimientos", estado="VALIDADO")
+        b.feature("F-005", "cuentas", estado="VALIDADO")
+        b.index([("F-001", "movimientos", "features/movimientos/spec/movimientos_spec.md",
+                  "LISTA", "ninguno"),
+                 ("F-005", "cuentas", "features/cuentas/spec/cuentas_spec.md", "BLOQUEADA",
+                  "ninguno")])
+        b.analysis("respondida")
+        b.readiness("| F-001: movimientos | LISTA | 0 | 0 | — |\n"
+                    "| F-005: cuentas | BLOQUEADA | 0 | 1 | conflictos: CF-F005-01 |",
+                    "| CF-F005-01 | Shared | F-001, F-005 | x | x |", media_rows="")
+        time.sleep(0.01)
+        return b
+
+    def _refresh(self, b, *extra):
+        r = run_script("sdd-project-status.py", b.spec, "--refresh-readiness", *extra)
+        return r.returncode, json.loads(r.stdout)
+
+    def test_un_cambio_revisado_que_cierra_su_conflicto(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            b = self._bank(tmp)
+            b.feature("F-005", "cuentas", estado="BORRADOR")      # el cambio
+            time.sleep(0.01)
+            write(b.spec / "features" / "cuentas" / "spec" / "cuentas_conflict_report.md",
+                  informe([("CF-F005-01", "ALTA", "F-001, F-005", "Resuelto en esta revisión")]))
+            self.assertFalse(b.pending()["readiness_vigente"])
+            rc, out = self._refresh(b)
+            self.assertEqual(rc, 0, out)
+            self.assertEqual(out["cerrados"], ["CF-F005-01"])
+            self.assertEqual(out["revisados"], ["F-005"])
+            data = b.pending()
+            self.assertTrue(data["readiness_vigente"])
+            self.assertNotIn("conflicto_alta", tipos(data))
+            self.assertNotIn("readiness", tipos(data))
+            texto = (b.spec / "spec_readiness_report.md").read_text(encoding="utf-8")
+            self.assertIn("| F-005: cuentas | BLOQUEADA | 0 | 0 | pendiente de validación", texto)
+
+    def test_un_conflicto_nuevo_pide_la_medicion_completa(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            b = self._bank(tmp)
+            b.feature("F-005", "cuentas", estado="BORRADOR")
+            time.sleep(0.01)
+            write(b.spec / "features" / "cuentas" / "spec" / "cuentas_conflict_report.md",
+                  informe([("CF-F005-02", "MEDIA", "F-001, F-005", "Nuevo")]))
+            rc, out = self._refresh(b)
+            self.assertEqual(rc, 2)
+            self.assertIn("CF-F005-02", " ".join(out["motivos"]))
+
+    def test_un_cambio_sin_revisar_pide_revisarlo(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            b = self._bank(tmp)
+            b.feature("F-005", "cuentas", estado="BORRADOR")
+            rc, out = self._refresh(b)
+            self.assertEqual(rc, 2)
+            self.assertIn("F-005", " ".join(out["motivos"]))
+            # Si el cambio solo añadió criterios (sugerencias), no hace falta revisión.
+            spec5 = b.spec / "features" / "cuentas" / "spec" / "cuentas_spec.md"
+            rc, out = self._refresh(b, "--solo-criterios", spec5)
+            self.assertEqual(rc, 0, out)
+
+    def test_una_feature_nueva_pide_la_medicion_completa(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            b = self._bank(tmp)
+            b.feature("F-006", "deudas")
+            b.index([("F-001", "movimientos", "features/movimientos/spec/movimientos_spec.md",
+                      "LISTA", "ninguno"),
+                     ("F-005", "cuentas", "features/cuentas/spec/cuentas_spec.md", "LISTA",
+                      "ninguno"),
+                     ("F-006", "deudas", "features/deudas/spec/deudas_spec.md", "BLOQUEADA",
+                      "ninguno")])
+            rc, out = self._refresh(b)
+            self.assertEqual(rc, 2)
+            self.assertIn("F-006", " ".join(out["motivos"]))
+
+
+class CierreConAprobadorTest(unittest.TestCase):
+    """v0.128.0: quién aprueba va en la opción, y los nombres salen con sus tildes."""
+
+    def _bank(self, tmp):
+        b = Bank(Path(tmp))
+        b.feature("F-001", "vision-general")
+        sp = b.spec / "features" / "vision-general" / "spec" / "vision-general_spec.md"
+        sp.write_text(sp.read_text(encoding="utf-8").replace("# Spec: F-001",
+                                                             "# Spec: Visión General"),
+                      encoding="utf-8")
+        b.feature("F-002", "cuentas", estado="VALIDADO")
+        b.index([("F-001", "vision-general",
+                  "features/vision-general/spec/vision-general_spec.md", "BLOQUEADA", "ninguno"),
+                 ("F-002", "cuentas", "features/cuentas/spec/cuentas_spec.md", "LISTA",
+                  "ninguno")])
+        b.analysis("respondida")
+        time.sleep(0.01)
+        b.readiness("| F-001: vision-general | BLOQUEADA | 0 | 0 | pendiente de validación |\n"
+                    "| F-002: cuentas | LISTA | 0 | 0 | — |", media_rows="")
+        return b
+
+    def _pending(self, b, nombre):
+        gitcfg = b.root / "gitconfig"
+        gitcfg.write_text(f"[user]\n\tname = {nombre}\n" if nombre else "", encoding="utf-8")
+        r = run_script("sdd-project-status.py", b.spec, "--spec-pending", "--json",
+                       env={"GIT_CONFIG_GLOBAL": gitcfg, "GIT_CONFIG_NOSYSTEM": "1",
+                            "HOME": b.root})
+        return json.loads(r.stdout)
+
+    def test_la_opcion_de_validar_lleva_el_aprobador(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            b = self._bank(tmp)
+            data = self._pending(b, "Ana Pérez")
+            val = next(o for o in data["cierre"]["opciones"] if o["accion"] == "validar")
+            self.assertEqual(val["aprueba"], "Ana Pérez")
+            self.assertIn("a nombre de Ana Pérez", val["preview"])
+            self.assertNotIn("quién aprueba", val["preview"])
+            self.assertIn("visión general (F-001)", data["cierre"]["pregunta"])
+
+    def test_sin_nombre_en_git_se_pregunta(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            b = self._bank(tmp)
+            val = next(o for o in self._pending(b, "")["cierre"]["opciones"]
+                       if o["accion"] == "validar")
+            self.assertEqual(val["aprueba"], "")
+            self.assertIn("quién aprueba", val["preview"])
+
+
 if __name__ == "__main__":
     unittest.main()

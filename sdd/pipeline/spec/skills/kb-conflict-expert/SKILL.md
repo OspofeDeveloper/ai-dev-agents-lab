@@ -141,6 +141,11 @@ opción que fija las dos cosas nombra a los dos dueños en su *Cambia:*. Medido 
 `CU-3.ac`: la opción *"el saldo puede quedar negativo con un gasto"* nombraba solo a cuentas; el
 contrato de Movimiento, que es quien registra ese gasto, no la recibió, y volvió como conflicto.
 
+**Cada opción anticipa su consecuencia directa (v0.128.0).** Si elegirla abre una pregunta inmediata
+—permitir saldo negativo abre *"¿se puede eliminar una cuenta en negativo?"*—, la opción la responde
+(*"…; una cuenta en negativo no se puede eliminar hasta volver a cero"*) o se parte en dos opciones.
+Si no, la respuesta del usuario vuelve como pregunta en el análisis del cambio: otra vuelta entera.
+
 **Lo que decide el usuario se escribe en sus palabras** (v0.127.1). *Qué hay que decidir*, cada
 opción y el *Qué* de un traslado se copian literales como requisito y acaban **dentro de los
 specs**: sin términos internos —ni *"gasto sintético"*, ni *"par enlazado"*, ni *"origen externo"*,

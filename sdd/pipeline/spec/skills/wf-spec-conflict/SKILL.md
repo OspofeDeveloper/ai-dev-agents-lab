@@ -2,7 +2,7 @@
 name: wf-spec-conflict
 description: "Detecta conflictos entre Specs SDD de un mismo proyecto: HUs duplicadas, CAs contradictorios, scope overlap, shared models inconsistentes."
 when_to_use: "Activa en frases como 'verifica conflictos entre specs', 'hay conflictos entre features', 'comprueba si este spec choca con los existentes', 'detecta inconsistencias entre specs'."
-argument-hint: "<feature_spec.md> --features-dir <path/features/>"
+argument-hint: "<feature_spec.md> --features-dir <path/features/> [--cambio <delta_analysis.md>]"
 effort: high
 allowed-tools: [Read, Bash]
 context: fork
@@ -25,6 +25,35 @@ Extrae de `$ARGUMENTS`:
 - **Directorio de features**: el argumento después de `--features-dir`
 
 Si no hay `--features-dir`, intenta inferir el directorio de features como `features/` relativo al directorio del spec objetivo.
+
+- **Análisis del cambio** (opcional): el argumento después de `--cambio`. Si está, trabajas en
+  **modo verificación** (abajo) en vez de revisar el spec entero.
+
+### Modo verificación de un cambio (v0.128.0)
+
+Tras un cambio que **no añade historias ni alcance** —copiar algo ya decidido, corregir lo que pidió
+la validación, aplicar una sugerencia—, revisar el spec entero contra todos los demás es caro y no
+determinista: en la pasada 1 de `CU-3.ac (3)` cada revisión completa costó 4-8 minutos y 6-10 M de
+tokens leídos, para verificar un cambio de una o dos frases, y dos de ellas *"descubrieron"* choques
+viejos que la anterior no había visto (cada uno, otra vuelta). En este modo:
+
+1. **Lees el análisis del cambio** (`--cambio`): qué reglas, CAs o filas cambian y qué conflicto
+   decía cerrar (su *Requisito de origen*).
+2. **Lees tu informe anterior** (el `_conflict_report.md` junto al spec). Es tu punto de partida.
+3. **Las features con las que comparar** son las que comparten un modelo con lo que cambió:
+   `python3 .sdd/scripts/sdd-model-contracts.py <raíz_spec> --vecinas <F-del-spec> --json`, más las
+   que nombra el conflicto que se cierra. De esas lees **lo que toca lo cambiado** —el contrato o la
+   fila del modelo, los CAs que lo usan—, no el spec entero.
+4. **Cada conflicto del informe anterior**: si el cambio lo resolvía, compruebas que queda cerrado
+   (o que no, y por qué) y lo marcas *Resuelto en esta revisión*; los demás **se copian tal cual**,
+   con su estado, sin volver a revisarlos. No es una revisión nueva del spec: un choque que el
+   informe anterior no vio no es asunto de este modo.
+5. **Conflictos nuevos**: solo los que crea **el texto cambiado** contra esas vecinas.
+6. El informe sigue la plantilla de siempre, con `Conjunto comparado` igual al anterior y una línea
+   **Modo**: *verificación del cambio vX → vY (comparado con: F-…)*.
+
+Si el análisis del cambio **añade o quita historias, CAs nuevos con comportamiento nuevo o alcance**,
+no es un cambio para este modo: revísalo entero (lo dices en el informe y sigues los pasos normales).
 
 Si no hay argumento, informa al usuario:
 > "Necesito el spec de la feature y el directorio donde viven las demás, para poder compararlos."

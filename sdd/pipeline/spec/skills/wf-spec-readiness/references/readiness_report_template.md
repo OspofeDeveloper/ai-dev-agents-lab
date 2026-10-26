@@ -79,7 +79,9 @@
 
 ## Conflictos ALTA no resueltos
 
-<!-- Omitir esta seccion completa si no hay _conflict_report.md o no hay conflictos ALTA -->
+<!-- Esta sección se escribe SIEMPRE, aunque no haya conflictos ALTA: entonces, sin tabla, una línea
+     «Ninguno.» (v0.128.0). Omitirla hacía que la lista de pendientes no supiera si el readiness no
+     tiene ALTA o es de un formato anterior. -->
 
 > Los siguientes conflictos de severidad ALTA deben resolverse antes de planificar las features afectadas.
 
@@ -95,7 +97,9 @@
 
 ## Conflictos MEDIA abiertos
 
-<!-- Omitir si no hay. Mismas columnas y misma regla que la tabla ALTA: solo los que TU
+<!-- Se escribe SIEMPRE: sin MEDIA abiertos, una línea «Ninguno.» en vez de la tabla (v0.128.0; el
+     cierre final de CU-3.ac (3) leyó la ausencia como un readiness antiguo y recomendó «4 decisiones
+     menores» ya resueltas). Mismas columnas y misma regla que la tabla ALTA: solo los que TU
      arbitraje mantiene; uno que descartas no va aquí (D-102). La lista de pendientes de la fase
      lee esta tabla, no los informes sueltos, que se contradicen por diseño.
      La «Descripcion breve» de un MEDIA la lee el usuario como la decisión que le queda (v0.126.1)

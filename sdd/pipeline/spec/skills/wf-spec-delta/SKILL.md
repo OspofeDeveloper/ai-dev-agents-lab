@@ -2,7 +2,7 @@
 name: wf-spec-delta
 description: "Evoluciona un Spec de feature de forma incremental. Modo 'analyze' genera un informe delta con HUs y CAs anadidos, modificados y eliminados; modo 'apply' integra los cambios validados en el spec."
 when_to_use: "Activa en frases como 'quiero anadir funcionalidad al spec', 'actualiza el spec con estos requisitos nuevos', 'evoluciona el spec con este cambio', 'genera el delta del spec'. No activa para completar HUs [INCOMPLETO] desde un _analysis.md (usa wf-spec-gap-resolve)."
-argument-hint: "analyze <spec.md> --new-reqs <desc.md> | apply <spec.md> <delta.md> [--allow-open-critical-gaps]"
+argument-hint: "analyze <spec.md> --new-reqs <desc.md> | apply <spec.md> <delta.md> [--allow-open-critical-gaps] | directo <spec.md> --new-reqs <desc.md> [--sin-indice]"
 effort: high
 allowed-tools: [Bash, Agent, AskUserQuestion]
 user-invocable: true
@@ -37,7 +37,12 @@ la extiende. Los cambios son mínimos y quirúrgicos.
 ## Paso 1: Parsear argumentos
 
 Extrae de `$ARGUMENTS`:
-- **Modo**: la primera palabra (`analyze` o `apply`)
+- **Modo**: la primera palabra (`analyze`, `apply` o `directo`)
+- En modo `directo` (v0.128.0): como `analyze`, spec y `--new-reqs`. Ver «Submodo DIRECTO».
+- **`--sin-indice`** (opcional, `apply` y `directo`): el escritor no regenera `_features.md`, porque
+  hay otros cambios en paralelo y lo regenera main **una vez** al final (v0.128.0). Medido en la
+  pasada 1 de `CU-3.ac (3)`: dos `apply` en paralelo lo regeneraron a la vez y main tuvo que
+  regenerarlo otra vez para asegurarse de que el resultado era el bueno.
 - En modo `analyze`:
   - **Path del spec existente**: el argumento después del modo, hasta `--new-reqs`
   - **Path de nuevos requisitos**: el argumento después de `--new-reqs`
@@ -112,6 +117,32 @@ decisión cambió, lo que toca primero es reactivarla.
 
 La valoración de si el contenido es utilizable **no la haces tú**: la hace tu delegado, que es quien
 lo lee con las `kb-*` en contexto.
+
+---
+
+## Submodo DIRECTO (v0.128.0)
+
+Para un cambio **sin nada que decidir**: copiar algo ya decidido (*Aplicar lo ya decidido*), corregir
+lo que pidió la validación, o aplicar una sugerencia de la validación. El requisito es texto literal
+que ya pasó por el usuario o por un auditor, y no puede abrir preguntas de producto. Analizar y
+aplicar por separado costaba dos agentes y unos 4-5 minutos por spec (pasada 1 de `CU-3.ac (3)`),
+y el análisis siempre volvía *"sin nada que decidir"*.
+
+Un solo delegado hace las dos cosas. Delega con la tool `Agent`, `subagent_type: "sdd-spec-writer"`
+y **`run_in_background: false`**, con el mismo encargo del Paso 3A y, a continuación, el del
+Paso 4B, encabezados por:
+
+```
+Modo: spec-delta-directo
+1. Haz el análisis como en spec-delta-analyze y escribe su informe.
+2. Si el informe sale DELTA_PURO y sin ningún gap [D-XXX] ni Dueño de otra feature, integra a
+   continuación como en spec-delta-apply (desellar, versión, changelog, índice salvo --sin-indice)
+   y dilo. Si no, PARA tras el análisis y di qué lo impide: no apliques nada.
+```
+
+Después: si el delegado **paró**, sigue en el Paso 4A con su informe, como un `analyze`. Si
+**integró**, comprueba como en el Paso 5B (y `sdd-analysis-gaps.py <informe> --check` da `NO_GAPS`).
+No uses este modo para un requisito que añade comportamiento: ahí las preguntas son del usuario.
 
 ---
 
@@ -279,7 +310,7 @@ INSTRUCCION:
 3. Incrementa la version en el header del spec (1.0 → 1.1, 1.2 → 1.3, 2.0 → 2.1) y anade o actualiza
    `## Changelog` al final (orden cronologico inverso) con la plantilla. Si aplicaste asunciones
    `[INFORMATIVO]`, anade ademas `## Asunciones Aplicadas (v[X.Y])` antes del Changelog.
-4. **Regenera `_features.md` si existe.** Es un indice **generado**: no se edita a mano y ningun
+4. **Regenera `_features.md` si existe** (salvo `--sin-indice`: entonces lo regenera main al final). Es un indice **generado**: no se edita a mano y ningun
    workflow lo compone escribiendo texto (por que y quien regenera que: `kb-decompose-expert`,
    "Reparto de SSoT", [[D-069]]). Desde la raiz del proyecto (el directorio que contiene `.sdd/`):
    `python3 .sdd/scripts/sdd-features-index.py <raiz_spec>`

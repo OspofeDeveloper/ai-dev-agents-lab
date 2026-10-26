@@ -79,7 +79,7 @@ Anota `> **Enmienda pendiente:** CA-XXX (E-00X, fecha)` tras `Estado:` del plan
 
 ## Funciones puras — no escriben
 
-### `sdd-model-contracts.py` · `<raíz_spec> [--json]`
+### `sdd-model-contracts.py` · `<raíz_spec> [--json]` · `<raíz_spec> --vecinas F-…[,F-…] [--json]`
 El lint de arquitectura de las specs ([[D-111]]): cada regla de un modelo compartido tiene un dueño.
 Comprueba que la feature dueña publica el **contrato** de su modelo (`## Contrato de modelos
 compartidos`) y que su catálogo de **orígenes externos** recoge a cada feature que crea o cambia el
@@ -87,7 +87,10 @@ modelo; que las **peticiones al dueño** (`R-NNN`, en `## Modelos de otras featu
 —el dueño las cita en su catálogo—; y avisa de los modelos que un consumidor usa sin que el índice lo
 declare. Un spec sin ninguna de las dos secciones es anterior a los contratos y queda exento. Si un uso
 es de lectura o de escritura lo dice la columna `Uso`; en specs sin ella, se deduce de la redacción. Lo usan
-`sdd-seal.py` (condición 10) y `sdd-project-status.py --spec-pending` (tipo `peticion`).
+`sdd-seal.py` (condición 10) y `sdd-project-status.py --spec-pending` (tipo `peticion`). Una celda
+que declara lectura **y** escritura cuenta como escritura (v0.128.0). Con `--vecinas`, las features
+con spec que comparten algún modelo con las dadas (dueña o consumidora): es el alcance de la
+**verificación de conflictos** de un cambio sin decisión (v0.128.0).
 
 - **Exit:** `0` sin nada que bloquee · `2` con contratos, catálogos o peticiones pendientes · `1` uso.
 
@@ -123,8 +126,20 @@ matriz estancada — avisa en stderr y deriva el estado de los marcadores).
 
 - **Exit:** `0` OK · `1` error IO · `2` (`--check`) desactualizado en disco.
 
-### `sdd-project-status.py` · `<dir> [--output F]` · `<dir> --spec-pending [--json]`
+### `sdd-project-status.py` · `<dir> [--output F]` · `<dir> --spec-pending [--json]` · `<dir> --refresh-readiness [--solo-criterios <spec.md>…]`
 Informe PM read-only: agrega el estado real de las features escaneando disco.
+
+Con `--refresh-readiness` (v0.128.0), la **medición incremental**: pone al día el informe de readiness
+sin rehacerlo cuando no hay nada que arbitrar —ninguna feature nueva, cada spec cambiado con su
+revisión de conflictos posterior (o declarado en `--solo-criterios`) y ningún conflicto abierto que
+el readiness no tuviera—. Escribe una sección `## Actualización incremental` con los conflictos
+cerrados y los specs revisados, y reescribe las filas de la matriz que solo esperaban a esos
+conflictos. Exit `0` puesto al día · `2` hace falta la medición completa (los `motivos` dicen por qué).
+El estado de cada conflicto lo da el informe más reciente que lo lista, también por sus alias
+(`` `CF-A` (= `CF-B`) ``): un readiness al día sin tabla de `MEDIA` no tiene ninguno, y los informes
+sueltos ya no dan por abierto lo que uno más nuevo cerró. Las opciones del cierre que acaban
+validando llevan `aprueba` (el `user.name` de git), y los nombres de las features salen del título
+de su spec, con tildes.
 
 Con `--spec-pending`, los **pendientes de la fase Spec** en orden fijo —readiness desactualizado,
 gaps críticos, respuestas reabiertas, conflictos `ALTA`, ciclos, alcance derivado, specs sin validar,

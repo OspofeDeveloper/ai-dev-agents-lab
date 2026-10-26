@@ -669,6 +669,8 @@ def spec_pending(directory: Path, lote: list | None = None) -> dict:
         if any(r.stat().st_mtime > rts for r in reports):
             motivos.append("hay informes de conflictos más nuevos que él")
     readiness_vigente = bool(readiness) and not motivos
+    estado_cf = _estado_conflictos(directory)
+    cerrados_inc = _cerrados_incrementales(rtext)
     if motivos:
         cv = sorted(conflictos_viejos, key=fid_sort_key)
         add("readiness", sorted(specs, key=fid_sort_key),
@@ -767,6 +769,9 @@ def spec_pending(directory: Path, lote: list | None = None) -> dict:
     if rtext:
         filas_alta = _table_rows(rtext, "Conflictos ALTA no resueltos")
         for row in _sin_repetidos(filas_alta):
+            if (_cerrado_despues(estado_cf, row[0], readiness.stat().st_mtime)
+                    or set(CF_ID_RE.findall(row[0])) & cerrados_inc):
+                continue
             fids = sorted(set(FID_RE.findall(" ".join(row[1:3]))), key=fid_sort_key)
             desc = row[3] if len(row) > 3 else ""
             if _add_traslado(add, directory, row[0], label):
@@ -880,8 +885,17 @@ def spec_pending(directory: Path, lote: list | None = None) -> dict:
     # ── 7. Conflictos MEDIA: los que el readiness mantiene tras arbitrar ──
     # De su tabla «Conflictos MEDIA abiertos». Un readiness de antes de D-102 no la trae:
     # entonces se cae a los informes sueltos y se dice que no están arbitrados.
-    if rtext and re.search(r"^##\s+Conflictos MEDIA abiertos", rtext, re.MULTILINE):
+    # Sin la tabla, un readiness al día no tiene MEDIA que arbitrar: su plantilla omitía la
+    # sección cuando no había ninguno, y el cierre final de CU-3.ac (3) leyó entonces los
+    # informes sueltos y recomendó «4 decisiones menores» ya resueltas (v0.128.0).
+    if rtext and (readiness_vigente
+                  and not re.search(r"^##\s+Conflictos MEDIA abiertos", rtext, re.MULTILINE)):
+        pass
+    elif rtext and re.search(r"^##\s+Conflictos MEDIA abiertos", rtext, re.MULTILINE):
         for row in _sin_repetidos(_table_rows(rtext, "Conflictos MEDIA abiertos")):
+            if (_cerrado_despues(estado_cf, row[0], readiness.stat().st_mtime)
+                    or set(CF_ID_RE.findall(row[0])) & cerrados_inc):
+                continue
             fids = sorted(set(FID_RE.findall(" ".join(row[1:3]))), key=fid_sort_key)
             desc = row[3] if len(row) > 3 else ""
             if _add_traslado(add, directory, row[0], label):
@@ -895,10 +909,16 @@ def spec_pending(directory: Path, lote: list | None = None) -> dict:
                 descripcion=desc)
     else:
         vistos = set()
+        raiz = estado_cf["__raiz__"]
         for rep in sorted(directory.glob("features/*/spec/*_conflict_report.md")):
             for row in _table_rows(read_text(rep), "Resumen de conflictos"):
                 if len(row) >= 4 and row[2].upper().startswith("MEDIA") and row[0] not in vistos:
                     vistos.add(row[0])
+                    # El informe más reciente manda, también por alias.
+                    if not estado_cf.get(row[0], (True, 0))[0]:
+                        continue
+                    if raiz(row[0]) in {raiz(v) for v in vistos - {row[0]}}:
+                        continue
                     fids = sorted(set(FID_RE.findall(row[3])), key=fid_sort_key)
                     add("conflicto_media", fids,
                         f"Conflicto {row[0]} (media) según el informe de {rep.parent.parent.name}, "
@@ -970,7 +990,9 @@ def spec_pending(directory: Path, lote: list | None = None) -> dict:
     criticas = [{"gap": i["gap"], "features": i["features"], "titulo": i.get("titulo", ""),
                  "fichero": i.get("fichero", "")} for i in items if i["tipo"] == "gap_critico"]
     no_declaradas = cdata["no_declaradas"] if cdata else []
-    mapa = _mapa(items, specs, label, cdata, readiness_vigente, lote)
+    mapa = _mapa(items, specs, label, cdata, readiness_vigente, lote,
+                 titulos={f: _titulo(sp) for f, sp in specs.items()},
+                 aprobador=_aprobador(directory))
     return {"total": len(items), "bloqueantes": bloq, "resumen": resumen,
             "dependencias_no_declaradas": no_declaradas, **mapa,
             "readiness_vigente": readiness_vigente, "items": items, "grupos": grupos,
@@ -982,8 +1004,29 @@ def spec_pending(directory: Path, lote: list | None = None) -> dict:
 NO_DECISION = ("readiness", "validar", "generar", "corregir")
 
 
+def _titulo(spec_path: Path) -> str:
+    """El nombre de la feature como lo escribe su spec («# Spec: Visión General»), con sus
+    tildes: el slug del índice («vision-general») salía en todos los cierres sin ellas."""
+    m = re.search(r"^#\s+Spec:\s*(.+?)\s*$", read_text(spec_path), re.MULTILINE)
+    if not m or FID_RE.fullmatch(m.group(1).strip()):
+        return ""
+    return " ".join(w if (w.isupper() and len(w) > 1) else w.lower() for w in m.group(1).split())
+
+
+def _aprobador(directory: Path) -> str:
+    """Quién aprobará lo que se valide desde el mapa: el `user.name` de git (D-027)."""
+    import subprocess
+    try:
+        r = subprocess.run(["git", "config", "user.name"], cwd=directory, capture_output=True,
+                           text=True, timeout=5)
+        return r.stdout.strip()
+    except (OSError, subprocess.SubprocessError):
+        return ""
+
+
 def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
-          readiness_vigente: bool, lote: list | None = None) -> dict:
+          readiness_vigente: bool, lote: list | None = None, titulos: dict | None = None,
+          aprobador: str = "") -> dict:
     """Qué se puede planificar ya y qué bloques de decisiones faltan para el resto (D-112).
 
     La lista plana decía «para poder planificar falta: …» del proyecto entero, y una feature
@@ -1058,9 +1101,13 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
         por_feature[f] = {"estado_plan": estado, "pendientes": propios[f], "espera": espera[f],
                           "lectora": f in lectoras}
 
+    titulos = titulos or {}
+
     def nombre(f):
         # «presupuesto mensual (F-004)», no «F-004 (presupuesto-mensual)»: el usuario
         # reconoce la feature por su nombre; el ID va detrás, para quien lo busque.
+        if titulos.get(f):
+            return f"{titulos[f]} ({f})"
         m = re.match(r"(F-[\w-]+?) \((.+)\)$", label.get(f, f))
         return f"{m.group(2).replace('-', ' ')} ({m.group(1)})" if m else label.get(f, f)
 
@@ -1068,6 +1115,8 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
         return _y([nombre(f) for f in fs])
 
     def corto(f):
+        if titulos.get(f):
+            return titulos[f]
         m = re.match(r"F-[\w-]+? \((.+)\)$", label.get(f, f))
         return m.group(1).replace("-", " ") if m else f
 
@@ -1169,9 +1218,8 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
                        key=fid_sort_key)
         uno = len(menores) == 1
         lineas.append(f"Sin frenar nada, {'queda' if uno else 'quedan'} "
-                      f"{_n(len(menores), 'decisión menor', 'decisiones menores')} "
-                      f"({'un hueco que ningún spec cubre' if uno else 'huecos que ningún spec cubre'}"
-                      f"), en {_y([corto(f) for f in tocan])}. "
+                      f"{_n(len(menores), 'decisión menor', 'decisiones menores')}, "
+                      f"en {_y([corto(f) for f in tocan])}. "
                       + ("Puedes tomarla ahora o más adelante; si cambia una feature ya validada, "
                          if uno else "Puedes tomarlas ahora o más adelante; si una cambia una "
                          "feature ya validada, ")
@@ -1181,8 +1229,10 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
         lineas.append("")
         lineas.append(f"La validación dejó {_n(len(sugerencias), 'sugerencia', 'sugerencias')} "
                       f"en {_y([corto(f) for f in fs])}: "
-                      + ("no frena nada, pero conviene verla." if len(sugerencias) == 1
-                         else "no frenan nada, pero conviene verlas."))
+                      + ("no frena nada. Aplicarla" if len(sugerencias) == 1
+                         else "no frenan nada. Aplicarlas")
+                      + f" vuelve a validar {_y([corto(f) for f in fs])}, sin revisar "
+                      "conflictos: son criterios que prueban reglas ya escritas.")
     if sin_spec:
         lineas.append("")
         lineas.append(f"Sin spec todavía: {nombres(sin_spec)}. No frena a las demás; se genera "
@@ -1191,6 +1241,13 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
     # Las opciones del cierre, en orden y con su preview: caben 4, y la última es siempre
     # «Lo dejo para luego». Lo que no cabe se dice en la pregunta, para pedirlo con palabras.
     cand = []
+    # Quién aprueba va en la opción (v0.128.0): elegir validar con el nombre delante es
+    # aprobar lo que pase la auditoría, y no se pregunta después en cada lote. Sin nombre
+    # de git, se pregunta como antes.
+    sella = ([f"Si pasan la auditoría, quedan validadas a nombre de {aprobador}; si algo "
+              "bloquea, se quedan en borrador y te digo qué."] if aprobador else
+             ["Se te pregunta una vez quién aprueba. Las que pasen quedan listas para "
+              "planificar."])
     if not readiness_vigente:
         prev = []
         tocados = (medir or {}).get("tocados") or []
@@ -1211,13 +1268,14 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
                      "preview": "\n".join(prev), "accion": "readiness"})
     if validar:
         cand.append({"label": f"Validar las listas ({len(validar)})",
-                     "description": "Las sellas y ya se pueden planificar, aunque el resto "
-                                    "siga abierto.",
+                     "description": (f"Se validan a nombre de {aprobador} si pasan la "
+                                     "auditoría, y ya se pueden planificar."
+                                     if aprobador else "Las sellas y ya se pueden planificar, "
+                                     "aunque el resto siga abierto."),
                      "preview": "\n".join(["Se valida:" if len(validar) == 1 else "Se validan juntas:", ""]
                                           + [f"- {nombre(f)}" for f in validar]
-                                          + ["", "Se te pregunta una vez quién aprueba. Las que "
-                                             "pasen quedan listas para planificar."]),
-                     "accion": "validar"})
+                                          + [""] + sella),
+                     "accion": "validar", "aprueba": aprobador})
     if corregir:
         prev = ["Lo que pidió corregir la validación (no se te pregunta nada):", ""]
         k = 0
@@ -1225,11 +1283,10 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
             for h in it["hallazgos"]:
                 k += 1
                 prev += [f"{k}. {nombre(it['features'][0])}: {h}"]
-        prev += ["", "Se corrige cada spec, se revisan sus conflictos, se mide y se vuelve",
-                 "a validar. Si pasa, queda lista para planificar."]
+        prev += ["", "Se corrige cada spec, se comprueba que no choca con nada y se valida."] + sella
         cand.append({"label": f"Corregir lo que pidió la validación ({len(corregir)})",
                      "description": "Arreglos sin decisiones nuevas; después se valida otra vez.",
-                     "preview": "\n".join(prev), "accion": "corregir"})
+                     "preview": "\n".join(prev), "accion": "corregir", "aprueba": aprobador})
     if traslados:
         prev = ["Ya decidido, falta copiarlo (no se te pregunta nada):", ""]
         for k, it in enumerate(traslados, 1):
@@ -1238,10 +1295,11 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
                      "   Falta en: " + _y([nombre(f) for f in tr["falta_en"]])
                      + ("; decidido en " + _y([nombre(f) for f in tr["decidido_en"]])
                         if tr["decidido_en"] else "")]
-        prev += ["", "Se aplican juntos, se revisan los conflictos de lo tocado y se validan."]
+        prev += ["", "Se copian juntos, se comprueba que cierran lo que tenían que cerrar y se",
+                 "validan."] + sella
         cand.append({"label": f"Aplicar lo ya decidido ({len(traslados)})",
                      "description": "Copia decisiones que ya tomaste a las features donde faltan.",
-                     "preview": "\n".join(prev), "accion": "trasladar"})
+                     "preview": "\n".join(prev), "accion": "trasladar", "aprueba": aprobador})
     for b in bloques:
         n = len(b["decisiones"])
         cand.append({"label": f"Bloque {b['bloque']} — " + _y([corto(f) for f in b["features"]][:2])
@@ -1261,10 +1319,11 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
         prev = ["Sugerencias de la validación (no frenan nada):", ""]
         for k, it in enumerate(sugerencias, 1):
             prev += [f"{k}. {nombre(it['features'][0])}: {it['que']}"]
-        prev += ["", "Al aplicarlas, esas features vuelven a validarse."]
+        prev += ["", "Se aplican, se auditan y se validan, sin revisar conflictos: son criterios",
+                 "que prueban reglas ya escritas."] + sella
         cand.append({"label": f"Aplicar sugerencias ({len(sugerencias)})",
                      "description": "Pequeños arreglos que vio la validación.",
-                     "preview": "\n".join(prev), "accion": "sugerencias"})
+                     "preview": "\n".join(prev), "accion": "sugerencias", "aprueba": aprobador})
     if sin_spec:
         cand.append({"label": "Generar " + _y([corto(f) for f in sin_spec][:2])
                               + ("…" if len(sin_spec) > 2 else ""),
@@ -1366,6 +1425,62 @@ def _desglose(items: list) -> list:
     return [texto[t](n) for t, n in cuenta.items()]
 
 
+CF_ID_RE = re.compile(r"\bCF-[\w]+(?:-[\w]+)*?-\d+\b")
+ALIAS_RE = re.compile(r"`?(CF-[\w]+(?:-[\w]+)*?-\d+)`?\s*\(?\s*=\s*`?(CF-[\w]+(?:-[\w]+)*?-\d+)`?")
+CERRADO_RE = re.compile(r"resuelt|cerrad|descartad", re.IGNORECASE)
+
+
+def _conflict_reports(directory: Path) -> list[Path]:
+    return sorted(list(directory.glob("features/*/spec/*_conflict_report.md"))
+                  + list(directory.glob("*_conflict_report.md")),
+                  key=lambda p: p.stat().st_mtime)
+
+
+def _estado_conflictos(directory: Path) -> dict:
+    """ID de conflicto -> (abierto, mtime del informe que lo dice), con sus alias.
+
+    Manda el informe más reciente que lo lista en su «Resumen de conflictos»: dos informes
+    se contradicen por diseño (cada uno ve el choque desde su feature), y uno viejo sigue
+    dándolo por abierto cuando el nuevo ya lo cerró. Los alias («`CF-F001-05` (= `CF-F005-04`)»)
+    son el mismo conflicto: cerrar uno cierra el otro. CU-3.ac (3): el cierre final daba
+    por abiertos cuatro conflictos resueltos, uno de ellos solo por su alias en un informe
+    estancado.
+    """
+    padre = {}
+
+    def raiz(x):
+        while padre.setdefault(x, x) != x:
+            x = padre[x]
+        return x
+
+    reports = _conflict_reports(directory)
+    for rep in reports:
+        for a, b in ALIAS_RE.findall(read_text(rep)):
+            padre[raiz(a)] = raiz(b)
+    estado = {}
+    for rep in reports:      # del más viejo al más nuevo: el último que lo diga, manda
+        mt = rep.stat().st_mtime
+        for row in _table_rows(read_text(rep), "Resumen de conflictos"):
+            ids = CF_ID_RE.findall(row[0])
+            if not ids:
+                continue
+            # Sin columna Estado (informes anteriores) se da por abierto.
+            abierto = not (len(row) >= 5 and CERRADO_RE.search(row[-1]))
+            for cid in ids:
+                estado[raiz(cid)] = (abierto, mt)
+    return {cid: estado[raiz(cid)] for cid in set(padre) | set(estado)
+            if raiz(cid) in estado} | {"__raiz__": raiz}
+
+
+def _cerrado_despues(estado: dict, conflict_id: str, desde: float) -> bool:
+    """Si algún informe posterior a `desde` da el conflicto (o un alias suyo) por cerrado."""
+    for cid in CF_ID_RE.findall(conflict_id) or [conflict_id]:
+        e = estado.get(cid) or estado.get(estado["__raiz__"](cid))
+        if e and not e[0] and e[1] > desde:
+            return True
+    return False
+
+
 def _sin_repetidos(rows: list[list[str]]) -> list[list[str]]:
     """Quita las filas que el propio readiness da por el mismo hallazgo que otra.
 
@@ -1428,8 +1543,123 @@ def render_pending(data: dict) -> str:
     return "\n".join(out) + "\n"
 
 
+INCREMENTAL_TITLE = "Actualización incremental"
+SIN_VALIDAR_TXT = "pendiente de validación (el spec sigue en BORRADOR)"
+
+
+def _cerrados_incrementales(rtext: str) -> set:
+    """Los conflictos que una actualización incremental del readiness dio por cerrados."""
+    m = re.search(r"^\s*[-*]\s*\*\*Cerrados\*\*\s*:\s*(.*)$", section(rtext, INCREMENTAL_TITLE),
+                  re.MULTILINE)
+    return set(CF_ID_RE.findall(m.group(1))) if m else set()
+
+
+def refresh_readiness(directory: Path, solo_criterios: list | None = None) -> dict:
+    """Pone al día el readiness sin rehacerlo, cuando no hay nada que arbitrar (v0.128.0).
+
+    Rehacerlo con un agente costaba 3-6 minutos por vuelta, y tras copiar algo ya decidido
+    solo decía «el conflicto queda cerrado» (pasada 1 de CU-3.ac (3): 4 mediciones, 21 min).
+    Se puede sin agente si: no hay features nuevas; cada spec cambiado tiene un informe de
+    conflictos posterior (o el cambio solo añadió criterios: `solo_criterios`); y ningún
+    informe posterior abre un conflicto que el readiness no tenga ya. Entonces lo que cambia
+    es mecánico: qué conflictos se cerraron y las filas de la matriz que solo esperaban a
+    ellos. Si algo de eso falla, `ok` es False y los `motivos` dicen por qué: hace falta la
+    medición completa.
+    """
+    solo = {Path(x).resolve() for x in (solo_criterios or [])}
+    readiness = first(directory, "*_readiness_report.md")
+    if not readiness:
+        return {"ok": False, "motivos": ["no hay informe de readiness"]}
+    rtext = read_text(readiness)
+    rts = readiness.stat().st_mtime
+    features_md_path = first(directory, "*_features.md")
+    idx = _index_blocks(read_text(features_md_path) if features_md_path else "")
+    specs = {f: (directory / m["ruta"]).resolve() for f, m in idx.items()
+             if m["ruta"] and (directory / m["ruta"]).resolve().is_file()}
+    motivos = []
+    rmat = {r[0].split(":")[0].strip(): r for r in _table_rows(rtext, "Matriz de readiness")}
+    nuevas = [f for f in specs if f not in rmat or "PENDIENTE" in rmat[f][1]]
+    if nuevas:
+        motivos.append("features nuevas desde la medición: " + ", ".join(sorted(nuevas)))
+    revisados = []
+    for f, sp in sorted(specs.items(), key=lambda kv: fid_sort_key(kv[0])):
+        if sp.stat().st_mtime <= rts:
+            continue
+        rep = sp.with_name(sp.name.replace("_spec.md", "_conflict_report.md"))
+        if rep.is_file() and rep.stat().st_mtime >= sp.stat().st_mtime:
+            revisados.append(f)
+        elif sp in solo:
+            revisados.append(f)
+        elif (m := ESTADO_SPEC_RE.search(read_text(sp))) and m.group(1) == "BORRADOR":
+            motivos.append(f"{f} cambió y sus conflictos no se han revisado después")
+        # Si no, solo se selló después: el sello no cambia lo medido.
+    estado_cf = _estado_conflictos(directory)
+    raiz = estado_cf["__raiz__"]
+    conocidos = [r[0] for r in _table_rows(rtext, "Conflictos ALTA no resueltos")
+                 + _table_rows(rtext, "Conflictos MEDIA abiertos")]
+    raices = {raiz(c) for k in conocidos for c in CF_ID_RE.findall(k)}
+    for rep in _conflict_reports(directory):
+        if rep.stat().st_mtime <= rts:
+            continue
+        for row in _table_rows(read_text(rep), "Resumen de conflictos"):
+            ids = CF_ID_RE.findall(row[0])
+            abierto = not (len(row) >= 5 and CERRADO_RE.search(row[-1]))
+            if ids and abierto and not {raiz(i) for i in ids} & raices:
+                motivos.append(f"conflicto nuevo que arbitrar: {ids[0]} "
+                               f"({rep.parent.parent.name})")
+    if motivos:
+        return {"ok": False, "motivos": motivos}
+
+    cerrados = sorted(_cerrados_incrementales(rtext) | {
+        c for k in conocidos for c in CF_ID_RE.findall(k)
+        if _cerrado_despues(estado_cf, c, rts)})
+    # Las filas de la matriz que solo esperaban a conflictos ya cerrados.
+    lineas = rtext.split("\n")
+    sec = section(rtext, "Matriz de readiness")
+    for n, ln in enumerate(lineas):
+        if not ln.strip().startswith("|") or ln not in sec:
+            continue
+        cells = [c.strip() for c in ln.strip().strip("|").split("|")]
+        fm = FID_RE.search(cells[0]) if cells else None
+        if not fm or len(cells) < 5 or fm.group(0) not in specs:
+            continue
+        partes = [x.strip() for x in cells[-1].split(";") if x.strip() and x.strip() != "—"]
+        quedan = [x for x in partes if not (CF_ID_RE.findall(x)
+                                            and set(CF_ID_RE.findall(x)) <= set(cerrados))]
+        if quedan == partes:
+            continue
+        borrador = bool((m := ESTADO_SPEC_RE.search(read_text(specs[fm.group(0)])))
+                        and m.group(1) == "BORRADOR")
+        if not quedan:
+            cells[1], cells[-1] = ("BLOQUEADA", SIN_VALIDAR_TXT) if borrador else ("LISTA", "—")
+        else:
+            cells[-1] = "; ".join(quedan)
+        if len(cells) >= 4 and cells[3].isdigit():
+            cells[3] = str(sum(1 for x in quedan if CF_ID_RE.search(x)))
+        lineas[n] = "| " + " | ".join(cells) + " |"
+    texto = "\n".join(lineas)
+    import datetime
+    bloque = (f"## {INCREMENTAL_TITLE}\n\n"
+              f"> {datetime.date.today().isoformat()} — puesta al día sin rehacer el informe: los "
+              "cambios posteriores no abrieron nada que arbitrar. Donde lo de abajo no coincida "
+              "con esto, manda esto.\n\n"
+              f"- **Cerrados**: {', '.join(cerrados) or 'ninguno'}\n"
+              f"- **Specs revisados después**: {', '.join(revisados) or 'ninguno'}\n\n---\n\n")
+    texto = re.sub(r"^##\s+" + INCREMENTAL_TITLE + r".*?(?=^##\s)", "", texto,
+                   flags=re.MULTILINE | re.DOTALL)
+    m = re.search(r"^##\s", texto, re.MULTILINE)
+    texto = texto[:m.start()] + bloque + texto[m.start():] if m else texto + "\n" + bloque
+    readiness.write_text(texto, encoding="utf-8")
+    return {"ok": True, "cerrados": cerrados, "revisados": revisados,
+            "informe": os.path.relpath(readiness)}
+
+
 def main(argv: list[str]) -> int:
-    lote = None
+    lote, solo = None, []
+    if "--solo-criterios" in argv:
+        i = argv.index("--solo-criterios")
+        solo = [a for a in argv[i + 1:] if not a.startswith("--")]
+        argv = argv[:i] + [a for a in argv[i + 1:] if a.startswith("--")]
     if "--lote" in argv:
         i = argv.index("--lote")
         lote = [a for a in argv[i + 1:] if not a.startswith("--")]
@@ -1441,12 +1671,19 @@ def main(argv: list[str]) -> int:
         args.remove(out_file)
     if len(args) != 1:
         sys.stderr.write("uso: sdd-project-status.py <dir> [--output <archivo>] | "
-                         "<dir> --spec-pending [--json] [--lote <spec.md> …]\n")
+                         "<dir> --spec-pending [--json] [--lote <spec.md> …] | "
+                         "<dir> --refresh-readiness [--solo-criterios <spec.md> …]\n")
         return 1
     directory = Path(args[0]).resolve()
     if not directory.is_dir():
         sys.stderr.write(f"[project-status] no es un directorio: {directory}\n")
         return 1
+
+    if "--refresh-readiness" in argv:
+        data = refresh_readiness(directory, solo)
+        import json
+        sys.stdout.write(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
+        return 0 if data["ok"] else 2
 
     if "--spec-pending" in argv:
         data = spec_pending(directory, lote)

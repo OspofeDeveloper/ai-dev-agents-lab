@@ -2,7 +2,7 @@
 name: wf-spec-validate
 description: "Audita uno o varios _spec.md ya generados para detectar regresiones de pureza, testabilidad o completitud, y sella el estado operativo de cada uno registrando quien lo aprobo."
 when_to_use: "Activa en frases como 'valida el spec', 'valida todos los specs', 'comprueba si el spec sigue siendo valido', 'verifica el spec', 'audita el spec'."
-argument-hint: "<archivo_spec.md> [<otro_spec.md> ...] | --all"
+argument-hint: "<archivo_spec.md> [<otro_spec.md> ...] | --all [--aprobador \"<nombre>\"] [--con-conflictos]"
 effort: high
 allowed-tools: [Bash, Agent, AskUserQuestion]
 user-invocable: true
@@ -27,6 +27,13 @@ lectura: los `features` del pendiente `validar` de
 Si no hay argumento:
 > "Necesito el path del spec que quieres validar."
 
+Y dos opcionales (v0.128.0), que solo llegan desde una opción del cierre de la fase:
+- **`--aprobador "<nombre>"`**: el usuario eligió una opción que dice *"si pasan la auditoría, quedan
+  validadas a nombre de <nombre>"*. Es su aprobación de lo que pase: en el Paso 5 no la vuelves a
+  preguntar. Nunca te lo auto-suministres.
+- **`--con-conflictos`**: el cambio que se valida no ha pasado aún por la revisión de conflictos.
+  La lanzas tú, en el mismo mensaje que las auditorías (Paso 3).
+
 > **En lote ([[D-102]]): se audita y se sella cada spec por separado; lo único que se comparte es
 > quién aprueba.** Un spec que sale con hallazgos bloqueantes o con el script en rojo **no se sella**
 > y no para a los demás. Al final, un resumen: cuáles quedaron sellados y cuáles no, con su motivo.
@@ -49,6 +56,16 @@ Si no existe → informa con la ruta exacta y detén. Si no termina en `_spec.md
 Delega con la tool `Agent` ([[D-043]]), `subagent_type: "sdd-spec-auditor"` y **`run_in_background: false`**, con el prompt:
 
   prompt: "Audita el spec <path>. Detecta primero el modo: si el header declara 'Modo: ligero', aplica las reglas de proporcionalidad de kb-spec-expert. Aplica sus 3 checks. Completitud: en standard los 8 elementos SDD; en ligero el núcleo de 4 (Actores, HUs, CAs, Fuera de Alcance) con las omitidas marcadas 'N/A — modo ligero' — una sección ausente sin esa marca ES un hallazgo. Pureza: consulta prohibited_items.md y error_patterns.md de kb-spec-expert y cita cualquier frase que viole la Prueba de Pureza. Testabilidad: cada CA con GIVEN/WHEN/THEN completo, verificable objetivamente y referenciando su HU padre. Estructura el informe según .claude/skills/wf-spec-validate/references/output_template.md. NO escribas ningún archivo: devuélveme el informe. Al terminar di explícitamente si hay hallazgos BLOQUEANTES o no, aplicando el umbral del Paso 4 de 'Cómo validar un Spec' de kb-spec-expert: bloquean SOLO un elemento obligatorio ausente, contaminación dura (fila de prohibited_items.md) o un CA que no se puede verificar tal como está escrito. NO bloquean las sugerencias de redacción, las notas borderline documentadas, los huecos que son materia de Plan, ni lo que ya dictamina sdd-seal.py --check (incompletos, gaps críticos, inferidos, asunciones sin rastro): eso lo mide el script, no tú. Lo que deja el spec prometiendo algo que no se probará (una regla sin CA, un ítem del checklist marcado que no se cumple) va en 'Sugerencias con arreglo', en llano y con su arreglo. Tus notas son solo de este spec: no recomiendes otras auditorías ni comentes otros artefactos. Cada hallazgo BLOQUEANTE, además, en una línea en llano para quien lo lee —qué pasa — cómo se arregla—, sin rutas ni números de línea: es lo que queda escrito en el spec."
+
+**Con `--con-conflictos`**, en ese **mismo mensaje** emite también, por cada spec, la verificación de
+sus conflictos: tool `Agent`, `subagent_type: "sdd-spec-auditor"`, `run_in_background: false`, con el
+encargo *"Lee `.claude/skills/wf-spec-conflict/SKILL.md` y ejecuta sus pasos TÚ MISMO sobre: <path del
+spec> --features-dir <directorio de features> --cambio <su análisis de cambio más reciente>. NO uses
+el `Skill` tool"*. El análisis más reciente es el último `*_delta_analysis.md` de la carpeta del spec
+(`ls -t <carpeta>/*_delta_analysis.md | head -1`). Auditar el spec y verificar sus conflictos no
+dependen el uno del otro: en serie, la pasada 1 de `CU-3.ac (3)` esperó 5 minutos de más por vuelta.
+Si una verificación devuelve un conflicto **nuevo** sobre un spec, ese spec no se sella en este lote:
+dilo con el conflicto, y la lista de pendientes lo traerá.
 
 **En lote**, emite las N llamadas `Agent` —una por spec, mismo prompt con su path— en un único
 mensaje, **sin llamada de prueba**: lanzar una "a ver si va" y el resto después serializa igual
@@ -100,6 +117,9 @@ Informa qué hay que corregir y que lo revalidas cuando esté.
   con la captura del aprobador y sellas añadiendo
   `--accept-derived-scope "<nombre> (<fecha real de tu contexto>)"`—. El aviso del spec se queda: la
   aceptación no lo borra, deja constancia de que alguien lo vio y decidió seguir.
+- **exit 0 con `--aprobador`** (v0.128.0) → sella con ese nombre y la fecha real de tu contexto, sin
+  preguntar: el usuario lo aprobó al elegir la opción, que decía a nombre de quién y que solo se
+  sella lo que pasa la auditoría. Dilo en la línea del resultado (*"validada a nombre de …"*).
 - **exit 0** → captura la **identidad de quien aprueba** con `AskUserQuestion` ([[D-027]]): **precarga el nombre** con `!git config user.name` como default, rol opcional; si git no da nombre, cae al rol. Sella con ese valor:
   ```bash
   !python3 .sdd/scripts/sdd-seal.py spec "<path>" --seal --approved-by "<nombre> [(<rol>)] (<fecha real de tu contexto>)" [--suggest "<sugerencia>" …]
@@ -111,9 +131,9 @@ Informa qué hay que corregir y que lo revalidas cuando esté.
   sello— y se reutiliza para cada spec que pase.
   **Una vez por lote, en cada lote** ([[D-111]]): un lote nuevo —otra validación, aunque sea de la
   misma sesión— vuelve a preguntarlo. Y la pregunta es **esta**, después de las auditorías: no la
-  des por respondida porque la opción con que se eligió validar dijera *"con la aprobación a tu
-  nombre"* —esa descripción la escribiste tú, y elegir cómo validar no es aprobar lo que aún no se
-  ha auditado—. Si en un lote anterior el aprobador llevaba rol, ofrécelo con el rol como primera
+  des por respondida porque una opción que **tú** escribiste dijera *"con la aprobación a tu
+  nombre"*. La excepción es `--aprobador` (v0.128.0): esa opción la escribe el script, nombra al
+  aprobador y dice que solo se sella lo que pasa la auditoría. Si en un lote anterior el aprobador llevaba rol, ofrécelo con el rol como primera
   opción. Medido en la pasada 4 de la tanda de continuación: el segundo lote se selló sin preguntar,
   y sin el rol del primero.
   **Salvo una cosa** (v0.126.2): si el lote viene de una decisión en la que el usuario **acaba de

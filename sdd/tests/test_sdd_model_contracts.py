@@ -103,6 +103,25 @@ class ContractsTest(unittest.TestCase):
         data, rc = self.contracts()
         self.assertEqual((rc, data["catalogo"]), (0, []))
 
+    def test_lectura_y_escritura_en_la_misma_celda_escribe(self):
+        # v0.128.0: «lectura: … · escritura: …» salía como solo lectura (CU-3.ac (3)).
+        fila = ("| Movimiento | F-001 | lectura: muestra las aportaciones · escritura: reservar "
+                "crea el movimiento | Contrato |")
+        self._banco(consumo_f2=CONSUMO.format(filas=fila, peticiones=""))
+        data, rc = self.contracts()
+        self.assertEqual(rc, 2)
+        self.assertEqual([u["escribe"] for u in data["uso"] if u["feature"] == "F-002"], [True])
+
+    def test_vecinas_son_las_que_comparten_un_modelo(self):
+        self._banco(consumo_f2=CONSUMO.format(filas=LECTURA, peticiones=""), refs="F-002")
+        r = run_script("sdd-model-contracts.py", self.b.spec, "--vecinas", "F-002", "--json")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        v = json.loads(r.stdout)
+        self.assertEqual(v["vecinas"], ["F-001"])
+        self.assertEqual(v["por_modelo"]["F-001"], ["Movimiento"])
+        r = run_script("sdd-model-contracts.py", self.b.spec, "--vecinas", "F-003", "--json")
+        self.assertEqual(json.loads(r.stdout)["vecinas"], [])
+
     def test_lee_al_principio_o_no_cambia_tambien_es_lectura(self):
         for fila in ("| Movimiento | F-001 | Lee el histórico para el resumen | Contrato |",
                      "| Movimiento | F-001 | elige la cuenta del gasto. No cambia su saldo | Contrato |"):

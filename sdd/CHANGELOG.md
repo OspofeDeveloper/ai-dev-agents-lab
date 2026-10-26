@@ -2,6 +2,29 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.128.0 — 2026-10-26
+
+**Un cambio sin nada que decidir sigue un camino corto, y el cierre dice lo que hay** — [[DECISIONS D-115]]. Sale de la revisión de la pasada 1 de `CU-3.ac (3)`: 71 minutos de máquina para copiar tres decisiones ya tomadas, y un cierre final que recomendaba cuatro decisiones ya resueltas.
+
+- 🔴 **El cierre ya no ofrece conflictos resueltos.** El estado de cada conflicto lo da el informe más reciente que lo lista, también por sus alias; un readiness al día sin tabla de `MEDIA` no tiene ninguno. La plantilla del readiness escribe siempre las dos tablas (*"Ninguno."*).
+- 🟠 ⚠ **Cambios sin nada que decidir** (*Aplicar lo ya decidido*, *Corregir lo que pidió la validación*, *Aplicar sugerencias*):
+  - `wf-spec-delta directo` analiza y aplica en un paso;
+  - la revisión de conflictos verifica **solo lo que cambió**, contra las features que comparten modelo (`wf-spec-conflict --cambio`, `sdd-model-contracts.py --vecinas`);
+  - la revisión va en paralelo con la auditoría (`wf-spec-validate --con-conflictos`);
+  - la medición es incremental (`sdd-project-status.py --refresh-readiness`), con agente solo si hay algo que arbitrar;
+  - las sugerencias no revisan conflictos.
+- 🟠 ⚠ **El aprobador va en la opción**: las opciones que acaban validando dicen *"si pasan la auditoría, quedan validadas a nombre de …"* (`aprueba`, del `user.name` de git) y no se vuelve a preguntar (`wf-spec-validate --aprobador`).
+- 🟠 Las features salen con el nombre de su spec, con tildes (*"visión general"*, no *"vision general"*).
+- 🟠 `sdd-model-contracts.py`: una celda *"lectura: … · escritura: …"* cuenta como escritura.
+- 🟡 Lo que lee el usuario:
+  - el *Qué* de un traslado dice lo que cambia, no qué sección se edita;
+  - una corrección sin comportamiento en disputa es traslado;
+  - cada opción de un conflicto anticipa su consecuencia directa;
+  - las sugerencias dicen qué revalidan y que no revisan conflictos;
+  - *"decisión menor"* ya no dice *"un hueco que ningún spec cubre"*.
+- 🟡 Con varios cambios en paralelo, el índice lo regenera main una vez (`--sin-indice`). La actualización del ecosistema no recorta la salida y dice qué podó. El script del cierre se ejecuta sin anunciarlo.
+- **Conformance:** `CU-3.ac (3)`, pasada 1 cerrada; `CU-3.ac (4)` nuevo, para medir el camino corto. 12 tests nuevos.
+
 ## 0.127.3 — 2026-10-26
 
 **Una decisión de una sola opción se aplica, no se pregunta** — [[DECISIONS D-114]] (ampliación). Sale de la pasada 1 de `CU-3.ac (3)`.
