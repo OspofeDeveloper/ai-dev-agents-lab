@@ -521,10 +521,13 @@ TRASLADO_FIELD_RE = re.compile(r"^\s*[-*]\s*\*\*(Qué|Decidido en|Falta en)\*\*\
 
 def _traslado(directory: Path, conflict_id: str) -> dict | None:
     """Un conflicto que no es una decisión: el dueño ya decidió y otra feature no lo ha
-    copiado (D-113). El auditor lo marca con Causa «Sin trasladar» y un bloque «Traslado»;
+    copiado (D-113), o el usuario ya respondió y la regla quedó fuera de su dueño (v0.127.1). El auditor lo marca con Causa «Sin trasladar» y un bloque «Traslado»;
     se aplica sin preguntar al usuario lo que ya respondió."""
     for rep, block in _bloques_conflicto(directory, conflict_id):
-        if not re.search(r"\*\*Causa\*\*\s*:\s*\**\s*Sin trasladar", block, re.IGNORECASE):
+        # «Decidido fuera del dueño» (v0.127.1) es lo mismo visto desde el otro lado: lo
+        # decidió el usuario, quedó en otra feature y lo recoge el dueño.
+        if not re.search(r"\*\*Causa\*\*\s*:\s*\**\s*(?:Sin trasladar|Decidido fuera del due[ñn]o)",
+                         block, re.IGNORECASE):
             continue
         campos = {k: v.strip() for k, v in TRASLADO_FIELD_RE.findall(block)}
         falta = sorted(set(FID_RE.findall(campos.get("Falta en", ""))), key=fid_sort_key)
@@ -609,7 +612,7 @@ def spec_pending(directory: Path, lote: list | None = None) -> dict:
     # ── 0. Readiness ──
     readiness = first(directory, "*_readiness_report.md")
     rtext = read_text(readiness) if readiness else ""
-    motivos, conflictos_viejos = [], []
+    motivos, conflictos_viejos, tocados = [], [], []
     if specs and not readiness:
         motivos.append("no hay informe de readiness")
     elif readiness:
@@ -646,7 +649,8 @@ def spec_pending(directory: Path, lote: list | None = None) -> dict:
              + " y después rehacer la medición de readiness." if cv else
              "Rehacer la medición de readiness, que arbitra los conflictos y da el estado de cada feature."),
             ("wf-spec-conflict (por feature) → wf-spec-readiness" if cv else "wf-spec-readiness"),
-            motivos=motivos, conflictos=cv)
+            motivos=motivos, conflictos=cv, tocados=sorted(
+                set(tocados) | set(conflictos_viejos), key=fid_sort_key))
 
     # ── 1. Gaps críticos abiertos y 2. respuestas reabiertas (análisis) ──
     disc = re.search(r"^>\s*Discovery:\s*`?([^`\n]+?)`?\s*(?:\(|$)", features_md, re.MULTILINE)
@@ -791,6 +795,23 @@ def spec_pending(directory: Path, lote: list | None = None) -> dict:
         m = ESTADO_SPEC_RE.search(stext)
         if not m or m.group(1) != "BORRADOR":
             continue
+        # Lo que la validación pidió corregir (v0.127.1): no está lista para validar —
+        # validarla otra vez volvería a fallar— sino para corregir. No es una decisión.
+        bloqueo = header_field(stext, "La validación pide corregir") or ""
+        vb = re.match(r"\(v([\d.]+)\)\s*", bloqueo)
+        version = re.search(r"^>\s*\**Versi[oó]n\**\s*:\s*\**\s*(\d+(?:\.\d+)*)", stext,
+                            re.MULTILINE)
+        # Con la versión cambiada, el arreglo ya está aplicado: vuelve a «lista para validar».
+        corregido = bool(vb and version and vb.group(1) != version.group(1))
+        hallazgos = [] if corregido else [
+            x.strip() for x in bloqueo[vb.end() if vb else 0:].split(" · ") if x.strip()]
+        if hallazgos:
+            add("corregir", [fid],
+                f"{label[fid]}: la validación pide corregir: " + " · ".join(hallazgos),
+                "Corregirlo con un cambio en el spec (el hallazgo literal es el requisito) y "
+                "volver a validarlo; no hay nada que decidir.",
+                "wf-spec-delta sobre el spec → wf-spec-validate", hallazgos=hallazgos)
+            continue
         av = (header_field(stext, "Avisos de gobernanza") or "").strip("* ")
         aceptado = header_field(stext, "Alcance derivado aceptado")
         if av.lower() not in SIN_AVISO and not aceptado:
@@ -876,8 +897,8 @@ def spec_pending(directory: Path, lote: list | None = None) -> dict:
             "wf-spec-features-first --features", bloquea=False)
 
     orden = ["readiness", "gap_critico", "peticion", "reabierto", "conflicto_alta", "ciclo",
-             "alcance_derivado", "validar", "trasladar", "conflicto_media", "sugerencia",
-             "generar"]
+             "alcance_derivado", "corregir", "validar", "trasladar", "conflicto_media",
+             "sugerencia", "generar"]
     items.sort(key=lambda it: orden.index(it["tipo"]))
     for n, it in enumerate(items, 1):
         it["orden"] = n
@@ -912,7 +933,7 @@ def spec_pending(directory: Path, lote: list | None = None) -> dict:
 
 # Lo que no es una decisión de nadie en concreto: la medición desactualizada nombra a todas
 # las features, validar y generar son el paso siguiente, no lo que lo impide.
-NO_DECISION = ("readiness", "validar", "generar")
+NO_DECISION = ("readiness", "validar", "generar", "corregir")
 
 
 def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
@@ -973,10 +994,13 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
 
     sellado = {f: bool((m := ESTADO_SPEC_RE.search(read_text(sp))) and m.group(1) == "VALIDADO")
                for f, sp in specs.items()}
+    a_corregir = {f for i in items if i["tipo"] == "corregir" for f in i["features"]}
     por_feature = {}
     for f in sorted(specs, key=fid_sort_key):
         if propios[f]:
             estado = "pendiente_propio"
+        elif f in a_corregir:
+            estado = "pendiente_corregir"
         elif espera[f] or f in lectoras:
             estado = "espera_a_otro"
         else:
@@ -1033,22 +1057,30 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
     sugerencias = [i for i in items if i["tipo"] == "sugerencia"]
     sin_spec = [f for i in items if i["tipo"] == "generar" for f in i["features"]]
 
+    corregir = [i for i in items if i["tipo"] == "corregir"]
+    medir = next((i for i in items if i["tipo"] == "readiness"), None)
     lineas = []
     if not readiness_vigente:
-        lineas.append("Antes de nada: la medición de qué está listo es anterior a los últimos "
-                      "cambios. Hay que rehacerla, y puede cambiar lo que sigue.")
+        # «Puede cambiar lo que sigue» junto a «Ya puedes planificar» se leía como una
+        # contradicción (v0.127.1): lo sellado se planifica igual; lo que se mueve es el resto.
+        lineas.append("La medición de qué está listo es anterior a los últimos cambios: lo de "
+                      "abajo puede moverse al rehacerla. Lo ya validado se puede planificar igual.")
         lineas.append("")
     ya = [f for f, v in por_feature.items() if v["estado_plan"] == "planificable"]
     validar = [f for f, v in por_feature.items() if v["estado_plan"] == "lista_para_validar"]
     if (not decisiones and not validar and not menores and not sin_spec and not traslados
-            and not sugerencias and readiness_vigente):
+            and not sugerencias and not corregir and readiness_vigente):
         lineas.append("Todo está cerrado: puedes planificar cualquier feature.")
     if ya:
         lineas.append(f"Ya puedes planificar: {nombres(ya)}.")
     if validar:
         lineas.append("Se pueden planificar en cuanto las valides (no les falta ninguna "
                       f"decisión): {nombres(validar)}.")
-    if (ya or validar) and (decisiones or menores or traslados):
+    if corregir:
+        fs = [f for it in corregir for f in it["features"]]
+        lineas.append(f"Falta corregir lo que vio la validación en {nombres(fs)}: no hay nada "
+                      "que decidir; se corrige y se vuelve a validar.")
+    if (ya or validar or corregir) and (decisiones or menores or traslados):
         lineas.append("Lo que quede abierto en otras features no les impide empezar.")
     if bloques:
         lineas.append("")
@@ -1106,9 +1138,23 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
     # «Lo dejo para luego». Lo que no cabe se dice en la pregunta, para pedirlo con palabras.
     cand = []
     if not readiness_vigente:
+        prev = []
+        tocados = (medir or {}).get("tocados") or []
+        cv = (medir or {}).get("conflictos") or []
+        if (medir or {}).get("motivos") == ["no hay informe de readiness"]:
+            prev += ["Todavía no se ha medido qué está listo.", ""]
+        elif tocados:
+            prev += [f"Han cambiado después de la última medición: {nombres(tocados)}.", ""]
+        else:
+            prev += ["Hay cambios posteriores a la última medición.", ""]
+        if cv:
+            prev += [f"Primero se revisan los conflictos de {nombres(cv)}, y después se mide.",
+                     ""]
+        prev += ["Tarda unos minutos. Lo ya validado se puede planificar igual; si sale algo",
+                 "nuevo, lo verás en el mapa."]
         cand.append({"label": "Rehacer la medición",
                      "description": "Mide otra vez qué está listo con los últimos cambios.",
-                     "accion": "readiness"})
+                     "preview": "\n".join(prev), "accion": "readiness"})
     if validar:
         cand.append({"label": f"Validar las listas ({len(validar)})",
                      "description": "Las sellas y ya se pueden planificar, aunque el resto "
@@ -1118,6 +1164,18 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
                                           + ["", "Se te pregunta una vez quién aprueba. Las que "
                                              "pasen quedan listas para planificar."]),
                      "accion": "validar"})
+    if corregir:
+        prev = ["Lo que pidió corregir la validación (no se te pregunta nada):", ""]
+        k = 0
+        for it in corregir:
+            for h in it["hallazgos"]:
+                k += 1
+                prev += [f"{k}. {nombre(it['features'][0])}: {h}"]
+        prev += ["", "Se corrige cada spec, se revisan sus conflictos, se mide y se vuelve",
+                 "a validar. Si pasa, queda lista para planificar."]
+        cand.append({"label": f"Corregir lo que pidió la validación ({len(corregir)})",
+                     "description": "Arreglos sin decisiones nuevas; después se valida otra vez.",
+                     "preview": "\n".join(prev), "accion": "corregir"})
     if traslados:
         prev = ["Ya decidido, falta copiarlo (no se te pregunta nada):", ""]
         for k, it in enumerate(traslados, 1):
@@ -1242,6 +1300,8 @@ def _desglose(items: list) -> list:
         "ciclo": lambda n: "romper " + _n(n, "dependencia circular", "dependencias circulares"),
         "alcance_derivado": lambda n: "decidir " + _n(n, "alcance que no está en el PRD",
                                                      "alcances que no están en el PRD"),
+        "corregir": lambda n: "corregir " + _n(n, "spec que la validación frenó",
+                                                "specs que la validación frenó"),
         "validar": lambda n: "validar " + _n(n, "spec", "specs"),
         "trasladar": lambda n: "aplicar " + _n(n, "decisión ya tomada", "decisiones ya tomadas"),
         "conflicto_media": lambda n: _n(n, "conflicto menor", "conflictos menores"),

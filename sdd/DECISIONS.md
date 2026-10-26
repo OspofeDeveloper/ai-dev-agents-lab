@@ -6,6 +6,70 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-114 — Una regla va a su dueño aunque nazca en otra feature; y lo que no sella, dice por qué
+
+- **Fecha:** 2026-10-26 · **Estado:** Adoptada. · **Relacionada:** [[D-111]] (contratos y dueños), [[D-113]] (lo ya decidido), [[D-112]] (bloques), [[D-104]] (respuestas literales).
+
+**Contexto.** En la pasada 2 de `CU-3.ac` las decisiones menores se cerraron en una sola vuelta,
+pero casi una cuarta parte del trabajo se repitió (unos 850.000 tokens y 22 minutos), y quedó un
+conflicto grave que no debía existir. Tres causas, vistas en los ficheros de la pasada:
+1. **Una regla de otra feature se escribe en la que se está tocando.** El analista de registro de
+   movimientos abrió como suya *"¿cuenta para el límite global?"*, que es del cálculo de presupuesto
+   mensual; la respuesta se guardó solo allí, aunque presupuesto mensual estaba en el mismo lote con
+   su propio requisito. En objetivos de ahorro, una respuesta que traía escrita una regla de los
+   movimientos se integró literal, con la cita del dueño al lado. El analista de objetivos lo vio
+   venir en una *nota de coordinación* que nadie leyó. Y la opción de un conflicto anterior (*"el
+   saldo puede quedar negativo"*) nombraba en su *Cambia:* solo a cuentas, no al dueño de Movimiento.
+   Tres agentes atribuyeron la misma regla a tres dueños distintos: no había criterio escrito para
+   una regla en la frontera entre dos modelos.
+2. **La revisión de conflictos vuelve a preguntar lo ya decidido.** Ninguna de sus causas cubría *"lo
+   decidió el usuario, quedó fuera del dueño y el dueño no dice nada"*: acababa en *Decisión*, con
+   una opción contraria a lo respondido, o en una *Decisión de producto* de una única opción
+   (*"no hay decisión nueva que tomar"*).
+3. **El motivo de un sello rechazado se pierde.** Los hallazgos del auditor solo vivían en la
+   conversación; desde la 0.127.0 el cierre lo escribe un script, que puso *"la auditoría encontró
+   algo que corregir, o no se aprobó"*, y el mapa daba la feature por *lista para validar* y
+   recomendaba validarla otra vez.
+
+**Decisión.**
+1. **Criterio de frontera** (`kb-spec-expert`): lo que un modelo *es* lo decide su dueño; lo que un
+   cálculo *cuenta*, el dueño del cálculo. Una pregunta que mezcla las dos son dos preguntas.
+2. **Campo `Dueño` en las preguntas del análisis de cambio**, y `sdd-analysis-gaps.py --owners`
+   antes de aplicar: una respuesta cuyo dueño es otra feature tiene que estar, literal, en un
+   análisis de cambio de esa feature; si no, el apply se para y main la lleva al dueño sin
+   preguntar nada. En la feature que no es dueña se integra solo como cita (*copiar y citar* también
+   está mal). El *Cambia:* de una opción nombra al dueño de cada regla que fija.
+3. **Causa *Decidido fuera del dueño*** (`kb-conflict-expert`), con la lista de lo ya respondido
+   (`sdd-analysis-gaps.py <features> --decisiones`) como dato de la revisión: va con un *Traslado*
+   hacia el dueño y se aplica sin preguntar. Si el dueño ya decía lo contrario, es *Decisión* y su
+   primera opción es lo que respondió el usuario. Una decisión de una sola opción no se escribe.
+4. **El rechazo queda en el spec** (`sdd-seal.py --unseal --blocked "<hallazgo — arreglo>"` y
+   `--not-approved`), con la versión auditada. El resultado del lote y la tabla lo dicen; el mapa da
+   la feature por `pendiente_corregir`, con la opción *Corregir lo que pidió la validación*; con la
+   versión cambiada vuelve a *lista para validar*. Se va al sellar.
+5. **Todo flujo que cambia un spec termina midiendo**, también la corrección y las sugerencias.
+
+**Alternativas descartadas.** *Que la revisión de conflictos lea los changelog en prosa sin más*:
+es lo que ya podía hacer y no hizo; la lista de decisiones es un dato que no depende de buscarla.
+*Detectar por script si una frase es una regla ajena*: es juicio; el script comprueba lo
+estructural (que la respuesta con dueño esté en el dueño). *Borrar el motivo del rechazo al aplicar
+el cambio*: aplicar no demuestra que se corrigió; la versión distinta basta para saber que se
+intentó.
+
+**Consecuencias.** Lo que ya respondió el usuario llega a su dueño en la misma vuelta, y si se
+escapa, la revisión lo trae como algo que aplicar, no como pregunta. Lo que no sella dice por qué en
+el mismo sitio donde se lee. Con ella, la 0.127.1 también trae: la vista previa de *Rehacer la
+medición* y su aviso sin contradicción, las opciones de los conflictos en palabras del usuario (sin
+*"gasto sintético"*), y `NO_GAPS` para un análisis de cambio que declara no tener preguntas.
+
+**Referencias.** `scripts/sdd-analysis-gaps.py` (`--owners`, `--decisiones`, `NO_GAPS`),
+`scripts/sdd-seal.py` (`--blocked`, `--not-approved`), `scripts/sdd-project-status.py`
+(`corregir`, `pendiente_corregir`, vista previa de la medición), `kb-spec-expert`,
+`kb-conflict-expert`, `kb-gap-conventions`, `wf-spec-delta` (paso 8 y paso 3C),
+`wf-spec-conflict`, `wf-spec-validate`, `pipeline/spec/routing.md`.
+
+---
+
 ## D-113 — Lo ya decidido se aplica, no se pregunta; y lo que la validación ve, se enseña
 
 - **Fecha:** 2026-10-26 · **Estado:** Adoptada. · **Relacionada:** [[D-112]] (bloques), [[D-111]] (contratos), [[D-109]] (decisión de producto), [[D-107]] (tabla del lote).

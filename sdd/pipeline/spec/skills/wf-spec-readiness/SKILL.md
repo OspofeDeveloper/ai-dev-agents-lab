@@ -120,8 +120,11 @@ Clasifica la feature como **BLOQUEADA** si tiene al menos un conflicto ALTA asoc
 > Su **descripción breve** es lo que el usuario lee como la decisión menor que le queda: escríbela
 > como la **pregunta de producto en llano** (*"si mover dinero entre tus cuentas cuenta para el
 > límite global"*), no como el hueco técnico (*"F-004 suma todos los movimientos de tipo gasto…"*).
-> Un conflicto con causa **Sin trasladar** ([[D-113]]) también va aquí, con tipo *"sin trasladar"*:
-> la lista lo ofrece como *"aplicar lo ya decidido"*, no como pregunta.
+> Un conflicto con causa **Sin trasladar** ([[D-113]]) o **Decidido fuera del dueño** ([[D-114]])
+> también va aquí —nunca en la de `ALTA`, aunque su informe lo marque así—, con tipo *"sin
+> trasladar"*: la lista lo ofrece como *"aplicar lo ya decidido"*, no como pregunta. Si un informe lo
+> trae como decisión de **una sola opción**, o dice que *"no hay decisión nueva que tomar"*, no lo
+> arbitres como decisión: pide revisar de nuevo los conflictos de esa feature.
 
 > **Cuando los informes se contradicen, arbitras tú ([[D-047]]).** Con el fan-out de features-first
 > hay **un auditor por feature**, y cada uno mira el mismo grafo desde su lado: es esperable que

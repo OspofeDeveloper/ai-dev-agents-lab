@@ -167,6 +167,13 @@ INSTRUCCION:
    peticion, la fila de origenes la cita: `F-00Y (nombre) · R-00N`). Si este spec tiene
    peticiones con una linea **Estado** (anteriores a [[D-112]]), quitala al tocarlo: la verdad
    es la cita del dueno, y esa linea se queda vieja en cuanto el dueno la integra.
+   **Si el dueno YA tiene la regla**, aqui solo va la cita: ni la copies ni la copies "con cita".
+   **Si una pregunta tuya fija una regla de otra feature** —lo que un modelo suyo ES (si se edita,
+   si lleva categoria) o lo que un calculo suyo CUENTA (que entra en un limite)—, escribe el gap
+   con `- **Dueno**: F-00Y (nombre)`; una pregunta con una parte propia y otra ajena son dos gaps.
+   No la dejes en una nota de coordinacion en prosa: nadie la lee. Medido en la pasada 2 de
+   `CU-3.ac`: la pregunta "¿cuenta para el limite global?" se abrio como propia en registro de
+   movimientos, su respuesta no llego a presupuesto mensual, y volvio como conflicto grave.
 ```
 
 ### Paso 4A: Los dos gates de clasificación (aquí, con `AskUserQuestion`)
@@ -217,7 +224,7 @@ El recuento **sale del script, no de tu lectura** ([[D-042]]):
 !python3 .sdd/scripts/sdd-analysis-gaps.py "<path_delta_analysis>" --check --json
 ```
 
-- **0 críticos pendientes** → continúa.
+- **0 críticos pendientes** (o `NO_GAPS`: el informe declara que no tiene preguntas) → continúa.
 - **≥1 crítico pendiente** y **sin** `--allow-open-critical-gaps` → **presenta la elección** con
   `AskUserQuestion`, nombrando cuántos son y qué HUs quedarían `[INCOMPLETO]`:
   - **Responderlos primero (recomendado)** → para aquí. Se responden en el `_delta_analysis.md` y se
@@ -230,6 +237,24 @@ El recuento **sale del script, no de tu lectura** ([[D-042]]):
 > forma: mete en el spec HUs incompletas que bloquean `wf-prepare-plan` más adelante, lejos de aquí.
 > La misma situación **ya se presentaba** en `wf-spec-features-first`; este workflow la resolvía
 > informando y continuando, que es decidir por el usuario sin decírselo.
+
+### Paso 3C: Una respuesta que es de otra feature se lleva a su dueño (v0.127.1)
+
+```bash
+!python3 .sdd/scripts/sdd-analysis-gaps.py "<path_delta_analysis>" --owners --json
+```
+
+- **`OWNERS_OK`** → continúa.
+- **`OWNER_MISSING`** → **no apliques**. Cada entrada de `faltan` es una respuesta que fija una
+  regla de otra feature y no está en ningún análisis de esa feature: escribe un requisito para el
+  dueño con **la pregunta y la respuesta literales** (*"Decidido por el usuario (respuesta a
+  D-006 en registro de movimientos): …"*), analízalo allí, y aplica los dos cambios a la vez. No
+  se le pregunta nada al usuario: ya respondió. Dilo en una línea (*"Tu respuesta sobre el límite
+  global es una regla de presupuesto mensual: la llevo también allí"*).
+
+Sin esto, la regla queda escrita solo fuera de su dueño: la validación la rechaza o la revisión de
+conflictos la devuelve como conflicto grave y te vuelve a preguntar lo que ya respondiste —las dos
+cosas medidas en la pasada 2 de `CU-3.ac`—.
 
 ### Paso 4B: Delegar la integración
 

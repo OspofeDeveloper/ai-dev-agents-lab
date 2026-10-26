@@ -766,5 +766,141 @@ class SugerenciasDelSelladorTest(unittest.TestCase):
             self.assertIn("LISTA", (b.spec / "spec_features.md").read_text())
 
 
+class MotivoDelRechazoTest(unittest.TestCase):
+    """v0.127.1: por qué no se selló queda en el spec; el cierre y el mapa lo leen."""
+
+    def _bank(self, tmp, header):
+        b = Bank(Path(tmp))
+        b.feature("F-001", "objetivos", extra_header="> Versión: 1.2\n" + header)
+        b.feature("F-002", "cuentas", estado="VALIDADO")
+        b.index([("F-001", "objetivos", "features/objetivos/spec/objetivos_spec.md", "LISTA",
+                  "ninguno"),
+                 ("F-002", "cuentas", "features/cuentas/spec/cuentas_spec.md", "LISTA",
+                  "ninguno")])
+        b.analysis("respondida")
+        time.sleep(0.01)
+        b.readiness()
+        return b
+
+    def test_blocked_queda_en_la_cabecera_con_su_version_y_se_va_al_sellar(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            p = Path(tmp) / "x_spec.md"
+            write(p, spec("F-001", extra_header="> Versión: 1.2\n"))
+            r = run_script("sdd-seal.py", "spec", p, "--unseal", "--blocked",
+                           "repite una regla de los movimientos — citarla")
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            self.assertIn("> La validación pide corregir: (v1.2) repite una regla de los "
+                          "movimientos — citarla", p.read_text())
+            r = run_script("sdd-seal.py", "spec", "--report", "--lineas", p)
+            self.assertIn("no se validó — la validación pide corregir: repite una regla", r.stdout)
+            self.assertNotIn("o no se aprobó", r.stdout)
+            run_script("sdd-seal.py", "spec", p, "--unseal")
+            self.assertIn("La validación pide corregir", p.read_text(),
+                          "aplicar un cambio no demuestra que se corrigió")
+            run_script("sdd-seal.py", "spec", p, "--seal", "--approved-by", "Ana")
+            self.assertNotIn("La validación pide corregir", p.read_text())
+
+    def test_not_approved_lo_dice_y_sustituye_al_hallazgo_anterior(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            p = Path(tmp) / "x_spec.md"
+            write(p, spec("F-001"))
+            run_script("sdd-seal.py", "spec", p, "--unseal", "--blocked", "a")
+            r = run_script("sdd-seal.py", "spec", p, "--unseal", "--not-approved")
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            text = p.read_text()
+            self.assertNotIn("La validación pide corregir", text)
+            self.assertIn("> Sin aprobar: se dejó en borrador al validar", text)
+            r = run_script("sdd-seal.py", "spec", "--report", p)
+            self.assertIn("pasa la auditoría, pero no se aprobó", r.stdout)
+
+    def test_blocked_solo_con_unseal(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            p = Path(tmp) / "x_spec.md"
+            write(p, spec("F-001"))
+            r = run_script("sdd-seal.py", "spec", p, "--seal", "--blocked", "a")
+            self.assertEqual(r.returncode, 1)
+
+    def test_el_mapa_la_da_por_corregir_y_no_por_lista(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            b = self._bank(tmp, "> La validación pide corregir: (v1.2) repite una regla — citarla\n")
+            data = b.pending()
+            self.assertEqual(data["por_feature"]["F-001"]["estado_plan"], "pendiente_corregir")
+            self.assertNotIn("en cuanto las valides", data["mapa"])
+            self.assertIn("Falta corregir lo que vio la validación en objetivos (F-001)",
+                          data["mapa"])
+            op = next(o for o in data["cierre"]["opciones"] if o["accion"] == "corregir")
+            self.assertIn("objetivos (F-001): repite una regla — citarla", op["preview"])
+            self.assertNotIn("validar", [o["accion"] for o in data["cierre"]["opciones"]])
+
+    def test_con_la_version_cambiada_vuelve_a_lista_para_validar(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            b = self._bank(tmp, "> La validación pide corregir: (v1.1) repite una regla\n")
+            data = b.pending()
+            self.assertEqual(data["por_feature"]["F-001"]["estado_plan"], "lista_para_validar")
+            r = run_script("sdd-seal.py", "spec", "--report", "--lineas",
+                           b.spec / "features" / "objetivos" / "spec" / "objetivos_spec.md")
+            self.assertIn("se corrigió lo que pidió la validación anterior", r.stdout)
+
+
+class RehacerLaMedicionTest(unittest.TestCase):
+    def test_la_opcion_dice_que_cambio_y_que_va_a_pasar(self):
+        """v0.127.1: salía sin vista previa, y el aviso parecía contradecir al «ya puedes»."""
+        with tempfile.TemporaryDirectory() as tmp:
+            b = Bank(Path(tmp))
+            b.feature("F-001", "categorias", estado="VALIDADO")
+            b.feature("F-002", "objetivos")
+            b.index([("F-001", "categorias", "features/categorias/spec/categorias_spec.md",
+                      "LISTA", "ninguno"),
+                     ("F-002", "objetivos", "features/objetivos/spec/objetivos_spec.md",
+                      "LISTA", "ninguno")])
+            b.analysis("respondida")
+            b.readiness()
+            time.sleep(0.02)
+            b.feature("F-002", "objetivos", body="\ncambiado\n")
+            data = b.pending()
+            op = next(o for o in data["cierre"]["opciones"] if o["accion"] == "readiness")
+            self.assertIn("Han cambiado después de la última medición: objetivos (F-002).",
+                          op["preview"])
+            self.assertIn("Lo ya validado se puede planificar igual", data["mapa"])
+            self.assertNotIn("puede cambiar lo que sigue", data["mapa"])
+
+
+INFORME_FUERA_DEL_DUENO = """## Detalle de conflictos
+
+### [CF-F004-01] Shared models inconsistentes — Severidad: MEDIA
+
+**Causa**: Decidido fuera del dueño — el usuario respondió D-006 en movimientos.
+
+**Traslado**:
+- **Qué**: el dinero que reservas para un objetivo no cuenta para tu límite global
+- **Decidido en**: F-001 (movimientos), respuesta a D-006
+- **Falta en**: F-004 (presupuesto)
+
+## Inventario
+"""
+
+
+class DecididoFueraDelDuenoTest(unittest.TestCase):
+    def test_se_aplica_como_traslado_y_no_se_pregunta(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            b = Bank(Path(tmp))
+            b.feature("F-001", "movimientos", estado="VALIDADO")
+            b.feature("F-004", "presupuesto", estado="VALIDADO")
+            b.index([("F-001", "movimientos", "features/movimientos/spec/movimientos_spec.md",
+                      "LISTA", "ninguno"),
+                     ("F-004", "presupuesto", "features/presupuesto/spec/presupuesto_spec.md",
+                      "LISTA", "ninguno")])
+            b.analysis("respondida")
+            write(b.spec / "features" / "presupuesto" / "spec" / "presupuesto_conflict_report.md",
+                  INFORME_FUERA_DEL_DUENO)
+            time.sleep(0.01)
+            b.readiness(media_rows="| `CF-F004-01` | Decidido fuera del dueño | F-001, F-004 | x | x |")
+            data = b.pending()
+            tr = next(i for i in data["items"] if i["tipo"] == "trasladar")
+            self.assertEqual(tr["traslado"]["falta_en"], ["F-004"])
+            self.assertEqual(tr["traslado"]["decidido_en"], ["F-001"])
+            self.assertNotIn("conflicto_media", tipos(data))
+
+
 if __name__ == "__main__":
     unittest.main()

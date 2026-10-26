@@ -2,6 +2,18 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.127.1 — 2026-10-26
+
+**Una regla va a su dueño aunque nazca en otra feature; y lo que no sella, dice por qué** — [[DECISIONS D-114]]. Sale de la revisión de la pasada 2 de `CU-3.ac`.
+
+- 🟠 ⚠ **Las preguntas de un análisis de cambio llevan `Dueño`** cuando la respuesta fija una regla de otra feature. Antes de aplicar, `sdd-analysis-gaps.py --owners` comprueba que la respuesta está también en el dueño; si no, se lleva allí sin preguntar nada. En la feature que no es dueña se escribe solo como cita.
+- 🟠 ⚠ **La revisión de conflictos no vuelve a preguntar lo ya respondido**: lee la lista de decisiones (`sdd-analysis-gaps.py <features> --decisiones`), y lo que decidió el usuario y quedó fuera de su dueño sale como *"Ya decidido, falta copiarlo"* (causa *Decidido fuera del dueño*). Una decisión de una sola opción ya no se escribe.
+- 🟠 ⚠ **Un sello rechazado deja su motivo** en la cabecera (`sdd-seal.py --unseal --blocked "…"`, `--not-approved`). El resultado del lote lo dice, y el mapa da la feature por *"falta corregir lo que vio la validación"*, con la opción *Corregir lo que pidió la validación*, en vez de recomendar validarla otra vez.
+- 🟠 Criterio escrito para una regla en la frontera entre dos modelos: lo que un modelo *es*, su dueño; lo que un cálculo *cuenta*, el dueño del cálculo. El *Cambia:* de una opción nombra a los dos.
+- 🟠 Todo flujo que cambia un spec termina midiendo (también la corrección y las sugerencias).
+- 🟡 *Rehacer la medición* tiene vista previa (qué cambió y qué va a pasar) y su aviso ya no parece contradecir al *"Ya puedes planificar"*. Las opciones de los conflictos se escriben en palabras del usuario (sin *"gasto sintético"*). Un análisis de cambio que declara *"Sin gaps detectados"* da `NO_GAPS` (exit 0) en vez de `VACUOUS`. `--list` lee también el rótulo `Pregunta` de la plantilla del análisis de cambio.
+- **Conformance:** `CU-3.ac (2)` con su balance; `CU-3.ac (3)` nuevo. 11 tests nuevos.
+
 ## 0.127.0 — 2026-10-26
 
 **Lo ya decidido no se pregunta, y lo que ve la validación se enseña** — [[DECISIONS D-113]]. Incluye los arreglos de la pasada 1 de `CU-3.ac`.

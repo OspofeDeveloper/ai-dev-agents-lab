@@ -38,6 +38,20 @@ Uso:
     sdd-analysis-gaps.py <analysis.md> --answer P-001 "texto de la respuesta" [--force] [--json]
     sdd-analysis-gaps.py <analysis.md> --export-answers
     sdd-analysis-gaps.py <analysis.md> --import-answers <respuestas.json> [--force] [--json]
+    sdd-analysis-gaps.py <delta_analysis.md> --owners [--json]
+    sdd-analysis-gaps.py <features_dir> --decisiones [--json]
+
+`--owners` (v0.127.1) — antes de aplicar un cambio: cada pregunta respondida cuyo `Dueño`
+es OTRA feature tiene que tener su respuesta, literal, en un análisis de cambio de esa
+feature. Si no, el apply se para: la regla se escribiría solo fuera de su dueño. Medido en
+la pasada 2 de `CU-3.ac`: «no cuenta en ningún presupuesto» se guardó solo en registro de
+movimientos, presupuesto mensual —dueño del cálculo, y en el mismo lote— no la recibió, y
+la revisión de conflictos la devolvió como conflicto grave, preguntando otra vez lo ya
+respondido.
+
+`--decisiones` (v0.127.1) — las preguntas que el usuario ya respondió en los análisis de
+cambio de todas las features: qué se preguntó, qué respondió, en qué feature y de quién es
+la regla. Lo lee la revisión de conflictos para no presentar como decisión lo ya decidido.
 
 Exit codes: 0 = ok; 1 = error de uso o IO; 2 = veredicto bloqueante / precondición fallida.
 
@@ -47,6 +61,8 @@ Veredictos de `--check`:
                         verificador que responde "0 críticos abiertos" sobre un
                         documento que no entiende es un no-op silencioso.
     CRITICAL_OPEN       quedan gaps `[CRÍTICO]` con `_(pendiente)_`.
+    NO_GAPS             (solo un `_delta_analysis.md`) no hay bloques de gap y el informe
+                        lo declara («Sin gaps detectados»): exit 0 (v0.127.1).
     CRITICAL_ANSWERED   ningún `[CRÍTICO]` abierto (los `[INFORMATIVO]` nunca bloquean:
                         se reportan porque cada uno aplicará su "Asunción por defecto").
 """
@@ -151,6 +167,7 @@ def check(gaps: list) -> dict:
 
 
 DETAIL = {
+    "NO_GAPS": "el informe declara que no hay puntos pendientes (\"Sin gaps detectados\").",
     "VACUOUS": (
         "el documento no contiene ningún bloque de gap `[P-XXX]`/`[D-XXX]`. No es "
         "\"sin gaps críticos\": es que no se ha podido parsear — comprueba que el path "
@@ -249,11 +266,16 @@ LIST_FIELDS = {
     "afecta": "afecta",
     "ejemplo": "ejemplo",
     "pregunta para el cliente": "question",
+    # La plantilla del análisis de cambio la llama solo «Pregunta».
+    "pregunta": "question",
     # La asuncion por defecto de un gap [INFORMATIVO] es una DECISION DE PRODUCTO
     # que se aplica sola si nadie responde (D-057). Se emite para que quien
     # presenta el gap pueda ensenarla verbatim en vez de redactarla el.
     "asuncion por defecto": "asuncion",
     "asunción por defecto": "asuncion",
+    # De quién es la regla que fija la respuesta, cuando no es de esta feature (v0.127.1).
+    "dueño": "dueno",
+    "dueno": "dueno",
 }
 
 
@@ -350,10 +372,111 @@ def list_gaps(text: str, source: str, only_gap: str = None) -> dict:
              "afecta": fields.get(g["id"], {}).get("afecta"),
              "ejemplo": fields.get(g["id"], {}).get("ejemplo"),
              "asuncion": fields.get(g["id"], {}).get("asuncion"),
+             "dueno": fields.get(g["id"], {}).get("dueno"),
              "answered": g["answered"]}
             for g in gaps
         ],
     }
+
+
+def _norm(texto: str) -> str:
+    return " ".join((texto or "").replace("`", "").replace("*", "").split()).lower()
+
+
+DUENO_FID_RE = re.compile(r"F-\d{3,4}")
+DUENO_SLUG_RE = re.compile(r"\(([\w-]+)\)")
+
+
+def _owner_spec_dir(features_dir: Path, dueno: str):
+    """La carpeta `spec/` de la feature que nombra el campo `Dueño` («F-004
+    (presupuesto-mensual)»): por el nombre entre paréntesis y, si no casa, por el
+    `Feature ID` de la cabecera de cada spec."""
+    m = DUENO_SLUG_RE.search(dueno or "")
+    if m:
+        for cand in (features_dir / m.group(1) / "spec", features_dir / m.group(1)):
+            if cand.is_dir():
+                return cand
+    fid = DUENO_FID_RE.search(dueno or "")
+    if fid:
+        for sp in sorted(features_dir.glob("*/spec/*_spec.md")) + sorted(features_dir.glob("*/*_spec.md")):
+            try:
+                head = sp.read_text(encoding="utf-8")[:3000]
+            except OSError:
+                continue
+            if re.search(r"Feature ID\**\s*:\s*\**\s*" + re.escape(fid.group(0)) + r"\b", head):
+                return sp.parent
+    return None
+
+
+def check_owners(text: str, path: Path) -> dict:
+    """Las respuestas cuya regla es de otra feature, ¿están también en su dueño?"""
+    data = list_gaps(text, str(path))
+    respuestas = {g["id"]: g["answer"] for g in parse_gaps(text)}
+    spec_dir = path.resolve().parent
+    features_dir = spec_dir.parent.parent if spec_dir.name == "spec" else spec_dir.parent
+    propia = spec_dir.parent.name if spec_dir.name == "spec" else spec_dir.name
+    faltan, ok = [], []
+    for g in data["gaps"]:
+        dueno = (g.get("dueno") or "").strip()
+        if not g["answered"] or not dueno or dueno.lower().startswith(("esta", "este", "—", "-")):
+            continue
+        destino = _owner_spec_dir(features_dir, dueno)
+        if destino is not None and (destino.parent.name == propia or destino.name == propia):
+            continue
+        respuesta = _norm(respuestas.get(g["id"]))
+        hallada = None
+        if destino is not None and respuesta:
+            for a in sorted(destino.glob("*_delta_analysis.md")):
+                try:
+                    if respuesta in _norm(a.read_text(encoding="utf-8")):
+                        hallada = str(a)
+                        break
+                except OSError:
+                    continue
+        entrada = {"gap": g["id"], "dueno": dueno, "respuesta": respuestas.get(g["id"]),
+                   "analisis_del_dueno": hallada}
+        if hallada:
+            ok.append(entrada)
+        else:
+            entrada["mensaje"] = (
+                f"La respuesta a {g['id']} fija una regla de {dueno}, y no está en ningún "
+                "análisis de cambio de esa feature. Analízala también allí, con la respuesta "
+                "literal en el requisito, antes de aplicar este cambio.")
+            faltan.append(entrada)
+    return {"action": "owners", "source": str(path),
+            "verdict": "OWNER_MISSING" if faltan else "OWNERS_OK",
+            "faltan": faltan, "en_su_dueno": ok}
+
+
+VERSION_RE = re.compile(r"_v(\d+\.\d+)_delta_analysis\.md$")
+
+
+def decisiones(features_dir: Path) -> dict:
+    """Lo que el usuario ya respondió en los análisis de cambio, feature a feature."""
+    out = []
+    files = sorted(features_dir.glob("*/spec/*_delta_analysis.md")) + \
+        sorted(features_dir.glob("*/*_delta_analysis.md"))
+    for a in files:
+        try:
+            text = a.read_text(encoding="utf-8").replace("\r\n", "\n")
+        except OSError:
+            continue
+        feature = a.parent.parent.name if a.parent.name == "spec" else a.parent.name
+        campos = {g["id"]: g for g in list_gaps(text, str(a))["gaps"]}
+        v = VERSION_RE.search(a.name)
+        for g in parse_gaps(text):
+            if not g["answered"]:
+                continue
+            f = campos.get(g["id"], {})
+            out.append({"feature": feature, "analisis": str(a),
+                        "version_analizada": v.group(1) if v else None,
+                        "gap": g["id"], "titulo": g["title"],
+                        "pregunta": f.get("question"), "respuesta": g["answer"],
+                        # «Como propones: …» remite a la asunción por defecto: sin ella la
+                        # respuesta no se entiende fuera de su análisis.
+                        "asuncion": f.get("asuncion"), "dueno": f.get("dueno")})
+    return {"action": "decisiones", "source": str(features_dir), "total": len(out),
+            "decisiones": out}
 
 
 def _norm_title(title: str) -> str:
@@ -435,6 +558,8 @@ def _parse_args(argv):
     do_check = False
     do_export = False
     do_list = False
+    do_owners = False
+    do_decisiones = False
     only_gap = None
     import_path = None
     answer = None
@@ -451,6 +576,10 @@ def _parse_args(argv):
             do_export = True
         elif a == "--list":
             do_list = True
+        elif a == "--owners":
+            do_owners = True
+        elif a == "--decisiones":
+            do_decisiones = True
         elif a == "--gap":
             only_gap = next(it, None)
             if only_gap is None:
@@ -468,25 +597,40 @@ def _parse_args(argv):
         else:
             rest.append(a)
     return (as_json, force, do_check, do_export, do_list, only_gap,
-            import_path, answer, rest)
+            import_path, answer, rest, do_owners, do_decisiones)
 
 
 def main() -> int:
     try:
         (as_json, force, do_check, do_export, do_list, only_gap, import_path,
-         answer, rest) = _parse_args(sys.argv[1:])
+         answer, rest, do_owners, do_decisiones) = _parse_args(sys.argv[1:])
     except GapError as e:
         print(f"ERROR: {e}", file=sys.stderr)
         return e.code
 
-    modes = [do_check, do_export, do_list, import_path is not None, answer is not None]
+    modes = [do_check, do_export, do_list, import_path is not None, answer is not None,
+             do_owners, do_decisiones]
     if len(rest) != 1 or sum(1 for m in modes if m) != 1:
         print('ERROR: uso: sdd-analysis-gaps.py <analysis.md> --check [--json] | '
               '--answer P-XXX "texto" [--force] [--json] | --export-answers | '
-              '--import-answers <respuestas.json> [--force] [--json] | --list', file=sys.stderr)
+              '--import-answers <respuestas.json> [--force] [--json] | --list | --owners | '
+              '<features_dir> --decisiones', file=sys.stderr)
         return 1
 
     path = Path(rest[0])
+    if do_decisiones:
+        if not path.is_dir():
+            print(f"ERROR: --decisiones espera el directorio de features: {path}", file=sys.stderr)
+            return 1
+        result = decisiones(path)
+        if as_json:
+            print(json.dumps(result, ensure_ascii=False))
+        else:
+            for d in result["decisiones"]:
+                print(f"{d['feature']} · {d['gap']} {d['titulo']}"
+                      + (f" (dueño: {d['dueno']})" if d.get("dueno") else ""))
+                print(f"    Respuesta: {d['respuesta']}")
+        return 0
     try:
         text = path.read_text(encoding="utf-8").replace("\r\n", "\n")
     except OSError as e:
@@ -496,6 +640,19 @@ def main() -> int:
     if do_export:
         print(json.dumps(export_answers(text, str(path)), ensure_ascii=False, indent=2))
         return 0
+
+    if do_owners:
+        result = check_owners(text, path)
+        if as_json:
+            print(json.dumps(result, ensure_ascii=False))
+        else:
+            for f in result["faltan"]:
+                print(f"✗ {f['mensaje']}")
+            for f in result["en_su_dueno"]:
+                print(f"✓ {f['gap']}: también en {f['analisis_del_dueno']}")
+            if not result["faltan"]:
+                print("OWNERS_OK: ninguna respuesta queda solo fuera de su dueño.")
+        return 2 if result["faltan"] else 0
 
     if do_list:
         try:
@@ -550,6 +707,13 @@ def main() -> int:
 
     if do_check:
         result = check(parse_gaps(text))
+        # Un análisis de cambio sin preguntas lo declara («Sin gaps detectados», su
+        # plantilla): eso no es un documento que no se entiende. Medido en la pasada 2 de
+        # CU-3.ac: la corrección de una redacción salía VACUOUS con exit 2 (v0.127.1).
+        if result["verdict"] == "VACUOUS" and path.name.endswith("_delta_analysis.md") and re.search(
+                r"^\s*>?\s*Sin (?:gaps detectados|puntos pendientes)", text,
+                re.MULTILINE | re.IGNORECASE):
+            result["verdict"] = "NO_GAPS"
         result["path"] = str(path)
         if as_json:
             print(json.dumps(result, ensure_ascii=False))
@@ -557,7 +721,7 @@ def main() -> int:
             detail = DETAIL[result["verdict"]].format(
                 critical_open_str=", ".join(result["critical_open_ids"]), **result)
             print(f"{result['verdict']}: {path} — {detail}")
-        return 0 if result["verdict"] == "CRITICAL_ANSWERED" else 2
+        return 0 if result["verdict"] in ("CRITICAL_ANSWERED", "NO_GAPS") else 2
 
     try:
         new_text, result = apply_answer(text, answer[0], answer[1], force)

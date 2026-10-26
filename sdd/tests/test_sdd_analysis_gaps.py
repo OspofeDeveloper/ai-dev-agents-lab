@@ -513,5 +513,81 @@ class AnalysisGapsTest(unittest.TestCase):
         self.assertEqual(r.returncode, 1)
 
 
+
+DELTA_CON_DUENO = """# Delta
+
+## Puntos pendientes de validación
+
+### [D-006][INFORMATIVO] Si cuenta para el límite global
+- **Contexto**: x
+- **Pregunta**: ¿cuenta para el límite global?
+- **Dueño**: F-004 (presupuesto)
+- **Respuesta**: no cuenta para ningún presupuesto
+- **Asunción por defecto**: no cuenta
+
+### [D-007][CRÍTICO] Si lleva categoría
+- **Contexto**: x
+- **Pregunta**: ¿lleva categoría?
+- **Respuesta**: nunca lleva categoría
+"""
+
+
+class DuenoYDecisionesTest(unittest.TestCase):
+    """v0.127.1: una respuesta que es regla de otra feature se lleva a su dueño."""
+
+    def _bank(self, tmp):
+        feats = Path(tmp) / "features"
+        write(feats / "movimientos" / "spec" / "movimientos_spec_v1.5_delta_analysis.md",
+              DELTA_CON_DUENO)
+        write(feats / "presupuesto" / "spec" / "presupuesto_spec.md",
+              "# Spec\n\n> Feature ID: F-004\n> Estado: VALIDADO\n")
+        return feats
+
+    def test_owners_para_si_la_respuesta_no_esta_en_el_dueno(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            feats = self._bank(tmp)
+            a = feats / "movimientos" / "spec" / "movimientos_spec_v1.5_delta_analysis.md"
+            r = run_script("sdd-analysis-gaps.py", a, "--owners", "--json")
+            self.assertEqual(r.returncode, 2, r.stdout + r.stderr)
+            data = json.loads(r.stdout)
+            self.assertEqual(data["verdict"], "OWNER_MISSING")
+            self.assertEqual([f["gap"] for f in data["faltan"]], ["D-006"])
+            self.assertIn("presupuesto", data["faltan"][0]["mensaje"])
+            write(feats / "presupuesto" / "spec" / "presupuesto_spec_v1.1_delta_analysis.md",
+                  "## Requisito de origen\n\nDecidido por el usuario (D-006): no cuenta para "
+                  "ningún\npresupuesto\n")
+            r = run_script("sdd-analysis-gaps.py", a, "--owners", "--json")
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            self.assertEqual(json.loads(r.stdout)["verdict"], "OWNERS_OK")
+
+    def test_list_emite_el_dueno_y_la_pregunta_corta(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            feats = self._bank(tmp)
+            a = feats / "movimientos" / "spec" / "movimientos_spec_v1.5_delta_analysis.md"
+            gaps = json.loads(run_script("sdd-analysis-gaps.py", a, "--list", "--json").stdout)["gaps"]
+            self.assertEqual(gaps[0]["dueno"], "F-004 (presupuesto)")
+            self.assertEqual(gaps[0]["question"], "¿cuenta para el límite global?")
+            self.assertIsNone(gaps[1]["dueno"])
+
+    def test_decisiones_lista_lo_respondido_en_todas_las_features(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            feats = self._bank(tmp)
+            r = run_script("sdd-analysis-gaps.py", feats, "--decisiones", "--json")
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            d = json.loads(r.stdout)["decisiones"]
+            self.assertEqual([(x["feature"], x["gap"]) for x in d],
+                             [("movimientos", "D-006"), ("movimientos", "D-007")])
+            self.assertEqual(d[0]["asuncion"], "no cuenta")
+            self.assertEqual(d[0]["version_analizada"], "1.5")
+
+    def test_un_delta_que_declara_que_no_tiene_preguntas_no_es_vacuous(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            a = Path(tmp) / "x_v1.2_delta_analysis.md"
+            write(a, "# Delta\n\n## Puntos pendientes de validación\n\nSin gaps detectados.\n")
+            r = run_script("sdd-analysis-gaps.py", a, "--check", "--json")
+            self.assertEqual(r.returncode, 0, r.stdout)
+            self.assertEqual(json.loads(r.stdout)["verdict"], "NO_GAPS")
+
+
 if __name__ == "__main__":
     unittest.main()

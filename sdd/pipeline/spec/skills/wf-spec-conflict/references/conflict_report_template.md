@@ -80,12 +80,14 @@ en dos CAs de features diferentes"—, nunca por el nombre de la kb que la defin
 - **Opción 2 — [título corto]**: [qué le pasa al actor]. *Cambia:* [F-00X (nombre)]
 
 <!-- Si la causa es «Sin trasladar» (D-113) —el dueño ya decidió la regla en su contrato y otra
-     feature no la ha copiado—, NO hay Decisión de producto: en su lugar va
+     feature no la ha copiado— o «Decidido fuera del dueño» (v0.127.1) —el usuario ya lo
+     respondió, quedó escrito en otra feature y el dueño no dice nada—, NO hay Decisión de
+     producto: en su lugar va
 
 **Traslado**:
 - **Qué**: [la regla en llano, como la vería el actor — ej: "reservar dinero para un objetivo exige saldo suficiente en la cuenta"]
-- **Decidido en**: [F-00X (nombre) — cita del contrato]
-- **Falta en**: [F-00Y (nombre)]
+- **Decidido en**: [F-00X (nombre) — cita del contrato, o la respuesta del usuario: "respuesta a D-006"]
+- **Falta en**: [F-00Y (nombre) — en «Decidido fuera del dueño», el dueño]
 
      y la lista de pendientes lo aplica sin preguntar al usuario. -->
 

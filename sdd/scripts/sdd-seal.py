@@ -21,6 +21,10 @@ Uso:
     sdd-seal.py spec --report <a.md> [<b.md> …]    # tabla del lote: spec · sellado · motivo (D-107)
     sdd-seal.py spec --report --lineas <a.md> …    # el mismo resultado en frases, para el cierre
     sdd-seal.py spec <archivo.md> --seal --approved-by "..." --suggest "<texto>" [--suggest …]
+    sdd-seal.py spec <archivo.md> --unseal --blocked "<hallazgo — arreglo>" [--blocked …]
+                                                   # la validación no sella: deja por qué (v0.127.1)
+    sdd-seal.py spec <archivo.md> --unseal --not-approved
+                                                   # pasa la auditoría, pero no se aprobó
 
 Exit codes: 0 = OK / sellado; 1 = error de uso o IO; 2 = condiciones no cumplidas.
 
@@ -157,6 +161,32 @@ SUGERENCIAS_RE = re.compile(
     re.MULTILINE)
 SUGERENCIAS_LINE_RE = re.compile(
     r"^[ \t]*(?:[-*>][ \t]*)?\**Sugerencias de la validación:?\**[ \t]*:?[^\n]*$\n?", re.MULTILINE)
+# Por qué una validación no selló (v0.127.1). Los hallazgos del auditor vivían solo en la
+# conversación: el cierre del lote, que escribe un script, decía «la auditoría encontró algo
+# que corregir, o no se aprobó», y el mapa seguía dando la feature por «lista para validar»
+# y recomendando validarla otra vez (pasada 2 de CU-3.ac). Se van al sellar; aplicar un
+# cambio no las quita: solo una validación que pasa demuestra que se corrigió.
+BLOQUEO_LABEL = "La validación pide corregir"
+BLOQUEO_RE = re.compile(
+    r"^(?P<prefix>\s*(?:[-*>]\s*)?\**La validación pide corregir:?\**\s*:?\s*)(?P<value>[^\n]*)$",
+    re.MULTILINE)
+BLOQUEO_LINE_RE = re.compile(
+    r"^[ \t]*(?:[-*>][ \t]*)?\**La validación pide corregir:?\**[ \t]*:?[^\n]*$\n?", re.MULTILINE)
+# La versión que se auditó va delante («(v1.2) …»): si el spec ya va por otra, el arreglo
+# se aplicó y lo que queda es volver a validarlo.
+VERSION_SPEC_RE = re.compile(r"^\s*>?\s*\**Versi[oó]n\**\s*:\s*\**\s*(\d+(?:\.\d+)*)", re.MULTILINE)
+
+
+def _version(text: str) -> str | None:
+    m = VERSION_SPEC_RE.search(text)
+    return m.group(1) if m else None
+
+
+SIN_APROBAR_LABEL = "Sin aprobar"
+SIN_APROBAR_RE = re.compile(
+    r"^(?P<prefix>\s*(?:[-*>]\s*)?\**Sin aprobar:?\**\s*:?\s*)(?P<value>[^\n]*)$", re.MULTILINE)
+SIN_APROBAR_LINE_RE = re.compile(
+    r"^[ \t]*(?:[-*>][ \t]*)?\**Sin aprobar:?\**[ \t]*:?[^\n]*$\n?", re.MULTILINE)
 # Variante de linea completa, para poder retirarla al deshacer la baja.
 RETIRADA_LINE_RE = re.compile(
     r"^[ \t]*(?:[-*>][ \t]*)?\**Retirada:?\**[ \t]*:?[^\n]*$\n?", re.MULTILINE)
@@ -622,6 +652,27 @@ def _nombre_legible(path: Path, text: str) -> str:
     return f"{nombre} ({fid.group(1)})" if fid else nombre
 
 
+def _motivo_no_sellado(path: Path, text: str, tabla: bool = False) -> str:
+    """Por qué no se selló: lo que dejó la validación en la cabecera, o lo que falla."""
+    b = BLOQUEO_RE.search(text)
+    if b and b.group("value").strip():
+        valor = b.group("value").strip()
+        m = re.match(r"\(v([\d.]+)\)\s*", valor)
+        if m and m.group(1) != _version(text):
+            return ("se corrigió lo que pidió la validación anterior; falta volver a validarla "
+                    "(" + valor[m.end():].rstrip(".") + ")")
+        return "la validación pide corregir: " + valor[m.end() if m else 0:].rstrip(".")
+    n = SIN_APROBAR_RE.search(text)
+    if n and n.group("value").strip():
+        return "pasa la auditoría, pero no se aprobó (" + n.group("value").strip().rstrip(".") + ")"
+    checks, _ = check_spec(path)
+    fallos = [("falla: " if tabla else "") + desc for c, desc in checks if not c]
+    if fallos:
+        return "; ".join(fallos)
+    return ("pasa las comprobaciones, pero no consta por qué no se selló: falta el motivo "
+            "que deja la validación")
+
+
 def lineas_lote(paths) -> list[str]:
     """El resultado de un lote en frases, para encabezar el cierre (v0.126.2).
 
@@ -644,10 +695,7 @@ def lineas_lote(paths) -> list[str]:
             if s and s.group("value").strip():
                 sug += [f"- {nombre}: {x.strip()}" for x in s.group("value").split(" · ") if x.strip()]
             continue
-        checks, _ = check_spec(path)
-        motivo = "; ".join(desc for c, desc in checks if not c) or \
-            "la auditoría encontró algo que corregir, o no se aprobó"
-        no.append(f"- {nombre}: no se validó — {motivo}.")
+        no.append(f"- {nombre}: no se validó — {_motivo_no_sellado(path, text)}.")
     out = []
     if ok:
         aprob = {a for _, a in ok}
@@ -687,9 +735,7 @@ def report(paths, lineas: bool = False) -> int:
         if estado == "RETIRADO":
             print(f"| {etiqueta} | ✗ | dada de baja |")
             continue
-        checks, _ = check_spec(path)
-        motivo = "; ".join("falla: " + desc for ok, desc in checks if not ok) or \
-            "pasa el sellador: no se selló (auditoría con hallazgos o sin aprobar)"
+        motivo = _motivo_no_sellado(path, text, tabla=True)
         print(f"| {etiqueta} | ✗ | {motivo.replace('|', '/')} |")
     return 0
 
@@ -758,6 +804,15 @@ def main() -> int:
         if err:
             return fail_usage(err)
         sugerencias.append(" ".join(valor.split()).replace(" · ", ", "))
+    bloqueos = []
+    while "--blocked" in args:
+        args, valor, err = take_value(args, "--blocked")
+        if err:
+            return fail_usage(err)
+        bloqueos.append(" ".join(valor.split()).replace(" · ", ", "))
+    no_aprobado = "--not-approved" in args
+    if no_aprobado:
+        args = [a for a in args if a != "--not-approved"]
     if len(args) >= 3 and args[0] == "spec" and args[1] == "--report":
         if args[2] == "--lineas":
             return report(args[3:], lineas=True)
@@ -771,6 +826,12 @@ def main() -> int:
         return fail_usage("`--approved-by` solo aplica con `--seal`")
     if sugerencias and (mode != "--seal" or kind != "spec"):
         return fail_usage("`--suggest` solo aplica con `spec --seal`")
+    if (bloqueos or no_aprobado) and (mode != "--unseal" or kind != "spec"):
+        return fail_usage("`--blocked` y `--not-approved` solo aplican con `spec --unseal`: "
+                          "dicen por qué una validación no selló")
+    if bloqueos and no_aprobado:
+        return fail_usage("`--blocked` o `--not-approved`, no los dos: con hallazgos que "
+                          "corregir no se llega a pedir la aprobación")
     if derivado is not None and (mode != "--seal" or kind != "spec" or not aprobado):
         return fail_usage("`--accept-derived-scope` solo aplica con `spec --seal --approved-by`: "
                           "aceptar el alcance derivado es parte de aprobar el spec")
@@ -815,6 +876,21 @@ def main() -> int:
             if nuevo != text:
                 plan_path.write_text(nuevo, encoding="utf-8")
                 print("`Aprobado por:` retirado — la aprobacion era del contenido anterior.")
+            if bloqueos or no_aprobado:
+                # El resultado de ESTA validación sustituye al de la anterior.
+                text = plan_path.read_text(encoding="utf-8")
+                plan_path.write_text(SIN_APROBAR_LINE_RE.sub("", BLOQUEO_LINE_RE.sub("", text)),
+                                     encoding="utf-8")
+                v = _version(plan_path.read_text(encoding="utf-8"))
+                if bloqueos and not write_header_line(plan_path, BLOQUEO_LABEL, BLOQUEO_RE,
+                                                      (f"(v{v}) " if v else "")
+                                                      + " · ".join(bloqueos)):
+                    return 1
+                if no_aprobado:
+                    from datetime import date
+                    if not write_header_line(plan_path, SIN_APROBAR_LABEL, SIN_APROBAR_RE,
+                                             f"se dejó en borrador al validar ({date.today()})"):
+                        return 1
         if kind == "spec":
             _refresh_index(plan_path)
         if mode == "--unretire":
@@ -866,7 +942,7 @@ def main() -> int:
     if kind == "spec":
         # Las sugerencias son de ESTA validación: las de una anterior se van con ella.
         text = plan_path.read_text(encoding="utf-8")
-        limpio = SUGERENCIAS_LINE_RE.sub("", text)
+        limpio = SIN_APROBAR_LINE_RE.sub("", BLOQUEO_LINE_RE.sub("", SUGERENCIAS_LINE_RE.sub("", text)))
         if limpio != text:
             plan_path.write_text(limpio, encoding="utf-8")
         if sugerencias and not write_header_line(plan_path, "Sugerencias de la validación",

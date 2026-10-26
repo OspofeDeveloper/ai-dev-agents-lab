@@ -242,6 +242,8 @@ El marcador `_(pendiente)_` se inserta en el campo **"Respuesta"** de cada gap h
 
 > **Nota sobre `Ejemplo`** ([[D-109]]): es lo que hace entendible la pregunta a quien la responde —*"el Usuario transfiere 50 € de su cuenta a su tarjeta; luego quiere borrar solo el ingreso"*—. Se presenta tal cual, así que sale del documento (un journey, un CA, una frase del PRD) y nunca se inventa: un ejemplo inventado cuela un comportamiento que nadie decidió. Si el documento no da para uno, se omite.
 
+> **Nota sobre `Dueño`** (v0.127.1, solo en los análisis de cambio de un spec): si la respuesta fija una regla de **otra** feature —lo que un modelo suyo *es*, o lo que un cálculo suyo *cuenta*—, el gap lleva `- **Dueño**: F-00Y (nombre)` antes de la respuesta. La respuesta se lleva entonces también al análisis de esa feature, y en este spec se integra solo como cita. Una pregunta con una parte propia y otra ajena se parte en dos. Sin la línea, la regla es de este spec.
+
 > **Nota sobre `Afecta`**: El campo `Afecta` es obligatorio en gaps `[CRÍTICO]` y permite trazar qué HUs quedarán marcadas como `[INCOMPLETO]` si el gap no se responde. No aplica a gaps `[INFORMATIVO]` (estos siempre tienen asunción por defecto).
 
 ---

@@ -165,6 +165,16 @@ para garantizar que ningún skill se queda sin casos en los cuatro ejes de prueb
 > legibles con tildes en el índice, medición incremental y el coste en tokens de las auditorías
 > (~140k por spec validado).
 
+> 🧪 **`CU-3.ac (2)`** (v0.127.0): FALLO del punto 4. El bloque de decisiones menores se cerró en
+> una vuelta y lo ya decidido se copió sin preguntar, pero una regla escrita fuera de su dueño
+> (dos veces) costó una validación fallida, un conflicto grave que repregunta lo respondido y ~22
+> minutos de repetición, y el motivo del rechazo no se vio. Estado guardado como
+> `bank-cu3ac-bloqueA`. → [[D-114]] (v0.127.1): campo `Dueño` y `--owners`, causa *Decidido fuera
+> del dueño* con la lista `--decisiones`, `--blocked` en el sellador; escenario **`CU-3.ac (3)`**.
+> Siguiente versión, ya acordada: revisar conflictos solo contra las features vecinas (las cuatro
+> revisiones fueron ~1 M tokens), medición incremental, el aprobador implícito en la opción de
+> validar y opciones que prevén sus consecuencias directas.
+
 > ⏱ **Cuatro escenarios nacen sin pasada del barrido de enlazado lateral de Spec**
 > ([[D-078]]/[[D-079]], 2026-09-14): **CU-9.o** (evolucionar una feature dada de baja se deniega, y
 > el estado sobrevive incluso sin hook), **CU-7.s** (la reactivación es la única vuelta atrás y no

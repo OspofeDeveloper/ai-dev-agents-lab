@@ -58,7 +58,7 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 - [ ] CU-3.q — Gap-resolve: confirmación de `[INFERIDO]` (dos turnos, tres vías)
 
 ### `wf-spec-delta` — evolución incremental del spec (hilo principal + `sdd-spec-writer`) (1)
-- [ ] CU-3.h — Evolucionar un spec con requisitos nuevos (delta): los tres gates (D-073) — punto 1: **2/3**; punto 3: **1/3**; punto 4: **1/3** (2026-10-01) · D-111: punto 6 nuevo (la aclaración de un cambio de varios specs llega a todos)
+- [ ] CU-3.h — Evolucionar un spec con requisitos nuevos (delta): los tres gates (D-073) — punto 1: **2/3**; punto 3: **1/3**; punto 4: **1/3** (2026-10-01) · D-111: punto 6 nuevo (la aclaración de un cambio de varios specs llega a todos) · D-114: punto 6 amplía a la respuesta de otra feature, que llega a su dueño
 
 ### orquestador de la fase Spec — guardrail de cambio de producto y oferta de rigor (3)
 - [ ] CU-3.b — Expansión de alcance desde las respuestas del analysis — **FALLO** 2026-09-28 (punto 2: marca derivada en una feature no afectada, [[D-101]]); punto 1 verde; 2026-09-29 **sin medir**
@@ -67,7 +67,7 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 - [ ] CU-3.z — Seguimiento de la fase: la lista de pendientes sale de ficheros y cada cierre ofrece el siguiente ([[D-102]]) — de paso en 2026-09-29: punto 2 verde, **punto 1 FALLO** tras *"Lo dejo para luego"* ([[D-103]]); **FALLO** 2026-10-01 (puntos 5 y 7, [[D-104]]); **FALLO** 2026-10-01 pasada 2 (punto 5: sin tabla, [[D-107]]); 1, 2, 3, 4 y 7 verdes en la pasada 2 · **D-112 (v0.126.0): punto 2 vuelve a 0** (con más de un frente, el cierre presenta el mapa por bloques)
 - [ ] CU-3.aa — Seguimiento: un ciclo del dominio se planifica en grupo, uno sin respaldo bloquea y se nombra ([[D-103]]) — **FALLO** 2026-10-01 (punto 1: el aviso del grupo no sale, [[D-104]]); **FALLO** 2026-10-01 pasada 2 (punto 1: `resumen` parafraseado, [[D-108]]); 2, 3 y 4 verdes en las dos
 - [ ] CU-3.ab — Cada regla tiene un dueño: el dueño publica el contrato del modelo y los demás lo citan ([[D-111]])
-- [ ] CU-3.ac — Planificar por bloques: qué se puede empezar ya y qué falta para el resto ([[D-112]]) · (2) un bloque de varias decisiones y lo ya decidido ([[D-113]])
+- [ ] CU-3.ac — Planificar por bloques: qué se puede empezar ya y qué falta para el resto ([[D-112]]) · (2) un bloque de varias decisiones y lo ya decidido ([[D-113]]) — **FALLO** 2026-10-26 (puntos 1, 2, 3 y 5 PASS; punto 4 FALLO: el motivo del rechazo no se vio; una regla fuera de su dueño costó una vuelta y un conflicto grave, [[D-114]]) · (3) lo respondido llega a su dueño y lo que no sella dice por qué ([[D-114]])
 
 > **Capa determinista** (no son escenarios manuales): los índices y marcadores
 > (`sdd-features-index.py`, `sdd-gap-conventions`) están cubiertos por unittests; la calidad
@@ -2013,6 +2013,10 @@ Modo `analyze` produce `<feature>_delta_analysis.md`; modo `apply` integra prese
    → **FALLO:** aplicar los dos con la aclaración solo en uno (medido en la pasada 4 de la tanda de
      continuación: *"dos movimientos enlazados"* en uno, *"un movimiento"* en el otro, y un
      conflicto grave nuevo).
+   → **Y si la respuesta es de otra feature** ([[D-114]]): la pregunta lleva `Dueño`, `--owners`
+     para el `apply` hasta que el dueño la tiene en su análisis, y en este spec queda solo la cita.
+     **FALLO:** la respuesta escrita solo en el spec analizado (medido en `CU-3.ac (2)`: *"no cuenta
+     en ningún presupuesto"* quedó en registro de movimientos y volvió como conflicto grave).
 
 **Resultado:** PASS si los tres gates se presentan **en el momento y en el mismo turno**
 ([[D-045]]), el veredicto y el recuento vienen de quien los produce (delegado y script), la
@@ -2517,10 +2521,14 @@ toca?"*— cierra con **qué falta para planificar, por tipo** ([[D-110]]) y una
    → **Esperado:** las auditorías salen en un único mensaje; el aprobador se pide **una vez en cada
      lote**, después de las auditorías —también en el segundo lote de la sesión—; cada spec se sella
      por separado; uno con hallazgos o con el script en rojo **no** se sella y no para a los demás; al
-     final, tabla spec · sellado · motivo.
+     final, tabla spec · sellado · motivo. El motivo de uno que no se selló dice **qué** pidió la
+     validación (lo deja en la cabecera, [[D-114]]), y en el mapa esa feature sale como *"falta
+     corregir"*, no como *"lista para validar"*.
    → **FALLO:** un aprobador por spec, un fallo que para el lote, sellar uno que no pasa, o sellar
      sin preguntar el aprobador porque la opción de validar decía *"con la aprobación a tu nombre"*
-     ([[D-111]]; medido en la pasada 4 de la tanda de continuación).
+     ([[D-111]]; medido en la pasada 4 de la tanda de continuación). **FALLO** también: un motivo
+     genérico (*"la auditoría encontró algo que corregir, o no se aprobó"*) o recomendar validar otra
+     vez lo que acaba de fallar ([[D-114]]).
 6. **Alcance derivado** (si el banco lo tiene). Pides validar esa feature.
    → **Esperado:** el sellador la rechaza por la condición del alcance derivado, y main pregunta
      *formalizarlo en el PRD (Recomendado)* / *aceptarlo con nombre y sellar*. Con aceptar, la cabecera
@@ -2643,7 +2651,8 @@ features` (consumidoras) de la plantilla del spec, `sdd-model-contracts.py`, la 
      reglas no fijan cómo se comporta un modelo ajeno. Lo que necesitan y el dueño no tiene va como
      petición `R-NNN`.
    → **FALLO:** un CA de una consumidora que dice si un movimiento se puede editar o borrar, o cómo
-     aparece en el histórico. Se mide con la misma clasificación que se hizo sobre `bank-cu3z`
+     aparece en el histórico — **también** si lo dice y además cita al dueño (*"…no se puede editar
+     (lo fija el contrato de Movimiento)"*): la cita no la hace propia ([[D-114]]). Se mide con la misma clasificación que se hizo sobre `bank-cu3z`
      (cita / duplica / supone / efecto / sin dueño): **0 en duplica y en supone**.
 3. **Las peticiones se atienden en el dueño.** Si sale alguna.
    → **Esperado:** la lista la trae como *completar el contrato* y se resuelve con un cambio **solo
@@ -2731,6 +2740,67 @@ decisiones menores, pagos previstos sin spec), con v0.127.0.
 5. **Idioma.** Ningún texto de main en inglés entre herramientas.
 
 **Resultado:** PASS si el bloque se cierra en una vuelta y nada ya decidido se vuelve a preguntar.
+
+**Pasada (2026-10-26, v0.127.0, orquestador `opus-5-5`) — FALLO del punto 4; 1, 2, 3 y 5 PASS.**
+Las tres decisiones menores se respondieron seguidas y se aplicaron en **una** vuelta (cuatro
+análisis, cuatro `apply`, cuatro revisiones de conflictos en un mensaje, una medición): unos 31
+minutos de máquina. La cuarta, ya decidida en cuentas, se copió a objetivos sin preguntar. Sin
+inglés. Pero:
+- **Punto 4:** objetivos de ahorro no se selló y el cierre dijo *"la auditoría encontró algo que
+  corregir, o no se aprobó"*; el mapa la dio por *lista para validar* y recomendó validarla otra vez.
+  Main lo sabía (al pedir aclaración ofreció explicar *"por qué sale como lista aunque la auditoría
+  la ha frenado"*).
+- **Una regla fuera de su dueño, dos veces.** *"No se puede editar ni eliminar"* (de Movimiento) se
+  escribió en objetivos, con la cita al lado → validación fallida y una vuelta de corrección.
+  *"No cuenta en ningún presupuesto"* (del cálculo de presupuesto) se escribió solo en registro de
+  movimientos, con presupuesto en el mismo lote → conflicto grave `CF-F004-01` que pregunta otra vez
+  lo respondido, con una opción contraria. Y `CF-F005-04`: *"el saldo puede quedar negativo"*,
+  decidido en un conflicto anterior cuya opción nombraba solo a cuentas, salió como *decisión* de
+  una única opción.
+- **Coste:** ~100 min (≈50 de máquina), 20 subagentes, ~3,8 M tokens; ~850 k tokens y ~22 min de
+  repetición. Las cuatro revisiones de conflictos fueron lo más caro (~1 M tokens, ~10 min).
+- **UX:** *Rehacer la medición* sin vista previa y con un aviso que parecía contradecir al *"Ya
+  puedes planificar"*; la corrección no midió al final; *"gasto sintético"* ya está en cinco frases
+  de los specs.
+→ [[D-114]] (v0.127.1). Estado guardado como `bank-cu3ac-bloqueA`.
+
+### CU-3.ac (3) — Lo respondido llega a su dueño, y lo que no sella dice por qué ([[D-114]]) ⏱ **sin pasada**
+
+**Precondición:** el banco `bank-cu3ac-bloqueA` (final de la pasada de `CU-3.ac (2)`: cuatro
+features planificables; bloque A con `CF-F004-01`, que es lo ya respondido en D-006; la decisión
+menor `CF-F005-04`, ya decidida en `CF-F005-01`; visión general esperando al bloque A; pagos
+previstos sin spec), con v0.127.1.
+**Mecanismo:** la causa *Decidido fuera del dueño* y la lista `--decisiones` en la revisión de
+conflictos; el campo `Dueño` y `--owners` en el análisis de cambio; `--blocked` en la validación; el
+pendiente `corregir`.
+
+1. **Lo ya respondido no se vuelve a preguntar.** Pides revisar de nuevo los conflictos de
+   presupuesto mensual y de registro de movimientos, y rehacer la medición.
+   → **Esperado:** `CF-F004-01` y `CF-F005-04` salen como *"Ya decidido, falta copiarlo"*: el primero
+     con *Falta en* presupuesto mensual, el segundo en registro de movimientos. Ninguna decisión.
+   → **FALLO:** cualquiera de los dos como decisión, o una opción que contradiga lo respondido.
+2. **Aplicar lo ya decidido cierra el bloque.** Eliges *Aplicar lo ya decidido*.
+   → **Esperado:** un cambio por feature en un mensaje, la revisión de lo tocado, **una** medición y
+     la validación en lote; en registro de movimientos la regla del presupuesto queda como cita. El
+     cierre: todo planificable salvo pagos previstos (sin spec).
+3. **Una respuesta de otra feature va a su dueño.** Pides: *"En registro de movimientos, el gasto que
+   genera una deuda no cuenta para el límite global del mes"*.
+   → **Esperado:** el análisis de registro de movimientos marca la pregunta (o el requisito) con
+     `Dueño: F-004 (presupuesto mensual)`; antes de aplicar, `--owners` lo detecta y main lleva el
+     requisito también a presupuesto mensual, **sin preguntarte nada**, y aplica los dos a la vez.
+   → **FALLO:** aplicarlo solo en registro de movimientos, o que la revisión de conflictos lo
+     devuelva como conflicto.
+4. **Lo que no sella dice por qué** (si en la pasada alguna validación no sella).
+   → **Esperado:** el cierre dice *"no se validó — la validación pide corregir: <qué>"*; el mapa,
+     *"Falta corregir lo que vio la validación en …"*, con la opción *Corregir lo que pidió la
+     validación*; tras corregir, se mide antes de cerrar.
+   → **FALLO:** el motivo genérico, o *Validar las listas* recomendado para esa feature.
+5. **El coste.** Cuenta vueltas y tiempo hasta cerrar el bloque A.
+   → **Esperado:** una vuelta, sin validaciones fallidas por una regla fuera de su dueño.
+
+**Resultado:** PASS si nada respondido se vuelve a preguntar, la respuesta con dueño llega a su dueño
+en la misma vuelta y un rechazo se explica · FALLO si una regla queda escrita solo fuera de su dueño.
+**Desviación → reportar:** issue citando `CU-3.ac`.
 
 ## CU-3.o — Readiness: sin índice, ciclos, scope derivado, sello y alcance del veredicto
 

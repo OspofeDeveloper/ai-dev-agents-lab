@@ -41,6 +41,9 @@ condición 10 exige los contratos de modelos compartidos al día ([[D-111]]); y 
 `Aprobado por:`, porque la aprobación era del contenido anterior. `--suggest "<texto>"` (repetible) guarda las sugerencias de
 la validación en la cabecera, y se van con el sello; `spec --report --lineas` da el resultado del
 lote en frases; sellar o desellar un spec regenera el índice de features ([[D-113]]).
+`spec --unseal --blocked "<hallazgo — arreglo>"` (repetible) deja en la cabecera por qué la
+validación no selló, con la versión auditada, y `--not-approved` que pasó la auditoría sin
+aprobarse; el resultado del lote y la tabla lo leen, y se va al sellar ([[D-114]]).
 
 - **Exit:** `0` OK/sellado · `1` error IO · `2` condiciones no cumplidas.
 
@@ -87,6 +90,16 @@ es de lectura o de escritura lo dice la columna `Uso`; en specs sin ella, se ded
 `sdd-seal.py` (condición 10) y `sdd-project-status.py --spec-pending` (tipo `peticion`).
 
 - **Exit:** `0` sin nada que bloquee · `2` con contratos, catálogos o peticiones pendientes · `1` uso.
+
+### `sdd-analysis-gaps.py` · `<analysis.md> --check | --list | --answer … | --owners` · `<features_dir> --decisiones`
+Cuenta, lista y escribe las respuestas de los gaps de un `_analysis.md` o un `_delta_analysis.md`
+sin que nadie los lea a ojo ([[D-042]]). `--owners` ([[D-114]]): cada pregunta respondida con
+`Dueño` de otra feature tiene que estar, literal, en un análisis de cambio de esa feature, o el
+apply se para. `--decisiones`: lo que el usuario ya respondió en los análisis de cambio de todas las
+features, con su dueño, para la revisión de conflictos. Un análisis de cambio que declara *"Sin
+gaps detectados"* da `NO_GAPS`.
+
+- **Exit:** `0` OK · `1` error de uso o IO · `2` críticos abiertos, `VACUOUS` o `OWNER_MISSING`.
 
 ### `sdd-resolve-path.py` · `write | find | rel-from | kinds <kind> <input> [--local-root D]`
 SSoT del layout de artefactos. `write` → ruta canónica donde escribir; `find` →
@@ -138,7 +151,10 @@ defecto gana la columna **Planificable**. Y `cierre` (v0.126.1): la `pregunta` y
 —`label`, `description`, `preview`, `accion` (`readiness`, `validar`, `bloque:X`, `menores`, `generar`,
 `luego`)—, como mucho cuatro, para copiarlas literal. Con `--lote <spec.md> …`, la pregunta empieza por el resultado de ese lote de
 validación. Tipos nuevos ([[D-113]]): `trasladar` (ya decidido por el dueño, se aplica sin preguntar)
-y `sugerencia` (lo que dejó la validación, de la cabecera del spec); ninguno bloquea.
+y `sugerencia` (lo que dejó la validación, de la cabecera del spec); ninguno bloquea. Y `corregir`
+([[D-114]]): un spec que la validación no selló por un hallazgo; su feature sale como
+`pendiente_corregir`, con la opción *Corregir lo que pidió la validación* (`accion: corregir`). La
+opción *Rehacer la medición* trae vista previa: qué cambió y si antes se revisan conflictos.
 
 - **Exit:** `0` siempre.
 

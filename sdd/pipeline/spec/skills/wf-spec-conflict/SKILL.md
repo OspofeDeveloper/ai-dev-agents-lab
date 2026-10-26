@@ -93,7 +93,7 @@ En las reglas de abajo, "los pares" son los de tu modo:
 1. **HUs duplicadas**: compara actores + verbos + objetivos en cada par
 2. **CAs contradictorios**: compara GIVEN+WHEN de los CAs de cada par; busca THENs incompatibles
 3. **Scope overlap**: analiza si los Journeys de una feature incluyen funcionalidad que es el objetivo de otra
-4. **Shared models inconsistentes**: inventaría todos los modelos mencionados y cruza sus definiciones/comportamientos. Lee antes `python3 .sdd/scripts/sdd-model-contracts.py <raíz_spec> --json`: te da lo estructural —qué consumidor crea o cambia un modelo que el catálogo del dueño no recoge, qué peticiones al dueño siguen sin atender, qué dependencias no declara el índice— y no lo vuelvas a derivar tú. Lo tuyo es la prosa: un consumidor que escribe una regla del modelo ajeno, o un dueño cuyo contrato contradice lo que otra feature necesita. Cada uno lleva su **Causa** ([[D-111]])
+4. **Shared models inconsistentes**: inventaría todos los modelos mencionados y cruza sus definiciones/comportamientos. Lee antes `python3 .sdd/scripts/sdd-model-contracts.py <raíz_spec> --json`: te da lo estructural —qué consumidor crea o cambia un modelo que el catálogo del dueño no recoge, qué peticiones al dueño siguen sin atender, qué dependencias no declara el índice— y no lo vuelvas a derivar tú. Lee también **lo que el usuario ya decidió**: `python3 .sdd/scripts/sdd-analysis-gaps.py <raíz_spec>/features --decisiones --json` (cada pregunta respondida en un análisis de cambio, con su respuesta literal y de quién es la regla). Lo tuyo es la prosa: un consumidor que escribe una regla del modelo ajeno, o un dueño cuyo contrato contradice lo que otra feature necesita. Cada uno lleva su **Causa** ([[D-111]])
 5. **Fuera de alcance contradictorio**: cruza las secciones "Fuera de Alcance" de cada feature con las HUs de las demás
 
 ---
@@ -113,6 +113,9 @@ Por cada conflicto:
 - **`Afecta también a`**: las features que ninguna opción cambia pero que leen algo que la decisión cambia. Es lo que permite que el resto siga planificándose sin esperar a esta decisión; no la rellenes por precaución.
 - Si una opción **amplía el PRD**, dilo en la propia opción.
 - **Si el dueño ya lo decidió** y el consumidor no lo ha copiado, la causa es **Sin trasladar** y en vez de la decisión va un bloque **Traslado** (*Qué · Decidido en · Falta en*), sin opciones ([[D-113]]): no se le vuelve a preguntar al usuario.
+- **Si lo decidió el usuario y quedó fuera del dueño** —uno de los lados es una respuesta de la lista de decisiones, o del changelog de un spec, y el dueño no dice nada de ese caso—, la causa es **Decidido fuera del dueño**: también **Traslado**, con *Falta en* el dueño (v0.127.1). Si el dueño ya decía lo contrario, es **Decisión**, y la primera opción es lo que respondió el usuario, citado. **Una decisión de una única opción no se escribe**: es un traslado.
+- **El *Cambia:* nombra al dueño de cada regla que fija la opción**: el del modelo para lo que el modelo *es*, el del cálculo para lo que el cálculo *cuenta*.
+- **Qué hay que decidir, las opciones y el *Qué* de un traslado van en palabras del usuario**: se copian como requisito y acaban dentro de los specs. Sin *"gasto sintético"*, *"par enlazado"* ni nombres de modelo.
 - **Un conflicto que traes de un informe anterior se reescribe con este criterio**: causa, severidad y decisión de hoy, no el encabezado de antes (*"ALTA (se mantiene)"*).
 - **Un conflicto de otro informe se cita con el ID que le da la lista de pendientes**, o no se cita.
 

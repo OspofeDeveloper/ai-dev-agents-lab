@@ -76,12 +76,38 @@ demás lo citan o le hacen una **petición**. Cuando dos specs chocan sobre un m
 
 | Causa | Qué pasa | Dónde se corrige |
 |---|---|---|
-| **Duplica** | el consumidor reescribe una regla del contrato del dueño, y no coinciden | el consumidor: cita el contrato en vez de reescribirlo |
+| **Duplica** | el consumidor reescribe una regla del contrato del dueño **para el mismo caso**, y no coinciden | el consumidor: cita el contrato en vez de reescribirlo |
 | **Supone** | el consumidor da por hecha una regla que el dueño no dice | el dueño: decide la regla en su contrato |
 | **Efecto no catalogado** | una operación del consumidor crea o cambia el modelo y el catálogo de orígenes del dueño no la recoge | el dueño: añade la fila y decide qué se puede hacer con lo que crea |
 | **Sin dueño** | cada spec deja la regla a la otra y nadie la tiene | el dueño del modelo, siempre |
 | **Decisión** | los dos specs dicen lo que les toca y el choque es de producto | según la decisión, pero una regla del modelo se escribe solo en su dueño |
 | **Sin trasladar** | el dueño **ya decidió** la regla y la tiene en su contrato, y el consumidor no la ha copiado o sigue con la versión anterior | el consumidor; no hay nada que decidir ([[D-113]]) |
+| **Decidido fuera del dueño** | el **usuario ya respondió** —consta en la lista de decisiones o en el changelog de un spec— y la regla quedó escrita en otra feature; el dueño no dice nada de ese caso | el dueño la recoge y la otra feature pasa a citarla; no hay nada que decidir (v0.127.1) |
+
+**Lo que el usuario ya decidió no se le vuelve a preguntar (v0.127.1).** Antes de escribir una
+*Decisión de producto*, mira la **lista de decisiones**: las preguntas que el usuario ya respondió
+en los análisis de cambio, con su respuesta literal y de quién es la regla
+(`sdd-analysis-gaps.py <features_dir> --decisiones --json`; tu flujo te la pasa), y los
+changelog de los specs (*"Integra la decisión de producto del usuario sobre `CF-…`"*). Si uno de los
+dos lados del choque **es** esa respuesta y el dueño no dice nada de ese caso, la causa es
+**Decidido fuera del dueño**, y va con un bloque **Traslado** como el de abajo: *Decidido en* es la
+feature donde quedó, con la referencia de la respuesta (*"F-001 (registro-movimientos), respuesta a
+D-006"*), y *Falta en* es **el dueño**. Si el dueño ya decía **lo contrario** antes de la respuesta,
+entonces sí es **Decisión**, y su primera opción es lo que el usuario respondió, citado como tal
+(*"lo que respondiste en D-006"*): nunca le ofrezcas solo opciones que lo contradicen. Medido en la
+pasada 2 de `CU-3.ac`: *"no cuenta en ningún presupuesto"*, respondido por el usuario y escrito solo
+en registro de movimientos, salió como conflicto grave con una opción contraria a su respuesta; y
+*"el saldo puede quedar negativo"*, decidido en un conflicto anterior y escrito solo en cuentas,
+salió en dos informes como *"no hay decisión nueva que tomar"* y aun así con una *Decisión de
+producto* de una única opción.
+
+**Una decisión de una sola opción no es una decisión.** Si al redactarla solo te sale una opción,
+es que ya está decidida: es **Sin trasladar** o **Decidido fuera del dueño**, con su *Traslado*.
+
+**Duplica es solo para el mismo caso.** Si el dueño no dice nada del caso concreto (un movimiento
+nuevo que su regla, escrita antes, no podía nombrar), no hay dos reglas que choquen: hay una sola,
+fuera de su sitio. Es **Decidido fuera del dueño** si salió de una respuesta del usuario, y
+**Supone** si no.
 
 **"Sin trasladar" no es una decisión ([[D-113]]).** Solo cuando el contrato del dueño **dice ya** la
 regla —cítala—: si el dueño la deja ambigua, es **Supone** o **Decisión**. En vez de *Decisión de
@@ -104,7 +130,19 @@ bastaba con citar— y cada uno frenó como si dos specs se contradijeran.
 Escríbela en el informe (campo **Causa** del conflicto). Y en la **Decisión de producto**, el
 *Cambia:* de una opción que fija una regla del modelo nombra **al dueño**: si una opción obliga a
 cambiar también al consumidor, es porque el consumidor tenía la regla duplicada — y eso se
-corrige citando, no volviendo a escribirla.
+corrige citando, no volviendo a escribirla. **El dueño de la regla, no solo el del modelo**: lo que
+un modelo *es* (si se puede editar, si lleva categoría, si su saldo puede quedar negativo) es de su
+dueño; lo que un cálculo *cuenta* (qué entra en el límite global) es del dueño de ese cálculo. Una
+opción que fija las dos cosas nombra a los dos dueños en su *Cambia:*. Medido en la pasada 2 de
+`CU-3.ac`: la opción *"el saldo puede quedar negativo con un gasto"* nombraba solo a cuentas; el
+contrato de Movimiento, que es quien registra ese gasto, no la recibió, y volvió como conflicto.
+
+**Lo que decide el usuario se escribe en sus palabras** (v0.127.1). *Qué hay que decidir*, cada
+opción y el *Qué* de un traslado se copian literales como requisito y acaban **dentro de los
+specs**: sin términos internos —ni *"gasto sintético"*, ni *"par enlazado"*, ni *"origen externo"*,
+ni nombres de modelo como `ObjetivoAhorro`—. Di lo que ve el usuario: *"el gasto que se crea al
+mover dinero entre tus cuentas"*. Medido en la pasada 2 de `CU-3.ac`: *"gasto sintético"* ya está en
+cinco frases de los specs, entrado por las opciones de un conflicto.
 
 **Un conflicto que sigue abierto se reescribe con el criterio de hoy.** Si lo traes de un informe
 anterior, no copies su encabezado (*"Severidad: ALTA (se mantiene)"*): vuelve a decidir su causa y

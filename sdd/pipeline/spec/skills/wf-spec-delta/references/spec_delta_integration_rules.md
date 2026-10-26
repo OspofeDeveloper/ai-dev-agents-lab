@@ -4,6 +4,12 @@ Principios base:
 - **No interpretar**: el texto aprobado va tal cual
 - **No ampliar**: si la respuesta cubre el gap, no expandirla
 - **No inferir**: si algo quedó sin responder pero era [INFORMATIVO], usa solo la Asunción por defecto
+- **Una respuesta con `Dueño` se integra como cita** (v0.127.1): si el gap lleva `- **Dueño**: F-00Y`,
+  la regla es de esa feature y se escribe en su spec. Aquí va solo lo que hace la operación de este
+  spec, citando al dueño (*"…lo que se puede hacer con ese movimiento lo fija el contrato de
+  Movimiento, F-001"*). No es interpretar la respuesta: es dónde se escribe. Copiarla y añadir la
+  cita sigue siendo una regla fuera de su dueño — medido en la pasada 2 de `CU-3.ac`, hizo fallar la
+  validación de objetivos de ahorro.
 
 Por tipo de cambio:
 

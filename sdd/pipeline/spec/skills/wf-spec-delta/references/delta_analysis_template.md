@@ -134,7 +134,13 @@ THEN [resultado observable y verificable]
 - **Problema**: [por qué este gap impide definir el cambio de forma verificable]
 - **Ejemplo**: [un caso concreto con el actor del spec, sacado de sus journeys o CAs, que muestre la diferencia — nunca inventado; si no lo hay, omite la línea]
 - **Pregunta**: [pregunta concreta y específica, sin opciones inventadas]
+- **Dueño**: [solo si la respuesta fija una regla de OTRA feature —de un modelo suyo, o de un cálculo suyo—: F-00Y (nombre). Si es de este spec, omite la línea]
 - **Respuesta**: _(pendiente)_
+
+<!-- `Dueño` (v0.127.1): la respuesta se lleva también al análisis de esa feature antes de aplicar
+     nada —`sdd-analysis-gaps.py <este informe> --owners` lo comprueba—, y aquí se integra solo
+     como cita. Una pregunta que mezcla una parte de este spec y otra del dueño son DOS preguntas:
+     sepáralas, cada una con su dueño. -->
 
 <!-- Si el veredicto es AMBIGUO, las lecturas van aquí, una por línea, con el formato de decisión
      (D-109) — se le presentan al usuario tal cual:
@@ -145,6 +151,7 @@ THEN [resultado observable y verificable]
 ### [D-002][INFORMATIVO] [Título del gap]
 - **Contexto**: [dónde aparece la ambigüedad]
 - **Pregunta**: [pregunta concreta]
+- **Dueño**: [solo si la regla es de otra feature: F-00Y (nombre)]
 - **Respuesta**: _(pendiente)_
 - **Asunción por defecto**: [lo que se aplicará si no se responde antes de ejecutar apply]
 

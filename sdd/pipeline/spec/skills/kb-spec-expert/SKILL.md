@@ -152,6 +152,21 @@ corregir uno, deja al otro diciendo lo contrario.
 contrato de Movimiento en el registro de movimientos)."*
 **Mal:** *"…se registra un gasto vinculado al contacto, que no se podrá editar mientras la deuda
 siga viva."* — es una regla de Movimiento escrita fuera de su dueño: va como petición al dueño.
+**Mal también —y es el error que más se repite—:** copiar la regla y añadir la cita: *"…no se
+puede editar ni eliminar desde el registro de movimientos (lo fija el contrato de Movimiento,
+F-001)."* La cita no la hace propia: sigue habiendo dos fuentes. Si el dueño **ya tiene** la regla,
+aquí solo va la cita; si no la tiene, va como petición o el cambio se lleva también al dueño.
+Medido en la pasada 2 de `CU-3.ac`: esa frase hizo fallar la validación de objetivos de ahorro.
+
+**De quién es una regla en la frontera entre dos modelos** (v0.127.1). Lo que un modelo **es** —sus
+atributos, si se puede editar o eliminar, si lleva categoría, qué invariante cumple— lo decide **su
+dueño**. Lo que un cálculo **cuenta** —qué entra en el límite global, qué suma un resumen— lo decide
+**el dueño de ese cálculo**, aunque lo que cuente sean modelos de otro. Precedente: con las
+transferencias, el registro de movimientos dijo *"ese gasto no lleva categoría"* (es de Movimiento) y
+el presupuesto decidió *"qué suma mi límite global"* (es suyo). Una pregunta que mezcla las dos
+cosas (*"¿lleva categoría y cuenta para el límite global?"*) son dos preguntas con dos dueños. Medido
+en la pasada 2 de `CU-3.ac`: tres agentes atribuyeron *"si cuenta para el presupuesto"* a tres
+dueños distintos, y la respuesta acabó escrita solo en el que no lo era.
 
 ---
 
