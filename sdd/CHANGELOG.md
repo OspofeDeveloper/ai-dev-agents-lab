@@ -2,6 +2,20 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.128.2 — 2026-10-28
+
+**Un cambio que pides es una sola vuelta** — [[DECISIONS D-115]] (ampliación). Sale del punto 3 de la pasada 1 de `CU-3.ac (4)`.
+
+- 🟠 ⚠ Un cambio pedido por el usuario que termina sin nada que decidir **se aplica sin preguntar** *"¿Lo aplico ahora?"*.
+- 🟠 ⚠ Tras aplicarlo, el cierre ofrece **Revisar y validar** (`accion: revisar_validar`): la revisión completa de conflictos y la auditoría a la vez, la medición y el sello a tu nombre, en una vuelta (`wf-spec-validate --con-conflictos-completos`). Antes eran dos: *Rehacer la medición* y *Validar las listas*.
+- 🟡 `--owners` encuentra la respuesta aunque el dueño la copie entre comillas o en un bloque citado.
+- 🟡 El cierre se copia también en sus descripciones, sin parafrasearlas.
+- 🟠 ⚠ **La actualización se pone al día a sí misma**: si las skills globales de bootstrap (`~/.claude/skills/`) difieren del ecosistema, ejecuta `setup.sh --update` y sigue las instrucciones nuevas. Eran copias, y nada las refrescaba: esta skill corrió con una de un mes antes. **Una vez**, a mano: `bash setup.sh --update`.
+- 🟠 Si el ecosistema tiene cambios sin publicar, la actualización **pregunta** antes de instalar (antes solo avisaba, y se instaló un estado a medias).
+- 🟡 El resumen de la actualización va en llano, sin flags ni nombres internos.
+- 🟡 Un cambio sobre una feature que el usuario nombra va a esa feature sin buscar antes en los specs: el dueño lo decide el analista.
+- **Conformance:** `CU-3.ac (4)` pasada 1, puntos 1-3 PASS, y la auditoría técnica del run. 2 tests nuevos.
+
 ## 0.128.1 — 2026-10-28
 
 **La medición va dentro de la validación, y las sugerencias no se encadenan** — [[DECISIONS D-115]] (ampliación). Sale de la pasada 1 de `CU-3.ac (4)`.

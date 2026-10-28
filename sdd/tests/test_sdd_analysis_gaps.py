@@ -560,6 +560,17 @@ class DuenoYDecisionesTest(unittest.TestCase):
             self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
             self.assertEqual(json.loads(r.stdout)["verdict"], "OWNERS_OK")
 
+    def test_owners_encuentra_la_respuesta_citada_o_entre_comillas(self):
+        # v0.128.2: el dueño la copió en un bloque citado y entre comillas, y no casaba.
+        with tempfile.TemporaryDirectory() as tmp:
+            feats = self._bank(tmp)
+            a = feats / "movimientos" / "spec" / "movimientos_spec_v1.5_delta_analysis.md"
+            write(feats / "presupuesto" / "spec" / "presupuesto_spec_v1.1_delta_analysis.md",
+                  "## Requisito de origen\n\n> Respuesta del usuario: «no cuenta para "
+                  "ningún\n> presupuesto»\n")
+            r = run_script("sdd-analysis-gaps.py", a, "--owners", "--json")
+            self.assertEqual(json.loads(r.stdout)["verdict"], "OWNERS_OK", r.stdout)
+
     def test_list_emite_el_dueno_y_la_pregunta_corta(self):
         with tempfile.TemporaryDirectory() as tmp:
             feats = self._bank(tmp)

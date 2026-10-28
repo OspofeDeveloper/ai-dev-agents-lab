@@ -1188,5 +1188,33 @@ class SugerenciasSinRecomendarTest(unittest.TestCase):
             self.assertIn("visión general (F-001)", r.stdout, r.stdout + r.stderr)
 
 
+class RevisarYValidarTest(unittest.TestCase):
+    """v0.128.2: un spec recién cambiado se revisa y se valida en una sola opción."""
+
+    def test_un_cambio_sin_revisar_ofrece_revisar_y_validar(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            b = Bank(Path(tmp))
+            b.feature("F-001", "movimientos", estado="VALIDADO")
+            b.feature("F-004", "presupuesto", estado="VALIDADO")
+            b.index([("F-001", "movimientos", "features/movimientos/spec/movimientos_spec.md",
+                      "LISTA", "ninguno"),
+                     ("F-004", "presupuesto", "features/presupuesto/spec/presupuesto_spec.md",
+                      "LISTA", "ninguno")])
+            b.analysis("respondida")
+            write(b.spec / "features" / "presupuesto" / "spec" / "presupuesto_conflict_report.md",
+                  informe([]))
+            time.sleep(0.01)
+            b.readiness("| F-001: movimientos | LISTA | 0 | 0 | — |\n"
+                        "| F-004: presupuesto | LISTA | 0 | 0 | — |", media_rows="")
+            time.sleep(0.01)
+            b.feature("F-004", "presupuesto", estado="BORRADOR")     # el cambio aplicado
+            ops = b.pending()["cierre"]["opciones"]
+            acciones = [o["accion"] for o in ops]
+            self.assertEqual(acciones[0], "revisar_validar")
+            self.assertIn("Recomendado", ops[0]["label"])
+            self.assertNotIn("readiness", acciones)
+            self.assertNotIn("validar", acciones)
+
+
 if __name__ == "__main__":
     unittest.main()

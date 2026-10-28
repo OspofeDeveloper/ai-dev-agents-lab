@@ -1248,10 +1248,34 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
               "bloquea, se quedan en borrador y te digo qué."] if aprobador else
              ["Se te pregunta una vez quién aprueba. Las que pasen quedan listas para "
               "planificar."])
-    if not readiness_vigente:
+    # Un spec que acaba de cambiar, sin nada más pendiente, no necesita dos vueltas —revisar sus
+    # conflictos y medir, y después validar—: va en una sola opción (v0.128.2). En CU-3.ac (4)
+    # un cambio pedido por el usuario costó «Rehacer la medición» y después «Validar las listas».
+    cv_todos = (medir or {}).get("conflictos") or []
+    revisar = [f for f in cv_todos if por_feature.get(f, {}).get("estado_plan") == "lista_para_validar"]
+    otros_motivos = [m for m in (medir or {}).get("motivos") or []
+                     if not m.startswith(("specs modificados", "informe de conflictos anterior",
+                                          "hay informes de conflictos"))]
+    tocados_todos = set((medir or {}).get("tocados") or [])
+    validar = [f for f in validar if f not in revisar]
+    if revisar:
+        cand.append({"label": f"Revisar y validar ({len(revisar)})",
+                     "description": (f"Se revisa si choca con el resto y se valida a nombre de "
+                                     f"{aprobador} si pasa." if aprobador else
+                                     "Se revisa si choca con el resto y se valida."),
+                     "preview": "\n".join(
+                         ["Cambió hace poco y falta revisarla:" if len(revisar) == 1 else
+                          "Cambiaron hace poco y falta revisarlas:", ""]
+                         + [f"- {nombre(f)}" for f in revisar]
+                         + ["", "Se revisa si choca con las demás features a la vez que se audita,",
+                            "se mide y se valida."] + sella),
+                     "accion": "revisar_validar", "aprueba": aprobador})
+    if not readiness_vigente and (otros_motivos or not revisar
+                                  or not tocados_todos <= set(revisar)
+                                  or not set(cv_todos) <= set(revisar)):
         prev = []
         tocados = (medir or {}).get("tocados") or []
-        cv = (medir or {}).get("conflictos") or []
+        cv = cv_todos
         if (medir or {}).get("motivos") == ["no hay informe de readiness"]:
             prev += ["Todavía no se ha medido qué está listo.", ""]
         elif tocados:

@@ -70,6 +70,27 @@ cambiado, el cierre no lo notó. La medición pasa a ser el último paso de la p
 validación dejó 2 sugerencias nuevas que el cierre volvía a recomendar: las sugerencias se ofrecen
 sin recomendarlas, y al revalidar tras aplicarlas, el auditor solo sugiere sobre lo que cambió.
 
+**Ampliación (v0.128.2, punto 3 de `CU-3.ac (4)`).** El cambio que pidió el usuario llegó a su
+dueño sin preguntarle nada, pero costó tres clics sin decisión: *"¿Lo aplico ahora?"* con todo
+respondido, *Rehacer la medición* (la opción prometía *"aplicar y revisar"* y el flujo paró tras
+aplicar, como mandaba la skill) y *Validar las listas*. Un cambio pedido se aplica en cuanto no hay
+nada que decidir, y el cierre ofrece *Revisar y validar*: la revisión completa y la auditoría en
+paralelo, la medición y el sello, en una vuelta.
+
+La auditoría técnica del run (9 agentes) confirmó que se cumplieron:
+- agentes en primer plano;
+- forks por `Agent` con el encargo de leer su skill;
+- llamadas en paralelo en un mensaje;
+- decisiones con `AskUserQuestion`;
+- auditores que no escriben.
+
+Y destapó un fallo estructural: `setup.sh` **copia** las skills de bootstrap a `~/.claude/skills/`,
+y actualizar un proyecto no las refrescaba. La actualización corrió con una copia de un mes antes.
+Ahora se compara con el ecosistema y se refresca sola. Además:
+- pregunta antes de instalar un ecosistema con cambios sin publicar;
+- resume en llano;
+- main no busca en los specs para enrutar un cambio sobre una feature que el usuario nombra.
+
 **Referencias.** `scripts/sdd-project-status.py` (`--refresh-readiness`, estado de conflictos por
 alias, `aprueba`, títulos), `scripts/sdd-model-contracts.py` (`--vecinas`, lectura y escritura),
 `wf-spec-delta` (submodo `directo`, `--sin-indice`), `wf-spec-conflict` (modo verificación,

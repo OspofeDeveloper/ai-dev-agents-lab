@@ -2845,7 +2845,7 @@ en la misma vuelta y un rechazo se explica · FALLO si una regla queda escrita s
   - Además: dos revisiones *"descubrieron"* choques viejos; el texto de los traslados estaba en jerga
     de editor; *"Now the closing: run the status script."*; y la actualización no dijo qué podó.
 
-### CU-3.ac (4) — El camino corto de lo que no tiene nada que decidir ([[D-115]]) ⏱ **pasada 1 en curso** (puntos 1 y 2; v0.128.1)
+### CU-3.ac (4) — El camino corto de lo que no tiene nada que decidir ([[D-115]]) ⏱ **pasada 1 cerrada** (1-3 PASS; v0.128.2)
 
 **Precondición:** el banco `bank-cu3ac-listo` (final de la pasada 1 de `CU-3.ac (3)`: las 7 features
 con spec, validadas; 5 sugerencias de la validación en registro de movimientos y presupuesto mensual;
@@ -2916,6 +2916,42 @@ algo resuelto, o si un cambio sin decisión vuelve a pasar por revisión complet
   - las sugerencias no se recomiendan;
   - al revalidar tras aplicarlas, el auditor solo sugiere sobre lo que cambió;
   - la cabecera del lote lleva tildes.
+- **Punto 3: PASS en lo esencial, con clics de más.**
+  - **La respuesta llegó a su dueño:** el análisis de registro de movimientos marcó `Dueño: F-004`;
+    la regla se escribió solo en presupuesto mensual (registro no cambió), y `--owners` lo comprobó.
+  - **Una pregunta nueva y legítima** (D-007: ¿cuenta también para el presupuesto de su categoría?),
+    con formato de decisión.
+  - **Revisión y medición:** revisión completa de presupuesto mensual y medición **sin agente**
+    (`--refresh-readiness`), en 5 min.
+  - **Validación sin preguntar el aprobador.** Unos 17 min de máquina en total.
+  - **Clics de más** (arreglados en v0.128.2):
+    - *"¿Lo aplico ahora?"* con todo respondido;
+    - la opción *"Aplicar y revisar"* aplicó y paró;
+    - revisar y validar fueron dos vueltas.
+  - `--owners` no encontró la respuesta copiada entre comillas en un bloque citado, y main pidió
+    reescribirla (arreglado en v0.128.2).
+  - Main parafraseó las descripciones del cierre.
+- **Punto 4: no aplicó.** **Punto 5:** pendiente (opcional).
+- **Auditoría técnica del run** (3 sesiones, 9 agentes; 4,2 M tokens nuevos y 27 M de caché, frente a
+  87 M de caché en `CU-3.ac (3)`):
+  - **cumplido:**
+    - todos los agentes en primer plano;
+    - los forks por `Agent` con *"Lee `.claude/skills/…` — NO uses el Skill tool"*;
+    - las llamadas paralelas en un mismo mensaje (mismo `message.id`);
+    - todas las decisiones con `AskUserQuestion`;
+    - auditores de validación solo con `Read`;
+    - main solo escribió ficheros de requisitos en su scratchpad;
+    - ninguna frase en inglés.
+  - **fallos** (arreglados en v0.128.2):
+    - 🔴 la skill global de actualización era una copia del 23-sep y no tenía las reglas de la
+      0.128.0 (`setup.sh` copia, y nada la refrescaba);
+    - 🟠 se actualizó desde el ecosistema con cambios sin publicar;
+    - 🟠 flags (`--prune`, `--con-conflictos`) en el resumen de la actualización;
+    - 🟠 main hizo `grep` del PRD y cuatro specs para enrutar un cambio sobre una feature nombrada
+      ([[D-031]]);
+    - 🟡 main leyó el análisis del dueño y el código del script para depurar `--owners`.
+- **Estado guardado:** `bank-cu3ac-punto3` (las 7 features con spec validadas; 1 sugerencia; pagos
+  previstos sin spec).
 
 ## CU-3.o — Readiness: sin índice, ciclos, scope derivado, sello y alcance del veredicto
 

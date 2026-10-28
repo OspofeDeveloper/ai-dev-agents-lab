@@ -2,7 +2,7 @@
 name: wf-spec-validate
 description: "Audita uno o varios _spec.md ya generados para detectar regresiones de pureza, testabilidad o completitud, y sella el estado operativo de cada uno registrando quien lo aprobo."
 when_to_use: "Activa en frases como 'valida el spec', 'valida todos los specs', 'comprueba si el spec sigue siendo valido', 'verifica el spec', 'audita el spec'."
-argument-hint: "<archivo_spec.md> [<otro_spec.md> ...] | --all [--aprobador \"<nombre>\"] [--con-conflictos | --solo-criterios]"
+argument-hint: "<archivo_spec.md> [<otro_spec.md> ...] | --all [--aprobador \"<nombre>\"] [--con-conflictos | --con-conflictos-completos | --solo-criterios]"
 effort: high
 allowed-tools: [Bash, Agent, AskUserQuestion]
 user-invocable: true
@@ -33,10 +33,13 @@ Y dos opcionales (v0.128.0), que solo llegan desde una opción del cierre de la 
   preguntar. Nunca te lo auto-suministres.
 - **`--con-conflictos`**: el cambio que se valida no ha pasado aún por la revisión de conflictos.
   La lanzas tú, en el mismo mensaje que las auditorías (Paso 3).
+- **`--con-conflictos-completos`** (v0.128.2): como `--con-conflictos`, pero el cambio sí cambia
+  comportamiento (lo pidió el usuario): la revisión de conflictos de cada spec es la **completa**, sin
+  `--cambio`. Llega desde la opción *Revisar y validar* del cierre.
 - **`--solo-criterios`** (v0.128.1): el cambio solo añadió criterios que prueban reglas ya escritas
   (sugerencias de una validación anterior). No hay revisión de conflictos.
 
-Con cualquiera de los dos, **antes del cierre mides** (Paso 5b).
+Con cualquiera de ellos, **antes del cierre mides** (Paso 5b).
 
 > **En lote ([[D-102]]): se audita y se sella cada spec por separado; lo único que se comparte es
 > quién aprueba.** Un spec que sale con hallazgos bloqueantes o con el script en rojo **no se sella**
@@ -68,7 +71,8 @@ spec> --features-dir <directorio de features> --cambio <su análisis de cambio m
 el `Skill` tool"*. El análisis más reciente es el último `*_delta_analysis.md` de la carpeta del spec
 (`ls -t <carpeta>/*_delta_analysis.md | head -1`). Auditar el spec y verificar sus conflictos no
 dependen el uno del otro: en serie, la pasada 1 de `CU-3.ac (3)` esperó 5 minutos de más por vuelta.
-Si una verificación devuelve un conflicto **nuevo** sobre un spec, ese spec no se sella en este lote:
+Con `--con-conflictos-completos`, el mismo encargo **sin** `--cambio` (la revisión completa del
+spec contra los demás). Si una verificación devuelve un conflicto **nuevo** sobre un spec, ese spec no se sella en este lote:
 dilo con el conflicto, y la lista de pendientes lo traerá.
 
 **Con `--solo-criterios`**, añade al prompt: *"Este spec ya se validó y este cambio solo añade los
@@ -162,7 +166,7 @@ Informa qué hay que corregir y que lo revalidas cuando esté.
 
 ## Paso 5b: Medir, si el cambio venía de una opción del cierre (v0.128.1)
 
-Con `--con-conflictos` o `--solo-criterios`, la medición va **aquí**, no después: en la pasada 1 de
+Con `--con-conflictos`, `--con-conflictos-completos` o `--solo-criterios`, la medición va **aquí**, no después: en la pasada 1 de
 `CU-3.ac (4)` estaba solo en la guía de la fase, como paso siguiente a esta skill, y se saltó.
 
 ```bash

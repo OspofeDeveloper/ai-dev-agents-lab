@@ -228,9 +228,17 @@ Según el veredicto que devuelva el agente:
 
 ### Paso 5A: Informar
 
-Path del delta generado, impacto (HUs añadidas/modificadas/eliminadas, CAs afectados), nº de gaps
-`[CRÍTICO]` e `[INFORMATIVO]` pendientes y el veredicto de clasificación. Siguiente paso, en lenguaje
-natural: responder los gaps críticos en el informe y pedirte que **apliques el delta al spec**.
+**Si el cambio lo pidió el usuario y ya no queda nada que decidir** —`DELTA_PURO`, sin gaps
+`[CRÍTICO]` sin responder y `--owners` en `OWNERS_OK`—, **no preguntes si se aplica: aplícalo**
+(submodo APPLY, en el mismo turno) y di en una línea qué cambió. El consentimiento está en la
+petición, igual que en el Paso 4A (v0.128.2). En la pasada 1 de `CU-3.ac (4)`, tras responder la
+única pregunta, main preguntó *"¿Lo aplico ahora?"*: un clic sin decisión detrás. Solo se pregunta
+si el usuario pidió **ver qué implicaría** un cambio sin hacerlo.
+
+Si no, informa: path del delta generado, impacto (HUs añadidas/modificadas/eliminadas, CAs
+afectados), nº de gaps `[CRÍTICO]` e `[INFORMATIVO]` pendientes y el veredicto de clasificación.
+Siguiente paso, en lenguaje natural: responder los gaps críticos en el informe y pedirte que
+**apliques el delta al spec**.
 
 ---
 
@@ -350,9 +358,11 @@ Comprueba si hay índice de features:
 !ls "<raíz_spec>"/*_features.md 2>/dev/null | head -1
 ```
 
-- **Si existe** → dilo al informar: *"este spec ha cambiado; conviene revisar si choca con el resto
-  antes de planificar"*. Nombra el spec y para ahí — la revisión de conflictos se pide aparte, y la
-  hace un auditor.
+- **Si existe** → cierra con la lista de pendientes de la fase, como cualquier flujo de Spec: su
+  cierre ofrece **Revisar y validar** el spec que acabas de cambiar —la revisión de conflictos la
+  hace un auditor, a la vez que la auditoría, dentro de la validación—. No prometas revisar tú ni
+  pares con *"conviene revisar"* sin opción: en la pasada 1 de `CU-3.ac (4)` la opción decía
+  *"Aplicar y revisar"*, el flujo aplicó y paró, y revisar y validar costaron dos vueltas más.
 - **Si no existe** → omite este paso.
 
 ---

@@ -137,7 +137,8 @@ cerrados y los specs revisados, y reescribe las filas de la matriz que solo espe
 conflictos. Exit `0` puesto al día · `2` hace falta la medición completa (los `motivos` dicen por qué).
 El estado de cada conflicto lo da el informe más reciente que lo lista, también por sus alias
 (`` `CF-A` (= `CF-B`) ``): un readiness al día sin tabla de `MEDIA` no tiene ninguno, y los informes
-sueltos ya no dan por abierto lo que uno más nuevo cerró. Las opciones del cierre que acaban
+sueltos ya no dan por abierto lo que uno más nuevo cerró. Un spec recién cambiado y sin revisar sale en una sola opción, *Revisar y validar*
+(`revisar_validar`, v0.128.2). Las opciones del cierre que acaban
 validando llevan `aprueba` (el `user.name` de git), y los nombres de las features salen del título
 de su spec, con tildes.
 

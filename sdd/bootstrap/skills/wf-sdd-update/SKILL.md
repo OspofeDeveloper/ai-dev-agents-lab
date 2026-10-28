@@ -22,6 +22,24 @@ Tu rol: reinstalar mecánicamente lo que el proyecto YA declaró, a la versión 
    - pero hay `.claude/rules/sdd-*.md` o `.sdd/sdd-version.json` → instalación standalone sin init: deriva las fases de los archivos `rules/sdd-<fase>.md` presentes y continúa (avísalo en el reporte).
    - y tampoco hay rastro SDD → detén: "Este proyecto no tiene instalación SDD. Para inicializar: `/wf-project-init`."
 2. **SDD_HOME**: léelo de `~/.sdd-home`. Verifica que `$SDD_HOME/install.sh` y `$SDD_HOME/VERSION` existen. Si no → detén e indica re-clonar el ecosistema o re-ejecutar `setup.sh`.
+3. **¿Esta skill está al día?** (v0.128.2). `setup.sh` **copia** las skills de bootstrap a
+   `~/.claude/skills/`, y actualizar un proyecto no las refresca: en la pasada 1 de `CU-3.ac (4)`
+   esta skill corrió con una copia de un mes antes, sin las reglas de la 0.128.0.
+   ```bash
+   !SDD_HOME=$(cat ~/.sdd-home); diff -rq ~/.claude/skills/wf-sdd-update "$SDD_HOME/bootstrap/skills/wf-sdd-update" >/dev/null && diff -rq ~/.claude/skills/wf-project-init "$SDD_HOME/bootstrap/skills/wf-project-init" >/dev/null && echo BOOTSTRAP_AL_DIA || echo BOOTSTRAP_DESFASADO
+   ```
+   Con `BOOTSTRAP_DESFASADO`, ponlo al día (`bash "$SDD_HOME/setup.sh" --update`, que reinstala las
+   skills globales, los hooks y el bloque de bootstrap, sin tocar proyectos), **lee**
+   `$SDD_HOME/bootstrap/skills/wf-sdd-update/SKILL.md` y sigue **ese** texto desde el Paso 2, no el que
+   tienes cargado. Dilo en una línea en el informe.
+4. **¿El ecosistema tiene cambios sin publicar?** (v0.128.2)
+   ```bash
+   !SDD_HOME=$(cat ~/.sdd-home); git -C "$SDD_HOME" status --porcelain --untracked-files=no | head -5
+   ```
+   Si sale algo, el ecosistema se está editando: lo que instalarías es un estado a medias, con el
+   mismo commit que la versión anterior. **No sigas sin preguntar** (`AskUserQuestion`): *Esperar a
+   que se publique (Recomendado)* · *Actualizar igualmente*. Medido en la pasada 1 de
+   `CU-3.ac (4)`: se avisó y se siguió, a mitad de una implementación.
 
 ## Paso 2: Comparar versiones
 
@@ -115,6 +133,11 @@ Y **borra `.sdd/version-denied` si existe**: acabas de actualizar, así que cual
    ```
    El verificador (exit 2 si algún check falla) subsume la existencia de cada regla y, además, el check `rule-globs`: si el proyecto usa un layout no canónico y olvidaste el `--artifacts-<fase>` en el Paso 4, el update lo deja en FALLO en vez de degradar la regla en silencio. Corrige (re-ejecuta el install con el flag) y re-verifica antes de cerrar.
 2. Reporta: versión vieja → nueva, fases reinstaladas, overlay re-aplicado (sí/no), avisos `⚠` aplicables, y piezas eliminadas por `--prune` si las hubo.
+   **En llano** (v0.128.2): qué cambia para quien trabaja en el proyecto, no cómo está hecho. Sin
+   flags (`--prune`, `--con-conflictos`), nombres de skill, de script ni de campo (`sdd_version`): el
+   CHANGELOG se escribe para quien mantiene el ecosistema, y copiar sus líneas tal cual las llevó al
+   chat en la pasada 1 de `CU-3.ac (4)`. Así: *"al validar, ya mide al terminar"*, no *"la
+   validación mide la readiness cuando se usa con `--con-conflictos`"*.
 3. Indica que hay que **commitear** los cambios de `.claude/` y `.sdd/` (la política de git del proyecto los versiona; la única excepción es `settings.local.json`).
 
 ## Paso 7: Parada obligatoria — reiniciar antes de seguir

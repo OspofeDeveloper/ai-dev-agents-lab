@@ -380,7 +380,13 @@ def list_gaps(text: str, source: str, only_gap: str = None) -> dict:
 
 
 def _norm(texto: str) -> str:
-    return " ".join((texto or "").replace("`", "").replace("*", "").split()).lower()
+    """Para buscar una respuesta en otro análisis: sin formato, comillas ni marcas de cita.
+
+    El escritor del dueño la copia dentro de un bloque citado o entre comillas, y la
+    comparación literal fallaba (CU-3.ac (4): main tuvo que pedir que la reescribiera)."""
+    t = re.sub(r"[`*\"“”«»‘’]", "", texto or "")
+    t = re.sub(r"(?m)^\s*>\s?", " ", t)
+    return " ".join(t.split()).lower()
 
 
 DUENO_FID_RE = re.compile(r"F-\d{3,4}")
