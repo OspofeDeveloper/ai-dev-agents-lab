@@ -2845,7 +2845,7 @@ en la misma vuelta y un rechazo se explica · FALLO si una regla queda escrita s
   - Además: dos revisiones *"descubrieron"* choques viejos; el texto de los traslados estaba en jerga
     de editor; *"Now the closing: run the status script."*; y la actualización no dijo qué podó.
 
-### CU-3.ac (4) — El camino corto de lo que no tiene nada que decidir ([[D-115]]) ⏱ **sin pasada**
+### CU-3.ac (4) — El camino corto de lo que no tiene nada que decidir ([[D-115]]) ⏱ **pasada 1 en curso** (puntos 1 y 2; v0.128.1)
 
 **Precondición:** el banco `bank-cu3ac-listo` (final de la pasada 1 de `CU-3.ac (3)`: las 7 features
 con spec, validadas; 5 sugerencias de la validación en registro de movimientos y presupuesto mensual;
@@ -2896,6 +2896,26 @@ conflictos completa o una medición con agente.
 cuestan menos de la mitad que en `CU-3.ac (3)` (unos 22 min por vuelta) · FALLO si el cierre ofrece
 algo resuelto, o si un cambio sin decisión vuelve a pasar por revisión completa y medición con agente.
 **Desviación → reportar:** issue citando `CU-3.ac`.
+
+**Pasada 1 (Opus 5.5, v0.128.0):**
+- **Punto 1: PASS.** Las 7 planificables, ninguna decisión menor, *Aplicar sugerencias (5)* con tu
+  nombre en la vista previa y los nombres con tildes.
+- **Punto 2: PASS con dos fallos menores.** **6,5 min** (antes ~22) y 4 agentes:
+  - lo bueno:
+    - dos cambios directos en un mensaje;
+    - el índice, regenerado una vez;
+    - validación sin preguntar el aprobador y sin revisión de conflictos;
+    - cierre sin *"Rehacer la medición"*;
+  - **la medición incremental no se ejecutó**: estaba en la guía de fase como paso posterior a la
+    validación, y el spec sellado no cuenta como cambiado, así que nada lo detectó;
+  - **la validación dejó 2 sugerencias nuevas** y el cierre volvió a recomendar *Aplicar sugerencias*:
+    un ciclo sin fin.
+
+  **Arreglos (v0.128.1):**
+  - la medición es el último paso de la validación;
+  - las sugerencias no se recomiendan;
+  - al revalidar tras aplicarlas, el auditor solo sugiere sobre lo que cambió;
+  - la cabecera del lote lleva tildes.
 
 ## CU-3.o — Readiness: sin índice, ciclos, scope derivado, sello y alcance del veredicto
 

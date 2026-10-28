@@ -63,6 +63,13 @@ ellos estancado y con el conflicto abierto solo bajo su alias.
 minutos a 7-8; el ahorro crece con el número de features, porque la revisión completa crece con ellas
 y la verificación no. Una pregunta menos por lote. El cierre no ofrece decisiones que no existen.
 
+**Ampliación (v0.128.1, pasada 1 de `CU-3.ac (4)`).** La vuelta de sugerencias bajó de unos 22
+minutos a 6,5, con 4 agentes y sin preguntar el aprobador. Pero la medición incremental, escrita como
+paso de la guía de fase *después* de la validación, se saltó; y como un spec sellado no cuenta como
+cambiado, el cierre no lo notó. La medición pasa a ser el último paso de la propia validación. Y la
+validación dejó 2 sugerencias nuevas que el cierre volvía a recomendar: las sugerencias se ofrecen
+sin recomendarlas, y al revalidar tras aplicarlas, el auditor solo sugiere sobre lo que cambió.
+
 **Referencias.** `scripts/sdd-project-status.py` (`--refresh-readiness`, estado de conflictos por
 alias, `aprueba`, títulos), `scripts/sdd-model-contracts.py` (`--vecinas`, lectura y escritura),
 `wf-spec-delta` (submodo `directo`, `--sin-indice`), `wf-spec-conflict` (modo verificación,

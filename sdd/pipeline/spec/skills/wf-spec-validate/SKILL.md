@@ -2,7 +2,7 @@
 name: wf-spec-validate
 description: "Audita uno o varios _spec.md ya generados para detectar regresiones de pureza, testabilidad o completitud, y sella el estado operativo de cada uno registrando quien lo aprobo."
 when_to_use: "Activa en frases como 'valida el spec', 'valida todos los specs', 'comprueba si el spec sigue siendo valido', 'verifica el spec', 'audita el spec'."
-argument-hint: "<archivo_spec.md> [<otro_spec.md> ...] | --all [--aprobador \"<nombre>\"] [--con-conflictos]"
+argument-hint: "<archivo_spec.md> [<otro_spec.md> ...] | --all [--aprobador \"<nombre>\"] [--con-conflictos | --solo-criterios]"
 effort: high
 allowed-tools: [Bash, Agent, AskUserQuestion]
 user-invocable: true
@@ -33,6 +33,10 @@ Y dos opcionales (v0.128.0), que solo llegan desde una opción del cierre de la 
   preguntar. Nunca te lo auto-suministres.
 - **`--con-conflictos`**: el cambio que se valida no ha pasado aún por la revisión de conflictos.
   La lanzas tú, en el mismo mensaje que las auditorías (Paso 3).
+- **`--solo-criterios`** (v0.128.1): el cambio solo añadió criterios que prueban reglas ya escritas
+  (sugerencias de una validación anterior). No hay revisión de conflictos.
+
+Con cualquiera de los dos, **antes del cierre mides** (Paso 5b).
 
 > **En lote ([[D-102]]): se audita y se sella cada spec por separado; lo único que se comparte es
 > quién aprueba.** Un spec que sale con hallazgos bloqueantes o con el script en rojo **no se sella**
@@ -66,6 +70,12 @@ el `Skill` tool"*. El análisis más reciente es el último `*_delta_analysis.md
 dependen el uno del otro: en serie, la pasada 1 de `CU-3.ac (3)` esperó 5 minutos de más por vuelta.
 Si una verificación devuelve un conflicto **nuevo** sobre un spec, ese spec no se sella en este lote:
 dilo con el conflicto, y la lista de pendientes lo traerá.
+
+**Con `--solo-criterios`**, añade al prompt: *"Este spec ya se validó y este cambio solo añade los
+criterios que pidió aquella validación. Comprueba que los criterios nuevos prueban lo que dicen; las
+sugerencias, solo sobre lo que cambió: lo que ya estaba cuando se validó no se vuelve a sugerir."*
+Sin esto, cada validación deja sugerencias nuevas sobre lo que antes no vio, y aplicarlas abre otra
+vuelta (pasada 1 de `CU-3.ac (4)`: 5 aplicadas, 2 nuevas).
 
 **En lote**, emite las N llamadas `Agent` —una por spec, mismo prompt con su path— en un único
 mensaje, **sin llamada de prueba**: lanzar una "a ver si va" y el resto después serializa igual
@@ -149,6 +159,19 @@ Informa qué hay que corregir y que lo revalidas cuando esté.
 > **Por qué el `Aprobado por:` lo estampa el script y no tú ([[D-065]]).** El dato es humano —lo acabas de capturar— pero escribirlo en el artefacto no es cosa del hilo principal ([[D-060]]). Se lo pasas al sellador, que es quien toca la cabecera. Mismo reparto que en el PRD, donde el sello lo estampa `sdd-prd-apply.py --seal "<valor>"` y no el orquestador.
 
 ---
+
+## Paso 5b: Medir, si el cambio venía de una opción del cierre (v0.128.1)
+
+Con `--con-conflictos` o `--solo-criterios`, la medición va **aquí**, no después: en la pasada 1 de
+`CU-3.ac (4)` estaba solo en la guía de la fase, como paso siguiente a esta skill, y se saltó.
+
+```bash
+!python3 .sdd/scripts/sdd-project-status.py <raíz_spec> --refresh-readiness [--solo-criterios <spec1.md> …]
+```
+
+(`--solo-criterios` con las rutas validadas si llegó ese flag.) Exit `0`: la medición queda al día,
+sin agente. Exit `2`: sus `motivos` dicen qué hay que arbitrar; delega entonces la medición completa
+(`wf-spec-readiness`, con la tool `Agent` como cualquier fork) antes del cierre.
 
 ## Paso 6: Informar el siguiente paso
 

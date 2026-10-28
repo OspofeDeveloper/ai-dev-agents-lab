@@ -649,6 +649,11 @@ def _current_estado(path: Path) -> str | None:
 def _nombre_legible(path: Path, text: str) -> str:
     fid = re.search(r"^\s*>?\s*\**Feature ID\**\s*:\s*\**\s*(F-[\w-]+)", text, re.MULTILINE)
     nombre = path.name.replace("_spec.md", "").replace("-", " ")
+    # El título del spec trae las tildes que el nombre del fichero no (v0.128.1).
+    t = re.search(r"^#\s+Spec:\s*(.+?)\s*$", text, re.MULTILINE)
+    if t and not re.fullmatch(r"F-[\w-]+", t.group(1).strip()):
+        nombre = " ".join(w if (w.isupper() and len(w) > 1) else w.lower()
+                          for w in t.group(1).split())
     return f"{nombre} ({fid.group(1)})" if fid else nombre
 
 

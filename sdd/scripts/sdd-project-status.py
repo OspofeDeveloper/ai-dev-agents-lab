@@ -1315,6 +1315,11 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
         cand.append({"label": f"Decisiones menores ({len(menores)})",
                      "description": "No frenan nada; tomarlas ahora evita revalidar después.",
                      "preview": "\n".join(prev), "accion": "menores"})
+    if sin_spec:
+        cand.append({"label": "Generar " + _y([corto(f) for f in sin_spec][:2])
+                              + ("…" if len(sin_spec) > 2 else ""),
+                     "description": "Crea su spec; no afecta a lo que ya está.",
+                     "accion": "generar"})
     if sugerencias:
         prev = ["Sugerencias de la validación (no frenan nada):", ""]
         for k, it in enumerate(sugerencias, 1):
@@ -1324,13 +1329,11 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
         cand.append({"label": f"Aplicar sugerencias ({len(sugerencias)})",
                      "description": "Pequeños arreglos que vio la validación.",
                      "preview": "\n".join(prev), "accion": "sugerencias", "aprueba": aprobador})
-    if sin_spec:
-        cand.append({"label": "Generar " + _y([corto(f) for f in sin_spec][:2])
-                              + ("…" if len(sin_spec) > 2 else ""),
-                     "description": "Crea su spec; no afecta a lo que ya está.",
-                     "accion": "generar"})
     opciones = cand[:3]
-    if opciones:
+    # Las sugerencias no se recomiendan (v0.128.1): cada validación puede dejar otras nuevas,
+    # y recomendarlas encadenaba vueltas sin fin (CU-3.ac (4): 5 aplicadas, 2 nuevas, otra vez
+    # «Aplicar sugerencias (Recomendado)»). Se ofrecen; el usuario decide si las quiere.
+    if opciones and opciones[0]["accion"] != "sugerencias":
         opciones[0] = {**opciones[0], "label": opciones[0]["label"] + " (Recomendado)"}
     opciones.append({"label": "Lo dejo para luego",
                      "description": "Lo que ya está listo se puede planificar igualmente.",

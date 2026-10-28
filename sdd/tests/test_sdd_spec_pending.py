@@ -1159,5 +1159,34 @@ class CierreConAprobadorTest(unittest.TestCase):
             self.assertIn("quién aprueba", val["preview"])
 
 
+class SugerenciasSinRecomendarTest(unittest.TestCase):
+    """v0.128.1: las sugerencias se ofrecen, pero no se recomiendan (cada validación deja otras)."""
+
+    def test_solo_sugerencias_no_lleva_recomendado(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            b = Bank(Path(tmp))
+            b.feature("F-001", "movimientos", estado="VALIDADO",
+                      extra_header="> Sugerencias de la validación: añadir un criterio de X\n")
+            b.index([("F-001", "movimientos", "features/movimientos/spec/movimientos_spec.md",
+                      "LISTA", "ninguno")])
+            b.analysis("respondida")
+            time.sleep(0.01)
+            b.readiness("| F-001: movimientos | LISTA | 0 | 0 | — |", media_rows="")
+            ops = b.pending()["cierre"]["opciones"]
+            self.assertEqual(ops[0]["accion"], "sugerencias")
+            self.assertNotIn("Recomendado", " ".join(o["label"] for o in ops))
+
+    def test_el_lote_nombra_las_features_con_tildes(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            b = Bank(Path(tmp))
+            b.feature("F-001", "vision-general", estado="VALIDADO")
+            sp = b.spec / "features" / "vision-general" / "spec" / "vision-general_spec.md"
+            sp.write_text(sp.read_text(encoding="utf-8").replace("# Spec: F-001",
+                                                                 "# Spec: Visión General"),
+                          encoding="utf-8")
+            r = run_script("sdd-seal.py", "spec", "--report", "--lineas", sp)
+            self.assertIn("visión general (F-001)", r.stdout, r.stdout + r.stderr)
+
+
 if __name__ == "__main__":
     unittest.main()

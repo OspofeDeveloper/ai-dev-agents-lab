@@ -2,6 +2,15 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.128.1 — 2026-10-28
+
+**La medición va dentro de la validación, y las sugerencias no se encadenan** — [[DECISIONS D-115]] (ampliación). Sale de la pasada 1 de `CU-3.ac (4)`.
+
+- 🟠 `wf-spec-validate` mide al terminar (`--refresh-readiness`, Paso 5b) cuando llega con `--con-conflictos` o `--solo-criterios`. Como paso de la guía de fase, se saltó.
+- 🟠 Las sugerencias se ofrecen, pero **no se recomiendan**: cada validación puede dejar otras nuevas y la recomendación encadenaba vueltas (5 aplicadas, 2 nuevas). Al revalidar tras aplicarlas, el auditor solo sugiere sobre lo que cambió.
+- 🟡 El resultado del lote nombra las features con las tildes de su spec.
+- **Conformance:** `CU-3.ac (4)` pasada 1, puntos 1 y 2. 2 tests nuevos.
+
 ## 0.128.0 — 2026-10-26
 
 **Un cambio sin nada que decidir sigue un camino corto, y el cierre dice lo que hay** — [[DECISIONS D-115]]. Sale de la revisión de la pasada 1 de `CU-3.ac (3)`: 71 minutos de máquina para copiar tres decisiones ya tomadas, y un cierre final que recomendaba cuatro decisiones ya resueltas.
