@@ -2,6 +2,14 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.128.3 — 2026-10-29
+
+**Al generar unas features, solo se pregunta lo que esas features usan** — [[DECISIONS D-115]] (ampliación). Sale del punto 5 de `CU-3.ac (4)`.
+
+- 🟠 ⚠ `sdd-analysis-gaps.py --check --tanda F-…` acota los gates de la generación a las respuestas que usan las features de la tanda (sus *Respuestas del análisis usadas* del discovery). Al generar pagos previstos se preguntaban dos informativos de otras features, ya aplicados en sus specs validados, y el alcance derivado de deudas, ya aceptado con nombre; la opción de seguir habría marcado como derivado un spec que no lo contenía.
+- 🟡 Si una respuesta de la tanda la aplica también una feature ya generada (`tambien_en`), cambiarla es reabrirla, y se dice así.
+- **Conformance:** `CU-3.ac (4)` punto 5, en curso. 2 tests nuevos.
+
 ## 0.128.2 — 2026-10-28
 
 **Un cambio que pides es una sola vuelta** — [[DECISIONS D-115]] (ampliación). Sale del punto 3 de la pasada 1 de `CU-3.ac (4)`.

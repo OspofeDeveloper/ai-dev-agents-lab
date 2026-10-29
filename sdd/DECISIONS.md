@@ -91,6 +91,13 @@ Ahora se compara con el ecosistema y se refresca sola. Además:
 - resume en llano;
 - main no busca en los specs para enrutar un cambio sobre una feature que el usuario nombra.
 
+**Ampliación (v0.128.3, punto 5 de `CU-3.ac (4)`).** Al generar pagos previstos, los gates de la
+generación revisaron todas las respuestas del análisis: preguntaron dos informativos de presupuesto
+y de deudas (ya aplicados en sus specs validados) y el alcance derivado de deudas (ya aceptado con
+nombre). La opción *"continuar con alcance derivado"* habría marcado pagos previstos como derivado
+sin contenerlo. Como cada feature del discovery dice qué respuestas usa, el script acota los gates a
+la tanda (`--check --tanda`). Una feature sin esa lista no se acota.
+
 **Referencias.** `scripts/sdd-project-status.py` (`--refresh-readiness`, estado de conflictos por
 alias, `aprueba`, títulos), `scripts/sdd-model-contracts.py` (`--vecinas`, lectura y escritura),
 `wf-spec-delta` (submodo `directo`, `--sin-indice`), `wf-spec-conflict` (modo verificación,

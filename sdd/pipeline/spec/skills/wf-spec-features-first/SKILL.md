@@ -149,6 +149,18 @@ Verifica que el archivo PRD existe; si no → informa con ruta exacta y detén.
    ```
    !python3 .sdd/scripts/sdd-analysis-gaps.py "<path>_analysis.md" --check --json
    ```
+   **Con `--features` y un discovery que ya existe, añade `--tanda <F-…,F-…>`** (v0.128.3): el JSON
+   trae además `tanda`, con lo que tocan **las features de esta tanda** —según sus *Respuestas del
+   análisis usadas* del discovery—: `critical_open_ids`, `informative_open_ids` y `cr_answered_ids`.
+   **Los puntos 5 a 8 usan esas listas, no las globales**: una respuesta que solo usan features ya
+   generadas ya se decidió cuando se generaron —su asunción ya está en sus specs, o su alcance ya se
+   aceptó al validarlas—, y preguntarla otra vez es preguntar lo decidido. Medido en la pasada 1 de
+   `CU-3.ac (4)`: para generar pagos previstos se preguntó por dos informativos de presupuesto y de
+   deudas, y por el alcance de deudas, ya aceptado con nombre; la opción *"continuar con alcance
+   derivado"* habría marcado como derivado un spec que no lo contenía. Si `tanda.tambien_en` nombra
+   un gap, una feature ya generada lo aplica también: responderlo distinto ahora es **reabrir** esa
+   respuesta (dilo así, y se reabre con `--answer … --force`). Si `tanda.sin_lista` no está vacía,
+   el discovery no dice qué usa alguna feature: la tanda las usa todas, como antes.
    Da `verdict` (`CRITICAL_OPEN` / `CRITICAL_ANSWERED` / `VACUOUS`), `critical_open` y `critical_open_ids`. **Este conteo no se hace leyendo el informe**: contar marcadores `_(pendiente)_` no es juicio, y de él cuelgan las dos ramas duras de los puntos 5 y 6. Si el veredicto es `VACUOUS`, el documento no se ha podido parsear — **detente** y dilo, no lo trates como "sin gaps".
 4. **Si existe** → **no lo leas.** Lo que necesitas sale del script y de una extracción acotada de metadatos, nunca de abrir el artefacto ([[D-051]]):
    - **Estado de cada gap** —IDs, severidad, **flags**, título y si está respondido—:

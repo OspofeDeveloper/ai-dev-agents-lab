@@ -645,10 +645,72 @@ def _parse_args(argv):
             import_path, answer, rest, do_owners, do_decisiones)
 
 
+def tanda(gaps: list, discovery_text: str, fids: list, specs_dir: Path | None = None) -> dict:
+    """Qué gaps tocan a las features que se van a generar ahora (v0.128.3).
+
+    Al generar un subconjunto, los gates de la generación revisaban TODAS las respuestas
+    del análisis: en CU-3.ac (4), para generar pagos previstos se preguntó por dos
+    informativos de presupuesto y deudas (ya aplicados en sus specs, validados) y por el
+    alcance derivado de deudas (ya aceptado con nombre). Cada feature del discovery dice qué
+    respuestas usa («Respuestas del análisis usadas»); con eso, cada gate mira solo las suyas.
+    Una feature sin esa línea no se puede acotar: entonces la tanda las usa todas.
+    """
+    bloques = {m.group(1): m.group(2) for m in re.finditer(
+        r"^###\s+(F-[\w-]+?):[^\n]*\n(.*?)(?=^###\s|^##\s|\Z)", discovery_text,
+        re.MULTILINE | re.DOTALL)}
+    usadas_por = {}
+    sin_lista = []
+    for f, b in bloques.items():
+        m = re.search(r"^\s*[-*]\s*\*\*Respuestas del an[aá]lisis usadas\*\*\s*:\s*(.*)$", b,
+                      re.MULTILINE)
+        if m:
+            usadas_por[f] = set(re.findall(r"\b[PD]-\d{3,4}\b", m.group(1)))
+        elif f in fids:
+            sin_lista.append(f)
+    ids = {g["id"] for g in gaps}
+    usadas = ids if sin_lista else set().union(*[usadas_por.get(f, set()) for f in fids])
+    con_spec = set()
+    if specs_dir and specs_dir.is_dir():
+        for sp in specs_dir.glob("*/spec/*_spec.md"):
+            fm = re.search(r"Feature ID\**\s*:\s*\**\s*(F-[\w-]+)", sp.read_text(encoding="utf-8"))
+            if fm:
+                con_spec.add(fm.group(1))
+    tambien = {g: sorted(f for f, u in usadas_por.items() if g in u and f not in fids
+                         and (not con_spec or f in con_spec))
+               for g in sorted(usadas)}
+    en = [g for g in gaps if g["id"] in usadas]
+    return {
+        "features": fids, "sin_lista": sin_lista,
+        "critical_open_ids": [g["id"] for g in en if g["severity"] == CRITICAL and not g["answered"]],
+        "informative_open_ids": [g["id"] for g in en
+                                 if g["severity"] == INFORMATIVE and not g["answered"]],
+        "cr_answered_ids": [g["id"] for g in en if "PUEDE_REQUERIR_CR" in g["flags"]
+                            and g["answered"]],
+        "fuera_ids": sorted(ids - usadas),
+        # Una respuesta que la tanda usa y que una feature ya generada también aplica:
+        # cambiarla ahora es reabrirla, no responderla por primera vez.
+        "tambien_en": {g: fs for g, fs in tambien.items() if fs},
+    }
+
+
 def main() -> int:
+    argv = sys.argv[1:]
+    tanda_fids, discovery_path = None, None
+    for flag in ("--tanda", "--discovery"):
+        if flag in argv:
+            i = argv.index(flag)
+            val = argv[i + 1] if i + 1 < len(argv) else None
+            if val is None:
+                print(f"ERROR: {flag} requiere un valor", file=sys.stderr)
+                return 1
+            argv = argv[:i] + argv[i + 2:]
+            if flag == "--tanda":
+                tanda_fids = re.findall(r"F-[\w]+(?:-\d+)?", val)
+            else:
+                discovery_path = Path(val)
     try:
         (as_json, force, do_check, do_export, do_list, only_gap, import_path,
-         answer, rest, do_owners, do_decisiones) = _parse_args(sys.argv[1:])
+         answer, rest, do_owners, do_decisiones) = _parse_args(argv)
     except GapError as e:
         print(f"ERROR: {e}", file=sys.stderr)
         return e.code
@@ -760,6 +822,21 @@ def main() -> int:
                 re.MULTILINE | re.IGNORECASE):
             result["verdict"] = "NO_GAPS"
         result["path"] = str(path)
+        if tanda_fids:
+            disc = discovery_path or path.with_name(path.name.replace("_analysis.md",
+                                                                      "_discovery.md"))
+            try:
+                dtext = disc.read_text(encoding="utf-8")
+            except OSError:
+                print(f"ERROR: --tanda necesita el discovery: {disc}", file=sys.stderr)
+                return 1
+            raiz = next((d for d in [path.parent, *path.parents]
+                         if (d / "spec" / "features").is_dir() or (d / "features").is_dir()), None)
+            specs_dir = None
+            if raiz:
+                specs_dir = (raiz / "spec" / "features") if (raiz / "spec" / "features").is_dir() \
+                    else raiz / "features"
+            result["tanda"] = tanda(parse_gaps(text), dtext, tanda_fids, specs_dir)
         if as_json:
             print(json.dumps(result, ensure_ascii=False))
         else:

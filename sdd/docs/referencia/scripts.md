@@ -94,14 +94,14 @@ con spec que comparten algún modelo con las dadas (dueña o consumidora): es el
 
 - **Exit:** `0` sin nada que bloquee · `2` con contratos, catálogos o peticiones pendientes · `1` uso.
 
-### `sdd-analysis-gaps.py` · `<analysis.md> --check | --list | --answer … | --owners` · `<features_dir> --decisiones`
+### `sdd-analysis-gaps.py` · `<analysis.md> --check [--tanda F-…] | --list | --answer … | --owners` · `<features_dir> --decisiones`
 Cuenta, lista y escribe las respuestas de los gaps de un `_analysis.md` o un `_delta_analysis.md`
 sin que nadie los lea a ojo ([[D-042]]). `--owners` ([[D-114]]): cada pregunta respondida con
 `Dueño` de otra feature tiene que estar, literal, en un análisis de cambio de esa feature, o el
 apply se para. `--decisiones`: lo que el usuario ya respondió en los análisis de cambio de todas las
 features, con su dueño, y la opción elegida en cada conflicto (campo `conflicto`), para la revisión de
 conflictos. Un análisis de cambio que declara *"Sin
-gaps detectados"* da `NO_GAPS`.
+gaps detectados"* da `NO_GAPS`. Con `--check --tanda F-…` (v0.128.3), el JSON añade `tanda`: los gaps que usan esas features según su discovery (*Respuestas del análisis usadas*), para que los gates de una generación por subconjunto no pregunten lo que solo usan features ya generadas.
 
 - **Exit:** `0` OK · `1` error de uso o IO · `2` críticos abiertos, `VACUOUS` o `OWNER_MISSING`.
 

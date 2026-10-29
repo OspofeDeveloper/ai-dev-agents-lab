@@ -618,5 +618,61 @@ class DuenoYDecisionesTest(unittest.TestCase):
             self.assertEqual(json.loads(r.stdout)["verdict"], "NO_GAPS")
 
 
+class TandaTest(unittest.TestCase):
+    """v0.128.3: al generar un subconjunto, los gates solo miran lo que usan esas features."""
+
+    ANALISIS = """# Análisis
+
+### [P-001][CRÍTICO][PUEDE_REQUERIR_CR] Saldar una deuda
+- **Respuesta**: crea un ingreso en una cuenta
+
+### [P-002][INFORMATIVO] Presupuesto y límite
+- **Respuesta**: _(pendiente)_
+- **Asunción por defecto**: independientes
+
+### [P-003][CRÍTICO][PUEDE_REQUERIR_CR] Aviso de un pago
+- **Respuesta**: al entrar en la app
+"""
+    DISCOVERY = """# Discovery
+
+## Features identificadas
+
+### F-001: deudas
+- **Respuestas del análisis usadas**: P-001
+
+### F-002: presupuesto
+- **Respuestas del análisis usadas**: P-002
+
+### F-003: pagos
+- **Respuestas del análisis usadas**: P-003
+
+## Tabla de shared models
+"""
+
+    def _run(self, tmp, fids, discovery=None):
+        d = Path(tmp)
+        write(d / "prd" / "x_analysis.md", self.ANALISIS)
+        write(d / "prd" / "x_discovery.md", discovery or self.DISCOVERY)
+        r = run_script("sdd-analysis-gaps.py", d / "prd" / "x_analysis.md", "--check", "--json",
+                       "--tanda", fids)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        return json.loads(r.stdout)["tanda"]
+
+    def test_solo_lo_que_usan_las_features_de_la_tanda(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            t = self._run(tmp, "F-003")
+            self.assertEqual(t["informative_open_ids"], [])
+            self.assertEqual(t["cr_answered_ids"], ["P-003"])
+            self.assertEqual(t["fuera_ids"], ["P-001", "P-002"])
+
+    def test_una_feature_sin_lista_usa_todas(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            t = self._run(tmp, "F-003", self.DISCOVERY.replace(
+                "- **Respuestas del análisis usadas**: P-003\n", ""))
+            self.assertEqual(t["sin_lista"], ["F-003"])
+            self.assertEqual(t["informative_open_ids"], ["P-002"])
+            self.assertEqual(t["cr_answered_ids"], ["P-001", "P-003"])
+
+
 if __name__ == "__main__":
     unittest.main()

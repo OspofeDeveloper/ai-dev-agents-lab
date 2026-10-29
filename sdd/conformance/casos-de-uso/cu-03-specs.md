@@ -2931,7 +2931,13 @@ algo resuelto, o si un cambio sin decisión vuelve a pasar por revisión complet
   - `--owners` no encontró la respuesta copiada entre comillas en un bloque citado, y main pidió
     reescribirla (arreglado en v0.128.2).
   - Main parafraseó las descripciones del cierre.
-- **Punto 4: no aplicó.** **Punto 5:** pendiente (opcional).
+- **Punto 4: no aplicó.**
+- **Punto 5: en curso (v0.128.2).** Antes de generar pagos previstos, la generación preguntó por dos
+  informativos de otras features (P-004 y P-005, ya aplicados en presupuesto y deudas, validados) y
+  después por el alcance derivado de deudas (P-002, ya aceptado con nombre el 26-oct). Las dos
+  opciones del segundo gate eran malas: parar a formalizarlo en el PRD daría deriva a los siete
+  specs, y seguir con alcance derivado marcaría pagos previstos sin contenerlo. **Arreglo
+  (v0.128.3):** `--check --tanda` acota los gates a las respuestas que usan las features de la tanda.
 - **Auditoría técnica del run** (3 sesiones, 9 agentes; 4,2 M tokens nuevos y 27 M de caché, frente a
   87 M de caché en `CU-3.ac (3)`):
   - **cumplido:**
