@@ -13,7 +13,7 @@
 ### Hallazgos BLOQUEANTES (degradan el veredicto)
 <!-- Si no hay ninguno, escribe "Ninguno". Nunca lo dejes vacío: el silencio no se
      distingue de haberlo olvidado, y este bloque decide si el spec se sella. -->
-1. [elemento obligatorio ausente | contaminación dura citada | CA no verificable]
+1. [elemento obligatorio ausente | contaminación dura citada | CA no verificable | regla de un modelo ajeno escrita aquí, también copiada con su cita]
 
 ### Notas NO bloqueantes (no cambian el veredicto)
 - [borderline aceptable, con el porqué | sugerencia de redacción | materia de Plan]

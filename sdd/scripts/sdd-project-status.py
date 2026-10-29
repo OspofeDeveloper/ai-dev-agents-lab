@@ -1232,7 +1232,7 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
                       + ("no frena nada. Aplicarla" if len(sugerencias) == 1
                          else "no frenan nada. Aplicarlas")
                       + f" vuelve a validar {_y([corto(f) for f in fs])}, sin revisar "
-                      "conflictos: son criterios que prueban reglas ya escritas.")
+                      "conflictos: son arreglos que no cambian cómo se comporta nada.")
     if sin_spec:
         lineas.append("")
         lineas.append(f"Sin spec todavía: {nombres(sin_spec)}. No frena a las demás; se genera "
@@ -1348,8 +1348,10 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
         prev = ["Sugerencias de la validación (no frenan nada):", ""]
         for k, it in enumerate(sugerencias, 1):
             prev += [f"{k}. {nombre(it['features'][0])}: {it['que']}"]
-        prev += ["", "Se aplican, se auditan y se validan, sin revisar conflictos: son criterios",
-                 "que prueban reglas ya escritas."] + sella
+        # Una sugerencia puede ser un criterio que prueba una regla ya escrita o quitar una
+        # copia de una regla ajena (v0.128.4): ninguna cambia el comportamiento.
+        prev += ["", "Se aplican, se auditan y se validan, sin revisar conflictos: son arreglos",
+                 "que no cambian cómo se comporta nada."] + sella
         cand.append({"label": f"Aplicar sugerencias ({len(sugerencias)})",
                      "description": "Pequeños arreglos que vio la validación.",
                      "preview": "\n".join(prev), "accion": "sugerencias", "aprueba": aprobador})
@@ -1637,6 +1639,12 @@ def refresh_readiness(directory: Path, solo_criterios: list | None = None) -> di
     if motivos:
         return {"ok": False, "motivos": motivos}
 
+    # Lo que dijeron las actualizaciones anteriores se acumula (v0.128.4): reescribir la
+    # sección perdía qué specs se habían revisado en la anterior.
+    m_rev = re.search(r"^\s*[-*]\s*\*\*Specs revisados después\*\*\s*:\s*(.*)$",
+                      section(rtext, INCREMENTAL_TITLE), re.MULTILINE)
+    revisados = sorted(set(revisados) | set(FID_RE.findall(m_rev.group(1) if m_rev else "")),
+                       key=fid_sort_key)
     cerrados = sorted(_cerrados_incrementales(rtext) | {
         c for k in conocidos for c in CF_ID_RE.findall(k)
         if _cerrado_despues(estado_cf, c, rts)})

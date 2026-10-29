@@ -15,6 +15,16 @@
 | F-003: [nombre] | — | — | — | PENDIENTE_GENERACIÓN |
 | F-004: [nombre] | Iteración previa | ✓ | — | RETIRADA |
 
+### Lo que se decidió con su asunción por defecto
+
+<!-- Solo si algún spec de esta tanda trae gaps [INFORMATIVO] propios (los que el escritor abrió al
+     generar y resolvió con su asunción). Uno por línea, en llano: "- pagos previstos: un pago
+     recurrente puede ser semanal, mensual o anual (asunción por defecto)". Y una frase al final:
+     "Si alguna no te vale, dímelo y se cambia en su spec (vuelve a validarse)". Nacen dentro del
+     spec, no en el análisis del PRD, así que el repaso de informativos de antes de generar no los
+     ve (v0.128.4): en la pasada 1 de CU-3.ac (4) pagos previstos salió con cinco, y solo se
+     contaron de pasada. Si no hay ninguno, omite la sección. -->
+
 ## Artefactos
 
 - Discovery: `<path>_discovery.md`

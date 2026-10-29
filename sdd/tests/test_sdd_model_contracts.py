@@ -112,6 +112,15 @@ class ContractsTest(unittest.TestCase):
         self.assertEqual(rc, 2)
         self.assertEqual([u["escribe"] for u in data["uso"] if u["feature"] == "F-002"], [True])
 
+    def test_el_indice_declara_un_uso_que_el_spec_no_tiene(self):
+        # v0.128.4: F-003 figura como referencia de Movimiento y su spec no lo usa.
+        self._banco(consumo_f2=CONSUMO.format(filas=LECTURA, peticiones=""),
+                    consumo_f3=CONSUMO.format(filas="", peticiones=""), refs="F-002, F-003")
+        data, rc = self.contracts()
+        self.assertEqual([(x["feature"], x["modelo"]) for x in data["referencias_sin_uso"]],
+                         [("F-003", "Movimiento")])
+        self.assertEqual(rc, 0)          # es un aviso: no bloquea
+
     def test_vecinas_son_las_que_comparten_un_modelo(self):
         self._banco(consumo_f2=CONSUMO.format(filas=LECTURA, peticiones=""), refs="F-002")
         r = run_script("sdd-model-contracts.py", self.b.spec, "--vecinas", "F-002", "--json")

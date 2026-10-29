@@ -1073,6 +1073,20 @@ class MedicionIncrementalTest(unittest.TestCase):
             texto = (b.spec / "spec_readiness_report.md").read_text(encoding="utf-8")
             self.assertIn("| F-005: cuentas | BLOQUEADA | 0 | 0 | pendiente de validación", texto)
 
+    def test_las_actualizaciones_se_acumulan(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            b = self._bank(tmp)
+            b.feature("F-005", "cuentas", estado="BORRADOR")
+            time.sleep(0.01)
+            write(b.spec / "features" / "cuentas" / "spec" / "cuentas_conflict_report.md",
+                  informe([("CF-F005-01", "ALTA", "F-001, F-005", "Resuelto en esta revisión")]))
+            self.assertEqual(self._refresh(b)[0], 0)
+            time.sleep(0.01)
+            rc, out = self._refresh(b)        # otra vez, sin cambios nuevos
+            self.assertEqual(rc, 0, out)
+            self.assertEqual(out["revisados"], ["F-005"])
+            self.assertEqual(out["cerrados"], ["CF-F005-01"])
+
     def test_un_conflicto_nuevo_pide_la_medicion_completa(self):
         with tempfile.TemporaryDirectory() as tmp:
             b = self._bank(tmp)
@@ -1161,6 +1175,20 @@ class CierreConAprobadorTest(unittest.TestCase):
 
 class SugerenciasSinRecomendarTest(unittest.TestCase):
     """v0.128.1: las sugerencias se ofrecen, pero no se recomiendan (cada validación deja otras)."""
+
+    def test_las_sugerencias_no_se_llaman_criterios(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            b = Bank(Path(tmp))
+            b.feature("F-001", "movimientos", estado="VALIDADO",
+                      extra_header="> Sugerencias de la validación: quitar la copia de la regla\n")
+            b.index([("F-001", "movimientos", "features/movimientos/spec/movimientos_spec.md",
+                      "LISTA", "ninguno")])
+            b.analysis("respondida")
+            time.sleep(0.01)
+            b.readiness("| F-001: movimientos | LISTA | 0 | 0 | — |", media_rows="")
+            data = b.pending()
+            self.assertIn("no cambian cómo se comporta nada", data["mapa"])
+            self.assertNotIn("criterios que prueban", data["mapa"])
 
     def test_solo_sugerencias_no_lleva_recomendado(self):
         with tempfile.TemporaryDirectory() as tmp:

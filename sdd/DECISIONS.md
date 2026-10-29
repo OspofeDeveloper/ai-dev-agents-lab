@@ -98,6 +98,15 @@ nombre). La opción *"continuar con alcance derivado"* habría marcado pagos pre
 sin contenerlo. Como cada feature del discovery dice qué respuestas usa, el script acota los gates a
 la tanda (`--check --tanda`). Una feature sin esa lista no se acota.
 
+**Ampliación (v0.128.4, cierre de `CU-3.ac (4)`).** El escritor de pagos previstos copió tres reglas
+de modelos ajenos junto a su cita, y la validación lo dejó en sugerencia: el umbral de
+`kb-spec-expert` ya lo hacía bloqueante (punto 4), pero el encargo al auditor enumeraba solo los tres
+primeros puntos. El encargo ya los enumera todos. Además:
+- las sugerencias no se llaman *criterios*;
+- el script de contratos avisa de usos que el índice declara y ningún spec tiene;
+- el cierre de la generación cuenta las asunciones por defecto de cada spec nuevo;
+- la medición incremental acumula su historial.
+
 **Referencias.** `scripts/sdd-project-status.py` (`--refresh-readiness`, estado de conflictos por
 alias, `aprueba`, títulos), `scripts/sdd-model-contracts.py` (`--vecinas`, lectura y escritura),
 `wf-spec-delta` (submodo `directo`, `--sin-indice`), `wf-spec-conflict` (modo verificación,

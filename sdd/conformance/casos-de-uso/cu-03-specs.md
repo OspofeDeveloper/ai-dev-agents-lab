@@ -2845,7 +2845,7 @@ en la misma vuelta y un rechazo se explica · FALLO si una regla queda escrita s
   - Además: dos revisiones *"descubrieron"* choques viejos; el texto de los traslados estaba en jerga
     de editor; *"Now the closing: run the status script."*; y la actualización no dijo qué podó.
 
-### CU-3.ac (4) — El camino corto de lo que no tiene nada que decidir ([[D-115]]) ⏱ **pasada 1 cerrada** (1-3 PASS; v0.128.2)
+### CU-3.ac (4) — El camino corto de lo que no tiene nada que decidir ([[D-115]]) ⏱ **pasada 1 cerrada** (1-3 y 5 PASS; v0.128.4)
 
 **Precondición:** el banco `bank-cu3ac-listo` (final de la pasada 1 de `CU-3.ac (3)`: las 7 features
 con spec, validadas; 5 sugerencias de la validación en registro de movimientos y presupuesto mensual;
@@ -2938,6 +2938,22 @@ algo resuelto, o si un cambio sin decisión vuelve a pasar por revisión complet
   opciones del segundo gate eran malas: parar a formalizarlo en el PRD daría deriva a los siete
   specs, y seguir con alcance derivado marcaría pagos previstos sin contenerlo. **Arreglo
   (v0.128.3):** `--check --tanda` acota los gates a las respuestas que usan las features de la tanda.
+  Con eso resuelto, **PASS**:
+  - pagos previstos nació sin alcance derivado (*Origen: PRD*, solo P-003);
+  - revisión de conflictos y medición **completas**, que es lo correcto con una feature nueva;
+  - validación a tu nombre sin preguntar;
+  - unos 23 min de máquina, 10 de ellos el escritor.
+- **Sugerencias otra vez** (3; 8 min): aplicadas por el camino corto, con la medición incremental
+  hecha y **sin sugerencias nuevas al revalidar**, así que el ciclo se cortó. Las 8 features quedan
+  validadas, sin nada pendiente.
+- **Hallazgos** (arreglados en v0.128.4):
+  - el escritor de pagos previstos **copió y citó** tres reglas de modelos ajenos (regresión del
+    punto 2 de `CU-3.ab`), y la validación lo dejó en sugerencia;
+  - el mapa llamaba *criterios* a quitar esa copia;
+  - el discovery declara un uso que ningún spec tiene;
+  - cinco asunciones por defecto del spec nuevo, contadas solo de pasada;
+  - `--solo-criterios` en el chat.
+- **Estado guardado:** `bank-cu3ac-final` (las 8 features con spec, validadas; nada pendiente).
 - **Auditoría técnica del run** (3 sesiones, 9 agentes; 4,2 M tokens nuevos y 27 M de caché, frente a
   87 M de caché en `CU-3.ac (3)`):
   - **cumplido:**

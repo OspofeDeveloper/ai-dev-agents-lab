@@ -317,6 +317,9 @@ dos formas en dos corridas).
    petición al dueño. Lo estructural (catálogo, peticiones, dependencias) lo verifica
    `sdd-model-contracts.py`; esta frase en prosa solo la ves tú. Un spec anterior a los contratos
    (sin ninguna de las dos secciones) no se juzga por esto: se anota como nota no bloqueante.
+   **Copiar la regla y añadir la cita también es esto**, no una sugerencia (v0.128.4): en la
+   pasada 1 de `CU-3.ac (4)`, tres reglas de pagos previstos repetían la del dueño con su cita, y
+   el encargo del auditor —que enumeraba solo los tres primeros puntos— lo dejó en sugerencia.
 
 **No degrada el veredicto** —se reporta, y el spec se sella igual—:
 

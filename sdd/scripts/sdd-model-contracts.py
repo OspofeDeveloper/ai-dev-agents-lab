@@ -284,8 +284,21 @@ def check(directory: Path) -> dict:
                                           + re.sub(r"^A\s+F-\S+\s*(\([^)]*\))?\s*:\s*", "",
                                                    p["titulo"])})
 
+    # 5. Al revés que el 4 (v0.128.4): el índice declara que una feature usa un modelo y su
+    # spec no lo usa. Viene de un discovery que se quedó atrás (se reutiliza, no se regenera):
+    # en CU-3.ac (4) decía que cuentas lee los pagos previstos, ningún spec lo confirmaba, y
+    # los auditores lo anotaban cada uno en su informe sin que nadie lo corrigiera. Aviso.
+    sin_uso = []
+    for key, mod in sorted(modelos.items()):
+        for r in sorted(mod["refs"], key=fid_key):
+            if r in nuevos and r != mod["owner"] and not any(
+                    norm(u["modelo"]) == key for u in usos[r][0]):
+                sin_uso.append({"feature": r, "modelo": mod["name"], "owner": mod["owner"],
+                                "que": f"El índice dice que {label.get(r, r)} usa "
+                                       f"{mod['name']}, y su spec no lo usa."})
     return {"anteriores_a_d111": anteriores, "sin_contrato": sin_contrato, "catalogo": catalogo,
             "peticiones": peticiones, "no_declaradas": no_declaradas, "uso": uso,
+            "referencias_sin_uso": sin_uso,
             "bloquea": bool(sin_contrato or catalogo or peticiones)}
 
 
@@ -330,7 +343,9 @@ def render(data: dict) -> str:
     secciones = [("Dueñas sin contrato publicado", data["sin_contrato"]),
                  ("Catálogo de orígenes incompleto", data["catalogo"]),
                  ("Peticiones al dueño sin atender", data["peticiones"]),
-                 ("Avisos: dependencias que el índice no declara", data["no_declaradas"])]
+                 ("Avisos: dependencias que el índice no declara", data["no_declaradas"]),
+                 ("Avisos: el índice declara usos que el spec no tiene",
+                  data.get("referencias_sin_uso", []))]
     for titulo, lista in secciones:
         if lista:
             out += [f"## {titulo}", ""] + [f"- {p['que']}" for p in lista] + [""]

@@ -186,6 +186,19 @@ para garantizar que ningún skill se queda sin casos en los cuatro ejes de prueb
 > nombres con tildes; escenario **`CU-3.ac (4)`**. Sigue pendiente: el coste en tokens de las
 > auditorías de validación.
 
+> 🧪 **`CU-3.ac (4)`** (v0.128.0 → v0.128.4): **cerrado**; puntos 1-3 y 5 PASS, con arreglos en
+> 0.128.1-0.128.4. Sobre el mismo banco que costó 71 min en `CU-3.ac (3)`:
+> - sugerencias en 6,5 y 8 min;
+> - un cambio con dueño en ~17 min;
+> - revisar y medir en 5 min;
+> - 9 agentes y ~27 M de tokens de caché (antes 25 y 87 M).
+>
+> La auditoría técnica destapó que las skills globales de bootstrap eran copias que nada
+> refrescaba (v0.128.2). Las 8 features quedan validadas: `bank-cu3ac-final`.
+>
+> **Siguiente:** tanda de regeneración desde el PRD (veredicto de `CU-3.ab`; `CU-3.f`/`o` (2) a su
+> serie; humo de c/d/f(4)/y/u/b), y después la de continuación (g, h, z, aa).
+
 > ⏱ **Cuatro escenarios nacen sin pasada del barrido de enlazado lateral de Spec**
 > ([[D-078]]/[[D-079]], 2026-09-14): **CU-9.o** (evolucionar una feature dada de baja se deniega, y
 > el estado sobrevive incluso sin hook), **CU-7.s** (la reactivación es la única vuelta atrás y no

@@ -2,6 +2,17 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.128.4 — 2026-10-29
+
+**Copiar y citar bloquea la validación; y lo que ya se ve, se dice bien** — [[DECISIONS D-115]] (ampliación). Sale del cierre de `CU-3.ac (4)`.
+
+- 🟠 ⚠ **Una regla de un modelo ajeno copiada junto a su cita bloquea la validación.** El umbral ya lo decía; el encargo al auditor enumeraba solo los tres primeros casos y lo dejaba en sugerencia (pagos previstos, tres reglas).
+- 🟡 Las sugerencias se presentan como *"arreglos que no cambian cómo se comporta nada"* (antes, *"criterios"*, también cuando era quitar una copia).
+- 🟡 `sdd-model-contracts.py` avisa cuando el índice declara que una feature usa un modelo y su spec no lo usa (`referencias_sin_uso`): un discovery que se quedó atrás.
+- 🟡 El cierre de la generación cuenta, en llano, lo que cada spec nuevo decidió con su asunción por defecto, y cómo cambiarlo.
+- 🟡 La medición incremental acumula los specs revisados en vez de reescribirlos. Al narrar un paso, ni flags ni nombres de script.
+- **Conformance:** `CU-3.ac (4)` cerrado (1-3 y 5 PASS). 4 tests nuevos.
+
 ## 0.128.3 — 2026-10-29
 
 **Al generar unas features, solo se pregunta lo que esas features usan** — [[DECISIONS D-115]] (ampliación). Sale del punto 5 de `CU-3.ac (4)`.
