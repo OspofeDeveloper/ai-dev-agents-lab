@@ -568,7 +568,9 @@ class MapaPorBloquesTest(unittest.TestCase):
         mov = next(b for b in data["bloques"] if b["features"] == ["F-001", "F-002"])
         self.assertEqual(pres["depende_de"], [mov["bloque"]])
         self.assertEqual(mov["depende_de"], [])
-        self.assertIn("Además espera a 1 decisión del bloque " + mov["bloque"], data["mapa"])
+        # Por sus features, no por la letra: las letras se recolocaban al cerrarse un bloque.
+        self.assertIn("Además espera a 1 decisión del bloque de movimientos y cuentas",
+                      data["mapa"])
         self.assertIn("Solo depende de sí mismo.", data["mapa"])
 
     def test_sin_afecta_tambien_a_no_hay_espera(self):
@@ -1242,6 +1244,115 @@ class RevisarYValidarTest(unittest.TestCase):
             self.assertIn("Recomendado", ops[0]["label"])
             self.assertNotIn("readiness", acciones)
             self.assertNotIn("validar", acciones)
+
+
+class AuthoringTest(unittest.TestCase):
+    """v0.128.5: en un repo `authoring` no hay fase Plan; lo validado pasa a desarrollo."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.b = Bank(Path(self.tmp.name))
+        b = self.b
+        b.feature("F-001", "movimientos", estado="VALIDADO")
+        b.feature("F-002", "cuentas")
+        b.index([("F-001", "movimientos", "features/movimientos/spec/movimientos_spec.md",
+                  "LISTA", "ninguno"),
+                 ("F-002", "cuentas", "features/cuentas/spec/cuentas_spec.md", "BLOQUEADA",
+                  "ninguno")])
+        b.analysis("respondida")
+        b.readiness()
+
+    def tearDown(self):
+        self.tmp.cleanup()
+
+    def _fases(self, fases):
+        write(Path(self.tmp.name) / ".sdd" / "project-init.json",
+              json.dumps({"topology": "authoring", "phases": fases}))
+
+    def test_authoring_dice_lista_para_desarrollo_y_no_planificar(self):
+        self._fases(["prd", "spec"])
+        data = self.b.pending()
+        texto = data["cierre"]["pregunta"] + "".join(
+            o["description"] + o.get("preview", "") for o in data["cierre"]["opciones"])
+        self.assertIn("Lista para desarrollo: movimientos (F-001). Ya se puede planificar en el "
+                      "repo de código.", data["mapa"])
+        self.assertIn("Pasan a desarrollo en cuanto las valides", data["mapa"])
+        self.assertNotIn("Ya puedes planificar", texto)
+        self.assertNotIn("se pueden planificar", texto)
+        self.assertNotIn("Para poder planificar", data["resumen"])
+
+    def test_con_plan_instalado_sigue_diciendo_planificar(self):
+        self._fases(["prd", "spec", "plan", "tasks"])
+        self.assertIn("Ya puedes planificar: movimientos (F-001).", self.b.pending()["mapa"])
+
+
+class PresentacionBloquesTest(unittest.TestCase):
+    """v0.128.5: lo que el mapa decía mal en la regeneración de CU-3.ac."""
+
+    def test_la_pregunta_critica_sale_por_su_titulo(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            b = Bank(Path(tmp))
+            b.feature("F-003", "categorias", body=(
+                "\n## Items Pendientes\n\n### [P-031][CRÍTICO] Nombres repetidos y pagos puntuales\n"
+                "- **Contexto**: x\n- **Respuesta**: _(pendiente)_\n"))
+            b.index([("F-003", "categorias", "features/categorias/spec/categorias_spec.md",
+                      "BLOQUEADA", "ninguno")])
+            b.analysis("respondida")
+            b.readiness()
+            data = b.pending()
+            prev = data["bloques"][0]["preview"]
+            self.assertIn("1. Nombres repetidos y pagos puntuales", prev)
+            self.assertNotIn("tiene la decisión", prev)
+            self.assertEqual(data["cierre"]["opciones"][0]["label"],
+                             "Bloque de categorias (Recomendado)")
+
+    def test_mas_de_dos_sin_spec_se_cuentan_en_la_etiqueta(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            b = Bank(Path(tmp))
+            b.feature("F-001", "movimientos", estado="VALIDADO")
+            b.index([("F-001", "movimientos", "features/movimientos/spec/movimientos_spec.md",
+                      "LISTA", "ninguno")]
+                    + [(f, n, None, "PENDIENTE_GENERACIÓN", "ninguno")
+                       for f, n in (("F-002", "a"), ("F-003", "b"), ("F-004", "c"))])
+            b.analysis("respondida")
+            b.readiness("| F-001: movimientos | LISTA | 0 | 0 | — |")
+            labels = [o["label"] for o in b.pending()["cierre"]["opciones"]]
+            self.assertIn("Generar las 3 features sin spec (Recomendado)", labels)
+
+
+class ResultadoDeValidacionConservaFechaTest(unittest.TestCase):
+    """v0.128.5: la nota de la validación no es un cambio del spec. Con fecha nueva, la
+    medición incremental pedía la completa (7 min en CU-3.ac) y el cierre «Rehacer la
+    medición»."""
+
+    def test_blocked_conserva_la_fecha_y_la_medicion_sigue_vigente(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            b = Bank(Path(tmp))
+            b.feature("F-001", "movimientos")
+            b.index([("F-001", "movimientos", "features/movimientos/spec/movimientos_spec.md",
+                      "BLOQUEADA", "ninguno")])
+            b.analysis("respondida")
+            sp = b.spec / "features" / "movimientos" / "spec" / "movimientos_spec.md"
+            os.utime(sp, (sp.stat().st_atime, sp.stat().st_mtime - 100))
+            b.readiness("| F-001: movimientos | BLOQUEADA | 0 | 0 | pendiente de validación |")
+            antes = sp.stat().st_mtime
+            r = run_script("sdd-seal.py", "spec", sp, "--unseal", "--blocked", "x — y")
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            self.assertIn("La validación pide corregir", sp.read_text())
+            self.assertEqual(sp.stat().st_mtime, antes)
+            data = b.pending()
+            self.assertTrue(data["readiness_vigente"], data["items"][:1])
+            rc = run_script("sdd-project-status.py", b.spec, "--refresh-readiness").returncode
+            self.assertEqual(rc, 0)
+
+    def test_un_unseal_sin_resultado_si_cambia_la_fecha(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            p = Path(tmp) / "x_spec.md"
+            write(p, spec("F-001", estado="VALIDADO"))
+            os.utime(p, (p.stat().st_atime, p.stat().st_mtime - 100))
+            antes = p.stat().st_mtime
+            run_script("sdd-seal.py", "spec", p, "--unseal")
+            self.assertGreater(p.stat().st_mtime, antes)
 
 
 if __name__ == "__main__":

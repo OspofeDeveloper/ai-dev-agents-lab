@@ -199,6 +199,14 @@ para garantizar que ningún skill se queda sin casos en los cuatro ejes de prueb
 > **Siguiente:** tanda de regeneración desde el PRD (veredicto de `CU-3.ab`; `CU-3.f`/`o` (2) a su
 > serie; humo de c/d/f(4)/y/u/b), y después la de continuación (g, h, z, aa).
 
+> 🧪 **`CU-3.ac (5)`, regeneración desde el PRD** (v0.128.4, primer tramo): las dos tandas y dos
+> bloques. Funcionan el alcance por subconjuntos, la reutilización del discovery, el alcance derivado
+> marcado, copiar y citar bloqueante y la recuperación de agentes cortados. Cuestan vueltas el
+> vocabulario de plan en un repo authoring, una nota de validación que fuerza la medición completa,
+> una regla copiada al aplicar una respuesta y una petición a una feature sin spec presentada como
+> bloque. → v0.128.5 (sin cambiar specs ni umbrales); escenario **`CU-3.ac (5)`**, puntos 1-5. Queda
+> para la siguiente: preguntar el contrato de las dueñas antes de generar.
+
 > ⏱ **Cuatro escenarios nacen sin pasada del barrido de enlazado lateral de Spec**
 > ([[D-078]]/[[D-079]], 2026-09-14): **CU-9.o** (evolucionar una feature dada de baja se deniega, y
 > el estado sobrevive incluso sin hook), **CU-7.s** (la reactivación es la única vuelta atrás y no

@@ -311,6 +311,10 @@ INSTRUCCION:
 1. Integra los cambios siguiendo las reglas de integracion (no interpretar, no ampliar, no inferir;
    reglas por tipo: HUs anadidas/modificadas/eliminadas, CAs, Journeys, Instrucciones Inambiguas,
    Fuera de Alcance). Las HUs afectadas por un gap `[CRITICO]` sin responder se marcan `[INCOMPLETO]`.
+   **Una regla de un modelo que no es de este spec se cita, no se escribe** (v0.128.5): si el
+   requisito fija algo de un modelo de `## Modelos de otras features` (o empieza por "Regla de
+   <dueño>"), aqui solo va la cita a su contrato; escribirla y ademas citarla son dos fuentes y la
+   validacion lo bloquea (`kb-spec-expert`, contratos de modelos compartidos).
 2. **Al modificar un spec, su validacion se reabre** ([[D-061]]). Tras escribir:
    `python3 .sdd/scripts/sdd-seal.py spec "<path_del_spec>" --unseal`
    Degradar a `BORRADOR` siempre es seguro y siempre es correcto: lo que se valido ya no es lo que

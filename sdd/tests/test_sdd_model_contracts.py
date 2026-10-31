@@ -237,6 +237,56 @@ class ContractsTest(unittest.TestCase):
         self.assertEqual(r.returncode, 0, r.stdout)
         self.assertNotIn("Contratos", r.stdout)
 
+    def test_peticion_respondida_que_la_consumidora_aun_da_por_pendiente_se_corrige(self):
+        # v0.128.5: cuentas salía lista para validar con «pendiente: F-006 aún sin spec».
+        fila = GASTO_DEUDA.replace("Orígenes externos de F-001",
+                                   "Contrato de F-001 (pendiente: F-001 aún sin spec, ver R-001)")
+        self._banco(origenes="| F-002 (deudas) · R-001 | Registrar deuda | gasto vinculado | no | — |",
+                    consumo_f2=CONSUMO.format(filas=fila,
+                                              peticiones=PETICION.format(estado="pendiente")))
+        data, rc = self.contracts()
+        self.assertEqual((rc, data["peticiones"]), (0, []))
+        self.assertEqual([(d["consumidor"], d["id"]) for d in data["peticiones_desfasadas"]],
+                         [("F-002", "R-001")])
+        self.assertEqual(self.seal("deudas").returncode, 0)   # no cambia lo que se sella
+        pend = json.loads(run_script("sdd-project-status.py", self.b.spec, "--spec-pending",
+                                     "--json").stdout)
+        corr = [i for i in pend["items"] if i["tipo"] == "corregir"]
+        self.assertEqual([i["features"] for i in corr], [["F-002"]])
+        self.assertNotEqual(pend["por_feature"]["F-002"]["estado_plan"], "lista_para_validar")
+        self.assertNotIn("F-002", next((i["features"] for i in pend["items"]
+                                        if i["tipo"] == "validar"), []))
+
+    def test_pendiente_de_aceptar_es_dominio_no_espera(self):
+        fila = GASTO_DEUDA.replace("Orígenes externos de F-001",
+                                   "un pago pendiente de aceptar lo fija F-001 (ver R-001)")
+        self._banco(origenes="| F-002 (deudas) · R-001 | Registrar deuda | gasto vinculado | no | — |",
+                    consumo_f2=CONSUMO.format(filas=fila,
+                                              peticiones=PETICION.format(estado="pendiente")))
+        data, _ = self.contracts()
+        self.assertEqual(data["peticiones_desfasadas"], [])
+
+    def test_peticion_a_una_feature_sin_spec_espera_a_generarla_no_es_un_bloque(self):
+        # v0.128.5: cuentas salía como bloque «solo depende de sí mismo» y recomendado, y su
+        # única decisión era una pregunta de pagos previstos, sin spec todavía.
+        b = self.b
+        b.feature("F-002", "deudas", body=CONSUMO.format(
+            filas=GASTO_DEUDA, peticiones=PETICION.format(estado="pendiente")))
+        b.index([("F-001", "movimientos", None, "PENDIENTE_GENERACIÓN", "ninguno"),
+                 ("F-002", "deudas", "features/deudas/spec/deudas_spec.md", "BLOQUEADA",
+                  "ninguno")], shared=[("Movimiento", "F-001", "F-002")])
+        b.readiness()
+        pend = json.loads(run_script("sdd-project-status.py", b.spec, "--spec-pending",
+                                     "--json").stdout)
+        self.assertIn("espera_generar", [i["tipo"] for i in pend["items"]])
+        self.assertNotIn("peticion", [i["tipo"] for i in pend["items"]])
+        self.assertEqual(pend["bloques"], [])
+        self.assertEqual(pend["por_feature"]["F-002"]["estado_plan"], "espera_a_otro")
+        self.assertIn("espera a que se genere movimientos (F-001), que tiene que responder su "
+                      "petición", pend["mapa"])
+        self.assertIn("Generar movimientos (F-001) desbloquea deudas (F-002)", pend["mapa"])
+        self.assertTrue(pend["cierre"]["opciones"][0]["label"].startswith("Generar movimientos"))
+
 
 class UnsealDropsApprovalTest(unittest.TestCase):
     def test_unseal_retira_el_aprobado_por(self):

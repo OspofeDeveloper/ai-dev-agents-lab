@@ -2,6 +2,19 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.128.5 — 2026-10-31
+
+**Menos vueltas y un cierre que dice lo correcto, con los mismos specs** — [[DECISIONS D-115]] (ampliación). Sale de la regeneración de `CU-3.ac` desde el PRD. Ningún cambio toca lo que escriben los redactores, lo que mira el auditor ni los umbrales.
+
+- 🟠 ⚠ **En un repo `authoring` el cierre dice *"lista para desarrollo"*, no *"ya puedes planificar"*.** Sin la fase `plan` instalada, el plan se hace en el repo de desarrollo. Si piden planificar en ese repo, se dice dónde se hace.
+- 🟠 ⚠ **El resultado de una validación conserva la fecha del spec** (`sdd-seal.py --unseal --blocked`/`--not-approved`). La medición incremental ya no pide la completa por una nota de la validación, ni el cierre *"Rehacer la medición"* antes de una corrección.
+- 🟠 ⚠ **Una petición a una feature sin spec es una espera, no un bloque de decisiones** (`espera_generar`): la feature espera a que se genere su dueña, y generarla sale antes que los bloques.
+- 🟠 **Una petición respondida que la consumidora aún da por pendiente sale como corrección**, no como lista para validar (`sdd-model-contracts.py`: `peticiones_desfasadas`, aviso).
+- 🟠 **Una respuesta que es regla de otra feature se cita en quien no es su dueño**: lo dice el texto que se guarda y el encargo de los escritores de cambios y de preguntas.
+- 🟡 Los bloques se nombran por sus features, sin letra. La vista previa dice la pregunta crítica por su título. Con más de dos features sin spec, *"Generar las N features sin spec"*. Las sugerencias del lote no se repiten. El motivo de no sellar, en llano.
+- 🟡 La vista de proyecto: columna *"Lista para desarrollo"* en un repo authoring.
+- **Conformance:** `CU-3.ac` (regeneración): frases esperadas según la topología, y puntos nuevos para las esperas y para authoring. 9 tests nuevos.
+
 ## 0.128.4 — 2026-10-29
 
 **Copiar y citar bloquea la validación; y lo que ya se ve, se dice bien** — [[DECISIONS D-115]] (ampliación). Sale del cierre de `CU-3.ac (4)`.

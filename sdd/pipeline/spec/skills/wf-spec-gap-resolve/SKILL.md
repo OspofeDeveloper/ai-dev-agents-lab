@@ -167,6 +167,16 @@ Y **no confundas marcar con decidir**: si lo que falta no es un detalle sino una
 del producto, no la marques — es el Paso 4, y se detiene. Corres sin poder preguntar, así que
 tampoco puedes decidir; marcar es para lo conservador y menor, parar es para lo demás.
 
+### 5.2 — Una respuesta que es regla de otra feature se cita, no se escribe (v0.128.5)
+
+Si la respuesta fija una regla de un modelo **que no es de este spec** —está en
+`## Modelos de otras features`, o la respuesta empieza por *"Regla de <dueño>"*—, aquí **solo va
+la cita** a su contrato: *"…el saldo de la cuenta se reduce en ese importe (si puede quedar en
+negativo lo fija el contrato de CuentaTarjeta en cuentas y tarjetas)"*. **No** escribas la regla y
+además la cites (*"…incluso si queda en negativo (lo fija el contrato de…)"*): son dos fuentes, y la
+validación lo bloquea. Si el dueño todavía no tiene la regla, es una petición a su dueño, no texto
+de este spec. Medido en la regeneración de `CU-3.ac`: esa frase costó una vuelta de corrección.
+
 > **Verificación mecánica, para que no dependa de tu criterio.** Al sellarse el spec,
 > `sdd-seal.py spec --check` deniega si un gap `[INFORMATIVO]` sin responder no tiene entrada que
 > lo cite ([[D-063]]). No juzga si tu asunción es buena —eso no es mecanizable—: exige que sea

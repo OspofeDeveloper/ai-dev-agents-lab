@@ -103,6 +103,7 @@ completa verifica contra el spec vigente, que ya incorpora la enmienda, asi
 que quedan absorbidas. `--check` nunca las toca ni bloquea por ellas.
 """
 import hashlib
+import os
 import re
 import sys
 from datetime import date
@@ -545,7 +546,7 @@ def check_spec(spec_path: Path, accept_derived: bool = False):
         if fid_m.group(1) not in data["anteriores_a_d111"]:
             problemas = contratos.problemas_de(data, fid_m.group(1))
             add(not problemas,
-                "Contratos de modelos compartidos al dia"
+                "Contratos de modelos compartidos al día"
                 + (" (" + "; ".join(problemas) + ")" if problemas else ""))
 
     return checks, all(ok for ok, _ in checks)
@@ -671,11 +672,21 @@ def _motivo_no_sellado(path: Path, text: str, tabla: bool = False) -> str:
     if n and n.group("value").strip():
         return "pasa la auditoría, pero no se aprobó (" + n.group("value").strip().rstrip(".") + ")"
     checks, _ = check_spec(path)
-    fallos = [("falla: " if tabla else "") + desc for c, desc in checks if not c]
+    fallos = [("falla: " if tabla else "") + (desc if tabla else _en_llano(desc))
+              for c, desc in checks if not c]
     if fallos:
         return "; ".join(fallos)
     return ("pasa las comprobaciones, pero no consta por qué no se selló: falta el motivo "
             "que deja la validación")
+
+
+def _en_llano(desc: str) -> str:
+    """Un criterio del sellado dicho para quien no conoce el sellado (v0.128.5): en CU-3.ac el
+    cierre mostró «Contratos de modelos compartidos al dia (R-002 sin atender: …)» en crudo."""
+    m = re.match(r"Contratos de modelos compartidos al día \((.*)\)$", desc)
+    if m:
+        return "le falta lo que tiene que responder la dueña de un modelo que usa: " + m.group(1)
+    return desc
 
 
 def lineas_lote(paths) -> list[str]:
@@ -873,6 +884,12 @@ def main() -> int:
                   f"decision de producto cambio, hay que reactivarla explicitamente antes "
                   f"de evolucionarla.", file=sys.stderr)
             return 2
+        # El resultado de una validación (`--blocked`, `--not-approved`) no cambia lo que dice el
+        # spec: conserva su fecha (v0.128.5). Con la fecha nueva, la medición incremental lo
+        # daba por cambiado sin revisar conflictos y pedía la medición completa —7 minutos en
+        # CU-3.ac, sin nada nuevo— y el cierre recomendaba «Rehacer la medición».
+        resultado = mode == "--unseal" and (bloqueos or no_aprobado)
+        fecha = plan_path.stat() if resultado else None
         if not write_estado(plan_path, "BORRADOR"):
             return 1
         if mode == "--unseal":
@@ -896,6 +913,8 @@ def main() -> int:
                     if not write_header_line(plan_path, SIN_APROBAR_LABEL, SIN_APROBAR_RE,
                                              f"se dejó en borrador al validar ({date.today()})"):
                         return 1
+            if fecha:
+                os.utime(plan_path, (fecha.st_atime, fecha.st_mtime))
         if kind == "spec":
             _refresh_index(plan_path)
         if mode == "--unretire":

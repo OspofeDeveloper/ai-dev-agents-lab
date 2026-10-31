@@ -2680,6 +2680,11 @@ bloque de cuatro features con decisiones compartidas y el alcance de deudas, y v
 lee de todas.
 **Mecanismo:** el mapa de `sdd-project-status.py --spec-pending` (`por_feature`, `bloques`, `mapa`) y
 la regla de cierre por bloques de la guía de la fase.
+**Topología (v0.128.5):** en un repo sin la fase `plan` instalada (`authoring`, como el banco), las
+frases esperadas de esta serie *"ya puedes planificar: X"* y *"se pueden planificar en cuanto las
+valides"* se leen *"Lista(s) para desarrollo: X"* y *"Pasan a desarrollo en cuanto las valides"*. Lo
+que decide el PASS no cambia: lo listo no espera al resto. Los bloques se nombran por sus features
+(*"Bloque de presupuesto mensual"*), no por una letra.
 
 1. **El cierre enseña el mapa.** Pides *"¿qué me falta?"*.
    → **Esperado:** el texto de la pregunta es el `mapa` literal: categorías lista en cuanto se
@@ -2974,6 +2979,70 @@ algo resuelto, o si un cambio sin decisión vuelve a pasar por revisión complet
     - 🟡 main leyó el análisis del dueño y el código del script para depurar `--owners`.
 - **Estado guardado:** `bank-cu3ac-punto3` (las 7 features con spec validadas; 1 sugerencia; pagos
   previstos sin spec).
+
+### CU-3.ac (5) — Regenerar desde el PRD: esperas, citas y un repo que no planifica ([[D-115]]) ⏱ **pasada 1 en curso**
+
+**Precondición:** el banco `bank-regen-inicio` (PRD v1.5 sellado y su análisis con los críticos
+respondidos; sin discovery ni `spec/`), en topología `authoring`. Dos tandas: las dueñas de los
+modelos compartidos y después el resto.
+**Mecanismo:** el mapa de `--spec-pending` (`espera_generar`, `peticiones_desfasadas` → `corregir`,
+vocabulario por fases instaladas); `sdd-seal.py --unseal --blocked` sin cambiar la fecha;
+`wf-spec-gap-resolve` 5.2 y `wf-spec-delta` (citar, no copiar).
+
+1. **Un repo authoring no planifica.** Tras validar algo, el cierre.
+   → **Esperado:** *"Lista(s) para desarrollo: …"*; ningún *"ya puedes planificar"*. Si pides
+     *"planifica categorías"*, una línea: el plan se hace en el repo de desarrollo, y aquí está lista.
+   → **FALLO:** *"ya puedes planificar"*, o busca una skill de plan.
+2. **Una petición a una feature sin spec espera, no se decide.** Con la consumidora generada en la
+   primera tanda y su dueña en la segunda.
+   → **Esperado:** la consumidora sale como *"espera a que se genere <dueña>"*, sin bloque propio; la
+     opción de generar va antes que los bloques. Al generarse, la dueña responde la petición; si la
+     consumidora aún la da por pendiente, sale en *Corregir*, no en *Validar las listas*.
+   → **FALLO:** un bloque *"solo depende de sí mismo"* con una pregunta de otra feature, o validar
+     un spec con la espera desfasada.
+3. **El resultado de una validación no pide medir.** Una validación que no sella.
+   → **Esperado:** la nota *"la validación pide corregir"* no cambia la fecha del spec; la medición
+     incremental de la validación sale con 0 y el cierre no recomienda *"Rehacer la medición"*.
+   → **FALLO:** medición completa con agente sin nada nuevo, o *"Rehacer la medición
+     (Recomendado)"* con una corrección pendiente.
+4. **Una respuesta que es regla de otra feature se cita.** Una misma respuesta que cierra preguntas
+   de la dueña y de una consumidora.
+   → **Esperado:** la consumidora solo cita el contrato; la validación no lo bloquea.
+   → **FALLO:** la regla escrita y citada en la consumidora.
+5. **El mapa se lee.** Bloques por sus features, la pregunta crítica por su título en la vista
+   previa, más de dos features sin spec contadas en la etiqueta, las sugerencias del lote una vez.
+
+**Resultado:** PASS si los puntos 1-4 se cumplen sin cambiar el contenido de ningún spec respecto a
+lo que exigía ya la validación · FALLO si alguno vuelve a costar una vuelta.
+**Desviación → reportar:** issue citando `CU-3.ac`.
+
+**Pasada 1, primer tramo (Opus 5.5, v0.128.4; origen de los puntos 1-5):**
+- **Lo que salió bien:**
+  - la pregunta del alcance, con el mapa en la vista previa y *"Primero la base"* (`CU-3.c`);
+  - la segunda tanda reutilizó el discovery (`CU-3.v`), y su cierre listó también lo de la
+    primera (`CU-3.y`);
+  - deudas, marcada como alcance derivado con su aviso (`CU-3.b`, `CU-3.u`);
+  - **copiar y citar bloqueó** la validación de movimientos (`CU-3.ab`), y pagos previstos, al
+    generarse, respondió la petición de cuentas;
+  - un bloque de 5 decisiones con dos solapes detectados por main, sin repreguntar;
+  - dos redactores cortados por el límite de uso: uno retomado, otro relanzado, y dicho en el cierre;
+  - todas las reglas de agentes cumplidas (primer plano, paralelo, sin `Skill`, sin inglés).
+- **Tiempos:** 1ª tanda ~20 min; bloque de categorías ~16; bloque de movimientos y cuentas ~23;
+  corrección ~8. La 2ª tanda no se pudo medir (límite de uso y reposo del equipo).
+- **Fallos** (los de los puntos 1-5, en v0.128.5):
+  - *"ya puedes planificar"* en un repo authoring;
+  - la nota de la validación dio por cambiado el spec: medición completa de 7 min y *"Rehacer la
+    medición (Recomendado)"* antes de corregir;
+  - el escritor de movimientos escribió y citó la regla del saldo negativo (8 min de corrección);
+  - cuentas, ofrecido como bloque *"solo depende de sí mismo"* y recomendado, cuando esperaba a
+    pagos previstos sin spec; y después, lista para validar con *"pendiente: F-006 aún sin spec"*;
+  - vista previa con *"tiene la decisión P-031 sin responder"*, letras de bloque que se
+    recolocan, *"Generar presupuesto mensual y deudas reembolsos…"*, la sugerencia dos veces y
+    *"Contratos de modelos compartidos al dia"* en crudo.
+- **Pendiente, sin arreglar todavía:** las dueñas salen de la generación con una pregunta crítica
+  sobre su contrato (P-011, P-021, P-031…) aunque el aviso previo dice *"ninguna saldrá
+  incompleta"*. Preguntarlo antes de generar cambia la generación: va en su propia versión, con una
+  pasada de regeneración.
 
 ## CU-3.o — Readiness: sin índice, ciclos, scope derivado, sello y alcance del veredicto
 

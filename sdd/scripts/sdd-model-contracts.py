@@ -65,6 +65,10 @@ CONTRATO = "Contrato de modelos compartidos"
 CONSUMO = "Modelos de otras features"
 PETICION_RE = re.compile(r"^#{3,4}\s*\[(?P<id>R-\d{3,4})\]\s*(?P<titulo>.*)$", re.MULTILINE)
 ESTADO_PETICION_RE = re.compile(r"^\s*[-*]\s*\**\s*Estado\s*\**\s*:\s*(.*)$", re.MULTILINE)
+# Lo que dice una consumidora mientras espera la respuesta del dueño («pendiente: F-006 aún sin
+# spec, ver petición R-002»). No «pendiente de aceptar», que es dominio.
+ESPERA_CITA_RE = re.compile(r"\bpendiente\s*:|\(pendiente\b|\baún sin spec\b|"
+                            r"\bsin (?:atender|responder)\b", re.IGNORECASE)
 RETIRADA = ("retirada", "retirado", "descartada")
 
 
@@ -233,6 +237,7 @@ def check(directory: Path) -> dict:
     usos = {f: consumo(specs[f]) for f in nuevos}
 
     sin_contrato, catalogo, peticiones, no_declaradas, uso = [], [], [], [], []
+    desfasadas = []
     # 1. El dueño publica el contrato de cada modelo suyo.
     for key, mod in sorted(modelos.items()):
         o = mod["owner"]
@@ -276,13 +281,27 @@ def check(directory: Path) -> dict:
             atendida = owner in contratos and any(
                 p["id"] in o["rids"] and c in o["fids_fila"]
                 for m in contratos[owner].values() for o in m["origenes"])
-            if not atendida:
-                peticiones.append({"consumidor": c, "owner": owner, "id": p["id"],
-                                   "modelo": p["modelo"], "titulo": p["titulo"],
-                                   "que": f"{label.get(c, c)} pide a "
-                                          f"{label.get(owner, owner or 'su dueña')}: "
-                                          + re.sub(r"^A\s+F-\S+\s*(\([^)]*\))?\s*:\s*", "",
-                                                   p["titulo"])})
+            if atendida:
+                # 3b. Atendida, pero la consumidora sigue diciendo que espera (v0.128.5): el
+                # texto quedó de cuando el dueño no tenía spec. En CU-3.ac cuentas salía lista
+                # para validar con «pendiente: F-006 aún sin spec» en su tabla. Aviso: no
+                # cambia lo que se sella; el cierre lo ofrece como corrección.
+                linea = next((l for l in specs[c].splitlines() if p["id"] in l
+                              and ESPERA_CITA_RE.search(l) and not PETICION_RE.match(l)), "")
+                if linea:
+                    desfasadas.append({"consumidor": c, "owner": owner, "id": p["id"],
+                                       "linea": linea.strip(),
+                                       "que": f"{label.get(owner, owner)} ya respondió la "
+                                              f"petición {p['id']}: quitar de "
+                                              f"{label.get(c, c)} que sigue pendiente y dejar "
+                                              "solo la cita a su contrato."})
+                continue
+            peticiones.append({"consumidor": c, "owner": owner, "id": p["id"],
+                               "modelo": p["modelo"], "titulo": p["titulo"],
+                               "que": f"{label.get(c, c)} pide a "
+                                      f"{label.get(owner, owner or 'su dueña')}: "
+                                      + re.sub(r"^A\s+F-\S+\s*(\([^)]*\))?\s*:\s*", "",
+                                               p["titulo"])})
 
     # 5. Al revés que el 4 (v0.128.4): el índice declara que una feature usa un modelo y su
     # spec no lo usa. Viene de un discovery que se quedó atrás (se reutiliza, no se regenera):
@@ -298,7 +317,7 @@ def check(directory: Path) -> dict:
                                        f"{mod['name']}, y su spec no lo usa."})
     return {"anteriores_a_d111": anteriores, "sin_contrato": sin_contrato, "catalogo": catalogo,
             "peticiones": peticiones, "no_declaradas": no_declaradas, "uso": uso,
-            "referencias_sin_uso": sin_uso,
+            "referencias_sin_uso": sin_uso, "peticiones_desfasadas": desfasadas,
             "bloquea": bool(sin_contrato or catalogo or peticiones)}
 
 
@@ -345,7 +364,9 @@ def render(data: dict) -> str:
                  ("Peticiones al dueño sin atender", data["peticiones"]),
                  ("Avisos: dependencias que el índice no declara", data["no_declaradas"]),
                  ("Avisos: el índice declara usos que el spec no tiene",
-                  data.get("referencias_sin_uso", []))]
+                  data.get("referencias_sin_uso", [])),
+                 ("Avisos: peticiones respondidas que la consumidora aún da por pendientes",
+                  data.get("peticiones_desfasadas", []))]
     for titulo, lista in secciones:
         if lista:
             out += [f"## {titulo}", ""] + [f"- {p['que']}" for p in lista] + [""]

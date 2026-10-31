@@ -107,6 +107,37 @@ primeros puntos. El encargo ya los enumera todos. Además:
 - el cierre de la generación cuenta las asunciones por defecto de cada spec nuevo;
 - la medición incremental acumula su historial.
 
+**Ampliación (v0.128.5, regeneración de `CU-3.ac` desde el PRD).** La pasada midió cuatro cosas
+que costaban vueltas sin cambiar ningún spec ni el PRD, y una de vocabulario:
+- **Un repo `authoring` no planifica.** Su `project-init.json` no instala `plan` ni `tasks`: el
+  código y su plan viven en los repos de desarrollo, que leen estos specs. El cierre decía *"Ya
+  puedes planificar"*. Ahora, si la fase `plan` no está instalada, dice *"lista para desarrollo"*,
+  y una petición de planificar en ese repo se responde diciendo dónde se hace.
+- **El resultado de una validación no es un cambio del spec.** La nota *"la validación pide
+  corregir"* cambiaba la fecha del fichero: la medición incremental lo daba por cambiado sin
+  revisar conflictos y pedía la completa (7 minutos con agente, sin nada nuevo), y el cierre
+  recomendaba *"Rehacer la medición"* antes de una corrección que ya mide al validarse.
+  `--unseal --blocked` (y `--not-approved`) conservan la fecha. Un cambio de contenido la sigue
+  cambiando, así que la medición se niega igual ante cualquier cambio real.
+- **Una petición a una feature sin spec no es una decisión.** El mapa ofrecía cuentas como bloque
+  *"solo depende de sí mismo"* y recomendado, y su única decisión era una pregunta de pagos
+  previstos, que aún no existía. Ahora es una espera (`espera_generar`): la feature sale como
+  *"espera a que se genere pagos previstos"* y la opción de generar va antes que los bloques.
+- **Una petición respondida que la consumidora aún da por pendiente se corrige antes de validar.**
+  Cuentas salía lista para validar con *"pendiente: F-006 aún sin spec"* en su tabla. El script
+  de contratos lo detecta (`peticiones_desfasadas`, aviso) y el cierre lo ofrece como corrección.
+  No cambia lo que se sella.
+- **Una respuesta que es regla de otra feature se cita.** La misma respuesta sobre el saldo
+  negativo se guardó en movimientos y cuentas; el escritor de movimientos la escribió y la citó, y
+  la validación lo bloqueó (8 minutos). Al guardar la respuesta para quien no es dueño se dice que
+  solo se cita, y los escritores de cambios y de preguntas lo tienen en su encargo.
+
+Y de presentación: los bloques se nombran por sus features (la letra se recolocaba al cerrarse
+uno), la pregunta crítica sale por su título en la vista previa, más de dos features sin spec se
+cuentan en la etiqueta, las sugerencias del lote no se repiten y el motivo de no sellar sale en
+llano. **Lo que no se toca:** lo que escriben los redactores, lo que mira el auditor, lo que busca
+la revisión de conflictos y los umbrales.
+
 **Referencias.** `scripts/sdd-project-status.py` (`--refresh-readiness`, estado de conflictos por
 alias, `aprueba`, títulos), `scripts/sdd-model-contracts.py` (`--vecinas`, lectura y escritura),
 `wf-spec-delta` (submodo `directo`, `--sin-indice`), `wf-spec-conflict` (modo verificación,

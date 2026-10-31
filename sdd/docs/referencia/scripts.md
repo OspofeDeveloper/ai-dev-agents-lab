@@ -43,7 +43,9 @@ la validación en la cabecera, y se van con el sello; `spec --report --lineas` d
 lote en frases; sellar o desellar un spec regenera el índice de features ([[D-113]]).
 `spec --unseal --blocked "<hallazgo — arreglo>"` (repetible) deja en la cabecera por qué la
 validación no selló, con la versión auditada, y `--not-approved` que pasó la auditoría sin
-aprobarse; el resultado del lote y la tabla lo leen, y se va al sellar ([[D-114]]).
+aprobarse; el resultado del lote y la tabla lo leen, y se va al sellar ([[D-114]]). Esas dos
+notas son el resultado de la validación, no un cambio del spec: conservan su fecha, y la medición
+incremental no lo da por cambiado (v0.128.5).
 
 - **Exit:** `0` OK/sellado · `1` error IO · `2` condiciones no cumplidas.
 
@@ -90,7 +92,7 @@ es de lectura o de escritura lo dice la columna `Uso`; en specs sin ella, se ded
 `sdd-seal.py` (condición 10) y `sdd-project-status.py --spec-pending` (tipo `peticion`). Una celda
 que declara lectura **y** escritura cuenta como escritura (v0.128.0). Con `--vecinas`, las features
 con spec que comparten algún modelo con las dadas (dueña o consumidora): es el alcance de la
-**verificación de conflictos** de un cambio sin decisión (v0.128.0). Avisa también, sin bloquear, de los usos que el índice declara y el spec no tiene (`referencias_sin_uso`, v0.128.4).
+**verificación de conflictos** de un cambio sin decisión (v0.128.0). Avisa también, sin bloquear, de los usos que el índice declara y el spec no tiene (`referencias_sin_uso`, v0.128.4), y de las peticiones que el dueño ya respondió y la consumidora aún da por pendientes (`peticiones_desfasadas`, v0.128.5).
 
 - **Exit:** `0` sin nada que bloquee · `2` con contratos, catálogos o peticiones pendientes · `1` uso.
 
@@ -164,7 +166,11 @@ planificar ya, está lista en cuanto se valide, tiene decisiones propias o esper
 `bloques` (features unidas por decisiones que las cambian a la vez, con lo que les falta, de qué
 bloque dependen y un `preview` por decisión) y `mapa`, el texto del cierre ya escrito. Leer algo que
 otra decisión cambia —su campo *Afecta también a*— no une bloques: crea una espera. El informe por
-defecto gana la columna **Planificable**. Y `cierre` (v0.126.1): la `pregunta` y las `opciones` del cierre ya escritas
+defecto gana la columna **Planificable** (*Lista para desarrollo* en un repo sin fase `plan`,
+v0.128.5: el texto del cierre dice entonces *"lista para desarrollo"* en vez de *"ya puedes
+planificar"*). Una petición a una feature sin spec sale como `espera_generar`: no es un bloque, la
+feature espera a que se genere su dueña; y una petición ya respondida que la consumidora aún da por
+pendiente, como `corregir` (v0.128.5). Y `cierre` (v0.126.1): la `pregunta` y las `opciones` del cierre ya escritas
 —`label`, `description`, `preview`, `accion` (`readiness`, `validar`, `bloque:X`, `menores`, `generar`,
 `luego`)—, como mucho cuatro, para copiarlas literal. Con `--lote <spec.md> …`, la pregunta empieza por el resultado de ese lote de
 validación. Tipos nuevos ([[D-113]]): `trasladar` (ya decidido por el dueño, se aplica sin preguntar)
