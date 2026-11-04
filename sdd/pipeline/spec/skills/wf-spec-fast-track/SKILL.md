@@ -162,7 +162,7 @@ Usa las plantillas de cabecera de `${CLAUDE_SKILL_DIR}/references/spec_header_te
   preguntó sus invariantes, y *"¿saldo negativo?"*, *"¿reservar sin saldo?"* y *"¿y si la cuenta
   ya no existe?"* (tres veces) salieron después, cada uno como conflicto con su vuelta.
 - Si **usa** modelos de otra feature → `## Modelos de otras features`: qué hace con cada uno
-  (`lectura: …` si solo lo lee) y qué regla del dueño cita. **No escribas reglas de ese modelo** en
+  (`lectura: …` si solo lo lee) y qué contrato del dueño cita. **No escribas reglas de ese modelo** en
   tus HUs, CAs, reglas ni fuera de alcance; si necesitas una que el dueño no tiene, registra una
   **petición al dueño** (`R-NNN`) y dilo en tu informe. Corres en paralelo con el dueño y no ves
   su spec: cita su contrato por lo que el discovery dice que hará, y lo que no cuadre lo detecta

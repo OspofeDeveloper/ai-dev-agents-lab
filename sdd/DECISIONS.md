@@ -138,6 +138,17 @@ cuentan en la etiqueta, las sugerencias del lote no se repiten y el motivo de no
 llano. **Lo que no se toca:** lo que escriben los redactores, lo que mira el auditor, lo que busca
 la revisión de conflictos y los umbrales.
 
+**Ampliación (v0.128.6, misma pasada).** Siguiendo la pasada, las cinco correcciones fueron del mismo
+tipo: una regla de otra feature escrita y citada a la vez. Dos vinieron de la generación (pagos
+previstos y presupuesto), una de una respuesta reutilizada (ya cubierta en la 0.128.5) y una de una
+respuesta de deudas que llevaba dentro una regla de movimientos. La validación las paró todas: el
+listón es el correcto (0.128.4), pero los escritores no se adaptaron a él. Dos causas eran de
+texto: la columna de la tabla se llamaba *«Regla que aplica»* y pedía justo lo que la validación
+rechaza, y la separación de respuestas solo cubría la reutilizada. Ahora la columna es *«Contrato
+que cita»* y toda respuesta se separa por dueños al guardarla. Lo de la generación —nombrar el
+error, leer el contrato del dueño cuando ya tiene spec, comprobar antes de entregar— va en su propia
+versión, con una regeneración para medirlo.
+
 **Referencias.** `scripts/sdd-project-status.py` (`--refresh-readiness`, estado de conflictos por
 alias, `aprueba`, títulos), `scripts/sdd-model-contracts.py` (`--vecinas`, lectura y escritura),
 `wf-spec-delta` (submodo `directo`, `--sin-indice`), `wf-spec-conflict` (modo verificación,

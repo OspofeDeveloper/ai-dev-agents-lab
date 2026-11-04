@@ -2,6 +2,14 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.128.6 — 2026-11-04
+
+**Una regla de otra feature no se cuela por la plantilla ni por una respuesta** — [[DECISIONS D-115]] (ampliación). Sale de la regeneración de `CU-3.ac`: cinco correcciones, todas por copiar y citar una regla ajena.
+
+- 🟠 ⚠ La columna de `## Modelos de otras features` pasa de **«Regla que aplica»** a **«Contrato que cita»**: pide la referencia, no la regla. Los specs con la cabecera antigua se leen igual.
+- 🟠 Al guardar una respuesta para un spec, la parte que fija un modelo de otra feature se separa y se marca *"Regla de <dueño>: aquí solo se cita"*, también cuando va dentro de una respuesta de ese spec. El escritor de preguntas aplica lo mismo a una parte de la respuesta.
+- **Conformance:** `CU-3.ac (5)` punto 4 ampliado. 1 test nuevo.
+
 ## 0.128.5 — 2026-10-31
 
 **Menos vueltas y un cierre que dice lo correcto, con los mismos specs** — [[DECISIONS D-115]] (ampliación). Sale de la regeneración de `CU-3.ac` desde el PRD. Ningún cambio toca lo que escriben los redactores, lo que mira el auditor ni los umbrales.

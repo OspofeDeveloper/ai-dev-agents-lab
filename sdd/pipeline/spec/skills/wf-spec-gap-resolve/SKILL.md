@@ -171,7 +171,8 @@ tampoco puedes decidir; marcar es para lo conservador y menor, parar es para lo 
 
 Si la respuesta fija una regla de un modelo **que no es de este spec** —está en
 `## Modelos de otras features`, o la respuesta empieza por *"Regla de <dueño>"*—, aquí **solo va
-la cita** a su contrato: *"…el saldo de la cuenta se reduce en ese importe (si puede quedar en
+la cita** a su contrato. Vale también para **una parte** de la respuesta: si mezcla lo de este spec
+con una regla de otro, escribe lo tuyo y cita lo otro (v0.128.6): *"…el saldo de la cuenta se reduce en ese importe (si puede quedar en
 negativo lo fija el contrato de CuentaTarjeta en cuentas y tarjetas)"*. **No** escribas la regla y
 además la cites (*"…incluso si queda en negativo (lo fija el contrato de…)"*): son dos fuentes, y la
 validación lo bloquea. Si el dueño todavía no tiene la regla, es una petición a su dueño, no texto

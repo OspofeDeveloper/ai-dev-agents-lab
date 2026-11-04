@@ -3006,8 +3006,10 @@ vocabulario por fases instaladas); `sdd-seal.py --unseal --blocked` sin cambiar 
    → **FALLO:** medición completa con agente sin nada nuevo, o *"Rehacer la medición
      (Recomendado)"* con una corrección pendiente.
 4. **Una respuesta que es regla de otra feature se cita.** Una misma respuesta que cierra preguntas
-   de la dueña y de una consumidora.
-   → **Esperado:** la consumidora solo cita el contrato; la validación no lo bloquea.
+   de la dueña y de una consumidora, o una respuesta de un spec que lleva dentro una regla de otro
+   (v0.128.6).
+   → **Esperado:** la parte ajena se guarda como *"Regla de <dueño>: aquí solo se cita"*; la
+     consumidora solo cita el contrato; la validación no lo bloquea.
    → **FALLO:** la regla escrita y citada en la consumidora.
 5. **El mapa se lee.** Bloques por sus features, la pregunta crítica por su título en la vista
    previa, más de dos features sin spec contadas en la etiqueta, las sugerencias del lote una vez.
@@ -3039,6 +3041,15 @@ lo que exigía ya la validación · FALLO si alguno vuelve a costar una vuelta.
   - vista previa con *"tiene la decisión P-031 sin responder"*, letras de bloque que se
     recolocan, *"Generar presupuesto mensual y deudas reembolsos…"*, la sugerencia dos veces y
     *"Contratos de modelos compartidos al dia"* en crudo.
+- **Segundo tramo (v0.128.5):** validadas cuentas, pagos previstos, deudas y, tras corregir,
+  presupuesto. Puntos 1, 2 y 5 PASS (vocabulario de authoring, esperas y corrección de la petición
+  desfasada, mapa legible). Movimientos no se reabrió con la respuesta de deudas. Pero **cinco
+  correcciones, todas por copiar y citar una regla ajena**: pagos previstos (generación, dos
+  vueltas; la segunda, por la columna *«Regla que aplica»*), deudas (una respuesta que llevaba
+  dentro una regla de movimientos) y presupuesto (generación). → v0.128.6: la columna pasa a
+  *«Contrato que cita»* y las respuestas se separan por dueños al guardarlas. También: el
+  alcance derivado ya aceptado en otro spec se recomendaba formalizar, y la pregunta de
+  presupuesto no incluyó lo que había avisado el revisor.
 - **Pendiente, sin arreglar todavía:** las dueñas salen de la generación con una pregunta crítica
   sobre su contrato (P-011, P-021, P-031…) aunque el aviso previo dice *"ninguna saldrá
   incompleta"*. Preguntarlo antes de generar cambia la generación: va en su propia versión, con una

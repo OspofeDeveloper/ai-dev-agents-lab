@@ -108,9 +108,13 @@ Flujos alternativos: Si [condición] → [resultado]
        después ese modelo (si se edita, si se borra, cómo aparece): eso es del dueño.
      - Si necesitas una regla que el contrato del dueño no tiene, o una distinta, NO la escribas:
        regístrala como petición al dueño. Se atiende con un cambio en el dueño, que la cita en su
-       catálogo de orígenes; aquí no hay que volver a tocar nada. -->
-| Modelo | Dueña | Uso | Qué hace esta feature con él | Regla que aplica |
-|--------|-------|-----|------------------------------|------------------|
+       catálogo de orígenes; aquí no hay que volver a tocar nada.
+     - `Contrato que cita` es solo la referencia: "Contrato de Movimiento en registro de
+       movimientos", "Orígenes externos de F-00X". NUNCA lo que dice la regla: "…; no se puede
+       editar desde aquí" junto a la cita son dos fuentes, y la validación lo bloquea (v0.128.6;
+       la columna se llamaba "Regla que aplica" y pedía justo eso). -->
+| Modelo | Dueña | Uso | Qué hace esta feature con él | Contrato que cita |
+|--------|-------|-----|------------------------------|-------------------|
 | [Modelo] | F-00X | [lectura · escritura] | [crea / cambia … al …, o qué lee y para qué] | [Contrato de F-00X · Orígenes externos de F-00X] |
 
 ### Peticiones al dueño

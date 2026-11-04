@@ -17,7 +17,7 @@ Desde D-111 el dueño publica el contrato en su spec y los consumidores lo citan
     | F-005 (deudas) · R-001 | Registrar deuda | gasto vinculado | no | — |
 
     ## Modelos de otras features                (en el spec consumidor)
-    | Modelo | Dueña | Qué hace esta feature con él | Regla que aplica |
+    | Modelo | Dueña | Qué hace esta feature con él | Contrato que cita |
     | Movimiento | F-001 | crea un gasto al registrar una deuda | Orígenes externos de F-001 |
     | Movimiento | F-001 | lectura: suma los gastos del mes | Contrato de F-001 |
     ### Peticiones al dueño

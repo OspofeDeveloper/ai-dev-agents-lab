@@ -152,6 +152,16 @@ class ContractsTest(unittest.TestCase):
         data, rc = self.contracts()
         self.assertEqual(data["catalogo"], [])
 
+    def test_la_columna_renombrada_se_lee_igual(self):
+        """v0.128.6: «Regla que aplica» pasa a «Contrato que cita»; las dos cabeceras valen."""
+        for col in ("Regla que aplica", "Contrato que cita"):
+            self._banco(consumo_f2="\n## Modelos de otras features\n"
+                        f"| Modelo | Dueña | Uso | Qué hace esta feature con él | {col} |\n"
+                        "|---|---|---|---|---|\n"
+                        "| Movimiento | F-001 | escritura | crea un gasto | Orígenes externos de F-001 |\n")
+            data, _ = self.contracts()
+            self.assertEqual([c["consumidor"] for c in data["catalogo"]], ["F-002"], col)
+
     def test_lo_que_el_spec_declara_usar_respalda_la_dependencia_del_ciclo(self):
         """El índice olvida que F-003 lee Movimiento: aviso, pero no un ciclo que bloquea."""
         self._banco(origenes="| F-002 (deudas) | Registrar deuda | gasto | no | — |",
