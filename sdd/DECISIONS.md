@@ -6,6 +6,43 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-116 — El orquestador va con Opus, y si no, se avisa
+
+- **Fecha:** 2026-11-04 · **Estado:** Adoptada. · **Relacionada:** [[D-115]] (la pasada donde se vio), el hook de sesión (protocolo de inicio).
+
+**Contexto.** Revisando los transcripts de la regeneración de `CU-3.ac`, la sesión principal de
+medio día iba con **Sonnet 5.5**, no con Opus: un `/model` de una prueba anterior se había quedado
+como predeterminado en la configuración del usuario. Nadie lo vio. Lo que sale de los scripts (mapa,
+esperas, correcciones) funcionó igual; lo que es criterio de main no: no amplió una pregunta que el
+revisor había avisado y recomendó formalizar un alcance que el usuario ya había aceptado. El usuario
+ya había visto antes a Sonnet saltarse pasos como orquestador.
+
+**Decisión.** Tres capas, porque ni Claude ni un hook pueden cambiar el modelo de una sesión:
+1. **Arrancar con Opus.** `install.sh` fija `"model": "opus"` en `.claude/settings.local.json` del
+   proyecto. Ese valor se aplica en cada arranque y gana al que `/model` guarda en la configuración
+   del usuario. Va en el fichero **local** (por desarrollador, ignorado por git): el commiteado
+   obligaría a todo el equipo, también a quien no tenga Opus en su plan. Nunca pisa un `model` que
+   ya esté puesto.
+2. **Avisar al empezar.** El hook `SessionStart` recibe el `model`; en un proyecto SDD, si no es Opus,
+   inyecta `model-not-opus`: una pregunta, y si elige cambiar, el usuario escribe `/model opus`.
+3. **Confirmar al cambiar.** Un hook `PreModelSwitch` pide confirmación al pasar a otro modelo en un
+   proyecto SDD. No prohíbe: quien quiera probar otro modelo lo hace a sabiendas.
+
+**Alternativas descartadas.**
+- *`model` en el `settings.json` commiteado:* obliga a todo el equipo.
+- *Bloquear el cambio (`deny`):* impide medir otros modelos a propósito.
+- *`availableModels` en la configuración gestionada:* es una política de organización, no del
+  ecosistema.
+
+**Límites.** El campo `model` puede no llegar (tras `/clear`, al recuperar una conversación): ahí no
+se avisa. `ask` solo pregunta en `/model` interactivo; en `-p` o el SDK es un rechazo, así que en CI
+el hook no dice nada.
+
+**Referencias.** `bootstrap/sdd-session-check.sh`, `bootstrap/sdd-model-switch.sh`, `setup.sh`,
+`install.sh` (5b), `bootstrap/claude-global-block.md`, `wf-sdd-update` (frescura del bootstrap).
+
+---
+
 ## D-115 — Un cambio sin nada que decidir sigue un camino corto; y el cierre dice lo que hay
 
 - **Fecha:** 2026-10-26 · **Estado:** Adoptada. · **Relacionada:** [[D-113]] (lo ya decidido), [[D-114]] (dueños), [[D-112]] (mapa), [[D-102]] (readiness arbitra), [[D-027]]/[[D-111]] (quién aprueba). Modifica la regla de [[D-111]] sobre el aprobador en lote.

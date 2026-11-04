@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 import sys
 import tempfile
 import unittest
@@ -1467,6 +1468,35 @@ class IdempotencyTest(InstallBase):
         r = self.install("all")
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         self.assertNotIn("fases no seleccionadas", r.stdout)
+
+
+class ModeloOpusTest(InstallBase):
+    """v0.128.8: las sesiones del proyecto arrancan con Opus (settings.local.json)."""
+
+    def _local(self):
+        return json.loads((self.claude / "settings.local.json").read_text(encoding="utf-8"))
+
+    def test_fija_opus_en_el_local_e_ignora_el_fichero(self):
+        subprocess.run(["git", "init", "-q", str(self.proj)], check=True)
+        r = self.install("spec")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertEqual(self._local()["model"], "opus")
+        self.assertIn(".claude/settings.local.json",
+                      (self.proj / ".gitignore").read_text(encoding="utf-8"))
+        self.install("spec")    # idempotente: no duplica la línea del .gitignore
+        self.assertEqual((self.proj / ".gitignore").read_text(encoding="utf-8")
+                         .count(".claude/settings.local.json"), 1)
+
+    def test_no_pisa_un_model_ya_puesto_ni_otras_claves(self):
+        write(self.claude / "settings.local.json",
+              json.dumps({"model": "sonnet", "permissions": {"allow": ["Bash(ls)"]}}))
+        self.install("spec")
+        self.assertEqual(self._local(), {"model": "sonnet",
+                                         "permissions": {"allow": ["Bash(ls)"]}})
+
+    def test_opt_out(self):
+        self.install("spec", env={"SDD_NO_MODEL_PIN": "1"})
+        self.assertFalse((self.claude / "settings.local.json").exists())
 
 
 class ProjectRootTest(InstallBase):

@@ -751,3 +751,28 @@ El determinismo literal vive en los scripts (gate `is_git_repo`, checks de insta
 **Resultado:** PASS si el fichero existe (sin `paths:`, dual-audience) con la desambiguación **solo** de las fases instaladas · FALLO si falta pese a haber una fase con `routing.md`, si declara `paths:` (lazy), o si arrastra desambiguación de una fase no instalada.
 **Nota:** cerrado el roll-out de [[D-022]], **las 5 fases** (prd/spec/design/plan/tasks) aportan `routing.md`, así que en cualquier init real el fichero existe; el invariante verificable es el **scoping** (caso 2), no la ausencia total (ya no alcanzable por instalación válida). Backstop determinista: `test_routing_rule_is_scoped` + `test_routing_rule_has_{prd,design,plan,tasks}_border` + `test_routing_rule_is_eager_and_dual_audience` + `test_routing_rule_carries_the_spec_fork_gate_paragraph`.
 **Desviación → reportar:** issue citando `CU-1.u`.
+
+## CU-1.v — Las sesiones de un proyecto SDD van con Opus, y si no, se avisa ([[D-116]]) ⏱ **sin pasada**
+
+**Precondición:** un proyecto SDD actualizado a v0.128.8 (y el bootstrap global al día).
+**Mecanismo:** `install.sh` (5b) fija `"model": "opus"` en `.claude/settings.local.json`; el hook
+`SessionStart` avisa con `model-not-opus`; el hook `PreModelSwitch` (`sdd-model-switch.sh`) pide
+confirmación al dejar Opus. Backstop determinista: `test_install_sh.py` (`ModeloOpusTest`) y
+`test_session_hook.py` (`ModeloDeLaSesionTest`, `CambioDeModeloTest`).
+
+1. **Arranca con Opus aunque tu predeterminado sea otro.** Con `/model sonnet` guardado de otra
+   sesión, abre una sesión nueva en el proyecto.
+   → **Esperado:** la barra de estado muestra Opus; `.claude/settings.local.json` tiene
+     `"model": "opus"` y está en el `.gitignore`.
+2. **Si aun así va con otro, se avisa.** Quita el `model` de `settings.local.json` y abre la sesión
+   con Sonnet.
+   → **Esperado:** antes de atender la primera petición, una pregunta *Cambio a Opus* /
+     *Sigo con este modelo*; al elegir cambiar, *"escribe `/model opus`"*, sin intentar cambiarlo.
+   → **FALLO:** atiende la petición sin avisar, o dice que ha cambiado el modelo.
+3. **Cambiar a mitad de sesión pide confirmación.** En una sesión con Opus, `/model sonnet`.
+   → **Esperado:** Claude Code pide confirmación con el motivo del ecosistema; aceptar cambia el
+     modelo.
+
+**Resultado:** PASS si los tres se cumplen · FALLO si una sesión de un proyecto SDD corre con otro
+modelo sin que se haya dicho.
+**Desviación → reportar:** issue citando `CU-1.v`.

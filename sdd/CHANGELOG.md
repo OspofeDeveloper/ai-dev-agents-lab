@@ -2,6 +2,16 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.128.8 — 2026-11-04
+
+**El orquestador va con Opus, y si no, se avisa** — [[DECISIONS D-116]]. Sale de la regeneración de `CU-3.ac`: medio día de la pasada corrió con la sesión principal en Sonnet sin que nadie lo viera.
+
+- 🟠 ⚠ **Las sesiones de un proyecto SDD arrancan con Opus**: `install.sh` fija `"model": "opus"` en `.claude/settings.local.json` (local, no se commitea; se añade al `.gitignore`) si no hay otro. Gana al modelo que guarda `/model` en la configuración del usuario. Opt-out: `SDD_NO_MODEL_PIN=1`, o poner otro `model` en ese fichero.
+- 🟠 ⚠ **Si aun así la sesión no va con Opus, se avisa al empezar** (directiva `model-not-opus`): una pregunta, *Cambio a Opus* o *Sigo con este modelo*. Claude no puede cambiar el modelo: lo cambia el usuario con `/model opus`.
+- 🟠 ⚠ **Cambiar a otro modelo a mitad de sesión pide confirmación** (hook `PreModelSwitch`, nuevo en el bootstrap global). No lo prohíbe.
+- **Una vez:** la actualización del proyecto pone al día el bootstrap global (`setup.sh --update`), que ahora incluye los dos hooks.
+- **Conformance:** `CU-1` gana el escenario del modelo de la sesión. 10 tests nuevos.
+
 ## 0.128.7 — 2026-11-04
 
 **Menos agentes por vuelta, con la misma certeza; y Sonnet 5.5** — [[DECISIONS D-115]] (ampliación). Sale de los tiempos de la regeneración de `CU-3.ac`.

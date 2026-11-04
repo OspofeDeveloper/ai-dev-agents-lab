@@ -404,7 +404,7 @@ cd ai-dev-agents-lab
 bash sdd/setup.sh
 ```
 
-Registra el hook de sesión (`~/.claude/hooks/sdd-session-check.sh`), el bloque de protocolo SDD en `~/.claude/CLAUDE.md`, las skills globales (`wf-project-init`, `wf-sdd-update`) y apunta `~/.sdd-home` a este checkout. Tras un `git pull`: `bash sdd/setup.sh --update`.
+Registra el hook de sesión (`~/.claude/hooks/sdd-session-check.sh`) y el de cambio de modelo (`sdd-model-switch.sh`), el bloque de protocolo SDD en `~/.claude/CLAUDE.md`, las skills globales (`wf-project-init`, `wf-sdd-update`) y apunta `~/.sdd-home` a este checkout. Tras un `git pull`: `bash sdd/setup.sh --update`.
 
 ### Instalación por proyecto
 

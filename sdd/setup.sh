@@ -41,6 +41,7 @@ if [ "$UNINSTALL" = "1" ]; then
   rm -rf "$GLOBAL_SKILLS_DIR/wf-project-init" "$GLOBAL_SKILLS_DIR/wf-sdd-update"
   rm -f "$HOME/.sdd-home"
   rm -f "$CLAUDE_DIR/hooks/sdd-session-check.sh"
+  rm -f "$CLAUDE_DIR/hooks/sdd-model-switch.sh"
   rm -f "$CLAUDE_DIR/hooks/sdd-statusline.sh"
 
   # Desregistrar el hook (y la status line SDD, si la pusimos) de settings.json
@@ -66,6 +67,16 @@ if new_ss:
     hooks["SessionStart"] = new_ss
 else:
     hooks.pop("SessionStart", None)
+new_ms = []
+for matcher in hooks.get("PreModelSwitch", []):
+    kept = [h for h in matcher.get("hooks", [])
+            if not h.get("command", "").endswith("sdd-model-switch.sh")]
+    if kept:
+        m = dict(matcher); m["hooks"] = kept; new_ms.append(m)
+if new_ms:
+    hooks["PreModelSwitch"] = new_ms
+else:
+    hooks.pop("PreModelSwitch", None)
 if hooks:
     data["hooks"] = hooks
 else:
@@ -176,6 +187,9 @@ HOOK_TARGET="$HOOKS_DIR/sdd-session-check.sh"
 mkdir -p "$HOOKS_DIR"
 cp "$SCRIPT_DIR/bootstrap/sdd-session-check.sh" "$HOOK_TARGET"
 chmod +x "$HOOK_TARGET"
+# Confirmacion al cambiar a un modelo que no es Opus en un proyecto SDD (v0.128.8).
+cp "$SCRIPT_DIR/bootstrap/sdd-model-switch.sh" "$HOOKS_DIR/sdd-model-switch.sh"
+chmod +x "$HOOKS_DIR/sdd-model-switch.sh"
 
 # Helper de status line (segmento con el modo SDD; se compone con la statusline del usuario).
 STATUSLINE_TARGET="$HOOKS_DIR/sdd-statusline.sh"
@@ -208,6 +222,17 @@ if not already:
     print("Hook SessionStart registrado en " + path)
 else:
     print("Hook SessionStart ya registrado en " + path)
+
+# PreModelSwitch (v0.128.8): pide confirmacion al pasar de Opus a otro modelo en un proyecto SDD.
+switch_cmd = os.path.expanduser("~/.claude/hooks/sdd-model-switch.sh")
+pre_switch = data.setdefault("hooks", {}).setdefault("PreModelSwitch", [])
+if not any(h.get("command", "").endswith("sdd-model-switch.sh")
+           for matcher in pre_switch for h in matcher.get("hooks", [])):
+    pre_switch.append({"hooks": [{"type": "command", "command": switch_cmd}]})
+    with open(path, "w") as f:
+        json.dump(data, f, indent=2)
+        f.write("\n")
+    print("Hook PreModelSwitch registrado en " + path)
 PYEOF
 
 # ── 4b. Status line: registrar SOLO si no hay una (nunca pisar la del usuario) ─

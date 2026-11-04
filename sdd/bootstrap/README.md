@@ -9,6 +9,7 @@ porque es el instalador/bootstrap, no una fase.
 ```
 bootstrap/
 ├── sdd-session-check.sh     hook SessionStart (se instala en ~/.claude/hooks/)
+├── sdd-model-switch.sh      hook PreModelSwitch: confirma dejar Opus en un proyecto SDD
 ├── claude-global-block.md   bloque que se añade a ~/.claude/CLAUDE.md (protocolo de sesión)
 └── skills/
     ├── wf-project-init/      inicializa/ampliar un proyecto SDD (skill global)

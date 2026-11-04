@@ -502,6 +502,40 @@ else
   echo "    Revisa manualmente que los hooks de $SCRIPT_DIR/settings.json esten presentes."
 fi
 
+# ── 5b. Las sesiones de este proyecto, en Opus (v0.128.8) ──────────────────
+# El orquestador del ecosistema esta medido con Opus. El `model` de settings.local.json se
+# aplica en cada arranque y gana al que guarda /model en la config del usuario: en la
+# regeneracion de CU-3.ac un /model a Sonnet de otra prueba se quedo de predeterminado y la
+# sesion principal corrio con Sonnet sin que nadie lo viera. Va en el fichero local (no se
+# commitea): no obliga al resto del equipo. Nunca pisa un `model` que ya este puesto.
+# Opt-out: SDD_NO_MODEL_PIN=1.
+if [ "${SDD_NO_MODEL_PIN:-}" != "1" ] && command -v python3 >/dev/null 2>&1; then
+  LOCAL_SETTINGS="$CLAUDE_DIR/settings.local.json" python3 - <<'PYEOF'
+import json, os
+path = os.environ["LOCAL_SETTINGS"]
+data = {}
+if os.path.exists(path):
+    try:
+        with open(path) as f:
+            data = json.load(f)
+    except Exception:
+        raise SystemExit(0)  # JSON ilegible: no tocar
+if not isinstance(data, dict) or "model" in data:
+    raise SystemExit(0)
+data["model"] = "opus"
+with open(path, "w") as f:
+    json.dump(data, f, indent=2); f.write("\n")
+print("  ✓ settings.local.json: las sesiones de este proyecto arrancan con Opus "
+      "(quítalo de ahí si prefieres otro)")
+PYEOF
+  PROJ_ROOT="$(dirname "$CLAUDE_DIR")"
+  if git -C "$PROJ_ROOT" rev-parse --is-inside-work-tree >/dev/null 2>&1 \
+     && ! git -C "$PROJ_ROOT" check-ignore -q .claude/settings.local.json 2>/dev/null; then
+    printf '\n.claude/settings.local.json\n' >> "$PROJ_ROOT/.gitignore"
+    echo "  ✓ .gitignore: .claude/settings.local.json (es de cada desarrollador)"
+  fi
+fi
+
 # ── 6. Reconciliar piezas SDD de fases no seleccionadas ─────────────────────
 # Detecta skills/agents que pertenecen al ecosistema SDD (existen en alguna
 # fase del framework) pero NO se instalaron en este run: huerfanos de un

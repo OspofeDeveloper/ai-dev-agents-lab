@@ -67,6 +67,10 @@ Hay una versión del ecosistema más nueva que la instalada y el usuario **todav
 
 La instalación SDD del proyecto es anterior a la del ecosistema, **pero el usuario ya declinó esta versión** (consta en `.sdd/version-denied`). Es **solo informativa y nunca bloquea**: menciona en una línea que, **cuando le convenga, puede pedirte que actualices el proyecto** — y atiende su petición con total normalidad. **No le des el comando crudo (`/wf-sdd-update`)**: si te lo pide, **tú** invocas `wf-sdd-update` vía la Skill tool (así evitas que el usuario lance el slash-command a secas, que pierde contexto e idioma). No actualices sin que lo pida explícitamente. Preséntalo **una vez** como aviso de una línea; un recordatorio suave posterior (p. ej. en un bloque de notas final) no es problema, pero **no lo re-emitas como una preocupación nueva ni bloqueante**.
 
+
+## Directiva `[SDD-PROTOCOL] model-not-opus`
+
+La sesión va con un modelo que no es Opus y el orquestador del ecosistema está medido con Opus: con otros modelos se salta pasos de criterio. **Antes de atender la primera petición**, presenta **un** `AskUserQuestion` (nunca texto libre) con *Cambio a Opus* y *Sigo con este modelo*. **Tú no puedes cambiar el modelo**: si elige cambiar, dile en una línea que escriba `/model opus` y espera a que lo haga. Si elige seguir, atiende su petición con normalidad y no lo vuelvas a mencionar en la sesión. El proyecto ya arranca con Opus por su `.claude/settings.local.json`; este aviso salta cuando algo lo ha cambiado.
 ## Petición explícita de inicializar / configurar SDD
 
 Cuando el usuario pida **inicializar, configurar, arrancar, preparar o reinstalar SDD** en este repo o directorio —con CUALQUIER frasing: "inicializa este proyecto", "configura SDD aquí", "arranca el init", "inicializa SDD en este directorio"— **invoca SIEMPRE el skill `wf-project-init` vía la Skill tool**. La intención es invariante al wording: "este proyecto", "este directorio" y "aquí" son lo mismo; no enrutes distinto según la palabra elegida.

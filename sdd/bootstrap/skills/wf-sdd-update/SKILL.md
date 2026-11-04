@@ -26,7 +26,7 @@ Tu rol: reinstalar mecánicamente lo que el proyecto YA declaró, a la versión 
    `~/.claude/skills/`, y actualizar un proyecto no las refresca: en la pasada 1 de `CU-3.ac (4)`
    esta skill corrió con una copia de un mes antes, sin las reglas de la 0.128.0.
    ```bash
-   !SDD_HOME=$(cat ~/.sdd-home); diff -rq ~/.claude/skills/wf-sdd-update "$SDD_HOME/bootstrap/skills/wf-sdd-update" >/dev/null && diff -rq ~/.claude/skills/wf-project-init "$SDD_HOME/bootstrap/skills/wf-project-init" >/dev/null && echo BOOTSTRAP_AL_DIA || echo BOOTSTRAP_DESFASADO
+   !SDD_HOME=$(cat ~/.sdd-home); diff -rq ~/.claude/skills/wf-sdd-update "$SDD_HOME/bootstrap/skills/wf-sdd-update" >/dev/null && diff -rq ~/.claude/skills/wf-project-init "$SDD_HOME/bootstrap/skills/wf-project-init" >/dev/null && cmp -s ~/.claude/hooks/sdd-session-check.sh "$SDD_HOME/bootstrap/sdd-session-check.sh" && cmp -s ~/.claude/hooks/sdd-model-switch.sh "$SDD_HOME/bootstrap/sdd-model-switch.sh" && echo BOOTSTRAP_AL_DIA || echo BOOTSTRAP_DESFASADO
    ```
    Con `BOOTSTRAP_DESFASADO`, ponlo al día (`bash "$SDD_HOME/setup.sh" --update`, que reinstala las
    skills globales, los hooks y el bloque de bootstrap, sin tocar proyectos), **lee**

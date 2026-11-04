@@ -10,12 +10,20 @@
 #         .sdd/stack-runs.jsonl
 #       - version del sello != ecosistema, no decidida → version-drift-undecided (gate 1x)
 #       - version del sello != ecosistema, ya declinada → version-drift (aviso blando)
+#       - la sesion no va con Opus                  → model-not-opus (gate 1x por sesion)
 #   .claude/sdd-mode.json con mode "free"          → modo libre, no inyecta nada
 #   .claude/sdd-mode.json con mode "sdd" sin init  → inyecta directiva init-pending
 #   sin marcador ni init                           → inyecta directiva mode-undecided (wizard)
 #
 # Instalado por setup.sh en ~/.claude/hooks/sdd-session-check.sh
 set -u
+
+# Entrada del hook (JSON por stdin). SessionStart trae `model` (puede faltar, p. ej. tras
+# /clear). Se lee con limite de tiempo: sin stdin cerrado, el hook no se queda colgado.
+HOOK_INPUT=""
+if [ ! -t 0 ]; then
+  IFS= read -r -d '' -t 1 HOOK_INPUT || true
+fi
 
 PROJECT_DIR="${CLAUDE_PROJECT_DIR:-$PWD}"
 cd "$PROJECT_DIR" 2>/dev/null || exit 0
@@ -161,6 +169,28 @@ except Exception:
       echo "[SDD-PROTOCOL] specialist-init-pending — El init tecnico del stack de este proyecto ($SPECIALIST_WF) aun no se ha ejecutado (sin registro en .sdd/stack-runs.jsonl). NUNCA bloquea: ante una peticion de PRD/spec/design solo menciona en UNA linea que esta pendiente y atiende al usuario con normalidad. Antes de cualquier trabajo de stack (plan, tasks o implementacion) invoca $SPECIALIST_WF como precondicion, y solo entonces. No repitas el wizard de modo."
     fi
   fi
+
+  # Modelo de la sesion (v0.128.8). El orquestador esta medido con Opus: con Sonnet se salto
+  # pasos de criterio (ampliar una pregunta avisada, separar una respuesta por duenos) en la
+  # regeneracion de CU-3.ac, y nadie lo noto hasta revisar el transcript. Hooks y Claude no
+  # pueden cambiar el modelo: se avisa, y lo cambia el usuario con /model. Sin el campo, nada.
+  SESSION_MODEL=""
+  if [ -n "$HOOK_INPUT" ] && command -v python3 >/dev/null 2>&1; then
+    SESSION_MODEL="$(printf '%s' "$HOOK_INPUT" | python3 -c '
+import json, sys
+try:
+    m = json.load(sys.stdin).get("model")
+    print(m if isinstance(m, str) else (m or {}).get("id", "") if isinstance(m, dict) else "")
+except Exception:
+    pass
+' 2>/dev/null || true)"
+  fi
+  case "$(printf '%s' "$SESSION_MODEL" | tr '[:upper:]' '[:lower:]')" in
+    ""|*opus*) ;;
+    *)
+      echo "[SDD-PROTOCOL] model-not-opus — Esta sesion va con el modelo $SESSION_MODEL, y el orquestador del ecosistema SDD esta medido con Opus: con otros modelos se salta pasos de criterio. ANTES de atender la primera peticion, presenta UN solo AskUserQuestion (nunca texto libre) con opciones 'Cambio a Opus' y 'Sigo con este modelo'. Tu no puedes cambiar el modelo: si elige cambiar, dile en una linea que escriba /model opus y espera a que lo haga antes de seguir. Si elige seguir, continua con su peticion con normalidad y no lo vuelvas a mencionar en esta sesion. No repitas el wizard de modo."
+      ;;
+  esac
 
   # Deteccion de deriva de version. Compara el sello de la instalacion
   # (.sdd/sdd-version.json) con el VERSION del ecosistema; solo actua si ambos

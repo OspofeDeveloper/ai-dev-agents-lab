@@ -60,6 +60,11 @@ class FreshInstallTest(SetupBase):
         self.assertTrue((self.claude / "skills" / "wf-sdd-update" / "SKILL.md").exists())
         # hook registrado y bloque presente
         self.assertTrue(self._hook_registered())
+        # v0.128.8: confirmación al cambiar a un modelo que no es Opus
+        self.assertTrue((self.claude / "hooks" / "sdd-model-switch.sh").exists())
+        ms = self._settings()["hooks"]["PreModelSwitch"]
+        self.assertTrue(any(h.get("command", "").endswith("sdd-model-switch.sh")
+                            for m in ms for h in m.get("hooks", [])))
         md = (self.claude / "CLAUDE.md").read_text(encoding="utf-8")
         self.assertIn(BLOCK_START, md)
 
@@ -137,6 +142,8 @@ class UninstallTest(SetupBase):
                 for h in m.get("hooks", [])]
         self.assertIn("mi-hook-propio.sh", cmds)
         self.assertFalse(any(c.endswith("sdd-session-check.sh") for c in cmds))
+        self.assertFalse((self.claude / "hooks" / "sdd-model-switch.sh").exists())
+        self.assertNotIn("PreModelSwitch", s.get("hooks", {}))
         md = (self.claude / "CLAUDE.md").read_text(encoding="utf-8")
         self.assertIn("mis reglas", md)
         self.assertNotIn(BLOCK_START, md)

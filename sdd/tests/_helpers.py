@@ -55,7 +55,7 @@ def run_script_at(script_path, *args, stdin=None, cwd=None):
     )
 
 
-def run_bash(script_path, *args, cwd=None, env=None):
+def run_bash(script_path, *args, cwd=None, env=None, input=None):
     """Ejecuta un script bash (p. ej. install.sh, setup.sh) como subproceso.
 
     - script_path: ruta absoluta al .sh.
@@ -63,6 +63,7 @@ def run_bash(script_path, *args, cwd=None, env=None):
     - cwd: directorio de trabajo (los installers resuelven .claude/ desde pwd).
     - env: dict de entorno EXTRA (se fusiona sobre os.environ); util para HOME
       falso (setup.sh) o SDD_PROJECT_ROOT (install.sh).
+    - input: texto para stdin (la entrada JSON de un hook); sin él, se hereda.
     """
     full_env = None
     if env is not None:
@@ -75,6 +76,7 @@ def run_bash(script_path, *args, cwd=None, env=None):
         text=True,
         cwd=str(cwd) if cwd else None,
         env=full_env,
+        input=input,
     )
 
 

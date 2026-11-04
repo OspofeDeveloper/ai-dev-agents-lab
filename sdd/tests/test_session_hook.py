@@ -63,7 +63,7 @@ class HookBase(unittest.TestCase):
     def tearDown(self):
         self.tmp.cleanup()
 
-    def run_hook(self, project=None, home=None, **env):
+    def run_hook(self, project=None, home=None, hook_input="", **env):
         e = {
             "HOME": str(home or self.home),
             "CLAUDE_PROJECT_DIR": str(project or self.proj),
@@ -71,7 +71,7 @@ class HookBase(unittest.TestCase):
             "SDD_NON_INTERACTIVE": "",
         }
         e.update({k: str(v) for k, v in env.items()})
-        r = run_bash(HOOK, env=e)
+        r = run_bash(HOOK, env=e, input=hook_input)
         self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
         return r.stdout
 
@@ -376,6 +376,71 @@ class MonorepoCeilingTest(HookBase):
         sub = self.base / "sub"
         sub.mkdir()
         self.assertDirective(self.run_hook(project=sub), "mode-undecided")
+
+
+class ModeloDeLaSesionTest(HookBase):
+    """v0.128.8: el orquestador esta medido con Opus; si la sesion va con otro, se avisa."""
+
+    def _entrada(self, model):
+        return json.dumps({"hook_event_name": "SessionStart", "source": "startup",
+                           **({"model": model} if model is not None else {})})
+
+    def test_sonnet_en_proyecto_sdd_avisa(self):
+        _init_json(self.proj, ["prd", "spec"])
+        out = self.run_hook(hook_input=self._entrada("claude-sonnet-5-5"))
+        self.assertDirective(out, "model-not-opus")
+        self.assertIn("claude-sonnet-5-5", out)
+        self.assertIn("/model opus", out)
+
+    def test_opus_no_avisa(self):
+        _init_json(self.proj, ["prd", "spec"])
+        out = self.run_hook(hook_input=self._entrada("claude-opus-5-5[1m]"))
+        self.assertNotIn("model-not-opus", out)
+
+    def test_sin_campo_model_no_avisa(self):
+        _init_json(self.proj, ["prd", "spec"])
+        self.assertNotIn("model-not-opus", self.run_hook(hook_input=self._entrada(None)))
+        self.assertNotIn("model-not-opus", self.run_hook(hook_input="no es json"))
+
+    def test_fuera_de_un_proyecto_sdd_no_avisa(self):
+        _mode_json(self.proj, "free")
+        self.assertNotIn("model-not-opus",
+                         self.run_hook(hook_input=self._entrada("claude-sonnet-5-5")))
+
+
+SWITCH = SDD_ROOT / "bootstrap" / "sdd-model-switch.sh"
+
+
+class CambioDeModeloTest(HookBase):
+    """v0.128.8: PreModelSwitch pide confirmación al dejar Opus en un proyecto SDD."""
+
+    def _switch(self, to_model, cwd=None, **env):
+        e = {"HOME": str(self.home), "CLAUDE_PROJECT_DIR": str(self.proj), "CI": "",
+             "SDD_NON_INTERACTIVE": "", **{k: str(v) for k, v in env.items()}}
+        entrada = json.dumps({"hook_event_name": "PreModelSwitch", "from_model": "claude-opus-5-5",
+                              "to_model": to_model, "cwd": str(cwd or self.proj)})
+        r = run_bash(SWITCH, env=e, input=entrada)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        return r.stdout.strip()
+
+    def test_a_sonnet_en_proyecto_sdd_pregunta(self):
+        _init_json(self.proj, ["spec"])
+        out = json.loads(self._switch("claude-sonnet-5-5"))["hookSpecificOutput"]
+        self.assertEqual(out["hookEventName"], "PreModelSwitch")
+        self.assertEqual(out["permissionDecision"], "ask")
+        self.assertIn("Opus", out["permissionDecisionReason"])
+
+    def test_a_opus_no_dice_nada(self):
+        _init_json(self.proj, ["spec"])
+        self.assertEqual(self._switch("claude-opus-5-5"), "")
+
+    def test_fuera_de_un_proyecto_sdd_no_dice_nada(self):
+        self.assertEqual(self._switch("claude-sonnet-5-5"), "")
+
+    def test_en_ci_no_dice_nada(self):
+        # «ask» fuera de /model interactivo es un rechazo: en CI no se pregunta.
+        _init_json(self.proj, ["spec"])
+        self.assertEqual(self._switch("claude-sonnet-5-5", CI="true"), "")
 
 
 if __name__ == "__main__":

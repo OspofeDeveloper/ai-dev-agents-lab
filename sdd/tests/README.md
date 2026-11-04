@@ -73,7 +73,7 @@ Tests de integracion que instalan el ecosistema en proyectos sinteticos
 |---|---|---|
 | `install.sh` | `test_install_sh.py` | install all (agentes/skills/rules/scripts sellados/settings/CLAUDE.md); install por fase (spec, plan) con dependencias cross-fase; fase desconocida -> exit 1; `--prune` poda huerfanos / sin `--prune` avisa; idempotencia del merge de settings; `SDD_PROJECT_ROOT` redirige `.sdd/` a la raiz |
 | `tech/kmm/install.sh` | `test_kmm_install_sh.py` | regla `sdd-kmm.md` con `paths:`; NO pisa el CLAUDE.md raiz (lo crea ni lo sobreescribe); instala `kb-kmm-project-state-protocol` (bug 0.1) y agentes KMM; override por basename de `plan-architect`/`kb-plan-expert`; install.sh re-aplica el overlay leyendo `stack` de project-init.json (bug 6.6); stack desconocido -> aviso sin fallo |
-| `setup.sh` | `test_setup_sh.py` | install fresco (hook, `~/.sdd-home`, registro en settings, bloque SDD-BOOTSTRAP, skills globales); idempotencia (no duplica hook ni bloque); preserva settings/CLAUDE.md ajenos; `--uninstall` revierte preservando lo ajeno; arg desconocido -> exit 1. Aislado con `HOME` falso; NO ejercita `--dev` (mutaria el repo real) |
+| `setup.sh` | `test_setup_sh.py` | install fresco (hook, `~/.sdd-home`, registro en settings, bloque SDD-BOOTSTRAP, skills globales); idempotencia (no duplica hook ni bloque); preserva settings/CLAUDE.md ajenos; `--uninstall` revierte preservando lo ajeno; arg desconocido -> exit 1. Aislado con `HOME` falso; NO ejercita `--dev` (mutaria el repo real); el hook `PreModelSwitch` se instala, se registra y se retira al desinstalar (v0.128.8) |
 
 ## Cobertura — tooling meta del ciclo de creacion (11.4c/d)
 
@@ -87,7 +87,7 @@ proyectos consumidores; viven solo en `sdd/scripts/`).
 
 ## Cobertura — hook de sesion (11.3c)
 
-`test_session_hook.py` (24): matriz de estados de `bootstrap/sdd-session-check.sh`,
+`test_session_hook.py`: matriz de estados (con el aviso `model-not-opus` y el hook `PreModelSwitch`, v0.128.8) de `bootstrap/sdd-session-check.sh`,
 aislado con `CLAUDE_PROJECT_DIR` + `HOME` falso + `CI=""`/`SDD_NON_INTERACTIVE=""`
 (neutralizan la herencia del runner). El hook siempre sale 0; la senal es su stdout.
 

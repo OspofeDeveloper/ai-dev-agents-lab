@@ -243,8 +243,17 @@ preserva lo del proyecto. SSoT del merge de hooks/permisos.
 
 ### `bootstrap/sdd-session-check.sh` · hook `SessionStart`
 Inyecta la directiva `[SDD-PROTOCOL]` (`mode-undecided` / `init-pending` /
-`init-incomplete` / `version-drift`) según el estado del proyecto. Se silencia en
-CI (`CI=true`, `SDD_NON_INTERACTIVE=1`).
+`init-incomplete` / `version-drift` / `model-not-opus`) según el estado del proyecto. Se silencia en
+CI (`CI=true`, `SDD_NON_INTERACTIVE=1`). Lee el `model` de su entrada: en un proyecto SDD, si la
+sesión no va con Opus, avisa una vez (v0.128.8).
+
+- **Exit:** `0` siempre.
+
+### `bootstrap/sdd-model-switch.sh` · hook `PreModelSwitch` (v0.128.8)
+En un proyecto SDD inicializado, cambiar a un modelo que no es Opus pide confirmación
+(`permissionDecision: "ask"`, con el motivo). No prohíbe. Fuera de un proyecto SDD, hacia Opus o en
+CI, no dice nada. `install.sh` además fija `"model": "opus"` en `.claude/settings.local.json` del
+proyecto si no hay otro (`SDD_NO_MODEL_PIN=1` para no hacerlo) y lo añade al `.gitignore`.
 
 - **Exit:** `0` siempre.
 
