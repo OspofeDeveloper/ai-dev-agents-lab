@@ -1099,6 +1099,27 @@ class MedicionIncrementalTest(unittest.TestCase):
             rc, out = self._refresh(b)
             self.assertEqual(rc, 2)
             self.assertIn("CF-F005-02", " ".join(out["motivos"]))
+            # v0.128.7: si es lo único que falta, se arbitra solo ese.
+            self.assertTrue(out["solo_conflictos_nuevos"])
+            self.assertEqual([n["id"] for n in out["por_arbitrar"]], ["CF-F005-02"])
+            rc, out = self._refresh(b, "--salvo-nuevos")
+            self.assertEqual(rc, 0, out)
+            self.assertEqual(out["revisados"], ["F-005"])
+            texto = (b.spec / "spec_readiness_report.md").read_text(encoding="utf-8")
+            self.assertIn("- **Por arbitrar**: CF-F005-02", texto)
+
+    def test_un_conflicto_nuevo_con_algo_mas_no_es_solo_arbitrar(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            b = self._bank(tmp)
+            b.feature("F-005", "cuentas", estado="BORRADOR")
+            time.sleep(0.01)
+            write(b.spec / "features" / "cuentas" / "spec" / "cuentas_conflict_report.md",
+                  informe([("CF-F005-02", "MEDIA", "F-001, F-005", "Nuevo")]))
+            time.sleep(0.01)
+            b.feature("F-001", "movimientos", estado="BORRADOR")    # cambio sin revisar
+            rc, out = self._refresh(b, "--salvo-nuevos")
+            self.assertEqual(rc, 2)
+            self.assertFalse(out["solo_conflictos_nuevos"])
 
     def test_un_cambio_sin_revisar_pide_revisarlo(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1318,6 +1339,31 @@ class PresentacionBloquesTest(unittest.TestCase):
             b.readiness("| F-001: movimientos | LISTA | 0 | 0 | — |")
             labels = [o["label"] for o in b.pending()["cierre"]["opciones"]]
             self.assertIn("Generar las 3 features sin spec (Recomendado)", labels)
+
+
+class CorregirSoloCopiaTest(unittest.TestCase):
+    """v0.128.7: quitar la copia de una regla ajena se valida sin revisar conflictos."""
+
+    def _pend(self, hallazgo):
+        with tempfile.TemporaryDirectory() as tmp:
+            b = Bank(Path(tmp))
+            b.feature("F-001", "movimientos",
+                      extra_header=f"> La validación pide corregir: (v1.0) {hallazgo}\n")
+            b.index([("F-001", "movimientos", "features/movimientos/spec/movimientos_spec.md",
+                      "BLOQUEADA", "ninguno")])
+            b.analysis("respondida")
+            b.readiness()
+            return next(o for o in b.pending()["cierre"]["opciones"] if o["accion"] == "corregir")
+
+    def test_dejar_solo_la_cita_es_solo_copia(self):
+        op = self._pend("repite la regla de cuentas — dejar solo la cita a su contrato")
+        self.assertTrue(op["solo_copia"])
+        self.assertIn("sin revisar conflictos", op["preview"])
+
+    def test_otro_arreglo_revisa_conflictos(self):
+        op = self._pend("el criterio no se puede verificar — reescribirlo con un resultado medible")
+        self.assertFalse(op["solo_copia"])
+        self.assertIn("se comprueba que no choca con nada", op["preview"])
 
 
 class ResultadoDeValidacionConservaFechaTest(unittest.TestCase):

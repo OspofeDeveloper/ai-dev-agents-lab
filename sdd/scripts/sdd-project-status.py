@@ -1037,6 +1037,10 @@ def spec_pending(directory: Path, lote: list | None = None) -> dict:
 
 # Lo que no es una decisión de nadie en concreto: la medición desactualizada nombra a todas
 # las features, validar y generar son el paso siguiente, no lo que lo impide.
+# Lo que pide la validación cuando un spec escribe una regla de otra feature además de citarla
+# (`kb-spec-expert`, umbral 4): el arreglo es quitar el texto y dejar la cita.
+SOLO_COPIA_RE = re.compile(r"\bdejar solo la (?:cita|referencia)\b", re.IGNORECASE)
+
 NO_DECISION = ("readiness", "validar", "generar", "corregir", "espera_generar")
 
 
@@ -1404,10 +1408,20 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
             for h in it["hallazgos"]:
                 k += 1
                 prev += [f"{k}. {nombre(it['features'][0])}: {h}"]
-        prev += ["", "Se corrige cada spec, se comprueba que no choca con nada y se valida."] + sella
+        # Quitar la copia de una regla ajena no cambia cómo se comporta nada: se valida sin
+        # revisar conflictos, como una sugerencia (v0.128.7). En la regeneración de CU-3.ac las
+        # cinco correcciones fueron de este tipo, y cada una lanzó una verificación de
+        # conflictos que no podía encontrar nada.
+        solo_copia = all(SOLO_COPIA_RE.search(h) for it in corregir for h in it["hallazgos"])
+        if solo_copia:
+            prev += ["", "Se quita la copia, se audita y se valida, sin revisar conflictos: no",
+                     "cambia cómo se comporta nada."] + sella
+        else:
+            prev += ["", "Se corrige cada spec, se comprueba que no choca con nada y se valida."] + sella
         cand.append({"label": f"Corregir lo que pidió la validación ({len(corregir)})",
                      "description": "Arreglos sin decisiones nuevas; después se valida otra vez.",
-                     "preview": "\n".join(prev), "accion": "corregir", "aprueba": aprobador})
+                     "preview": "\n".join(prev), "accion": "corregir", "aprueba": aprobador,
+                     "solo_copia": solo_copia})
     if traslados:
         prev = ["Ya decidido, falta copiarlo (no se te pregunta nada):", ""]
         for k, it in enumerate(traslados, 1):
@@ -1706,7 +1720,8 @@ def _cerrados_incrementales(rtext: str) -> set:
     return set(CF_ID_RE.findall(m.group(1))) if m else set()
 
 
-def refresh_readiness(directory: Path, solo_criterios: list | None = None) -> dict:
+def refresh_readiness(directory: Path, solo_criterios: list | None = None,
+                      salvo_nuevos: bool = False) -> dict:
     """Pone al día el readiness sin rehacerlo, cuando no hay nada que arbitrar (v0.128.0).
 
     Rehacerlo con un agente costaba 3-6 minutos por vuelta, y tras copiar algo ya decidido
@@ -1717,6 +1732,12 @@ def refresh_readiness(directory: Path, solo_criterios: list | None = None) -> di
     es mecánico: qué conflictos se cerraron y las filas de la matriz que solo esperaban a
     ellos. Si algo de eso falla, `ok` es False y los `motivos` dicen por qué: hace falta la
     medición completa.
+
+    Si lo único que falta es arbitrar conflictos nuevos (`solo_conflictos_nuevos`), no hace falta
+    rehacerlo todo (v0.128.7): con `salvo_nuevos` se pone al día lo demás y devuelve en
+    `por_arbitrar` los conflictos que un auditor arbitra y añade al informe
+    (`wf-spec-readiness --solo-conflictos`). Tras deudas, en la regeneración de CU-3.ac, una
+    medición completa de 7 minutos fue para arbitrar uno.
     """
     solo = {Path(x).resolve() for x in (solo_criterios or [])}
     readiness = first(directory, "*_readiness_report.md")
@@ -1750,6 +1771,7 @@ def refresh_readiness(directory: Path, solo_criterios: list | None = None) -> di
     conocidos = [r[0] for r in _table_rows(rtext, "Conflictos ALTA no resueltos")
                  + _table_rows(rtext, "Conflictos MEDIA abiertos")]
     raices = {raiz(c) for k in conocidos for c in CF_ID_RE.findall(k)}
+    nuevos = []
     for rep in _conflict_reports(directory):
         if rep.stat().st_mtime <= rts:
             continue
@@ -1757,10 +1779,14 @@ def refresh_readiness(directory: Path, solo_criterios: list | None = None) -> di
             ids = CF_ID_RE.findall(row[0])
             abierto = not (len(row) >= 5 and CERRADO_RE.search(row[-1]))
             if ids and abierto and not {raiz(i) for i in ids} & raices:
-                motivos.append(f"conflicto nuevo que arbitrar: {ids[0]} "
-                               f"({rep.parent.parent.name})")
-    if motivos:
-        return {"ok": False, "motivos": motivos}
+                if ids[0] not in {n["id"] for n in nuevos}:
+                    nuevos.append({"id": ids[0], "informe": os.path.relpath(rep)})
+    solo_nuevos = bool(nuevos) and not motivos
+    motivos += [f"conflicto nuevo que arbitrar: {n['id']} ({Path(n['informe']).parent.parent.name})"
+                for n in nuevos]
+    if motivos and not (salvo_nuevos and solo_nuevos):
+        return {"ok": False, "motivos": motivos, "solo_conflictos_nuevos": solo_nuevos,
+                "por_arbitrar": nuevos}
 
     # Lo que dijeron las actualizaciones anteriores se acumula (v0.128.4): reescribir la
     # sección perdía qué specs se habían revisado en la anterior.
@@ -1799,17 +1825,20 @@ def refresh_readiness(directory: Path, solo_criterios: list | None = None) -> di
     import datetime
     bloque = (f"## {INCREMENTAL_TITLE}\n\n"
               f"> {datetime.date.today().isoformat()} — puesta al día sin rehacer el informe: los "
-              "cambios posteriores no abrieron nada que arbitrar. Donde lo de abajo no coincida "
-              "con esto, manda esto.\n\n"
+              + ("cambios posteriores solo abrieron los conflictos de abajo, que se arbitran "
+                 "aparte en sus tablas. " if nuevos else
+                 "cambios posteriores no abrieron nada que arbitrar. ")
+              + "Donde lo de abajo no coincida con esto, manda esto.\n\n"
               f"- **Cerrados**: {', '.join(cerrados) or 'ninguno'}\n"
-              f"- **Specs revisados después**: {', '.join(revisados) or 'ninguno'}\n\n---\n\n")
+              + (f"- **Por arbitrar**: {', '.join(n['id'] for n in nuevos)}\n" if nuevos else "")
+              + f"- **Specs revisados después**: {', '.join(revisados) or 'ninguno'}\n\n---\n\n")
     texto = re.sub(r"^##\s+" + INCREMENTAL_TITLE + r".*?(?=^##\s)", "", texto,
                    flags=re.MULTILINE | re.DOTALL)
     m = re.search(r"^##\s", texto, re.MULTILINE)
     texto = texto[:m.start()] + bloque + texto[m.start():] if m else texto + "\n" + bloque
     readiness.write_text(texto, encoding="utf-8")
     return {"ok": True, "cerrados": cerrados, "revisados": revisados,
-            "informe": os.path.relpath(readiness)}
+            "informe": os.path.relpath(readiness), "por_arbitrar": nuevos}
 
 
 def main(argv: list[str]) -> int:
@@ -1830,7 +1859,8 @@ def main(argv: list[str]) -> int:
     if len(args) != 1:
         sys.stderr.write("uso: sdd-project-status.py <dir> [--output <archivo>] | "
                          "<dir> --spec-pending [--json] [--lote <spec.md> …] | "
-                         "<dir> --refresh-readiness [--solo-criterios <spec.md> …]\n")
+                         "<dir> --refresh-readiness [--salvo-nuevos] "
+                         "[--solo-criterios <spec.md> …]\n")
         return 1
     directory = Path(args[0]).resolve()
     if not directory.is_dir():
@@ -1838,7 +1868,7 @@ def main(argv: list[str]) -> int:
         return 1
 
     if "--refresh-readiness" in argv:
-        data = refresh_readiness(directory, solo)
+        data = refresh_readiness(directory, solo, salvo_nuevos="--salvo-nuevos" in argv)
         import json
         sys.stdout.write(json.dumps(data, ensure_ascii=False, indent=2) + "\n")
         return 0 if data["ok"] else 2

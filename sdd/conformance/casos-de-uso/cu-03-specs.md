@@ -3013,6 +3013,13 @@ vocabulario por fases instaladas); `sdd-seal.py --unseal --blocked` sin cambiar 
    → **FALLO:** la regla escrita y citada en la consumidora.
 5. **El mapa se lee.** Bloques por sus features, la pregunta crítica por su título en la vista
    previa, más de dos features sin spec contadas en la etiqueta, las sugerencias del lote una vez.
+6. **Quitar una copia no revisa conflictos** (v0.128.7). Una corrección *"dejar solo la cita"*.
+   → **Esperado:** la opción dice *"sin revisar conflictos"*; la validación lanza el auditor y
+     ninguna verificación de conflictos.
+7. **Un conflicto nuevo se arbitra solo** (v0.128.7). Una validación cuya revisión abre un
+   conflicto nuevo y nada más.
+   → **Esperado:** `--salvo-nuevos` y un auditor con `--solo-conflictos`, sin rehacer el informe
+     entero; el conflicto sale en su tabla y la medición queda al día.
 
 **Resultado:** PASS si los puntos 1-4 se cumplen sin cambiar el contenido de ningún spec respecto a
 lo que exigía ya la validación · FALLO si alguno vuelve a costar una vuelta.

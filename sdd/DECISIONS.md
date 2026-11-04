@@ -149,6 +149,21 @@ que cita»* y toda respuesta se separa por dueños al guardarla. Lo de la genera
 error, leer el contrato del dueño cuando ya tiene spec, comprobar antes de entregar— va en su propia
 versión, con una regeneración para medirlo.
 
+**Ampliación (v0.128.7, optimizaciones sin perder certeza).** De los tiempos de la misma pasada:
+- **Quitar una copia no revisa conflictos.** Una corrección que solo deja la cita no cambia
+  ningún comportamiento, igual que una sugerencia: se valida con auditoría completa y sin
+  verificación de conflictos. Se reconoce por cómo escribe el auditor el arreglo (*"dejar solo la
+  cita"*); cualquier otro arreglo sigue revisándolos.
+- **Arbitrar solo lo nuevo.** Si la medición incremental solo se niega por conflictos nuevos, lo
+  demás se pone al día sin agente y el auditor arbitra solo esos, con los mismos criterios, sobre
+  el informe existente. Lo ya medido no ha cambiado; rehacerlo no añadía certeza.
+- **Sonnet 5.5** en los agentes que iban con Sonnet 5. Se medirá en la siguiente regeneración si
+  sigue mejor el *"cita, no copies"*.
+
+Descartado: la sesión principal en Sonnet (ya probada: se salta pasos del orquestador). Queda para
+medir: Haiku en los cambios directos con requisito literal, que son justo los que han provocado
+copias.
+
 **Referencias.** `scripts/sdd-project-status.py` (`--refresh-readiness`, estado de conflictos por
 alias, `aprueba`, títulos), `scripts/sdd-model-contracts.py` (`--vecinas`, lectura y escritura),
 `wf-spec-delta` (submodo `directo`, `--sin-indice`), `wf-spec-conflict` (modo verificación,

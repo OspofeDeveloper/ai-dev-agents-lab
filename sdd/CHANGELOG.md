@@ -2,6 +2,15 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.128.7 — 2026-11-04
+
+**Menos agentes por vuelta, con la misma certeza; y Sonnet 5.5** — [[DECISIONS D-115]] (ampliación). Sale de los tiempos de la regeneración de `CU-3.ac`.
+
+- 🟠 ⚠ **Los agentes que iban con Sonnet pasan a Sonnet 5.5** (`claude-sonnet-5` → `claude-sonnet-5-5`): Spec (redactor, auditor, explorador), auditor de plan, tasks, QA, el auditor del ecosistema y los del overlay KMM. Los de Opus no cambian.
+- 🟠 ⚠ **Quitar la copia de una regla ajena se valida sin revisar conflictos** (`solo_copia` en la opción *Corregir*, validación con `--solo-criterios`): no cambia cómo se comporta nada. Las cinco correcciones de la pasada lanzaron cada una una verificación que no podía encontrar nada. El auditor escribe ese arreglo empezando por *"dejar solo la cita"*.
+- 🟠 ⚠ **Un conflicto nuevo no rehace toda la medición.** Si es lo único que falta (`solo_conflictos_nuevos`), `--refresh-readiness --salvo-nuevos` pone al día lo demás y un auditor arbitra solo esos conflictos (`wf-spec-readiness --solo-conflictos`). Antes, 7 minutos para arbitrar uno.
+- **Conformance:** `CU-3.ac (5)` puntos 6 y 7. 3 tests nuevos.
+
 ## 0.128.6 — 2026-11-04
 
 **Una regla de otra feature no se cuela por la plantilla ni por una respuesta** — [[DECISIONS D-115]] (ampliación). Sale de la regeneración de `CU-3.ac`: cinco correcciones, todas por copiar y citar una regla ajena.

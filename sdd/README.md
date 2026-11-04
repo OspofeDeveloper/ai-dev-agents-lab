@@ -377,8 +377,8 @@ El `task-generator` conoce los dominios de implementación KMM y asigna cada tas
 
 **Modelo por complejidad**:
 - `plan-architect` → `claude-opus-5-5` (decisiones arquitectónicas complejas)
-- `task-generator` → `claude-sonnet-5` (formateo estructurado)
-- agentes Spec (`sdd-spec-explorer`, `sdd-spec-writer`, `sdd-spec-auditor`) → `claude-sonnet-5`, con responsabilidad separada por tipo de trabajo
+- `task-generator` → `claude-sonnet-5-5` (formateo estructurado)
+- agentes Spec (`sdd-spec-explorer`, `sdd-spec-writer`, `sdd-spec-auditor`) → `claude-sonnet-5-5`, con responsabilidad separada por tipo de trabajo
 
 **Estado en los artefactos, no en la memoria del agente**: ningún agente declara `memory:` ([D-041](DECISIONS.md)). La consistencia entre artefactos no se sostiene en lo que un agente recuerde —estado que ningún gate, script ni check puede ver ni invalidar— sino en que cada agente **lee** los artefactos vigentes y en los verificadores deterministas que los cruzan.
 

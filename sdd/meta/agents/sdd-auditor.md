@@ -3,7 +3,7 @@ name: sdd-auditor
 description: Agente especializado en auditar el ecosistema SDD. Detecta problemas estructurales (referencias rotas, skills huerfanas, rootmap invalido) y problemas de calidad de contenido (violaciones de SSoT, violaciones de SRP, contradicciones entre skills, inconsistencias). Produce reportes accionables con severidad y accion sugerida. No crea ni modifica piezas; para eso usar sdd-author.
 skills: [kb-sdd-skill-architecture, kb-sdd-creation-guide, kb-sdd-audit-structural, kb-sdd-audit-content]
 permissionMode: acceptEdits
-model: claude-sonnet-5
+model: claude-sonnet-5-5
 disallowedTools: Write, Edit
 color: purple
 ---

@@ -170,7 +170,11 @@ defecto gana la columna **Planificable** (*Lista para desarrollo* en un repo sin
 v0.128.5: el texto del cierre dice entonces *"lista para desarrollo"* en vez de *"ya puedes
 planificar"*). Una petición a una feature sin spec sale como `espera_generar`: no es un bloque, la
 feature espera a que se genere su dueña; y una petición ya respondida que la consumidora aún da por
-pendiente, como `corregir` (v0.128.5). Y `cierre` (v0.126.1): la `pregunta` y las `opciones` del cierre ya escritas
+pendiente, como `corregir` (v0.128.5). La opción *Corregir* lleva `solo_copia` cuando todos sus
+arreglos son *"dejar solo la cita"*: se valida sin revisar conflictos (v0.128.7).
+`--refresh-readiness` devuelve, si se niega, `solo_conflictos_nuevos` y `por_arbitrar`; con
+`--salvo-nuevos` pone al día lo demás aunque queden conflictos nuevos, que arbitra un auditor
+aparte (v0.128.7). Y `cierre` (v0.126.1): la `pregunta` y las `opciones` del cierre ya escritas
 —`label`, `description`, `preview`, `accion` (`readiness`, `validar`, `bloque:X`, `menores`, `generar`,
 `luego`)—, como mucho cuatro, para copiarlas literal. Con `--lote <spec.md> …`, la pregunta empieza por el resultado de ese lote de
 validación. Tipos nuevos ([[D-113]]): `trasladar` (ya decidido por el dueño, se aplica sin preguntar)

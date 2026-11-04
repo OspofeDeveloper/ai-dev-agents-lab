@@ -2,7 +2,7 @@
 name: wf-spec-readiness
 description: "Genera un informe de readiness desde los artefactos post-spec (specs, READMEs, _features.md, _conflict_report.md): que features estan listas para plan, cuales bloqueadas y por que, y el orden de implementacion recomendado."
 when_to_use: "Activa en frases como 'que features estan listas', 'readiness de las features', 'cuales puedo planificar', 'orden de implementacion', 'verifica readiness', 'que falta para planificar'."
-argument-hint: "<path/features/>"
+argument-hint: "<path/features/> [--solo-conflictos CF-…[,CF-…]]"
 effort: medium
 allowed-tools: [Read, Bash]
 context: fork
@@ -27,7 +27,29 @@ Tu objetivo es sintetizar el estado de los artefactos post-spec-generation en un
 Extrae de `$ARGUMENTS`:
 - **Directorio de features**: el primer argumento. Debe ser el directorio que contiene las carpetas de features (ej: `docs/features/`).
 
+- **`--solo-conflictos CF-…[,CF-…]`** (opcional, v0.128.7): arbitrar solo esos conflictos nuevos.
+  Ver "Modo solo conflictos" abajo.
+
 Si no hay argumento, intenta inferir buscando un directorio `features/` en el directorio actual.
+
+### Modo solo conflictos (v0.128.7)
+
+Lo lanza la validación cuando la medición incremental ya puso al día todo lo demás y solo quedan
+conflictos nuevos por arbitrar (`--refresh-readiness --salvo-nuevos`). Rehacer el informe entero
+para eso costaba 7 minutos y no cambiaba nada más. **El informe existente es la base: no lo
+reescribas.**
+
+1. Lee el informe de readiness, los informes de conflictos que traen esos IDs y los specs de las
+   features que nombran. Nada más.
+2. Arbitra cada conflicto **con los mismos criterios del Paso 4c**: si es contradicción (ALTA),
+   hueco (MEDIA) o no es conflicto.
+3. Edita el informe con `Bash` (como en el Paso 8): una fila por conflicto en
+   `## Conflictos ALTA no resueltos` o en `## Conflictos MEDIA abiertos` (si la sección dice
+   *"Ninguno."*, sustitúyelo por la tabla), y, si es ALTA, añade su ID a los bloqueantes de las
+   features que nombra en `## Matriz de readiness`. Si no es conflicto, añádelo a la línea
+   `Por arbitrar` de `## Actualización incremental` como *"descartado: <por qué>"*. No toques
+   ninguna otra sección.
+4. Haz el Paso 8.5 (regenerar el índice) e informa de qué decidiste con cada uno.
 
 Si no hay argumento y no se puede inferir, informa al usuario:
 > "Necesito el directorio donde viven las features, para revisar cuáles están listas."
