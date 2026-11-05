@@ -66,8 +66,8 @@ El estado de cobertura autoritativo (ejes happy/edge/harness/args) vive en
 - [ ] CU-3.r — El rigor (standard/ligero) se elige al crear el spec, no en el init (D-006) — puntos 1 y 4: **SELLADOS 3/3** (tanda A, 2026-09-25/28; puntos 2, 3 y 5 sin serie)
 - [ ] CU-3.z — Seguimiento de la fase: la lista de pendientes sale de ficheros y cada cierre ofrece el siguiente ([[D-102]]) — de paso en 2026-09-29: punto 2 verde, **punto 1 FALLO** tras *"Lo dejo para luego"* ([[D-103]]); **FALLO** 2026-10-01 (puntos 5 y 7, [[D-104]]); **FALLO** 2026-10-01 pasada 2 (punto 5: sin tabla, [[D-107]]); 1, 2, 3, 4 y 7 verdes en la pasada 2 · **D-112 (v0.126.0): punto 2 vuelve a 0** (con más de un frente, el cierre presenta el mapa por bloques)
 - [ ] CU-3.aa — Seguimiento: un ciclo del dominio se planifica en grupo, uno sin respaldo bloquea y se nombra ([[D-103]]) — **FALLO** 2026-10-01 (punto 1: el aviso del grupo no sale, [[D-104]]); **FALLO** 2026-10-01 pasada 2 (punto 1: `resumen` parafraseado, [[D-108]]); 2, 3 y 4 verdes en las dos
-- [ ] CU-3.ab — Cada regla tiene un dueño: el dueño publica el contrato del modelo y los demás lo citan ([[D-111]])
-- [ ] CU-3.ac — Planificar por bloques: qué se puede empezar ya y qué falta para el resto ([[D-112]]) · (2) un bloque de varias decisiones y lo ya decidido ([[D-113]]) — **FALLO** 2026-10-26 (puntos 1, 2, 3 y 5 PASS; punto 4 FALLO: el motivo del rechazo no se vio; una regla fuera de su dueño costó una vuelta y un conflicto grave, [[D-114]]) · (3) lo respondido llega a su dueño y lo que no sella dice por qué ([[D-114]])
+- [ ] CU-3.ab — Cada regla tiene un dueño: el dueño publica el contrato del modelo y los demás lo citan ([[D-111]]) — **FALLO** 2026-11-05 (punto 2: las consumidoras siguen copiando reglas ajenas al generar, responder y aplicar sugerencias; 1, 3 y 4 verdes)
+- [ ] CU-3.ac — Planificar por bloques: qué se puede empezar ya y qué falta para el resto ([[D-112]]) · (2) un bloque de varias decisiones y lo ya decidido ([[D-113]]) — **FALLO** 2026-10-26 (puntos 1, 2, 3 y 5 PASS; punto 4 FALLO: el motivo del rechazo no se vio; una regla fuera de su dueño costó una vuelta y un conflicto grave, [[D-114]]) · (3) lo respondido llega a su dueño y lo que no sella dice por qué ([[D-114]]) · (5) regenerar desde el PRD ([[D-115]]) — **FALLO** 2026-11-05 (1-3 y 6-8 PASS; 4: las copias siguen costando vueltas; 5: aviso duplicado tras un lote; 9: lecturas a trozos)
 
 > **Capa determinista** (no son escenarios manuales): los índices y marcadores
 > (`sdd-features-index.py`, `sdd-gap-conventions`) están cubiertos por unittests; la calidad
@@ -2629,7 +2629,7 @@ alguno no se cumple.
 > grupo. El ciclo forzado salió nombrando solo `F-002 → F-003`, y validar ofreció solo lo listo. →
 > [[D-108]] (v0.123.2): el `resumen`, dentro de la pregunta.
 
-## CU-3.ab — Cada regla tiene un dueño: el dueño publica el contrato del modelo y los demás lo citan ([[D-111]]) ⏱ **sin pasada**
+## CU-3.ab — Cada regla tiene un dueño: el dueño publica el contrato del modelo y los demás lo citan ([[D-111]]) ⏱ **pasada 1: FALLO** (punto 2; regeneración de `CU-3.ac (5)`, v0.128.4 → v0.128.9)
 
 **Precondición:** generar las specs **desde cero** sobre el PRD ya analizado del banco de la tanda
 de continuación (`rm -rf spec && cp -Rp .conformance-attic/bank-cu3z/prd .`, y *"genera las
@@ -2670,6 +2670,20 @@ features` (consumidoras) de la plantilla del spec, `sdd-model-contracts.py`, la 
 peticiones se atienden en el dueño y no aparece ningún conflicto por duplicación o falta de dueño ·
 FALLO si una regla de un modelo compartido vive en dos specs.
 **Desviación → reportar:** issue citando `CU-3.ab`.
+
+**Pasada 1 (2026-10-29 → 11-05, Opus 5.5, v0.128.4 → v0.128.9; la regeneración de `CU-3.ac (5)`):
+FALLO por el punto 2.**
+- **1 PASS:** las dueñas publican su contrato con el catálogo de orígenes; lo que el PRD no decide
+  sale en una pregunta por modelo (aunque después de generar: ver el pendiente de `CU-3.ac (5)`).
+- **2 FALLO:** las consumidoras siguen escribiendo reglas ajenas, al generar (pagos previstos,
+  presupuesto), al guardar una respuesta (deudas) y al aplicar sugerencias (cuentas). La validación
+  las paró casi siempre antes de sellar, pero cada una costó una vuelta, y una pasó la auditoría y
+  abrió un hueco (`CF-F002-01`).
+- **3 PASS:** las peticiones se atendieron en el dueño (pagos previstos respondió la de cuentas; el
+  importe mínimo de una aportación directa se escribió en movimientos).
+- **4 PASS:** las lectoras salen en el mapa y en el aviso de *"usan datos unas de otras"*.
+- **5 mejora, sin llegar:** ningún conflicto con causa *duplica* abierto al final, pero las vueltas
+  por copia siguen siendo el grueso del coste.
 
 ## CU-3.ac — Planificar por bloques: qué se puede empezar ya y qué falta para el resto ([[D-112]]) ⏱ **pasada 1 parcial (puntos 1–2)**
 
@@ -2980,7 +2994,7 @@ algo resuelto, o si un cambio sin decisión vuelve a pasar por revisión complet
 - **Estado guardado:** `bank-cu3ac-punto3` (las 7 features con spec validadas; 1 sugerencia; pagos
   previstos sin spec).
 
-### CU-3.ac (5) — Regenerar desde el PRD: esperas, citas y un repo que no planifica ([[D-115]]) ⏱ **pasada 1 en curso**
+### CU-3.ac (5) — Regenerar desde el PRD: esperas, citas y un repo que no planifica ([[D-115]]) ⏱ **pasada 1 cerrada: FALLO** (1-3 y 6-8 PASS; 4, 5 y 9 parciales; v0.128.4 → v0.128.9; banco final `bank-regen-final`)
 
 **Precondición:** el banco `bank-regen-inicio` (PRD v1.5 sellado y su análisis con los críticos
 respondidos; sin discovery ni `spec/`), en topología `authoring`. Dos tandas: las dueñas de los
@@ -3067,6 +3081,46 @@ lo que exigía ya la validación · FALLO si alguno vuelve a costar una vuelta.
   sobre su contrato (P-011, P-021, P-031…) aunque el aviso previo dice *"ninguna saldrá
   incompleta"*. Preguntarlo antes de generar cambia la generación: va en su propia versión, con una
   pasada de regeneración.
+
+**Tercer tramo y cierre de la pasada 1 (2026-11-05, Opus 5.5; v0.128.8 hasta las 14:49, v0.128.9
+después):** validar presupuesto (no sella: copia), corregir dos copias, aplicar 14 sugerencias
+(5 decisiones), trasladar lo decidido de `CF-F002-01`, y *"planifica categorías"*. Final: las 7
+features listas para desarrollo, 0 conflictos abiertos, 12 sugerencias sin aplicar →
+`.conformance-attic/bank-regen-final/`.
+- **Veredicto por punto:**
+  - **1 PASS:** *"Listas para desarrollo… Ya se pueden planificar en el repo de código"*, y
+    *"planifica categorías"* contesta en una línea que el plan va en el repo de desarrollo.
+  - **2 y 3 PASS** (segundo tramo; en este, presupuesto no selló y el cierre recomendó *Corregir*,
+    no medir).
+  - **4 parcial:** la respuesta del importe mínimo de una aportación directa se escribió en su dueña
+    (F-001) y objetivos la cita; el traslado de `CF-F002-01` dejó en movimientos solo la cita a
+    CuentaTarjeta. Pero las copias **siguen costando vueltas**: presupuesto necesitó tres
+    correcciones por la misma regla de movimientos (v1.2, v1.3, v1.5; cada auditoría señaló una
+    aparición) y cuentas escribió esa regla en CA-010/CA-011 al aplicar sugerencias, la auditoría
+    **no** la paró y de ahí salió el hueco `CF-F002-01`.
+  - **5 casi:** tras validar un lote, el aviso de las sugerencias sale dos veces seguidas, y una
+    línea de la vista previa sale cortada (*"period → criterio…"*).
+  - **6, 7 y 8 PASS:** quitar una copia valida con `--solo-criterios`; `CF-F002-01` se arbitró
+    solo con `--salvo-nuevos`; las decisiones menores aplicadas no volvieron a salir.
+  - **9, 2 de 3:** primer turno de 86-92k (antes 115-121k) y un agente por spec al aplicar. Pero
+    11 de 26 agentes leen algún fichero 3 o 4 veces: `cat` corta la salida a 10k y piden el spec y
+    las plantillas a trozos.
+- **Consumo** (26 agentes, mismo tipo de trabajo que el tramo anterior): por agente, 130k de
+  escritura en caché (antes 152k) y 597k de lectura (antes 773k).
+- **Fallos nuevos, para la versión de arreglos:**
+  - **Alta — una sugerencia que exige decidir:** la auditoría de pagos previstos (v0.128.8) dejó como
+    sugerencia unos CA que *"no se pueden comprobar"* sin fijar cuántas semanas abarca la consulta;
+    la feature se dio por lista. Al aplicar las 14 salieron 3 decisiones críticas y 2 más, y el
+    cierre seguía diciendo *"son arreglos que no cambian cómo se comporta nada"*. Las 12 nuevas
+    vuelven a traer decisiones (periodicidades sin enumerar; origen y destino en la misma cuenta).
+  - **Alta — la regla de copias no se aplica igual:** la misma copia bloquea en presupuesto y pasa en
+    cuentas.
+  - **Media:** el encargo `spec-delta-directo` no repite el *"se cita, no se escribe"* del de aplicar
+    (desde v0.128.2); una copia se corrige aparición a aparición; las sugerencias no se agotan
+    (14 aplicadas → 12 nuevas) y el cierre las sigue ofreciendo; el aviso de un redactor sobre un
+    hueco entre specs solo lo recoge la revisión de conflictos, que las sugerencias puras no lanzan
+    (aquí se salvó porque hubo decisiones).
+  - **Baja:** una línea del orquestador en inglés (*"Now owners check for F-007 and apply."*).
 
 ## CU-3.o — Readiness: sin índice, ciclos, scope derivado, sello y alcance del veredicto
 

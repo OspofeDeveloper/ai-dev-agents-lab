@@ -207,6 +207,21 @@ para garantizar que ningún skill se queda sin casos en los cuatro ejes de prueb
 > bloque. → v0.128.5 (sin cambiar specs ni umbrales); escenario **`CU-3.ac (5)`**, puntos 1-5. Queda
 > para la siguiente: preguntar el contrato de las dueñas antes de generar.
 
+> 🔴 **`CU-3.ac (5)` pasada 1 cerrada, y `CU-3.ab` FALLO** (2026-11-05, v0.128.9 en el último
+> tramo; banco `bank-regen-final`): las 7 features listas para desarrollo y 0 conflictos abiertos,
+> con los puntos 1-3 y 6-8 en verde y los agentes un 25 % más ligeros (primer turno de 86-92k).
+> Quedan dos fallos de **certeza**: la auditoría deja como sugerencia lo que exige una decisión de
+> producto (pagos previstos se dio por lista con CA que no se podían comprobar) y no aplica igual la
+> regla de copias (bloquea en presupuesto, pasa en cuentas). Y de **coste**: las copias se siguen
+> escribiendo (generar, responder, sugerencias; el encargo directo no repite *"se cita, no se
+> escribe"*) y se corrigen aparición a aparición; las sugerencias no se agotan (14 → 12); el aviso
+> de un hueco entre specs depende de que haya revisión de conflictos; lecturas a trozos por salida
+> cortada.
+>
+> **Siguiente:** versión de arreglos (los de certeza primero, más preguntar el contrato de las
+> dueñas antes de generar) con una regeneración desde el PRD; después, la de optimizaciones de
+> lectura (mapa de contratos, lectura sin cortes), medida aparte.
+
 > ⏱ **Cuatro escenarios nacen sin pasada del barrido de enlazado lateral de Spec**
 > ([[D-078]]/[[D-079]], 2026-09-14): **CU-9.o** (evolucionar una feature dada de baja se deniega, y
 > el estado sobrevive incluso sin hook), **CU-7.s** (la reactivación es la única vuelta atrás y no
