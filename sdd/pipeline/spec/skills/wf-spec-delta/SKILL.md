@@ -123,7 +123,8 @@ lo lee con las `kb-*` en contexto.
 ## Submodo DIRECTO (v0.128.0)
 
 Para un cambio **sin nada que decidir**: copiar algo ya decidido (*Aplicar lo ya decidido*), corregir
-lo que pidió la validación, o aplicar una sugerencia de la validación. El requisito es texto literal
+lo que pidió la validación, aplicar una sugerencia de la validación, o aplicar las respuestas que el
+usuario ya dio en un bloque o en las decisiones menores (v0.128.9). El requisito es texto literal
 que ya pasó por el usuario o por un auditor, y no puede abrir preguntas de producto. Analizar y
 aplicar por separado costaba dos agentes y unos 4-5 minutos por spec (pasada 1 de `CU-3.ac (3)`),
 y el análisis siempre volvía *"sin nada que decidir"*.

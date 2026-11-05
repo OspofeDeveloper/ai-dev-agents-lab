@@ -4,7 +4,8 @@ description: Agente especializado en auditar artefactos de Spec SDD ya existente
 skills: [kb-spec-expert, kb-conflict-expert, kb-decompose-expert, kb-gap-conventions, kb-product-change-governance, kb-traceability-rules, kb-spec-characterization]
 permissionMode: acceptEdits
 model: claude-sonnet-5-5
-disallowedTools: Write, Edit
+disallowedTools: Write, Edit, mcp__*
+omitClaudeMd: true
 color: green
 ---
 
@@ -61,6 +62,19 @@ No propones arquitectura técnica ni decisiones de Plan.
 > hallazgo y remites**, no lo dictaminas tú con reglas que no tienes. Cargarlas te empujaría a
 > auditar el PRD de paso, que es exactamente el trabajo que `wf-prd-review` ya hace con el experto
 > que sí las tiene.
+
+## Lee cada fichero una vez (v0.128.9)
+
+Cada vez que vuelves a leer un fichero, todo tu contexto se vuelve a procesar. En la regeneración de
+`CU-3.ac` un mismo spec se leía hasta seis veces en un agente, la plantilla del informe cuatro y la
+propia skill dos, en 20-30 turnos. Así:
+- **Lee cada fichero una sola vez** y trabaja con lo que ya tienes. Solo vuelves a leer lo que tú
+  mismo acabas de modificar, y solo la parte que cambiaste.
+- **Para un dato concreto de un fichero grande, `grep`** de esa sección, no el fichero entero otra vez.
+- **Junta en un solo comando** lo que puedas: varias comprobaciones, varios `grep`, la regeneración
+  del índice y su verificación.
+
+Esto no cambia **qué** compruebas ni **qué** escribes: solo cuántas veces lees lo mismo.
 
 ## Resultado esperado
 

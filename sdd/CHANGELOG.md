@@ -2,6 +2,17 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.128.9 — 2026-11-05
+
+**Agentes más ligeros y menos agentes por vuelta, con las mismas comprobaciones** — [[DECISIONS D-115]] (ampliación). Sale del recuento de la regeneración de `CU-3.ac`: 36 agentes en un tramo, cada uno arrancando con 115-121k tokens antes de hacer nada.
+
+- 🟠 ⚠ **Los agentes de Spec (redactor y auditor) arrancan sin `CLAUDE.md` ni reglas del orquestador** (`omitClaudeMd`) y **sin herramientas MCP** (`disallowedTools: mcp__*`). Las reglas de la fase siguen llegando al tocar sus ficheros y en sus guías de conocimiento; la de enrutado (~12k tokens) era solo para la sesión principal.
+- 🟠 **Leen cada fichero una vez**: instrucción explícita a los dos agentes (hasta 6 lecturas del mismo spec en un agente).
+- 🟠 **Un agente por spec al aplicar respuestas ya dadas** (bloques y decisiones menores): cambio directo, que para si encuentra algo que decidir. Antes, uno para analizar y otro para aplicar.
+- 🟠 **Una decisión aplicada en todos los specs que cambia cierra su conflicto**, aunque la verificación posterior no lo nombre. Cuatro menores ya aplicadas seguían saliendo como pendientes.
+- 🟡 Un conflicto nuevo **menor** no impide sellar (solo uno grave). Los bloques y las decisiones menores llevan el aprobador en la opción. *"Dejando solo la referencia"* se reconoce como corrección de solo copia. No se recomienda medir cuando todo lo cambiado está en un bloque pendiente. Formato del bloque global.
+- **Conformance:** `CU-3.ac (5)` puntos 8 y 9. 5 tests nuevos.
+
 ## 0.128.8 — 2026-11-04
 
 **El orquestador va con Opus, y si no, se avisa** — [[DECISIONS D-116]]. Sale de la regeneración de `CU-3.ac`: medio día de la pasada corrió con la sesión principal en Sonnet sin que nadie lo viera.

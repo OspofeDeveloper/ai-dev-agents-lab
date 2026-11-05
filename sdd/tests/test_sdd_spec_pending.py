@@ -1366,6 +1366,73 @@ class CorregirSoloCopiaTest(unittest.TestCase):
         self.assertIn("se comprueba que no choca con nada", op["preview"])
 
 
+ANALISIS_DECISION = """# Delta Analysis: presupuesto
+
+> **Spec existente**: features/presupuesto/spec/presupuesto_spec.md (v1.0)
+
+---
+
+## Requisito de origen
+
+> # Decisión de producto sobre el conflicto CF-F001-02
+> Qué se decidía: si una transferencia cuenta para el límite global
+> Opción elegida: No cuenta — mover dinero propio no es gastar.
+
+---
+
+## Estado general
+
+> **{estado}**
+"""
+
+
+class DecisionAplicadaCierraTest(MapaPorBloquesTest):
+    """v0.128.9: una decisión aplicada en todos los specs que cambia cierra su conflicto,
+    aunque la verificación posterior diga «sin conflictos» sin nombrarlo."""
+
+    def _analisis(self, estado="CAMBIOS_MENORES", version="1.1"):
+        d = self.b.spec / "features" / "presupuesto" / "spec"
+        write(d / "presupuesto_v1.1_delta_analysis.md", ANALISIS_DECISION.format(estado=estado))
+        time.sleep(0.01)
+        self.b.feature("F-004", "presupuesto", extra_header=f"> Versión: {version}\n")
+
+    def test_aplicada_no_sale(self):
+        self._analisis()
+        confl = [i.get("conflicto") for i in self.b.pending()["items"]]
+        self.assertNotIn("CF-F001-02", confl)
+        self.assertIn("CF-F001-01", confl)
+
+    def test_sin_aplicar_sigue(self):
+        self._analisis(version="1.0")
+        self.assertIn("CF-F001-02", [i.get("conflicto") for i in self.b.pending()["items"]])
+
+    def test_sin_cambios_cuenta_como_aplicada(self):
+        self._analisis(estado="SIN_CAMBIOS", version="1.0")
+        self.assertNotIn("CF-F001-02", [i.get("conflicto") for i in self.b.pending()["items"]])
+
+
+class OpcionesQueValidanTest(MapaPorBloquesTest):
+    """v0.128.9: los bloques también validan, y llevan el aprobador."""
+
+    def test_el_bloque_lleva_aprueba(self):
+        op = self.b.pending()["cierre"]["opciones"]
+        for o in op:
+            if o["accion"].startswith("bloque:"):
+                self.assertIn("aprueba", o)
+
+    def test_la_copia_se_reconoce_aunque_se_redacte_de_otra_forma(self):
+        import importlib.util
+        spec = importlib.util.spec_from_file_location(
+            "sdd_project_status", Path(__file__).resolve().parent.parent / "scripts"
+            / "sdd-project-status.py")
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        for h in ("dejar solo la cita a su contrato", "se arregla dejando solo la referencia",
+                  "deja solo la cita"):
+            self.assertTrue(mod.SOLO_COPIA_RE.search(h), h)
+        self.assertFalse(mod.SOLO_COPIA_RE.search("reescribir el criterio"))
+
+
 class ResultadoDeValidacionConservaFechaTest(unittest.TestCase):
     """v0.128.5: la nota de la validación no es un cambio del spec. Con fecha nueva, la
     medición incremental pedía la completa (7 min en CU-3.ac) y el cierre «Rehacer la

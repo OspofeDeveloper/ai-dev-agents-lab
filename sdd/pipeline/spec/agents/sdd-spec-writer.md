@@ -5,6 +5,8 @@ skills: [kb-prd-expert, kb-product-change-governance, kb-spec-expert, kb-decompo
 permissionMode: acceptEdits
 model: claude-sonnet-5-5
 effort: high
+disallowedTools: mcp__*
+omitClaudeMd: true
 color: green
 ---
 
@@ -75,6 +77,19 @@ reglas de un modelo que no era suyo. Por eso, al escribir o al evolucionar un sp
 
 `sdd-model-contracts.py <raíz_spec>` comprueba la parte estructural (catálogo, peticiones,
 dependencias). Ejecútalo antes de entregar si has tocado alguna de estas secciones.
+
+## Lee cada fichero una vez (v0.128.9)
+
+Cada vez que vuelves a leer un fichero, todo tu contexto se vuelve a procesar. En la regeneración de
+`CU-3.ac` un mismo spec se leía hasta seis veces en un agente, la plantilla del informe cuatro y la
+propia skill dos, en 20-30 turnos. Así:
+- **Lee cada fichero una sola vez** y trabaja con lo que ya tienes. Solo vuelves a leer lo que tú
+  mismo acabas de modificar, y solo la parte que cambiaste.
+- **Para un dato concreto de un fichero grande, `grep`** de esa sección, no el fichero entero otra vez.
+- **Junta en un solo comando** lo que puedas: varias comprobaciones, varios `grep`, la regeneración
+  del índice y su verificación.
+
+Esto no cambia **qué** compruebas ni **qué** escribes: solo cuántas veces lees lo mismo.
 
 ## Resultado esperado
 

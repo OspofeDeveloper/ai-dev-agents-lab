@@ -3020,6 +3020,12 @@ vocabulario por fases instaladas); `sdd-seal.py --unseal --blocked` sin cambiar 
    conflicto nuevo y nada más.
    → **Esperado:** `--salvo-nuevos` y un auditor con `--solo-conflictos`, sin rehacer el informe
      entero; el conflicto sale en su tabla y la medición queda al día.
+8. **Lo decidido cierra el conflicto** (v0.128.9). Decisiones menores aplicadas.
+   → **Esperado:** el cierre no las vuelve a ofrecer, sin rehacer la medición.
+9. **Los agentes cuestan menos** (v0.128.9). En los transcripts de los subagentes, el contexto del
+   primer turno y el número de agentes por vuelta.
+   → **Esperado:** primer turno claramente por debajo de 115k; un agente por spec al aplicar
+     respuestas ya dadas; ningún fichero leído más de dos veces por un agente.
 
 **Resultado:** PASS si los puntos 1-4 se cumplen sin cambiar el contenido de ningún spec respecto a
 lo que exigía ya la validación · FALLO si alguno vuelve a costar una vuelta.

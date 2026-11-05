@@ -797,7 +797,7 @@ def spec_pending(directory: Path, lote: list | None = None) -> dict:
     if rtext:
         filas_alta = _table_rows(rtext, "Conflictos ALTA no resueltos")
         for row in _sin_repetidos(filas_alta):
-            if (_cerrado_despues(estado_cf, row[0], readiness.stat().st_mtime)
+            if (_cerrado(estado_cf, row[0], readiness.stat().st_mtime)
                     or set(CF_ID_RE.findall(row[0])) & cerrados_inc):
                 continue
             fids = sorted(set(FID_RE.findall(" ".join(row[1:3]))), key=fid_sort_key)
@@ -924,7 +924,7 @@ def spec_pending(directory: Path, lote: list | None = None) -> dict:
         pass
     elif rtext and re.search(r"^##\s+Conflictos MEDIA abiertos", rtext, re.MULTILINE):
         for row in _sin_repetidos(_table_rows(rtext, "Conflictos MEDIA abiertos")):
-            if (_cerrado_despues(estado_cf, row[0], readiness.stat().st_mtime)
+            if (_cerrado(estado_cf, row[0], readiness.stat().st_mtime)
                     or set(CF_ID_RE.findall(row[0])) & cerrados_inc):
                 continue
             fids = sorted(set(FID_RE.findall(" ".join(row[1:3]))), key=fid_sort_key)
@@ -1039,7 +1039,9 @@ def spec_pending(directory: Path, lote: list | None = None) -> dict:
 # las features, validar y generar son el paso siguiente, no lo que lo impide.
 # Lo que pide la validación cuando un spec escribe una regla de otra feature además de citarla
 # (`kb-spec-expert`, umbral 4): el arreglo es quitar el texto y dejar la cita.
-SOLO_COPIA_RE = re.compile(r"\bdejar solo la (?:cita|referencia)\b", re.IGNORECASE)
+# El auditor no siempre lo escribe igual («se arregla dejando solo la referencia», v0.128.9).
+SOLO_COPIA_RE = re.compile(r"\bdej(?:ar|ando|a)\s+(?:solo|s[oó]lo|únicamente)\s+la\s+(?:cita|referencia)\b",
+                           re.IGNORECASE)
 
 NO_DECISION = ("readiness", "validar", "generar", "corregir", "espera_generar")
 
@@ -1368,9 +1370,14 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
                          + ["", "Se revisa si choca con las demás features a la vez que se audita,",
                             "se mide y se valida."] + sella),
                      "accion": "revisar_validar", "aprueba": aprobador})
-    if not readiness_vigente and (otros_motivos or not revisar
-                                  or not tocados_todos <= set(revisar)
-                                  or not set(cv_todos) <= set(revisar)):
+    # Si todo lo cambiado está en un bloque pendiente, medir ahora es una vuelta perdida: el
+    # bloque lo vuelve a cambiar y mide al terminar (v0.128.9; en CU-3.ac se recomendaba medir
+    # justo antes de un bloque sobre los mismos specs).
+    en_bloque = {f for b in bloques for f in b["features"]}
+    cambiados = tocados_todos | set(cv_todos)
+    if not readiness_vigente and (otros_motivos or not (cambiados and cambiados <= en_bloque)) and (
+            otros_motivos or not revisar or not tocados_todos <= set(revisar)
+            or not set(cv_todos) <= set(revisar)):
         prev = []
         tocados = (medir or {}).get("tocados") or []
         cv = cv_todos
@@ -1455,14 +1462,17 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
                                        "espera a que se genere " + nombres(b["espera_generar"])
                                        if b["espera_generar"] else "solo depende de sí mismo")
                                     + ".",
-                     "preview": b["preview"], "accion": f"bloque:{b['bloque']}"})
+                     "preview": b["preview"], "accion": f"bloque:{b['bloque']}",
+                     # Un bloque acaba validando sus specs: quien lo elige aprueba lo que pase
+                     # la auditoría, como en las demás opciones que validan (v0.128.9).
+                     "aprueba": aprobador})
     if menores:
         prev = ["Decisiones menores (no frenan nada):", ""]
         for k, it in enumerate(menores, 1):
             prev += _linea_decision(k, it, [nombre(g) for g in (cambia(it) or it["features"])])
         cand.append({"label": f"Decisiones menores ({len(menores)})",
                      "description": "No frenan nada; tomarlas ahora evita revalidar después.",
-                     "preview": "\n".join(prev), "accion": "menores"})
+                     "preview": "\n".join(prev), "accion": "menores", "aprueba": aprobador})
     if generar:
         # Más de dos no caben en la etiqueta: «Generar presupuesto mensual y deudas
         # reembolsos…» escondía las otras dos (v0.128.5).
@@ -1634,8 +1644,76 @@ def _estado_conflictos(directory: Path) -> dict:
             abierto = not (len(row) >= 5 and CERRADO_RE.search(row[-1]))
             for cid in ids:
                 estado[raiz(cid)] = (abierto, mt)
+    # Lo decidido y aplicado cierra el conflicto aunque ningún informe lo diga (v0.128.9).
+    decididos = _decididos(directory)
+    for cid, mt in decididos.items():
+        previo = estado.get(raiz(cid))
+        if not previo or mt > previo[1]:
+            estado[raiz(cid)] = (False, mt)
     return {cid: estado[raiz(cid)] for cid in set(padre) | set(estado)
-            if raiz(cid) in estado} | {"__raiz__": raiz}
+            if raiz(cid) in estado} | {"__raiz__": raiz, "__decididos__": set(decididos)}
+
+
+DECISION_CF_RE = re.compile(r"Decisi[oó]n de producto sobre el conflicto\s+`?(CF-[\w]+(?:-[\w]+)*?-\d+)")
+OPCION_ELEGIDA_LINE_RE = re.compile(r"^\W*Opci[oó]n elegida\W*:\s*(.+)$", re.MULTILINE)
+SPEC_EXISTENTE_RE = re.compile(r"Spec existente\**\s*:.*?\(v(\d+(?:\.\d+)*)\)")
+VERSION_SPEC_RE = re.compile(r"^>\s*\**Versi[oó]n\**\s*:\s*\**\s*(\d+(?:\.\d+)*)", re.MULTILINE)
+
+
+def _v(x: str) -> tuple:
+    return tuple(int(n) for n in x.split("."))
+
+
+def _decididos(directory: Path) -> dict:
+    """Conflictos cuya decisión de producto ya se aplicó en todos los specs que cambia, con la
+    fecha de la última aplicación (v0.128.9).
+
+    Un conflicto se daba por cerrado solo si el informe de conflictos más reciente lo decía. Las
+    verificaciones tras un cambio dicen «sin conflictos» sin nombrar los que cerró, así que en la
+    regeneración de CU-3.ac cuatro decisiones menores ya aplicadas seguían saliendo como pendientes.
+    El requisito de cada cambio empieza por «Decisión de producto sobre el conflicto CF-…» y lleva
+    la «Opción elegida»: con eso y la versión del spec se sabe qué se aplicó y dónde. Hacen falta
+    todos los specs que cambia la opción elegida (del informe); sin poder casarla, todos los que
+    recibieron la decisión.
+    """
+    aplicada, pendiente = {}, {}
+    for a in sorted(directory.glob("features/*/spec/*_delta_analysis.md")):
+        text = read_text(a)
+        req = re.search(r"^##\s+Requisito de origen\s*$(.*?)(?=^##\s|\Z)", text,
+                        re.MULTILINE | re.DOTALL)
+        if not req or re.search(r"^>?\s*\**Estado\**\s*:\s*\**\s*Descartad", text, re.MULTILINE):
+            continue
+        sp = next(iter(sorted(a.parent.glob("*_spec.md"))), None)
+        stext = read_text(sp) if sp else ""
+        ve, vs = SPEC_EXISTENTE_RE.search(text), VERSION_SPEC_RE.search(stext)
+        # Aplicado: el spec subió de versión después del análisis. Un análisis SIN_CAMBIOS (el
+        # spec ya solo citaba la regla que la decisión pone en otro dueño) no tiene nada que aplicar.
+        hecho = bool(re.search(r"\*\*SIN_CAMBIOS\*\*", text)) or bool(
+            sp and vs and ve and _v(vs.group(1)) > _v(ve.group(1))
+            and sp.stat().st_mtime > a.stat().st_mtime)
+        fm = FID_RE.search(re.search(r"Feature ID\**\s*:\s*\**\s*(F-[\w-]+)", stext).group(1)
+                           if re.search(r"Feature ID\**\s*:\s*\**\s*(F-[\w-]+)", stext) else "")
+        fid = fm.group(0) if fm else a.parent.parent.name
+        trozos = re.split(r"(?=Decisi[oó]n de producto sobre el conflicto)", req.group(1))
+        for t in trozos:
+            m = DECISION_CF_RE.search(t)
+            if not m:
+                continue
+            op = OPCION_ELEGIDA_LINE_RE.search(t)
+            d = (aplicada if hecho else pendiente).setdefault(m.group(1), {})
+            d[fid] = (sp.stat().st_mtime if sp else 0, op.group(1).strip() if op else "")
+    out = {}
+    for cid, por_f in aplicada.items():
+        if pendiente.get(cid):
+            continue
+        elegida = next((o for _, o in por_f.values() if o), "")
+        dec = _decision(directory, cid) or {}
+        op = next((o for o in dec.get("opciones", [])
+                   if o["titulo"] and elegida.lower().startswith(o["titulo"].lower())), None)
+        requeridas = set(op["cambia"]) if op and op["cambia"] else set(por_f)
+        if requeridas <= set(por_f):
+            out[cid] = max(t for t, _ in por_f.values())
+    return out
 
 
 def _cerrado_despues(estado: dict, conflict_id: str, desde: float) -> bool:
@@ -1645,6 +1723,17 @@ def _cerrado_despues(estado: dict, conflict_id: str, desde: float) -> bool:
         if e and not e[0] and e[1] > desde:
             return True
     return False
+
+
+def _cerrado(estado: dict, conflict_id: str, desde: float) -> bool:
+    """Cerrado por un informe posterior a `desde`, o por una decisión ya aplicada en todos los
+    specs que cambia, sea cual sea su fecha: una medición incremental posterior no la miraba y lo
+    seguía listando (v0.128.9)."""
+    if _cerrado_despues(estado, conflict_id, desde):
+        return True
+    raiz = estado["__raiz__"]
+    decididos = {raiz(c) for c in estado.get("__decididos__", ())}
+    return any(raiz(c) in decididos for c in CF_ID_RE.findall(conflict_id) or [conflict_id])
 
 
 def _sin_repetidos(rows: list[list[str]]) -> list[list[str]]:
@@ -1796,7 +1885,7 @@ def refresh_readiness(directory: Path, solo_criterios: list | None = None,
                        key=fid_sort_key)
     cerrados = sorted(_cerrados_incrementales(rtext) | {
         c for k in conocidos for c in CF_ID_RE.findall(k)
-        if _cerrado_despues(estado_cf, c, rts)})
+        if _cerrado(estado_cf, c, rts)})
     # Las filas de la matriz que solo esperaban a conflictos ya cerrados.
     lineas = rtext.split("\n")
     sec = section(rtext, "Matriz de readiness")

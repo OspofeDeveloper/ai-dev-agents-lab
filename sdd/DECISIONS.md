@@ -197,6 +197,24 @@ versión, con una regeneración para medirlo.
 - **Sonnet 5.5** en los agentes que iban con Sonnet 5. Se medirá en la siguiente regeneración si
   sigue mejor el *"cita, no copies"*.
 
+**Ampliación (v0.128.9, el coste de cada agente).** En un tramo de la misma pasada hubo 36 agentes, y
+cada uno arrancaba con 115-121k tokens antes de leer nada, escritos en caché por cada agente: 15,6 M de
+escrituras frente a 0,7 M de salida. Lo caro es la carga fija por agente, no su trabajo. Tres
+recortes que no cambian qué se comprueba:
+- **Lo que el agente no usa no se le carga.** Redactor y auditor arrancan sin `CLAUDE.md` ni reglas
+  del orquestador (`omitClaudeMd`), y sin herramientas MCP. La regla de enrutado es solo para la
+  sesión principal; la norma de cómo se escribe un artefacto ya va repetida en `kb-spec-expert` y en
+  la regla de fase, que se carga al tocar sus ficheros ([[D-055]]).
+- **Menos agentes:** aplicar respuestas ya dadas es un cambio directo (analiza y aplica en uno, y para
+  si hay algo que decidir).
+- **Menos relecturas:** cada fichero, una vez.
+
+Recortar la historia de las guías se descartó: medida, era menos del 5 % de la carga.
+
+Y un fallo de la misma pasada: una decisión aplicada no cerraba su conflicto si la verificación no lo
+nombraba. Ahora lo cierra el propio requisito aplicado (*"Decisión de producto sobre el conflicto
+CF-…"*) en todos los specs que cambia su opción elegida.
+
 Descartado: la sesión principal en Sonnet (ya probada: se salta pasos del orquestador). Queda para
 medir: Haiku en los cambios directos con requisito literal, que son justo los que han provocado
 copias.

@@ -174,7 +174,9 @@ pendiente, como `corregir` (v0.128.5). La opción *Corregir* lleva `solo_copia` 
 arreglos son *"dejar solo la cita"*: se valida sin revisar conflictos (v0.128.7).
 `--refresh-readiness` devuelve, si se niega, `solo_conflictos_nuevos` y `por_arbitrar`; con
 `--salvo-nuevos` pone al día lo demás aunque queden conflictos nuevos, que arbitra un auditor
-aparte (v0.128.7). Y `cierre` (v0.126.1): la `pregunta` y las `opciones` del cierre ya escritas
+aparte (v0.128.7). Un conflicto cuya decisión de producto ya se aplicó en todos los specs que cambia
+la opción elegida —el requisito del cambio la nombra— cuenta como cerrado, lo diga o no un informe
+posterior; un análisis `SIN_CAMBIOS` cuenta como aplicado (v0.128.9). Y `cierre` (v0.126.1): la `pregunta` y las `opciones` del cierre ya escritas
 —`label`, `description`, `preview`, `accion` (`readiness`, `validar`, `bloque:X`, `menores`, `generar`,
 `luego`)—, como mucho cuatro, para copiarlas literal. Con `--lote <spec.md> …`, la pregunta empieza por el resultado de ese lote de
 validación. Tipos nuevos ([[D-113]]): `trasladar` (ya decidido por el dueño, se aplica sin preguntar)

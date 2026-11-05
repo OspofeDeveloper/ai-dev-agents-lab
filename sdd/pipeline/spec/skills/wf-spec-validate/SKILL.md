@@ -73,8 +73,11 @@ el `Skill` tool"*. El análisis más reciente es el último `*_delta_analysis.md
 (`ls -t <carpeta>/*_delta_analysis.md | head -1`). Auditar el spec y verificar sus conflictos no
 dependen el uno del otro: en serie, la pasada 1 de `CU-3.ac (3)` esperó 5 minutos de más por vuelta.
 Con `--con-conflictos-completos`, el mismo encargo **sin** `--cambio` (la revisión completa del
-spec contra los demás). Si una verificación devuelve un conflicto **nuevo** sobre un spec, ese spec no se sella en este lote:
-dilo con el conflicto, y la lista de pendientes lo traerá.
+spec contra los demás). Si una verificación devuelve un conflicto **nuevo y grave** (ALTA) sobre un spec, ese spec no se sella en este lote:
+dilo con el conflicto, y la lista de pendientes lo traerá. Uno nuevo **menor** (MEDIA) no impide el sello
+(v0.128.9): no frena el plan de nadie, sale como decisión menor, y si su decisión cambia el spec, lo
+desella. En la regeneración de `CU-3.ac`, presupuesto mensual pasó la auditoría y se quedó sin sellar y
+sin motivo por un hueco menor que el arbitraje descartó después, y hubo que auditarlo otra vez.
 
 **Con `--solo-criterios`**, añade al prompt: *"Este spec ya se validó y este cambio solo aplica lo que
 pidió aquella validación (criterios que prueban reglas ya escritas, o quitar la copia de una regla
