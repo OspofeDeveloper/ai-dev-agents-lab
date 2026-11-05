@@ -7,13 +7,13 @@
 > [1-2 frases del estado. Si REQUIERE_REVISIÓN: menciona los bloqueantes principales.]
 
 <!-- El umbral NO es de juicio: lo fija `kb-spec-expert` (Paso 4 de «Cómo validar un
-     Spec»). REQUIERE_REVISIÓN exige al menos un bloqueante de los tres tipos. Una
+     Spec»). REQUIERE_REVISIÓN exige al menos un bloqueante de los cinco tipos. Una
      nota no bloqueante NUNCA degrada el veredicto. -->
 
 ### Hallazgos BLOQUEANTES (degradan el veredicto)
 <!-- Si no hay ninguno, escribe "Ninguno". Nunca lo dejes vacío: el silencio no se
      distingue de haberlo olvidado, y este bloque decide si el spec se sella. -->
-1. [elemento obligatorio ausente | contaminación dura citada | CA no verificable | regla de un modelo ajeno escrita aquí, también copiada con su cita]
+1. [elemento obligatorio ausente | contaminación dura citada | CA no verificable | regla de un modelo ajeno escrita aquí, también copiada con su cita: TODAS sus apariciones, una por sección | falta decidir: ¿pregunta? (propuesta, si la hay)]
 
 ### Notas NO bloqueantes (no cambian el veredicto)
 - [borderline aceptable, con el porqué | sugerencia de redacción | materia de Plan]
@@ -21,7 +21,9 @@
 ### Sugerencias con arreglo (no bloquean; se ofrecen al usuario)
 <!-- Solo lo que deja el spec prometiendo algo que no se probará (una regla sin CA, un ítem del
      checklist marcado que no se cumple), en llano y con su arreglo: "promete X y no hay criterio
-     que lo pruebe → añadir el criterio". Si no hay, "Ninguna". El sellador las guarda en la
+     que lo pruebe → añadir el criterio". Si para escribir ese criterio hay que ELEGIR algo que el
+     spec, el PRD y el análisis no fijan, no es sugerencia: es un bloqueante "falta decidir:".
+     Si no hay, "Ninguna". El sellador las guarda en la
      cabecera (`--suggest`) y la lista de pendientes las ofrece. -->
 - [qué falta → qué se añadiría]
 

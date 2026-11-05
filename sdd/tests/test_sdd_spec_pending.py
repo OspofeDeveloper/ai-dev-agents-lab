@@ -834,6 +834,19 @@ class MotivoDelRechazoTest(unittest.TestCase):
             self.assertIn("objetivos (F-001): repite una regla — citarla", op["preview"])
             self.assertNotIn("validar", [o["accion"] for o in data["cierre"]["opciones"]])
 
+    def test_si_falta_decidir_no_promete_que_no_hay_nada_que_decidir(self):
+        """v0.129.0: un hallazgo «falta decidir» se pregunta antes de corregir."""
+        with tempfile.TemporaryDirectory() as tmp:
+            b = self._bank(tmp, "> La validación pide corregir: (v1.2) CA-001 no se puede "
+                                "comprobar — falta decidir: ¿cuántas semanas abarca la consulta?\n")
+            data = b.pending()
+            item = next(i for i in data["items"] if i["tipo"] == "corregir")
+            self.assertEqual(len(item["decidir"]), 1)
+            self.assertNotIn("no hay nada que decidir", data["mapa"])
+            self.assertIn("antes hay que decidir 1 cosa de objetivos (F-001)", data["mapa"])
+            op = next(o for o in data["cierre"]["opciones"] if o["accion"] == "corregir")
+            self.assertIn("Primero te pregunto lo que falta decidir", op["description"])
+
     def test_con_la_version_cambiada_vuelve_a_lista_para_validar(self):
         with tempfile.TemporaryDirectory() as tmp:
             b = self._bank(tmp, "> La validación pide corregir: (v1.1) repite una regla\n")
@@ -1210,8 +1223,33 @@ class SugerenciasSinRecomendarTest(unittest.TestCase):
             time.sleep(0.01)
             b.readiness("| F-001: movimientos | LISTA | 0 | 0 | — |", media_rows="")
             data = b.pending()
-            self.assertIn("no cambian cómo se comporta nada", data["mapa"])
+            # v0.129.0: ya no promete «no cambian cómo se comporta nada» (en `CU-3.ac (5)`
+            # salieron cinco decisiones al aplicarlas); dice qué pasa si alguna pide decidir.
+            self.assertNotIn("no cambian cómo se comporta nada", data["mapa"])
+            self.assertIn("si alguna pide decidir algo, te lo pregunto antes", data["mapa"])
             self.assertNotIn("criterios que prueban", data["mapa"])
+
+    def test_tras_un_lote_las_de_otras_features_no_repiten_el_aviso(self):
+        """v0.129.0: con sugerencias de fuera del lote, el aviso salía dos veces seguidas."""
+        with tempfile.TemporaryDirectory() as tmp:
+            b = Bank(Path(tmp))
+            for fid, n in (("F-001", "movimientos"), ("F-002", "cuentas")):
+                b.feature(fid, n, estado="VALIDADO",
+                          extra_header=f"> Sugerencias de la validación: criterio de {n}\n")
+            b.index([(f, n, f"features/{n}/spec/{n}_spec.md", "LISTA", "ninguno")
+                     for f, n in (("F-001", "movimientos"), ("F-002", "cuentas"))])
+            b.analysis("respondida")
+            time.sleep(0.01)
+            b.readiness("| F-001: movimientos | LISTA | 0 | 0 | — |\n"
+                        "| F-002: cuentas | LISTA | 0 | 0 | — |", media_rows="")
+            lote = b.spec / "features" / "movimientos" / "spec" / "movimientos_spec.md"
+            r = run_script("sdd-project-status.py", b.spec, "--spec-pending", "--json",
+                           "--lote", lote)
+            pregunta = json.loads(r.stdout)["cierre"]["pregunta"]
+            self.assertEqual(pregunta.count("sugerencias que no frenan nada"), 1, pregunta)
+            self.assertNotIn("La validación dejó", pregunta)
+            self.assertIn("Además queda 1 sugerencia de validaciones anteriores en cuentas",
+                          pregunta)
 
     def test_solo_sugerencias_no_lleva_recomendado(self):
         with tempfile.TemporaryDirectory() as tmp:

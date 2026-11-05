@@ -43,11 +43,18 @@ exige nada, para que un proyecto que actualiza no se quede bloqueado.
 Uso:
     sdd-model-contracts.py <raíz_spec> [--json]
     sdd-model-contracts.py <raíz_spec> --vecinas F-001[,F-008…] [--json]
+    sdd-model-contracts.py <raíz_spec> --contratos-de F-004 [--json]
 
 `--vecinas` (v0.128.0) da las features con las que las dadas comparten un modelo —dueña o
 consumidora, según el índice y las tablas de los specs—. Es el alcance de una revisión de
 conflictos tras un cambio que no añade historias ni alcance: un choque de modelo compartido
 solo puede darse entre features que comparten el modelo.
+
+`--contratos-de` (v0.129.0) da, para los modelos ajenos que usa una feature, el contrato tal
+como lo publica su dueña (su `### <Modelo>` entero). Es lo que la auditoría compara con el
+spec para encontrar **todas** las frases que repiten una regla del dueño: en la pasada 1 de
+`CU-3.ac (5)` la misma copia bloqueó en presupuesto y pasó en cuentas, y presupuesto
+necesitó tres correcciones porque cada auditoría encontró una aparición.
 
 Exit: 0 sin problemas que bloqueen · 2 con alguno (contrato, catálogo o petición) ·
 1 error de uso. Los avisos no cambian el exit.
@@ -340,6 +347,45 @@ def vecinas(directory: Path, fids: list[str]) -> dict:
             "nombres": {f: nombres.get(f, "") for f in orden}}
 
 
+def bloque_contrato(text: str, modelo: str) -> str:
+    """El `### <modelo>` del contrato del dueño, literal (vacío si no lo publica)."""
+    body = h2(text, CONTRATO)
+    heads = list(re.finditer(r"^###\s+(.+?)\s*$", body, re.MULTILINE))
+    for n, m in enumerate(heads):
+        if norm(m.group(1).strip(" `*")) == norm(modelo):
+            end = heads[n + 1].start() if n + 1 < len(heads) else len(body)
+            return body[m.start():end].strip()
+    return ""
+
+
+def contratos_de(directory: Path, fid: str) -> dict:
+    """Los contratos que publica la dueña de cada modelo ajeno que usa `fid`."""
+    features_md_path = next(iter(sorted(directory.glob("*_features.md"))), None)
+    rutas, nombres, _ = index(read_text(features_md_path) if features_md_path else "")
+    texto = read_text(directory / rutas[fid]) if fid in rutas else ""
+    vistos, out = set(), []
+    for u in consumo(texto)[0]:
+        clave = (norm(u["modelo"]), u["owner"])
+        if not u["owner"] or u["owner"] == fid or clave in vistos:
+            continue
+        vistos.add(clave)
+        dueno = read_text(directory / rutas[u["owner"]]) if u["owner"] in rutas else ""
+        out.append({"modelo": u["modelo"], "owner": u["owner"],
+                    "nombre_owner": nombres.get(u["owner"], ""),
+                    "contrato": bloque_contrato(dueno, u["modelo"])})
+    return {"feature": fid, "nombre": nombres.get(fid, ""), "modelos": out}
+
+
+def render_contratos(data: dict) -> str:
+    out = [f"# Contratos que {data['feature']} ({data['nombre']}) solo puede citar", ""]
+    if not data["modelos"]:
+        out.append("Esta feature no usa modelos de otras features.")
+    for m in data["modelos"]:
+        out += [f"## {m['modelo']} — dueña {m['owner']} ({m['nombre_owner']})", "",
+                m["contrato"] or "(la dueña aún no publica su contrato de este modelo)", ""]
+    return "\n".join(out).rstrip() + "\n"
+
+
 def problemas_de(data: dict, fid: str) -> list[str]:
     """Lo que impide sellar `fid` (condición 10 de `sdd-seal.py spec`)."""
     out = [p["que"] for p in data["sin_contrato"] if p["owner"] == fid]
@@ -380,7 +426,7 @@ def render(data: dict) -> str:
 
 def main(argv: list[str]) -> int:
     args = [a for i, a in enumerate(argv) if not a.startswith("--")
-            and not (i and argv[i - 1] == "--vecinas")]
+            and not (i and argv[i - 1] in ("--vecinas", "--contratos-de"))]
     if len(args) != 1 or not Path(args[0]).is_dir():
         print(__doc__.split("Uso:")[1].split("Exit:")[0].strip(), file=sys.stderr)
         return 1
@@ -395,6 +441,16 @@ def main(argv: list[str]) -> int:
             print(json.dumps(v, ensure_ascii=False, indent=2))
         else:
             print(", ".join(v["vecinas"]) or "(ninguna)")
+        return 0
+    if "--contratos-de" in argv:
+        i = argv.index("--contratos-de")
+        fids = FID_RE.findall(argv[i + 1]) if i + 1 < len(argv) else []
+        if len(fids) != 1:
+            print("--contratos-de necesita una feature: F-004", file=sys.stderr)
+            return 1
+        c = contratos_de(Path(args[0]), fids[0])
+        print(json.dumps(c, ensure_ascii=False, indent=2) if "--json" in argv
+              else render_contratos(c), end="" if "--json" not in argv else "\n")
         return 0
     data = check(Path(args[0]))
     if "--json" in argv:

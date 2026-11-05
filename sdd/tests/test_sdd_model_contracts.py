@@ -131,6 +131,22 @@ class ContractsTest(unittest.TestCase):
         r = run_script("sdd-model-contracts.py", self.b.spec, "--vecinas", "F-003", "--json")
         self.assertEqual(json.loads(r.stdout)["vecinas"], [])
 
+    def test_contratos_de_da_el_contrato_literal_de_cada_duena(self):
+        """v0.129.0: lo que la auditoría compara con el spec para encontrar todas las copias."""
+        self._banco(origenes="| F-002 (deudas) | Registrar deuda | gasto vinculado | no | — |",
+                    consumo_f2=CONSUMO.format(filas=GASTO_DEUDA + "\n" + LECTURA, peticiones=""))
+        r = run_script("sdd-model-contracts.py", self.b.spec, "--contratos-de", "F-002", "--json")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        c = json.loads(r.stdout)
+        self.assertEqual([(m["modelo"], m["owner"]) for m in c["modelos"]],
+                         [("Movimiento", "F-001")])        # una vez, aunque lo use dos veces
+        self.assertIn("crear, editar y eliminar los que registra a mano", c["modelos"][0]["contrato"])
+        self.assertIn("Registrar deuda", c["modelos"][0]["contrato"])
+        r = run_script("sdd-model-contracts.py", self.b.spec, "--contratos-de", "F-002")
+        self.assertIn("## Movimiento — dueña F-001 (movimientos)", r.stdout)
+        r = run_script("sdd-model-contracts.py", self.b.spec, "--contratos-de", "F-001")
+        self.assertIn("no usa modelos de otras features", r.stdout)
+
     def test_lee_al_principio_o_no_cambia_tambien_es_lectura(self):
         for fila in ("| Movimiento | F-001 | Lee el histórico para el resumen | Contrato |",
                      "| Movimiento | F-001 | elige la cuenta del gasto. No cambia su saldo | Contrato |"):

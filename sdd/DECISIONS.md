@@ -6,6 +6,61 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-117 — Lo que falta decidir no es una sugerencia, y una copia se busca contra el contrato
+
+- **Fecha:** 2026-11-05 · **Estado:** Adoptada. · **Relacionada:** [[D-111]] (contratos de modelos), [[D-115]] (camino corto de los cambios sin decisiones), `kb-spec-expert` (umbral del veredicto).
+
+**Contexto.** La pasada 1 de `CU-3.ac (5)` acabó con las 7 features listas para desarrollo, pero
+destapó dos fallos de certeza en la auditoría:
+1. **Una decisión de producto que pasa como sugerencia.** Pagos previstos se selló con CA que *"no
+   se pueden comprobar"* (no decía cuántas semanas abarca la consulta). La auditoría lo dejó como
+   sugerencia, el cierre prometía *"son arreglos que no cambian cómo se comporta nada"*, y al
+   aplicarlas salieron cinco decisiones, tres críticas. Las sugerencias de la vuelta siguiente
+   volvieron a traer decisiones (periodicidades sin enumerar). Una feature podía llegar a desarrollo
+   con un hueco de producto dentro.
+2. **La regla de copias, a juicio de cada pasada.** La misma copia (cómo registra Movimiento un
+   traspaso) bloqueó en presupuesto y pasó en cuentas, donde abrió un hueco entre specs. Y
+   presupuesto necesitó tres correcciones por la misma regla: cada auditoría señaló una aparición.
+
+**Decisión.**
+1. **Quinto tipo de bloqueante: falta una decisión de producto.** Si para que un CA se pueda
+   comprobar, o una regla diga qué pasa, hace falta un valor o un comportamiento que ni el spec, ni
+   el PRD, ni su análisis fijan, el hallazgo bloquea y su línea empieza por *"falta decidir:"* y la
+   pregunta, sin que la auditoría elija la respuesta. El corte con la sugerencia: si el spec ya dice
+   qué pasa y solo falta el CA, es sugerencia; si para escribir el CA hay que elegir, es esto.
+2. **La corrección pregunta antes de tocar el spec.** `--spec-pending` marca esos hallazgos
+   (`decidir`) y el cierre deja de decir *"no hay nada que decidir"*; main las presenta como las
+   críticas y el requisito del cambio lleva la respuesta. Las sugerencias ya no prometen que no
+   cambian nada: dicen que, si alguna pide decidir, se pregunta antes, y lo cambiado se revisa
+   contra el resto.
+3. **Las copias se buscan contra el contrato, en todo el spec, y salen todas a la vez.**
+   `sdd-model-contracts.py --contratos-de <F>` da literal el contrato de cada modelo ajeno que usa
+   la feature; la auditoría compara con él el spec entero (también los CA de una operación propia y
+   el contexto de una pregunta pendiente) y da todas las apariciones en un hallazgo.
+4. **El encargo del cambio directo repite *"se cita, no se escribe"*.** Lo llevaba el de aplicar,
+   no el directo, que es el que corre ahora en correcciones, sugerencias y bloques.
+5. **Un aviso entre specs de un redactor lleva a revisar conflictos** aunque sea una tanda de
+   sugerencias (que se valida solo con criterios).
+
+**Alternativas descartadas.**
+- *Detectar las copias con un regex o por parecido de texto:* la misma regla se escribe de mil
+  formas (*"un gasto en la cuenta de origen y un ingreso en la de destino"* frente a *"dos
+  movimientos enlazados"*). El juicio sigue siendo del auditor; lo determinista es darle el texto
+  exacto con el que comparar, para que no dependa de lo que recuerde.
+- *Dejar las decisiones como sugerencias y preguntarlas al aplicarlas:* es lo que pasó; el spec
+  ya estaba sellado y la feature dada por lista.
+
+**Consecuencias.** Un spec sellado con una sugerencia que en realidad era una decisión puede no
+pasar la próxima validación: es lo que se quiere. La auditoría lee algo más (los contratos de las
+dueñas, unos 8k caracteres en presupuesto), a cambio de vueltas de corrección enteras.
+
+**Referencias.** `kb-spec-expert` (Paso 4, umbrales 4 y 5), `wf-spec-validate` (encargo del
+auditor y plantilla), `wf-spec-delta` (encargo directo), `pipeline/spec/routing.md`,
+`scripts/sdd-model-contracts.py` (`--contratos-de`), `scripts/sdd-project-status.py`
+(`FALTA_DECIDIR_RE`, cierre del lote), `CU-3.ac (5)` (pasada 1).
+
+---
+
 ## D-116 — El orquestador va con Opus, y si no, se avisa
 
 - **Fecha:** 2026-11-04 · **Estado:** Adoptada. · **Relacionada:** [[D-115]] (la pasada donde se vio), el hook de sesión (protocolo de inicio).

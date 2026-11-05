@@ -320,6 +320,26 @@ dos formas en dos corridas).
    **Copiar la regla y añadir la cita también es esto**, no una sugerencia (v0.128.4): en la
    pasada 1 de `CU-3.ac (4)`, tres reglas de pagos previstos repetían la del dueño con su cita, y
    el encargo del auditor —que enumeraba solo los tres primeros puntos— lo dejó en sugerencia.
+   **Se busca contra el contrato, no de memoria, y se dan todas las apariciones** (v0.129.0):
+   `sdd-model-contracts.py <raíz_spec> --contratos-de <F-XXX>` da el contrato de cada modelo
+   ajeno tal como lo publica su dueña. Recorre el spec **entero** —HUs, CAs, recorridos, reglas,
+   contrato propio, Items Pendientes (contexto y ejemplos incluidos), asunciones— y toda frase que
+   diga lo mismo que una regla de esos contratos (cómo se registra, cómo aparece, si se edita o se
+   borra, un invariante) es copia, **también dentro de un CA de una operación propia** (*"…y queda
+   en el histórico un gasto y un ingreso"* repite el invariante de Movimiento: el CA dice el efecto
+   propio y cita). Van **todas en un mismo hallazgo**, una por sección, para que se corrijan de
+   una vez. En la pasada 1 de `CU-3.ac (5)` la misma copia bloqueó en presupuesto y pasó en
+   cuentas, y presupuesto necesitó tres correcciones: cada auditoría vio una aparición.
+5. **Falta una decisión de producto** (v0.129.0): para que un CA se pueda comprobar, o para que
+   una regla diga qué pasa, hace falta un valor o un comportamiento que **ni el spec, ni el PRD, ni
+   su análisis fijan** —cuántas semanas abarca una consulta, qué ocurrencias toca *"todas las
+   futuras"*, si se admite un importe cero—. No es una sugerencia aunque el arreglo parezca
+   pequeño: lo que se decida cambia lo que le pasa al Usuario. Su línea empieza por **`falta
+   decidir:`** seguido de la pregunta, sin elegir tú la respuesta (puedes proponer una entre
+   paréntesis). El corte con las *sugerencias con arreglo* es este: si el spec ya dice qué pasa y
+   solo falta el CA que lo pruebe, es sugerencia; si para escribir ese CA hay que elegir, es esto.
+   En la pasada 1 de `CU-3.ac (5)` pagos previstos se selló con CA que *"no se pueden comprobar"*
+   sin el horizonte de la consulta, como sugerencia, y al aplicarla salieron cinco decisiones.
 
 **No degrada el veredicto** —se reporta, y el spec se sella igual—:
 

@@ -867,11 +867,15 @@ def spec_pending(directory: Path, lote: list | None = None) -> dict:
         hallazgos = [] if corregido else [
             x.strip() for x in bloqueo[vb.end() if vb else 0:].split(" · ") if x.strip()]
         if hallazgos:
+            decidir = [h for h in hallazgos if FALTA_DECIDIR_RE.search(h)]
             add("corregir", [fid],
                 f"{label[fid]}: la validación pide corregir: " + " · ".join(hallazgos),
-                "Corregirlo con un cambio en el spec (el hallazgo literal es el requisito) y "
-                "volver a validarlo; no hay nada que decidir.",
-                "wf-spec-delta sobre el spec → wf-spec-validate", hallazgos=hallazgos)
+                ("Preguntar al usuario lo que falta decidir, corregir el spec con su respuesta y "
+                 "volver a validarlo." if decidir else
+                 "Corregirlo con un cambio en el spec (el hallazgo literal es el requisito) y "
+                 "volver a validarlo; no hay nada que decidir."),
+                "wf-spec-delta sobre el spec → wf-spec-validate", hallazgos=hallazgos,
+                decidir=decidir)
             continue
         av = (header_field(stext, "Avisos de gobernanza") or "").strip("* ")
         aceptado = header_field(stext, "Alcance derivado aceptado")
@@ -1042,6 +1046,11 @@ def spec_pending(directory: Path, lote: list | None = None) -> dict:
 # El auditor no siempre lo escribe igual («se arregla dejando solo la referencia», v0.128.9).
 SOLO_COPIA_RE = re.compile(r"\bdej(?:ar|ando|a)\s+(?:solo|s[oó]lo|únicamente)\s+la\s+(?:cita|referencia)\b",
                            re.IGNORECASE)
+# Un hallazgo que solo se arregla decidiendo algo de producto (`kb-spec-expert`, umbral 5,
+# v0.129.0): el auditor lo escribe «falta decidir: ¿…?». La corrección pregunta antes de tocar el
+# spec. En la pasada 1 de `CU-3.ac (5)` esos hallazgos iban como sugerencias que «no cambian
+# cómo se comporta nada», y al aplicarlas salieron cinco decisiones.
+FALTA_DECIDIR_RE = re.compile(r"\bfalta\s+decidir\b", re.IGNORECASE)
 
 NO_DECISION = ("readiness", "validar", "generar", "corregir", "espera_generar")
 
@@ -1265,8 +1274,15 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
                       f"(no les falta ninguna decisión): {nombres(validar)}.")
     if corregir:
         fs = [f for it in corregir for f in it["features"]]
-        lineas.append(f"Falta corregir lo que vio la validación en {nombres(fs)}: no hay nada "
-                      "que decidir; se corrige y se vuelve a validar.")
+        con_decision = [f for it in corregir if it.get("decidir") for f in it["features"]]
+        if con_decision:
+            lineas.append(f"Falta corregir lo que vio la validación en {nombres(fs)}: antes hay "
+                          f"que decidir {_n(sum(len(it.get('decidir') or []) for it in corregir), 'cosa', 'cosas')} "
+                          f"de {nombres(con_decision)}; con tu respuesta se corrige y se vuelve "
+                          "a validar.")
+        else:
+            lineas.append(f"Falta corregir lo que vio la validación en {nombres(fs)}: no hay nada "
+                          "que decidir; se corrige y se vuelve a validar.")
     if (ya or validar or corregir) and (decisiones or menores or traslados):
         lineas.append("Lo que quede abierto en otras features no les impide empezar.")
     if bloques:
@@ -1327,7 +1343,8 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
                       + ("no frena nada. Aplicarla" if len(sugerencias) == 1
                          else "no frenan nada. Aplicarlas")
                       + f" vuelve a validar {_y([corto(f) for f in fs])}, sin revisar "
-                      "conflictos: son arreglos que no cambian cómo se comporta nada.")
+                      "conflictos; si alguna pide decidir algo, te lo pregunto antes de "
+                      "aplicarla.")
     if sin_spec:
         lineas.append("")
         duenas = sorted({g for v in espera_gen.values() for g in v} & set(sin_spec),
@@ -1425,8 +1442,11 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
                      "cambia cómo se comporta nada."] + sella
         else:
             prev += ["", "Se corrige cada spec, se comprueba que no choca con nada y se valida."] + sella
+        hay_decision = any(it.get("decidir") for it in corregir)
         cand.append({"label": f"Corregir lo que pidió la validación ({len(corregir)})",
-                     "description": "Arreglos sin decisiones nuevas; después se valida otra vez.",
+                     "description": ("Primero te pregunto lo que falta decidir; después se "
+                                     "corrige y se valida otra vez." if hay_decision else
+                                     "Arreglos sin decisiones nuevas; después se valida otra vez."),
                      "preview": "\n".join(prev), "accion": "corregir", "aprueba": aprobador,
                      "solo_copia": solo_copia})
     if traslados:
@@ -1481,10 +1501,12 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
         prev = ["Sugerencias de la validación (no frenan nada):", ""]
         for k, it in enumerate(sugerencias, 1):
             prev += [f"{k}. {nombre(it['features'][0])}: {it['que']}"]
-        # Una sugerencia puede ser un criterio que prueba una regla ya escrita o quitar una
-        # copia de una regla ajena (v0.128.4): ninguna cambia el comportamiento.
-        prev += ["", "Se aplican, se auditan y se validan, sin revisar conflictos: son arreglos",
-                 "que no cambian cómo se comporta nada."] + sella
+        # Una sugerencia es un criterio que prueba una regla ya escrita o quitar una copia de
+        # una regla ajena (v0.128.4). Lo que exige decidir ya no va aquí (umbral 5, v0.129.0),
+        # pero si al aplicarla sale una decisión se pregunta, y lo cambiado revisa conflictos:
+        # en `CU-3.ac (5)` esta vista prometía «no cambian cómo se comporta nada» y salieron cinco.
+        prev += ["", "Se aplican, se auditan y se validan, sin revisar conflictos. Si alguna pide",
+                 "decidir algo, te lo pregunto antes, y lo que cambie se revisa contra el resto."] + sella
         cand.append({"label": f"Aplicar sugerencias ({len(sugerencias)})",
                      "description": "Pequeños arreglos que vio la validación.",
                      "preview": "\n".join(prev), "accion": "sugerencias", "aprueba": aprobador})
@@ -1509,10 +1531,20 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
     # Las sugerencias del lote ya salen en su cabecera: el párrafo del mapa las repetía.
     cuerpo = lineas
     del_lote = {f for f, sp in specs.items() if sp in {Path(x).resolve() for x in lote or []}}
-    if (sugerencias and any(l.startswith("La validación deja sugerencias") for l in cabeza)
-            and all(f in del_lote for it in sugerencias for f in it["features"])):
+    if sugerencias and any(l.startswith("La validación deja sugerencias") for l in cabeza):
         i = next(k for k, l in enumerate(lineas) if l.startswith("La validación dejó"))
-        cuerpo = lineas[:i - 1] + lineas[i + 1:]
+        # Las de otras features (de validaciones anteriores) se nombran en una línea, sin
+        # repetir el párrafo entero: en la pasada 1 de `CU-3.ac (5)` el lote de movimientos y
+        # cuentas salió con el aviso dos veces porque había sugerencias de pagos y objetivos.
+        fuera = [it for it in sugerencias if not all(f in del_lote for f in it["features"])]
+        if fuera:
+            fs = sorted({f for it in fuera for f in it["features"]}, key=fid_sort_key)
+            cuerpo = lineas[:i] + [
+                f"Además {'queda' if len(fuera) == 1 else 'quedan'} "
+                f"{_n(len(fuera), 'sugerencia', 'sugerencias')} de validaciones "
+                f"anteriores en {_y([corto(f) for f in fs])}: tampoco frenan nada."] + lineas[i + 1:]
+        else:
+            cuerpo = lineas[:i - 1] + lineas[i + 1:]
     pregunta = "\n".join(cabeza + cuerpo) + "\n\n¿Por dónde seguimos?" + (
         " (También puedes pedirme con tus palabras: "
         + _y([x[:1].lower() + x[1:] for x in sobran]) + ".)" if sobran else "")

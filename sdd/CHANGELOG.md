@@ -2,6 +2,17 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.129.0 — 2026-11-05
+
+**Lo que falta decidir no pasa como sugerencia, y una copia se busca contra el contrato** — [[DECISIONS D-117]]. Sale de la pasada 1 de `CU-3.ac (5)`: pagos previstos se dio por listo con CA que no se podían comprobar, y la misma copia de una regla bloqueó en un spec y pasó en otro.
+
+- 🔴 ⚠ **Nuevo bloqueante de la validación: falta una decisión de producto.** Si para comprobar un CA o para que una regla diga qué pasa hace falta algo que ni el spec, ni el PRD, ni su análisis fijan, no se sella. El hallazgo dice *"falta decidir: ¿…?"*, y la corrección te lo pregunta antes de tocar el spec. Un spec ya sellado con una sugerencia así puede no pasar la próxima validación.
+- 🔴 ⚠ **Las copias de reglas ajenas se buscan contra el contrato del dueño, en todo el spec, y salen todas a la vez.** Nuevo `sdd-model-contracts.py --contratos-de <F>`: el contrato literal de cada modelo que usa la feature. Antes cada auditoría veía una aparición (presupuesto, tres correcciones por la misma regla).
+- 🟠 El cambio directo repite *"una regla de otro spec se cita, no se escribe"* (no lo llevaba).
+- 🟠 Las sugerencias ya no prometen *"no cambian cómo se comporta nada"*: si alguna pide decidir, se pregunta antes. Si al aplicarlas se responden decisiones, o el redactor avisa de algo entre specs, ese spec se revisa contra el resto.
+- 🟡 Tras validar un lote, el aviso de las sugerencias sale una vez; las de otras features, en una línea.
+- **Conformance:** veredicto de `CU-3.ac (5)` pasada 1 y de `CU-3.ab`. 4 tests nuevos.
+
 ## 0.128.9 — 2026-11-05
 
 **Agentes más ligeros y menos agentes por vuelta, con las mismas comprobaciones** — [[DECISIONS D-115]] (ampliación). Sale del recuento de la regeneración de `CU-3.ac`: 36 agentes en un tramo, cada uno arrancando con 115-121k tokens antes de hacer nada.

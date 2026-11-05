@@ -139,7 +139,15 @@ Modo: spec-delta-directo
 2. Si el informe sale DELTA_PURO y sin ningún gap [D-XXX] ni Dueño de otra feature, integra a
    continuación como en spec-delta-apply (desellar, versión, changelog, índice salvo --sin-indice)
    y dilo. Si no, PARA tras el análisis y di qué lo impide: no apliques nada.
+3. Una regla de un modelo que no es de este spec se cita, no se escribe: si el requisito toca un
+   modelo de `## Modelos de otras features`, aquí va el efecto propio y la cita al contrato del
+   dueño (`python3 .sdd/scripts/sdd-model-contracts.py <raíz_spec> --contratos-de <F-XXX>` te
+   lo da), nunca la regla del dueño, ni en un CA ni en un recorrido.
 ```
+
+El punto 3 repite a propósito el del encargo de aplicar (v0.129.0): el modo directo no lo
+llevaba, y en la pasada 1 de `CU-3.ac (5)` cuentas, al aplicar sus sugerencias, escribió en dos CA
+cómo registra Movimiento un traspaso.
 
 Después: si el delegado **paró**, sigue en el Paso 4A con su informe, como un `analyze`. Si
 **integró**, comprueba como en el Paso 5B (y `sdd-analysis-gaps.py <informe> --check` da `NO_GAPS`).
