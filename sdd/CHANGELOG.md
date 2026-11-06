@@ -2,6 +2,16 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.130.0 — 2026-11-06
+
+**Generar después de la dueña es generar con su contrato delante; y una regla con dos dueñas se decide** — [[DECISIONS D-118]]. Sale de la pasada 1 de `CU-3.ac (5)` (la segunda tanda copió reglas de contratos a medio decidir) y de la prueba corta de la 0.129.0 (la regla del reservado, marcada como copia en un spec y luego en el otro).
+
+- 🟠 ⚠ **El redactor de una feature cuya dueña ya tiene spec lee su contrato antes de escribir** (`sdd-model-contracts.py --contratos-de`, que ahora sale del índice aunque la feature aún no tenga spec) y no lo repite en ningún sitio: ni en un CA de una operación propia, ni en un recorrido, ni en el contexto de una pregunta pendiente.
+- 🟠 ⚠ **Antes de generar, las preguntas del contrato de las dueñas.** Si una feature sin spec usa un modelo cuya dueña tiene preguntas sin responder, el cierre lo dice y la opción de generar deja de ir primero. El aviso previo a generar ya no promete que *"ninguna saldrá incompleta"*: las dueñas pueden salir con una pregunta sobre su contrato.
+- 🟠 ⚠ **Regla con dos dueñas**: la misma regla en el contrato de dos features dueñas de modelos distintos no es una copia. La validación la anota sin bloquear, y la revisión de conflictos la abre como decisión (una opción por dueña), con la causa nueva *Dos dueñas*.
+- 🟡 Las líneas de las vistas previas se parten a 72 caracteres (a 96 se seguían cortando).
+- **Conformance:** escenario `CU-3.ac (6)` para la regeneración. 4 tests nuevos.
+
 ## 0.129.1 — 2026-11-05
 
 **Sellar no hace parecer cambiado un spec** — [[DECISIONS D-117]] (ampliación). Sale de la prueba corta de la 0.129.0, que confirmó el bloqueante *falta decidir* y la búsqueda de todas las copias.

@@ -222,6 +222,12 @@ para garantizar que ningún skill se queda sin casos en los cuatro ejes de prueb
 > dueñas antes de generar) con una regeneración desde el PRD; después, la de optimizaciones de
 > lectura (mapa de contratos, lectura sin cortes), medida aparte.
 
+> 🧪 **Prueba corta de v0.129.0** (2026-11-05, sobre `bank-regen-final`): el bloqueante *falta
+> decidir* y la búsqueda de todas las copias funcionan, la corrección pregunta antes y las
+> decisiones convergen (6 → 3 → 2). Destapa que sellar hacía parecer cambiado el spec (v0.129.1) y
+> la regla con dos dueñas, que oscilaba entre cuentas y objetivos. → v0.130.0 con los arreglos de
+> la generación; escenario **`CU-3.ac (6)`**, regeneración desde `bank-regen-inicio`.
+
 > ⏱ **Cuatro escenarios nacen sin pasada del barrido de enlazado lateral de Spec**
 > ([[D-078]]/[[D-079]], 2026-09-14): **CU-9.o** (evolucionar una feature dada de baja se deniega, y
 > el estado sobrevive incluso sin hook), **CU-7.s** (la reactivación es la única vuelta atrás y no

@@ -856,7 +856,7 @@ class MotivoDelRechazoTest(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             b = self._bank(tmp, f"> La validación pide corregir: (v1.2) {largo}— citarla\n")
             op = next(o for o in b.pending()["cierre"]["opciones"] if o["accion"] == "corregir")
-            self.assertTrue(all(len(l) <= 96 for l in op["preview"].split("\n")), op["preview"])
+            self.assertTrue(all(len(l) <= 72 for l in op["preview"].split("\n")), op["preview"])
             self.assertRegex(op["preview"], r"\n1\. objetivos .*\n   \S")   # sangría tras «1. »
 
     def test_con_la_version_cambiada_vuelve_a_lista_para_validar(self):
@@ -1545,3 +1545,34 @@ class ResultadoDeValidacionConservaFechaTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ContratoAbiertoAntesDeGenerarTest(unittest.TestCase):
+    """v0.130.0: generar una feature que usa un modelo cuya dueña tiene preguntas sin responder
+    la hace suponer lo que la dueña aún no decidió (la 2.ª tanda de CU-3.ac (5))."""
+
+    def _bank(self, tmp, gap=True):
+        b = Bank(Path(tmp))
+        body = ("\n## Items Pendientes\n\n### [P-021][CRÍTICO] Saldo negativo\n"
+                "- **Respuesta**: _(pendiente)_\n" if gap else "")
+        b.feature("F-001", "cuentas", body=body)
+        b.index([("F-001", "cuentas", "features/cuentas/spec/cuentas_spec.md", "BLOQUEADA",
+                  "ninguno"),
+                 ("F-002", "objetivos", None, "PENDIENTE_GENERACIÓN", "ninguno")],
+                shared=[("CuentaTarjeta", "F-001", "F-002")])
+        b.analysis("respondida")
+        return b
+
+    def test_recomienda_responder_el_contrato_antes_de_generar(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            data = self._bank(tmp).pending()
+            gen = next(i for i in data["items"] if i["tipo"] == "generar")
+            self.assertEqual(gen["contrato_abierto"], ["F-001"])
+            self.assertIn("Responder antes las preguntas del contrato", gen["accion"])
+
+    def test_sin_preguntas_abiertas_no_dice_nada(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            data = self._bank(tmp, gap=False).pending()
+            gen = next(i for i in data["items"] if i["tipo"] == "generar")
+            self.assertEqual(gen["contrato_abierto"], [])
+            self.assertNotIn("preguntas del contrato", data.get("mapa", ""))

@@ -975,10 +975,24 @@ def spec_pending(directory: Path, lote: list | None = None) -> dict:
     # ── 8. Features sin generar ──
     pend = [f for f, meta in idx.items() if meta["estado"].startswith("PENDIENTE")]
     if pend:
+        # Una feature que usa un modelo cuya dueña tiene preguntas sin responder se generaría
+        # suponiendo lo que la dueña aún no decidió (v0.130.0): en la pasada 1 de `CU-3.ac (5)`
+        # la segunda tanda salió con reglas copiadas o supuestas de contratos a medio decidir.
+        abiertas = {f for it in items if it["tipo"] == "gap_critico" for f in it["features"]}
+        contrato_abierto = []
+        if contratos and abiertas:
+            _, _, modelos = contratos.index(features_md)
+            contrato_abierto = sorted({m["owner"] for m in modelos.values()
+                                       if m["owner"] in abiertas and set(pend) & m["refs"]},
+                                      key=fid_sort_key)
         add("generar", sorted(pend, key=fid_sort_key),
             f"{len(pend)} feature(s) sin spec: " + ", ".join(label[f] for f in pend) + ".",
-            "Generar sus specs cuando convenga.",
-            "wf-spec-features-first --features", bloquea=False)
+            ("Responder antes las preguntas del contrato de "
+             + ", ".join(label[f] for f in contrato_abierto)
+             + ", que estas features usan; después, generarlas." if contrato_abierto else
+             "Generar sus specs cuando convenga."),
+            "wf-spec-features-first --features", bloquea=False,
+            contrato_abierto=contrato_abierto)
 
     # Lo ya decidido que falta copiar cambia el spec: validarlo antes es sellarlo para
     # desellarlo. CU-3.ac (3): presupuesto salía a la vez en «Validar las listas» y en
@@ -1246,6 +1260,8 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
     traslados = [i for i in items if i["tipo"] == "trasladar"]
     sugerencias = [i for i in items if i["tipo"] == "sugerencia"]
     sin_spec = [f for i in items if i["tipo"] == "generar" for f in i["features"]]
+    contrato_abierto = [f for i in items if i["tipo"] == "generar"
+                        for f in i.get("contrato_abierto") or []]
 
     corregir = [i for i in items if i["tipo"] == "corregir"]
     medir = next((i for i in items if i["tipo"] == "readiness"), None)
@@ -1355,6 +1371,10 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
                       + (f"Generar {nombres(duenas)} desbloquea {nombres(esperan)}; el resto no "
                          "frena a nadie." if duenas else
                          "No frena a las demás; se genera cuando quieras."))
+        if contrato_abierto:
+            lineas.append(f"Antes de generarlas conviene responder las preguntas del contrato de "
+                          f"{nombres(contrato_abierto)}: usan sus modelos, y sin esas respuestas "
+                          "se generarían suponiendo lo que aún no está decidido.")
 
     # Las opciones del cierre, en orden y con su preview: caben 4, y la última es siempre
     # «Lo dejo para luego». Lo que no cabe se dice en la pregunta, para pedirlo con palabras.
@@ -1475,7 +1495,10 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
                           f"Generar las {len(sin_spec)} features sin spec"),
                 "description": "Crea su spec; no afecta a lo que ya está.",
                 "accion": "generar"} if sin_spec else None)
-    if generar and any(espera_gen.values()):
+    if generar and contrato_abierto:
+        generar["description"] = ("Mejor después de responder las preguntas del contrato de "
+                                  + _y([corto(f) for f in contrato_abierto]) + ".")
+    elif generar and any(espera_gen.values()):
         cand.append(generar)
         generar = None
     # Primero los bloques que no esperan a nada.
@@ -1517,7 +1540,8 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
                      "description": "Pequeños arreglos que vio la validación.",
                      "preview": "\n".join(prev), "accion": "sugerencias", "aprueba": aprobador})
     # Las líneas largas de una vista previa salen cortadas por el medio en la caja de la pregunta
-    # («…en qué orden o proporo y escribir…», v0.129.1): se parten antes, con su sangría.
+    # («…en qué orden o proporo y escribir…», v0.129.1): se parten antes, con su sangría. A 72
+    # (v0.130.0): con 96 se seguían cortando en un terminal más estrecho.
     for c in cand:
         if c.get("preview"):
             c["preview"] = _envolver(c["preview"])
@@ -1605,7 +1629,7 @@ def _linea_decision(k: int, it: dict, fs: list) -> list:
     return out
 
 
-def _envolver(texto: str, ancho: int = 96) -> str:
+def _envolver(texto: str, ancho: int = 72) -> str:
     """Parte las líneas de más de `ancho` caracteres; las de continuación llevan la sangría
     del texto tras la numeración («3. », «- »)."""
     out = []

@@ -147,6 +147,17 @@ class ContractsTest(unittest.TestCase):
         r = run_script("sdd-model-contracts.py", self.b.spec, "--contratos-de", "F-001")
         self.assertIn("no usa modelos de otras features", r.stdout)
 
+    def test_contratos_de_una_feature_sin_spec_sale_del_indice(self):
+        """v0.130.0: el redactor de una consumidora que se genera después de su dueña."""
+        self._banco(origenes="| F-002 (deudas) | Registrar deuda | gasto vinculado | no | — |",
+                    refs="F-002, F-004")
+        r = run_script("sdd-model-contracts.py", self.b.spec, "--contratos-de", "F-004", "--json")
+        self.assertEqual(r.returncode, 0, r.stderr)
+        c = json.loads(r.stdout)
+        self.assertEqual([(m["modelo"], m["owner"]) for m in c["modelos"]],
+                         [("Movimiento", "F-001")])
+        self.assertIn("Registrar deuda", c["modelos"][0]["contrato"])
+
     def test_lee_al_principio_o_no_cambia_tambien_es_lectura(self):
         for fila in ("| Movimiento | F-001 | Lee el histórico para el resumen | Contrato |",
                      "| Movimiento | F-001 | elige la cuenta del gasto. No cambia su saldo | Contrato |"):

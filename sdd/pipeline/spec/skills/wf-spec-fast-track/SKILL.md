@@ -164,9 +164,25 @@ Usa las plantillas de cabecera de `${CLAUDE_SKILL_DIR}/references/spec_header_te
 - Si **usa** modelos de otra feature → `## Modelos de otras features`: qué hace con cada uno
   (`lectura: …` si solo lo lee) y qué contrato del dueño cita. **No escribas reglas de ese modelo** en
   tus HUs, CAs, reglas ni fuera de alcance; si necesitas una que el dueño no tiene, registra una
-  **petición al dueño** (`R-NNN`) y dilo en tu informe. Corres en paralelo con el dueño y no ves
-  su spec: cita su contrato por lo que el discovery dice que hará, y lo que no cuadre lo detecta
-  después `sdd-model-contracts.py` como trabajo sobre el dueño, no como conflicto.
+  **petición al dueño** (`R-NNN`) y dilo en tu informe.
+  **Si el dueño ya tiene spec, lee su contrato antes de escribir** (v0.130.0):
+  `python3 .sdd/scripts/sdd-model-contracts.py <raíz_spec> --contratos-de <tu F-XXX>` te da,
+  literal, el contrato de cada modelo ajeno que usas (sale del índice aunque tu spec aún no
+  exista). Lo que diga ese contrato **no lo repites en ningún sitio**: ni en un CA de una operación
+  tuya (*"…y queda en el histórico un gasto y un ingreso"* es su invariante: tu CA dice tu efecto
+  —*"el importe pasa a estar reservado en la cuenta de destino"*— y cita), ni en un recorrido, ni en
+  el contexto o el ejemplo de una pregunta pendiente, ni en una asunción. Si el contrato aún no
+  decide algo que necesitas, es una petición, no una regla tuya. En la pasada 1 de `CU-3.ac (5)` la
+  segunda tanda, generada con las dueñas ya escritas, copió sus reglas en cuatro specs y cada copia
+  costó una corrección.
+  **Si corres en paralelo con el dueño** (misma tanda) no ves su spec: cita su contrato por lo que el
+  discovery dice que hará, y lo que no cuadre lo detecta después `sdd-model-contracts.py` como
+  trabajo sobre el dueño, no como conflicto.
+- **Una regla de tu contrato que otra dueña ya tiene en el suyo** (las dos publican la misma
+  invariante, p. ej. *"lo reservado para un objetivo nunca baja de cero en una cuenta"* en el
+  contrato de la cuenta y en el del objetivo) no se escribe dos veces: si el `--contratos-de` te la
+  enseña en el contrato de otra, cítala; si dudas de quién es, escríbela en el tuyo y dilo en tu
+  informe como **regla con dos dueñas posibles**, para que se decida una.
 
 Añade las secciones opcionales según corresponda (plantillas en `spec_header_templates.md`):
 - `## Decisiones derivadas del analysis` si se usó `--allow-derived-scope-from-analysis`

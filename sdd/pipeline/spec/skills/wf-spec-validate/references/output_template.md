@@ -16,7 +16,7 @@
 1. [elemento obligatorio ausente | contaminación dura citada | CA no verificable | regla de un modelo ajeno escrita aquí, también copiada con su cita: TODAS sus apariciones, una por sección | falta decidir: ¿pregunta? (propuesta, si la hay)]
 
 ### Notas NO bloqueantes (no cambian el veredicto)
-- [borderline aceptable, con el porqué | sugerencia de redacción | materia de Plan]
+- [borderline aceptable, con el porqué | sugerencia de redacción | materia de Plan | regla con dos dueñas: <regla>, también en el contrato de <feature> — se decide en la revisión de conflictos]
 
 ### Sugerencias con arreglo (no bloquean; se ofrecen al usuario)
 <!-- Solo lo que deja el spec prometiendo algo que no se probará (una regla sin CA, un ítem del

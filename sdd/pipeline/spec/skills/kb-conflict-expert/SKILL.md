@@ -83,6 +83,7 @@ demás lo citan o le hacen una **petición**. Cuando dos specs chocan sobre un m
 | **Decisión** | los dos specs dicen lo que les toca y el choque es de producto | según la decisión, pero una regla del modelo se escribe solo en su dueño |
 | **Sin trasladar** | el dueño **ya decidió** la regla y la tiene en su contrato, y el consumidor no la ha copiado o sigue con la versión anterior | el consumidor; no hay nada que decidir ([[D-113]]) |
 | **Decidido fuera del dueño** | el **usuario ya respondió** —consta en la lista de decisiones o en el changelog de un spec— y la regla quedó escrita en otra feature; el dueño no dice nada de ese caso | el dueño la recoge y la otra feature pasa a citarla; no hay nada que decidir (v0.127.1) |
+| **Dos dueñas** | la **misma regla** está en el contrato de dos dueñas, cada una de un modelo distinto (*"lo reservado para un objetivo nunca baja de cero en una cuenta"* en el contrato de la cuenta y en el del objetivo) | se decide **una** dueña y la otra pasa a citarla; es una **Decisión** con dos opciones, una por dueña (v0.130.0) |
 
 **Lo que el usuario ya decidió no se le vuelve a preguntar (v0.127.1).** Antes de escribir una
 *Decisión de producto*, mira la **lista de decisiones**: las preguntas que el usuario ya respondió
@@ -121,6 +122,14 @@ vería el usuario (*"reservar dinero para un objetivo exige saldo suficiente en 
 vuelve a preguntar: la lista lo ofrece como *"Aplicar lo ya decidido"* y se copia sin preguntar.
 Medido en `CU-3.ac`: *"F-005 ya decidió que reservar exige saldo y F-008 no trasladó esa
 respuesta"* salió como una de las cuatro decisiones menores, con su pregunta.
+
+**Dos dueñas no es Duplica (v0.130.0).** Duplica es un consumidor que reescribe la regla de un
+dueño; aquí las dos features son dueñas de su propio modelo y las dos escriben la regla en su
+contrato. Ninguna está *fuera de su sitio* hasta que se decide de quién es, así que no se corrige
+quitándola de una al azar: se pregunta. Si las dos dicen lo mismo es **MEDIA** (no hay
+contradicción, pero sí dos fuentes); si no coinciden, **ALTA**. En la prueba corta de v0.129.0, una
+auditoría marcó como copia la regla del reservado en cuentas y la siguiente, en objetivos: cada una
+le dio la razón a un contrato distinto.
 
 **Contradicción o hueco: la severidad ([[D-112]]).** Solo **Duplica** (que no coincide) y
 **Decisión** son una **contradicción** —dos specs dicen cosas incompatibles—, y solo esas son

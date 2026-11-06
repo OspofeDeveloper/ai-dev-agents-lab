@@ -92,7 +92,7 @@ es de lectura o de escritura lo dice la columna `Uso`; en specs sin ella, se ded
 `sdd-seal.py` (condición 10) y `sdd-project-status.py --spec-pending` (tipo `peticion`). Una celda
 que declara lectura **y** escritura cuenta como escritura (v0.128.0). Con `--vecinas`, las features
 con spec que comparten algún modelo con las dadas (dueña o consumidora): es el alcance de la
-**verificación de conflictos** de un cambio sin decisión (v0.128.0). Avisa también, sin bloquear, de los usos que el índice declara y el spec no tiene (`referencias_sin_uso`, v0.128.4), y de las peticiones que el dueño ya respondió y la consumidora aún da por pendientes (`peticiones_desfasadas`, v0.128.5). Con `--contratos-de`, el contrato literal que publica la dueña de cada modelo ajeno que usa la feature: es con lo que la auditoría compara el spec entero para dar **todas** las frases que repiten una regla del dueño (v0.129.0, [[D-117]]).
+**verificación de conflictos** de un cambio sin decisión (v0.128.0). Avisa también, sin bloquear, de los usos que el índice declara y el spec no tiene (`referencias_sin_uso`, v0.128.4), y de las peticiones que el dueño ya respondió y la consumidora aún da por pendientes (`peticiones_desfasadas`, v0.128.5). Con `--contratos-de`, el contrato literal que publica la dueña de cada modelo ajeno que usa la feature: es con lo que la auditoría compara el spec entero para dar **todas** las frases que repiten una regla del dueño (v0.129.0, [[D-117]]); para una feature que aún no tiene spec, los modelos salen del índice, y es lo que lee su redactor al generarla después de la dueña (v0.130.0, [[D-118]]).
 
 - **Exit:** `0` sin nada que bloquee · `2` con contratos, catálogos o peticiones pendientes · `1` uso.
 

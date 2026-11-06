@@ -3122,6 +3122,50 @@ features listas para desarrollo, 0 conflictos abiertos, 12 sugerencias sin aplic
     (aquí se salvó porque hubo decisiones).
   - **Baja:** una línea del orquestador en inglés (*"Now owners check for F-007 and apply."*).
 
+### CU-3.ac (6) — Regenerar con el contrato delante: sin copias al generar, y lo que falta decidir se pregunta ([[D-117]], [[D-118]]) ⏱ **sin pasada**
+
+**Precondición:** el banco `bank-regen-inicio` (PRD v1.5 sellado y su análisis con los críticos
+respondidos; sin discovery ni `spec/`), topología `authoring`, v0.130.0 o posterior. Dos tandas:
+las dueñas de los modelos compartidos y después el resto.
+**Mecanismo:** `sdd-model-contracts.py --contratos-de` (redactor y auditor), el bloqueante *falta
+decidir* (`kb-spec-expert`, umbral 5), `contrato_abierto` en `--spec-pending`, la causa *Dos dueñas*.
+**Prueba corta previa (2026-11-05, v0.129.0 sobre `bank-regen-final`):** pagos previstos y cuentas
+no sellaron por cuatro y dos *falta decidir*, y cuentas dio en un hallazgo los seis sitios de una
+copia; la corrección preguntó antes y validó con conflictos; las decisiones convergieron (6 → 3 →
+2). Destapó que sellar hacía parecer cambiado el spec (v0.129.1) y la regla con dos dueñas (v0.130.0).
+
+1. **El aviso previo no promete lo que no sabe.**
+   → **Esperado:** antes de generar, dice que las dueñas pueden salir con una pregunta sobre su
+     contrato y recomienda generarlas primero.
+   → **FALLO:** *"ninguna saldrá incompleta"* con dueñas de modelos compartidos en la tanda.
+2. **El contrato se responde antes de generar a quien lo usa.** Tras la tanda de dueñas.
+   → **Esperado:** el cierre dice *"antes de generarlas conviene responder las preguntas del
+     contrato de …"* y no recomienda generar primero.
+3. **Las consumidoras generadas después citan el contrato publicado.**
+   → **Esperado:** en los transcripts de los redactores de la segunda tanda, `--contratos-de`; la
+     primera validación de esas specs no encuentra ninguna copia de una regla ajena.
+   → **FALLO:** una corrección *"dejar solo la cita"* en una spec de la segunda tanda.
+4. **Lo que falta decidir no es una sugerencia.** En cualquier validación.
+   → **Esperado:** un CA que no se puede comprobar sin elegir algo sale como *"falta decidir: ¿…?"*
+     y no sella; la corrección lo pregunta antes de tocar el spec y valida con conflictos. Las
+     sugerencias, al aplicarse, no traen decisiones.
+5. **Una copia sale entera.** Si aparece alguna.
+   → **Esperado:** todas sus apariciones en un hallazgo; la revalidación no encuentra otra de la
+     misma regla.
+6. **Una regla con dos dueñas se decide, no oscila.** Si dos contratos la tienen.
+   → **Esperado:** la validación la anota sin bloquear; la revisión de conflictos la abre con causa
+     *Dos dueñas* y una opción por dueña.
+   → **FALLO:** marcada como copia en un spec y, tras corregirla, en el otro.
+7. **Converge.** Hasta tener las features listas para desarrollo.
+   → **Esperado:** vueltas de corrección por spec claramente por debajo de la pasada 1 de
+     `CU-3.ac (5)` (presupuesto, 3 por la misma copia); decisiones por vuelta decrecientes.
+8. **El cierre se lee entero.** Vistas previas sin líneas cortadas; sellar y después reabrir no pide
+   rehacer la medición.
+
+**Resultado:** PASS si 1-6 se cumplen y 7 mejora claramente · FALLO si una copia nace al generar
+una consumidora con la dueña ya escrita, o una decisión pasa como sugerencia.
+**Desviación → reportar:** issue citando `CU-3.ac (6)`.
+
 ## CU-3.o — Readiness: sin índice, ciclos, scope derivado, sello y alcance del veredicto
 
 **Precondición:** según el sub-escenario: (1) directorio de features sin `_features.md`;

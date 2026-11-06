@@ -330,6 +330,12 @@ dos formas en dos corridas).
    propio y cita). Van **todas en un mismo hallazgo**, una por sección, para que se corrijan de
    una vez. En la pasada 1 de `CU-3.ac (5)` la misma copia bloqueó en presupuesto y pasó en
    cuentas, y presupuesto necesitó tres correcciones: cada auditoría vio una aparición.
+   **Salvo si la frase está en el contrato propio de este spec** (`## Contrato de modelos
+   compartidos`, de un modelo del que es dueño) y la otra dueña la tiene en el suyo: eso no es una
+   copia, es una **regla con dos dueñas** (v0.130.0). No bloquea ni eliges tú cuál se queda: va en
+   *Notas no bloqueantes* como *"regla con dos dueñas: <regla>, también en el contrato de <feature>
+   — se decide en la revisión de conflictos"*. En la prueba corta de v0.129.0 una auditoría la
+   marcó como copia en cuentas y la siguiente en objetivos.
 5. **Falta una decisión de producto** (v0.129.0): para que un CA se pueda comprobar, o para que
    una regla diga qué pasa, hace falta un valor o un comportamiento que **ni el spec, ni el PRD, ni
    su análisis fijan** —cuántas semanas abarca una consulta, qué ocurrencias toca *"todas las

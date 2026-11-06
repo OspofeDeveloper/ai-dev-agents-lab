@@ -51,7 +51,8 @@ conflictos tras un cambio que no añade historias ni alcance: un choque de model
 solo puede darse entre features que comparten el modelo.
 
 `--contratos-de` (v0.129.0) da, para los modelos ajenos que usa una feature, el contrato tal
-como lo publica su dueña (su `### <Modelo>` entero). Es lo que la auditoría compara con el
+como lo publica su dueña (su `### <Modelo>` entero). Si la feature aún no tiene spec, los modelos
+salen de la tabla de shared models del índice (v0.130.0): es lo que lee su redactor al generarla. Es lo que la auditoría compara con el
 spec para encontrar **todas** las frases que repiten una regla del dueño: en la pasada 1 de
 `CU-3.ac (5)` la misma copia bloqueó en presupuesto y pasó en cuentas, y presupuesto
 necesitó tres correcciones porque cada auditoría encontró una aparición.
@@ -361,10 +362,17 @@ def bloque_contrato(text: str, modelo: str) -> str:
 def contratos_de(directory: Path, fid: str) -> dict:
     """Los contratos que publica la dueña de cada modelo ajeno que usa `fid`."""
     features_md_path = next(iter(sorted(directory.glob("*_features.md"))), None)
-    rutas, nombres, _ = index(read_text(features_md_path) if features_md_path else "")
+    rutas, nombres, modelos = index(read_text(features_md_path) if features_md_path else "")
     texto = read_text(directory / rutas[fid]) if fid in rutas else ""
+    usos = consumo(texto)[0]
+    # Sin spec todavía (se va a generar): los modelos que el índice le asigna (v0.130.0). Es lo
+    # que lee el redactor de una consumidora generada después de su dueña, para citar el
+    # contrato publicado en vez de suponerlo.
+    if not usos:
+        usos = [{"modelo": m["name"], "owner": m["owner"]} for m in modelos.values()
+                if fid in m["refs"]]
     vistos, out = set(), []
-    for u in consumo(texto)[0]:
+    for u in usos:
         clave = (norm(u["modelo"]), u["owner"])
         if not u["owner"] or u["owner"] == fid or clave in vistos:
             continue

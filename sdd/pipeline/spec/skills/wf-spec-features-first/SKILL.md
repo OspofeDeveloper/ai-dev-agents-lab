@@ -416,7 +416,7 @@ Si no hay `--features` y el discovery contiene >5 features, y **no** vino `--all
 > ya instalada en la segunda: el usuario no vio el mapa **ni una vez**, y en las dos últimas main
 > pidió *"los IDs de la tabla"* sin haberla mostrado.
 
-Si hay gaps `[CRÍTICO]` abiertos, dilo aquí también: indica qué features quedarían con HUs `[INCOMPLETO]`, porque cambia la decisión de alcance. Con `--all-features` o `--features` **de entrada** → no presentes el gate; continúa.
+Si hay gaps `[CRÍTICO]` abiertos, dilo aquí también: indica qué features quedarían con HUs `[INCOMPLETO]`, porque cambia la decisión de alcance. **Sin gaps abiertos, no prometas que ninguna saldrá incompleta** (v0.130.0): las dueñas de un modelo compartido pueden salir con **una** pregunta sobre su contrato —lo que el PRD no decide de sus orígenes, invariantes o qué pasa al borrarlo—. Dilo así, y que esas preguntas se responden **antes** de generar las features que usan sus modelos: por eso conviene generar primero las dueñas. En la pasada 1 de `CU-3.ac (5)` el aviso dijo *"ninguna saldrá incompleta"*, las dueñas salieron con P-011, P-021 y P-031, y la segunda tanda se generó con esos contratos a medio decidir. Con `--all-features` o `--features` **de entrada** → no presentes el gate; continúa.
 
 ### 4b — Clasificar specs preexistentes (ponderado por riesgo, [[D-024]])
 

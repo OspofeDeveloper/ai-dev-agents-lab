@@ -6,6 +6,47 @@ Formato: una entrada `## D-NNN — <título>` por decisión, **más reciente arr
 
 ---
 
+## D-118 — Generar después de la dueña es generar con su contrato delante; y una regla con dos dueñas se decide
+
+- **Fecha:** 2026-11-06 · **Estado:** Adoptada. · **Relacionada:** [[D-111]] (contratos), [[D-117]] (búsqueda de copias contra el contrato).
+
+**Contexto.**
+1. **Las copias nacían al generar.** En la pasada 1 de `CU-3.ac (5)` la mayoría de las copias de
+   reglas ajenas salieron de la segunda tanda, generada **después** de las dueñas. El redactor tenía
+   la instrucción de citar por lo que el discovery decía, la misma que cuando corre en paralelo con
+   la dueña, y no leía el contrato ya escrito. Además, las dueñas salieron con su pregunta de
+   contrato abierta (P-011, P-021, P-031) y nada recomendaba responderlas antes de generar a quien
+   usaba sus modelos: el aviso previo incluso decía *"ninguna saldrá incompleta"*.
+2. **Una regla con dos dueñas oscilaba.** En la prueba corta de v0.129.0, *"lo reservado para un
+   objetivo nunca baja de cero en una cuenta"* estaba en el contrato de cuentas y en el de objetivos.
+   Al comparar con el contrato ajeno ([[D-117]]), una auditoría la marcó como copia en cuentas y la
+   siguiente, en objetivos.
+
+**Decisión.**
+1. Con la dueña ya generada, el redactor lee su contrato literal (`--contratos-de`, que sale del
+   índice aunque la consumidora aún no tenga spec) y no repite nada de él. Lo que el contrato no
+   decide es una petición.
+2. Si una feature sin spec usa un modelo cuya dueña tiene preguntas sin responder, `--spec-pending`
+   lo marca (`contrato_abierto`), el cierre lo dice y no recomienda generar primero. El aviso previo
+   dice que las dueñas pueden salir con una pregunta de contrato, y que se responde antes de generar
+   a sus consumidoras.
+3. **Dos dueñas** es una causa de conflicto nueva: la misma regla en el contrato de dos dueñas de
+   modelos distintos. No es *Duplica* (nadie está fuera de su sitio hasta decidirlo); la auditoría
+   la anota sin bloquear y la revisión de conflictos la abre como decisión con una opción por dueña.
+
+**Alternativas descartadas.**
+- *Generar todo en una tanda, sin dueñas primero:* sin contrato escrito que leer, las consumidoras
+  solo pueden suponer.
+- *Que la auditoría elija la dueña por el nombre del modelo:* la regla del reservado vale para
+  los dos modelos; elegir es de producto.
+
+**Referencias.** `wf-spec-fast-track` (modelos compartidos), `wf-spec-features-first` (aviso
+previo), `kb-conflict-expert` (causa *Dos dueñas*), `kb-spec-expert` (umbral 4),
+`wf-spec-validate`, `scripts/sdd-model-contracts.py`, `scripts/sdd-project-status.py`
+(`contrato_abierto`), `CU-3.ac (6)`.
+
+---
+
 ## D-117 — Lo que falta decidir no es una sugerencia, y una copia se busca contra el contrato
 
 - **Fecha:** 2026-11-05 · **Estado:** Adoptada. · **Relacionada:** [[D-111]] (contratos de modelos), [[D-115]] (camino corto de los cambios sin decisiones), `kb-spec-expert` (umbral del veredicto).
