@@ -2,6 +2,15 @@
 
 Formato: `## <versión> — <fecha>`. Las líneas con `⚠` son cambios que afectan a proyectos ya inicializados (`wf-sdd-update` las muestra al actualizar).
 
+## 0.129.1 — 2026-11-05
+
+**Sellar no hace parecer cambiado un spec** — [[DECISIONS D-117]] (ampliación). Sale de la prueba corta de la 0.129.0, que confirmó el bloqueante *falta decidir* y la búsqueda de todas las copias.
+
+- 🟠 **Sellar un spec conserva su fecha**, como ya lo hacía el resultado de una validación que no sella (v0.128.5). Con la fecha nueva, el spec quedaba posterior a su informe de conflictos, y cuando otra validación lo reabría el cierre recomendaba *Rehacer la medición* con conflictos que revisar, sin que nada hubiera cambiado. Los specs sellados antes de esta versión lo arrastran hasta su próximo cambio.
+- 🟡 La validación copia literal la línea del auditor en el motivo del bloqueo (*falta decidir:*, *dejar solo la cita*): esos comienzos deciden cómo sigue la corrección.
+- 🟡 La vista previa de *Corregir* dice que primero pregunta lo que falta decidir, y las líneas largas de las vistas previas se parten antes de mostrarse (la caja las cortaba por el medio).
+- 3 tests nuevos.
+
 ## 0.129.0 — 2026-11-05
 
 **Lo que falta decidir no pasa como sugerencia, y una copia se busca contra el contrato** — [[DECISIONS D-117]]. Sale de la pasada 1 de `CU-3.ac (5)`: pagos previstos se dio por listo con CA que no se podían comprobar, y la misma copia de una regla bloqueó en un spec y pasó en otro.

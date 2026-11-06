@@ -846,6 +846,18 @@ class MotivoDelRechazoTest(unittest.TestCase):
             self.assertIn("antes hay que decidir 1 cosa de objetivos (F-001)", data["mapa"])
             op = next(o for o in data["cierre"]["opciones"] if o["accion"] == "corregir")
             self.assertIn("Primero te pregunto lo que falta decidir", op["description"])
+            self.assertNotIn("no se te pregunta nada", op["preview"])        # v0.129.1
+            self.assertIn("Primero te pregunto lo que falta decidir; con tus respuestas",
+                          op["preview"])
+
+    def test_las_lineas_largas_de_la_vista_previa_se_parten(self):
+        """v0.129.1: la caja de la pregunta cortaba por el medio las líneas largas."""
+        largo = "la regla dice algo muy largo " * 12
+        with tempfile.TemporaryDirectory() as tmp:
+            b = self._bank(tmp, f"> La validación pide corregir: (v1.2) {largo}— citarla\n")
+            op = next(o for o in b.pending()["cierre"]["opciones"] if o["accion"] == "corregir")
+            self.assertTrue(all(len(l) <= 96 for l in op["preview"].split("\n")), op["preview"])
+            self.assertRegex(op["preview"], r"\n1\. objetivos .*\n   \S")   # sangría tras «1. »
 
     def test_con_la_version_cambiada_vuelve_a_lista_para_validar(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -1495,6 +1507,31 @@ class ResultadoDeValidacionConservaFechaTest(unittest.TestCase):
             self.assertTrue(data["readiness_vigente"], data["items"][:1])
             rc = run_script("sdd-project-status.py", b.spec, "--refresh-readiness").returncode
             self.assertEqual(rc, 0)
+
+    def test_sellar_conserva_la_fecha_y_reabrir_no_lo_da_por_cambiado(self):
+        """v0.129.1: sellar dejaba el spec posterior a su informe de conflictos; al reabrirlo
+        otra validación, el cierre pedía revisar conflictos y rehacer la medición."""
+        with tempfile.TemporaryDirectory() as tmp:
+            b = Bank(Path(tmp))
+            b.feature("F-001", "movimientos")
+            b.index([("F-001", "movimientos", "features/movimientos/spec/movimientos_spec.md",
+                      "BLOQUEADA", "ninguno")])
+            b.analysis("respondida")
+            sp = b.spec / "features" / "movimientos" / "spec" / "movimientos_spec.md"
+            os.utime(sp, (sp.stat().st_atime, sp.stat().st_mtime - 200))
+            rep = write(sp.with_name("movimientos_conflict_report.md"), "# Conflict Report\n")
+            os.utime(rep, (rep.stat().st_atime, rep.stat().st_mtime - 100))
+            b.readiness("| F-001: movimientos | LISTA | 0 | 0 | — |")
+            antes = sp.stat().st_mtime
+            r = run_script("sdd-seal.py", "spec", sp, "--seal", "--approved-by", "Ana")
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            self.assertIn("VALIDADO", sp.read_text())
+            self.assertEqual(sp.stat().st_mtime, antes)
+            r = run_script("sdd-seal.py", "spec", sp, "--unseal", "--blocked", "falta decidir: ¿x?")
+            self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+            data = b.pending()
+            self.assertTrue(data["readiness_vigente"], data["items"][:2])
+            self.assertNotIn("readiness", [o["accion"] for o in data["cierre"]["opciones"]])
 
     def test_un_unseal_sin_resultado_si_cambia_la_fecha(self):
         with tempfile.TemporaryDirectory() as tmp:

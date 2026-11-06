@@ -118,6 +118,10 @@ Un `--blocked` por hallazgo bloqueante, con lo que dijo el auditor **en llano** 
 arregla: *"repite una regla de los movimientos que ya está en registro de movimientos — citarla en
 vez de copiarla"*), sin rutas ni números de línea. Queda en la cabecera del spec, y de ahí lo leen
 el resultado del lote, el mapa y la opción *"Corregir lo que pidió la validación"* (v0.127.1).
+**Copia la línea del auditor tal cual, sin reescribirla**: sus comienzos son contrato. Una línea
+que empieza por *"falta decidir:"* hace que la corrección pregunte antes de tocar el spec, y una
+que dice *"dejar solo la cita"* la valida sin revisar conflictos (v0.129.1: en la prueba corta de
+v0.129.0, main reescribió cuatro *"falta decidir"* con sus palabras y tuvo que volver a sellar).
 Medido en la pasada 2 de `CU-3.ac`: sin él, el cierre decía *"la auditoría encontró algo que
 corregir, o no se aprobó"* y el mapa recomendaba validar otra vez lo que acababa de fallar.
 Informa qué hay que corregir y que lo revalidas cuando esté.

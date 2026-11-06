@@ -34,6 +34,7 @@ from __future__ import annotations
 import os
 import re
 import sys
+import textwrap
 from pathlib import Path
 
 FID_RE = re.compile(r"\bF-(?:C-)?\d+\b")
@@ -1426,7 +1427,9 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
                                           + [""] + sella),
                      "accion": "validar", "aprueba": aprobador})
     if corregir:
-        prev = ["Lo que pidió corregir la validación (no se te pregunta nada):", ""]
+        prev = [("Lo que pidió corregir la validación (lo que dice «falta decidir» te lo "
+                 "pregunto antes):" if any(it.get("decidir") for it in corregir) else
+                 "Lo que pidió corregir la validación (no se te pregunta nada):"), ""]
         k = 0
         for it in corregir:
             for h in it["hallazgos"]:
@@ -1441,7 +1444,10 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
             prev += ["", "Se quita la copia, se audita y se valida, sin revisar conflictos: no",
                      "cambia cómo se comporta nada."] + sella
         else:
-            prev += ["", "Se corrige cada spec, se comprueba que no choca con nada y se valida."] + sella
+            prev += ["", ("Primero te pregunto lo que falta decidir; con tus respuestas se corrige "
+                          "cada spec, se comprueba que no choca con nada y se valida."
+                          if any(it.get("decidir") for it in corregir) else
+                          "Se corrige cada spec, se comprueba que no choca con nada y se valida.")] + sella
         hay_decision = any(it.get("decidir") for it in corregir)
         cand.append({"label": f"Corregir lo que pidió la validación ({len(corregir)})",
                      "description": ("Primero te pregunto lo que falta decidir; después se "
@@ -1510,6 +1516,11 @@ def _mapa(items: list, specs: dict, label: dict, cdata: dict | None,
         cand.append({"label": f"Aplicar sugerencias ({len(sugerencias)})",
                      "description": "Pequeños arreglos que vio la validación.",
                      "preview": "\n".join(prev), "accion": "sugerencias", "aprueba": aprobador})
+    # Las líneas largas de una vista previa salen cortadas por el medio en la caja de la pregunta
+    # («…en qué orden o proporo y escribir…», v0.129.1): se parten antes, con su sangría.
+    for c in cand:
+        if c.get("preview"):
+            c["preview"] = _envolver(c["preview"])
     opciones = cand[:3]
     # Las sugerencias no se recomiendan (v0.128.1): cada validación puede dejar otras nuevas,
     # y recomendarlas encadenaba vueltas sin fin (CU-3.ac (4): 5 aplicadas, 2 nuevas, otra vez
@@ -1592,6 +1603,21 @@ def _linea_decision(k: int, it: dict, fs: list) -> list:
     if ident:
         out.append(f"   ({ident})")
     return out
+
+
+def _envolver(texto: str, ancho: int = 96) -> str:
+    """Parte las líneas de más de `ancho` caracteres; las de continuación llevan la sangría
+    del texto tras la numeración («3. », «- »)."""
+    out = []
+    for linea in texto.split("\n"):
+        if len(linea) <= ancho:
+            out.append(linea)
+            continue
+        m = re.match(r"^(\s*(?:\d+\.|[-*•])?\s*)", linea)
+        sangria = " " * len(m.group(1)) if m else ""
+        out += textwrap.wrap(linea, ancho, subsequent_indent=sangria,
+                             break_long_words=False, break_on_hyphens=False) or [""]
+    return "\n".join(out)
 
 
 def _n(n: int, uno: str, varios: str) -> str:

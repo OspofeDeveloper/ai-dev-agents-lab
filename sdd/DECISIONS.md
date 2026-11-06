@@ -54,6 +54,13 @@ destapó dos fallos de certeza en la auditoría:
 pasar la próxima validación: es lo que se quiere. La auditoría lee algo más (los contratos de las
 dueñas, unos 8k caracteres en presupuesto), a cambio de vueltas de corrección enteras.
 
+**Ampliación (v0.129.1).** La prueba corta confirmó los dos arreglos —pagos previstos no selló
+por cuatro *falta decidir*, y cuentas dio en un hallazgo los seis sitios de la copia—, pero el
+cierre recomendó *Rehacer la medición*: sellar reescribía el spec y lo dejaba posterior a su informe
+de conflictos, y al reabrirlo parecía cambiado sin revisar. Sellar conserva ahora la fecha, como
+ya lo hacía el resultado de una validación que no sella (v0.128.5). Y main copia literal la línea
+del auditor al bloquear: la había reescrito sin el *falta decidir:*.
+
 **Referencias.** `kb-spec-expert` (Paso 4, umbrales 4 y 5), `wf-spec-validate` (encargo del
 auditor y plantilla), `wf-spec-delta` (encargo directo), `pipeline/spec/routing.md`,
 `scripts/sdd-model-contracts.py` (`--contratos-de`), `scripts/sdd-project-status.py`

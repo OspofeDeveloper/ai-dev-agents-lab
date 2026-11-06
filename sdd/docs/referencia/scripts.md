@@ -45,7 +45,7 @@ lote en frases; sellar o desellar un spec regenera el índice de features ([[D-1
 validación no selló, con la versión auditada, y `--not-approved` que pasó la auditoría sin
 aprobarse; el resultado del lote y la tabla lo leen, y se va al sellar ([[D-114]]). Esas dos
 notas son el resultado de la validación, no un cambio del spec: conservan su fecha, y la medición
-incremental no lo da por cambiado (v0.128.5).
+incremental no lo da por cambiado (v0.128.5). Sellar un spec tampoco cambia su fecha (v0.129.1): si no, quedaba posterior a su informe de conflictos y, al reabrirlo otra validación, parecía cambiado sin revisar.
 
 - **Exit:** `0` OK/sellado · `1` error IO · `2` condiciones no cumplidas.
 

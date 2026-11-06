@@ -956,6 +956,11 @@ def main() -> int:
         for ca, ref in absorbed:
             print(f"Enmienda absorbida por re-validacion: {ca} ({ref}) — anotacion limpiada.")
 
+    # Sellar un spec no cambia lo que dice: conserva su fecha (v0.129.1), como el resultado de una
+    # validación que no sella (v0.128.5). Con la fecha nueva, el spec quedaba posterior a su
+    # informe de conflictos, y en cuanto otra validación lo reabría parecía «cambiado sin
+    # revisar»: el cierre recomendaba rehacer la medición (prueba corta de v0.129.0).
+    fecha = plan_path.stat() if kind == "spec" else None
     if not write_estado(plan_path, "VALIDADO"):
         return 1
     if aprobado and not write_header_line(plan_path, "Aprobado por", APROBADO_RE, aprobado):
@@ -972,6 +977,7 @@ def main() -> int:
         if sugerencias and not write_header_line(plan_path, "Sugerencias de la validación",
                                                  SUGERENCIAS_RE, " · ".join(sugerencias)):
             return 1
+        os.utime(plan_path, (fecha.st_atime, fecha.st_mtime))
         _refresh_index(plan_path)
     return 0
 
