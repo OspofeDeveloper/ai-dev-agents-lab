@@ -3166,6 +3166,23 @@ copia; la corrección preguntó antes y validó con conflictos; las decisiones c
 una consumidora con la dueña ya escrita, o una decisión pasa como sugerencia.
 **Desviación → reportar:** issue citando `CU-3.ac (6)`.
 
+**Pasada 1, primer tramo (2026-11-06, Opus 5.5, v0.130.0; en curso):** P-004/P-005 por defecto,
+alcance derivado del ingreso al saldar una deuda (como en `CU-3.ac (5)`), tanda de dueñas
+(F-001 movimientos, F-003 categorías, F-005 cuentas) y sus tres preguntas de contrato respondidas.
+- **Punto 1 PASS:** el aviso dice que las dueñas *"pueden salir con una pregunta sobre él, y lo mejor
+  es responderla antes de generar las que lo usan"*.
+- **Punto 2 PASS:** una pregunta crítica por dueña (P-011, P-021, P-031); el cierre dice *"antes de
+  generarlas conviene responder las preguntas del contrato de…"* y no ofrece generar.
+- **Por dueños:** la respuesta de categorías salió como peticiones a pagos previstos y a movimientos;
+  la petición R-003 de movimientos se completa solo en cuentas. El hueco del traspaso y el saldo
+  disponible (el `CF-F002-01` del final de `CU-3.ac (5)`) sale ya en la primera medición.
+- **El guardrail de PRD paró dos puntos de una respuesta que lo contradecían** (pagos aceptados y
+  aportaciones en el histórico) sin guardarla a medias.
+- **Consumo:** 17 agentes hasta aquí, primer turno medio de 94k. Una línea del orquestador en
+  inglés (*"All three reports in. Step 6: regenerate index."*).
+- **Siguiente:** completar R-003 en cuentas, generar las otras cinco (F-002, F-004, F-006, F-007,
+  F-008) y mirar en su primera validación el punto 3 (ninguna copia).
+
 ## CU-3.o — Readiness: sin índice, ciclos, scope derivado, sello y alcance del veredicto
 
 **Precondición:** según el sub-escenario: (1) directorio de features sin `_features.md`;
